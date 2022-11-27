@@ -41,6 +41,7 @@ import {
     metisLecturePosts,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
+import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -65,6 +66,7 @@ describe('CourseDiscussionComponent', () => {
             imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbPaginationModule)],
             declarations: [
                 CourseDiscussionComponent,
+                MockComponent(VirtualScrollComponent),
                 MockComponent(PostingThreadComponent),
                 MockComponent(PostCreateEditModalComponent),
                 MockComponent(FaIconComponent),
@@ -372,17 +374,14 @@ describe('CourseDiscussionComponent', () => {
         );
     }));
 
-    it('should call fetchNextPage at course discussions when scrolled to bottom and do nothing when scrolled to top', fakeAsync(() => {
-        component.itemsPerPage = 5;
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
+    it('should call fetchNextPage when virtual scroller component renders last part of fetched posts', fakeAsync(() => {
+        prepareComponent();
 
-        const scrollableDiv = getElement(fixture.debugElement, 'div[id=scrollableDiv]');
-        scrollableDiv.dispatchEvent(new Event('scrolledUp'));
-        expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
+        const onEndOfOriginalItemsReachedEvent = new CustomEvent('onEndOfOriginalItemsReached');
 
-        scrollableDiv.dispatchEvent(new Event('scrolled'));
+        const scrollableDiv = getElement(fixture.debugElement, 'jhi-virtual-scroll');
+        scrollableDiv.dispatchEvent(onEndOfOriginalItemsReachedEvent);
+
         expect(fetchNextPageSpy).toHaveBeenCalledOnce();
     }));
 
@@ -421,4 +420,11 @@ describe('CourseDiscussionComponent', () => {
             expect(result).toBeFalse();
         });
     });
+
+    function prepareComponent() {
+        component.itemsPerPage = 5;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+    }
 });

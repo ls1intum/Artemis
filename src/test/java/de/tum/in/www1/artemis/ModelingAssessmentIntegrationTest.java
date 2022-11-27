@@ -1442,7 +1442,6 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         Result firstResult = ModelFactory.generateResult(true, 50);
         firstResult.setAssessor(tutor1);
         firstResult.setHasComplaint(true);
-        firstResult.setHasFeedback(false);
         firstResult.setParticipation(studentParticipation);
         firstResult = resultRepo.saveAndFlush(firstResult);
 

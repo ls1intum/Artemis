@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
@@ -40,6 +40,13 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
     @Output()
     formSubmitted: EventEmitter<OnlineUnitFormData> = new EventEmitter<OnlineUnitFormData>();
     form: FormGroup;
+
+    @Input()
+    hasCancelButton: boolean;
+    @Output()
+    onCancel: EventEmitter<any> = new EventEmitter<any>();
+
+    faTimes = faTimes;
 
     urlValidator = urlValidator;
 
@@ -126,5 +133,9 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
 
     get isSubmitPossible() {
         return !this.form.invalid;
+    }
+
+    cancelForm() {
+        this.onCancel.emit();
     }
 }
