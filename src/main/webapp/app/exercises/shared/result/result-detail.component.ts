@@ -201,7 +201,7 @@ export class ResultDetailComponent implements OnInit {
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
 
                         const isProgrammingExercise = this.exerciseType === ExerciseType.PROGRAMMING;
-                        this.feedbackList = this.feedbackService.createFeedbackItems(filteredFeedback, isProgrammingExercise);
+                        this.feedbackList = this.feedbackService.createFeedbackItems(filteredFeedback, isProgrammingExercise, this.showTestDetails);
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
                         this.backupFilteredFeedbackList = this.filteredFeedbackList;
 
