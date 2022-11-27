@@ -9,6 +9,6 @@ import { BarChartModule } from '@swimlane/ngx-charts';
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule, BarChartModule],
     declarations: [FeedbackCollapseComponent, FeedbackListProgrammingComponent],
-    exports: [],
+    exports: [FeedbackCollapseComponent, FeedbackListProgrammingComponent],
 })
 export class ArtemisFeedbackModule {}
