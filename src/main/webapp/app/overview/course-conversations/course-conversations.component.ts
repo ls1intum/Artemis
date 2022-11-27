@@ -19,11 +19,10 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     isLoading = false;
     isServiceSetUp = false;
-
     postInThread: Post;
     showPostThread = false;
     activeConversation?: ConversationDto = undefined;
-    conversations: ConversationDto[] = [];
+    conversationsOfUser: ConversationDto[] = [];
     constructor(private activatedRoute: ActivatedRoute, public metisConversationService: MetisConversationService) {}
 
     getAsChannel = getAsChannelDto;
@@ -69,7 +68,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
 
     private subscribeToConversationsOfUser() {
         this.metisConversationService.conversationsOfUser$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversations: ConversationDto[]) => {
-            this.conversations = conversations ?? [];
+            this.conversationsOfUser = conversations ?? [];
         });
     }
 

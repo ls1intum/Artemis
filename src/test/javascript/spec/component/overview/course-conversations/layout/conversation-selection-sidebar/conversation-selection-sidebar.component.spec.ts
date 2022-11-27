@@ -11,7 +11,7 @@ import { MetisConversationService } from 'app/shared/metis/metis-conversation.se
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../helpers/conversationExampleModels';
-import { BehaviorSubject, NEVER } from 'rxjs';
+import { BehaviorSubject, EMPTY } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channels-create-dialog.component';
@@ -102,7 +102,7 @@ examples.forEach((activeConversation) => {
             Object.defineProperty(metisConversationService, 'conversationsOfUser$', {
                 get: () => new BehaviorSubject(allConversations).asObservable(),
             });
-            Object.defineProperty(metisConversationService, 'forceRefresh', { value: () => NEVER });
+            Object.defineProperty(metisConversationService, 'forceRefresh', { value: () => EMPTY });
             Object.defineProperty(metisConversationService, 'setActiveConversation', { value: () => {} });
 
             fixture = TestBed.createComponent(ConversationSelectionSidebarComponent);
@@ -171,7 +171,7 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should open create channel dialog when button is pressed', fakeAsync(() => {
-            const createChannelSpy = jest.fn().mockReturnValue(NEVER);
+            const createChannelSpy = jest.fn().mockReturnValue(EMPTY);
             Object.defineProperty(metisConversationService, 'createChannel', { value: createChannelSpy });
             createConversationDialogTest(new ChannelDTO(), ChannelsCreateDialogComponent, 'createChannel');
             fixture.whenStable().then(() => {
@@ -180,7 +180,7 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should open create group chat dialog when button is pressed', fakeAsync(() => {
-            const createGroupChatSpy = jest.fn().mockReturnValue(NEVER);
+            const createGroupChatSpy = jest.fn().mockReturnValue(EMPTY);
             Object.defineProperty(metisConversationService, 'createGroupChat', { value: createGroupChatSpy });
             createConversationDialogTest([new UserPublicInfoDTO()], GroupChatCreateDialogComponent, 'createGroupChat');
             fixture.whenStable().then(() => {
@@ -189,7 +189,7 @@ examples.forEach((activeConversation) => {
         }));
 
         it('should open one to one chat dialog when button is pressed', fakeAsync(() => {
-            const createOneToOneChatSpy = jest.fn().mockReturnValue(NEVER);
+            const createOneToOneChatSpy = jest.fn().mockReturnValue(EMPTY);
             Object.defineProperty(metisConversationService, 'createOneToOneChat', { value: createOneToOneChatSpy });
             const chatPartner = new UserPublicInfoDTO();
             chatPartner.login = 'test';
@@ -228,7 +228,7 @@ examples.forEach((activeConversation) => {
             fixture.detectChanges();
             tick(301);
 
-            const refreshSpy = jest.fn().mockReturnValue(NEVER);
+            const refreshSpy = jest.fn().mockReturnValue(EMPTY);
             Object.defineProperty(metisConversationService, 'forceRefresh', { value: refreshSpy });
             component.onSettingsChanged();
             expect(refreshSpy).toHaveBeenCalledOnce();
