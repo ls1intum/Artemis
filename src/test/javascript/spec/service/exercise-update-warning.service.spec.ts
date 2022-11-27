@@ -23,8 +23,8 @@ describe('Exercise Update Warning Service', () => {
     const gradingCriterionCreditsChanged = { ...gradingCriterion, structuredGradingInstructions: [gradingInstructionCreditsChanged] } as GradingCriterion;
     const gradingCriterionUsageCountChanged = { ...gradingCriterion, structuredGradingInstructions: [gradingInstructionUsageCountChanged] } as GradingCriterion;
     const gradingCriterionWithoutInstruction = { id: 1, title: 'testCriteria' } as GradingCriterion;
-    const exercise = { id: 1 } as Exercise;
-    const backupExercise = { id: 1 } as Exercise;
+    let exercise: Exercise;
+    let backupExercise: Exercise;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -47,6 +47,9 @@ describe('Exercise Update Warning Service', () => {
                 updateWarningService.creditChanged = false;
                 updateWarningService.usageCountChanged = false;
                 updateWarningService.immediateReleaseWarning = '';
+
+                exercise = { id: 1 } as Exercise;
+                backupExercise = { id: 1 } as Exercise;
             });
     });
 
@@ -102,7 +105,7 @@ describe('Exercise Update Warning Service', () => {
     ])('should correctly ask user about exercise without release date', ({ newExercise, oldExercise, expectedMessage }) => {
         updateWarningService.checkExerciseBeforeUpdate(newExercise, oldExercise);
 
-        expect(updateWarningService.immediateReleaseWarning).toEqual(expectedMessage);
+        expect(updateWarningService.immediateReleaseWarning).toBe(expectedMessage);
     });
 
     it('should not check in test course', () => {
@@ -114,7 +117,7 @@ describe('Exercise Update Warning Service', () => {
         updateWarningService.checkExerciseBeforeUpdate(exercise, backupExercise);
 
         expect(updateWarningService.usageCountChanged).toBeFalse();
-        expect(updateWarningService.immediateReleaseWarning).toEqual('');
+        expect(updateWarningService.immediateReleaseWarning).toBe('');
     });
 
     it('should not check releaseDate in Exam', () => {
@@ -122,7 +125,7 @@ describe('Exercise Update Warning Service', () => {
         updateWarningService.isExamMode = true;
         updateWarningService.checkImmediateRelease(exercise, backupExercise);
 
-        expect(updateWarningService.immediateReleaseWarning).toEqual('');
+        expect(updateWarningService.immediateReleaseWarning).toBe('');
     });
 
     it('should loadExercise and not open warning modal', () => {
@@ -133,6 +136,7 @@ describe('Exercise Update Warning Service', () => {
         expect(updateWarningService.instructionDeleted).toBeFalse();
         expect(updateWarningService.creditChanged).toBeFalse();
         expect(updateWarningService.usageCountChanged).toBeFalse();
+        expect(updateWarningService.immediateReleaseWarning).toBe('');
 
         expect(loadExerciseSpy).toHaveBeenCalledOnce();
         expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
@@ -144,8 +148,8 @@ describe('Exercise Update Warning Service', () => {
         backupExercise.gradingCriteria = [gradingCriterion];
         updateWarningService.checkExerciseBeforeUpdate(exercise, backupExercise);
 
-        expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
         expect(loadExerciseSpy).toHaveBeenCalledOnce();
+        expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
         expect(openSpy).toHaveBeenCalledWith(ExerciseUpdateWarningComponent as Component);
         expect(openSpy).toHaveBeenCalledOnce();
     });
