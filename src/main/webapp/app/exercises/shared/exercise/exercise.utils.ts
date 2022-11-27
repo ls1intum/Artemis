@@ -66,22 +66,20 @@ export class SaveExerciseCommand<T extends Exercise> {
 
         let saveObservable = of([false, prepareRequestOptions()]);
 
-        if (exercise.gradingInstructionFeedbackUsed) {
-            const popupRefObs = from(this.popupService.checkExerciseBeforeUpdate(exercise, this.backupExercise));
+        const popupRefObs = from(this.popupService.checkExerciseBeforeUpdate(exercise, this.backupExercise));
 
-            if (this.modalService.hasOpenModals()) {
-                const confirmedCase = popupRefObs.pipe(
-                    mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).confirmed.pipe(map(() => [false, prepareRequestOptions()]))),
-                );
-                const reEvaluatedCase = popupRefObs.pipe(
-                    mergeMap((ref) =>
-                        (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(map(() => [true, { deleteFeedback: ref.componentInstance.deleteFeedback }])),
-                    ),
-                );
-                const canceledCase = popupRefObs.pipe(mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).canceled));
+        if (this.modalService.hasOpenModals()) {
+            const confirmedCase = popupRefObs.pipe(
+                mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).confirmed.pipe(map(() => [false, prepareRequestOptions()]))),
+            );
+            const reEvaluatedCase = popupRefObs.pipe(
+                mergeMap((ref) =>
+                    (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(map(() => [true, { deleteFeedback: ref.componentInstance.deleteFeedback }])),
+                ),
+            );
+            const canceledCase = popupRefObs.pipe(mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).canceled));
 
-                saveObservable = confirmedCase.pipe(mergeWith(reEvaluatedCase), takeUntil(canceledCase));
-            }
+            saveObservable = confirmedCase.pipe(mergeWith(reEvaluatedCase), takeUntil(canceledCase));
         }
 
         return saveObservable.pipe(

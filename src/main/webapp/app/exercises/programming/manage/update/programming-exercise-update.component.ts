@@ -475,24 +475,20 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     save() {
-        if (this.programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && this.programmingExercise.gradingInstructionFeedbackUsed) {
-            const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise);
-            if (!this.modalService.hasOpenModals()) {
-                this.saveExercise();
-            } else {
-                ref.then((reference) => {
-                    reference.componentInstance.confirmed.subscribe(() => {
-                        this.saveExercise();
-                    });
-                    reference.componentInstance.reEvaluated.subscribe(() => {
-                        const requestOptions = {} as any;
-                        requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
-                        this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
-                    });
-                });
-            }
-        } else {
+        const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise);
+        if (!this.modalService.hasOpenModals()) {
             this.saveExercise();
+        } else {
+            ref.then((reference) => {
+                reference.componentInstance.confirmed.subscribe(() => {
+                    this.saveExercise();
+                });
+                reference.componentInstance.reEvaluated.subscribe(() => {
+                    const requestOptions = {} as any;
+                    requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
+                    this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
+                });
+            });
         }
     }
 
@@ -500,16 +496,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * Saves the programming exercise with the provided input
      */
     saveExercise() {
-        // If no release date is set, we warn the user.
-        if (!this.programmingExercise.releaseDate && !this.isExamMode) {
-            const confirmNoReleaseDate = this.translateService.instant(
-                this.translationBasePath + (this.programmingExercise.startDate ? 'noReleaseDateWarning' : 'noReleaseAndStartDateWarning'),
-            );
-            if (!window.confirm(confirmNoReleaseDate)) {
-                return;
-            }
-        }
-
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
         if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {
             this.programmingExercise.submissionPolicy = undefined;
