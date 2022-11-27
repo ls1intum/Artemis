@@ -1,0 +1,186 @@
+import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../helpers/conversationExampleModels';
+import {
+    canAddUsersToConversation,
+    canChangeChannelArchivalState,
+    canChangeChannelProperties,
+    canChangeGroupChatProperties,
+    canCreateChannel,
+    canDeleteChannel,
+    canJoinChannel,
+    canRemoveUsersFromConversation,
+} from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { Course } from 'app/entities/course.model';
+import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
+
+describe('ConversationPermissionUtils', () => {
+    describe('allConversations', () => {});
+
+    describe('channels', () => {
+        describe('addUsersToConversation', () => {
+            const channelWhereUsersCanBeAdded = generateExampleChannelDTO({ hasChannelAdminRights: true, isArchived: false });
+
+            it('can add users to channel', () => {
+                expect(canAddUsersToConversation(channelWhereUsersCanBeAdded)).toBeTrue();
+            });
+
+            it('should return false if the user is not a channel admin', () => {
+                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, hasChannelAdminRights: false } as ChannelDTO)).toBeFalse();
+            });
+
+            it('should return false if the channel is archived', () => {
+                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, isArchived: true } as ChannelDTO)).toBeFalse();
+            });
+        });
+
+        describe('removeUsersFromConversation', () => {
+            const channelsWhereUsersCanBeRemoved = generateExampleChannelDTO({ hasChannelAdminRights: true, isArchived: false, isPublic: false });
+
+            it('can remove users to channel', () => {
+                expect(canRemoveUsersFromConversation(channelsWhereUsersCanBeRemoved)).toBeTrue();
+            });
+
+            it('should return false if the user is not a channel admin', () => {
+                expect(canRemoveUsersFromConversation({ ...channelsWhereUsersCanBeRemoved, hasChannelAdminRights: false } as ChannelDTO)).toBeFalse();
+            });
+
+            it('should return false if the channel is archived', () => {
+                expect(canRemoveUsersFromConversation({ ...channelsWhereUsersCanBeRemoved, isArchived: true } as ChannelDTO)).toBeFalse();
+            });
+
+            it('should return false if the channel is public', () => {
+                expect(canRemoveUsersFromConversation({ ...channelsWhereUsersCanBeRemoved, isPublic: true } as ChannelDTO)).toBeFalse();
+            });
+        });
+
+        describe('canCreateChannel', () => {
+            const courseWithCorrectRights = { isAtLeastInstructor: true } as Course;
+
+            it('can create channel as instructor', () => {
+                expect(canCreateChannel(courseWithCorrectRights)).toBeTrue();
+            });
+
+            it('can not create channel as tutor', () => {
+                expect(canCreateChannel({ isAtLeastInstructor: false, isAtLeastTutor: true } as Course)).toBeFalse();
+            });
+        });
+        describe('canDeleteChannel', () => {
+            const channelThatCanBeDeleted = generateExampleChannelDTO({ hasChannelAdminRights: true });
+
+            it('can delete channel', () => {
+                expect(canDeleteChannel(channelThatCanBeDeleted)).toBeTrue();
+            });
+
+            it('cannot delete channel without admin rights', () => {
+                expect(canDeleteChannel({ ...channelThatCanBeDeleted, hasChannelAdminRights: false })).toBeFalse();
+            });
+        });
+
+        describe('can change channel archival state', () => {
+            const channelThatCanBeArchived = generateExampleChannelDTO({ hasChannelAdminRights: true });
+
+            it('can archive channel', () => {
+                expect(canChangeChannelArchivalState(channelThatCanBeArchived)).toBeTrue();
+            });
+
+            it('cannot archive channel without admin rights', () => {
+                expect(canChangeChannelArchivalState({ ...channelThatCanBeArchived, hasChannelAdminRights: false })).toBeFalse();
+            });
+        });
+
+        describe('can change channel properties', () => {
+            const channelThatCanBeChanged = generateExampleChannelDTO({ hasChannelAdminRights: true, isArchived: false });
+
+            it('can change channel properties', () => {
+                expect(canChangeChannelProperties(channelThatCanBeChanged)).toBeTrue();
+            });
+
+            it('cannot change channel properties without admin rights', () => {
+                expect(canChangeChannelProperties({ ...channelThatCanBeChanged, hasChannelAdminRights: false })).toBeFalse();
+            });
+
+            it('cannot change channel properties of channel that is already archived', () => {
+                expect(canChangeChannelProperties({ ...channelThatCanBeChanged, isArchived: true })).toBeFalse();
+            });
+        });
+
+        describe('canJoinChannel', () => {
+            const channelThatCanBeJoined = generateExampleChannelDTO({ isMember: false, isPublic: true, isArchived: false, hasChannelAdminRights: false, isAdmin: false });
+
+            it('can join channel', () => {
+                expect(canJoinChannel(channelThatCanBeJoined)).toBeTrue();
+            });
+
+            it('can not join a channel twice', () => {
+                expect(canJoinChannel({ ...channelThatCanBeJoined, isMember: true })).toBeFalse();
+            });
+
+            it('can not join a private channel without admin rights', () => {
+                expect(canJoinChannel({ ...channelThatCanBeJoined, isPublic: false })).toBeFalse();
+            });
+
+            it('can not join an archived channel without admin rights', () => {
+                expect(canJoinChannel({ ...channelThatCanBeJoined, isArchived: true })).toBeFalse();
+            });
+
+            it('can join a private channel with admin rights', () => {
+                expect(canJoinChannel({ ...channelThatCanBeJoined, isPublic: false, hasChannelAdminRights: true })).toBeTrue();
+            });
+
+            it('can join an archived channel with admin rights', () => {
+                expect(canJoinChannel({ ...channelThatCanBeJoined, isArchived: true, hasChannelAdminRights: true })).toBeTrue();
+            });
+        });
+    });
+
+    describe('one-on-one chats', () => {
+        describe('addUsersToConversation', () => {
+            it('is not possible to add users to a one-on-one chat', () => {
+                expect(canAddUsersToConversation(generateOneToOneChatDTO({}))).toBeFalse();
+            });
+        });
+
+        describe('removeUsersFromConversation', () => {
+            it('is not possible to remove users to a one-on-one chat', () => {
+                expect(canRemoveUsersFromConversation(generateOneToOneChatDTO({}))).toBeFalse();
+            });
+        });
+    });
+
+    describe('groupChats', () => {
+        describe('addUsersToConversation', () => {
+            const groupChatWhereUsersCanBeAdded = generateExampleGroupChatDTO({ isMember: true });
+
+            it('can add users to channel', () => {
+                expect(canAddUsersToConversation(groupChatWhereUsersCanBeAdded)).toBeTrue();
+            });
+
+            it('should return false if the user is not a member of the group chat', () => {
+                expect(canAddUsersToConversation({ ...groupChatWhereUsersCanBeAdded, isMember: false })).toBeFalse();
+            });
+        });
+
+        describe('removeUsersFromConversation', () => {
+            const groupChatWhereUsersCanBeRemoved = generateExampleGroupChatDTO({ isMember: true });
+
+            it('can remove users to channel', () => {
+                expect(canRemoveUsersFromConversation(groupChatWhereUsersCanBeRemoved)).toBeTrue();
+            });
+
+            it('should return false if the user is not a member of the group chat', () => {
+                expect(canRemoveUsersFromConversation({ ...groupChatWhereUsersCanBeRemoved, isMember: false })).toBeFalse();
+            });
+        });
+
+        describe('can change group chat properties', () => {
+            const groupChatThatCanBeChanged = generateExampleGroupChatDTO({ isMember: true });
+
+            it('can change group chat properties', () => {
+                expect(canChangeGroupChatProperties(groupChatThatCanBeChanged)).toBeTrue();
+            });
+
+            it('cannot change group chat properties without being a member', () => {
+                expect(canChangeGroupChatProperties({ ...groupChatThatCanBeChanged, isMember: false })).toBeFalse();
+            });
+        });
+    });
+});

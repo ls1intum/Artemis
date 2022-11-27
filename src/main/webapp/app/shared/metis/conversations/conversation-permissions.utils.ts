@@ -35,7 +35,7 @@ export function canRemoveUsersFromConversation(conversation: ConversationDto): b
         return false;
     }
     const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
-    const channelCheck = (channel: ChannelDTO): boolean => !!channel.hasChannelAdminRights && !channel?.isArchived && !channel?.isPublic;
+    const channelCheck = (channel: ChannelDTO): boolean => !!channel.hasChannelAdminRights && !channel?.isArchived && channel?.isPublic === false;
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);

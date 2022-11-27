@@ -58,6 +58,7 @@ export const generateExampleGroupChatDTO = ({
     isCreator = true,
     isFavorite = false,
     isHidden = false,
+    isMember = true,
 }: GroupChatDto) => {
     const exampleGroupChatDTO = new GroupChatDto();
     exampleGroupChatDTO.id = id;
@@ -71,6 +72,7 @@ export const generateExampleGroupChatDTO = ({
     exampleGroupChatDTO.isFavorite = isFavorite;
     exampleGroupChatDTO.isHidden = isHidden;
     exampleGroupChatDTO.members = members;
+    exampleGroupChatDTO.isMember = isMember;
 
     return exampleGroupChatDTO;
 };
