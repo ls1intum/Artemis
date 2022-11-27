@@ -1,0 +1,60 @@
+<div class="markdown-preview visual-mode">
+    <p class="visual-question" contenteditable="true">{{ this.question.text }}</p>
+    <!--<div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
+        <ng-template #renderedHint>
+            <div [innerHTML]="renderedQuestion.hint"></div>
+        </ng-template>
+        <span class="label label-info" [ngbPopover]="renderedHint" triggers="mouseenter:mouseleave" *ngIf="question.hint">
+            <fa-icon [icon]="faQuestionCircle"></fa-icon>
+            <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
+        </span>
+        <br />
+        <ng-template #renderedExplanation>
+            <div [innerHTML]="renderedQuestion.explanation"></div>
+        </ng-template>
+        <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right auto" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
+            <fa-icon [icon]="faExclamationCircle"></fa-icon>
+            <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
+        </span>
+    </div>
+    <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{ incorrect: (score || 0) < question.points! }">
+        <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
+        <span class="show-explanation">{{ score || 0 }}/{{ question.points }}</span>
+        <span class="show-explanation">
+            <jhi-quiz-scoring-infostudent-modal
+                [score]="score"
+                [question]="question"
+                [multipleChoiceMapping]="selectedAnswerOptions"
+                [questionIndex]="questionIndex"
+                [multipleChoiceSubmittedResult]="submittedResult"
+                [submittedQuizExercise]="submittedQuizExercise"
+            ></jhi-quiz-scoring-infostudent-modal>
+        </span>
+    </div>
+    <div class="answer-options" *ngIf="!showResult">
+        <div
+            *ngFor="let answerOption of question.answerOptions; let i = index"
+            id="answer-option-{{ i }}"
+            class="answer-option"
+            [ngClass]="{ 'click-disabled': clickDisabled }"
+            (click)="toggleSelection(answerOption)"
+        >
+            <div class="content">
+                <div class="text" [innerHTML]="renderedQuestion.renderedSubElements[i].text"></div>
+                <div class="hint">
+                    <ng-template #renderedAnswerOptionsHint>
+                        <div [innerHTML]="renderedQuestion.renderedSubElements[i].hint"></div>
+                    </ng-template>
+                    <span class="label label-info" [ngbPopover]="renderedAnswerOptionsHint" triggers="mouseenter:mouseleave" *ngIf="answerOption.hint">
+                        <fa-icon [icon]="faQuestionCircle"></fa-icon>
+                        <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
+                    </span>
+                </div>
+            </div>
+            <div class="selection" id="mc-answer-selection-{{ i }}">
+                <fa-icon [icon]="question.singleChoice ? faDotCircle : faCheckSquare" size="2x" *ngIf="isAnswerOptionSelected(answerOption)"></fa-icon>
+                <fa-icon [icon]="question.singleChoice ? faCircle : faSquare" size="2x" *ngIf="!isAnswerOptionSelected(answerOption)"></fa-icon>
+            </div>
+        </div>
+    </div>-->
+</div>

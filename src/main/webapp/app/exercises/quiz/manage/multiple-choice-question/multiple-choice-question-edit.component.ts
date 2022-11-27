@@ -44,6 +44,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
         return this.markdownEditor && this.markdownEditor.previewMode;
     }
     showMultipleChoiceQuestionPreview = true;
+    showMultipleChoiceQuestionVisual = true;
 
     hintCommand = new HintCommand();
     correctCommand = new CorrectOptionCommand();
@@ -166,6 +167,7 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
             }
         }
         this.resetMultipleChoicePreview();
+        this.resetMultipleChoiceVisual();
     }
 
     /**
@@ -178,6 +180,13 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
         this.showMultipleChoiceQuestionPreview = false;
         this.changeDetector.detectChanges();
         this.showMultipleChoiceQuestionPreview = true;
+        this.changeDetector.detectChanges();
+    }
+
+    private resetMultipleChoiceVisual() {
+        this.showMultipleChoiceQuestionVisual = false;
+        this.changeDetector.detectChanges();
+        this.showMultipleChoiceQuestionVisual = true;
         this.changeDetector.detectChanges();
     }
 
