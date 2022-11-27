@@ -33,6 +33,7 @@ import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { resultIsPreliminary } from 'app/exercises/shared/result/result.utils';
 import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { computeFeedbackPreviewText } from 'app/exercises/shared/result/feedback.util';
 
 export enum FeedbackItemType {
     Issue,
@@ -52,8 +53,6 @@ export class FeedbackItem {
     credits?: number;
     actualCredits?: number;
 }
-
-export const feedbackPreviewCharacterLimit = 300;
 
 // Modal -> Result details view
 @Component({
@@ -262,29 +261,6 @@ export class ResultDetailComponent implements OnInit {
     };
 
     /**
-     * Computes the feedback preview for feedback texts with multiple lines or feedback that is longer than {@link feedbackPreviewCharacterLimit} characters.
-     * @param text The feedback detail text.
-     * @return One line of text with at most {@link feedbackPreviewCharacterLimit} characters.
-     */
-    private static computeFeedbackPreviewText(text?: string): string | undefined {
-        if (!text) {
-            return undefined;
-        }
-
-        if (text.includes('\n')) {
-            // if there are multiple lines, only use the first one
-            const firstLine = text.slice(0, text.indexOf('\n'));
-            if (firstLine.length > feedbackPreviewCharacterLimit) {
-                return firstLine.slice(0, feedbackPreviewCharacterLimit);
-            } else {
-                return firstLine;
-            }
-        } else if (text.length > feedbackPreviewCharacterLimit) {
-            return text.slice(0, feedbackPreviewCharacterLimit);
-        }
-    }
-
-    /**
      * Creates a feedback item with a category, title and text for each feedback object.
      * @param feedbacks The list of feedback objects.
      * @private
@@ -298,7 +274,7 @@ export class ResultDetailComponent implements OnInit {
                 category: this.translateService.instant('artemisApp.result.detail.feedback'),
                 title: feedback.text,
                 text: feedback.detailText,
-                previewText: ResultDetailComponent.computeFeedbackPreviewText(feedback.detailText),
+                previewText: computeFeedbackPreviewText(feedback.detailText),
                 positive: feedback.positive,
                 credits: feedback.credits,
             }));
@@ -311,7 +287,7 @@ export class ResultDetailComponent implements OnInit {
      * @private
      */
     private createProgrammingExerciseFeedbackItem(feedback: Feedback): FeedbackItem {
-        const previewText = ResultDetailComponent.computeFeedbackPreviewText(feedback.detailText);
+        const previewText = computeFeedbackPreviewText(feedback.detailText);
 
         if (Feedback.isSubmissionPolicyFeedback(feedback)) {
             return this.createProgrammingExerciseSubmissionPolicyFeedbackItem(feedback, previewText);
@@ -355,7 +331,7 @@ export class ResultDetailComponent implements OnInit {
         const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
         const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
         const text = this.showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message;
-        const previewText = ResultDetailComponent.computeFeedbackPreviewText(text);
+        const previewText = computeFeedbackPreviewText(text);
 
         return {
             type: FeedbackItemType.Issue,
