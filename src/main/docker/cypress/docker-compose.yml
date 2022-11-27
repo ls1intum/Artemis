@@ -45,6 +45,9 @@ services:
             - 8080:8080
         networks:
             - artemis
+        healthcheck:
+            test: [ "CMD", "wget" ,"-nv", "-t1", "--spider", "http://localhost:8080" ]
+            interval: 15s
         depends_on:
             artemis-mysql:
                 condition: service_healthy
@@ -117,8 +120,8 @@ services:
         # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
         image: cypress/browsers:node18.6.0-chrome105-ff104
         depends_on:
-            - artemis-app
-            - artemis-mysql
+            artemis-app:
+                condition: service_healthy
         environment:
             - CYPRESS_baseUrl
             - CYPRESS_adminUsername
