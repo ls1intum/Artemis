@@ -13,11 +13,7 @@ export const computeFeedbackPreviewText = (text?: string): string | undefined =>
     if (text.includes('\n')) {
         // if there are multiple lines, only use the first one
         const firstLine = text.slice(0, text.indexOf('\n'));
-        if (firstLine.length > FEEDBACK_PREVIEW_CHARACTER_LIMIT) {
-            return firstLine.slice(0, FEEDBACK_PREVIEW_CHARACTER_LIMIT);
-        } else {
-            return firstLine;
-        }
+        return firstLine.slice(0, FEEDBACK_PREVIEW_CHARACTER_LIMIT);
     } else if (text.length > FEEDBACK_PREVIEW_CHARACTER_LIMIT) {
         return text.slice(0, FEEDBACK_PREVIEW_CHARACTER_LIMIT);
     }
