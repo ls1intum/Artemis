@@ -35,6 +35,7 @@ import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.
 import { faAngleRight, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
 import { v4 as uuid } from 'uuid';
+import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
@@ -144,6 +145,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /** {previewChild} Is not null when the parent component is responsible for the preview content
      * -> parent component has to implement ng-content and set the showPreviewButton on true through an input */
     @ContentChild('preview', { static: false }) previewChild: ElementRef;
+    @ContentChild(MultipleChoiceVisualQuestionComponent, { static: false }) visualChild: MultipleChoiceVisualQuestionComponent;
 
     /** Resizable constants **/
     @Input()
@@ -388,6 +390,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
         } else {
             this.onEditSelect.emit();
         }
+
+        if (event.activeId === 'editor_visual' && this.visualChild) {
+            // TODO: Rebuild markdown and parse if preview mode
+            this.visualChild.parseQuestion();
+        }
+
         // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
         if (event.activeId === 'editor_edit') {
             this.parse();

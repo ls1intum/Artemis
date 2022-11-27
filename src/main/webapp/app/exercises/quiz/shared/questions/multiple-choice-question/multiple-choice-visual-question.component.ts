@@ -36,12 +36,8 @@ export class MultipleChoiceVisualQuestionComponent {
 
     constructor(private artemisMarkdown: ArtemisMarkdownService) {}
 
-    /**
-     * Update html for text, hint and explanation for the question and every answer option
-     */
     watchCollection(): void {
         this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
-        this.renderedQuestion.text = this.artemisMarkdown.safeHtmlForMarkdown(this.question.text);
         // this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.question.hint);
         // this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.question.explanation);
         // this.renderedQuestion.renderedSubElements = this.question.answerOptions!.map((answerOption) => {
@@ -51,5 +47,9 @@ export class MultipleChoiceVisualQuestionComponent {
         //     renderedAnswerOption.explanation = this.artemisMarkdown.safeHtmlForMarkdown(answerOption.explanation);
         //     return renderedAnswerOption;
         // });
+    }
+
+    parseQuestion() {
+        console.log(this.question.text);
     }
 }
