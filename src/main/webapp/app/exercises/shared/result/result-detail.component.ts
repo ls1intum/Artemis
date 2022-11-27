@@ -4,19 +4,12 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
-import {
-    Feedback,
-    FeedbackType,
-    STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
-    SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
-    checkSubsequentFeedbackInAssessment,
-} from 'app/entities/feedback.model';
+import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
-import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
@@ -25,14 +18,13 @@ import { round, roundValueSpecifiedByCourseSettings } from 'app/shared/util/util
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
-import { faCircleNotch, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { resultIsPreliminary } from 'app/exercises/shared/result/result.utils';
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
 
 export enum FeedbackItemType {
@@ -207,7 +199,9 @@ export class ResultDetailComponent implements OnInit {
                         this.result.feedbacks = feedbacks!;
                         const filteredFeedback = this.filterFeedback(feedbacks);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
-                        this.feedbackList = this.feedbackService.createFeedbackItems(filteredFeedback);
+
+                        const isProgrammingExercise = this.exerciseType === ExerciseType.PROGRAMMING;
+                        this.feedbackList = this.feedbackService.createFeedbackItems(filteredFeedback, isProgrammingExercise);
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
                         this.backupFilteredFeedbackList = this.filteredFeedbackList;
 

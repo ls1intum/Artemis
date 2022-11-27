@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/result-detail.component';
-import { ExerciseType } from 'app/entities/exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { computeFeedbackPreviewText } from 'app/exercises/shared/feedback/feedback.util';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
@@ -9,7 +8,6 @@ import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue
 @Injectable({ providedIn: 'root' })
 export class FeedbackService {
     // TODO: Set exercise.type dynamically
-    exerciseType = ExerciseType.PROGRAMMING;
     showTestDetails = false;
 
     constructor(private translateService: TranslateService) {}
@@ -17,9 +15,10 @@ export class FeedbackService {
     /**
      * Creates a feedback item with a category, title and text for each feedback object.
      * @param feedbacks The list of feedback objects.
+     * @param isProgrammingExercise TODO: find other way
      */
-    public createFeedbackItems(feedbacks: Feedback[]): FeedbackItem[] {
-        if (this.exerciseType === ExerciseType.PROGRAMMING) {
+    public createFeedbackItems(feedbacks: Feedback[], isProgrammingExercise: boolean): FeedbackItem[] {
+        if (isProgrammingExercise) {
             return feedbacks.map((feedback) => this.createProgrammingExerciseFeedbackItem(feedback));
         } else {
             return feedbacks.map((feedback) => ({
