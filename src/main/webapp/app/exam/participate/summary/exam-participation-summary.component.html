@@ -1,10 +1,10 @@
 <div>
     <h2>
         <ng-container *ngIf="!instructorView">
-            {{ 'artemisApp.exam.examSummary.yourSubmissionTo' | artemisTranslate: { examTitle: studentExam?.exam?.title, studentName: studentExam?.user?.name } }}
+            {{ 'artemisApp.exam.examSummary.yourSubmissionTo' | artemisTranslate : { examTitle: studentExam?.exam?.title, studentName: studentExam?.user?.name } }}
         </ng-container>
         <ng-container *ngIf="instructorView">
-            {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | artemisTranslate: { examTitle: studentExam?.exam?.title, studentName: studentExam?.user?.name } }}
+            {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | artemisTranslate : { examTitle: studentExam?.exam?.title, studentName: studentExam?.user?.name } }}
         </ng-container>
         <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
             <fa-icon [icon]="faPrint"></fa-icon>

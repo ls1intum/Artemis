@@ -380,7 +380,7 @@
                 "realExam": "Klausur",
                 "testExam": "Testklausur",
                 "examMode": "Exammodus",
-                "examModeTooltip": "Testklausuren können von Studierenden mehrmals innerhalb des Bearbeitungsfensters durchgeführt werden und erhalten nach jedem Durchlauf automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
+                "examModeTooltip": "Testklausuren können von Studierenden an einem frei wählbaren Zeitpunkt innerhalb des Bearbeitungsfensters begonnen werden, zur Durchführung steht die gewählte Arbeitszeit zur Verfügung. Nach dem Durchlauf erhalten die Studierenden automatisiertes Feedback. HINWEIS: Der Modus kann nach der Erstellung nicht mehr geändert werden!",
                 "startDate": "Beginn Bearbeitungsfenster",
                 "endDate": "Ende Bearbeitungsfenster",
                 "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"

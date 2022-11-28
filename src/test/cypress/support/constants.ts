@@ -9,9 +9,6 @@ export const PATCH = 'PATCH';
 export const BASE_API = 'api/';
 export const EXERCISE_BASE = BASE_API + 'exercises/';
 
-// Authentication
-export const authTokenKey = 'jhi-authenticationtoken';
-
 // Constants
 export const USER_ID_SELECTOR = 'USERID';
 

@@ -322,7 +322,7 @@
                         {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}
                     </h4>
                     <h4 *ngIf="isExamMode" class="d-inline-block">
-                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam' | artemisTranslate: { round: correctionRound + 1 } }}
+                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam' | artemisTranslate : { round: correctionRound + 1 } }}
                     </h4>
                     <fa-icon
                         *ngIf="correctionRound > 0"
@@ -526,7 +526,7 @@
                                 </td>
                                 <td>
                                     <ng-container *ngIf="submissionWithComplaint.complaint.accepted === undefined"> &gt;= </ng-container>
-                                    {{ complaintService.getResponseTimeInSeconds(submissionWithComplaint.complaint) | artemisDurationFromSeconds: true }}
+                                    {{ complaintService.getResponseTimeInSeconds(submissionWithComplaint.complaint) | artemisDurationFromSeconds : true }}
                                     <fa-icon
                                         *ngIf="complaintService.shouldHighlightComplaint(submissionWithComplaint.complaint)"
                                         [icon]="faExclamationTriangle"
@@ -637,7 +637,7 @@
                                 </td>
                                 <td>
                                     <ng-container *ngIf="moreFeedbackRequest.complaint.accepted === undefined"> &gt;= </ng-container>
-                                    {{ complaintService.getResponseTimeInSeconds(moreFeedbackRequest.complaint) | artemisDurationFromSeconds: true }}
+                                    {{ complaintService.getResponseTimeInSeconds(moreFeedbackRequest.complaint) | artemisDurationFromSeconds : true }}
                                     <fa-icon
                                         *ngIf="complaintService.shouldHighlightComplaint(moreFeedbackRequest.complaint)"
                                         [icon]="faExclamationTriangle"

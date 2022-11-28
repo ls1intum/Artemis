@@ -39,6 +39,7 @@ public abstract class ExerciseImportService {
         newExercise.setIncludedInOverallScore(importedExercise.getIncludedInOverallScore());
         newExercise.setAssessmentType(importedExercise.getAssessmentType());
         newExercise.setProblemStatement(importedExercise.getProblemStatement());
+        newExercise.setStartDate(importedExercise.getStartDate());
         newExercise.setReleaseDate(importedExercise.getReleaseDate());
         newExercise.setDueDate(importedExercise.getDueDate());
         newExercise.setAssessmentDueDate(importedExercise.getAssessmentDueDate());
@@ -75,7 +76,6 @@ public abstract class ExerciseImportService {
         newResult.setCompletionDate(originalResult.getCompletionDate());
         newResult.setExampleResult(true);
         newResult.setRated(true);
-        newResult.setHasFeedback(originalResult.getHasFeedback());
         newResult.setScore(originalResult.getScore());
         newResult.copyProgrammingExerciseCounters(originalResult);
         newResult.setFeedbacks(copyFeedback(originalResult.getFeedbacks(), newResult, gradingInstructionCopyTracker));

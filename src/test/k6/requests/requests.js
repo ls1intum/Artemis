@@ -11,7 +11,7 @@ const userAgent = 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:66.0) Gecko/201001
 const acceptLanguage = 'en-CA,en-US;q=0.7,en;q=0.3';
 const acceptEncoding = 'gzip, deflate, br';
 
-const request = function (method, endpoint, authToken, body, params) {
+const request = function (method, endpoint, authToken, body, params, formData) {
     let paramString;
     if (params) {
         paramString = Object.keys(params)
@@ -19,12 +19,19 @@ const request = function (method, endpoint, authToken, body, params) {
             .join('&');
     }
 
+    let bodyParameter = null;
+    if (body) {
+        bodyParameter = JSON.stringify(body);
+    } else if (formData) {
+        bodyParameter = formData.body();
+    }
+
     let url = baseUrl + '/api' + endpoint + (paramString ? '?' + paramString : '');
     let req = [
         {
             method: method,
             url: url,
-            body: body ? JSON.stringify(body) : null,
+            body: bodyParameter,
             params: {
                 headers: {
                     Host: host,
@@ -33,14 +40,16 @@ const request = function (method, endpoint, authToken, body, params) {
                     'Accept-Language': acceptLanguage,
                     'Accept-Encoding': acceptEncoding,
                     Referer: baseUrl + '/',
-                    Authorization: 'Bearer ' + authToken,
-                    'Content-Type': 'application/json',
+                    'Content-Type': formData ? 'multipart/form-data; boundary=' + formData.boundary : 'application/json',
                     'X-Artemis-Client-Fingerprint': 'b832814fcce0cab9fc5f717d5b93fa07',
                     'X-Artemis-Client-Instance-ID': '9e0b78ec-e43e-43da-a767-89b3f80df63a',
                     Connection: 'keep-alive',
                     TE: 'Trailers',
                 },
                 tags: { name: url },
+                cookies: {
+                    jwt: authToken,
+                },
             },
         },
     ];
@@ -79,7 +88,7 @@ export function login(username, password) {
     if (res[0].status !== 200) {
         fail('FAILTEST: failed to login as user ' + username + ' (' + res[0].status + ')! Response was + ' + res[0].body);
     }
-    const authToken = JSON.parse(res[0].body).id_token;
+    const authToken = res[0].cookies.jwt[0].value;
     // console.log('GOT authToken ' + authToken + ' for user ' + username);
 
     // The user requests it own information of the account
@@ -95,11 +104,13 @@ export function login(username, password) {
                     'Accept-Language': acceptLanguage,
                     'Accept-Encoding': acceptEncoding,
                     Referer: baseUrl + '/',
-                    Authorization: 'Bearer ' + authToken,
                     Connection: 'keep-alive',
                     TE: 'Trailers',
                 },
                 tags: { name: baseUrl + '/api/account' },
+                cookies: {
+                    jwt: authToken,
+                },
             },
         },
     ];
@@ -112,8 +123,8 @@ export function Artemis(authToken) {
     this.get = function (endpoint, params) {
         return request('get', endpoint, authToken, null, params);
     };
-    this.post = function (endpoint, body, params) {
-        return request('post', endpoint, authToken, body, params);
+    this.post = function (endpoint, body, params, formData) {
+        return request('post', endpoint, authToken, body, params, formData);
     };
     this.put = function (endpoint, body, params) {
         return request('put', endpoint, authToken, body, params);
@@ -126,9 +137,11 @@ export function Artemis(authToken) {
     };
     this.websocket = function (doOnSocket) {
         const websocketEndpoint = websocketProtocol + '://' + host + '/websocket/tracker/websocket';
-        const websocketUrl = websocketEndpoint + '?access_token=' + authToken;
 
-        ws.connect(websocketUrl, { tags: { name: websocketEndpoint } }, function (socket) {
+        const jar = new http.CookieJar();
+        jar.set(baseUrl, 'jwt', authToken);
+
+        ws.connect(websocketEndpoint, { tags: { name: websocketEndpoint }, jar }, function (socket) {
             socket.on('open', function open() {
                 socket.send('CONNECT\naccept-version:1.2\nheart-beat:10000,10000\n\n\u0000');
                 socket.setInterval(function timeout() {

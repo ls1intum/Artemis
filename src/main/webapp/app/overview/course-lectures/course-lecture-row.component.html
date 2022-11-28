@@ -16,7 +16,7 @@
         </div>
         <div class="row">
             <div class="col-auto mb-2" *ngIf="lecture?.startDate; else noDate" [ngClass]="getUrgentClass(lecture.startDate)">
-                <span class="d-none d-sm-inline"> {{ lecture.startDate | artemisDate: 'long-date' }} </span>
+                <span class="d-none d-sm-inline"> {{ lecture.startDate | artemisDate : 'long-date' }} </span>
                 ({{ lecture.startDate | artemisTimeAgo }})
             </div>
             <ng-template #noDate>
