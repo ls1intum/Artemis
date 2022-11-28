@@ -1,7 +1,7 @@
 import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
-import { faExclamationCircle, faExclamationTriangle, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationCircle, faExclamationTriangle, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { faCheckSquare, faCircle, faDotCircle, faSquare } from '@fortawesome/free-regular-svg-icons';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 
@@ -30,6 +30,7 @@ export class MultipleChoiceVisualQuestionComponent {
     faExclamationCircle = faExclamationCircle;
     faSquare = faSquare;
     faCheckSquare = faCheckSquare;
+    faCheck = faCheck;
     faCircle = faCircle;
     faDotCircle = faDotCircle;
     faTrash = faTrash;
@@ -76,5 +77,17 @@ export class MultipleChoiceVisualQuestionComponent {
         });
 
         this.question.answerOptions = newAnswers;
+    }
+
+    toggleIsCorrect(answerOption: AnswerOption) {
+        if (this.correctToggleDisabled() && !answerOption.isCorrect) {
+            return;
+        }
+
+        answerOption.isCorrect = !answerOption.isCorrect ?? true;
+    }
+
+    correctToggleDisabled() {
+        return this.question.singleChoice && this.question.answerOptions?.some((option) => option.isCorrect);
     }
 }

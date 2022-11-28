@@ -133,6 +133,27 @@
     width: 2.5%;
 }
 
+.visual-answer-correct-container {
+    background: #53a351;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    width: 2.5%;
+}
+
 .visual-answer-delete-container:hover {
     color: white;
+}
+
+.visual-answer-correct-container:hover {
+    background: #90c48e;
+}
+
+.visual-answer-correct {
+    color: white;
+}
+
+.visual-answer-wrong {
+    color: gray;
 }

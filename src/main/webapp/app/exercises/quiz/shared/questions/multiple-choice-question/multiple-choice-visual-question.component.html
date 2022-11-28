@@ -16,6 +16,13 @@
     <h4>Answer Options</h4>
     <div *ngFor="let answerOption of question.answerOptions; let i = index" id="answer-option-{{ i }}" class="visual-answer-option form-group-narrow">
         <div class="form-group-narrow visual-answer-question-container">
+            <div
+                class="visual-answer-correct-container"
+                [ngClass]="answerOption.isCorrect ? 'visual-answer-correct' : 'visual-answer-wrong'"
+                (click)="toggleIsCorrect(answerOption)"
+            >
+                <fa-icon [icon]="faCheck"></fa-icon>
+            </div>
             <input class="form-control" [(ngModel)]="answerOption.text" />
             <div class="visual-answer-delete-container" (click)="deleteAnswer(i)">
                 <fa-icon [icon]="faTrash"></fa-icon>
