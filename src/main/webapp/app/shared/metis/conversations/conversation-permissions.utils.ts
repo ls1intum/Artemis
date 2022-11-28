@@ -26,7 +26,7 @@ export function canGrantChannelAdminRights(channel: ChannelDTO): boolean {
     return hasChannelAdminRightsCheck(channel);
 }
 
-export function canRevokeChannelAdminRights(channel: ConversationDto): boolean {
+export function canRevokeChannelAdminRights(channel: ChannelDTO): boolean {
     return hasChannelAdminRightsCheck(channel);
 }
 

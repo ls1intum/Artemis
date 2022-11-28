@@ -6,9 +6,11 @@ import {
     canChangeGroupChatProperties,
     canCreateChannel,
     canDeleteChannel,
+    canGrantChannelAdminRights,
     canJoinChannel,
     canLeaveConversation,
     canRemoveUsersFromConversation,
+    canRevokeChannelAdminRights,
 } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -86,6 +88,30 @@ describe('ConversationPermissionUtils', () => {
 
             it('cannot delete channel without admin rights', () => {
                 expect(canDeleteChannel({ ...channelThatCanBeDeleted, hasChannelAdminRights: false })).toBeFalse();
+            });
+        });
+
+        describe('can grant channel admin rights', () => {
+            const channelWhereRightsCanBeGranted = generateExampleChannelDTO({ hasChannelAdminRights: true });
+
+            it('can grant admin rights', () => {
+                expect(canGrantChannelAdminRights(channelWhereRightsCanBeGranted)).toBeTrue();
+            });
+
+            it('cannot grant admin rights without admin rights', () => {
+                expect(canGrantChannelAdminRights({ ...channelWhereRightsCanBeGranted, hasChannelAdminRights: false })).toBeFalse();
+            });
+        });
+
+        describe('can revoke channel admin rights', () => {
+            const channelWhereRightsCanBeRevoked = generateExampleChannelDTO({ hasChannelAdminRights: true });
+
+            it('can revoke admin rights', () => {
+                expect(canRevokeChannelAdminRights(channelWhereRightsCanBeRevoked)).toBeTrue();
+            });
+
+            it('cannot revoke admin rights without admin rights', () => {
+                expect(canRevokeChannelAdminRights({ ...channelWhereRightsCanBeRevoked, hasChannelAdminRights: false })).toBeFalse();
             });
         });
 
