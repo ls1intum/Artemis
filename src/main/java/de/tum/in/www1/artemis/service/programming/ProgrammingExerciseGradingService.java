@@ -667,12 +667,6 @@ public class ProgrammingExerciseGradingService {
         // Remove automatic feedbacks not associated with test cases
         result.getFeedbacks().removeIf(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()
                 && testCases.stream().noneMatch(test -> test.getTestName().equalsIgnoreCase(feedback.getText())));
-
-        // If there are no feedbacks left after filtering those not valid, also setHasFeedback to false.
-        if (result.getFeedbacks().stream().noneMatch(feedback -> feedback.hasDetails()
-                || feedback.getType() != null && (feedback.getType().equals(FeedbackType.MANUAL) || feedback.getType().equals(FeedbackType.MANUAL_UNREFERENCED)))) {
-            result.setHasFeedback(false);
-        }
     }
 
     /**
@@ -721,8 +715,6 @@ public class ProgrammingExerciseGradingService {
                     .toList();
             result.addFeedbacks(feedbacksForDuplicateTestCases);
 
-            // Enables to view the result details in case all test cases are positive
-            result.setHasFeedback(true);
             String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
             groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
 
@@ -968,7 +960,6 @@ public class ProgrammingExerciseGradingService {
      */
     private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<Feedback> staticCodeAnalysisFeedback) {
         result.setFeedbacks(staticCodeAnalysisFeedback);
-        result.hasFeedback(!staticCodeAnalysisFeedback.isEmpty());
         result.setScore(0D);
         result.setTestCaseCount(0);
         result.setPassedTestCaseCount(0);

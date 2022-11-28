@@ -100,7 +100,7 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     }
 
     downloadFile(filePath: string) {
-        this.fileService.downloadFileWithAccessToken(filePath);
+        this.fileService.downloadFile(filePath);
     }
 
     /**

@@ -82,6 +82,7 @@ export class ResultDetailComponent implements OnInit {
     @Input() showMissingAutomaticFeedbackInformation = false;
     @Input() latestIndividualDueDate?: dayjs.Dayjs;
     @Input() taskName?: string;
+    @Input() numberOfNotExecutedTests?: number;
 
     // Icons
     faXmark = faXmark;

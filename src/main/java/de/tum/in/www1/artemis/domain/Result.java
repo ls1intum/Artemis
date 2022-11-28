@@ -66,14 +66,6 @@ public class Result extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Boolean rated;
 
-    // This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
-    // loading its Feedback list. In this case you still want to know if Feedback for this Result exists
-    // without querying the server/database again.
-    // IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
-    // all other exercise types should set this flag to false
-    @Column(name = "has_feedback")
-    private Boolean hasFeedback;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonView(QuizView.Before.class)
     @JsonIgnoreProperties({ "results", "participation" })
@@ -164,41 +156,6 @@ public class Result extends DomainObject {
 
     public Instant getLastModifiedDate() {
         return lastModifiedDate;
-    }
-
-    /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
-     * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
-     * moment all other exercise types should set this flag to false
-     *
-     * @param hasFeedback explicit flag used only by Programming Exercise
-     */
-    public void setHasFeedback(Boolean hasFeedback) {
-        this.hasFeedback = hasFeedback;
-    }
-
-    /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
-     * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
-     * moment all other exercise types should set this flag to false
-     *
-     * @return true if the result has feedback, otherwise false
-     */
-    public Boolean getHasFeedback() {
-        return hasFeedback;
-    }
-
-    /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
-     * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
-     * moment all other exercise types should set this flag to false
-     *
-     * @param hasFeedback explicit flag used only by Programming Exercise
-     * @return result with newly set hasFeedback property
-     */
-    public Result hasFeedback(Boolean hasFeedback) {
-        this.hasFeedback = hasFeedback;
-        return this;
     }
 
     /**
@@ -546,9 +503,9 @@ public class Result extends DomainObject {
 
     @Override
     public String toString() {
-        return "Result{" + "id" + getId() + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score + ", rated=" + rated + ", hasFeedback="
-                + hasFeedback + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + ", testCaseCount=" + testCaseCount + ", passedTestCaseCount="
-                + passedTestCaseCount + ", codeIssueCount=" + codeIssueCount + '}';
+        return "Result{" + "id" + getId() + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score + ", rated=" + rated + ", assessmentType="
+                + assessmentType + ", hasComplaint=" + hasComplaint + ", testCaseCount=" + testCaseCount + ", passedTestCaseCount=" + passedTestCaseCount + ", codeIssueCount="
+                + codeIssueCount + '}';
     }
 
     /**

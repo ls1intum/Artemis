@@ -99,37 +99,31 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
         }
 
         if (this.isTeamParticipation) {
-            return this.addAccessTokenToHttpUrl(this.repositoryUrlForTeam(this.getRepositoryUrl()), insertPlaceholder);
+            return this.addCredentialsToHttpUrl(this.repositoryUrlForTeam(this.getRepositoryUrl()), insertPlaceholder);
         }
 
-        return this.addAccessTokenToHttpUrl(this.getRepositoryUrl(), insertPlaceholder);
+        return this.addCredentialsToHttpUrl(this.getRepositoryUrl(), insertPlaceholder);
     }
 
     /**
-     * Add the access token to the http url, if possible.
+     * Add the credentials to the http url, if possible.
      * The token will be added if
      * - the token is required (based on the profile information), and
      * - the token is present (based on the user model).
      *
-     * It will only be added if a username is present in the given url and will be added after the username and before the host name.
-     * @param url the url to which the token should be added
+     * @param url the url to which the credentials should be added
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
      */
-    private addAccessTokenToHttpUrl(url: string, insertPlaceholder = false): string {
-        const vcsAccessToken = this.user.vcsAccessToken;
-        // If the token is not present or not required, don't include it
-        if (!this.versionControlAccessTokenRequired || !vcsAccessToken || !url) {
-            return url;
-        }
-
-        const token = insertPlaceholder ? '**********' : vcsAccessToken;
-        const urlUserInfoPart = `://${this.user.login}:${token}@`;
+    private addCredentialsToHttpUrl(url: string, insertPlaceholder = false): string {
+        const includeToken = this.versionControlAccessTokenRequired && this.user.vcsAccessToken;
+        const token = insertPlaceholder ? '**********' : this.user.vcsAccessToken;
+        const credentials = `://${this.user.login}${includeToken ? `:${token}` : ''}@`;
         if (!url.includes('@')) {
             // the url has the format https://vcs-server.com
-            return url.replace('://', urlUserInfoPart);
+            return url.replace('://', credentials);
         } else {
             // the url has the format https://username@vcs-server.com -> replace ://username@
-            return url.replace(/:\/\/.*@/, urlUserInfoPart);
+            return url.replace(/:\/\/.*@/, credentials);
         }
     }
 

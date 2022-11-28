@@ -7,7 +7,7 @@
     <h4 *ngIf="this.rangeFilter" class="d-flex align-items-center">
         <span class="me-2">
             <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
-            <span class="ms-1">{{ 'artemisApp.exercise.showingOnlyInRange' | artemisTranslate: { range: this.rangeFilter.toString() } }}</span>
+            <span class="ms-1">{{ 'artemisApp.exercise.showingOnlyInRange' | artemisTranslate : { range: this.rangeFilter.toString() } }}</span>
         </span>
         <button type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter">Reset submission filter</button>
     </h4>
