@@ -848,6 +848,12 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateToOnlineCourse() throws Exception {
+        courseTestService.testUpdateToOnlineCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testOnlineCourseConfigurationIsLazyLoaded() throws Exception {
         courseTestService.testOnlineCourseConfigurationIsLazyLoaded();
     }
@@ -868,5 +874,47 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
         courseTestService.testDeleteCourseDeletesOnlineConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateInvalidOnlineCourseConfiguration() throws Exception {
+        courseTestService.testUpdateInvalidOnlineCourseConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testInvalidOnlineCourseConfigurationNonUniqueRegistrationId() throws Exception {
+        courseTestService.testInvalidOnlineCourseConfigurationNonUniqueRegistrationId();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfigurationAsStudent_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateValidOnlineCourseConfigurationNotOnlineCourse() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfigurationNotOnlineCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateValidOnlineCourseConfiguration_IdMismatch() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfiguration_IdMismatch();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateValidOnlineCourseConfiguration() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testEditCourseRemoveExistingIcon() throws Exception {
+        courseTestService.testEditCourseRemoveExistingIcon();
     }
 }

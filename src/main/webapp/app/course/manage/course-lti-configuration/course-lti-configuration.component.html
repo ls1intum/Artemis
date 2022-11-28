@@ -1,0 +1,234 @@
+<form name="editForm" role="form" novalidate>
+    <div class="modal-header">
+        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForCourse" [translateValues]="{ title: course?.title }">
+            LTI Configuration for course {{ course?.title }}
+        </h4>
+
+        <a
+            *ngIf="course.isAtLeastInstructor"
+            id="edit-course"
+            [routerLink]="['/course-management', course.id!, 'lti-configuration', 'edit']"
+            class="tab-item btn btn-warning btn-md"
+        >
+            <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit">Edit</span>
+        </a>
+    </div>
+
+    <nav ngbNav #nav="ngbNav" [(activeId)]="activeTab" class="nav-tabs mt-4">
+        <ng-container ngbNavItem [ngbNavItem]="1">
+            <a ngbNavLink jhiTranslate="artemisApp.lti.generalConfiguration">General Configuration</a>
+            <ng-template ngbNavContent>
+                <dt>
+                    <span>{{ 'artemisApp.lti.userPrefix' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.userPrefix }}</span>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.requireExistingUser' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ (onlineCourseConfiguration?.requireExistingUser ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</span>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.ltiLaunchTarget' | artemisTranslate }}</span>
+                    <jhi-help-icon text="artemisApp.lti.launchTargetTooltip"></jhi-help-icon>
+                </dt>
+                <dd>
+                    <span>New Window</span>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.scored' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>True</span>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.requestUsername' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>True</span>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.requestEmail' | artemisTranslate }}</span>
+                    <jhi-help-icon text="artemisApp.lti.requestUserEmailTooltip"></jhi-help-icon>
+                </dt>
+                <dd>
+                    <span>True</span>
+                </dd>
+            </ng-template>
+        </ng-container>
+        <ng-container ngbNavItem [ngbNavItem]="2">
+            <a ngbNavLink jhiTranslate="artemisApp.lti.version10">LTI 1.0</a>
+            <ng-template ngbNavContent>
+                <dt>
+                    <span>{{ 'artemisApp.lti.ltiKey' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.ltiKey }}</span>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiKey ?? ''"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.ltiSecret' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.ltiSecret }}</span>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.ltiSecret ?? ''"></jhi-copy-icon-button>
+                </dd>
+            </ng-template>
+        </ng-container>
+        <ng-container ngbNavItem [ngbNavItem]="3">
+            <a ngbNavLink>
+                <span>{{ 'artemisApp.lti.version13' | artemisTranslate }}</span>
+                <fa-icon
+                    *ngIf="missingLti13ConfigurationField()"
+                    [icon]="faExclamationTriangle"
+                    class="text-warning"
+                    ngbTooltip="{{ 'artemisApp.lti13.missingConfigurationWarning' | artemisTranslate }}"
+                ></fa-icon>
+            </a>
+            <ng-template ngbNavContent>
+                <dt>
+                    <span>{{ 'artemisApp.lti.dynamicRegistrationUrl' | artemisTranslate }}</span>
+                    <jhi-help-icon text="artemisApp.lti.dynamicRegistrationTooltip"></jhi-help-icon>
+                </dt>
+                <dd>
+                    <span>{{ getDynamicRegistrationUrl() }}</span>
+                    <jhi-copy-icon-button [copyText]="getDynamicRegistrationUrl()"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.deepLinkingUrl' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ getDeepLinkingUrl() }}</span>
+                    <jhi-copy-icon-button [copyText]="getDeepLinkingUrl()"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.keysetUrl' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ getKeysetUrl() }}</span>
+                    <jhi-copy-icon-button [copyText]="getKeysetUrl()"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.registrationId' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.registrationId }}</span>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.registrationId ?? ''"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.clientId' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.clientId }}</span>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.clientId ?? ''"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.authorizationUri' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.authorizationUri }}</span>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.authorizationUri ?? ''"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.tokenUri' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.tokenUri }}</span>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.tokenUri ?? ''"></jhi-copy-icon-button>
+                </dd>
+
+                <dt>
+                    <span>{{ 'artemisApp.lti.jwkSetUri' | artemisTranslate }}</span>
+                </dt>
+                <dd>
+                    <span>{{ onlineCourseConfiguration?.jwkSetUri }}</span>
+                    <jhi-copy-icon-button [copyText]="onlineCourseConfiguration?.jwkSetUri ?? ''"></jhi-copy-icon-button>
+                </dd>
+            </ng-template>
+        </ng-container>
+        <ng-container ngbNavItem [ngbNavItem]="4">
+            <a ngbNavLink jhiTranslate="artemisApp.lti.exercises">Exercises</a>
+            <ng-template ngbNavContent>
+                <div class="row">
+                    <div class="col-12 mx-auto">
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead class="thead-dark">
+                                    <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
+                                        <th jhiSortBy="id">
+                                            id
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="type">
+                                            {{ 'artemisApp.exercise.type' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="title">
+                                            {{ 'artemisApp.exercise.title' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="launchUrl">
+                                            {{ 'artemisApp.lti.lti10LaunchUrl' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="launchUrl">
+                                            {{ 'artemisApp.lti.lti13LaunchUrl' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="releaseDate">
+                                            {{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="dueDate">
+                                            {{ 'artemisApp.exercise.dueDate' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                        <th jhiSortBy="assessmentDueDate">
+                                            {{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}
+                                            <fa-icon [icon]="faSort"></fa-icon>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr *ngFor="let exercise of exercises" id="exercise-{{ exercise.id }}">
+                                        <td>{{ exercise.id ? exercise.id : '' }}</td>
+                                        <td>{{ exercise.type ? exercise.type : '' }}</td>
+                                        <td>{{ exercise.title ? exercise.title : '' }}</td>
+                                        <td>
+                                            {{ getExerciseLti10LaunchUrl(exercise) }}
+                                            <jhi-copy-icon-button [copyText]="getExerciseLti10LaunchUrl(exercise)"></jhi-copy-icon-button>
+                                        </td>
+                                        <td>
+                                            {{ getExerciseLti13LaunchUrl(exercise) }}
+                                            <jhi-copy-icon-button [copyText]="getExerciseLti13LaunchUrl(exercise)"></jhi-copy-icon-button>
+                                        </td>
+                                        <td>{{ exercise.releaseDate ? exercise.releaseDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                        <td>{{ exercise.dueDate ? exercise.dueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                        <td>{{ exercise.assessmentDueDate ? exercise.assessmentDueDate.format('MMM DD YYYY, HH:mm:ss') : '' }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
+        </ng-container>
+    </nav>
+    <div class="modal-body">
+        <div [ngbNavOutlet]="nav" class="mt-2"></div>
+    </div>
+</form>

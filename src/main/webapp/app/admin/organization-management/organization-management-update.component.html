@@ -4,13 +4,13 @@
             <h2 jhiTranslate="artemisApp.organizationManagement.addOrEditLabel">Add or edit a Organization</h2>
             <div>
                 <div class="form-group" [hidden]="!organization.id">
-                    <label jhiTranslate="global.field.id">ID</label>
-                    <input type="text" class="form-control" name="id" [(ngModel)]="organization.id" readonly />
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input id="id" type="text" class="form-control" name="id" [(ngModel)]="organization.id" readonly />
                 </div>
 
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.organizationManagement.name">Name</label>
-                    <input type="text" class="form-control" name="name" #nameInput="ngModel" [(ngModel)]="organization.name" required minlength="1" maxlength="100" />
+                    <label for="name" class="form-control-label" jhiTranslate="artemisApp.organizationManagement.name">Name</label>
+                    <input id="name" type="text" class="form-control" name="name" #nameInput="ngModel" [(ngModel)]="organization.name" required minlength="1" maxlength="100" />
 
                     <div *ngIf="nameInput.dirty && nameInput.invalid">
                         <small class="form-text text-danger" *ngIf="nameInput.errors?.required" jhiTranslate="entity.validation.required"> This field is required. </small>
@@ -25,8 +25,9 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.organizationManagement.shortName">Short Name</label>
+                    <label for="shortName" class="form-control-label" jhiTranslate="artemisApp.organizationManagement.shortName">Short Name</label>
                     <input
+                        id="shortName"
                         type="text"
                         class="form-control"
                         name="shortName"
@@ -51,16 +52,16 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.organizationManagement.url">URL</label>
-                    <input type="text" class="form-control" name="url" #urlInput="ngModel" [(ngModel)]="organization.url" />
+                    <label for="url" class="form-control-label" jhiTranslate="artemisApp.organizationManagement.url">URL</label>
+                    <input id="url" type="text" class="form-control" name="url" #urlInput="ngModel" [(ngModel)]="organization.url" />
                 </div>
                 <div class="form-group">
-                    <label jhiTranslate="artemisApp.organizationManagement.description">Description</label>
-                    <input type="text" class="form-control" name="description" #descriptionInput="ngModel" [(ngModel)]="organization.description" />
+                    <label for="description" jhiTranslate="artemisApp.organizationManagement.description">Description</label>
+                    <input id="description" type="text" class="form-control" name="description" #descriptionInput="ngModel" [(ngModel)]="organization.description" />
                 </div>
                 <div class="form-group">
-                    <label jhiTranslate="artemisApp.organizationManagement.logoUrl">Logo Url</label>
-                    <input type="text" class="form-control" name="logoUrl" #logoUrlInput="ngModel" [(ngModel)]="organization.logoUrl" />
+                    <label for="logoUrl" jhiTranslate="artemisApp.organizationManagement.logoUrl">Logo Url</label>
+                    <input id="logoUrl" type="text" class="form-control" name="logoUrl" #logoUrlInput="ngModel" [(ngModel)]="organization.logoUrl" />
                 </div>
                 <div class="form-group">
                     <div class="alert alert-warning">
@@ -68,8 +69,17 @@
                             >Changing the email pattern will trigger a re-assignment of all users to this organization</span
                         >
                     </div>
-                    <label jhiTranslate="artemisApp.organizationManagement.emailPattern">Email Pattern</label>
-                    <input type="text" required class="form-control" name="emailPattern" validPattern #emailPattern="ngModel" [(ngModel)]="organization.emailPattern" />
+                    <label for="emailPattern" jhiTranslate="artemisApp.organizationManagement.emailPattern">Email Pattern</label>
+                    <input
+                        id="emailPattern"
+                        type="text"
+                        required
+                        class="form-control"
+                        name="emailPattern"
+                        validPattern
+                        #emailPattern="ngModel"
+                        [(ngModel)]="organization.emailPattern"
+                    />
 
                     <div *ngIf="emailPattern?.dirty && emailPattern?.invalid">
                         <small class="form-text text-danger" *ngIf="emailPattern.errors?.validPattern" jhiTranslate="entity.validation.invalidPattern">

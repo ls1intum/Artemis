@@ -13,6 +13,8 @@ import { MockResultService } from '../../helpers/mocks/service/mock-result.servi
 import { MockRepositoryFileService } from '../../helpers/mocks/service/mock-repository-file.service';
 import { problemStatement, problemStatementBubbleSortFailsHtml, problemStatementBubbleSortNotExecutedHtml } from '../../helpers/sample/problemStatement.json';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+// eslint-disable-next-line @typescript-eslint/tslint/config
+// tslint:disable-next-line:max-line-length
 import { ProgrammingExerciseInstructionStepWizardComponent } from 'app/exercises/programming/shared/instructions-render/step-wizard/programming-exercise-instruction-step-wizard.component';
 import { ProgrammingExerciseInstructionService } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { ProgrammingExerciseTaskExtensionWrapper } from 'app/exercises/programming/shared/instructions-render/extensions/programming-exercise-task.extension';
@@ -365,12 +367,33 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         openModalStub.mockReturnValue(modalRef);
 
         bubbleSortStep.nativeElement.click();
-        mergeSortStep.nativeElement.click();
-
         expect(openModalStub).toHaveBeenCalledOnce();
         expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
         expect(modalRef).toEqual({
-            componentInstance: { exercise, exerciseType: ExerciseType.PROGRAMMING, feedbackFilter: ['testBubbleSort'], result, showTestDetails: true },
+            componentInstance: {
+                exercise,
+                exerciseType: ExerciseType.PROGRAMMING,
+                feedbackFilter: ['testBubbleSort'],
+                result,
+                showTestDetails: true,
+                taskName: 'Implement Bubble Sort',
+                numberOfNotExecutedTests: 1,
+            },
+        });
+
+        mergeSortStep.nativeElement.click();
+        expect(openModalStub).toHaveBeenCalledTimes(2);
+        expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(modalRef).toEqual({
+            componentInstance: {
+                exercise,
+                exerciseType: ExerciseType.PROGRAMMING,
+                feedbackFilter: ['testMergeSort'],
+                result,
+                showTestDetails: true,
+                taskName: 'Implement Merge Sort',
+                numberOfNotExecutedTests: 0,
+            },
         });
     }));
 
@@ -427,12 +450,33 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         openModalStub.mockReturnValue(modalRef);
 
         bubbleSortStep.nativeElement.click();
-        mergeSortStep.nativeElement.click();
-
         expect(openModalStub).toHaveBeenCalledOnce();
         expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
         expect(modalRef).toEqual({
-            componentInstance: { exercise, exerciseType: ExerciseType.PROGRAMMING, feedbackFilter: ['testBubbleSort'], result, showTestDetails: false },
+            componentInstance: {
+                exercise,
+                exerciseType: ExerciseType.PROGRAMMING,
+                feedbackFilter: ['testBubbleSort'],
+                result,
+                showTestDetails: false,
+                taskName: 'Implement Bubble Sort',
+                numberOfNotExecutedTests: 0,
+            },
+        });
+
+        mergeSortStep.nativeElement.click();
+        expect(openModalStub).toHaveBeenCalledTimes(2);
+        expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(modalRef).toEqual({
+            componentInstance: {
+                exercise,
+                exerciseType: ExerciseType.PROGRAMMING,
+                feedbackFilter: ['testMergeSort'],
+                result,
+                showTestDetails: false,
+                taskName: 'Implement Merge Sort',
+                numberOfNotExecutedTests: 0,
+            },
         });
     }));
 });

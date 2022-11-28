@@ -87,7 +87,7 @@
             <tbody>
                 <tr *ngFor="let gradeStep of gradingScale.gradeSteps; let i = index; let last = last" class="grading-scale-table-row">
                     <td *ngIf="last; else intervalInputs">
-                        <jhi-help-icon placement="auto" text="artemisApp.gradingSystem.stickyGradeStep"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.gradingSystem.stickyGradeStep"></jhi-help-icon>
                     </td>
                     <ng-template #intervalInputs>
                         <td *ngIf="gradeEditMode === GradeEditMode.PERCENTAGE">
@@ -106,10 +106,10 @@
                         </td>
                     </ng-template>
                     <td>
-                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE:last | safeHtml"></span>
+                        <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.PERCENTAGE : last | safeHtml"></span>
                     </td>
                     <td>
-                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS:last | safeHtml"></span>
+                        <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.POINTS : last | safeHtml"></span>
                     </td>
                     <td *ngIf="gradingScale.gradeType !== GradeType.BONUS">
                         <input [(ngModel)]="gradeStep.gradeName" type="text" required />

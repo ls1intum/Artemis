@@ -6,6 +6,7 @@ import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutor
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Course } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-tutorial-group-management-detail',
@@ -14,7 +15,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 export class TutorialGroupManagementDetailComponent implements OnInit {
     isLoading = false;
     tutorialGroup: TutorialGroup;
-    courseId: number;
+    course: Course;
     tutorialGroupId: number;
     isAtLeastInstructor = false;
 
@@ -28,10 +29,10 @@ export class TutorialGroupManagementDetailComponent implements OnInit {
                 switchMap(([params, { course }]) => {
                     this.tutorialGroupId = Number(params.get('tutorialGroupId'));
                     if (course) {
-                        this.courseId = course.id;
+                        this.course = course;
                         this.isAtLeastInstructor = course.isAtLeastInstructor;
                     }
-                    return this.tutorialGroupService.getOneOfCourse(this.courseId, this.tutorialGroupId);
+                    return this.tutorialGroupService.getOneOfCourse(this.course.id!, this.tutorialGroupId);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
@@ -44,14 +45,14 @@ export class TutorialGroupManagementDetailComponent implements OnInit {
     }
 
     onCourseClicked = () => {
-        this.router.navigate(['/course-management', this.courseId]);
+        this.router.navigate(['/course-management', this.course.id!]);
     };
 
     onRegistrationsClicked = () => {
-        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups', this.tutorialGroupId, 'registered-students']);
+        this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups', this.tutorialGroupId, 'registered-students']);
     };
 
     onTutorialGroupDeleted = () => {
-        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups']);
+        this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
     };
 }

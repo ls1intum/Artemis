@@ -22,4 +22,7 @@ export class TutorialGroupDetailStubComponent {
 
     @Input()
     registrationClickHandler: () => void;
+
+    @Input()
+    timeZone?: string = undefined;
 }

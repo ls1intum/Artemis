@@ -1,11 +1,10 @@
-<fa-icon *ngIf="!showConfirm" [icon]="initialIcon" [ngbTooltip]="initialTooltip" [size]="iconSize" container="body" (click)="toggle()"></fa-icon>
+<fa-icon *ngIf="!showConfirm" [icon]="initialIcon" [ngbTooltip]="initialTooltip" [size]="iconSize" (click)="toggle()"></fa-icon>
 <fa-icon
     *ngIf="showConfirm"
     [ngClass]="'text-danger'"
     [icon]="confirmIcon"
     [ngbTooltip]="confirmTooltip"
     [size]="iconSize"
-    container="body"
     (mouseleave)="toggle()"
     (click)="confirmAction()"
 ></fa-icon>

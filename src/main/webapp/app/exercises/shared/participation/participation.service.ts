@@ -135,6 +135,9 @@ export class ParticipationService {
         if (participation) {
             participation.initializationDate = convertDateFromServer(participation.initializationDate);
             participation.individualDueDate = convertDateFromServer(participation.individualDueDate);
+            if (participation.exercise) {
+                participation.exercise = ExerciseService.convertExerciseDatesFromServer(participation.exercise);
+            }
         }
         return participation;
     }

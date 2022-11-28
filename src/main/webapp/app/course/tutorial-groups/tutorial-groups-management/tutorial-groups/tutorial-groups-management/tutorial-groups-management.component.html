@@ -1,32 +1,93 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
     <div class="row">
-        <div class="col-12 col-xl-8">
+        <div class="col-12 col-xl-10">
             <div class="d-flex justify-content-between">
-                <h4>{{ 'artemisApp.pages.tutorialGroupsManagement.title' | artemisTranslate }}</h4>
+                <h4>
+                    {{ 'artemisApp.pages.tutorialGroupsManagement.title' | artemisTranslate }}
+                    <span class="badge rounded-pill text-bg-warning ms-1" ngbTooltip="{{ 'artemisApp.generic.betaWarning' | artemisTranslate }}">BETA</span>
+                </h4>
                 <div *ngIf="isAtLeastInstructor">
+                    <a
+                        ngbTooltip="{{ 'artemisApp.pages.tutorialFreePeriodsManagement.explanation' | artemisTranslate }}"
+                        class="btn btn-primary"
+                        *ngIf="course?.tutorialGroupsConfiguration"
+                        [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'tutorial-free-days']"
+                    >
+                        <fa-icon [icon]="faUmbrellaBeach"></fa-icon>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons' | artemisTranslate }}</span>
+                    </a>
                     <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'tutorial-groups', 'create']">
                         <fa-icon [icon]="faPlus"></fa-icon>
-                        <span>{{ 'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate }}</span>
+                        <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate }}</span>
                     </a>
-                    <jhi-tutorial-groups-import-button [courseId]="courseId" (importFinished)="loadTutorialGroups()"></jhi-tutorial-groups-import-button>
+                    <div ngbDropdown class="d-inline-block">
+                        <button type="button" class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
+                            {{ 'artemisApp.generic.more' | artemisTranslate }}
+                        </button>
+                        <div ngbDropdownMenu>
+                            <a
+                                ngbDropDownItem
+                                class="btn"
+                                *ngIf="course?.tutorialGroupsConfiguration"
+                                [routerLink]="['/course-management', courseId, 'tutorial-groups', 'configuration', course!.tutorialGroupsConfiguration!.id, 'edit']"
+                            >
+                                <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
+                            </a>
+                            <jhi-tutorial-groups-import-button
+                                ngbDropDownItem
+                                ngbTooltip="{{ 'artemisApp.tutorialGroupImportDialog.explanations.description' | artemisTranslate }}"
+                                [courseId]="courseId"
+                                (importFinished)="loadTutorialGroups()"
+                            ></jhi-tutorial-groups-import-button>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <ng-container *ngIf="tutorialGroups?.length">
-                <jhi-tutorial-groups-table [tutorialGroups]="tutorialGroups" [courseId]="courseId" [tutorialGroupClickHandler]="onTutorialGroupSelected" [showIdColumn]="true">
+            <ng-container *ngIf="tutorialGroups?.length; else intro">
+                <jhi-tutorial-groups-table
+                    [tutorialGroups]="tutorialGroups"
+                    [course]="course"
+                    [tutorialGroupClickHandler]="onTutorialGroupSelected"
+                    [showIdColumn]="true"
+                    [timeZone]="course.timeZone"
+                >
                     <ng-template let-tutorialGroup>
                         <jhi-tutorial-group-row-buttons
-                            [courseId]="courseId"
+                            [course]="course"
                             [isAtLeastInstructor]="isAtLeastInstructor"
                             [tutorialGroup]="tutorialGroup"
                             (tutorialGroupDeleted)="loadTutorialGroups()"
+                            (registrationsChanged)="loadTutorialGroups()"
                         >
                         </jhi-tutorial-group-row-buttons>
                     </ng-template>
                 </jhi-tutorial-groups-table>
             </ng-container>
+            <ng-template #intro>
+                <div>
+                    <div class="alert alert-success" role="alert">
+                        <div>
+                            <span class="badge rounded-pill text-bg-warning ms-1" ngbTooltip="{{ 'artemisApp.generic.betaWarning' | artemisTranslate }}">BETA</span>
+                            {{ 'artemisApp.pages.tutorialGroupsManagement.intro' | artemisTranslate }}
+                        </div>
+                        <div class="text-center">
+                            <jhi-tutorial-groups-import-button
+                                class="btn btn-outline-secondary"
+                                *ngIf="isAtLeastInstructor"
+                                ngbTooltip="{{ 'artemisApp.tutorialGroupImportDialog.explanations.description' | artemisTranslate }}"
+                                [courseId]="courseId"
+                                (importFinished)="loadTutorialGroups()"
+                            ></jhi-tutorial-groups-import-button>
+                        </div>
+                    </div>
+                </div>
+            </ng-template>
         </div>
-        <div class="col-12 col-xl-4">
+        <div class="col-12 col-xl-2">
             <jhi-tutorial-groups-course-information [tutorialGroups]="tutorialGroups"></jhi-tutorial-groups-course-information>
+            <div class="mt-1" *ngIf="tutorialGroupFreeDays && tutorialGroupFreeDays.length > 0">
+                <jhi-tutorial-group-free-days-overview [timeZone]="course.timeZone" [tutorialGroupFreeDays]="tutorialGroupFreeDays"></jhi-tutorial-group-free-days-overview>
+            </div>
         </div>
     </div>
 </jhi-loading-indicator-container>

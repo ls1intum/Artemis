@@ -54,7 +54,7 @@ public class ExerciseDateService {
 
     /**
      * Checks if submissions are no longer possible.
-     *
+     * <p>
      * Checks for exam or course exercise, and if an individual due date is set for the given
      * participation or only a course-wide due date applies.
      * @param participation in a course or exam exercise.
@@ -123,17 +123,14 @@ public class ExerciseDateService {
      * @param participation of a student in an exercise.
      * @return the individual due date, or the exercise due date, or nothing.
      */
-    public Optional<ZonedDateTime> getDueDate(ParticipationInterface participation) {
+    public static Optional<ZonedDateTime> getDueDate(ParticipationInterface participation) {
         final Exercise exercise = participation.getExercise();
 
         if (participation.getIndividualDueDate() != null) {
             return Optional.of(participation.getIndividualDueDate());
         }
-        else if (exercise.getDueDate() != null) {
-            return Optional.of(exercise.getDueDate());
-        }
         else {
-            return Optional.empty();
+            return Optional.ofNullable(exercise.getDueDate());
         }
     }
 }

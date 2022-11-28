@@ -86,7 +86,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "admin1", roles = "ADMIN")
     void testCreateSystemNotification() throws Exception {
-        SystemNotification response = request.postWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class);
+        SystemNotification response = request.postWithResponseBody("/api/admin/system-notifications", systemNotification, SystemNotification.class);
 
         assertThat(systemNotificationRepo.findById(response.getId())).as("Saved system notification").isNotNull();
         assertThat(systemNotificationRepo.existsById(response.getId())).as("Saved notification exists").isTrue();
@@ -96,11 +96,11 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "admin1", roles = "ADMIN")
     void testCreateSystemNotification_BadRequest() throws Exception {
         systemNotification.setId(1L);
-        request.post("/api/system-notifications", systemNotification, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/system-notifications", systemNotification, HttpStatus.BAD_REQUEST);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "/api/system-notifications/", "/api/notifications/" })
+    @ValueSource(strings = { "/api/admin/system-notifications/", "/api/notifications/" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCreateSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
         request.post(endpoint, systemNotification, HttpStatus.FORBIDDEN);
@@ -110,7 +110,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(roles = "USER")
     void testCreateSystemNotification_asUser_Forbidden() throws Exception {
         systemNotification.setId(1L);
-        request.post("/api/system-notifications", systemNotification, HttpStatus.FORBIDDEN);
+        request.post("/api/admin/system-notifications", systemNotification, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -119,13 +119,13 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
         systemNotificationRepo.save(systemNotification);
         String updatedText = "updated text";
         systemNotification.setText(updatedText);
-        SystemNotification response = request.putWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class, HttpStatus.OK);
+        SystemNotification response = request.putWithResponseBody("/api/admin/system-notifications", systemNotification, SystemNotification.class, HttpStatus.OK);
         assertThat(response.getText()).as("response has updated text").isEqualTo(updatedText);
         assertThat(systemNotificationRepo.findById(systemNotification.getId())).get().as("repository contains updated notification").isEqualTo(response);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "/api/system-notifications/", "/api/notifications/" })
+    @ValueSource(strings = { "/api/admin/system-notifications/", "/api/notifications/" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testUpdateSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
         systemNotificationRepo.save(systemNotification);
@@ -137,7 +137,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = "admin1", roles = "ADMIN")
     void testUpdateSystemNotification_BadRequest() throws Exception {
         SystemNotification systemNotification = ModelFactory.generateSystemNotification(ZonedDateTime.now().minusDays(3), ZonedDateTime.now().plusDays(3));
-        request.put("/api/system-notifications", systemNotification, HttpStatus.BAD_REQUEST);
+        request.put("/api/admin/system-notifications", systemNotification, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -150,7 +150,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "admin1", roles = "ADMIN")
     void testGetSystemNotification() throws Exception {
-        SystemNotification response = request.postWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class);
+        SystemNotification response = request.postWithResponseBody("/api/admin/system-notifications", systemNotification, SystemNotification.class);
         assertThat(systemNotificationRepo.findById(response.getId())).get().as("system notification is not null").isNotNull();
         request.get("/api/system-notifications/" + response.getId(), HttpStatus.OK, SystemNotification.class);
         request.get("/api/system-notifications/" + response.getId() + 1, HttpStatus.NOT_FOUND, SystemNotification.class);
@@ -159,13 +159,13 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "admin1", roles = "ADMIN")
     void testDeleteSystemNotification() throws Exception {
-        SystemNotification response = request.postWithResponseBody("/api/system-notifications", systemNotification, SystemNotification.class);
+        SystemNotification response = request.postWithResponseBody("/api/admin/system-notifications", systemNotification, SystemNotification.class);
         assertThat(systemNotificationRepo.findById(response.getId())).get().as("system notification is not null").isNotNull();
-        request.delete("/api/system-notifications/" + response.getId(), HttpStatus.OK);
+        request.delete("/api/admin/system-notifications/" + response.getId(), HttpStatus.OK);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "/api/system-notifications/", "/api/notifications/" })
+    @ValueSource(strings = { "/api/admin/system-notifications/", "/api/notifications/" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testDeleteSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
         SystemNotification notification = systemNotificationRepo.save(systemNotification);

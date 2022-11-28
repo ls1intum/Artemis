@@ -46,17 +46,15 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     /**
      * Opens the ResultDetailComponent as popup; displays test results
      * @param {string[]} tests - Identifies the testcase
+     * @param taskName - the name of the selected task
      */
-    public showDetailsForTests(tests: string[]) {
-        if (!this.latestResult || !this.latestResult.feedbacks) {
+    public showDetailsForTests(tests: string[], taskName: string) {
+        if (!this.latestResult) {
             return;
         }
         const {
-            detailed: { failedTests, notExecutedTests },
+            detailed: { notExecutedTests },
         } = this.instructionService.testStatusForTask(tests, this.latestResult);
-        if (failedTests.length + notExecutedTests.length <= 0) {
-            return;
-        }
         const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
         const componentInstance = modalRef.componentInstance as ResultDetailComponent;
         componentInstance.exercise = this.exercise;
@@ -64,5 +62,7 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
         componentInstance.feedbackFilter = tests;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         componentInstance.showTestDetails = this.showTestDetails || false;
+        componentInstance.taskName = taskName;
+        componentInstance.numberOfNotExecutedTests = notExecutedTests.length;
     }
 }

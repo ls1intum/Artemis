@@ -46,7 +46,7 @@ describe('PostingContentPartComponent', () => {
                 fileService = TestBed.inject(FileService);
 
                 navigateByUrlSpy = jest.spyOn(router, 'navigateByUrl');
-                openAttachmentSpy = jest.spyOn(fileService, 'downloadFileWithAccessToken');
+                openAttachmentSpy = jest.spyOn(fileService, 'downloadFile');
 
                 contentBeforeReference = '**Be aware**\n\n I want to reference the following Post ';
                 contentAfterReference = 'in my content,\n\n does it *actually* work?';

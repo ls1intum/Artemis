@@ -24,7 +24,8 @@ Multiple instances of the application server are used to distribute the load:
    .. figure:: setup/distributed/deployment_after_simple.drawio.png
       :align: center
 
-A load balancer (typically a reverse proxy such as nginx) is added, that distributes the requests to the different instances.
+A load balancer (typically a reverse proxy such as nginx) is added, that distributes the requests
+to the different instances.
 
 **Note:** This documentation focuses on the practical setup of this distributed setup.
 More details regarding the theoretical aspects can be found in the Bachelor's Thesis
@@ -33,7 +34,8 @@ More details regarding the theoretical aspects can be found in the Bachelor's Th
 
 Additional synchronization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-All instances of the application server use the same database, but other parts of the system also have to be synchronized:
+All instances of the application server use the same database, but other parts of the system also
+have to be synchronized:
 
 1. Database cache
 2. WebSocket messages
@@ -48,21 +50,24 @@ Artemis uses a cache provider that supports distributed caching: Hazelcast_.
 .. _Hazelcast: https://hazelcast.com/
 
 All instances of Artemis form a so-called cluster that allows them to synchronize their cache.
-You can use the configuration argument ``spring.hazelcast.interface`` to configure the interface on which Hazelcast will listen.
+You can use the configuration argument ``spring.hazelcast.interface`` to configure the interface on which Hazelcast
+will listen.
 
 
    .. figure:: setup/distributed/deployment_hazelcast.drawio.png
       :align: center
 
 
-One problem that arises with a distributed setup is that all instances have to know each other in order to create this cluster.
+One problem that arises with a distributed setup is that all instances have to know each other in order
+to create this cluster.
 This is problematic if the instances change dynamically.
 Artemis uses a discovery service to solve the issue (named `JHipster Registry
 <https://www.jhipster.tech/jhipster-registry/>`_).
 
 Discovery service
 ^^^^^^^^^^^^^^^^^
-JHipster registry contains Eureka, the discovery service where all instances can register themselves and fetch the other registered instances.
+JHipster registry contains Eureka, the discovery service where all instances can register themselves and fetch
+the other registered instances.
 
 Eureka can be configured like this within Artemis:
 
@@ -87,7 +92,8 @@ Eureka can be configured like this within Artemis:
 ``{{ artemis_eureka_urls }}`` must be the URL where Eureka is reachable,
 ``{{ artemis_ip_address }}`` must be the IP under which this instance is reachable and
 ``{{ artemis_eureka_instance_id }}`` must be a unique identifier for this instance.
-You also have to setup the value ``jhipster.registry.password`` to the password of the registry (which you will set later).
+You also have to setup the value ``jhipster.registry.password`` to the password of the registry
+(which you will set later).
 
 Note that Hazelcast (which requires Eureka) is by default binding to ``127.0.0.1`` to prevent other instances
 to form a cluster without manual intervention.

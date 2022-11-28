@@ -23,7 +23,7 @@ export class FileUploadExamSummaryComponent implements OnInit {
         if (!filePath) {
             return;
         }
-        this.fileService.downloadFileWithAccessToken(filePath);
+        this.fileService.downloadFile(filePath);
     }
 
     attachmentExtension(filePath: string): string {
