@@ -28,6 +28,8 @@ import de.tum.in.www1.artemis.service.exam.StudentExamService;
 
 class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "eqservicetest";
+
     @Autowired
     private StudentExamService studentExamService;
 
@@ -55,6 +57,9 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private StudentExamRepository studentExamRepository;
 
+    @Autowired
+    private MigrationChangeRepository migrationChangeRepository;
+
     private QuizExercise quizExercise;
 
     private Course course;
@@ -69,7 +74,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @BeforeEach
     void init() {
-        users = database.addUsers(numberOfParticipants, 1, 0, 1);
+        users = database.addUsers(TEST_PREFIX, numberOfParticipants, 1, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -82,36 +87,36 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exerciseGroup.addExercise(quizExercise);
 
         // Add an instructor who is not in the course
-        if (!database.userExistsWithLogin("instructor6")) {
-            database.createAndSaveUser("instructor6");
+        if (!database.userExistsWithLogin(TEST_PREFIX + "instructor6")) {
+            database.createAndSaveUser(TEST_PREFIX + "instructor6");
         }
     }
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
+        migrationChangeRepository.deleteAllInBatch();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void evaluateQuiz_asTutor_PreAuth_forbidden() throws Exception {
         evaluateQuiz_authorization_forbidden();
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void evaluateQuiz_asStudent_PreAuth_forbidden() throws Exception {
         evaluateQuiz_authorization_forbidden();
     }
 
     @Test
-    @WithMockUser(username = "instructor6", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor6", roles = "INSTRUCTOR")
     void evaluateQuiz_asInstructorNotInCourse_forbidden() throws Exception {
         evaluateQuiz_authorization_forbidden();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void evaluateQuiz_authorization_forbidden() throws Exception {
         exam = examRepository.save(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
@@ -122,7 +127,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuiz_testExam_forbidden() throws Exception {
         exam.setTestExam(true);
         exam.setEndDate(ZonedDateTime.now().minusMinutes(30));
@@ -135,7 +140,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuiz_notOver_badRequest() throws Exception {
         exam = examRepository.save(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
@@ -146,7 +151,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuiz() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
             exam.addRegisteredUser(users.get(i));
@@ -165,12 +170,12 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
-            database.changeUser("student" + (i + 1));
+            database.changeUser(TEST_PREFIX + "student" + (i + 1));
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
 
-        database.changeUser("instructor1");
+        database.changeUser(TEST_PREFIX + "instructor1");
         // All exams should be over before evaluation
         for (StudentExam studentExam : studentExamRepository.findByExamId(exam.getId())) {
             studentExam.setWorkingTime(0);
@@ -193,7 +198,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuizWithNoSubmissions() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
             exam.addRegisteredUser(users.get(i));
@@ -212,7 +217,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // add participations with no submissions
         for (int i = 0; i < numberOfParticipants; i++) {
-            final var user = database.getUserByLogin("student" + (i + 1));
+            final var user = database.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
             var participation = new StudentParticipation();
             participation.setExercise(quizExercise);
             participation.setParticipant(user);
@@ -221,7 +226,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             studentParticipationRepository.save(participation);
         }
 
-        database.changeUser("instructor1");
+        database.changeUser(TEST_PREFIX + "instructor1");
         // All exams should be over before evaluation
         for (StudentExam studentExam : studentExamRepository.findByExamId(exam.getId())) {
             studentExam.setWorkingTime(0);
@@ -242,7 +247,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuizWithMultipleSubmissions() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
             exam.addRegisteredUser(users.get(i));
@@ -261,7 +266,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
-            final var user = database.getUserByLogin("student" + (i + 1));
+            final var user = database.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
             database.changeUser(user.getLogin());
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
@@ -274,7 +279,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             quizSubmissionRepository.save(quizSubmission2);
         }
 
-        database.changeUser("instructor1");
+        database.changeUser(TEST_PREFIX + "instructor1");
         // All exams should be over before evaluation
         for (StudentExam studentExam : studentExamRepository.findByExamId(exam.getId())) {
             studentExam.setWorkingTime(0);
@@ -297,7 +302,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuiz_twice() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
             exam.addRegisteredUser(users.get(i));
@@ -316,12 +321,12 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
-            database.changeUser("student" + (i + 1));
+            database.changeUser(TEST_PREFIX + "student" + (i + 1));
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
 
-        database.changeUser("instructor1");
+        database.changeUser(TEST_PREFIX + "instructor1");
         // All exams should be over before evaluation
         for (StudentExam studentExam : studentExamRepository.findByExamId(exam.getId())) {
             studentExam.setWorkingTime(0);
