@@ -49,15 +49,22 @@ public class OneToOneChatResource {
         this.conversationService = conversationService;
     }
 
+    /**
+     * POST /api/courses/:courseId/one-to-one-chats/: Starts a new one to one chat in a course
+     *
+     * @param courseId                   the id of the course
+     * @param otherChatParticipantLogins logins of other participants (must be 1 for one to one chat) excluding the requesting user
+     * @return ResponseEntity with status 201 (Created) and with body containing the created one to one chat
+     */
     @PostMapping("/{courseId}/one-to-one-chats")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<OneToOneChatDTO> startOneToOneChat(@PathVariable Long courseId, @RequestBody List<String> otherChatParticipantsLogins) throws URISyntaxException {
+    public ResponseEntity<OneToOneChatDTO> startOneToOneChat(@PathVariable Long courseId, @RequestBody List<String> otherChatParticipantLogins) throws URISyntaxException {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        log.debug("REST request to create channel in course {} between : {} and : {}", courseId, requestingUser.getLogin(), otherChatParticipantsLogins);
+        log.debug("REST request to create one to one chat in course {} between : {} and : {}", courseId, requestingUser.getLogin(), otherChatParticipantLogins);
         var course = courseRepository.findByIdElseThrow(courseId);
         oneToOneChatAuthorizationService.isAllowedToCreateOneToOneChat(course, requestingUser);
 
-        var loginsToSearchFor = new HashSet<>(otherChatParticipantsLogins);
+        var loginsToSearchFor = new HashSet<>(otherChatParticipantLogins);
         loginsToSearchFor.add(requestingUser.getLogin());
         var chatMembers = new ArrayList<>(conversationService.findUsersInDatabase(loginsToSearchFor.stream().toList()));
 

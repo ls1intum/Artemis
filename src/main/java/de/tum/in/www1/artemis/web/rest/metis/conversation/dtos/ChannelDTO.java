@@ -95,6 +95,11 @@ public class ChannelDTO extends ConversationDTO {
         this.isChannelAdmin = isChannelAdmin;
     }
 
+    /**
+     * Converts the DTO back to the entity
+     *
+     * @return the converted channel entity
+     */
     public Channel toChannel() {
         Channel channel = new Channel();
         channel.setName(name);

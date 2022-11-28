@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
 import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings.MAX_GROUP_CHAT_PARTICIPANTS;
-import static de.tum.in.www1.artemis.service.metis.conversation.ChannelService.CHANNEL_ENTITY_NAME;
 import static de.tum.in.www1.artemis.service.metis.conversation.GroupChatService.GROUP_CHAT_ENTITY_NAME;
 
 import java.net.URI;
@@ -54,6 +53,13 @@ public class GroupChatResource {
         this.conversationDTOService = conversationDTOService;
     }
 
+    /**
+     * POST /api/courses/:courseId/group-chats/: Starts a new group chat in a course
+     *
+     * @param courseId                    the id of the course
+     * @param otherChatParticipantsLogins logins of the starting members of the group chat (excluding the requesting user)
+     * @return ResponseEntity with status 201 (Created) and with body containing the created group chat
+     */
     @PostMapping("/{courseId}/group-chats")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<GroupChatDTO> startGroupChat(@PathVariable Long courseId, @RequestBody List<String> otherChatParticipantsLogins) throws URISyntaxException {
@@ -77,6 +83,14 @@ public class GroupChatResource {
         return ResponseEntity.created(new URI("/api/group-chats/" + groupChat.getId())).body(conversationDTOService.convertGroupChatToDto(requestingUser, groupChat));
     }
 
+    /**
+     * PUT /api/courses/:courseId/group-chats/:groupChatId: Updates a group chat in a course
+     *
+     * @param courseId     the id of the course
+     * @param groupChatId  the id of the group chat to be updated
+     * @param groupChatDTO dto containing the properties of the group chat to be updated
+     * @return ResponseEntity with status 200 (Ok) and with body containing the updated group chat
+     */
     @PutMapping("/{courseId}/group-chats/{groupChatId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<GroupChatDTO> updateGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody GroupChatDTO groupChatDTO) {
@@ -85,18 +99,26 @@ public class GroupChatResource {
         var originalGroupChat = groupChatService.getGroupChatOrThrow(groupChatId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         if (!originalGroupChat.getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("The group chat does not belong to the course", CHANNEL_ENTITY_NAME, "groupChat.course.mismatch");
+            throw new BadRequestAlertException("The group chat does not belong to the course", GROUP_CHAT_ENTITY_NAME, "groupChat.course.mismatch");
         }
         groupChatAuthorizationService.isAllowedToUpdateGroupChat(originalGroupChat, requestingUser);
         var updatedGroupChat = groupChatService.updateGroupChat(originalGroupChat.getId(), groupChatDTO);
         return ResponseEntity.ok().body(conversationDTOService.convertGroupChatToDto(requestingUser, updatedGroupChat));
     }
 
+    /**
+     * POST /api/courses/:courseId/group-chats/:groupChatId/register : Registers users to a group chat of a course
+     *
+     * @param courseId    the id of the course
+     * @param groupChatId the id of the group chat
+     * @param userLogins  the logins of the course users to be registered to a group chat
+     * @return ResponseEntity with status 200 (Ok)
+     */
     @PostMapping("/{courseId}/group-chats/{groupChatId}/register")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> registerUsersToGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody List<String> userLogins) {
         if (userLogins == null || userLogins.isEmpty()) {
-            throw new BadRequestAlertException("No user logins provided", CHANNEL_ENTITY_NAME, "userLoginsEmpty");
+            throw new BadRequestAlertException("No user logins provided", GROUP_CHAT_ENTITY_NAME, "userLoginsEmpty");
         }
         log.debug("REST request to register {} users to group chat: {}", userLogins.size(), groupChatId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -109,13 +131,21 @@ public class GroupChatResource {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * POST /api/courses/:courseId/group-chats/:groupChatId/deregister : Deregisters users from a group chat of a course
+     *
+     * @param courseId    the id of the course
+     * @param groupChatId the id of the group chat
+     * @param userLogins  the logins of the course users to be deregistered from a group chat
+     * @return ResponseEntity with status 200 (Ok)
+     */
     @PostMapping("/{courseId}/group-chats/{groupChatId}/deregister")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deregisterUsersFromGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody List<String> userLogins) {
         if (userLogins == null || userLogins.isEmpty()) {
-            throw new BadRequestAlertException("No user logins provided", CHANNEL_ENTITY_NAME, "userLoginsEmpty");
+            throw new BadRequestAlertException("No user logins provided", GROUP_CHAT_ENTITY_NAME, "userLoginsEmpty");
         }
-        log.debug("REST request to deregister {} users from the channel : {}", userLogins.size(), groupChatId);
+        log.debug("REST request to deregister {} users from the group chat : {}", userLogins.size(), groupChatId);
         var course = courseRepository.findByIdElseThrow(courseId);
 
         var groupChatFromDatabase = this.groupChatService.getGroupChatOrThrow(groupChatId);
@@ -136,7 +166,7 @@ public class GroupChatResource {
         });
         conversationId.ifPresent(conversationIdValue -> {
             if (!groupChat.getId().equals(conversationIdValue)) {
-                throw new BadRequestAlertException("The conversationId in the path does not match the channelId in the groupChat", GROUP_CHAT_ENTITY_NAME, "channelIdMismatch");
+                throw new BadRequestAlertException("The conversationId in the path does not match the groupChatId in the groupChat", GROUP_CHAT_ENTITY_NAME, "groupIdMismatch");
             }
         });
     }

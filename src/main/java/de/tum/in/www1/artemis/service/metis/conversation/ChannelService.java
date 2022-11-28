@@ -44,11 +44,23 @@ public class ChannelService {
         this.conversationService = conversationService;
     }
 
+    /**
+     * Gets the channel with the given id or throws a not found exception
+     *
+     * @param channelId the id of the channel
+     * @return the channel with the given id
+     */
     public Channel getChannelOrThrow(Long channelId) {
         return channelRepository.findById(channelId)
                 .orElseThrow(() -> new BadRequestAlertException("Channel with id " + channelId + " does not exist", CHANNEL_ENTITY_NAME, "idnotfound"));
     }
 
+    /**
+     * Grans the channel admin role to the given user for the given channel
+     *
+     * @param channel                  the channel
+     * @param usersToGrantChannelAdmin the users to grant channel admin
+     */
     public void grantChannelAdmin(Channel channel, Set<User> usersToGrantChannelAdmin) {
         var matchingParticipants = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(channel.getId(),
                 usersToGrantChannelAdmin.stream().map(User::getId).collect(Collectors.toSet()));
@@ -59,6 +71,12 @@ public class ChannelService {
         conversationService.notifyConversationMembersAboutUpdate(channel);
     }
 
+    /**
+     * Removes the channel admin role from a user for the given channel
+     *
+     * @param channel                   the channel to remove the channel admin role from
+     * @param usersToRevokeChannelAdmin the users to revoke channel admin
+     */
     public void revokeChannelAdmin(Channel channel, Set<User> usersToRevokeChannelAdmin) {
         var matchingParticipants = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(channel.getId(),
                 usersToRevokeChannelAdmin.stream().map(User::getId).collect(Collectors.toSet()));
@@ -69,10 +87,24 @@ public class ChannelService {
         conversationService.notifyConversationMembersAboutUpdate(channel);
     }
 
+    /**
+     * Get all channels for the given course
+     *
+     * @param courseId the id of the course
+     * @return a list of channels for the given course
+     */
     public List<Channel> getChannels(Long courseId) {
         return channelRepository.findChannelsByCourseId(courseId);
     }
 
+    /**
+     * Updates the given channel
+     *
+     * @param channelId  the id of the channel to update
+     * @param courseId   the id of the course the channel belongs to
+     * @param channelDTO the dto containing the new channel data
+     * @return the updated channel
+     */
     public Channel updateChannel(Long channelId, Long courseId, ChannelDTO channelDTO) {
         var channel = getChannelOrThrow(channelId);
         if (channelDTO.getName() != null && !channelDTO.getName().equals(channel.getName())) {
@@ -91,6 +123,13 @@ public class ChannelService {
         return updatedChannel;
     }
 
+    /**
+     * Creates a new channel for the given course
+     *
+     * @param course  the course to create the channel for
+     * @param channel the channel to create
+     * @return the created channel
+     */
     public Channel createChannel(Course course, Channel channel) {
         if (channel.getId() != null) {
             throw new BadRequestAlertException("A new channel cannot already have an ID", "channel", "idexists");
@@ -114,6 +153,12 @@ public class ChannelService {
         return savedChannel;
     }
 
+    /**
+     * Checks if the given channel is valid for the given course or throws an exception
+     *
+     * @param courseId the id of the course
+     * @param channel  the channel to check
+     */
     public void channelIsValidOrThrow(Long courseId, Channel channel) {
         var validator = buildDefaultValidatorFactory().getValidator();
         var violations = validator.validate(channel);
@@ -138,6 +183,11 @@ public class ChannelService {
         });
     }
 
+    /**
+     * Archive the channel with the given id
+     *
+     * @param channelId the id of the channel to archive
+     */
     public void archiveChannel(Long channelId) {
         var channel = getChannelOrThrow(channelId);
         if (channel.getIsArchived()) {
@@ -148,6 +198,11 @@ public class ChannelService {
         conversationService.notifyConversationMembersAboutUpdate(updatedChannel);
     }
 
+    /**
+     * Unarchive the channel with the given id
+     *
+     * @param channelId the id of the archived channel to unarchive
+     */
     public void unarchiveChannel(Long channelId) {
         var channel = getChannelOrThrow(channelId);
         if (!channel.getIsArchived()) {
@@ -158,6 +213,11 @@ public class ChannelService {
         conversationService.notifyConversationMembersAboutUpdate(updatedChannel);
     }
 
+    /**
+     * Delete the channel with the given id
+     *
+     * @param channel the channel to delete
+     */
     public void deleteChannel(Channel channel) {
         this.conversationService.deleteConversation(channel);
     }

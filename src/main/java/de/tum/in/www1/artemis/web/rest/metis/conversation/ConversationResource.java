@@ -55,6 +55,12 @@ public class ConversationResource {
         this.courseRepository = courseRepository;
     }
 
+    /**
+     * GET /api/courses/:courseId/conversations: Returns all conversations of a course where the requesting user is a member
+     *
+     * @param courseId the id of the course
+     * @return ResponseEntity with status 200 (OK) and with body containing the list of conversations where the requesting user is a member
+     */
     @GetMapping("/{courseId}/conversations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ConversationDTO>> getConversationsOfUser(@PathVariable Long courseId) {
@@ -64,6 +70,14 @@ public class ConversationResource {
         return ResponseEntity.ok(new ArrayList<>(conversations));
     }
 
+    /**
+     * POST /api/courses/:courseId/conversations/:conversationId/favorite : Updates the favorite status of a conversation for the requesting user
+     *
+     * @param courseId       the id of the course
+     * @param conversationId the id of the conversation
+     * @param isFavorite     the new favorite status
+     * @return ResponseEntity with status 200 (Ok)
+     */
     @PostMapping("/{courseId}/conversations/{conversationId}/favorite")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> changeFavoriteStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isFavorite) {
@@ -73,6 +87,14 @@ public class ConversationResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * POST /api/courses/:courseId/conversations/:conversationId/hidden : Updates the hidden status of a conversation for the requesting user
+     *
+     * @param courseId       the id of the course
+     * @param conversationId the id of the conversation
+     * @param isFavorite     the new hidden status
+     * @return ResponseEntity with status 200 (Ok)
+     */
     @PostMapping("/{courseId}/conversations/{conversationId}/hidden")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> switchHiddenStatus(@PathVariable Long courseId, @PathVariable Long conversationId, @RequestParam Boolean isHidden) {
@@ -82,6 +104,15 @@ public class ConversationResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * GET /api/courses/:courseId/conversations/:conversationId/members/search: Searches for members of a conversation
+     *
+     * @param courseId       the id of the course
+     * @param conversationId the id of the conversation
+     * @param loginOrName    the search term to search login and names by
+     * @param filter         an additional role filter to only search for users of a specific role
+     * @return ResponseEntity with status 200 (OK) and with body containing the list of found members matching the criteria
+     */
     @GetMapping("/{courseId}/conversations/{conversationId}/members/search")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ConversationUserDTO>> searchMembersOfConversation(@PathVariable Long courseId, @PathVariable Long conversationId,
@@ -125,7 +156,8 @@ public class ConversationResource {
         });
         conversationId.ifPresent(conversationIdValue -> {
             if (!conversation.getId().equals(conversationIdValue)) {
-                throw new BadRequestAlertException("The conversationId in the path does not match the channelId in the conversation", "conversation", "channelIdMismatch");
+                throw new BadRequestAlertException("The conversationId in the path does not match the conversationId in the conversation", "conversation",
+                        "conversationIdMismatch");
             }
         });
     }

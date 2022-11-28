@@ -57,6 +57,12 @@ public class ChannelResource {
         this.conversationService = conversationService;
     }
 
+    /**
+     * GET /api/courses/:courseId/channels/overview: Returns an overview of all channels in a course
+     *
+     * @param courseId the id of the course
+     * @return ResponseEntity with status 200 (OK) and with body containing the list of channels the user is authorized to see
+     */
     @GetMapping("/{courseId}/channels/overview")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ChannelDTO>> getCourseChannelsOverview(@PathVariable Long courseId) {
@@ -76,6 +82,13 @@ public class ChannelResource {
         return ResponseEntity.ok(filteredStream.sorted(Comparator.comparing(ChannelDTO::getName)).toList());
     }
 
+    /**
+     * POST /api/courses/:courseId/channels/: Creates a new channel in a course
+     *
+     * @param courseId   the id of the course
+     * @param channelDTO the dto containing the properties of the channel to be created
+     * @return ResponseEntity with status 201 (Created) and with body containing the created channel
+     */
     @PostMapping("/{courseId}/channels")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ChannelDTO> createChannel(@PathVariable Long courseId, @RequestBody ChannelDTO channelDTO) throws URISyntaxException {
@@ -88,6 +101,14 @@ public class ChannelResource {
         return ResponseEntity.created(new URI("/api/channels/" + createdChannel.getId())).body(conversationDTOService.convertChannelToDto(requestingUser, createdChannel));
     }
 
+    /**
+     * PUT /api/courses/:courseId/channels/:channelId: Updates a channel in a course
+     *
+     * @param courseId   the id of the course
+     * @param channelId  the id of the channel to be updated
+     * @param channelDTO the dto containing the properties of the channel to be updated
+     * @return ResponseEntity with status 200 (Ok) and with body containing the updated channel
+     */
     @PutMapping("/{courseId}/channels/{channelId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ChannelDTO> updateChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody ChannelDTO channelDTO) {
@@ -106,6 +127,13 @@ public class ChannelResource {
         return ResponseEntity.ok().body(conversationDTOService.convertChannelToDto(requestingUser, updatedChannel));
     }
 
+    /**
+     * DELETE /api/courses/:courseId/channels/:channelId: Deletes a channel in a course
+     *
+     * @param courseId  the id of the course
+     * @param channelId the id of the channel to be deleted
+     * @return ResponseEntity with status 200 (Ok)
+     */
     @DeleteMapping("/{courseId}/channels/{channelId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
@@ -119,6 +147,13 @@ public class ChannelResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * POST /api/courses/:courseId/channels/:channelId/archive : Archives a channel in a course
+     *
+     * @param courseId  the id of the course
+     * @param channelId the id of the channel to be archived
+     * @return ResponseEntity with status 200 (Ok)
+     */
     @PostMapping("/{courseId}/channels/{channelId}/archive")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> archiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
@@ -130,6 +165,13 @@ public class ChannelResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * POST /api/courses/:courseId/channels/:channelId/unarchive : Unarchives an archived channel in a course
+     *
+     * @param courseId  the id of the course
+     * @param channelId the id of the archived channel to be unarchived
+     * @return ResponseEntity with status 200 (Ok)
+     */
     @PostMapping("/{courseId}/channels/{channelId}/unarchive")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> unArchiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
@@ -141,6 +183,14 @@ public class ChannelResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * POST /api/courses/:courseId/channels/:channelId/grant-channel-admin : Grants members of a channel the channel admin role
+     *
+     * @param courseId   the id of the course
+     * @param channelId  the id of the channel
+     * @param userLogins the logins of the channel members to be granted the channel admin role
+     * @return ResponseEntity with status 200 (Ok)
+     */
     @PostMapping("/{courseId}/channels/{channelId}/grant-channel-admin")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> grantChannelAdmin(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
@@ -155,6 +205,14 @@ public class ChannelResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * POST /api/courses/:courseId/channels/:channelId/revoke-channel-admin : Revokes members of a channel the channel admin role
+     *
+     * @param courseId   the id of the course
+     * @param channelId  the id of the channel
+     * @param userLogins the logins of the channel members to be revokes the channel admin role
+     * @return ResponseEntity with status 200 (Ok)
+     */
     @PostMapping("/{courseId}/channels/{channelId}/revoke-channel-admin")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> revokeChannelAdmin(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
@@ -171,6 +229,14 @@ public class ChannelResource {
         return ResponseEntity.ok().build();
     }
 
+    /**
+     * POST /api/courses/:courseId/channels/:channelId/register : Registers users to a channel of a course
+     *
+     * @param courseId   the id of the course
+     * @param channelId  the id of the channel
+     * @param userLogins the logins of the course users to be registered for a channel
+     * @return ResponseEntity with status 200 (Ok)
+     */
     @PostMapping("/{courseId}/channels/{channelId}/register")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins,
@@ -214,6 +280,14 @@ public class ChannelResource {
         return ResponseEntity.noContent().build();
     }
 
+    /**
+     * POST /api/courses/:courseId/channels/:channelId/deregister : Deregisters users from a channel of a course
+     *
+     * @param courseId   the id of the course
+     * @param channelId  the id of the channel
+     * @param userLogins the logins of the course users to be deregistered from a channel
+     * @return ResponseEntity with status 200 (Ok)
+     */
     @PostMapping("/{courseId}/channels/{channelId}/deregister")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deregisterUsers(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
