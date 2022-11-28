@@ -50,6 +50,15 @@ export class MultipleChoiceVisualQuestionComponent {
     }
 
     parseQuestion() {
-        console.log(this.question.text);
+        let markdown = this.question.text;
+
+        if (this.question.hint) {
+            markdown += '\n\t[hint] ' + this.question.hint;
+        }
+        if (this.question.explanation) {
+            markdown += '\n\t[exp] ' + this.question.explanation;
+        }
+
+        return markdown;
     }
 }

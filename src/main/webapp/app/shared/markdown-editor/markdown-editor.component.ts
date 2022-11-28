@@ -392,8 +392,11 @@ export class MarkdownEditorComponent implements AfterViewInit {
         }
 
         if (event.activeId === 'editor_visual' && this.visualChild) {
-            // TODO: Rebuild markdown and parse if preview mode
-            this.visualChild.parseQuestion();
+            this.markdown = this.visualChild.parseQuestion();
+
+            if (this.previewMode) {
+                this.parse();
+            }
         }
 
         // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
