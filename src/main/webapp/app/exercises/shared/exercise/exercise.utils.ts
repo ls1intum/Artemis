@@ -31,7 +31,7 @@ export class SaveExerciseCommand<T extends Exercise> {
         private alertService: AlertService,
     ) {}
 
-    save(exercise: T, notificationText?: string): Observable<T> {
+    save(exercise: T, isExamMode: boolean, notificationText?: string): Observable<T> {
         const prepareRequestOptions = (): any => {
             switch (this.editType) {
                 case EditType.UPDATE:
@@ -66,7 +66,7 @@ export class SaveExerciseCommand<T extends Exercise> {
 
         let saveObservable = of([false, prepareRequestOptions()]);
 
-        const popupRefObs = from(this.popupService.checkExerciseBeforeUpdate(exercise, this.backupExercise));
+        const popupRefObs = from(this.popupService.checkExerciseBeforeUpdate(exercise, this.backupExercise, isExamMode));
 
         if (this.modalService.hasOpenModals()) {
             const confirmedCase = popupRefObs.pipe(

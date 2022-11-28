@@ -3,7 +3,7 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise } from 'app/entities/exercise.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
-import { ActivatedRoute } from '@angular/router';
+import dayjs from 'dayjs/esm';
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseUpdateWarningService {
@@ -17,7 +17,7 @@ export class ExerciseUpdateWarningService {
 
     isExamMode: boolean;
 
-    constructor(private modalService: NgbModal, private route: ActivatedRoute) {}
+    constructor(private modalService: NgbModal) {}
 
     /**
      * Open the modal with the given content for the given exercise.
@@ -38,13 +38,14 @@ export class ExerciseUpdateWarningService {
      *
      * @param exercise the exercise for which the modal should be shown
      * @param backupExercise the copy of exercise for which the modal should be shown
+     * @param isExamMode flag that indicates if the exercise is part of an exam
      */
-    checkExerciseBeforeUpdate(exercise: Exercise, backupExercise: Exercise): Promise<NgbModalRef> {
+    checkExerciseBeforeUpdate(exercise: Exercise, backupExercise: Exercise, isExamMode: boolean): Promise<NgbModalRef> {
         if (exercise.course?.testCourse) {
             return new Promise<NgbModalRef>((resolve) => resolve(this.ngbModalRef));
         }
 
-        this.initializeVariables();
+        this.initializeVariables(isExamMode);
         this.loadExercise(exercise, backupExercise);
         this.checkImmediateRelease(exercise, backupExercise);
         return new Promise<NgbModalRef>((resolve) => {
@@ -58,14 +59,12 @@ export class ExerciseUpdateWarningService {
     /**
      * Resets all possible warnings and checks if the exercise is part of an exam
      */
-    initializeVariables() {
+    initializeVariables(isExamMode: boolean) {
         this.instructionDeleted = false;
         this.creditChanged = false;
         this.usageCountChanged = false;
         this.immediateReleaseWarning = '';
-        this.route.params.subscribe((params) => {
-            this.isExamMode = !!Number(params['examId']);
-        });
+        this.isExamMode = isExamMode;
     }
 
     /**
@@ -122,8 +121,8 @@ export class ExerciseUpdateWarningService {
      * @param backupExercise the optional exercise before the update that might already be released
      */
     checkImmediateRelease(exercise: Exercise, backupExercise: Exercise) {
-        const noReleaseDate = !exercise.releaseDate || !exercise.releaseDate.isValid();
-        const creationOrReleaseDateBefore = !exercise.id || (backupExercise.releaseDate && backupExercise.releaseDate.isValid());
+        const noReleaseDate = !exercise.releaseDate || !dayjs(exercise.releaseDate).isValid();
+        const creationOrReleaseDateBefore = !exercise.id || (backupExercise.releaseDate && dayjs(backupExercise.releaseDate).isValid());
         if (noReleaseDate && !this.isExamMode && creationOrReleaseDateBefore) {
             this.immediateReleaseWarning = exercise.startDate ? 'artemisApp.exercise.noReleaseDateWarning' : 'artemisApp.exercise.noReleaseAndStartDateWarning';
         }

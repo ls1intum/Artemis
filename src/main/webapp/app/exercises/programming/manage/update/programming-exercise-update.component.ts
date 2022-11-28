@@ -475,7 +475,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     save() {
-        const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise);
+        const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
         if (!this.modalService.hasOpenModals()) {
             this.saveExercise();
         } else {
