@@ -1,11 +1,15 @@
 <div class="markdown-preview visual-mode">
     <textarea id="mc-question" class="form-control form-group-narrow" [(ngModel)]="this.question.text" rows="5"></textarea>
     <div class="form-group-narrow visual-question-hint">
-        <fa-icon [icon]="faQuestionCircle" class="text-secondary me-1"></fa-icon>
+        <fa-icon [icon]="faQuestionCircle" class="text-secondary me-1" ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}"></fa-icon>
         <input class="form-control" [(ngModel)]="question.hint" />
     </div>
     <div class="form-group-narrow visual-question-hint">
-        <fa-icon [icon]="faExclamationCircle" class="text-secondary me-1"></fa-icon>
+        <fa-icon
+            [icon]="faExclamationCircle"
+            class="text-secondary me-1"
+            ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationTooltip' | artemisTranslate }}"
+        ></fa-icon>
         <input class="form-control" [(ngModel)]="question.explanation" />
     </div>
     <!--<div class="hint" *ngIf="question.hint || (question.explanation && showResult)">

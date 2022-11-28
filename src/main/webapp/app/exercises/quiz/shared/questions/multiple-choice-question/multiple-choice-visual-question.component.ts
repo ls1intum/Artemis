@@ -50,7 +50,7 @@ export class MultipleChoiceVisualQuestionComponent {
     }
 
     parseQuestion() {
-        let markdown = this.question.text;
+        let markdown = this.question.text ?? '';
 
         if (this.question.hint) {
             markdown += '\n\t[hint] ' + this.question.hint;
