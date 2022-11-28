@@ -92,7 +92,7 @@ public class ConversationResource {
      *
      * @param courseId       the id of the course
      * @param conversationId the id of the conversation
-     * @param isFavorite     the new hidden status
+     * @param isHidden       the new hidden status
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/conversations/{conversationId}/hidden")
@@ -111,6 +111,7 @@ public class ConversationResource {
      * @param conversationId the id of the conversation
      * @param loginOrName    the search term to search login and names by
      * @param filter         an additional role filter to only search for users of a specific role
+     * @param pageable       containing the pageable information
      * @return ResponseEntity with status 200 (OK) and with body containing the list of found members matching the criteria
      */
     @GetMapping("/{courseId}/conversations/{conversationId}/members/search")

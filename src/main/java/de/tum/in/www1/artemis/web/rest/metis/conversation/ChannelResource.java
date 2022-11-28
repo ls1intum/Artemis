@@ -232,9 +232,13 @@ public class ChannelResource {
     /**
      * POST /api/courses/:courseId/channels/:channelId/register : Registers users to a channel of a course
      *
-     * @param courseId   the id of the course
-     * @param channelId  the id of the channel
-     * @param userLogins the logins of the course users to be registered for a channel
+     * @param courseId          the id of the course
+     * @param channelId         the id of the channel
+     * @param userLogins        the logins of the course users to be registered for a channel
+     * @param addAllStudents    true if all course students should be added
+     * @param addAllTutors      true if all course tutors should be added
+     * @param addAllEditors     true if all course editors should be added
+     * @param addAllInstructors true if all course instructors should be added
      * @return ResponseEntity with status 200 (Ok)
      */
     @PostMapping("/{courseId}/channels/{channelId}/register")
