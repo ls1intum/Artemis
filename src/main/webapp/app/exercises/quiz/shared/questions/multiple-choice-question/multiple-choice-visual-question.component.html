@@ -1,10 +1,11 @@
 <div class="markdown-preview visual-mode">
+    <h4>Question</h4>
     <textarea id="mc-question" class="form-control form-group-narrow" [(ngModel)]="this.question.text" rows="5"></textarea>
     <div class="form-group-narrow visual-question-hint">
         <fa-icon [icon]="faQuestionCircle" class="text-secondary me-1" ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}"></fa-icon>
         <input class="form-control" [(ngModel)]="question.hint" />
     </div>
-    <div class="form-group-narrow visual-question-hint">
+    <div class="form-group visual-question-hint">
         <fa-icon
             [icon]="faExclamationCircle"
             class="text-secondary me-1"
@@ -12,37 +13,27 @@
         ></fa-icon>
         <input class="form-control" [(ngModel)]="question.explanation" />
     </div>
-    <!--<div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
-        <ng-template #renderedHint>
-            <div [innerHTML]="renderedQuestion.hint"></div>
-        </ng-template>
-        <span class="label label-info" [ngbPopover]="renderedHint" triggers="mouseenter:mouseleave" *ngIf="question.hint">
-            <fa-icon [icon]="faQuestionCircle"></fa-icon>
-            <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
-        </span>
-        <br />
-        <ng-template #renderedExplanation>
-            <div [innerHTML]="renderedQuestion.explanation"></div>
-        </ng-template>
-        <span class="label label-primary" [ngbPopover]="renderedExplanation" placement="right auto" triggers="mouseenter:mouseleave" *ngIf="question.explanation && showResult">
-            <fa-icon [icon]="faExclamationCircle"></fa-icon>
-            <span jhiTranslate="artemisApp.quizQuestion.explanation"></span>
-        </span>
+    <h4>Answer Options</h4>
+    <div *ngFor="let answerOption of question.answerOptions; let i = index" id="answer-option-{{ i }}" class="visual-answer-option form-group-narrow">
+        <input class="form-control form-group-narrow" [(ngModel)]="answerOption.text" />
+        <div class="form-group-narrow visual-question-hint">
+            <fa-icon
+                [icon]="faQuestionCircle"
+                class="text-secondary me-1"
+                ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}"
+            ></fa-icon>
+            <input class="form-control" [(ngModel)]="answerOption.hint" />
+        </div>
+        <div class="visual-question-hint">
+            <fa-icon
+                [icon]="faExclamationCircle"
+                class="text-secondary me-1"
+                ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationTooltip' | artemisTranslate }}"
+            ></fa-icon>
+            <input class="form-control" [(ngModel)]="answerOption.explanation" />
+        </div>
     </div>
-    <div class="question-score result" *ngIf="showResult && !forceSampleSolution" [ngClass]="{ incorrect: (score || 0) < question.points! }">
-        <span jhiTranslate="artemisApp.quizQuestion.yourScore" class="colon-suffix"></span>
-        <span class="show-explanation">{{ score || 0 }}/{{ question.points }}</span>
-        <span class="show-explanation">
-            <jhi-quiz-scoring-infostudent-modal
-                [score]="score"
-                [question]="question"
-                [multipleChoiceMapping]="selectedAnswerOptions"
-                [questionIndex]="questionIndex"
-                [multipleChoiceSubmittedResult]="submittedResult"
-                [submittedQuizExercise]="submittedQuizExercise"
-            ></jhi-quiz-scoring-infostudent-modal>
-        </span>
-    </div>
+    <!--
     <div class="answer-options" *ngIf="!showResult">
         <div
             *ngFor="let answerOption of question.answerOptions; let i = index"
