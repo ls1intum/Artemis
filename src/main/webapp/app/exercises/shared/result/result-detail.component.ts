@@ -24,7 +24,6 @@ import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datat
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { resultIsPreliminary } from 'app/exercises/shared/result/result.utils';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
 
 export enum FeedbackItemType {
@@ -56,9 +55,7 @@ export class ResultDetailComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
-    readonly FeedbackItemType = FeedbackItemType;
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
-    readonly resultIsPreliminary = resultIsPreliminary;
     readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
 
     @Input() exercise?: Exercise;
@@ -312,26 +309,6 @@ export class ResultDetailComponent implements OnInit {
                 ];
             } else {
                 return [...feedbackList];
-            }
-        }
-    }
-
-    /**
-     * Handles the coloring of each feedback items based on its type and credits.
-     * @param feedback The feedback item
-     */
-    getClassNameForFeedbackItem(feedback: FeedbackItem): string {
-        if (feedback.type === FeedbackItemType.Issue) {
-            return 'alert-warning';
-        } else if (feedback.type === FeedbackItemType.Test) {
-            return feedback.positive ? 'alert-success' : 'alert-danger';
-        } else if (feedback.type === FeedbackItemType.Subsequent) {
-            return 'alert-secondary';
-        } else {
-            if (feedback.credits === 0) {
-                return 'alert-warning';
-            } else {
-                return feedback.positive || (feedback.credits && feedback.credits > 0) ? 'alert-success' : 'alert-danger';
             }
         }
     }

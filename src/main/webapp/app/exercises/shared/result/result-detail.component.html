@@ -70,56 +70,24 @@
 
             <hr *ngIf="buildLogs?.length" />
 
-            <div class="feedback-list">
-                <div class="mb-2 d-flex justify-content-center align-items-center" *ngIf="showOnlyNegativeFeedback || showOnlyPositiveFeedback">
-                    <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
-                    <span class="ms-1" jhiTranslate="artemisApp.result.chart.filterApplied">A filter is applied to your feedback</span>
-                    <button type="button" class="ms-2 btn btn-info" (click)="resetChartFilter()" jhiTranslate="artemisApp.result.chart.reset">Reset</button>
-                </div>
-                <div *ngIf="!loadingFailed && resultIsPreliminary(result)">
-                    <div class="d-flex justify-content-end m-1">
-                        <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
-                    </div>
-                    <p *ngIf="exercise?.assessmentType !== AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
-                    <p *ngIf="exercise?.assessmentType === AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
-                </div>
-                <div *ngIf="testCaseCount || numberOfNotExecutedTests || scaFeedbackCount || manualFeedbackCount" class="mb-2">
-                    <div *ngIf="testCaseCount">
-                        {{ 'artemisApp.result.testCount' | artemisTranslate : { passed: passedTestCaseCount, total: testCaseCount } }}
-                    </div>
-                    <div *ngIf="numberOfNotExecutedTests">
-                        {{ 'artemisApp.result.notExecutedTests' | artemisTranslate : { numberOfNotExecutedTests } }}
-                        <jhi-help-icon text="artemisApp.result.notExecutedTestsTooltip"></jhi-help-icon>
-                    </div>
-                    <div *ngIf="scaFeedbackCount">
-                        {{ 'artemisApp.result.scaIssueCount' | artemisTranslate : { issues: scaFeedbackCount } }}
-                    </div>
-                    <div *ngIf="manualFeedbackCount">
-                        {{ 'artemisApp.result.manualFeedbackCount' | artemisTranslate : { feedbacks: manualFeedbackCount } }}
-                    </div>
-                </div>
-
-                <div *ngFor="let feedback of filteredFeedbackList" [ngClass]="['feedback-item', 'alert', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
-                    <span>{{ feedback.category }}</span>
-                    <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits">
-                        {{ roundValueSpecifiedByCourseSettings(feedback.actualCredits ?? feedback.credits, course) }}P
-                        <fa-icon
-                            *ngIf="feedback.type === FeedbackItemType.Subsequent"
-                            [icon]="faExclamationTriangle"
-                            [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
-                        ></fa-icon>
-                        <fa-icon
-                            *ngIf="feedback.type === FeedbackItemType.Issue && feedback.actualCredits !== feedback.credits"
-                            [icon]="faExclamationTriangle"
-                            [ngbTooltip]="'artemisApp.programmingAssessment.codeIssueNotApplied' | artemisTranslate : { points: feedback.credits }"
-                        >
-                        </fa-icon>
-                    </span>
-                    <span class="feedback-title" *ngIf="feedback.title">{{ feedback.title }}</span>
-                    <jhi-feedback-collapse id="feedback-text" *ngIf="feedback.text" [text]="feedback.text!" [previewText]="feedback.previewText"></jhi-feedback-collapse>
-                    <p *ngElse jhiTranslate="artemisApp.result.noFeedback">No feedback available</p>
-                </div>
+            <div class="mb-2 d-flex justify-content-center align-items-center" *ngIf="showOnlyNegativeFeedback || showOnlyPositiveFeedback">
+                <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
+                <span class="ms-1" jhiTranslate="artemisApp.result.chart.filterApplied">A filter is applied to your feedback</span>
+                <button type="button" class="ms-2 btn btn-info" (click)="resetChartFilter()" jhiTranslate="artemisApp.result.chart.reset">Reset</button>
             </div>
+
+            <jhi-feedback-list
+                [exercise]="exercise"
+                [course]="course"
+                [result]="result"
+                [loadingFailed]="loadingFailed"
+                [numberOfNotExecutedTests]="numberOfNotExecutedTests"
+                [filteredFeedbackList]="filteredFeedbackList"
+                [testCaseCount]="testCaseCount"
+                [passedTestCaseCount]="passedTestCaseCount"
+                [scaFeedbackCount]="scaFeedbackCount"
+                [manualFeedbackCount]="manualFeedbackCount"
+            ></jhi-feedback-list>
         </div>
     </ng-template>
 
