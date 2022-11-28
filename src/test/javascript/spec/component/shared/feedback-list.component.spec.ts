@@ -23,7 +23,7 @@ describe('FeedbackListComponent', () => {
             },
         ];
 
-        items.forEach((item) => expect(comp.getClassNameForFeedbackItem(item)).toEqual('alert-success'));
+        items.forEach((item) => expect(comp.getClassNameForFeedbackItem(item)).toBe('alert-success'));
     });
 
     it('should generate correct class names for warning feedback items', () => {
@@ -39,7 +39,7 @@ describe('FeedbackListComponent', () => {
             },
         ];
 
-        items.forEach((item) => expect(comp.getClassNameForFeedbackItem(item)).toEqual('alert-warning'));
+        items.forEach((item) => expect(comp.getClassNameForFeedbackItem(item)).toBe('alert-warning'));
     });
 
     it('should generate correct class names for wrong feedback items', () => {
@@ -61,6 +61,6 @@ describe('FeedbackListComponent', () => {
             },
         ];
 
-        items.forEach((item) => expect(comp.getClassNameForFeedbackItem(item)).toEqual('alert-danger'));
+        items.forEach((item) => expect(comp.getClassNameForFeedbackItem(item)).toBe('alert-danger'));
     });
 });
