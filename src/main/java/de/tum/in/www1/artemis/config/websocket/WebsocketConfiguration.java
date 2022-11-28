@@ -8,6 +8,7 @@ import java.security.Principal;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import javax.servlet.http.Cookie;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -39,6 +40,7 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 import org.springframework.web.socket.server.support.DefaultHandshakeHandler;
 import org.springframework.web.socket.sockjs.transport.handler.WebSocketTransportHandler;
+import org.springframework.web.util.WebUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Iterators;
@@ -51,6 +53,8 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.jwt.JWTFilter;
+import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -66,6 +70,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
     private final ObjectMapper objectMapper;
+
+    private final TokenProvider tokenProvider;
 
     private final TaskScheduler messageBrokerTaskScheduler;
 
@@ -89,11 +95,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     @Value("${spring.websocket.broker.password}")
     private String brokerPassword;
 
-    public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
+    public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
             UserRepository userRepository, ExamRepository examRepository) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
+        this.tokenProvider = tokenProvider;
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseRepository = exerciseRepository;
@@ -187,8 +194,10 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                     @NotNull Map<String, Object> attributes) {
                 if (request instanceof ServletServerHttpRequest servletRequest) {
                     attributes.put(IP_ADDRESS, servletRequest.getRemoteAddress());
+                    Cookie jwtCookie = WebUtils.getCookie(servletRequest.getServletRequest(), JWTFilter.JWT_COOKIE_NAME);
+                    return JWTFilter.isJwtCookieValid(tokenProvider, jwtCookie);
                 }
-                return true;
+                return false;
             }
 
             @Override

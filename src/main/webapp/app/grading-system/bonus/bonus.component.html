@@ -47,10 +47,10 @@
                 <tr *ngFor="let gradeStep of bonus.sourceGradingScale?.gradeSteps; let i = index; let last = last">
                     <td>{{ gradeStep.gradeName }}</td>
                     <td>
-                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE:last | safeHtml"></span>
+                        <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.PERCENTAGE : last | safeHtml"></span>
                     </td>
                     <td *ngIf="hasPointsSet()">
-                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS:last | safeHtml"></span>
+                        <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.POINTS : last | safeHtml"></span>
                     </td>
                 </tr>
             </tbody>
@@ -81,7 +81,7 @@
             {{ 'artemisApp.bonus.formula.finalGradeFromPoints' | artemisTranslate }}
         </div>
         <div class="row fs-5 ps-2">
-            {{ 'artemisApp.bonus.formula.finalGradeLimit' | artemisTranslate: { maxPossibleGrade: maxPossibleGrade() } }}
+            {{ 'artemisApp.bonus.formula.finalGradeLimit' | artemisTranslate : { maxPossibleGrade: maxPossibleGrade() } }}
         </div>
     </div>
     <div *ngIf="hasBonusStrategyWeightMismatch" class="alert alert-warning" jhiTranslate="artemisApp.bonus.warnStrategyWeightMismatch">sadsgd gfhfgh</div>
