@@ -122,7 +122,7 @@ class Lti13LaunchFilterTest {
         ArgumentCaptor<JSONObject> argument = ArgumentCaptor.forClass(JSONObject.class);
         verify(responseWriter).print(argument.capture());
         JSONObject responseJsonBody = argument.getValue();
-        verify(lti13Service).addLtiQueryParams(any());
+        verify(lti13Service).buildLtiResponse(any(), any());
         assertThat(((String) responseJsonBody.get("targetLinkUri")).contains(this.targetLinkUri)).as("Response body contains the expected targetLinkUri");
     }
 

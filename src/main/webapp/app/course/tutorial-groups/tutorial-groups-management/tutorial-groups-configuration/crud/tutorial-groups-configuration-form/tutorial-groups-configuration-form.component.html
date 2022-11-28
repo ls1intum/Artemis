@@ -12,7 +12,7 @@
                         required
                         [class.is-invalid]="isPeriodInvalid"
                         (focus)="markPeriodAsTouched()"
-                        [value]="periodControl?.value | artemisDateRange: 'long-date':undefined:true"
+                        [value]="periodControl?.value | artemisDateRange : 'long-date' : undefined : true"
                         [owlDateTimeTrigger]="period"
                         readonly
                         class="form-control"

@@ -16,7 +16,7 @@
 
         <tr *ngFor="let logger of filteredAndOrderedLoggers">
             <td>
-                <small>{{ logger.name | slice: 0:140 }}</small>
+                <small>{{ logger.name | slice : 0 : 140 }}</small>
             </td>
             <td>
                 <button (click)="changeLevel(logger.name, 'TRACE')" [ngClass]="logger.level === 'TRACE' ? 'btn-primary' : 'btn-light'" class="btn btn-sm">TRACE</button>
