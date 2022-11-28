@@ -106,10 +106,10 @@
                         </td>
                     </ng-template>
                     <td>
-                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE:last | safeHtml"></span>
+                        <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.PERCENTAGE : last | safeHtml"></span>
                     </td>
                     <td>
-                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS:last | safeHtml"></span>
+                        <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.POINTS : last | safeHtml"></span>
                     </td>
                     <td *ngIf="gradingScale.gradeType !== GradeType.BONUS">
                         <input [(ngModel)]="gradeStep.gradeName" type="text" required />

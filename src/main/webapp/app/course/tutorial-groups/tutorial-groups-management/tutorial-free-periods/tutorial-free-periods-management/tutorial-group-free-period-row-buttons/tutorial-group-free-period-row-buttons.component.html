@@ -8,7 +8,7 @@
     <button
         [id]="'delete-' + tutorialFreePeriod.id"
         jhiDeleteButton
-        entityTitle="{{ tutorialFreePeriod.start | artemisDate: 'long-date':false:course.timeZone }}"
+        entityTitle="{{ tutorialFreePeriod.start | artemisDate : 'long-date' : false : course.timeZone }}"
         deleteQuestion="artemisApp.pages.tutorialFreePeriodsManagement.deleteDialog.question"
         (delete)="deleteTutorialFreePeriod()"
         [dialogError]="dialogError$"

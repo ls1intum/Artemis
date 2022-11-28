@@ -260,7 +260,7 @@
                 <ng-container *ngIf="programmingExercise.dueDate">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
                     <dd>
-                        <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | artemisDate: 'long':true }}</span>
+                        <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | artemisDate : 'long' : true }}</span>
                     </dd>
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title">Enable Static Code Analysis</span></dt>
@@ -558,26 +558,26 @@
                                     <td>
                                         {{
                                             programmingExercise.buildLogStatistics.agentSetupDuration
-                                                ? (programmingExercise.buildLogStatistics.agentSetupDuration | number: '1.2-2') + 's'
+                                                ? (programmingExercise.buildLogStatistics.agentSetupDuration | number : '1.2-2') + 's'
                                                 : '-'
                                         }}
                                     </td>
                                     <td>
                                         {{
                                             programmingExercise.buildLogStatistics.testDuration
-                                                ? (programmingExercise.buildLogStatistics.testDuration | number: '1.2-2') + 's'
+                                                ? (programmingExercise.buildLogStatistics.testDuration | number : '1.2-2') + 's'
                                                 : '-'
                                         }}
                                     </td>
                                     <td>
                                         {{
-                                            programmingExercise.buildLogStatistics.scaDuration ? (programmingExercise.buildLogStatistics.scaDuration | number: '1.2-2') + 's' : '-'
+                                            programmingExercise.buildLogStatistics.scaDuration ? (programmingExercise.buildLogStatistics.scaDuration | number : '1.2-2') + 's' : '-'
                                         }}
                                     </td>
                                     <td>
                                         {{
                                             programmingExercise.buildLogStatistics.totalJobDuration
-                                                ? (programmingExercise.buildLogStatistics.totalJobDuration | number: '1.2-2') + 's'
+                                                ? (programmingExercise.buildLogStatistics.totalJobDuration | number : '1.2-2') + 's'
                                                 : '-'
                                         }}
                                     </td>

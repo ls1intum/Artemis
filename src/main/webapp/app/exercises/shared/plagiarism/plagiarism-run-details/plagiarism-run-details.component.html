@@ -4,7 +4,7 @@
             {{ 'artemisApp.plagiarism.duration' | artemisTranslate }}
         </div>
         <div class="plagiarism-run-details-info duration">
-            {{ plagiarismResult.duration | date: 'HH:mm:ss.SSS':'GMT' }}
+            {{ plagiarismResult.duration | date : 'HH:mm:ss.SSS' : 'GMT' }}
         </div>
     </div>
 
@@ -27,14 +27,14 @@
                 (select)="onSelect($event)"
             >
                 <ng-template #tooltipTemplate let-model="model">
-                    <b>{{ 'artemisApp.plagiarism.numberIdentifiedPairs' | artemisTranslate: { amount: model.value } }} </b> <br />
-                    <span> {{ 'artemisApp.plagiarism.confirmed' | artemisTranslate: { amount: getBucketDTO(model.label).confirmed } }}</span> <br />
-                    <span> {{ 'artemisApp.plagiarism.denied' | artemisTranslate: { amount: getBucketDTO(model.label).denied } }}</span> <br />
-                    <span> {{ 'artemisApp.plagiarism.open' | artemisTranslate: { amount: getBucketDTO(model.label).open } }}</span> <br />
-                    <span>{{ 'artemisApp.plagiarism.withSimilarity' | artemisTranslate: { range: model.name } }}</span> <br />
+                    <b>{{ 'artemisApp.plagiarism.numberIdentifiedPairs' | artemisTranslate : { amount: model.value } }} </b> <br />
+                    <span> {{ 'artemisApp.plagiarism.confirmed' | artemisTranslate : { amount: getBucketDTO(model.label).confirmed } }}</span> <br />
+                    <span> {{ 'artemisApp.plagiarism.denied' | artemisTranslate : { amount: getBucketDTO(model.label).denied } }}</span> <br />
+                    <span> {{ 'artemisApp.plagiarism.open' | artemisTranslate : { amount: getBucketDTO(model.label).open } }}</span> <br />
+                    <span>{{ 'artemisApp.plagiarism.withSimilarity' | artemisTranslate : { range: model.name } }}</span> <br />
                     <b>{{
                         'artemisApp.plagiarism.portionOfAllCases'
-                            | artemisTranslate: { percentage: totalDetectedPlagiarisms > 0 ? round((model.value * 100) / totalDetectedPlagiarisms, 2) : 0 }
+                            | artemisTranslate : { percentage: totalDetectedPlagiarisms > 0 ? round((model.value * 100) / totalDetectedPlagiarisms, 2) : 0 }
                     }}</b>
                 </ng-template>
             </ngx-charts-bar-vertical>
