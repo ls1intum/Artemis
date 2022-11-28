@@ -19,7 +19,10 @@ export function isChannel(conversation: Conversation): conversation is Channel {
     return conversation.type === ConversationType.CHANNEL;
 }
 
-export function getAsChannel(conversation: Conversation): Channel | undefined {
+export function getAsChannel(conversation: Conversation | undefined): Channel | undefined {
+    if (!conversation) {
+        return undefined;
+    }
     return isChannel(conversation) ? conversation : undefined;
 }
 
@@ -51,6 +54,9 @@ export function isChannelDto(conversation: ConversationDto): conversation is Cha
     return conversation.type === ConversationType.CHANNEL;
 }
 
-export function getAsChannelDto(conversation: ConversationDto): ChannelDTO | undefined {
+export function getAsChannelDto(conversation: ConversationDto | undefined): ChannelDTO | undefined {
+    if (!conversation) {
+        return undefined;
+    }
     return isChannelDto(conversation) ? conversation : undefined;
 }

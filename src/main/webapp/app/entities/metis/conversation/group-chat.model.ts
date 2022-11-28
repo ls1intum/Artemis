@@ -13,7 +13,10 @@ export function isGroupChat(conversation: Conversation): conversation is GroupCh
     return conversation.type === ConversationType.GROUP_CHAT;
 }
 
-export function getAsGroupChat(conversation: Conversation): GroupChat | undefined {
+export function getAsGroupChat(conversation: Conversation | undefined): GroupChat | undefined {
+    if (!conversation) {
+        return undefined;
+    }
     return isGroupChat(conversation) ? conversation : undefined;
 }
 
@@ -29,6 +32,9 @@ export function isGroupChatDto(conversation: ConversationDto): conversation is G
     return conversation.type === ConversationType.GROUP_CHAT;
 }
 
-export function getAsGroupChatDto(conversation: ConversationDto): GroupChatDto | undefined {
+export function getAsGroupChatDto(conversation: ConversationDto | undefined): GroupChatDto | undefined {
+    if (!conversation) {
+        return undefined;
+    }
     return isGroupChatDto(conversation) ? conversation : undefined;
 }

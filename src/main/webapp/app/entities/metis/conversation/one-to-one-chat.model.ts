@@ -11,7 +11,10 @@ export function isOneToOneChat(conversation: Conversation): conversation is OneT
     return conversation.type === ConversationType.ONE_TO_ONE;
 }
 
-export function getAsOneToOneChat(conversation: Conversation): OneToOneChat | undefined {
+export function getAsOneToOneChat(conversation: Conversation | undefined): OneToOneChat | undefined {
+    if (!conversation) {
+        return undefined;
+    }
     return isOneToOneChat(conversation) ? conversation : undefined;
 }
 
@@ -25,6 +28,9 @@ export function isOneToOneChatDto(conversation: ConversationDto): conversation i
     return conversation.type === ConversationType.ONE_TO_ONE;
 }
 
-export function getAsOneToOneChatDto(conversation: ConversationDto): OneToOneChatDTO | undefined {
+export function getAsOneToOneChatDto(conversation: ConversationDto | undefined): OneToOneChatDTO | undefined {
+    if (!conversation) {
+        return undefined;
+    }
     return isOneToOneChatDto(conversation) ? conversation : undefined;
 }
