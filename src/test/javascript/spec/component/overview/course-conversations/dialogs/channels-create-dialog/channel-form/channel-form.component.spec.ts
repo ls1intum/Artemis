@@ -108,7 +108,7 @@ describe('ChannelFormComponent', () => {
     }
 
     function setName(name?: string) {
-        component!.nameControl!.setValue(undefined);
+        component!.nameControl!.setValue(name);
     }
 
     const setValidFormValues = () => {
