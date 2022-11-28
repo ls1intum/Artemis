@@ -49,6 +49,13 @@ public class UserPublicInfoDTO {
         this.isStudent = null;
     }
 
+    /**
+     * Assigns the transient fields isInstructor, isEditor, isTeachingAssistant and isStudent based on the given course and user
+     *
+     * @param course            the course to check the roles for
+     * @param user              the user to check the roles for
+     * @param userPublicInfoDTO the DTO to assign the roles to
+     */
     public static void assignRoleProperties(Course course, User user, UserPublicInfoDTO userPublicInfoDTO) {
         if (course.getStudentGroupName() != null && user.getGroups().contains(course.getStudentGroupName())) {
             userPublicInfoDTO.setIsStudent(true);

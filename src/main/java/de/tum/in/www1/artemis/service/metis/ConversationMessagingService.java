@@ -49,6 +49,13 @@ public class ConversationMessagingService extends PostingService {
         this.conversationMessageRepository = conversationMessageRepository;
     }
 
+    /**
+     * Creates a new message in a conversation
+     *
+     * @param courseId    the id where the conversation is located
+     * @param messagePost the message to be created includes the conversation id
+     * @return the created message
+     */
     public Post createMessage(Long courseId, Post messagePost) {
         if (messagePost.getId() != null) {
             throw new BadRequestAlertException("A new message post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");

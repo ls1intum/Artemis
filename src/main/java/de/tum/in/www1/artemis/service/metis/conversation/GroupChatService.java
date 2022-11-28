@@ -42,11 +42,24 @@ public class GroupChatService {
         this.groupChatRepository = groupChatRepository;
     }
 
+    /**
+     * Gets a group chat by its id from the database or throws an exception if it does not exist
+     *
+     * @param groupChatId the id of the group chat
+     * @return the group chat
+     */
     public GroupChat getGroupChatOrThrow(Long groupChatId) {
         return groupChatRepository.findById(groupChatId)
                 .orElseThrow(() -> new BadRequestAlertException("GroupChat with id " + groupChatId + " does not exist", GROUP_CHAT_ENTITY_NAME, "idnotfound"));
     }
 
+    /**
+     * Creates a new group chat
+     *
+     * @param course          the course the group chat is created in
+     * @param startingMembers the users that are initially part of the group chat
+     * @return the newly created group chat
+     */
     public GroupChat startGroupChat(Course course, Set<User> startingMembers) {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var groupChat = new GroupChat();
@@ -66,6 +79,13 @@ public class GroupChatService {
         return participant;
     }
 
+    /**
+     * Updates the group chat with the given id
+     *
+     * @param groupChatId  the id of the group chat to update
+     * @param groupChatDTO the DTO containing the new group chat data
+     * @return the updated group chat
+     */
     public GroupChat updateGroupChat(Long groupChatId, GroupChatDTO groupChatDTO) {
         var groupChat = getGroupChatOrThrow(groupChatId);
         if (groupChatDTO.getName() != null && !groupChatDTO.getName().equals(groupChat.getName())) {
@@ -77,6 +97,11 @@ public class GroupChatService {
         return updatedGroupChat;
     }
 
+    /**
+     * Checks if the group chat is valid and throws an exception if it is not
+     *
+     * @param groupChat the group chat to check
+     */
     public void groupChatIsValidOrThrow(GroupChat groupChat) {
         var validator = buildDefaultValidatorFactory().getValidator();
         var violations = validator.validate(groupChat);

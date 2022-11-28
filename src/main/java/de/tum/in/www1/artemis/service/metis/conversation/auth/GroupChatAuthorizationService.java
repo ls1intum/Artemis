@@ -22,16 +22,29 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
 
     private final GroupChatRepository groupChatRepository;
 
-    public boolean isMember(Long channelId, Long userId) {
-        return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, userId).isPresent();
-    }
-
     public GroupChatAuthorizationService(ConversationParticipantRepository conversationParticipantRepository, UserRepository userRepository,
             AuthorizationCheckService authorizationCheckService, GroupChatRepository groupChatRepository) {
         super(conversationParticipantRepository, userRepository, authorizationCheckService);
         this.groupChatRepository = groupChatRepository;
     }
 
+    /**
+     * Checks if a user is a member of a group chat
+     *
+     * @param groupChatId the id of the group chat
+     * @param userId      the id of the user
+     * @return true if the user is a member of the group chat, false otherwise
+     */
+    public boolean isMember(Long groupChatId, Long userId) {
+        return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(groupChatId, userId).isPresent();
+    }
+
+    /**
+     * Checks if a user is allowed to create a group chat in a course or throws an exception if not
+     *
+     * @param course the course the group chat should be created in
+     * @param user   the user that wants to create the group chat
+     */
     public void isAllowedToCreateGroupChat(@NotNull Course course, @Nullable User user) {
         user = getUserIfNecessary(user);
         var createdGroupChats = groupChatRepository.countByCreatorIdAndCourseId(user.getId(), course.getId());
@@ -41,6 +54,12 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
     }
 
+    /**
+     * Checks if a user is allowed to add a user to a group chat or throws an exception if not
+     *
+     * @param groupChat the group chat the user should be added to
+     * @param user      the user that wants to add the other user
+     */
     public void isAllowedToAddUsersToGroupChat(@NotNull GroupChat groupChat, @Nullable User user) {
         user = getUserIfNecessary(user);
         if (!isMember(groupChat.getId(), user.getId())) {
@@ -48,6 +67,12 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
         }
     }
 
+    /**
+     * Checks if a user is allowed to edit a group chat or throws an exception if not
+     *
+     * @param groupChat the group chat that should be edited
+     * @param user      the user that wants to edit the group chat
+     */
     public void isAllowedToUpdateGroupChat(@NotNull GroupChat groupChat, @Nullable User user) {
         user = getUserIfNecessary(user);
         if (!isMember(groupChat.getId(), user.getId())) {
@@ -55,6 +80,12 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
         }
     }
 
+    /**
+     * Checks if a user is allowed to remove a user from  a group chat or throws an exception if not
+     *
+     * @param groupChat the group chat the user should be removed from
+     * @param user      the user that wants to remove the other user
+     */
     public void isAllowedToRemoveUsersFromGroupChat(@NotNull GroupChat groupChat, @Nullable User user) {
         user = getUserIfNecessary(user);
         if (!isMember(groupChat.getId(), user.getId())) {

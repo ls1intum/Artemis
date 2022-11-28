@@ -37,6 +37,13 @@ public class ConversationDTOService {
         this.channelAuthorizationService = channelAuthorizationService;
     }
 
+    /**
+     * Creates a ConversationDTO from a Conversation
+     *
+     * @param conversation   the conversation to create the DTO from
+     * @param requestingUser the user requesting the DTO
+     * @return the created ConversationDTO
+     */
     public ConversationDTO convertToDTO(Conversation conversation, User requestingUser) {
         if (conversation instanceof Channel channel) {
             return convertChannelToDto(requestingUser, channel);
@@ -50,6 +57,13 @@ public class ConversationDTOService {
         throw new IllegalArgumentException("Conversation type not supported");
     }
 
+    /**
+     * Creates a ChannelDTO from a Channel
+     *
+     * @param requestingUser the user requesting the DTO
+     * @param channel        the channel to create the DTO from
+     * @return the created ChannelDTO
+     */
     @NotNull
     public ChannelDTO convertChannelToDto(User requestingUser, Channel channel) {
         var channelDTO = new ChannelDTO(channel);
@@ -65,6 +79,13 @@ public class ConversationDTOService {
         return channelDTO;
     }
 
+    /**
+     * Creates a OneToOneChatDTO from a OneToOneChat
+     *
+     * @param requestingUser the user requesting the DTO
+     * @param oneToOneChat   the one to one chat to create the DTO from
+     * @return the created OneToOneChatDTO
+     */
     @NotNull
     public OneToOneChatDTO convertOneToOneChatToDto(User requestingUser, OneToOneChat oneToOneChat) {
         var course = oneToOneChat.getCourse();
@@ -83,6 +104,13 @@ public class ConversationDTOService {
         return oneToOneChatDTO;
     }
 
+    /**
+     * Creates a GroupChatDTO from a GroupChat
+     *
+     * @param requestingUser the user requesting the DTO
+     * @param groupChat      the group chat to create the DTO from
+     * @return the created GroupChatDTO
+     */
     @NotNull
     public GroupChatDTO convertGroupChatToDto(User requestingUser, GroupChat groupChat) {
         var course = groupChat.getCourse();

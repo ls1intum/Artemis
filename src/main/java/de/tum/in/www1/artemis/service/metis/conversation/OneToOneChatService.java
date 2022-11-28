@@ -31,10 +31,28 @@ public class OneToOneChatService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Tries to find a OneToOneChat between two users
+     *
+     * @param courseId the course the OneToOneChat is in
+     * @param userAId  the id of the first user
+     * @param userBId  the id of the second user
+     * @return the OneToOneChat if it exists, otherwise empty optional
+     */
     public Optional<OneToOneChat> findOneToOneChatWithSameMembers(Long courseId, Long userAId, Long userBId) {
         return oneToOneChatRepository.findBetweenUsersWithParticipantsAndUserGroups(courseId, userAId, userBId);
     }
 
+    /**
+     * Creates a new OneToOneChat between two users
+     * <p>
+     * Note: if a OneToOneChat between the two users already exists, it will be returned instead of a new one
+     *
+     * @param course the course the OneToOneChat is in
+     * @param userA  the first user
+     * @param userB  the second user
+     * @return the newly created OneToOneChat or the existing one
+     */
     public OneToOneChat startOneToOneChat(Course course, User userA, User userB) {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var existingChatBetweenUsers = findOneToOneChatWithSameMembers(course.getId(), userA.getId(), userB.getId());
