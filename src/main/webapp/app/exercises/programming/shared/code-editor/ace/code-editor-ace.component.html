@@ -5,7 +5,7 @@
             <span> &nbsp;{{ selectedFile }}</span>
             <fa-icon *ngIf="isLoading" [icon]="faCircleNotch" [spin]="true" class="ms-2" title="{{ 'artemisApp.editor.loadingFile' | artemisTranslate }}"></fa-icon>
         </h3>
-        <div ngbDropdown class="ms-2" placement="bottom-end" [autoClose]="'outside'" aria-label="Code Editor Settings">
+        <div ngbDropdown class="ms-2" placement="bottom-end auto" [autoClose]="'outside'" aria-label="Code Editor Settings">
             <button ngbDropdownToggle class="btn btn-sm btn-primary" type="button" id="dropdownCodeEditorSettings" aria-expanded="false">
                 <fa-icon [icon]="faGear"></fa-icon>
             </button>

@@ -1,0 +1,42 @@
+<jhi-loading-indicator-container [isLoading]="isLoading">
+    <div class="row" *ngIf="course">
+        <div class="col-12">
+            <h1>{{ 'artemisApp.pages.checklist.title' | artemisTranslate }}</h1>
+            <p>
+                {{ 'artemisApp.pages.checklist.explanation' | artemisTranslate }}
+            </p>
+        </div>
+        <hr />
+        <div class="col-12">
+            <p>{{ 'artemisApp.pages.checklist.timeZoneExplanation' | artemisTranslate }}</p>
+            <div class="form-check">
+                <label class="form-check-label" for="timeZone">
+                    {{ 'artemisApp.pages.checklist.timeZone' | artemisTranslate }}
+                </label>
+                <input class="form-check-input" (click)="onNoClick($event)" readonly type="checkbox" value="" id="timeZone" [checked]="isTimeZoneConfigured" />
+            </div>
+            <a [routerLink]="['/course-management', course.id!, 'edit']" class="btn btn-warning btn-md my-2">
+                <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span>{{ 'artemisApp.pages.checklist.editCourse' | artemisTranslate }}</span>
+            </a>
+        </div>
+        <hr />
+        <div class="col-12">
+            <p>{{ 'artemisApp.pages.checklist.configurationExplanation' | artemisTranslate }}</p>
+            <div class="form-check">
+                <input class="form-check-input" (click)="onNoClick($event)" readonly type="checkbox" value="" id="configuration" [checked]="isTutorialGroupConfigurationCreated" />
+                <label class="form-check-label" for="configuration">
+                    {{ 'artemisApp.pages.checklist.configuration' | artemisTranslate }}
+                </label>
+            </div>
+            <a [routerLink]="['/course-management', course.id!, 'create-tutorial-groups-configuration']" class="btn btn-primary btn-md my-2">
+                <fa-icon [icon]="faPlus"></fa-icon>&nbsp;<span>{{ 'artemisApp.pages.checklist.createConfiguration' | artemisTranslate }}</span>
+            </a>
+        </div>
+        <hr />
+        <div class="col-12">
+            <button [routerLink]="['/course-management', course.id!, 'tutorial-groups']" class="btn btn-primary btn-md my-2" [disabled]="!isFullyConfigured">
+                <span>{{ 'artemisApp.pages.checklist.continueToManagement' | artemisTranslate }}</span>
+            </button>
+        </div>
+    </div>
+</jhi-loading-indicator-container>

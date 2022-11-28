@@ -74,7 +74,7 @@
     <!-- Footer -->
     <div class="card-footer row">
         <!-- For real exams, the start date is shown. For test exams, the working window is shown to the students -->
-        <div *ngIf="!exam.testExam && exam.startDate" class="col-sm">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: exam.startDate | artemisDate } }}</div>
+        <div *ngIf="!exam.testExam && exam.startDate" class="col-sm">{{ 'artemisApp.exam.overview.start' | artemisTranslate : { start: exam.startDate | artemisDate } }}</div>
         <div *ngIf="exam.testExam && exam.startDate && exam.endDate" class="col-12">
             {{
                 'artemisApp.exam.overview.testExam.available'
@@ -86,8 +86,8 @@
             }}
         </div>
         <div *ngIf="exam.startDate && exam.endDate" class="col-12">
-            {{ 'artemisApp.exam.overview.duration' | artemisTranslate }} {{ exam.workingTime! | artemisDurationFromSeconds: true }}
+            {{ 'artemisApp.exam.overview.duration' | artemisTranslate }} {{ exam.workingTime! | artemisDurationFromSeconds : true }}
         </div>
-        <div *ngIf="exam.maxPoints" class="col-sm">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate: { points: exam.maxPoints } }}</div>
+        <div *ngIf="exam.maxPoints" class="col-sm">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate : { points: exam.maxPoints } }}</div>
     </div>
 </div>

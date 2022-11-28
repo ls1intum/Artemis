@@ -1,0 +1,11 @@
+.tutorial-group-detail {
+    .scrollbar {
+        position: relative;
+        max-height: 1000px;
+        overflow: auto;
+    }
+
+    .table-wrapper-scroll-y {
+        display: block;
+    }
+}

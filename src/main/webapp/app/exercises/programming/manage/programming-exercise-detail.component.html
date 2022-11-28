@@ -132,7 +132,6 @@
                             type="button"
                             (click)="combineTemplateCommits()"
                             class="btn btn-secondary btn-sm"
-                            container="body"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.combineTemplateCommitsWarning' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.combineTemplateCommits">Combine Template Commits</span>
@@ -144,7 +143,6 @@
                             type="button"
                             (click)="generateStructureOracle()"
                             class="btn btn-secondary btn-sm"
-                            container="body"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
@@ -164,7 +162,6 @@
                             type="button"
                             (click)="getAndShowTestwiseCoverage()"
                             class="btn btn-secondary btn-sm"
-                            container="body"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.testwiseCoverageReport.tooltip' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.button">Show Testwise Coverage</span>
@@ -263,7 +260,7 @@
                 <ng-container *ngIf="programmingExercise.dueDate">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.timeline.afterDueDate">Automatic Submission Run After Due Date</span></dt>
                     <dd>
-                        <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | artemisDate: 'long':true }}</span>
+                        <span>{{ programmingExercise.buildAndTestStudentSubmissionsAfterDueDate | artemisDate : 'long' : true }}</span>
                     </dd>
                 </ng-container>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.enableStaticCodeAnalysis.title">Enable Static Code Analysis</span></dt>
@@ -541,7 +538,7 @@
                 <div *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.buildLogStatistics">
                     <dt>
                         <span jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.title">Build Log Statistics</span>
-                        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildLogStatistics.tooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.programmingExercise.buildLogStatistics.tooltip"></jhi-help-icon>
                     </dt>
                     <dd>
                         <table class="table table-striped">
@@ -561,26 +558,26 @@
                                     <td>
                                         {{
                                             programmingExercise.buildLogStatistics.agentSetupDuration
-                                                ? (programmingExercise.buildLogStatistics.agentSetupDuration | number: '1.2-2') + 's'
+                                                ? (programmingExercise.buildLogStatistics.agentSetupDuration | number : '1.2-2') + 's'
                                                 : '-'
                                         }}
                                     </td>
                                     <td>
                                         {{
                                             programmingExercise.buildLogStatistics.testDuration
-                                                ? (programmingExercise.buildLogStatistics.testDuration | number: '1.2-2') + 's'
+                                                ? (programmingExercise.buildLogStatistics.testDuration | number : '1.2-2') + 's'
                                                 : '-'
                                         }}
                                     </td>
                                     <td>
                                         {{
-                                            programmingExercise.buildLogStatistics.scaDuration ? (programmingExercise.buildLogStatistics.scaDuration | number: '1.2-2') + 's' : '-'
+                                            programmingExercise.buildLogStatistics.scaDuration ? (programmingExercise.buildLogStatistics.scaDuration | number : '1.2-2') + 's' : '-'
                                         }}
                                     </td>
                                     <td>
                                         {{
                                             programmingExercise.buildLogStatistics.totalJobDuration
-                                                ? (programmingExercise.buildLogStatistics.totalJobDuration | number: '1.2-2') + 's'
+                                                ? (programmingExercise.buildLogStatistics.totalJobDuration | number : '1.2-2') + 's'
                                                 : '-'
                                         }}
                                     </td>

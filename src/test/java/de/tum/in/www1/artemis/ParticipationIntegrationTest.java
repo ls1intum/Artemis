@@ -172,6 +172,42 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
+    @WithMockUser(username = "student2")
+    void participateInTextExercise_noReleaseDateStartDateNotReached() throws Exception {
+        textExercise.setReleaseDate(null);
+        textExercise.setStartDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepo.save(textExercise);
+        request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student2")
+    void participateInTextExercise_releaseDateReachedStartDateNotReached() throws Exception {
+        textExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(1));
+        textExercise.setStartDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepo.save(textExercise);
+        request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1")
+    void participateInTextExercise_releaseDateReachedStartDateNotReachedAsTutor() throws Exception {
+        textExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(1));
+        textExercise.setStartDate(ZonedDateTime.now().plusHours(2));
+        exerciseRepo.save(textExercise);
+        request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    void participateInTextExercise_releaseDateReachedStartDateReached() throws Exception {
+        textExercise.setReleaseDate(ZonedDateTime.now().minusMinutes(2));
+        textExercise.setStartDate(ZonedDateTime.now().minusMinutes(1));
+        exerciseRepo.save(textExercise);
+        request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.CREATED);
+    }
+
+    @Test
     @WithMockUser(username = "student3")
     void participateInTextExercise_notStudentInCourse() throws Exception {
         request.post("/api/exercises/" + textExercise.getId() + "/participations", null, HttpStatus.FORBIDDEN);
@@ -444,7 +480,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
         assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
                 .allMatch(participation -> participation.getStudent().isPresent()).as("No submissions should exist for participations")
-                .allMatch(participation -> participation.getSubmissionCount() == 0);
+                .allMatch(participation -> participation.getSubmissionCount() == null || participation.getSubmissionCount() == 0);
     }
 
     @Test
@@ -462,7 +498,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         params.add("withLatestResult", "true");
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
         assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
-                .allMatch(p -> p.getStudent().isPresent()).as("No submissions should exist for participations").allMatch(p -> p.getSubmissionCount() == 0);
+                .allMatch(p -> p.getStudent().isPresent()).as("No submissions should exist for participations")
+                .allMatch(p -> p.getSubmissionCount() == null || p.getSubmissionCount() == 0);
         var participationWithResult = participations.stream().filter(p -> p.getParticipant().equals(database.getUserByLogin("student2"))).findFirst().get();
         assertThat(participationWithResult.getResults()).hasSize(1).contains(result);
     }

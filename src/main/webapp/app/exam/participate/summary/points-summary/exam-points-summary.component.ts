@@ -67,7 +67,10 @@ export class ExamPointsSummaryComponent implements OnInit {
         return this.studentExamWithGrade?.studentResult.overallPointsAchieved ?? 0;
     }
 
-    getMaxPointsSum() {
+    /**
+     * Returns the max. achievable (normal) points. It is possible to exceed this value if there are bonus points.
+     */
+    getMaxNormalPointsSum() {
         return this.studentExamWithGrade?.maxPoints ?? 0;
     }
 
@@ -80,6 +83,13 @@ export class ExamPointsSummaryComponent implements OnInit {
      */
     getMaxBonusPointsSum(): number {
         return this.studentExamWithGrade?.maxBonusPoints ?? 0;
+    }
+
+    /**
+     * Returns the sum of max. achievable normal and bonus points. It is not possible to exceed this value.
+     */
+    getMaxNormalAndBonusPointsSum(): number {
+        return this.getMaxNormalPointsSum() + this.getMaxBonusPointsSum();
     }
 
     private hasAtLeastOneResult(): boolean {

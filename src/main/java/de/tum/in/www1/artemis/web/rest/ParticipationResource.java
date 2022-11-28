@@ -6,6 +6,7 @@ import static java.time.ZonedDateTime.now;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -52,8 +53,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing Participation.
  */
 @RestController
-@RequestMapping("/api")
-@PreAuthorize("hasRole('ADMIN')")
+@RequestMapping("api/")
 public class ParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);
@@ -149,17 +149,17 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
      */
-    @PostMapping("/exercises/{exerciseId}/participations")
+    @PostMapping("exercises/{exerciseId}/participations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Participation> startParticipation(@PathVariable Long exerciseId) throws URISyntaxException {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Participant participant = user;
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        // if the user is a student and the exercise has a release date, they cannot start the exercise before the release date
-        if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(now())) {
+        // Don't allow student to start before the start and release date
+        ZonedDateTime releaseOrStartDate = exercise.getParticipationStartDate();
+        if (releaseOrStartDate != null && releaseOrStartDate.isAfter(now())) {
             if (authCheckService.isOnlyStudentInCourse(exercise.getCourseViaExerciseGroupOrCourseMember(), user)) {
                 throw new AccessForbiddenException("Students cannot start an exercise before the release date");
             }
@@ -176,11 +176,11 @@ public class ParticipationResource {
         }
 
         // if this is a team-based exercise, set the participant to the team that the user belongs to
+        Participant participant = user;
         if (exercise.isTeamMode()) {
             participant = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), user.getId())
                     .orElseThrow(() -> new BadRequestAlertException("Team exercise cannot be started without assigned team.", "participation", "cannotStart"));
         }
-
         StudentParticipation participation = participationService.startExercise(exercise, participant, true);
 
         if (exercise.isExamExercise() && exercise instanceof ProgrammingExercise) {
@@ -205,7 +205,7 @@ public class ParticipationResource {
      * @return the ResponseEntity with status 201 (Created) and the participation within the body, or with status 404 (Not Found)
      * @throws URISyntaxException If the URI for the created participation could not be created
      */
-    @PostMapping("/exercises/{exerciseId}/participations/practice")
+    @PostMapping("exercises/{exerciseId}/participations/practice")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Participation> startPracticeParticipation(@PathVariable Long exerciseId,
@@ -411,7 +411,7 @@ public class ParticipationResource {
      * @param participations for which the individual due date should be updated.
      * @return all participations where the individual due date actually changed.
      */
-    @PutMapping("/exercises/{exerciseId}/participations/update-individual-due-date")
+    @PutMapping("exercises/{exerciseId}/participations/update-individual-due-date")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<StudentParticipation>> updateParticipationDueDates(@PathVariable long exerciseId, @RequestBody List<StudentParticipation> participations) {
         final boolean anyInvalidExerciseId = participations.stream()

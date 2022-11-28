@@ -4,21 +4,21 @@
             <h2 id="myNotificationLabel" jhiTranslate="artemisApp.systemNotification.createOrEditLabel">Create or edit a system notification</h2>
             <div>
                 <div class="form-group" [hidden]="!notification.id">
-                    <label jhiTranslate="global.field.id">ID</label>
-                    <input type="text" class="form-control" name="id" formControlName="id" readonly />
+                    <label for="id" jhiTranslate="global.field.id">ID</label>
+                    <input id="id" type="text" class="form-control" name="id" formControlName="id" readonly />
                 </div>
 
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.systemNotification.title">Title</label>
-                    <input type="text" class="form-control" name="title" formControlName="title" />
+                    <label for="title" class="form-control-label" jhiTranslate="artemisApp.systemNotification.title">Title</label>
+                    <input id="title" type="text" class="form-control" name="title" formControlName="title" />
                 </div>
                 <div class="form-group">
-                    <label class="form-control-label" jhiTranslate="artemisApp.systemNotification.text">Text</label>
-                    <input type="text" class="form-control" name="text" formControlName="text" />
+                    <label for="text" class="form-control-label" jhiTranslate="artemisApp.systemNotification.text">Text</label>
+                    <input id="text" type="text" class="form-control" name="text" formControlName="text" />
                 </div>
                 <div class="form-group">
-                    <label jhiTranslate="artemisApp.systemNotification.type">Type</label>
-                    <select class="form-select" name="type" formControlName="type">
+                    <label for="type" jhiTranslate="artemisApp.systemNotification.type">Type</label>
+                    <select id="type" class="form-select" name="type" formControlName="type">
                         <option *ngFor="let systemNotificationType of systemNotificationTypes" [value]="systemNotificationType.value">{{ systemNotificationType.name }}</option>
                     </select>
                 </div>

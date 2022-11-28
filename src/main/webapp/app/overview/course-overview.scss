@@ -117,9 +117,7 @@ Course Info Bar
     }
 
     .collapsed {
-        margin-top: 16px;
-        margin-left: -12px;
-        margin-right: -12px;
+        margin-top: 1rem;
         border-bottom: 1px solid var(--overview-light-border-color);
     }
 }
@@ -194,4 +192,8 @@ canvas#complete-chart {
     .col-12 {
         width: 100% !important;
     }
+}
+
+.course-exercises-search {
+    width: 100%;
 }

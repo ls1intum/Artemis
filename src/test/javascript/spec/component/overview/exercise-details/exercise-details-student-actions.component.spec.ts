@@ -242,16 +242,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(comp.publishBuildPlanUrl()).toBeUndefined();
     });
 
-    it('should hide the feedback request button', () => {
-        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: false };
-        expect(comp.isManualFeedbackRequestsAllowed()).toBeFalse();
-    });
-
-    it('should show the feedback request button', () => {
-        comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
-        expect(comp.isManualFeedbackRequestsAllowed()).toBeTrue();
-    });
-
     it('should disable the feedback request button', () => {
         const result: Result = { score: 50, rated: true };
         const participation: StudentParticipation = {
@@ -279,9 +269,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     });
 
     it('should show correct buttons in exam mode', fakeAsync(() => {
-        const exercise = { type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
-        exercise.allowOfflineIde = false;
-        exercise.allowOnlineEditor = true;
+        const exercise = { type: ExerciseType.PROGRAMMING, allowOfflineIde: false, allowOnlineEditor: true } as ProgrammingExercise;
         exercise.studentParticipations = [{ initializationState: InitializationState.INITIALIZED } as StudentParticipation];
         comp.exercise = exercise;
         comp.examMode = true;
@@ -308,4 +296,20 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         cloneRepoButton = debugElement.query(By.css('jhi-clone-repo-button'));
         expect(cloneRepoButton).not.toBeNull();
     }));
+
+    // Quiz not supported yet
+    it.each([ExerciseType.PROGRAMMING, ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD])(
+        'should disable start exercise button before start date %s',
+        fakeAsync((type: ExerciseType) => {
+            const exercise = { type, releaseDate: dayjs().subtract(1, 'hour'), startDate: dayjs().add(1, 'hour') } as ProgrammingExercise;
+            comp.exercise = exercise;
+
+            fixture.detectChanges();
+            tick();
+
+            const startExerciseButton = debugElement.query(By.css('button.start-exercise'));
+            expect(startExerciseButton).not.toBeNull();
+            expect(startExerciseButton.componentInstance.overwriteDisabled).toBeTrue();
+        }),
+    );
 });

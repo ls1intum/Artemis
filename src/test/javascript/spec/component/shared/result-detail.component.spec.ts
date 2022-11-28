@@ -72,8 +72,8 @@ describe('ResultDetailComponent', () => {
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Issue,
-                category: 'Code Issue',
-                title: category + ' Issue in file www/packet/File.java at line ' + line + (column != undefined ? ' column ' + column : ''),
+                category: 'artemisApp.result.detail.codeIssue.name',
+                title: 'artemisApp.result.detail.codeIssue.title',
                 text: showDetails ? 'Rule: This is a code issue' : 'This is a code issue',
                 credits: -penalty,
                 actualCredits: credits,
@@ -92,11 +92,11 @@ describe('ResultDetailComponent', () => {
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Test,
-                category: showDetails ? 'Test Case' : 'Feedback',
+                category: showDetails ? 'artemisApp.result.detail.test.name' : 'artemisApp.result.detail.feedback',
                 text: message,
                 credits,
                 positive: credits > 0,
-                title: showDetails ? `Test ${name} ${credits > 0 ? 'passed' : 'failed'}` : undefined,
+                title: showDetails ? (credits > 0 ? 'artemisApp.result.detail.test.passed' : 'artemisApp.result.detail.test.failed') : undefined,
             }),
         };
     };
@@ -112,7 +112,7 @@ describe('ResultDetailComponent', () => {
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Feedback,
-                category: showDetails ? 'Tutor' : 'Feedback',
+                category: showDetails ? 'artemisApp.course.tutor' : 'artemisApp.result.detail.feedback',
                 title,
                 text,
                 credits,
@@ -140,7 +140,15 @@ describe('ResultDetailComponent', () => {
 
         if (!showTestDetails) {
             expectedItems.pop();
-            expectedItems.unshift(makeFeedbackItem({ type: FeedbackItemType.Test, category: 'Feedback', title: '1 passed test', positive: true, credits: 3 }));
+            expectedItems.unshift(
+                makeFeedbackItem({
+                    type: FeedbackItemType.Test,
+                    category: 'artemisApp.result.detail.feedback',
+                    title: 'artemisApp.result.detail.test.passedTest',
+                    positive: true,
+                    credits: 3,
+                }),
+            );
         }
 
         return { feedbacks, expectedItems };
@@ -373,9 +381,9 @@ describe('ResultDetailComponent', () => {
         };
 
         const expectedFeedbackItem: FeedbackItem = {
-            category: 'Test Case',
+            category: 'artemisApp.result.detail.test.name',
             credits: 0.3,
-            title: 'No result information for automaticTestCase1',
+            title: 'artemisApp.result.detail.test.noInfo',
             type: FeedbackItemType.Test,
             text: undefined,
             previewText: undefined,
@@ -398,7 +406,7 @@ describe('ResultDetailComponent', () => {
 
         const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
-            category: 'Tutor',
+            category: 'artemisApp.course.tutor',
             title: feedback.text,
             text: 'Grading Instruction Feedback\nManual tutor feedback',
             credits: 0,
@@ -436,7 +444,7 @@ describe('ResultDetailComponent', () => {
 
         const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
-            category: 'Feedback',
+            category: 'artemisApp.result.detail.feedback',
             title: feedback.text,
             text: 'Grading Instruction Feedback\nManual tutor feedback',
             credits: 0,
@@ -458,7 +466,7 @@ describe('ResultDetailComponent', () => {
 
         const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Policy,
-            category: 'Submission Policy',
+            category: 'artemisApp.programmingExercise.submissionPolicy.title',
             title: 'Submission Penalty Policy',
             text: feedback.detailText,
             previewText: undefined,
@@ -478,7 +486,7 @@ describe('ResultDetailComponent', () => {
 
         const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
-            category: 'Feedback',
+            category: 'artemisApp.result.detail.feedback',
             title: feedback.text,
             text: feedback.detailText,
             previewText: 'Multi',
@@ -498,7 +506,7 @@ describe('ResultDetailComponent', () => {
 
         const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
-            category: 'Feedback',
+            category: 'artemisApp.result.detail.feedback',
             title: feedback.text,
             text: feedback.detailText,
             previewText: '0'.repeat(300),
@@ -529,7 +537,7 @@ describe('ResultDetailComponent', () => {
                 rule: 'Checkstyle',
             };
             baseExpectedFeedbackItem = {
-                category: 'Code Issue',
+                category: 'artemisApp.result.detail.codeIssue.name',
                 type: FeedbackItemType.Issue,
                 actualCredits: 0,
                 credits: 0,
@@ -542,7 +550,7 @@ describe('ResultDetailComponent', () => {
         it('should show start and end lines', () => {
             baseScaIssue.endLine = 4;
             const feedback = createScaFeedback('SCA Rule', baseScaIssue);
-            baseExpectedFeedbackItem.title = 'SCA Rule Issue in file src/Main.java at lines 1-4';
+            baseExpectedFeedbackItem.title = 'artemisApp.result.detail.codeIssue.title';
 
             shouldGenerateFeedbackItem(feedback, baseExpectedFeedbackItem);
         });
@@ -550,7 +558,7 @@ describe('ResultDetailComponent', () => {
         it('should only show start line if end line is identical', () => {
             baseScaIssue.endLine = baseScaIssue.startLine;
             const feedback = createScaFeedback('SCA Rule', baseScaIssue);
-            baseExpectedFeedbackItem.title = 'SCA Rule Issue in file src/Main.java at line 1';
+            baseExpectedFeedbackItem.title = 'artemisApp.result.detail.codeIssue.title';
 
             shouldGenerateFeedbackItem(feedback, baseExpectedFeedbackItem);
         });
@@ -560,7 +568,7 @@ describe('ResultDetailComponent', () => {
             baseScaIssue.startColumn = 3;
             baseScaIssue.endColumn = 40;
             const feedback = createScaFeedback('SCA Rule', baseScaIssue);
-            baseExpectedFeedbackItem.title = 'SCA Rule Issue in file src/Main.java at lines 1-4 columns 3-40';
+            baseExpectedFeedbackItem.title = 'artemisApp.result.detail.codeIssue.title';
 
             shouldGenerateFeedbackItem(feedback, baseExpectedFeedbackItem);
         });
@@ -570,7 +578,7 @@ describe('ResultDetailComponent', () => {
             baseScaIssue.startColumn = 45;
             baseScaIssue.endColumn = 45;
             const feedback = createScaFeedback('SCA Rule', baseScaIssue);
-            baseExpectedFeedbackItem.title = 'SCA Rule Issue in file src/Main.java at line 1 column 45';
+            baseExpectedFeedbackItem.title = 'artemisApp.result.detail.codeIssue.title';
 
             shouldGenerateFeedbackItem(feedback, baseExpectedFeedbackItem);
         });

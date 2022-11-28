@@ -252,7 +252,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         instructor_dashboard: 'entity.action.instructorDashboard',
         assessment_dashboard: 'artemisApp.assessmentDashboard.home.title',
         test_run_exercise_assessment_dashboard: 'artemisApp.exerciseAssessmentDashboard.home.title',
-        lti_configuration: 'artemisApp.programmingExercise.home.title',
+        lti_configuration: 'artemisApp.lti.home.title',
         teams: 'artemisApp.team.home.title',
         exercise_hints: 'artemisApp.exerciseHint.home.title',
         ratings: 'artemisApp.ratingList.pageTitle',
@@ -310,6 +310,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutorial_groups_management: 'artemisApp.pages.tutorialGroupsManagement.title',
         tutorial_groups: 'artemisApp.breadcrumb.title',
         registered_students: 'artemisApp.pages.registeredStudents.title',
+        sessions: 'artemisApp.pages.tutorialGroupSessionManagement.title',
+        tutorial_free_days: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
+        tutorial_groups_checklist: 'artemisApp.pages.checklist.title',
+        create_tutorial_groups_configuration: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
     };
 
     studentPathBreadcrumbTranslations = {

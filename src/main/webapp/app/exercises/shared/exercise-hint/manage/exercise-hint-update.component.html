@@ -17,7 +17,7 @@
                 <div class="form-group">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.description" for="field_description">Description</label>
-                        <jhi-help-icon placement="auto" text="artemisApp.exerciseHint.descriptionTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.exerciseHint.descriptionTooltip"></jhi-help-icon>
                     </div>
                     <input type="text" required minlength="3" class="form-control" name="description" id="field_description" [(ngModel)]="exerciseHint.description" />
                 </div>
@@ -25,7 +25,7 @@
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.task" for="field_task">Task</label>
                         <ng-container *ngIf="exerciseHint.type === 'code'">
-                            <jhi-help-icon placement="auto" text="artemisApp.exerciseHint.taskTooltip"></jhi-help-icon>
+                            <jhi-help-icon text="artemisApp.exerciseHint.taskTooltip"></jhi-help-icon>
                         </ng-container>
                     </div>
                     <select class="form-select" required name="task" [(ngModel)]="this.exerciseHint.programmingExerciseTask" id="field_task">
@@ -36,7 +36,7 @@
                 <div class="form-group">
                     <div>
                         <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.displayThreshold" for="field_description">Display Threshold</label>
-                        <jhi-help-icon placement="auto" text="artemisApp.exerciseHint.displayThresholdTooltip"></jhi-help-icon>
+                        <jhi-help-icon text="artemisApp.exerciseHint.displayThresholdTooltip"></jhi-help-icon>
                     </div>
                     <input
                         type="number"

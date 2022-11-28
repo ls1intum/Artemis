@@ -50,7 +50,7 @@ public class AnswerPostService extends PostingService {
     /**
      * Checks course, user and answer post and associated post validity,
      * determines the associated post, the answer post's author,
-     * sets to approved if author is at least a tutor,
+     * sets resolves post to false by default,
      * persists the answer post, and sends a notification to affected user groups
      *
      * @param courseId   id of the course the answer post belongs to
@@ -68,6 +68,9 @@ public class AnswerPostService extends PostingService {
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
 
+        // increase answerCount of post needed for sorting
+        post.setAnswerCount(post.getAnswerCount() + 1);
+
         // use post from database rather than user input
         answerPost.setPost(post);
         // set author to current user
@@ -76,6 +79,8 @@ public class AnswerPostService extends PostingService {
         // on creation of an answer post, we set the resolves_post field to false per default
         answerPost.setResolvesPost(false);
         AnswerPost savedAnswerPost = answerPostRepository.save(answerPost);
+        postRepository.save(post);
+
         this.preparePostAndBroadcast(savedAnswerPost, course);
         sendNotification(post, answerPost, course);
 
@@ -109,6 +114,9 @@ public class AnswerPostService extends PostingService {
             // check if requesting user is allowed to mark this answer post as resolving, i.e. if user is author or original post or at least tutor
             mayMarkAnswerPostAsResolvingElseThrow(existingAnswerPost, user, course);
             existingAnswerPost.setResolvesPost(answerPost.doesResolvePost());
+            // sets the post as resolved if there exists any resolving answer
+            existingAnswerPost.getPost().setResolved(existingAnswerPost.getPost().getAnswers().stream().anyMatch(answer -> answer.doesResolvePost()));
+            postRepository.save(existingAnswerPost.getPost());
         }
         else {
             // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
@@ -137,7 +145,8 @@ public class AnswerPostService extends PostingService {
 
     /**
      * Checks course and user validity,
-     * determines authority to delete post and deletes the post
+     * determines authority to delete and deletes the answer post
+     * reduces answerCount of post and updates resolved status
      *
      * @param courseId     id of the course the answer post belongs to
      * @param answerPostId id of the answer post to delete
@@ -148,15 +157,25 @@ public class AnswerPostService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         AnswerPost answerPost = this.findById(answerPostId);
+        Post post = postRepository.findPostByIdElseThrow(answerPost.getPost().getId());
+
         mayUpdateOrDeletePostingElseThrow(answerPost, user, course);
+
+        // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
+        post.removeAnswerPost(answerPost);
+
+        // decrease answerCount of post needed for sorting
+        post.setAnswerCount(post.getAnswerCount() - 1);
+
+        // sets the post as resolved if there exists any resolving answer
+        post.setResolved(post.getAnswers().stream().anyMatch(answerPost1 -> answerPost1.doesResolvePost()));
+        // deletes the answerPost from database and persists updates on the post properties
+        postRepository.save(post);
 
         // delete
         answerPostRepository.deleteById(answerPostId);
 
-        // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
-        Post updatedPost = answerPost.getPost();
-        updatedPost.removeAnswerPost(answerPost);
-        broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
+        broadcastForPost(new PostDTO(post, MetisCrudAction.UPDATE), course);
     }
 
     /**

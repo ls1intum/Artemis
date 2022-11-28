@@ -141,7 +141,7 @@ GitLab Server Quickstart
 
 The following steps describes how to set up the GitLab server in a semi-automated way.
 This is ideal as a quickstart for developers. For a more detailed setup, see
-`Manual Gitlab Server Setup <#gitlab-server-setup>`__.
+`Manual Gitlab Server Setup <#manual-gitlab-server-setup>`__.
 In a production setup, you have to at least change the root password (by either specifying it in step 1 or extracting
 the random password in step 2) and generate random access tokens (instead of the pre-defined values).
 Set the variable ``GENERATE_ACCESS_TOKENS`` to ``true`` in the ``gitlab-local-setup.sh`` script and use the generated
@@ -262,7 +262,8 @@ Start GitLab
 
 3. Wait a couple of minutes until the container is deployed and GitLab
    is set up, then open the instance in you browser.
-   You can get the initial password for the ``root`` user using ``docker exec gitlab cat /etc/gitlab/initial_root_password``.
+   You can get the initial password for the ``root`` user using
+   ``docker exec gitlab cat /etc/gitlab/initial_root_password``.
 
 4. We recommend to rename the ``root`` admin user to ``artemis``. To rename
    the user, click on the image on the top right and select ``Settings``.
@@ -416,7 +417,8 @@ GitLab Access Token
     Navigate to ``GITLAB-URL/-/profile/keys`` and add the SSH key by pasting the content of the public key.
 
     ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename). It will
-    be used in the configuration of Artemis to specify where Artemis should look for the key and store the ``known_hosts`` file.
+    be used in the configuration of Artemis to specify where Artemis should look for the key and store
+    the ``known_hosts`` file.
 
     ``<ssh-private-key-password>`` is the password used to secure the private key. It is also needed for the
     configuration of Artemis, but can be omitted if no password was set (e.g. for development environments).
@@ -442,7 +444,8 @@ starting a new container with the old volumes:
 See https://hub.docker.com/r/gitlab/gitlab-ce/ for the latest version.
 You can also specify an earlier one.
 
-Note that **upgrading to a major version** may require following an upgrade path. You can view supported paths `here <https://docs.gitlab.com/ee/update/#upgrade-paths>`__.
+Note that **upgrading to a major version** may require following an upgrade path. You can view supported paths
+`here <https://docs.gitlab.com/ee/update/#upgrade-paths>`__.
 
 Start a GitLab container just as described in `Start-Gitlab <#start-gitlab>`__ and wait for a couple of minutes. GitLab
 should configure itself automatically. If there are no issues, you can
@@ -457,7 +460,8 @@ Automated Jenkins Server Setup
 """"""""""""""""""""""""""""""
 
 The following steps describe how to deploy a pre-configured version of the Jenkins server.
-This is ideal as a quickstart for developers. For a more detailed setup, see `Manual Jenkins Server Setup <#manual-jenkins-server-setup>`__.
+This is ideal as a quickstart for developers. For a more detailed setup, see
+`Manual Jenkins Server Setup <#manual-jenkins-server-setup>`__.
 In a production setup, you have to at least change the user credentials (in the file ``jenkins-casc-config.yml``) and
 generate random access tokens and push tokens.
 
@@ -714,7 +718,8 @@ recommended ones that got installed during the setup process):
     **Note:** This is a suite of plugins that will install multiple plugins
 
 4. `Pipeline Maven <https://plugins.jenkins.io/pipeline-maven/>`__ to use maven within the pipelines. If you want to
-   use Docker for your build agents you may also need to install `Docker Pipeline <https://plugins.jenkins.io/docker-workflow/>`__ .
+   use Docker for your build agents you may also need to install
+   `Docker Pipeline <https://plugins.jenkins.io/docker-workflow/>`__ .
 
 5. `Matrix Authorization Strategy Plugin <https://plugins.jenkins.io/matrix-auth/>`__ for configuring permissions
    for users on a project and build plan level (Matrix Authorization Strategy might already be installed).
@@ -950,7 +955,8 @@ and the corresponding Docker image can be found on
 `dockerhub <https://hub.docker.com/r/jenkins/jenkins/tags?page=1&ordering=last_updated>`__.
 
 1. Open the Jenkins Dockerfile and replace the value of ``FROM`` with ``jenkins/jenkins:lts``.
-   After running the command ``docker pull jenkins/jenkins:lts``, this will use the latest LTS version in the following steps.
+   After running the command ``docker pull jenkins/jenkins:lts``, this will use the latest LTS version
+   in the following steps.
    You can also use a specific LTS version.
    For example, if you want to upgrade Jenkins to version ``2.289.2``, you will need to use the
    ``jenkins/jenkins:2.289.2-lts`` image.
@@ -1060,7 +1066,8 @@ Agent setup:
 
     3. If an permission error occurs, try to restart the docker container
 
-12. Now you can exit the container executing ``exit`` twice (the first will exit the jenkins user and the second the container)
+12. Now you can exit the container executing ``exit`` twice (the first will exit the jenkins user and
+    the second the container)
 
 Add agent in Jenkins:
 
@@ -1152,21 +1159,21 @@ Prerequisites:
       Jenkins SSH Credentials
 
 8. Add a new node (select a name and select `Permanent Agent`):
-    Set the number of executors so that it matches your machine's specs: This is the number of concurrent builds
-    this agent can handle. It is recommended to match the number of cores of the machine,
-    but you might want to adjust this later if needed.
+   Set the number of executors so that it matches your machine's specs: This is the number of concurrent builds
+   this agent can handle. It is recommended to match the number of cores of the machine,
+   but you might want to adjust this later if needed.
 
-    Set the remote root directory to ``/home/jenkins/remote_agent``.
+   Set the remote root directory to ``/home/jenkins/remote_agent``.
 
-    Set the usage to `Only build jobs with label expressions matching this node`.
-    This ensures that only docker-jobs will be built on this agent, and not other jobs.
+   Set the usage to `Only build jobs with label expressions matching this node`.
+   This ensures that only docker-jobs will be built on this agent, and not other jobs.
 
-    Add a label ``docker`` to the agent.
+   Add a label ``docker`` to the agent.
 
-    Set the launch method to `Launch via SSH` and add the host of the machine.
-    Select the credentials you just created and select `Manually trusted key Verification Strategy`
-    as Host key verification Strategy.
-    Save it.
+   Set the launch method to `Launch via SSH` and add the host of the machine.
+   Select the credentials you just created and select `Manually trusted key Verification Strategy`
+   as Host key verification Strategy.
+   Save it.
 
 
    .. figure:: setup/jenkins-gitlab/jenkins_node.png
@@ -1175,7 +1182,7 @@ Prerequisites:
       Add a Jenkins node
 
 9. Wait for some moments while jenkins installs it's remote agent on the agent's machine.
-    You can track the progress using the `Log` page when selecting the agent. System information should also be available.
+   You can track the progress using the `Log` page when selecting the agent. System information should also be available.
 
 10. Change the settings of the master node to be used only for specific jobs.
     This ensures that the docker tasks are not executed on the master agent but on the remote agent.

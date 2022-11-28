@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.repository.BonusRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BonusService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
@@ -31,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing bonus
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 public class BonusResource {
 
     private final Logger log = LoggerFactory.getLogger(BonusResource.class);
@@ -69,7 +70,7 @@ public class BonusResource {
      * @param includeSourceGradeSteps flag to determine if the GradeSteps for the source grading scale should be included in the response. Default is false.
      * @return ResponseEntity with status 200 (Ok) with body the bonus if it exists and 404 (Not found) otherwise
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/bonus")
+    @GetMapping("courses/{courseId}/exams/{examId}/bonus")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Bonus> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(required = false) boolean includeSourceGradeSteps) {
         log.debug("REST request to get bonus for exam: {}", examId);
@@ -101,8 +102,9 @@ public class BonusResource {
      * @param sourcePoints         points achieved by the student at the source grading scale's course or exam
      * @return final grade and points with bonus
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/bonus/calculate-raw")
-    @PreAuthorize("hasRole('ADMIN')")
+    @GetMapping("courses/{courseId}/exams/{examId}/bonus/calculate-raw")
+    @EnforceAdmin
+    // TODO: Ignore this in automated tests as this is only used for testing purposes
     public ResponseEntity<BonusExampleDTO> calculateGradeWithBonus(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam BonusStrategy bonusStrategy,
             @RequestParam Double calculationSign, @RequestParam Double bonusToPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
 
@@ -125,7 +127,7 @@ public class BonusResource {
      * @return ResponseEntity with status 201 (Created) with body the new bonus if no such exists for the course
      * and if it is correctly formatted and 400 (Bad request) otherwise
      */
-    @PostMapping("/courses/{courseId}/exams/{examId}/bonus")
+    @PostMapping("courses/{courseId}/exams/{examId}/bonus")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Bonus> createBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Bonus bonus) throws URISyntaxException {
         log.debug("REST request to create a bonus for exam: {}", examId);
@@ -182,43 +184,43 @@ public class BonusResource {
     }
 
     /**
-     * PUT /courses/{courseId}/exams/{examId}/bonus/{bonusId} : Update bonus applying to exam
+     * PUT /courses/{courseId}/exams/{examId}/bonus/{bonusId} : Update updatedBonus applying to exam
      *
      * @param courseId the course to which the exam belongs
-     * @param examId   the exam to which the bonus belongs
-     * @param bonus    the bonus which will be updated
-     * @param bonusId  the id of the bonus to update
-     * @return ResponseEntity with status 200 (Ok) with body the newly updated bonus if it is correctly formatted and 400 (Bad request) otherwise
+     * @param examId   the exam to which the updatedBonus belongs
+     * @param updatedBonus    the updatedBonus which will be updated
+     * @param bonusId  the id of the updatedBonus to update
+     * @return ResponseEntity with status 200 (Ok) with body the newly updated updatedBonus if it is correctly formatted and 400 (Bad request) otherwise
      */
-    @PutMapping("/courses/{courseId}/exams/{examId}/bonus/{bonusId}")
+    @PutMapping("courses/{courseId}/exams/{examId}/bonus/{bonusId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Bonus> updateBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId, @RequestBody Bonus bonus) {
-        log.debug("REST request to update a bonus: {}", bonusId);
+    public ResponseEntity<Bonus> updateBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId, @RequestBody Bonus updatedBonus) {
+        log.debug("REST request to update a updatedBonus: {}", bonusId);
 
-        if (!Objects.equals(bonus.getId(), bonusId)) {
-            throw new ConflictException("The bonus id in the body and path do not match", ENTITY_NAME, "bonusIdMismatch");
+        if (!Objects.equals(updatedBonus.getId(), bonusId)) {
+            throw new ConflictException("The updatedBonus id in the body and path do not match", ENTITY_NAME, "bonusIdMismatch");
         }
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        Bonus oldBonus = bonusRepository.findByIdElseThrow(bonus.getId());
+        Bonus oldBonus = bonusRepository.findByIdElseThrow(updatedBonus.getId());
         checkBonusAppliesToExam(oldBonus, examId);
 
         GradingScale bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByBonusFromId(oldBonus.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Grading Scale From Bonus", bonus.getId()));
+                .orElseThrow(() -> new EntityNotFoundException("Grading Scale From Bonus", updatedBonus.getId()));
 
         boolean isSourceGradeScaleUpdated = false;
-        if (bonus.getSourceGradingScale() != null && !oldBonus.getSourceGradingScale().getId().equals(bonus.getSourceGradingScale().getId())) {
-            var sourceFromDb = gradingScaleRepository.findById(bonus.getSourceGradingScale().getId()).orElseThrow();
-            bonus.setSourceGradingScale(sourceFromDb);
+        if (updatedBonus.getSourceGradingScale() != null && !oldBonus.getSourceGradingScale().getId().equals(updatedBonus.getSourceGradingScale().getId())) {
+            var sourceFromDb = gradingScaleRepository.findById(updatedBonus.getSourceGradingScale().getId()).orElseThrow();
+            updatedBonus.setSourceGradingScale(sourceFromDb);
             checkIsAtLeastInstructorForGradingScaleCourse(sourceFromDb);
             isSourceGradeScaleUpdated = true;
         }
 
-        bonusToGradingScale.addBonusFrom(bonus);
-        bonusToGradingScale.setBonusStrategy(bonus.getBonusStrategy());
+        bonusToGradingScale.addBonusFrom(updatedBonus);
+        bonusToGradingScale.setBonusStrategy(updatedBonus.getBonusStrategy());
         gradingScaleRepository.save(bonusToGradingScale);
-        Bonus savedBonus = bonusService.saveBonus(bonus, isSourceGradeScaleUpdated);
+        Bonus savedBonus = bonusService.saveBonus(updatedBonus, isSourceGradeScaleUpdated);
 
         filterBonusForResponse(savedBonus, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
@@ -244,7 +246,7 @@ public class BonusResource {
      * @param bonusId  the id of the bonus to delete
      * @return ResponseEntity with status 200 (Ok) if the bonus is successfully deleted and 400 (Bad request) otherwise
      */
-    @DeleteMapping("/courses/{courseId}/exams/{examId}/bonus/{bonusId}")
+    @DeleteMapping("courses/{courseId}/exams/{examId}/bonus/{bonusId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId) {
         log.debug("REST request to delete the bonus: {}", bonusId);

@@ -1,6 +1,8 @@
-import { COURSE, COURSES, COURSE_STUDENTS, COURSE_INSTRUCTORS, COURSE_TUTORS } from './endpoints.js';
+import { COURSE, COURSES, COURSE_STUDENTS, COURSE_INSTRUCTORS, COURSE_TUTORS, ADMIN_COURSES, ADMIN_COURSE } from './endpoints.js';
 import { nextAlphanumeric } from '../util/utils.js';
 import { fail } from 'k6';
+import http from 'k6/http';
+import { FormData } from 'https://jslib.k6.io/formdata/0.0.2/index.js';
 
 export function getCourse(artemis, courseId) {
     const res = JSON.parse(artemis.get(COURSE(courseId), null));
@@ -38,7 +40,10 @@ export function newCourse(artemis) {
         endDate: endDate,
     };
 
-    const res = artemis.post(COURSES, course);
+    const formData = new FormData();
+    formData.append('course', http.file(JSON.stringify(course), 'course', 'application/json'));
+
+    const res = artemis.post(ADMIN_COURSES, undefined, undefined, formData);
     if (res[0].status !== 201) {
         console.log('ERROR when creating a new course. Response headers:');
         for (let [key, value] of Object.entries(res[0].headers)) {
@@ -82,7 +87,7 @@ export function removeUserFromInstructorsInCourse(artemis, username, courseId) {
 }
 
 export function deleteCourse(artemis, courseId) {
-    const res = artemis.delete(COURSE(courseId));
+    const res = artemis.delete(ADMIN_COURSE(courseId));
 
     if (res[0].status !== 200) {
         fail('FAILTEST: Unable to delete course ' + courseId);

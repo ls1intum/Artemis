@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
@@ -18,6 +18,10 @@ import { TutorialGroupsTableStubComponent } from '../../../stubs/tutorial-groups
 import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
+import { Course } from 'app/entities/course.model';
+import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
+import { NgbDropdownModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({ selector: 'jhi-tutorial-groups-course-information', template: '' })
 class MockTutorialGroupsCourseInformationComponent {
@@ -36,17 +40,23 @@ class MockTutorialGroupsImportButtonComponent {
 describe('TutorialGroupsManagementComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsManagementComponent>;
     let component: TutorialGroupsManagementComponent;
+    const configuration = generateExampleTutorialGroupsConfiguration({});
+    const course = { id: 1, title: 'Example', isAtLeastInstructor: true } as Course;
 
     let tutorialGroupTwo: TutorialGroup;
     let tutorialGroupOne: TutorialGroup;
 
     let tutorialGroupsService: TutorialGroupsService;
+    let configurationService: TutorialGroupsConfigurationService;
     let getAllOfCourseSpy: jest.SpyInstance;
+    let getOneOfCourseSpy: jest.SpyInstance;
+    let navigateSpy: jest.SpyInstance;
 
     const router = new MockRouter();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [NgbDropdownModule],
             declarations: [
                 TutorialGroupsManagementComponent,
                 MockTutorialGroupsCourseInformationComponent,
@@ -55,10 +65,12 @@ describe('TutorialGroupsManagementComponent', () => {
                 TutorialGroupRowButtonsStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
+                MockDirective(NgbTooltip),
                 MockRouterLinkDirective,
                 MockTutorialGroupsImportButtonComponent,
             ],
             providers: [
+                MockProvider(TutorialGroupsConfigurationService),
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
                 { provide: Router, useValue: router },
@@ -66,10 +78,7 @@ describe('TutorialGroupsManagementComponent', () => {
                     {},
                     {},
                     {
-                        course: {
-                            id: 1,
-                            isAtLeastInstructor: true,
-                        },
+                        course,
                     },
                     {},
                 ),
@@ -91,10 +100,15 @@ describe('TutorialGroupsManagementComponent', () => {
                         }),
                     ),
                 );
+                configurationService = TestBed.inject(TutorialGroupsConfigurationService);
+                getOneOfCourseSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: configuration })));
+                navigateSpy = jest.spyOn(router, 'navigate');
+                navigateSpy.mockClear();
             });
     });
 
     afterEach(() => {
+        fixture.destroy();
         jest.restoreAllMocks();
     });
 
@@ -103,6 +117,8 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(component).not.toBeNull();
         expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
+        expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
+        expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
     });
 
     it('should get all tutorial groups for course', () => {
@@ -110,21 +126,26 @@ describe('TutorialGroupsManagementComponent', () => {
         expect(component.tutorialGroups).toEqual([tutorialGroupOne, tutorialGroupTwo]);
         expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
+        expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
+        expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
     });
 
     it('should get all tutorial groups for course if import is done', () => {
         fixture.detectChanges();
         getAllOfCourseSpy.mockClear();
+        getOneOfCourseSpy.mockClear();
+        expect(getOneOfCourseSpy).not.toHaveBeenCalled();
         expect(getAllOfCourseSpy).not.toHaveBeenCalled();
         const mockTutorialGroupImportButtonComponent = fixture.debugElement.query(By.directive(MockTutorialGroupsImportButtonComponent)).componentInstance;
         mockTutorialGroupImportButtonComponent.importFinished.emit();
         expect(getAllOfCourseSpy).toHaveBeenCalledOnce();
         expect(getAllOfCourseSpy).toHaveBeenCalledWith(1);
+        expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
+        expect(getOneOfCourseSpy).toHaveBeenCalledWith(1);
     });
 
     it('should navigate to tutorial group detail page when tutorial group click callback is called', () => {
-        fixture.detectChanges();
-        const navigateSpy = jest.spyOn(router, 'navigate');
+        component.courseId = 1;
         component.onTutorialGroupSelected(tutorialGroupOne);
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['/course-management', 1, 'tutorial-groups', tutorialGroupOne.id]);

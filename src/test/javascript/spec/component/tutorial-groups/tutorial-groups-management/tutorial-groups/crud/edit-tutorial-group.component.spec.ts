@@ -20,6 +20,7 @@ describe('EditTutorialGroupComponent', () => {
     let component: EditTutorialGroupComponent;
     let findTutorialGroupSpy: jest.SpyInstance;
     let tutorialGroupService: TutorialGroupsService;
+    const course = { id: 2, title: 'Example' };
 
     let exampleTutorialGroup: TutorialGroup;
 
@@ -38,10 +39,8 @@ describe('EditTutorialGroupComponent', () => {
                         tutorialGroupId: 1,
                     },
                     {},
+                    { course },
                     {},
-                    {
-                        courseId: 2,
-                    },
                 ),
             ],
         })
@@ -88,6 +87,12 @@ describe('EditTutorialGroupComponent', () => {
 
     it('should send PUT request upon form submission and navigate', () => {
         fixture.detectChanges();
+        delete exampleTutorialGroup.isUserRegistered;
+        delete exampleTutorialGroup.isUserTutor;
+        delete exampleTutorialGroup.course;
+        delete exampleTutorialGroup.numberOfRegisteredUsers;
+        delete exampleTutorialGroup.courseTitle;
+        delete exampleTutorialGroup.teachingAssistantName;
 
         const changedTutorialGroup = {
             ...exampleTutorialGroup,

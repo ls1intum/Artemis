@@ -80,8 +80,7 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
 
                 const domElem = (componentRef.hostView as EmbeddedViewRef<any>).rootNodes[0] as HTMLElement;
                 const taskHtmlContainer = taskHtmlContainers[i];
-                taskHtmlContainer.innerHTML = '';
-                taskHtmlContainer.append(domElem);
+                taskHtmlContainer.replaceChildren(domElem);
             }
         });
     };
@@ -96,13 +95,10 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
         const extension: ShowdownExtension = {
             type: 'lang',
             filter: (text: string) => {
-                const idPlaceholder = '%idPlaceholder%';
                 // E.g. [task][Implement BubbleSort](testBubbleSort)
                 const taskRegex = /\[task\]\[.*\]\(.*\)({.*})?/g;
                 // E.g. Implement BubbleSort, testBubbleSort
                 const innerTaskRegex = /\[task\]\[(.*)\]\((.*)\)({(.*)})?/;
-                // Without class="d-flex" the injected components height would be 0.
-                const taskContainer = `<div class="pe-task-${idPlaceholder} d-flex"></div>`;
                 const tasks = text.match(taskRegex) || [];
                 const testsForTask: TaskArray = tasks
                     .map((task) => {
@@ -132,7 +128,9 @@ export class ProgrammingExerciseTaskExtensionWrapper implements ArtemisShowdownE
                 return testsForTask.reduce(
                     (acc: string, { completeString: task, id }): string =>
                         // Insert anchor divs into the text so that injectable elements can be inserted into them.
-                        acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), taskContainer.replace(idPlaceholder, id.toString())),
+                        // Without class="d-flex" the injected components height would be 0.
+                        // Added zero-width space as content so the div actually consumes a line to prevent a <ol> display bug in Safari
+                        acc.replace(new RegExp(escapeStringForUseInRegex(task), 'g'), `<div class="pe-task-${id.toString()} d-flex">&#8203;</div>`),
                     text,
                 );
             },

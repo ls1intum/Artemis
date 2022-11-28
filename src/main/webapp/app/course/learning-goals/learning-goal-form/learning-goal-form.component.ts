@@ -9,6 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { intersection } from 'lodash-es';
 import { LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Async Validator to make sure that a learning goal title is unique within a course
@@ -68,9 +69,16 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     @Input()
     isEditMode = false;
     @Input()
+    isInSingleLectureMode = false;
+    @Input()
     courseId: number;
     @Input()
     lecturesOfCourseWithLectureUnits: Lecture[] = [];
+
+    @Input()
+    hasCancelButton: boolean;
+    @Output()
+    onCancel: EventEmitter<any> = new EventEmitter<any>();
 
     titleUniqueValidator = titleUniqueValidator;
     learningGoalTaxonomy = LearningGoalTaxonomy;
@@ -81,6 +89,8 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     form: FormGroup;
     selectedLectureInDropdown: Lecture;
     selectedLectureUnitsInTable: LectureUnit[] = [];
+
+    faTimes = faTimes;
 
     constructor(
         private fb: FormBuilder,
@@ -126,6 +136,10 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
         });
         this.selectedLectureUnitsInTable = [];
+
+        if (this.isInSingleLectureMode) {
+            this.selectLectureInDropdown(this.lecturesOfCourseWithLectureUnits.first()!);
+        }
     }
 
     private setFormValues(formData: LearningGoalFormData) {
@@ -133,6 +147,10 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         if (formData.connectedLectureUnits) {
             this.selectedLectureUnitsInTable = formData.connectedLectureUnits;
         }
+    }
+
+    cancelForm() {
+        this.onCancel.emit();
     }
 
     submitForm() {

@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 @Service
 public class FileUploadExerciseImportService extends ExerciseImportService {
 
-    private final Logger log = LoggerFactory.getLogger(TextExerciseImportService.class);
+    private final Logger log = LoggerFactory.getLogger(FileUploadExerciseImportService.class);
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 

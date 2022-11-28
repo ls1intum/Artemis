@@ -12,7 +12,7 @@
 #### Server
 - [ ] I followed the [coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/server/).
 - [ ] I added multiple integration tests (Spring) related to the features (with a high test coverage).
-- [ ] I added `@PreAuthorize` and checked the course groups for all new REST Calls (security).
+- [ ] I added pre-authorization annotations according to the [guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/server/#rest-endpoint-best-practices-for-authorization) and checked the course groups for all new REST Calls (security).
 - [ ] I implemented the changes with a good performance and prevented too many database calls.
 - [ ] I documented the Java code using JavaDoc style.
 #### Client
@@ -78,9 +78,10 @@ Prerequisites:
 ### Test Coverage
 <!-- Please add the test coverages for all changed files here. You can see this when executing the tests locally (see build.gradle and package.json) or when looking into the corresponding Bamboo build plan. -->
 <!-- Lines are the main reference but a significantly lower branch percentage can indicate missing edge cases in the tests. -->
+<!-- Note: You may use the table below or copy the file coverage from the Codecov bot's comment. -->
+<!--
 | Class/File | Branch | Line |
 |------------|-------:|-----:|
-<!--
 | ExerciseService.java | 85% | 77% |
 | programming-exercise.component.ts | 13% | 95% |
 -->

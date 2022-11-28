@@ -28,6 +28,12 @@
         <property name="fileNamePattern" value="module\-info\.java$"/>
     </module>
 
+    <!-- Allows to suppress checks for certain files -->
+    <!-- See https://checkstyle.sourceforge.io/config_filters.html#SuppressionFilter -->
+    <!-- <module name="SuppressionFilter"> -->
+    <!--    <property name="file" value="${config_loc}/checkstyle-suppressions.xml"/> -->
+    <!-- </module> -->
+
     <!-- Checks that a package-info.java file exists for each package.     -->
     <!-- See https://checkstyle.org/config_javadoc.html#JavadocPackage -->
     <!-- <module name="JavadocPackage"/> -->
@@ -48,10 +54,6 @@
         <property name="max" value="120"/>
         <property name="ignorePattern" value="^package.*|^import.*|a href|href|http://|https://|ftp://"/>
     </module>
-
-    <!-- Checks for whitespace                               -->
-    <!-- See https://checkstyle.org/config_whitespace.html -->
-    <module name="FileTabCharacter"/>
 
     <!-- Miscellaneous other checks.                   -->
     <!-- See https://checkstyle.org/config_misc.html -->
