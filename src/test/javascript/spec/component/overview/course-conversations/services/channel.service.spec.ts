@@ -119,4 +119,37 @@ describe('ChannelService', () => {
         req.flush({});
         tick();
     }));
+
+    it('registersUsersToChannel', fakeAsync(() => {
+        service
+            .registerUsersToChannel(1, 1, true, true, true, true, ['login'])
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual({}));
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush({});
+        tick();
+    }));
+
+    it('grantChannelAdminRights', fakeAsync(() => {
+        service
+            .grantChannelAdminRights(1, 1, ['login'])
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual({}));
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush({});
+        tick();
+    }));
+
+    it('revokeChannelAdminRights', fakeAsync(() => {
+        service
+            .revokeChannelAdminRights(1, 1, ['login'])
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual({}));
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush({});
+        tick();
+    }));
 });
