@@ -119,3 +119,20 @@
     margin: 4px 0;
     padding: 6px 10px;
 }
+
+.visual-answer-question-container {
+    display: flex;
+}
+
+.visual-answer-delete-container {
+    background: #eb3223;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    width: 2.5%;
+}
+
+.visual-answer-delete-container:hover {
+    color: white;
+}

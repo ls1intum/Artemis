@@ -1,9 +1,9 @@
 import { Component, Input, ViewEncapsulation } from '@angular/core';
-import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
-import { faExclamationCircle, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationCircle, faExclamationTriangle, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { faCheckSquare, faCircle, faDotCircle, faSquare } from '@fortawesome/free-regular-svg-icons';
+import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 
 @Component({
     selector: 'jhi-multiple-choice-visual-question',
@@ -17,7 +17,6 @@ export class MultipleChoiceVisualQuestionComponent {
     @Input()
     set question(question: MultipleChoiceQuestion) {
         this._question = question;
-        this.watchCollection();
     }
     get question(): MultipleChoiceQuestion {
         return this._question;
@@ -33,21 +32,9 @@ export class MultipleChoiceVisualQuestionComponent {
     faCheckSquare = faCheckSquare;
     faCircle = faCircle;
     faDotCircle = faDotCircle;
+    faTrash = faTrash;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService) {}
-
-    watchCollection(): void {
-        this.renderedQuestion = new RenderedQuizQuestionMarkDownElement();
-        // this.renderedQuestion.hint = this.artemisMarkdown.safeHtmlForMarkdown(this.question.hint);
-        // this.renderedQuestion.explanation = this.artemisMarkdown.safeHtmlForMarkdown(this.question.explanation);
-        // this.renderedQuestion.renderedSubElements = this.question.answerOptions!.map((answerOption) => {
-        //     const renderedAnswerOption = new RenderedQuizQuestionMarkDownElement();
-        //     renderedAnswerOption.text = this.artemisMarkdown.safeHtmlForMarkdown(answerOption.text);
-        //     renderedAnswerOption.hint = this.artemisMarkdown.safeHtmlForMarkdown(answerOption.hint);
-        //     renderedAnswerOption.explanation = this.artemisMarkdown.safeHtmlForMarkdown(answerOption.explanation);
-        //     return renderedAnswerOption;
-        // });
-    }
+    constructor() {}
 
     parseQuestion() {
         let markdown = this.question.text ?? '';
@@ -75,5 +62,19 @@ export class MultipleChoiceVisualQuestionComponent {
         }
 
         return markdown;
+    }
+
+    deleteAnswer(index: number) {
+        const newAnswers: AnswerOption[] = [];
+
+        this.question.answerOptions?.forEach((answerOption, i) => {
+            if (i === index) {
+                return;
+            }
+
+            newAnswers.push(answerOption);
+        });
+
+        this.question.answerOptions = newAnswers;
     }
 }
