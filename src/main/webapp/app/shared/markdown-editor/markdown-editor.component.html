@@ -48,7 +48,7 @@
                 <div class="markdown-editor__commands-default">
                     <!--default commands (e.g. bold)-->
                     <button
-                        *ngFor="let command of defaultCommands | negatedTypeCheck: MultiOptionCommand"
+                        *ngFor="let command of defaultCommands | negatedTypeCheck : MultiOptionCommand"
                         type="button"
                         class="btn btn-sm"
                         (click)="command.execute()"
@@ -70,7 +70,7 @@
                         </div>
                     </div>
                     <!--multi option command-->
-                    <ng-container *ngFor="let command of defaultCommands | typeCheck: MultiOptionCommand">
+                    <ng-container *ngFor="let command of defaultCommands | typeCheck : MultiOptionCommand">
                         <div ngbDropdown class="dropdown">
                             <button class="btn btn-sm dropdown-toggle" type="button" ngbDropdownToggle>
                                 {{ command.buttonTranslationString | artemisTranslate }}
@@ -99,12 +99,12 @@
                     </div>
                     <!-- domain commands -->
                     <div class="markdown-editor__commands-domain" *ngIf="domainCommands && domainCommands.length != 0">
-                        <ng-container *ngFor="let command of domainCommands | typeCheck: DomainTagCommand">
+                        <ng-container *ngFor="let command of domainCommands | typeCheck : DomainTagCommand">
                             <div *ngIf="command.displayCommandButton" class="btn btn-sm" (click)="command.execute()">
                                 {{ command.buttonTranslationString | artemisTranslate }}
                             </div>
                         </ng-container>
-                        <ng-container *ngFor="let command of domainCommands | typeCheck: DomainMultiOptionCommand">
+                        <ng-container *ngFor="let command of domainCommands | typeCheck : DomainMultiOptionCommand">
                             <div ngbDropdown class="d-inline-block">
                                 <button class="btn btn-sm" type="button" ngbDropdownToggle>
                                     {{ command.buttonTranslationString | artemisTranslate }}
