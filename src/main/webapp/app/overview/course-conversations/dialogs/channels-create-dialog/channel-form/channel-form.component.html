@@ -21,7 +21,7 @@
                         {{ 'artemisApp.forms.channelForm.nameInput.requiredValidationError' | artemisTranslate }}
                     </div>
                     <div *ngIf="nameControl?.errors?.maxlength">
-                        {{ 'artemisApp.forms.channelForm.nameInput.maxLengthValidationError' | artemisTranslate: { max: '20' } }}
+                        {{ 'artemisApp.forms.channelForm.nameInput.maxLengthValidationError' | artemisTranslate : { max: '20' } }}
                     </div>
                     <div *ngIf="!nameControl?.errors?.required && !nameControl?.errors?.maxlength && nameControl?.errors?.pattern">
                         {{ 'artemisApp.forms.channelForm.nameInput.regexValidationError' | artemisTranslate }}
@@ -35,7 +35,7 @@
                 <small id="descriptionHelp" class="form-text text-muted">{{ 'artemisApp.forms.channelForm.descriptionInput.descriptionHelp' | artemisTranslate }}</small>
                 <div *ngIf="descriptionControl?.invalid && (descriptionControl?.dirty || descriptionControl?.touched)" class="alert alert-danger">
                     <div *ngIf="descriptionControl?.errors?.maxlength">
-                        {{ 'artemisApp.forms.channelForm.descriptionInput.maxLengthValidationError' | artemisTranslate: { max: '250' } }}
+                        {{ 'artemisApp.forms.channelForm.descriptionInput.maxLengthValidationError' | artemisTranslate : { max: '250' } }}
                     </div>
                 </div>
             </div>

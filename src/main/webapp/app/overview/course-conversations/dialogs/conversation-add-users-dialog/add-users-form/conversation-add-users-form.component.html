@@ -1,7 +1,7 @@
 <div class="row" *ngIf="activeConversation && courseId">
     <div class="col-12">
         <div *ngIf="maxSelectable" class="alert alert-info">
-            {{ 'artemisApp.messages.addUserForm.maxUsersNote' | artemisTranslate: { max: maxSelectable } }}
+            {{ 'artemisApp.messages.addUserForm.maxUsersNote' | artemisTranslate : { max: maxSelectable } }}
         </div>
         <div class="mode-switch" [hidden]="!getAsChannel(activeConversation)">
             <div class="form-group">
@@ -15,7 +15,7 @@
         </div>
         <form (ngSubmit)="submitForm()" [formGroup]="form">
             <div class="row individual-select" [hidden]="mode !== 'individual'">
-                <div clas="col-12">
+                <div class="col-12">
                     <jhi-course-users-selector
                         formControlName="selectedUsers"
                         [courseId]="courseId"
@@ -26,7 +26,7 @@
                             {{ 'artemisApp.messages.addUserForm.requiredError' | artemisTranslate }}
                         </div>
                         <div *ngIf="selectedUsersControl?.errors?.maxlength">
-                            {{ 'artemisApp.messages.addUserForm.maxError' | artemisTranslate: { max: maxSelectable } }}
+                            {{ 'artemisApp.messages.addUserForm.maxError' | artemisTranslate : { max: maxSelectable } }}
                         </div>
                     </div>
                 </div>
