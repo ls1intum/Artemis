@@ -15,17 +15,6 @@ export class Channel extends Conversation {
     }
 }
 
-export function isChannel(conversation: Conversation): conversation is Channel {
-    return conversation.type === ConversationType.CHANNEL;
-}
-
-export function getAsChannel(conversation: Conversation | undefined): Channel | undefined {
-    if (!conversation) {
-        return undefined;
-    }
-    return isChannel(conversation) ? conversation : undefined;
-}
-
 /**
  * DTO
  */
@@ -41,14 +30,6 @@ export class ChannelDTO extends ConversationDto {
     constructor() {
         super(ConversationType.CHANNEL);
     }
-}
-
-export function isPrivateChannel(channel: ChannelDTO): boolean {
-    return !channel.isPublic;
-}
-
-export function isPublicChannel(channel: ChannelDTO): boolean {
-    return !!channel.isPublic;
 }
 export function isChannelDto(conversation: ConversationDto): conversation is ChannelDTO {
     return conversation.type === ConversationType.CHANNEL;

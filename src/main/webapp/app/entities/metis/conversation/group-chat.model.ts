@@ -8,18 +8,6 @@ export class GroupChat extends Conversation {
         super(ConversationType.GROUP_CHAT);
     }
 }
-
-export function isGroupChat(conversation: Conversation): conversation is GroupChat {
-    return conversation.type === ConversationType.GROUP_CHAT;
-}
-
-export function getAsGroupChat(conversation: Conversation | undefined): GroupChat | undefined {
-    if (!conversation) {
-        return undefined;
-    }
-    return isGroupChat(conversation) ? conversation : undefined;
-}
-
 export class GroupChatDto extends ConversationDto {
     public members?: ConversationUserDTO[];
     public name?: string;
