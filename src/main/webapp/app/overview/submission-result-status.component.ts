@@ -41,7 +41,7 @@ export class SubmissionResultStatusComponent implements OnInit {
         this.uninitializedQuiz = this.exercise.type === ExerciseType.QUIZ && !!(this.exercise as QuizExercise)?.quizBatches?.some((batch) => batch.started);
         this.quizNotStarted =
             !this.uninitializedQuiz &&
-            (!this.exercise.studentParticipations?.[0].initializationState ||
+            (!this.exercise.studentParticipations?.[0]?.initializationState ||
                 ![InitializationState.INITIALIZED, InitializationState.FINISHED].includes(this.exercise.studentParticipations[0].initializationState));
         this.afterDueDate = !!this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs());
         this.uninitialized = !this.afterDueDate && !this.exercise.studentParticipations?.length;

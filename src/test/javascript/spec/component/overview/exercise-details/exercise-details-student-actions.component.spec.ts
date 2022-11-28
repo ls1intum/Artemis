@@ -149,7 +149,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.studentParticipation?.initializationState).toEqual(InitializationState.INITIALIZED);
+        expect(comp.exercise?.studentParticipations?.[0].initializationState).toEqual(InitializationState.INITIALIZED);
 
         // Check that button "Start exercise" is no longer shown
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
@@ -171,7 +171,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             allowOfflineIde: true,
             studentParticipations: [] as StudentParticipation[],
         } as ProgrammingExercise;
-        const inactivePart = { id: 2, initializationState: InitializationState.UNINITIALIZED, testRun: true } as StudentParticipation;
         const initPart = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
 
         comp.exercise = exercise;
@@ -185,29 +184,15 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         let cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
         expect(cloneRepositoryButton).toBeNull();
 
-        comp.exercise.studentParticipations = [inactivePart];
-
-        fixture.detectChanges();
-        tick();
-
-        // Check that button "Start practice" is no longer shown
-        startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
-        expect(startPracticeButton).not.toBeNull();
-
-        // Check that button "Clone repository" is shown
-        cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
-        expect(cloneRepositoryButton).toBeNull();
-
         comp.exercise.studentParticipations = [initPart];
+        comp.practiceParticipation = initPart;
 
         fixture.detectChanges();
         tick();
 
-        // Check that button "Start practice" is no longer shown
         startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).toBeNull();
 
-        // Check that button "Clone repository" is shown
         cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
         expect(cloneRepositoryButton).not.toBeNull();
 

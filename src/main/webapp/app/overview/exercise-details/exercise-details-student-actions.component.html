@@ -183,7 +183,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
                 [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId"
+                *ngIf="exercise.teamMode && exercise.studentAssignedTeamIdComputed && exercise.studentAssignedTeamId"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
@@ -200,7 +200,7 @@
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
                     [overwriteDisabled]="isBeforeStartDateAndStudent"
-                    *ngIf="gradedParticipation && isStartExerciseAvailable()"
+                    *ngIf="!gradedParticipation && isStartExerciseAvailable() && (!exercise.teamMode || exercise.studentAssignedTeamId)"
                     (click)="startExercise()"
                 ></button>
             </span>
@@ -209,7 +209,7 @@
                 class="start-practice me-1"
                 [smallButtons]="smallButtons"
                 [exercise]="exercise"
-                *ngIf="!practiceParticipation && isStartPracticeAvailable()"
+                *ngIf="!practiceParticipation && isStartPracticeAvailable() && (!exercise.teamMode || exercise.studentAssignedTeamId)"
             ></jhi-start-practice-mode-button>
 
             <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open
