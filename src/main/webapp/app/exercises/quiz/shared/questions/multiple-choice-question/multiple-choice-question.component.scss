@@ -131,6 +131,8 @@
     justify-content: center;
     cursor: pointer;
     width: 2.5%;
+    margin-left: 0.2rem;
+    border-radius: 2px;
 }
 
 .visual-answer-correct-container {
@@ -140,6 +142,36 @@
     justify-content: center;
     cursor: pointer;
     width: 2.5%;
+    margin-right: 0.2rem;
+    border-radius: 2px;
+}
+
+.visual-answer-add-container {
+    background: #508ac7;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    width: 2.5%;
+    margin-left: 0.2rem;
+    border-radius: 2px;
+    color: white;
+}
+
+.visual-answer-add-container:hover {
+    background: lighten(#508ac7, 20%);
+}
+
+.visual-answer-add-container-disabled {
+    background: lighten(#508ac7, 20%);
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    width: 2.5%;
+    margin-left: 0.2rem;
+    border-radius: 2px;
+    color: white;
 }
 
 .visual-answer-delete-container:hover {
@@ -156,4 +188,8 @@
 
 .visual-answer-wrong {
     color: gray;
+}
+
+.visual-new-answer-title {
+    margin-top: 1rem;
 }
