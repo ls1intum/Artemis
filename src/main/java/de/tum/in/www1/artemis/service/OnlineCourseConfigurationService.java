@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
-import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -30,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Service
 public class OnlineCourseConfigurationService implements ClientRegistrationRepository {
 
-    private final Logger log = LoggerFactory.getLogger(OAuth2JWKSService.class);
+    private final Logger log = LoggerFactory.getLogger(OnlineCourseConfigurationService.class);
 
     private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
 

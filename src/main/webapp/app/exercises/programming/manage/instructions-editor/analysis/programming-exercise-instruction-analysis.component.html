@@ -14,7 +14,7 @@
     <ng-template #testCasesTooltipContent>
         <div class="text-start w-100">
             <div *ngIf="invalidTestCases.length">
-                <span [innerHTML]="'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCases' | artemisTranslate: { number: invalidTestCases.length }"
+                <span [innerHTML]="'artemisApp.programmingExercise.testCaseAnalysis.invalidTestCases' | artemisTranslate : { number: invalidTestCases.length }"
                     >There are {{ invalidTestCases.length }} test cases that are part of the problem statement but can't be found in your test repository:</span
                 >
                 <ul>
@@ -22,7 +22,7 @@
                 </ul>
             </div>
             <div *ngIf="missingTestCases.length" class="text-start">
-                <span>{{ 'artemisApp.programmingExercise.testCaseAnalysis.missingTestCases' | artemisTranslate: { number: missingTestCases.length } }}</span>
+                <span>{{ 'artemisApp.programmingExercise.testCaseAnalysis.missingTestCases' | artemisTranslate : { number: missingTestCases.length } }}</span>
                 <ul>
                     <li *ngFor="let test of missingTestCases">{{ test }}</li>
                 </ul>
