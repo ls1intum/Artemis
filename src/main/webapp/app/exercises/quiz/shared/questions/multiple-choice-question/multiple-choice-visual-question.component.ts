@@ -59,6 +59,21 @@ export class MultipleChoiceVisualQuestionComponent {
             markdown += '\n\t[exp] ' + this.question.explanation;
         }
 
+        if (this.question.answerOptions && this.question.answerOptions.length > 0) {
+            markdown += '\n';
+
+            this.question.answerOptions.forEach((answerOption) => {
+                markdown += '\n' + (answerOption.isCorrect ? '[correct] ' : '[wrong] ') + answerOption.text;
+
+                if (answerOption.hint) {
+                    markdown += '\n\t[hint] ' + answerOption.hint;
+                }
+                if (answerOption.explanation) {
+                    markdown += '\n\t[exp] ' + answerOption.explanation;
+                }
+            });
+        }
+
         return markdown;
     }
 }
