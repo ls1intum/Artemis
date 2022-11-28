@@ -21,7 +21,7 @@ services:
         environment:
             _JAVA_OPTIONS: "-Xmx5120m -Xms2560m"
             JHIPSTER_SLEEP: 30 # gives time for other services to boot before the application
-            spring.profiles.active: "prod,bamboo,bitbucket,jira,artemis"
+            spring.profiles.active: "prod,bamboo,bitbucket,jira,artemis,cypress"
             spring.datasource.url: "${DATASOURCE_URL}"
             spring.datasource.username: root
             spring.datasource.password: ""

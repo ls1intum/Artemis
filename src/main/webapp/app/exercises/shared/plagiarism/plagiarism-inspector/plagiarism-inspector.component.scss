@@ -1,4 +1,4 @@
-$card-body-padding: 1.25rem;
+$card-body-padding: 1rem;
 $navbar-height: 57px;
 $breadcrumbs-height: 41px;
 $footer-height: 31px;
@@ -8,7 +8,7 @@ $footer-height: 31px;
     flex-direction: column;
     height: calc(100vh - 2 * #{$card-body-padding} - #{$navbar-height} - #{$footer-height} - #{$breadcrumbs-height});
     // JHipster's .card-body has default padding of 1.25
-    margin: -1.25rem;
+    margin: -1rem;
 
     .plagiarism-header {
         background-color: var(--artemis-dark);
