@@ -28,11 +28,23 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         this.channelRepository = channelRepository;
     }
 
+    /**
+     * Checks if a user is allowed to create a channel in a course or throws an exception if not
+     *
+     * @param course the course the channel should be created in
+     * @param user   the user that wants to create the channel
+     */
     public void isAllowedToCreateChannel(@NotNull Course course, @Nullable User user) {
         user = getUserIfNecessary(user);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
     }
 
+    /**
+     * Checks if a user is allowed to edit a channel or throws an exception if not
+     *
+     * @param channel the channel that should be edited
+     * @param user    the user that wants to edit the channel
+     */
     public void isAllowedToUpdateChannel(@NotNull Channel channel, @Nullable User user) {
         user = getUserIfNecessary(user);
         if (!hasChannelAdminRights(channel.getId(), user)) {
@@ -40,6 +52,12 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         }
     }
 
+    /**
+     * Checks if a user is allowed to delete a channel or throws an exception if not
+     *
+     * @param channel the channel that should be deleted
+     * @param user    the user that wants to delete the channel
+     */
     public void isAllowedToDeleteChannel(@NotNull Channel channel, @Nullable User user) {
         user = getUserIfNecessary(user);
         if (!hasChannelAdminRights(channel.getId(), user)) {
@@ -47,20 +65,50 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         }
     }
 
+    /**
+     * Checks if a user is a member of a channel
+     *
+     * @param channelId the id of the channel
+     * @param userId    the id of the user
+     * @return true if the user is a member of the channel, false otherwise
+     */
     public boolean isMember(Long channelId, Long userId) {
         return conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, userId).isPresent();
     }
 
+    /**
+     * Checks if a user is a admin of a channel
+     *
+     * @param channelId the id of the channel
+     * @param userId    the id of the user
+     * @return true if the user is a admin of the channel, false otherwise
+     */
     public boolean isChannelAdmin(Long channelId, Long userId) {
         return conversationParticipantRepository.findAdminConversationParticipantByConversationIdAndUserId(channelId, userId).isPresent();
     }
 
+    /**
+     * Checks if a user has admin rights to a channel
+     * <p>
+     * Note: Either the user is a course instructor or a channel admin to have admin rights
+     *
+     * @param channelId the id of the channel
+     * @param user      the user to check
+     * @return true if the user has admin rights, false otherwise
+     */
     public boolean hasChannelAdminRights(Long channelId, @Nullable User user) {
         user = getUserIfNecessary(user);
         var channel = channelRepository.findById(channelId);
         return isChannelAdmin(channelId, user.getId()) || authorizationCheckService.isAtLeastInstructorInCourse(channel.get().getCourse(), user);
     }
 
+    /**
+     * Checks if a user is allowed to register users to a channel or throws an exception if not
+     *
+     * @param channel    the channel the users should be registered to
+     * @param userLogins the logins of the users that should be registered
+     * @param user       the user that wants to register the users
+     */
     public void isAllowedToRegisterUsersToChannel(@NotNull Channel channel, List<String> userLogins, @Nullable User user) {
         user = getUserIfNecessary(user);
         if (hasChannelAdminRights(channel.getId(), user)) {
@@ -75,6 +123,12 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         }
     }
 
+    /**
+     * Checks if a user is allowed to grant channel admin rights to a user or throws an exception if not
+     *
+     * @param channel the channel the rights should be granted to
+     * @param user    the user that wants to grant the channel admin rights
+     */
     public void isAllowedToGrantChannelAdmin(@NotNull Channel channel, @Nullable User user) {
         user = getUserIfNecessary(user);
         if (!hasChannelAdminRights(channel.getId(), user)) {
@@ -82,6 +136,12 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         }
     }
 
+    /**
+     * Checks if a user is allowed to revoke channel admin rights from a user or throws an exception if not
+     *
+     * @param channel the channel the rights should be revoked from
+     * @param user    the user that wants to revoke the channel admin rights
+     */
     public void isAllowedToRevokeChannelAdmin(@NotNull Channel channel, @Nullable User user) {
         user = getUserIfNecessary(user);
         if (!hasChannelAdminRights(channel.getId(), user)) {
@@ -89,6 +149,13 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         }
     }
 
+    /**
+     * Checks if a user is allowed to remove a user from a channel or throws an exception if not
+     *
+     * @param channel    the channel the user should be removed from
+     * @param userLogins the logins of the users that should be removed
+     * @param user       the user that wants to remove the users
+     */
     public void isAllowedToDeregisterUsersFromChannel(@NotNull Channel channel, List<String> userLogins, @Nullable User user) {
         user = getUserIfNecessary(user);
         if (hasChannelAdminRights(channel.getId(), user)) {
@@ -104,10 +171,22 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         }
     }
 
+    /**
+     * Checks if a user is allowed to archive a channel or throws an exception if not
+     *
+     * @param channel the channel that should be archived
+     * @param user    the user that wants to archive the channel
+     */
     public void isAllowedToArchiveChannel(@NotNull Channel channel, @Nullable User user) {
         isAllowedToChangeArchivalStatus(channel, user);
     }
 
+    /**
+     * Checks if a user is allowed to unarchive a channel or throws an exception if not
+     *
+     * @param channel the channel that should be unarchived
+     * @param user    the user that wants to unarchive the channel
+     */
     public void isAllowedToUnArchiveChannel(@NotNull Channel channel, @Nullable User user) {
         isAllowedToChangeArchivalStatus(channel, user);
     }

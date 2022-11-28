@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
-import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings.MAX_GROUP_CHATS_PER_USER_PER_COURSE;
 import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings.MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE;
 
 import javax.annotation.Nullable;
@@ -27,11 +26,17 @@ public class OneToOneChatAuthorizationService extends ConversationAuthorizationS
         this.oneToOneChatRepository = oneToOneChatRepository;
     }
 
+    /**
+     * Checks if a user is allowed to create a one to one chat in a course or throws an exception if not
+     *
+     * @param course the course the one to one chat should be created in
+     * @param user   the user that wants to create the one to one chat
+     */
     public void isAllowedToCreateOneToOneChat(@NotNull Course course, @Nullable User user) {
         user = getUserIfNecessary(user);
         var createdOneToOneChats = oneToOneChatRepository.countByCreatorIdAndCourseId(user.getId(), course.getId());
         if (createdOneToOneChats >= MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE) {
-            throw new IllegalArgumentException("You can only create " + MAX_GROUP_CHATS_PER_USER_PER_COURSE + "group chats per course");
+            throw new IllegalArgumentException("You can only create " + MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE + "one to one chats per course");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
     }
