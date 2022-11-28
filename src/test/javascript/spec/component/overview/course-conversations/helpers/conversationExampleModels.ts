@@ -21,6 +21,7 @@ export const generateExampleChannelDTO = ({
     isCreator = true,
     isFavorite = false,
     isHidden = false,
+    isMember = true,
 }: ChannelDTO) => {
     const exampleChannelDto = new ChannelDTO();
     exampleChannelDto.id = id;
@@ -39,6 +40,7 @@ export const generateExampleChannelDTO = ({
     exampleChannelDto.isCreator = isCreator;
     exampleChannelDto.isFavorite = isFavorite;
     exampleChannelDto.isHidden = isHidden;
+    exampleChannelDto.isMember = isMember;
 
     return exampleChannelDto;
 };
@@ -91,6 +93,7 @@ export const generateOneToOneChatDTO = ({
     isCreator = true,
     isFavorite = false,
     isHidden = false,
+    isMember = true,
 }: GroupChatDto) => {
     const exampleOneToOneChatDTO = new OneToOneChatDTO();
     exampleOneToOneChatDTO.id = id;
@@ -103,5 +106,6 @@ export const generateOneToOneChatDTO = ({
     exampleOneToOneChatDTO.isFavorite = isFavorite;
     exampleOneToOneChatDTO.isHidden = isHidden;
     exampleOneToOneChatDTO.members = members;
+    exampleOneToOneChatDTO.isMember = isMember;
     return exampleOneToOneChatDTO;
 };

@@ -57,7 +57,7 @@ export function canLeaveConversation(conversation: ConversationDto): boolean {
         return false;
     }
     // the creator of a channel can not leave it
-    if (isChannelDto(conversation) && conversation.isCreator) {
+    if (isChannelDto(conversation) && conversation?.isCreator === true) {
         return false;
     }
 

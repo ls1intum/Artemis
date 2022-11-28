@@ -7,15 +7,29 @@ import {
     canCreateChannel,
     canDeleteChannel,
     canJoinChannel,
+    canLeaveConversation,
     canRemoveUsersFromConversation,
 } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 describe('ConversationPermissionUtils', () => {
-    describe('allConversations', () => {});
-
     describe('channels', () => {
+        describe('canLeaveConversation', () => {
+            const channelsThatCanBeLeft = generateExampleChannelDTO({ isMember: true, isCreator: false });
+            it('can leave channel', () => {
+                expect(canLeaveConversation(channelsThatCanBeLeft)).toBeTrue();
+            });
+
+            it('creator can not leave a channel', () => {
+                expect(canLeaveConversation({ ...channelsThatCanBeLeft, isCreator: true })).toBeFalse();
+            });
+
+            it('non member can not leave a channel', () => {
+                expect(canLeaveConversation({ ...channelsThatCanBeLeft, isMember: false })).toBeFalse();
+            });
+        });
+
         describe('addUsersToConversation', () => {
             const channelWhereUsersCanBeAdded = generateExampleChannelDTO({ hasChannelAdminRights: true, isArchived: false });
 
@@ -133,6 +147,12 @@ describe('ConversationPermissionUtils', () => {
     });
 
     describe('one-on-one chats', () => {
+        describe('canLeaveConversation', () => {
+            it('is not possible to leave a one to one chat', () => {
+                expect(canLeaveConversation(generateOneToOneChatDTO({}))).toBeFalse();
+            });
+        });
+
         describe('addUsersToConversation', () => {
             it('is not possible to add users to a one-on-one chat', () => {
                 expect(canAddUsersToConversation(generateOneToOneChatDTO({}))).toBeFalse();
@@ -147,6 +167,16 @@ describe('ConversationPermissionUtils', () => {
     });
 
     describe('groupChats', () => {
+        describe('canLeaveConversation', () => {
+            const groupChatThatCanBeLeft = generateExampleGroupChatDTO({ isMember: true });
+            it('can leave channel', () => {
+                expect(canLeaveConversation(groupChatThatCanBeLeft)).toBeTrue();
+            });
+
+            it('non member can not leave a group chat', () => {
+                expect(canLeaveConversation({ ...groupChatThatCanBeLeft, isMember: false })).toBeFalse();
+            });
+        });
         describe('addUsersToConversation', () => {
             const groupChatWhereUsersCanBeAdded = generateExampleGroupChatDTO({ isMember: true });
 
