@@ -49,7 +49,7 @@
                         submissionPolicy.submissionLimit +
                         (submissionPolicy.exceedingPenalty
                             ? ('artemisApp.programmingExercise.submissionPolicy.submissionPenalty.penaltyInfoLabel'
-                              | artemisTranslate: { points: submissionPolicy.exceedingPenalty })
+                              | artemisTranslate : { points: submissionPolicy.exceedingPenalty })
                             : '')
                 }}
                 <fa-icon
@@ -85,7 +85,7 @@
                     [ngClass]="statusBadges[0]"
                     class="badge"
                     [ngbTooltip]="
-                        'artemisApp.courseOverview.exerciseDetails.startDateTooltip' | artemisTranslate: { date: exercise.startDate ?? exercise.releaseDate | artemisDate }
+                        'artemisApp.courseOverview.exerciseDetails.startDateTooltip' | artemisTranslate : { date: exercise.startDate ?? exercise.releaseDate | artemisDate }
                     "
                 >
                     {{ exercise.startDate ?? exercise.releaseDate | artemisTimeAgo }}
@@ -96,7 +96,7 @@
                 <span
                     [ngClass]="statusBadges[1]"
                     class="badge"
-                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate: { date: dueDate | artemisDate }"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.submissionDueTooltip' | artemisTranslate : { date: dueDate | artemisDate }"
                 >
                     {{ dueDate | artemisTimeAgo }}
                 </span>
@@ -106,7 +106,7 @@
                 <span
                     [ngClass]="statusBadges[2]"
                     class="badge"
-                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.assessmentDueTooltip' | artemisTranslate: { date: exercise.assessmentDueDate | artemisDate }"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.assessmentDueTooltip' | artemisTranslate : { date: exercise.assessmentDueDate | artemisDate }"
                 >
                     {{ exercise.assessmentDueDate | artemisTimeAgo }}
                 </span>
@@ -116,7 +116,7 @@
                 <span
                     [ngClass]="statusBadges[3]"
                     class="badge"
-                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintDueTooltip' | artemisTranslate: { date: individualComplaintDeadline | artemisDate }"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintDueTooltip' | artemisTranslate : { date: individualComplaintDeadline | artemisDate }"
                 >
                     {{ individualComplaintDeadline | artemisTimeAgo }}
                 </span>
@@ -125,7 +125,7 @@
                 {{ 'artemisApp.courseOverview.exerciseDetails.complaintPossible' | artemisTranslate }}
                 <span
                     class="badge bg-success"
-                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate: { days: course?.maxComplaintTimeDays }"
+                    [ngbTooltip]="'artemisApp.courseOverview.exerciseDetails.complaintPossibleTooltip' | artemisTranslate : { days: course?.maxComplaintTimeDays }"
                 >
                     {{
                         (exercise.allowComplaintsForAutomaticAssessments || exercise.assessmentType !== AssessmentType.AUTOMATIC ? 'global.generic.yes' : 'global.generic.no')

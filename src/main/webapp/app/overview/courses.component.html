@@ -1,6 +1,6 @@
 <div *ngIf="nextRelevantExam && nextRelevantCourseForExam" class="row">
     <h3 class="col mb-3 fw-medium">
-        {{ 'artemisApp.studentDashboard.examTitle' | artemisTranslate: { course: nextRelevantCourseForExam.title } }}
+        {{ 'artemisApp.studentDashboard.examTitle' | artemisTranslate : { course: nextRelevantCourseForExam.title } }}
     </h3>
     <div class="col-12 mb-5">
         <div class="row justify-content-between align-items-center exam-container ps-3 pe-3" (click)="openExam()">
@@ -9,8 +9,8 @@
                 <h4 class="ms-2 fw-medium">{{ nextRelevantExam.title }}</h4>
             </div>
             <div class="text-end mb-4 mt-4" style="width: unset">
-                <div *ngIf="nextRelevantExam.startDate">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: nextRelevantExam.startDate | artemisDate } }}</div>
-                <div *ngIf="nextRelevantExam.maxPoints">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate: { points: nextRelevantExam.maxPoints } }}</div>
+                <div *ngIf="nextRelevantExam.startDate">{{ 'artemisApp.exam.overview.start' | artemisTranslate : { start: nextRelevantExam.startDate | artemisDate } }}</div>
+                <div *ngIf="nextRelevantExam.maxPoints">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate : { points: nextRelevantExam.maxPoints } }}</div>
             </div>
         </div>
     </div>
@@ -20,10 +20,10 @@
     <div class="col">
         <h3 class="fw-medium">
             <span *ngIf="nextRelevantExercise.dueDate; else noDueDate">
-                {{ 'artemisApp.studentDashboard.exerciseTitle' | artemisTranslate: { course: nextRelevantCourse.title } }}
+                {{ 'artemisApp.studentDashboard.exerciseTitle' | artemisTranslate : { course: nextRelevantCourse.title } }}
             </span>
             <ng-template #noDueDate>
-                {{ 'artemisApp.studentDashboard.exerciseTitleWithoutDueDate' | artemisTranslate: { course: nextRelevantCourse.title } }}
+                {{ 'artemisApp.studentDashboard.exerciseTitleWithoutDueDate' | artemisTranslate : { course: nextRelevantCourse.title } }}
             </ng-template>
         </h3>
     </div>

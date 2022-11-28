@@ -124,7 +124,7 @@
                 </li>
                 <li>
                     <strong>{{ 'artemisApp.studentExams.submissionDate' | artemisTranslate }}:</strong>
-                    {{ studentExam.submissionDate | artemisDate: 'long':true }}
+                    {{ studentExam.submissionDate | artemisDate : 'long' : true }}
                 </li>
                 <li *ngIf="gradingScaleExists">
                     <strong>{{ getGradeExplanation() | artemisTranslate }}:</strong>

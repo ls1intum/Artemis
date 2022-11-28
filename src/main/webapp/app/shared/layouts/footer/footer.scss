@@ -1,0 +1,14 @@
+:host {
+    display: block;
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    background-color: var(--footer-bg);
+    padding: 0.5rem 1rem;
+    width: 100%;
+
+    .footer-text {
+        font-weight: normal;
+        font-size: small;
+    }
+}
