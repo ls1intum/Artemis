@@ -1,5 +1,13 @@
 <div class="markdown-preview visual-mode">
-    <p class="visual-question" contenteditable="true">{{ this.question.text }}</p>
+    <textarea id="mc-question" class="form-control form-group-narrow" [(ngModel)]="this.question.text" rows="5"></textarea>
+    <div class="form-group-narrow visual-question-hint">
+        <fa-icon [icon]="faQuestionCircle" class="text-secondary me-1"></fa-icon>
+        <input class="form-control" [(ngModel)]="question.hint" />
+    </div>
+    <div class="form-group-narrow visual-question-hint">
+        <fa-icon [icon]="faExclamationCircle" class="text-secondary me-1"></fa-icon>
+        <input class="form-control" [(ngModel)]="question.explanation" />
+    </div>
     <!--<div class="hint" *ngIf="question.hint || (question.explanation && showResult)">
         <ng-template #renderedHint>
             <div [innerHTML]="renderedQuestion.hint"></div>
