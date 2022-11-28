@@ -617,24 +617,6 @@ describe('ResultDetailComponent', () => {
         expect(comp.isLoading).toBeFalse();
     });
 
-    it('should generate correct class names for feedback items', () => {
-        const { expectedItems } = generateFeedbacksAndExpectedItems();
-
-        const expectedClasses = [
-            'alert-success', // test case 1
-            'alert-warning', // sca
-            'alert-warning', // sca
-            'alert-warning', // sca
-            'alert-success', // manual 1
-            'alert-danger', // manual 2
-            'alert-warning', // manual 3
-            'alert-danger', // test case 2
-            'alert-success', // test case 3
-        ];
-
-        expectedItems.forEach((item, index) => expect(comp.getClassNameForFeedbackItem(item)).toEqual(expectedClasses[index]));
-    });
-
     it('should calculate the correct chart values and update the score chart', () => {
         const { feedbacks, expectedItems } = setupComponent();
 
