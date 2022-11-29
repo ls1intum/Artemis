@@ -28,16 +28,7 @@ export type LanguageStepInputs = {
     withDependencies: boolean;
     packageNameRequired: boolean;
     packageNamePattern: string;
-    supportsJava: boolean;
-    supportsPython: boolean;
-    supportsC: boolean;
-    supportsHaskell: boolean;
-    supportsKotlin: boolean;
-    supportsVHDL: boolean;
-    supportsAssembler: boolean;
-    supportsSwift: boolean;
-    supportsOCaml: boolean;
-    supportsEmpty: boolean;
+    supportedLanguages: string[];
     selectedProgrammingLanguage: ProgrammingLanguage;
     onProgrammingLanguageChange: (language: ProgrammingLanguage) => ProgrammingLanguage;
     projectTypes: ProjectType[];

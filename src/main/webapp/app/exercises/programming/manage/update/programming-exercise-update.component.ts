@@ -100,16 +100,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     public inProductionEnvironment: boolean;
 
-    public supportsJava = true;
-    public supportsPython = false;
-    public supportsC = false;
-    public supportsHaskell = false;
-    public supportsKotlin = false;
-    public supportsVHDL = false;
-    public supportsAssembler = false;
-    public supportsSwift = false;
-    public supportsOCaml = false;
-    public supportsEmpty = false;
+    public supportedLanguages = ['java'];
 
     public packageNameRequired = true;
     public staticCodeAnalysisAllowed = false;
@@ -435,16 +426,38 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             }
         });
 
-        this.supportsJava = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.JAVA);
-        this.supportsPython = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.PYTHON);
-        this.supportsC = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.C);
-        this.supportsHaskell = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.HASKELL);
-        this.supportsKotlin = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.KOTLIN);
-        this.supportsVHDL = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.VHDL);
-        this.supportsAssembler = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.ASSEMBLER);
-        this.supportsSwift = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.SWIFT);
-        this.supportsOCaml = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.OCAML);
-        this.supportsEmpty = this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.EMPTY);
+        this.supportedLanguages = [];
+
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.JAVA)) {
+            this.supportedLanguages.push(ProgrammingLanguage.JAVA);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.PYTHON)) {
+            this.supportedLanguages.push(ProgrammingLanguage.PYTHON);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.C)) {
+            this.supportedLanguages.push(ProgrammingLanguage.C);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.HASKELL)) {
+            this.supportedLanguages.push(ProgrammingLanguage.HASKELL);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.KOTLIN)) {
+            this.supportedLanguages.push(ProgrammingLanguage.KOTLIN);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.VHDL)) {
+            this.supportedLanguages.push(ProgrammingLanguage.VHDL);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.ASSEMBLER)) {
+            this.supportedLanguages.push(ProgrammingLanguage.ASSEMBLER);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.SWIFT)) {
+            this.supportedLanguages.push(ProgrammingLanguage.SWIFT);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.OCAML)) {
+            this.supportedLanguages.push(ProgrammingLanguage.OCAML);
+        }
+        if (this.programmingLanguageFeatureService.supportsProgrammingLanguage(ProgrammingLanguage.EMPTY)) {
+            this.supportedLanguages.push(ProgrammingLanguage.EMPTY);
+        }
     }
 
     /**
@@ -953,16 +966,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             withDependencies: this.withDependencies,
             packageNameRequired: this.packageNameRequired,
             packageNamePattern: this.packageNamePattern,
-            supportsJava: this.supportsJava,
-            supportsPython: this.supportsPython,
-            supportsC: this.supportsC,
-            supportsHaskell: this.supportsHaskell,
-            supportsKotlin: this.supportsKotlin,
-            supportsVHDL: this.supportsVHDL,
-            supportsAssembler: this.supportsAssembler,
-            supportsSwift: this.supportsSwift,
-            supportsOCaml: this.supportsOCaml,
-            supportsEmpty: this.supportsEmpty,
+            supportedLanguages: this.supportedLanguages,
             selectedProgrammingLanguage: this.selectedProgrammingLanguage,
             onProgrammingLanguageChange: this.programmingLanguageChanged,
             projectTypes: this.projectTypes,
