@@ -71,7 +71,7 @@ export class CourseCardComponent implements OnChanges {
                 this.nextExerciseTooltip = getIconTooltip(this.nextRelevantExercise!.type);
             }
 
-            // const scores = this.course.scores -> kommt von findAllForDashboard()
+            // const scores = this.course.scores.total -> kommt von findAllForDashboard()
             const scores = this.courseScoreCalculationService.calculateTotalScores(this.course.exercises, this.course);
             this.totalRelativeScore = scores.get('currentRelativeScore')!;
             this.totalAbsoluteScore = scores.get('absoluteScore')!;

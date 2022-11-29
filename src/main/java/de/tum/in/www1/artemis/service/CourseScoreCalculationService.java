@@ -177,7 +177,7 @@ public class CourseScoreCalculationService {
         return pointsAchievedFromExercise;
     }
 
-    Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
+    private Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
         if (participation == null) {
             return null;
         }

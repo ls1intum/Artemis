@@ -297,7 +297,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.modelingPresentationScoreEnabled = false;
         this.textPresentationScoreEnabled = false;
         this.fileUploadPresentationScoreEnabled = false;
-        // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for the order inside the statistic charts
+        // adding several years to be sure that exercises without due date are sorted at the end. this is necessary for
+        // the order inside the statistic charts
         exercises = sortBy(exercises, [(exercise: Exercise) => (exercise.dueDate || dayjs().add(5, 'year')).valueOf()]);
         exercises.forEach((exercise) => {
             if (!exercise.dueDate || exercise.dueDate.isBefore(dayjs()) || exercise.type === ExerciseType.PROGRAMMING) {
@@ -317,6 +318,8 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 } else {
                     exercise.studentParticipations.forEach((participation) => {
                         if (participation.results?.length) {
+                            // const participationResult = participation.result;
+                            // -> kommt aus dem course in courseStorageService und damit auch von findAllForDashboard() oder findOneForDashboard()
                             const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                             if (participationResult?.rated) {
                                 const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score!, this.course);
@@ -400,6 +403,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @private
      */
     private calculateAbsoluteScores(): void {
+        // const quizzesTotalScore = this.course.scores.quiz.total
         const quizzesTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ScoreType.ABSOLUTE_SCORE);
         const programmingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ScoreType.ABSOLUTE_SCORE);
         const modelingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ScoreType.ABSOLUTE_SCORE);
@@ -438,6 +442,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @private
      */
     private calculateMaxPoints(): void {
+        // const quizzesTotalMaxPoints = this.courses.scores.quiz.max
         const quizzesTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ScoreType.MAX_POINTS);
         const programmingExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ScoreType.MAX_POINTS);
         const modelingExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ScoreType.MAX_POINTS);
@@ -539,6 +544,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @returns map containing score for every score type
      * @private
      */
+    // Kann denke ich komplett raus
     private calculateScores(filterFunction: (courseExercise: Exercise) => boolean): Map<string, number> {
         let courseExercises = this.courseExercises;
         if (filterFunction) {
@@ -554,6 +560,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @returns requested score value
      * @private
      */
+    // Wird auch raus müssen, dann muss ich aber für verschiedene exerciseTypes den jeweiligen Score mit übertragen
     private calculateScoreTypeForExerciseType(exerciseType: ExerciseType, scoreType: ScoreType): number {
         if (exerciseType != undefined && scoreType != undefined) {
             const filterFunction = (courseExercise: Exercise) => courseExercise.type === exerciseType;
