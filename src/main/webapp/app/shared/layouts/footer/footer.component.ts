@@ -18,8 +18,8 @@ export class FooterComponent implements OnInit {
     gitCommitId: string;
     gitTimestamp: string;
     gitCommitUser: string;
-    testServer: Boolean;
-    inProduction: Boolean;
+    testServer: boolean;
+    inProduction: boolean;
 
     constructor(private profileService: ProfileService) {}
 
@@ -32,7 +32,7 @@ export class FooterComponent implements OnInit {
                     this.contact = info.contact;
                     this.gitBranch = info.git.branch;
                     this.gitCommitId = info.git.commit.id.abbrev;
-                    this.gitTimestamp = info.git.commit.time;
+                    this.gitTimestamp = new Date(info.git.commit.time).toUTCString();
                     this.gitCommitUser = info.git.commit.user.name;
                     this.testServer = info.testServer ?? false;
                     this.inProduction = info.inProduction;

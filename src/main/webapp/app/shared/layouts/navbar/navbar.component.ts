@@ -186,7 +186,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.openApiEnabled = profileInfo.openApiEnabled;
                 this.gitCommitId = profileInfo.git.commit.id.abbrev;
                 this.gitBranchName = profileInfo.git.branch;
-                this.gitTimestamp = profileInfo.git.commit.time;
+                this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
                 this.gitUsername = profileInfo.git.commit.user.name;
             }
         });

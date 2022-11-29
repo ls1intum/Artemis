@@ -1,7 +1,7 @@
 {
     "artemisApp": {
         "git": {
-            "title": "Git-Information",
+            "title": "Git-Informationen",
             "branch": "Branch",
             "commit": "Commit-Hash",
             "timestamp": "Commit-Datum",
