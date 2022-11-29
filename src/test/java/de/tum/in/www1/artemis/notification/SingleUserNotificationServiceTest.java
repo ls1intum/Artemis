@@ -6,12 +6,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.Set;
 
 import javax.mail.internet.MimeMessage;
 
-import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,9 +30,12 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "singleusernotification";
 
     @Autowired
     private SingleUserNotificationService singleUserNotificationService;
@@ -77,8 +78,10 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
         course = database.createCourse();
 
-        List<User> users = database.addUsers(3, 0, 0, 0);
-        user = users.get(0);
+        database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
+        user = database.getUserByLogin(TEST_PREFIX + "student1");
+        userTwo = database.getUserByLogin(TEST_PREFIX + "student2");
+        userThree = database.getUserByLogin(TEST_PREFIX + "student3");
 
         notificationRepository.deleteAllInBatch();
 
@@ -244,8 +247,8 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         Course testCourse = database.addCourseWithFileUploadExercise();
         Exercise testExercise = testCourse.getExercises().iterator().next();
 
-        User studentWithParticipationAndSubmissionAndResult = database.getUserByLogin("student1");
-        User studentWithParticipationButWithoutSubmission = database.getUserByLogin("student2");
+        User studentWithParticipationAndSubmissionAndResult = database.getUserByLogin(TEST_PREFIX + "student1");
+        User studentWithParticipationButWithoutSubmission = database.getUserByLogin(TEST_PREFIX + "student2");
 
         database.createParticipationSubmissionAndResult(testExercise.getId(), studentWithParticipationAndSubmissionAndResult, 10.0, 10.0, 50, true);
         database.createAndSaveParticipationForExercise(testExercise, studentWithParticipationButWithoutSubmission.getLogin());
@@ -255,7 +258,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(testExercise);
 
         assertThat(notificationRepository.findAll()).as("Only one notification should have been created (for the user with a valid participation, submission, and result)")
-            .hasSize(1);
+                .hasSize(1);
     }
 
     // Plagiarism related
@@ -266,7 +269,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     @Test
     void testNotifyUserAboutNewPossiblePlagiarismCase() {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
-        database.changeUser("student1");
+        database.changeUser(TEST_PREFIX + "student1");
         Post post = new Post();
         post.setPlagiarismCase(new PlagiarismCase());
         post.setContent("You plagiarized!");
@@ -282,7 +285,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     @Test
     void testNotifyUserAboutFinalPlagiarismState() {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
-        database.changeUser("student1");
+        database.changeUser(TEST_PREFIX + "student1");
         plagiarismCase.setVerdict(PlagiarismVerdict.NO_PLAGIARISM);
         singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
@@ -293,6 +296,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testTutorialGroupNotifications_studentRegistration() {
+        notificationSettingRepository.deleteAll();
         notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyStudentAboutRegistrationToTutorialGroup(tutorialGroup, user, userTwo);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_REGISTRATION_STUDENT_TITLE);
@@ -301,6 +305,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testTutorialGroupNotifications_studentDeregistration() {
+        notificationSettingRepository.deleteAll();
         notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyStudentAboutDeregistrationFromTutorialGroup(tutorialGroup, user, userTwo);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_DEREGISTRATION_STUDENT_TITLE);
@@ -309,8 +314,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testTutorialGroupNotifications_tutorRegistration() {
+        notificationSettingRepository.deleteAll();
         notificationSettingRepository
-            .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyTutorAboutRegistrationToTutorialGroup(tutorialGroup, user, userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_REGISTRATION_TUTOR_TITLE);
         verifyEmail();
@@ -319,8 +325,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testTutorialGroupNotifications_tutorRegistrationMultiple() {
+        notificationSettingRepository.deleteAll();
         notificationSettingRepository
-            .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyTutorAboutMultipleRegistrationsToTutorialGroup(tutorialGroup, Set.of(user), userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_REGISTRATION_MULTIPLE_TUTOR_TITLE);
         verifyEmail();
@@ -328,8 +335,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testTutorialGroupNotifications_tutorDeregistration() {
+        notificationSettingRepository.deleteAll();
         notificationSettingRepository
-            .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION));
         singleUserNotificationService.notifyTutorAboutDeregistrationFromTutorialGroup(tutorialGroup, user, userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_DEREGISTRATION_TUTOR_TITLE);
         verifyEmail();
@@ -337,8 +345,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testTutorialGroupNotifications_groupAssigned() {
+        notificationSettingRepository.deleteAll();
         notificationSettingRepository
-            .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
         singleUserNotificationService.notifyTutorAboutAssignmentToTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_ASSIGNED_TITLE);
         verifyEmail();
@@ -346,8 +355,9 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     void testTutorialGroupNotifications_groupUnassigned() {
+        notificationSettingRepository.deleteAll();
         notificationSettingRepository
-            .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
+                .save(new NotificationSetting(tutorialGroup.getTeachingAssistant(), true, true, NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN));
         singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(tutorialGroup, tutorialGroup.getTeachingAssistant(), userThree);
         verifyRepositoryCallWithCorrectNotification(TUTORIAL_GROUP_UNASSIGNED_TITLE);
         verifyEmail();
