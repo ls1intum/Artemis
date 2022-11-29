@@ -16,7 +16,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -68,13 +67,11 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private ExerciseGroup exerciseGroup;
 
-    private List<User> users;
-
     private final int numberOfParticipants = 12;
 
     @BeforeEach
     void init() {
-        users = database.addUsers(TEST_PREFIX, numberOfParticipants, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, numberOfParticipants, 1, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
@@ -154,7 +151,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuiz() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
-            exam.addRegisteredUser(users.get(i));
+            exam.addRegisteredUser(database.getUserByLogin(TEST_PREFIX + "student" + (i + 1)));
         }
 
         exam = examRepository.save(exam);
@@ -201,7 +198,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuizWithNoSubmissions() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
-            exam.addRegisteredUser(users.get(i));
+            exam.addRegisteredUser(database.getUserByLogin(TEST_PREFIX + "student" + (i + 1)));
         }
 
         exam = examRepository.save(exam);
@@ -250,7 +247,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuizWithMultipleSubmissions() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
-            exam.addRegisteredUser(users.get(i));
+            exam.addRegisteredUser(database.getUserByLogin(TEST_PREFIX + "student" + (i + 1)));
         }
 
         exam = examRepository.save(exam);
@@ -305,7 +302,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void evaluateQuiz_twice() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
-            exam.addRegisteredUser(users.get(i));
+            exam.addRegisteredUser(database.getUserByLogin(TEST_PREFIX + "student" + (i + 1)));
         }
 
         exam = examRepository.save(exam);
