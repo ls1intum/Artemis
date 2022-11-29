@@ -29,7 +29,7 @@ export enum ExerciseMode {
     TEAM = 'TEAM',
 }
 
-// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java
+// IMPORTANT NOTICE: The following strings have to be consistent with the ones defined in Exercise.java and in ExerciseType.java -> getExerciseTypeAsString().
 export enum ExerciseType {
     PROGRAMMING = 'programming',
     MODELING = 'modeling',

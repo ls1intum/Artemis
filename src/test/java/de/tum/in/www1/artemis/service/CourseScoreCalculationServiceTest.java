@@ -65,7 +65,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         User student = userRepository.findOneByLogin("student1").get();
 
-        var courseResult = courseScoreCalculationService.calculateCourseScores(course.getId(), List.of(student.getId()));
+        var courseResult = courseScoreCalculationService.calculateCourseScoresWithPlagiarismVerdicts(course.getId(), List.of(student.getId()));
         assertThat(courseResult.maxPoints()).isEqualTo(0.0);
         assertThat(courseResult.reachablePoints()).isEqualTo(0.0);
         assertThat(courseResult.studentScores()).hasSize(1);
@@ -77,7 +77,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(booleans = { true, false })
+    @ValueSource(booleans = {true, false})
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreForStudentWithMultipleResultsInParticipation(boolean withDueDate) {
 
@@ -107,7 +107,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         studentParticipations.get(2).setResults(Collections.emptySet());
 
         var studentScoreResult = courseScoreCalculationService.calculateCourseScoreForStudent(student.getId(), studentParticipations, 25.0, 5.0,
-                new PlagiarismCaseService.PlagiarismMapping(Collections.emptyMap()));
+            new PlagiarismCaseService.PlagiarismMapping(Collections.emptyMap()));
         assertThat(studentScoreResult.studentId()).isEqualTo(student.getId());
         assertThat(studentScoreResult.relativeScore()).isEqualTo(16.0);
         assertThat(studentScoreResult.absolutePoints()).isEqualTo(4.0);

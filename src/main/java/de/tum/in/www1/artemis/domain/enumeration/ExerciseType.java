@@ -5,10 +5,19 @@ public enum ExerciseType {
     TEXT, PROGRAMMING, MODELING, FILE_UPLOAD, QUIZ;
 
     /**
+     * @return the exercise type as a lower case String with underscores replaced by hyphens (e.g. FILE_UPLOAD -> "file-upload")
+     */
+    public String getExerciseTypeAsString() {
+        return this.toString().toLowerCase().replace('_', '-');
+    }
+
+    /**
      * Used for human-readable string manipulations e.g. for notifications texts
      * @return the exercise type as a lower case String without any special characters (e.g. FILE_UPLOAD -> "file upload")
      */
     public String getExerciseTypeAsReadableString() {
         return this.toString().toLowerCase().replace('_', ' ');
     }
+
+
 }

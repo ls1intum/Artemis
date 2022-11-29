@@ -100,11 +100,13 @@ public class CourseResource {
 
     private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
 
+    private final CourseScoreCalculationService courseScoreCalculationService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
             OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService) {
+            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -120,6 +122,7 @@ public class CourseResource {
         this.exerciseRepository = exerciseRepository;
         this.fileService = fileService;
         this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
+        this.courseScoreCalculationService = courseScoreCalculationService;
     }
 
     /**
@@ -418,19 +421,25 @@ public class CourseResource {
     /**
      * GET /courses/for-dashboard
      *
-     * @return the list of courses (the user has access to) including all exercises with participation and result for the user
+     * @return the list of courses (the user has access to) including all exercises with participation and result for the user +
+     *          the calculated scores the user achieved in each of those courses (including reachablePoints, and absolutePoints i.a.)
      */
     @GetMapping("courses/for-dashboard")
     @PreAuthorize("hasRole('USER')")
-    public List<Course> getAllCoursesForDashboard() {
+    public Map<String, Object> getAllCoursesForDashboard() {
         long start = System.currentTimeMillis();
-        log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
+        log.debug("REST request to get all Courses the user has access to with exercises, participations and results + the calculated scores the user achieved in each of those courses");
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
-        return courses;
+
+        Map<Long, CourseScoresDTO> scores = new HashMap<>();
+        courses.forEach(course -> {
+            scores.put(course.getId(), courseScoreCalculationService.calculateCourseScores(course.getId());
+        });
+        return Map.of("courses", courses, "scores", scores);
     }
 
     /**
