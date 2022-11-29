@@ -1,6 +1,5 @@
-import { Component, Input, ViewEncapsulation } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
 import { faCheck, faExclamationCircle, faExclamationTriangle, faPlus, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { faCheckSquare, faCircle, faDotCircle, faSquare } from '@fortawesome/free-regular-svg-icons';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
@@ -24,7 +23,7 @@ export class MultipleChoiceVisualQuestionComponent {
         return this._question;
     }
 
-    renderedQuestion: RenderedQuizQuestionMarkDownElement;
+    @Output() questionChanged = new EventEmitter();
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -80,6 +79,8 @@ export class MultipleChoiceVisualQuestionComponent {
         });
 
         this.question.answerOptions = newAnswers;
+
+        this.questionChanged.emit();
     }
 
     toggleIsCorrect(answerOption: AnswerOption) {
@@ -88,6 +89,8 @@ export class MultipleChoiceVisualQuestionComponent {
         }
 
         answerOption.isCorrect = !answerOption.isCorrect ?? true;
+
+        this.questionChanged.emit();
     }
 
     correctToggleDisabled() {
@@ -97,5 +100,7 @@ export class MultipleChoiceVisualQuestionComponent {
     addNewAnswer() {
         this.question.answerOptions?.push(this.newOption);
         this.newOption = new AnswerOption();
+
+        this.questionChanged.emit();
     }
 }

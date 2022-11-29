@@ -109,6 +109,18 @@ export class MultipleChoiceQuestionEditComponent implements OnInit, QuizQuestion
     }
 
     /**
+     * Detect of changes in the visual editor
+     * 1. Parse the text in the editor to get the newest values
+     * 2. Notify the parent component to check the validity of the text
+     */
+    changesInVisualMode(): void {
+        // this.markdownEditor.markdown = this.markdownEditor.visualChild.parseQuestion();
+        // this.prepareForSave();
+        this.questionUpdated.emit();
+        this.changeDetector.detectChanges();
+    }
+
+    /**
      * Triggers the saving process by cleaning up the question and calling the markdown parse function
      * to get the newest values in the editor to update the question attributes
      */
