@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.time.ZonedDateTime;
+import java.util.*;
 
 import javax.annotation.PostConstruct;
 
@@ -21,6 +19,11 @@ import org.springframework.web.socket.messaging.SubProtocolWebSocketHandler;
 
 import com.zaxxer.hikari.HikariDataSource;
 
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
 
@@ -49,14 +52,24 @@ public class MetricsBean {
 
     private final WebSocketHandler webSocketHandler;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final ExamRepository examRepository;
+
+    private final UserRepository userRepository;
+
     public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
-            WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource) {
+            WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
+            ExamRepository examRepository, UserRepository userRepository) {
         this.meterRegistry = meterRegistry;
         this.env = env;
         this.taskScheduler = taskScheduler;
         this.webSocketStats = webSocketStats;
         this.userRegistry = userRegistry;
         this.webSocketHandler = websocketHandler;
+        this.exerciseRepository = exerciseRepository;
+        this.examRepository = examRepository;
+        this.userRepository = userRepository;
 
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
@@ -111,6 +124,41 @@ public class MetricsBean {
         // Publish the number of currently (via WebSockets) connected users
         Gauge.builder("artemis.instance.websocket.users", webSocketHandler, MetricsBean::extractWebsocketUserCount).strongReference(true)
                 .description("Number of users connected to this Artemis instance").register(meterRegistry);
+
+        int[] ranges = new int[] { 5, 15, 30, 45, 60, 120 };
+        for (int range : ranges) {
+            for (var exerciseType : ExerciseType.values()) {
+                Gauge.builder("artemis.scheduled.exercises.due.count", () -> this.getUpcomingDueExercisesCount(range, exerciseType)).strongReference(true)
+                        .tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.getExerciseTypeAsReadableString())
+                        .description("Number of exercises ending within the next minutes").register(meterRegistry);
+
+                Gauge.builder("artemis.scheduled.exercises.due.student_multiplier", () -> this.getUpcomingDueExercisesCountWithStudentMultiplier(range, exerciseType))
+                        .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.getExerciseTypeAsReadableString())
+                        .description("Number of exercises ending within the next minutes multiplied with students in the course").register(meterRegistry);
+
+                Gauge.builder("artemis.scheduled.exercises.release.count", () -> this.getUpcomingReleasedExercisesCount(range, exerciseType)).strongReference(true)
+                        .tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.getExerciseTypeAsReadableString())
+                        .description("Number of exercises starting within the next minutes").register(meterRegistry);
+
+                Gauge.builder("artemis.scheduled.exercises.release.student_multiplier", () -> this.getUpcomingReleasedExercisesCountWithStudentMultiplier(range, exerciseType))
+                        .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.getExerciseTypeAsReadableString())
+                        .description("Number of exercises starting within the next minutes multiplied with students in the course").register(meterRegistry);
+            }
+
+            Gauge.builder("artemis.scheduled.exams.due.count", range, this::getUpcomingEndingExamCount).strongReference(true).tag("range", String.valueOf(range))
+                    .description("Number of exams ending within the next minutes").register(meterRegistry);
+
+            Gauge.builder("artemis.scheduled.exams.due.student_multiplier", range, this::getUpcomingEndingExamCountWithStudentMultiplier).strongReference(true)
+                    .tag("range", String.valueOf(range)).description("Number of exams ending within the next minutes multiplied with students in the course")
+                    .register(meterRegistry);
+
+            Gauge.builder("artemis.scheduled.exams.release.count", range, this::getUpcomingStartingExamCount).strongReference(true).tag("range", String.valueOf(range))
+                    .description("Number of exams starting within the next minutes").register(meterRegistry);
+
+            Gauge.builder("artemis.scheduled.exams.release.student_multiplier", range, this::getUpcomingStartingExamCountWithStudentMultiplier).strongReference(true)
+                    .tag("range", String.valueOf(range)).description("Number of exams starting within the next minutes multiplied with students in the course")
+                    .register(meterRegistry);
+        }
     }
 
     private static double extractWebsocketUserCount(WebSocketHandler webSocketHandler) {
@@ -118,6 +166,64 @@ public class MetricsBean {
             return subProtocolWebSocketHandler.getStats().getWebSocketSessions();
         }
         return -1;
+    }
+
+    private double getUpcomingDueExercisesCount(int minutes, ExerciseType exerciseType) {
+        SecurityUtils.setAuthorizationObject();
+        var now = ZonedDateTime.now();
+        var endDate = ZonedDateTime.now().plusMinutes(minutes);
+        return exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate).stream().filter(e -> e.getExerciseType() == exerciseType).count();
+    }
+
+    private double getUpcomingDueExercisesCountWithStudentMultiplier(int minutes, ExerciseType exerciseType) {
+        SecurityUtils.setAuthorizationObject();
+        var now = ZonedDateTime.now();
+        var endDate = ZonedDateTime.now().plusMinutes(minutes);
+        return exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate).stream().filter(e -> e.getExerciseType() == exerciseType)
+                .map(e -> userRepository.countUserInGroup(e.getCourseViaExerciseGroupOrCourseMember().getStudentGroupName())).reduce(0L, Long::sum);
+    }
+
+    private double getUpcomingReleasedExercisesCount(int minutes, ExerciseType exerciseType) {
+        SecurityUtils.setAuthorizationObject();
+        var now = ZonedDateTime.now();
+        var endDate = ZonedDateTime.now().plusMinutes(minutes);
+        return exerciseRepository.findAllExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate).stream().filter(e -> e.getExerciseType() == exerciseType).count();
+    }
+
+    private double getUpcomingReleasedExercisesCountWithStudentMultiplier(int minutes, ExerciseType exerciseType) {
+        SecurityUtils.setAuthorizationObject();
+        var now = ZonedDateTime.now();
+        var endDate = ZonedDateTime.now().plusMinutes(minutes);
+        return exerciseRepository.findAllExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate).stream().filter(e -> e.getExerciseType() == exerciseType)
+                .map(e -> userRepository.countUserInGroup(e.getCourseViaExerciseGroupOrCourseMember().getStudentGroupName())).reduce(0L, Long::sum);
+    }
+
+    private double getUpcomingEndingExamCount(int minutes) {
+        SecurityUtils.setAuthorizationObject();
+        var now = ZonedDateTime.now();
+        var endDate = ZonedDateTime.now().plusMinutes(minutes);
+        return examRepository.findAllByEndDateGreaterThanEqualButLessOrEqualThan(now, endDate).size();
+    }
+
+    private double getUpcomingEndingExamCountWithStudentMultiplier(int minutes) {
+        SecurityUtils.setAuthorizationObject();
+        var now = ZonedDateTime.now();
+        var endDate = ZonedDateTime.now().plusMinutes(minutes);
+        return examRepository.findAllByEndDateGreaterThanEqualButLessOrEqualThan(now, endDate).stream().map(exam -> exam.getRegisteredUsers().size()).reduce(0, Integer::sum);
+    }
+
+    private double getUpcomingStartingExamCount(int minutes) {
+        SecurityUtils.setAuthorizationObject();
+        var now = ZonedDateTime.now();
+        var endDate = ZonedDateTime.now().plusMinutes(minutes);
+        return examRepository.findAllByStartDateGreaterThanEqualButLessOrEqualThan(now, endDate).size();
+    }
+
+    private double getUpcomingStartingExamCountWithStudentMultiplier(int minutes) {
+        SecurityUtils.setAuthorizationObject();
+        var now = ZonedDateTime.now();
+        var endDate = ZonedDateTime.now().plusMinutes(minutes);
+        return examRepository.findAllByStartDateGreaterThanEqualButLessOrEqualThan(now, endDate).stream().map(exam -> exam.getRegisteredUsers().size()).reduce(0, Integer::sum);
     }
 
     private void registerDatasourceMetrics(HikariDataSource dataSource) {

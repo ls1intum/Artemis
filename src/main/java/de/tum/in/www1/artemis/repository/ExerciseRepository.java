@@ -72,6 +72,24 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT e FROM Exercise e
             WHERE e.course.testCourse = FALSE
+            	AND e.dueDate >= :#{#now}
+            	AND e.dueDate <= :#{#maxDate}
+            ORDER BY e.dueDate ASC
+            """)
+    Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate);
+
+    @Query("""
+            SELECT e FROM Exercise e
+            WHERE e.course.testCourse = FALSE
+            	AND e.releaseDate >= :#{#now}
+            	AND e.releaseDate <= :#{#maxDate}
+            ORDER BY e.dueDate ASC
+            """)
+    Set<Exercise> findAllExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate);
+
+    @Query("""
+            SELECT e FROM Exercise e
+            WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :#{#now}
             ORDER BY e.dueDate ASC
             """)
