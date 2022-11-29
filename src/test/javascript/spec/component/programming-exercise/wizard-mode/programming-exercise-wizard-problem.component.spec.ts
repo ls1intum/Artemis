@@ -53,7 +53,7 @@ describe('ProgrammingExerciseWizardProblemComponent', () => {
                 exercise.assessmentType = AssessmentType.AUTOMATIC;
                 exercise.submissionPolicy = { type: SubmissionPolicyType.NONE };
 
-                wizardComponent.programmingExercise = exercise;
+                wizardComponent.exercise = exercise;
             });
     });
 

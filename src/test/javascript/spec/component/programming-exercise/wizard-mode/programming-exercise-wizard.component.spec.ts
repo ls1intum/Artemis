@@ -4,6 +4,7 @@ import { ActivatedRoute } from '@angular/router';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ProgrammingExerciseUpdateWizardComponent } from 'app/exercises/programming/manage/update/wizard-mode/programming-exercise-update-wizard.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('ProgrammingExerciseWizardComponent', () => {
     let wizardComponentFixture: ComponentFixture<ProgrammingExerciseUpdateWizardComponent>;
@@ -25,6 +26,9 @@ describe('ProgrammingExerciseWizardComponent', () => {
             .then(() => {
                 wizardComponentFixture = TestBed.createComponent(ProgrammingExerciseUpdateWizardComponent);
                 wizardComponent = wizardComponentFixture.componentInstance;
+
+                const exercise = new ProgrammingExercise(undefined, undefined);
+                wizardComponent.exercise = exercise;
             });
     });
 
