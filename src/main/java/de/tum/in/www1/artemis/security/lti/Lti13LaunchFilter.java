@@ -87,7 +87,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
         PrintWriter writer = response.getWriter();
 
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(targetLinkUri);
-        lti13Service.addLtiQueryParams(uriBuilder);
+        lti13Service.buildLtiResponse(uriBuilder, response);
 
         JSONObject json = new JSONObject();
         json.put("targetLinkUri", uriBuilder.build().toUriString());

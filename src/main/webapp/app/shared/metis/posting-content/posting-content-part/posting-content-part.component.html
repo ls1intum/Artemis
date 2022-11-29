@@ -1,7 +1,7 @@
 <span
     class="markdown-preview"
     *ngIf="postingContentPart.contentBeforeReference"
-    [innerHTML]="postingContentPart.contentBeforeReference | htmlForPostingMarkdown: true:allowedHtmlTags:allowedHtmlAttributes"
+    [innerHTML]="postingContentPart.contentBeforeReference | htmlForPostingMarkdown : true : allowedHtmlTags : allowedHtmlAttributes"
 ></span>
 <a class="reference" *ngIf="postingContentPart.linkToReference" [routerLink]="postingContentPart.linkToReference" [queryParams]="postingContentPart.queryParams">
     <fa-icon class="px-1" [icon]="referenceIcon(postingContentPart.referenceType!)"></fa-icon>{{ postingContentPart.referenceStr }}
@@ -12,5 +12,5 @@
 <span
     class="markdown-preview"
     *ngIf="postingContentPart.contentAfterReference"
-    [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown: false:allowedHtmlTags:allowedHtmlAttributes"
+    [innerHTML]="postingContentPart.contentAfterReference | htmlForPostingMarkdown : false : allowedHtmlTags : allowedHtmlAttributes"
 ></span>

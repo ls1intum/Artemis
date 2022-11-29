@@ -17,7 +17,7 @@
                 <jhi-help-icon text="artemisApp.programmingExercise.titleTooltip"></jhi-help-icon>
             </div>
             <input required type="text" class="form-control" name="title" id="field_title" [pattern]="titleNamePattern" [(ngModel)]="programmingExercise.title" #title="ngModel" />
-            <ng-container *ngFor="let e of title.errors! | keyvalue | removekeys: ['required']">
+            <ng-container *ngFor="let e of title.errors! | keyvalue | removekeys : ['required']">
                 <div *ngIf="title.invalid && (title.dirty || title.touched)" class="alert alert-danger">
                     <div [jhiTranslate]="'artemisApp.exercise.form.title' + '.' + e.key"></div>
                 </div>
@@ -40,7 +40,7 @@
                 [readonly]="!isImport && programmingExercise.id"
                 #shortName="ngModel"
             />
-            <ng-container *ngFor="let error of shortName.errors! | keyvalue | removekeys: ['required']">
+            <ng-container *ngFor="let error of shortName.errors! | keyvalue | removekeys : ['required']">
                 <div *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)" class="alert alert-danger">
                     <div [jhiTranslate]="'artemisApp.exercise.form.shortName' + '.' + error.key"></div>
                 </div>
@@ -193,7 +193,7 @@
                 #packageName="ngModel"
                 [disabled]="isImport || !!programmingExercise.id"
             />
-            <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
+            <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys : ['required']">
                 <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
                     <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
                 </div>
@@ -214,7 +214,7 @@
                 #packageName="ngModel"
                 [disabled]="isImport || !!programmingExercise.id"
             />
-            <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys: ['required']">
+            <ng-container *ngFor="let e of packageName.errors! | keyvalue | removekeys : ['required']">
                 <div *ngIf="packageName.invalid && (packageName.dirty || packageName.touched)" class="alert alert-danger">
                     <div [jhiTranslate]="'artemisApp.exercise.form.packageName' + '.' + e.key + '.' + programmingExercise.programmingLanguage"></div>
                 </div>
