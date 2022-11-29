@@ -501,7 +501,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         expect(questionUpdated).toHaveBeenCalledOnce();
     });
 
-    it('should return highst spot number', () => {
+    it('should return highest spot number', () => {
         expect(component.getHighestSpotNumbers(`[-spot 1]`)).toBe(1);
         expect(component.getHighestSpotNumbers(`hello [-spot 1] [-spot 3] [-spot 2]`)).toBe(3);
         expect(
