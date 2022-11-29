@@ -11,13 +11,24 @@ import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-po
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ExportToCsv } from 'export-to-csv';
 
+interface TestCaseResult {
+    testName: string;
+    testResult: string;
+}
+
 @Component({
     selector: 'jhi-exercise-scores-export-button',
     template: `
-        <button class="btn btn-info btn-sm me-1" (click)="exportResults()">
-            <fa-icon [icon]="faDownload"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
-        </button>
+        <div ngbDropdown class="d-none d-md-inline">
+            <button id="export-results-dropdown" class="btn btn-info btn-sm me-1" ngbDropdownToggle>
+                <fa-icon [icon]="faDownload"></fa-icon>
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
+            </button>
+            <div ngbDropdownMenu="export-results-dropdown">
+                <button ngbDropdownItem (click)="exportResults(true)">With test cases</button>
+                <button ngbDropdownItem (click)="exportResults(false)">Without test cases</button>
+            </div>
+        </div>
     `,
 })
 @Injectable({ providedIn: 'root' })
@@ -33,20 +44,21 @@ export class ExerciseScoresExportButtonComponent {
     /**
      * Exports the exercise results as a CSV file.
      */
-    exportResults() {
+    exportResults(withTestCases: boolean) {
         if (this.exercises.length === 0 && this.exercise !== undefined) {
             this.exercises = this.exercises.concat(this.exercise);
         }
 
-        this.exercises.forEach((exercise) => this.constructCSV(exercise));
+        this.exercises.forEach((exercise) => this.constructCSV(exercise, withTestCases));
     }
 
     /**
      * Builds the CSV with results and triggers the download to the user for it.
      * @param exercise for which the results should be exported.
+     * @param withTestCases optional parameter that includes test cases info in the exported CSV file
      * @private
      */
-    private constructCSV(exercise: Exercise) {
+    private constructCSV(exercise: Exercise, withTestCases?: boolean) {
         this.resultService.getResultsWithPointsPerGradingCriterion(exercise).subscribe((data) => {
             const results: ResultWithPointsPerGradingCriterion[] = data.body || [];
             if (results.length === 0) {
@@ -57,14 +69,25 @@ export class ExerciseScoresExportButtonComponent {
             const isTeamExercise = !!(results[0].result.participation! as StudentParticipation).team;
             const gradingCriteria: GradingCriterion[] = ExerciseScoresExportButtonComponent.sortedGradingCriteria(exercise);
 
-            const keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria);
-            const rows = results.map((resultWithPoints) => {
-                const studentParticipation = resultWithPoints.result.participation! as StudentParticipation;
-                return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints).build();
-            });
-
+            let keys;
+            let rows;
+            if (withTestCases && results.first()) {
+                const testCasesNames = this.getTestCaseNamesFromResult(results.first()!);
+                keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria, testCasesNames);
+                rows = results.map((resultWithPoints) => {
+                    const studentParticipation = resultWithPoints.result.participation! as StudentParticipation;
+                    const testCaseResults = this.getTestCaseResults(resultWithPoints, testCasesNames);
+                    return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints, testCaseResults).build();
+                });
+            } else {
+                keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria);
+                rows = results.map((resultWithPoints) => {
+                    const studentParticipation = resultWithPoints.result.participation! as StudentParticipation;
+                    return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints).build();
+                });
+            }
             const fileNamePrefix = exercise.shortName ?? exercise.title?.split(/\s+/).join('_');
-            ExerciseScoresExportButtonComponent.exportAsCsv(`${fileNamePrefix}-results-scores`, keys, rows);
+            ExerciseScoresExportButtonComponent.exportAsCsv(`${fileNamePrefix}-results-scores`, keys, rows, withTestCases ? ',' : undefined);
         });
     }
 
@@ -73,11 +96,12 @@ export class ExerciseScoresExportButtonComponent {
      * @param filename The filename the results should be downloaded as.
      * @param keys The column names in the CSV.
      * @param rows The actual data rows in the CSV.
+     * @param fieldSeparator Optional parameter for exporting the CSV file using a custom separator symbol
      * @private
      */
-    private static exportAsCsv(filename: string, keys: string[], rows: ExerciseScoresRow[]) {
+    private static exportAsCsv(filename: string, keys: string[], rows: ExerciseScoresRow[], fieldSeparator?: string) {
         const options = {
-            fieldSeparator: ';',
+            fieldSeparator: fieldSeparator ?? ';',
             quoteStrings: '"',
             decimalSeparator: 'locale',
             showLabels: true,
@@ -110,6 +134,41 @@ export class ExerciseScoresExportButtonComponent {
             }) || []
         );
     }
+
+    /**
+     * Retrieves a list of test cases names contained in a result's feedback list
+     * @param result
+     * @private
+     */
+    private getTestCaseNamesFromResult(result: ResultWithPointsPerGradingCriterion): string[] {
+        if (!result.result.feedbacks) {
+            return [];
+        }
+        return result.result.feedbacks!.map((f) => {
+            return f.text ? 'Test ' + f.text : 'Test ' + result.result.feedbacks?.indexOf(f) + 1;
+        });
+    }
+
+    /**
+     * Extracts test case results from a given result and returns them.
+     * If no feedback is found in the result an empty array is returned
+     * @param result from which the test case results should be extracted
+     * @param testCaseNames list containing the test names
+     * @private
+     */
+    private getTestCaseResults(result: ResultWithPointsPerGradingCriterion, testCaseNames: string[]): TestCaseResult[] {
+        return (
+            result.result.feedbacks?.map((f, i) => {
+                let resultText;
+                if (f.positive) {
+                    resultText = 'Passed';
+                } else {
+                    resultText = f.detailText ? 'Failed: "' + f.detailText + '"' : 'Failed';
+                }
+                return { testName: testCaseNames[i], testResult: resultText } as TestCaseResult;
+            }) ?? []
+        );
+    }
 }
 
 /**
@@ -124,14 +183,22 @@ class ExerciseScoresRowBuilder {
     private readonly gradingCriteria: GradingCriterion[];
     private readonly participation: StudentParticipation;
     private readonly resultWithPoints: ResultWithPointsPerGradingCriterion;
+    private readonly testCaseResults?: TestCaseResult[];
 
     private csvRow: ExerciseScoresRow = {};
 
-    constructor(exercise: Exercise, gradingCriteria: GradingCriterion[], participation: StudentParticipation, resultWithPoints: ResultWithPointsPerGradingCriterion) {
+    constructor(
+        exercise: Exercise,
+        gradingCriteria: GradingCriterion[],
+        participation: StudentParticipation,
+        resultWithPoints: ResultWithPointsPerGradingCriterion,
+        testCaseResults?: TestCaseResult[],
+    ) {
         this.exercise = exercise;
         this.gradingCriteria = gradingCriteria;
         this.participation = participation;
         this.resultWithPoints = resultWithPoints;
+        this.testCaseResults = testCaseResults;
     }
 
     /**
@@ -147,6 +214,10 @@ class ExerciseScoresRowBuilder {
         this.setGradingCriteriaPoints();
         this.setProgrammingExerciseInformation();
         this.setTeamInformation();
+
+        if (this.testCaseResults) {
+            this.setTestCaseResults();
+        }
 
         return this.csvRow;
     }
@@ -214,6 +285,16 @@ class ExerciseScoresRowBuilder {
     }
 
     /**
+     * Adds information about each exercise's test case result.
+     * @private
+     */
+    private setTestCaseResults() {
+        this.testCaseResults!.forEach((testResult) => {
+            this.set(testResult.testName, testResult.testResult);
+        });
+    }
+
+    /**
      * CSV columns [alternative column name for team exercises]:
      * - Name [Team Name]
      * - Username [Team Short Name]
@@ -227,8 +308,9 @@ class ExerciseScoresRowBuilder {
      * @param exercise The exercise for which results should be exported.
      * @param isTeamExercise True, if the students participate in teams in this exercise.
      * @param gradingCriteria The grading criteria that can be used in this exercise.
+     * @param testCases Optional columns representing each exercise test case
      */
-    public static keys(exercise: Exercise, isTeamExercise: boolean, gradingCriteria: GradingCriterion[]): Array<string> {
+    public static keys(exercise: Exercise, isTeamExercise: boolean, gradingCriteria: GradingCriterion[], testCases?: string[]): Array<string> {
         const columns = [];
 
         if (isTeamExercise) {
@@ -255,6 +337,12 @@ class ExerciseScoresRowBuilder {
 
         if (isTeamExercise) {
             columns.push('Students');
+        }
+
+        if (testCases) {
+            testCases.forEach((testCase) => {
+                columns.push(testCase);
+            });
         }
 
         return columns;
