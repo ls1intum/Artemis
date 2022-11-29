@@ -93,4 +93,9 @@ export class MultipleChoiceVisualQuestionComponent {
     correctToggleDisabled() {
         return this.question.singleChoice && this.question.answerOptions?.some((option) => option.isCorrect);
     }
+
+    addNewAnswer() {
+        this.question.answerOptions?.push(this.newOption);
+        this.newOption = new AnswerOption();
+    }
 }

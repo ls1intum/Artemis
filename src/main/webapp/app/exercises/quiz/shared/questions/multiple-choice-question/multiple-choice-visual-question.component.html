@@ -1,9 +1,9 @@
 <div class="markdown-preview visual-mode">
     <h4>Question</h4>
-    <textarea id="mc-question" class="form-control form-group-narrow" [(ngModel)]="this.question.text" rows="5"></textarea>
+    <textarea id="mc-question" class="form-control form-group-narrow" [(ngModel)]="this.question.text" rows="5" placeholder="Answer Text"></textarea>
     <div class="form-group-narrow visual-question-hint">
         <fa-icon [icon]="faQuestionCircle" class="text-secondary me-1" ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}"></fa-icon>
-        <input class="form-control" [(ngModel)]="question.hint" />
+        <input class="form-control" [(ngModel)]="question.hint" placeholder="Answer Hint" />
     </div>
     <div class="form-group visual-question-hint">
         <fa-icon
@@ -11,7 +11,7 @@
             class="text-secondary me-1"
             ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationTooltip' | artemisTranslate }}"
         ></fa-icon>
-        <input class="form-control" [(ngModel)]="question.explanation" />
+        <input class="form-control" [(ngModel)]="question.explanation" placeholder="Answer Explanation" />
     </div>
     <h4>Answer Options</h4>
     <div *ngFor="let answerOption of question.answerOptions; let i = index" id="answer-option-{{ i }}" class="visual-answer-option form-group-narrow">
@@ -23,7 +23,7 @@
             >
                 <fa-icon [icon]="faCheck"></fa-icon>
             </div>
-            <input class="form-control" [(ngModel)]="answerOption.text" />
+            <input class="form-control" [(ngModel)]="answerOption.text" placeholder="Answer Text" />
             <div class="visual-answer-delete-container" (click)="deleteAnswer(i)">
                 <fa-icon [icon]="faTrash"></fa-icon>
             </div>
@@ -34,7 +34,7 @@
                 class="text-secondary me-1"
                 ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.hintTooltip' | artemisTranslate }}"
             ></fa-icon>
-            <input class="form-control" [(ngModel)]="answerOption.hint" />
+            <input class="form-control" [(ngModel)]="answerOption.hint" placeholder="Answer Hint" />
         </div>
         <div class="visual-question-hint">
             <fa-icon
@@ -42,7 +42,7 @@
                 class="text-secondary me-1"
                 ngbTooltip="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.explanationTooltip' | artemisTranslate }}"
             ></fa-icon>
-            <input class="form-control" [(ngModel)]="answerOption.explanation" />
+            <input class="form-control" [(ngModel)]="answerOption.explanation" placeholder="Answer Explanation" />
         </div>
     </div>
     <h4 class="visual-new-answer-title">New Answer Option</h4>
@@ -52,7 +52,7 @@
                 <fa-icon [icon]="faCheck"></fa-icon>
             </div>
             <input class="form-control" [(ngModel)]="newOption.text" placeholder="Answer Text" />
-            <div [ngClass]="newOption.text ? 'visual-answer-add-container' : 'visual-answer-add-container-disabled'">
+            <div [ngClass]="newOption.text ? 'visual-answer-add-container' : 'visual-answer-add-container-disabled'" (click)="addNewAnswer()">
                 <fa-icon [icon]="faPlus"></fa-icon>
             </div>
         </div>
