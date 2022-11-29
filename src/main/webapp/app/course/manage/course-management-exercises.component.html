@@ -11,6 +11,9 @@
             <jhi-documentation-button [type]="documentationType"></jhi-documentation-button>
         </div>
         <div class="col text-end align-self-center">
+            <button type="button" id="back-to-wizard" *ngIf="showBackToWizardModeButton" class="btn btn-secondary" (click)="goBackToWizardMode()">
+                <fa-icon [icon]="faHandshakeAngle"></fa-icon>&nbsp;{{ 'artemisApp.lecture.wizardMode.backToWizard' | artemisTranslate }}
+            </button>
             <button id="toggleSearchButton" class="btn btn-primary" type="button" (click)="toggleSearch()">
                 {{ 'artemisApp.course.exercise.search.toggleButton.' + showSearch | artemisTranslate }}
             </button>

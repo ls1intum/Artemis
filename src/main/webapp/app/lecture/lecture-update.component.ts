@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -11,8 +11,9 @@ import { Course } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faSave } from '@fortawesome/free-solid-svg-icons';
 import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
+import { faBan, faHandshakeAngle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -21,9 +22,13 @@ import { DocumentationType } from 'app/shared/components/documentation-button/do
 })
 export class LectureUpdateComponent implements OnInit {
     documentationType = DocumentationType.Lecture;
+
+    @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
+
     EditorMode = EditorMode;
     lecture: Lecture;
     isSaving: boolean;
+    isShowingWizardMode: boolean;
 
     courses: Course[];
     startDate: string;
@@ -34,6 +39,10 @@ export class LectureUpdateComponent implements OnInit {
     // Icons
     faSave = faSave;
     faBan = faBan;
+    faHandShakeAngle = faHandshakeAngle;
+
+    toggleModeFunction = () => this.toggleWizardMode();
+    saveLectureFunction = () => this.save();
 
     constructor(
         protected alertService: AlertService,
@@ -49,6 +58,7 @@ export class LectureUpdateComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
+        this.isShowingWizardMode = false;
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
             const lecture = data['lecture'];
@@ -57,6 +67,12 @@ export class LectureUpdateComponent implements OnInit {
             const course = data['course'];
             if (course) {
                 this.lecture.course = course;
+            }
+        });
+
+        this.activatedRoute.queryParams.subscribe((params) => {
+            if (params.shouldBeInWizardMode) {
+                this.isShowingWizardMode = params.shouldBeInWizardMode;
             }
         });
     }
@@ -84,6 +100,14 @@ export class LectureUpdateComponent implements OnInit {
     }
 
     /**
+     * Activate or deactivate the wizard mode for easier lecture creation.
+     * This function is called by pressing "Switch to guided mode" when creating a new lecture
+     */
+    toggleWizardMode() {
+        this.isShowingWizardMode = !this.isShowingWizardMode;
+    }
+
+    /**
      * @callback Callback function after saving a lecture, handles appropriate action in case of error
      * @param result The Http response from the server
      */
@@ -98,8 +122,19 @@ export class LectureUpdateComponent implements OnInit {
      * Action on successful lecture creation or edit
      */
     protected onSaveSuccess(lecture: Lecture) {
-        this.isSaving = false;
-        this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
+        if (this.isShowingWizardMode && !this.lecture.id) {
+            this.lectureService.findWithDetails(lecture.id!).subscribe({
+                next: (response: HttpResponse<Lecture>) => {
+                    this.isSaving = false;
+                    this.lecture = response.body!;
+                    this.alertService.success(`Lecture with title ${lecture.title} was successfully created.`);
+                    this.wizardComponent.onLectureCreationSucceeded();
+                },
+            });
+        } else {
+            this.isSaving = false;
+            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
+        }
     }
 
     /**
@@ -109,5 +144,17 @@ export class LectureUpdateComponent implements OnInit {
     protected onSaveError(error: HttpErrorResponse) {
         this.isSaving = false;
         onError(this.alertService, error);
+    }
+
+    onDatesValuesChanged() {
+        if (this.lecture.startDate === undefined || this.lecture.endDate === undefined) {
+            return;
+        }
+
+        if (this.lecture.startDate.isSameOrBefore(this.lecture.endDate)) {
+            return;
+        }
+
+        this.lecture.endDate = this.lecture.startDate;
     }
 }

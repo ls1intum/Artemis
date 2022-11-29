@@ -153,7 +153,7 @@ describe('Exercise Service', () => {
 
         service.validateDate(exercise);
 
-        expect(exercise.dueDateError).toBeFalse();
+        expect(exercise.dueDateError).toBeFalsy();
         expect(exercise.exampleSolutionPublicationDateError).toBeTrue();
         expect(exercise.exampleSolutionPublicationDateWarning).toBeTrue();
     });

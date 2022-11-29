@@ -54,6 +54,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     programmingExercise: ProgrammingExercise;
     backupExercise: ProgrammingExercise;
     isSaving: boolean;
+    goBackAfterSaving = false;
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText?: string;
@@ -387,6 +388,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 }),
             )
             .subscribe();
+
+        this.activatedRoute.queryParams.subscribe((params) => {
+            if (params.shouldHaveBackButtonToWizard) {
+                this.goBackAfterSaving = true;
+            }
+        });
+
         // If an exercise is created, load our readme template so the problemStatement is not empty
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
         if (this.programmingExercise.id) {
@@ -497,7 +505,9 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     saveExercise() {
         // If no release date is set, we warn the user.
         if (!this.programmingExercise.releaseDate && !this.isExamMode) {
-            const confirmNoReleaseDate = this.translateService.instant(this.translationBasePath + 'noReleaseDateWarning');
+            const confirmNoReleaseDate = this.translateService.instant(
+                this.translationBasePath + (this.programmingExercise.startDate ? 'noReleaseDateWarning' : 'noReleaseAndStartDateWarning'),
+            );
             if (!window.confirm(confirmNoReleaseDate)) {
                 return;
             }
@@ -555,6 +565,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private onSaveSuccess(exercise: ProgrammingExercise) {
         this.isSaving = false;
+
+        if (this.goBackAfterSaving) {
+            this.navigationUtilService.navigateBack();
+
+            return;
+        }
+
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 

@@ -34,6 +34,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
 
     documentationType = DocumentationType.Communications;
 
+    forceReload = true;
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly pageType = PageType.OVERVIEW;
@@ -128,6 +129,8 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      */
     onSelectContext(): void {
         this.page = 1;
+        // will scroll to the top of the posts
+        this.forceReload = true;
         super.onSelectContext();
     }
 
@@ -192,7 +195,6 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
             this.lectures?.find((lecture) => lecture.id === this.currentPostContextFilter.lectureId),
         );
     }
-
     /**
      * defines a function that returns the post id as unique identifier,
      * by this means, Angular determines which post in the collection of posts has to be reloaded/destroyed on changes
@@ -243,7 +245,7 @@ export class CourseDiscussionComponent extends CourseDiscussionDirective impleme
      * fetches next page of posts when user scrolls to the end of posts
      */
     fetchNextPage() {
-        if (this.posts.length < this.totalItems) {
+        if (!this.isLoading && this.posts.length < this.totalItems) {
             this.isLoading = true;
             this.page += 1;
             this.onSelectPage();

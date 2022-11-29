@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @RequestMapping("/api")
 public class GradeStepResource {
 
-    private final Logger log = LoggerFactory.getLogger(GradingScaleResource.class);
+    private final Logger log = LoggerFactory.getLogger(GradeStepResource.class);
 
     private final AuthorizationCheckService authCheckService;
 
