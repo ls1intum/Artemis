@@ -5,7 +5,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { MockProvider, MockPipe } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
@@ -56,14 +56,17 @@ describe('QuizVisualEditorComponent', () => {
 
         comp.question.text = 'Hallo';
         comp.question.hint = 'Hint';
+        comp.question.explanation = 'Exp';
 
         const answerOption = new AnswerOption();
         answerOption.text = 'Answer';
+        answerOption.hint = 'H2';
+        answerOption.explanation = 'Exp2';
         answerOption.isCorrect = true;
         comp.question.answerOptions = [answerOption];
 
         const markdown = comp.parseQuestion();
-        const expected = 'Hallo\n\t[hint] Hint\n\n[correct] Answer';
+        const expected = 'Hallo\n\t[hint] Hint\n\t[exp] Exp\n\n[correct] Answer\n\t[hint] H2\n\t[exp] Exp2';
 
         expect(markdown).toBe(expected);
     }));
@@ -73,12 +76,13 @@ describe('QuizVisualEditorComponent', () => {
         expect(comp).not.toBeNull();
 
         const answerOption = new AnswerOption();
-        comp.question.answerOptions = [answerOption];
-        expect(comp.question.answerOptions).toHaveLength(1);
+        const answerOption2 = new AnswerOption();
+        comp.question.answerOptions = [answerOption, answerOption2];
+        expect(comp.question.answerOptions).toHaveLength(2);
 
         comp.deleteAnswer(0);
 
-        expect(comp.question.answerOptions).toBeEmpty();
+        expect(comp.question.answerOptions).toHaveLength(1);
     }));
 
     it('toggle the isCorrect state', fakeAsync(() => {
@@ -95,6 +99,26 @@ describe('QuizVisualEditorComponent', () => {
         comp.toggleIsCorrect(answerOption);
 
         expect(answerOption.isCorrect).toBeFalse();
+    }));
+
+    it('does not toggle the if single mode and already has correct answer', fakeAsync(() => {
+        fixture.detectChanges();
+        expect(comp).not.toBeNull();
+
+        comp.question.singleChoice = true;
+
+        const answerOption = new AnswerOption();
+        answerOption.text = 'Answer';
+        answerOption.isCorrect = true;
+
+        const answerOption2 = new AnswerOption();
+        comp.question.answerOptions = [answerOption, answerOption2];
+
+        expect(answerOption2.isCorrect).toBeFalse();
+
+        comp.toggleIsCorrect(answerOption2);
+
+        expect(answerOption2.isCorrect).toBeFalse();
     }));
 
     it('add a new answer option', fakeAsync(() => {
