@@ -35,7 +35,7 @@ public class JMSListenerService {
     }
 
     @Bean
-    public SimpleMessageListenerContainer someServiceContainer(final QuizSubmissionWebsocketService quizSubmissionWebsocketService, final ConnectionFactory connectionFactory) {
+    public SimpleMessageListenerContainer quizSubmissionMessageListener(final ConnectionFactory connectionFactory) {
         // Create an adapter for some service
         final MessageListenerAdapter messageListener = new MessageListenerAdapter(new AbstractAdaptableMessageListener() {
 
@@ -53,12 +53,11 @@ public class JMSListenerService {
                     var address = activeMQMessage.getCoreMessage().getAddress();
                     var exerciseId = Long.parseLong(address.split("/queue/quizExercise/")[1].split("/submission")[0]);
                     try {
-                        quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, activeMQMessage.getStringProperty("userName"), false);
+                        quizSubmissionService.saveSubmissionForLiveMode(exerciseId, quizSubmission, activeMQMessage.getStringProperty("user-name"), false);
                     }
                     catch (QuizSubmissionException e) {
                         e.printStackTrace();
                     }
-                    // quizSubmissionService.saveSubmissionForLiveMode()
 
                 }
                 catch (IOException e) {
@@ -73,7 +72,6 @@ public class JMSListenerService {
         // [2] to a queue
         final SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
         container.setDestinationName("/queue/quizExercise/*/submission");
-        // container.setMessageConverter();
         container.setMessageListener(messageListener);
         container.setConnectionFactory(connectionFactory);
         return container;

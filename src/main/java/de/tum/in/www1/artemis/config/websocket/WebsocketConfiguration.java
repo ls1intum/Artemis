@@ -179,44 +179,13 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
             @Override
             public Message<?> preSend(Message<?> message, MessageChannel channel) {
-                System.err.println("preSend");
                 MultiValueMap<String, String> nativeHeaders = (MultiValueMap<String, String>) message.getHeaders().get(NativeMessageHeaderAccessor.NATIVE_HEADERS);
                 Authentication authentication = message.getHeaders().get(SimpMessageHeaderAccessor.USER_HEADER, Authentication.class);
                 if (nativeHeaders != null && authentication != null && authentication.isAuthenticated()) {
                     org.springframework.security.core.userdetails.User user = (org.springframework.security.core.userdetails.User) authentication.getPrincipal();
-                    nativeHeaders.add("userName", user.getUsername());
+                    nativeHeaders.add("user-name", user.getUsername());
                 }
                 return ChannelInterceptor.super.preSend(message, channel);
-            }
-
-            @Override
-            public void postSend(Message<?> message, MessageChannel channel, boolean sent) {
-                System.err.println("postSend");
-                ChannelInterceptor.super.postSend(message, channel, sent);
-            }
-
-            @Override
-            public void afterSendCompletion(Message<?> message, MessageChannel channel, boolean sent, Exception ex) {
-                System.err.println("afterSendCompletion");
-                ChannelInterceptor.super.afterSendCompletion(message, channel, sent, ex);
-            }
-
-            @Override
-            public boolean preReceive(MessageChannel channel) {
-                System.err.println("preReceive");
-                return ChannelInterceptor.super.preReceive(channel);
-            }
-
-            @Override
-            public Message<?> postReceive(Message<?> message, MessageChannel channel) {
-                System.err.println("postReceive");
-                return ChannelInterceptor.super.postReceive(message, channel);
-            }
-
-            @Override
-            public void afterReceiveCompletion(Message<?> message, MessageChannel channel, Exception ex) {
-                System.err.println("afterReceiveCompletion");
-                ChannelInterceptor.super.afterReceiveCompletion(message, channel, ex);
             }
         });
     }
