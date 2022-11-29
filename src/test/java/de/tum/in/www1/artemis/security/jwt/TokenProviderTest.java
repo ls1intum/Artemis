@@ -7,7 +7,6 @@ import java.security.Key;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Map;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +18,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.management.SecurityMetersService;
 import de.tum.in.www1.artemis.security.Role;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
@@ -30,6 +28,8 @@ import tech.jhipster.config.JHipsterProperties;
 class TokenProviderTest {
 
     private static final long ONE_MINUTE = 60000;
+
+    private static final long TEN_MINUTES = 600000;
 
     private Key key;
 
@@ -48,6 +48,8 @@ class TokenProviderTest {
 
         ReflectionTestUtils.setField(tokenProvider, "key", key);
         ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMilliseconds", ONE_MINUTE);
+        ReflectionTestUtils.setField(tokenProvider, "tokenValidityInMillisecondsForRememberMe", TEN_MINUTES);
+
     }
 
     @Test
@@ -96,47 +98,6 @@ class TokenProviderTest {
     }
 
     @Test
-    void testReturnFalseWhenJWTisMissingClaims() {
-        Authentication authentication = createAuthentication();
-        Claims claimsForToken = Jwts.claims();
-        claimsForToken.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 2);
-        String token = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, claimsForToken);
-
-        // attachment id and filename are required
-        var requiredClaims = Map.of(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 2, TokenProvider.FILENAME_KEY, "testfile");
-        boolean isTokenValid = tokenProvider.validateTokenForAuthorityAndFile(token, requiredClaims);
-
-        assertThat(isTokenValid).isFalse();
-    }
-
-    @Test
-    void testReturnFalseWhenJWTHasWrongValuesForClaims() {
-        Authentication authentication = createAuthentication();
-        Claims claimsForToken = Jwts.claims();
-        claimsForToken.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 2);
-        String token = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, claimsForToken);
-
-        var requiredClaims = Map.of(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 3);
-        boolean isTokenValid = tokenProvider.validateTokenForAuthorityAndFile(token, requiredClaims);
-
-        assertThat(isTokenValid).isFalse();
-    }
-
-    @Test
-    void testReturnTrueWhenJWTIsValidAndHasCorrectClaims() {
-        Authentication authentication = createAuthentication();
-        Claims claimsForToken = Jwts.claims();
-        claimsForToken.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 2);
-        claimsForToken.put(TokenProvider.FILENAME_KEY, "testfile");
-        String token = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, claimsForToken);
-
-        var requiredClaims = Map.of(TokenProvider.ATTACHMENT_UNIT_ID_KEY, 2, TokenProvider.FILENAME_KEY, "testfile");
-        boolean isTokenValid = tokenProvider.validateTokenForAuthorityAndFile(token, requiredClaims);
-
-        assertThat(isTokenValid).isTrue();
-    }
-
-    @Test
     void testKeyIsSetFromSecretWhenSecretIsNotEmpty() {
         final String secret = "NwskoUmKHZtzGRKJKVjsJF7BtQMMxNWi";
         JHipsterProperties jHipsterProperties = new JHipsterProperties();
@@ -164,6 +125,20 @@ class TokenProviderTest {
 
         Key key = (Key) ReflectionTestUtils.getField(tokenProvider, "key");
         assertThat(key).isNotNull().isEqualTo(Keys.hmacShaKeyFor(Decoders.BASE64.decode(base64Secret)));
+    }
+
+    @Test
+    void testGetTokenValidityRememberMe() {
+        long validity = tokenProvider.getTokenValidity(true);
+
+        assertThat(validity).isEqualTo(TEN_MINUTES);
+    }
+
+    @Test
+    void testGetTokenValidityNotRememberMe() {
+        long validity = tokenProvider.getTokenValidity(false);
+
+        assertThat(validity).isEqualTo(ONE_MINUTE);
     }
 
     private Authentication createAuthentication() {

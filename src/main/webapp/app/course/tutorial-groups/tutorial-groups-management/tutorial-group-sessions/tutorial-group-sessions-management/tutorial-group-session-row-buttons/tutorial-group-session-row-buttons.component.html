@@ -23,9 +23,9 @@
     <button
         [id]="'delete-' + tutorialGroupSession.id"
         jhiDeleteButton
-        entityTitle="{{ tutorialGroupSession.start | artemisDate: 'short-date':false:course.timeZone! }}
-        {{ tutorialGroupSession.start | artemisDate: 'time':false:course.timeZone! }} -
-        {{ tutorialGroupSession.end | artemisDate: 'time':false:course.timeZone! }}"
+        entityTitle="{{ tutorialGroupSession.start | artemisDate : 'short-date' : false : course.timeZone! }}
+        {{ tutorialGroupSession.start | artemisDate : 'time' : false : course.timeZone! }} -
+        {{ tutorialGroupSession.end | artemisDate : 'time' : false : course.timeZone! }}"
         deleteQuestion="artemisApp.pages.tutorialGroupSessionManagement.deleteDialog.question"
         (delete)="deleteTutorialGroupSession()"
         [dialogError]="dialogError$"
