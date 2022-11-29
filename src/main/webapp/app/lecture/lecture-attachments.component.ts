@@ -166,7 +166,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     downloadAttachment(downloadUrl: string) {
         if (!this.isDownloadingAttachmentLink) {
             this.isDownloadingAttachmentLink = downloadUrl;
-            this.fileService.downloadFileWithAccessToken(downloadUrl);
+            this.fileService.downloadFile(downloadUrl);
             this.isDownloadingAttachmentLink = undefined;
         }
     }

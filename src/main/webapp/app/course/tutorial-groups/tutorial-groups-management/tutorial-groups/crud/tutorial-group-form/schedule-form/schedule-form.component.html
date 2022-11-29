@@ -12,10 +12,10 @@
             </div>
             <div *ngIf="repetitionFrequencyControl?.invalid && (repetitionFrequencyControl?.dirty || repetitionFrequencyControl?.touched)" class="alert alert-danger">
                 <div *ngIf="repetitionFrequencyControl?.errors?.min">
-                    {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.minValidationError' | artemisTranslate: { min: 1 } }}
+                    {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.minValidationError' | artemisTranslate : { min: 1 } }}
                 </div>
                 <div *ngIf="repetitionFrequencyControl?.errors?.max">
-                    {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.maxValidationError' | artemisTranslate: { max: 7 } }}
+                    {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.maxValidationError' | artemisTranslate : { max: 7 } }}
                 </div>
                 <div *ngIf="repetitionFrequencyControl?.errors?.required">
                     {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.requiredValidationError' | artemisTranslate }}
@@ -82,7 +82,7 @@
             ></textarea>
             <div *ngIf="locationControl?.invalid && (locationControl?.dirty || locationControl?.touched)" class="alert alert-danger">
                 <div *ngIf="locationControl?.errors?.maxlength">
-                    {{ 'artemisApp.forms.scheduleForm.locationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
+                    {{ 'artemisApp.forms.scheduleForm.locationInput.maxLengthValidationError' | artemisTranslate : { max: '2000' } }}
                 </div>
                 <div *ngIf="locationControl?.errors?.required">
                     {{ 'artemisApp.forms.scheduleForm.locationInput.requiredValidationError' | artemisTranslate }}
@@ -103,7 +103,7 @@
                     required
                     [class.is-invalid]="isPeriodInvalid"
                     (focus)="markPeriodAsTouched()"
-                    [value]="periodControl?.value | artemisDateRange: 'long-date':undefined:true"
+                    [value]="periodControl?.value | artemisDateRange : 'long-date' : undefined : true"
                     [owlDateTimeTrigger]="period"
                     readonly
                     class="form-control"
@@ -122,7 +122,7 @@
         </div>
         <div *ngIf="createdSessions.length > 0">
             <span>{{ 'artemisApp.forms.scheduleForm.sessionCreationInfo' | artemisTranslate }} </span>
-            <span class="badge bg-info m-1" *ngFor="let session of createdSessions"> {{ session | artemisDate: 'long-date':false:undefined:true }} </span>
+            <span class="badge bg-info m-1" *ngFor="let session of createdSessions"> {{ session | artemisDate : 'long-date' : false : undefined : true }} </span>
         </div>
     </div>
 </ng-container>

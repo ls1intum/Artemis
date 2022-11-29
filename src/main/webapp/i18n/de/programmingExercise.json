@@ -70,7 +70,8 @@
                     "assessmentSemiautomatic": "halb-automatisch"
                 }
             },
-            "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein.",
+            "noReleaseDateWarning": "Du hast kein Veröffentlichungsdatum definiert, daher wird die Aufgabe sofort veröffentlicht und sichtbar für die Studierenden sein. Sie können aber erst nach dem Startdatum an der Aufgabe teilnehmen.",
+            "noReleaseAndStartDateWarning": "Du hast kein Veröffentlichungs- und Startdatum definiert, daher wird die Aufgabe sofort veröffentlicht und Studierende können direkt an der Aufgabe teilnehmen.",
             "unsavedChangesLanguageChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll die Programmiersprache wirklich geändert werden?",
             "unsavedChangesProjectTypeChange": "Die Aufgabenstellung enthält noch nicht gespeicherte Änderungen. Soll der Projekt Typ wirklich geändert werden?",
             "templateRepositoryUrl": "Vorlagen-Repository-Url",
@@ -318,7 +319,8 @@
                 "automaticTestsAfterDueDateTooltip": "Sobald die Einreichungsfrist abgelaufen ist, wird der Build für alle Abgaben erneut durchgeführt und sie werden ein letztes Mal automatisch getestet unter Verwendung ALLER im Test-Repository gespeicherten Tests.",
                 "assessmentTypeTooltipAutomaticAssessment": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Keine manuelle Bewertung",
                 "assessmentTypeTooltipManualAssessment": "Die Art der Bewertung, die nach der Einreichungsfrist durchgeführt wird: Eine manuelle Bewertung durch Tutor:innen und Beschwerden von Studierenden, falls möglich",
-                "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studierende können erst nach dem angegebenen Datum an der Aufgabe teilnehmen.",
+                "releaseDateTooltip": "Das Freigabedatum der Aufgabe. Studierende können die Aufgabe ab diesem Datum sehen. Sollte kein Startdatum festgelegt sein können Studierende auch ab diesem Datum die Aufgabe beginnen.",
+                "startDateTooltip": "Das Startdatum der Aufgabe. Falls dieses gesetzt ist, können Studierende vor diesem Datum die Aufgabe nur ansehen aber diese noch nicht bearbeiten.",
                 "dueDateTooltip": "Die finale Deadline, zu welcher alle Abgaben und Commits für Studierende gesperrt werden.",
                 "afterDueDateTooltip": "Aktiviere diese Option, um alle Abgaben von Studierenden nach der Einreichungsfrist zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Abgaben von Studierenden ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
                 "alertNewDueDate": "Die Einreichungsfrist wurde auf das Veröffentlichungsdatum gesetzt!",
@@ -338,7 +340,7 @@
                 "disallowComplaintOnAutomaticAssessmentTooltip": "Die Studierenden dürfen keine Beschwerde nach einer automatischen Bewertung einlegen",
                 "complaintOnAutomaticAssessmentEnabled": "Beschwerden sind möglich",
                 "complaintOnAutomaticAssessmentDisabled": "Beschwerden sind nicht möglich",
-                "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studenten zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen."
+                "exampleSolutionPublicationDateTooltip": "Das Datum, an dem das Lösungsrepository für Studierende zum Herunterladen verfügbar wird. Zum Deaktivieren leer lassen."
             },
             "repositoryIsLocked": {
                 "title": "Dein Repository ist gesperrt.",

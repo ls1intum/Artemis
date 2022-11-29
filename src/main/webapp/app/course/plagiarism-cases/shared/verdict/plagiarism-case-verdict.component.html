@@ -11,7 +11,7 @@
             [class]="plagiarismCase.verdict == plagiarismVerdict.NO_PLAGIARISM ? 'bg-success' : 'bg-danger'"
             ngbTooltip="{{
                 'artemisApp.plagiarism.plagiarismCases.verdict.description'
-                    | artemisTranslate: { date: plagiarismCase.verdictDate | artemisDate, user: plagiarismCase.verdictBy?.name }
+                    | artemisTranslate : { date: plagiarismCase.verdictDate | artemisDate, user: plagiarismCase.verdictBy?.name }
             }}"
         >
             <h6 class="mb-0">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}: {{ verdictTranslationString | artemisTranslate }}</h6>
