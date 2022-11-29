@@ -22,12 +22,28 @@ interface TestCaseResult {
         <div ngbDropdown class="d-inline">
             <button id="export-results-dropdown" class="btn btn-info btn-sm me-1" ngbDropdownToggle>
                 <fa-icon [icon]="faDownload"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults.title">Export Results</span>
             </button>
             <div ngbDropdownMenu="export-results-dropdown">
-                <button ngbDropdownItem (click)="exportResults(false, false)">Without test cases</button>
-                <button ngbDropdownItem (click)="exportResults(true, false)">With test cases</button>
-                <button ngbDropdownItem (click)="exportResults(true, true)">With test cases<br />and feedback</button>
+                <button ngbDropdownItem (click)="exportResults(false, false)" jhiTranslate="artemisApp.exercise.exportResults.withoutTestCases">Without test cases</button>
+                <button
+                    ngbTooltip="{{ 'artemisApp.exercise.exportResults.withTestCasesTooltip' | artemisTranslate }}"
+                    placement="left"
+                    ngbDropdownItem
+                    (click)="exportResults(true, false)"
+                    jhiTranslate="artemisApp.exercise.exportResults.withTestCases"
+                >
+                    With test cases
+                </button>
+                <button
+                    ngbTooltip="{{ 'artemisApp.exercise.exportResults.withTestCasesAndFeedbackTooltip' | artemisTranslate }}"
+                    placement="left"
+                    ngbDropdownItem
+                    (click)="exportResults(true, true)"
+                    jhiTranslate="artemisApp.exercise.exportResults.withTestCasesAndFeedback"
+                >
+                    With test cases<br />and feedback
+                </button>
             </div>
         </div>
     `,
@@ -64,7 +80,7 @@ export class ExerciseScoresExportButtonComponent {
         this.resultService.getResultsWithPointsPerGradingCriterion(exercise).subscribe((data) => {
             const results: ResultWithPointsPerGradingCriterion[] = data.body || [];
             if (results.length === 0) {
-                this.alertService.warning(`artemisApp.exercise.exportResultsEmptyError`, { exercise: exercise.title });
+                this.alertService.warning(`artemisApp.exercise.exportResults.emptyError`, { exercise: exercise.title });
                 window.scroll(0, 0);
                 return;
             }

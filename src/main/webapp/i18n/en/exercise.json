@@ -122,8 +122,15 @@
             "submissions": "Submissions",
             "teams": "Teams",
             "exportNames": "Export Names",
-            "exportResults": "Export Results",
-            "exportResultsEmptyError": "{{ exercise }}: No results found",
+            "exportResults": {
+                "title": "Export Results",
+                "withoutTestCases": "Without test cases",
+                "withTestCases": "With test cases",
+                "withTestCasesAndFeedback": "With test cases<br />and feedback",
+                "withTestCasesTooltip": "This will include additional information about passed and failed test cases for each result entry.",
+                "withTestCasesAndFeedbackTooltip": "This will include information about test cases and a copy of the provided feedback for failed test cases.",
+                "emptyError": "{{ exercise }}: No results found"
+            },
             "refresh": "Refresh",
             "course": "Course",
             "type": "Type",
