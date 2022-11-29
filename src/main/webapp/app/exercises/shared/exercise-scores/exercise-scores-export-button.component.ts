@@ -19,14 +19,15 @@ interface TestCaseResult {
 @Component({
     selector: 'jhi-exercise-scores-export-button',
     template: `
-        <div ngbDropdown class="d-none d-md-inline">
+        <div ngbDropdown class="d-inline">
             <button id="export-results-dropdown" class="btn btn-info btn-sm me-1" ngbDropdownToggle>
                 <fa-icon [icon]="faDownload"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults">Export Results</span>
             </button>
             <div ngbDropdownMenu="export-results-dropdown">
-                <button ngbDropdownItem (click)="exportResults(true)">With test cases</button>
-                <button ngbDropdownItem (click)="exportResults(false)">Without test cases</button>
+                <button ngbDropdownItem (click)="exportResults(false, false)">Without test cases</button>
+                <button ngbDropdownItem (click)="exportResults(true, false)">With test cases</button>
+                <button ngbDropdownItem (click)="exportResults(true, true)">With test cases<br />and feedback</button>
             </div>
         </div>
     `,
@@ -44,21 +45,22 @@ export class ExerciseScoresExportButtonComponent {
     /**
      * Exports the exercise results as a CSV file.
      */
-    exportResults(withTestCases: boolean) {
+    exportResults(withTestCases: boolean, withFeedback: boolean) {
         if (this.exercises.length === 0 && this.exercise !== undefined) {
             this.exercises = this.exercises.concat(this.exercise);
         }
 
-        this.exercises.forEach((exercise) => this.constructCSV(exercise, withTestCases));
+        this.exercises.forEach((exercise) => this.constructCSV(exercise, withTestCases, withFeedback));
     }
 
     /**
      * Builds the CSV with results and triggers the download to the user for it.
      * @param exercise for which the results should be exported.
      * @param withTestCases optional parameter that includes test cases info in the exported CSV file
+     * @param withFeedback optional parameter including the feedback's full text in case of failed test case
      * @private
      */
-    private constructCSV(exercise: Exercise, withTestCases?: boolean) {
+    private constructCSV(exercise: Exercise, withTestCases?: boolean, withFeedback?: boolean) {
         this.resultService.getResultsWithPointsPerGradingCriterion(exercise).subscribe((data) => {
             const results: ResultWithPointsPerGradingCriterion[] = data.body || [];
             if (results.length === 0) {
@@ -76,7 +78,7 @@ export class ExerciseScoresExportButtonComponent {
                 keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria, testCasesNames);
                 rows = results.map((resultWithPoints) => {
                     const studentParticipation = resultWithPoints.result.participation! as StudentParticipation;
-                    const testCaseResults = this.getTestCaseResults(resultWithPoints, testCasesNames);
+                    const testCaseResults = this.getTestCaseResults(resultWithPoints, testCasesNames, withFeedback);
                     return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints, testCaseResults).build();
                 });
             } else {
@@ -87,7 +89,7 @@ export class ExerciseScoresExportButtonComponent {
                 });
             }
             const fileNamePrefix = exercise.shortName ?? exercise.title?.split(/\s+/).join('_');
-            ExerciseScoresExportButtonComponent.exportAsCsv(`${fileNamePrefix}-results-scores`, keys, rows, withTestCases ? ',' : undefined);
+            ExerciseScoresExportButtonComponent.exportAsCsv(`${fileNamePrefix}-results-scores`, keys, rows, withFeedback ? ',' : undefined);
         });
     }
 
@@ -144,7 +146,7 @@ export class ExerciseScoresExportButtonComponent {
         if (!result.result.feedbacks) {
             return [];
         }
-        return result.result.feedbacks!.map((f) => {
+        return result.result.feedbacks.map((f) => {
             return f.text ? 'Test ' + f.text : 'Test ' + result.result.feedbacks?.indexOf(f) + 1;
         });
     }
@@ -154,16 +156,17 @@ export class ExerciseScoresExportButtonComponent {
      * If no feedback is found in the result an empty array is returned
      * @param result from which the test case results should be extracted
      * @param testCaseNames list containing the test names
+     * @param withFeedback if true, the feedback's full text is included in case of failed test case
      * @private
      */
-    private getTestCaseResults(result: ResultWithPointsPerGradingCriterion, testCaseNames: string[]): TestCaseResult[] {
+    private getTestCaseResults(result: ResultWithPointsPerGradingCriterion, testCaseNames: string[], withFeedback?: boolean): TestCaseResult[] {
         return (
             result.result.feedbacks?.map((f, i) => {
                 let resultText;
                 if (f.positive) {
                     resultText = 'Passed';
                 } else {
-                    resultText = f.detailText ? 'Failed: "' + f.detailText + '"' : 'Failed';
+                    resultText = !!withFeedback && f.detailText ? 'Failed: "' + f.detailText + '"' : 'Failed';
                 }
                 return { testName: testCaseNames[i], testResult: resultText } as TestCaseResult;
             }) ?? []
