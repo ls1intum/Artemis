@@ -11,6 +11,7 @@ import { Course } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 import { faBan, faHandshakeAngle, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 
@@ -20,6 +21,8 @@ import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-up
     styleUrls: ['./lecture-update.component.scss'],
 })
 export class LectureUpdateComponent implements OnInit {
+    documentationType = DocumentationType.Lecture;
+
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
 
     EditorMode = EditorMode;

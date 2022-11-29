@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { DocumentationType } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @Component({
     selector: 'jhi-grading-system',
@@ -10,6 +11,8 @@ export class GradingSystemComponent implements OnInit {
     courseId?: number;
     examId?: number;
     isExam = false;
+
+    documentationType = DocumentationType.Grading;
 
     constructor(private route: ActivatedRoute) {}
 

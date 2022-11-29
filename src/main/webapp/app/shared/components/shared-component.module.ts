@@ -14,6 +14,7 @@ import { OpenCodeEditorButtonComponent } from 'app/shared/components/open-code-e
 import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module';
 import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
 import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
+import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisCoursesRoutingModule, FeatureToggleModule, ClipboardModule],
@@ -30,6 +31,7 @@ import { StartPracticeModeButtonComponent } from 'app/shared/components/start-pr
         ExerciseActionButtonComponent,
         CourseExamArchiveButtonComponent,
         NotReleasedTagComponent,
+        DocumentationButtonComponent,
     ],
     exports: [
         ButtonComponent,
@@ -43,6 +45,7 @@ import { StartPracticeModeButtonComponent } from 'app/shared/components/start-pr
         ExerciseActionButtonComponent,
         CourseExamArchiveButtonComponent,
         NotReleasedTagComponent,
+        DocumentationButtonComponent,
     ],
 })
 export class ArtemisSharedComponentModule {}
