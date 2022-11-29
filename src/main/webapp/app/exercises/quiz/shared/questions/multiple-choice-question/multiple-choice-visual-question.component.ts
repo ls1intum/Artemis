@@ -98,6 +98,10 @@ export class MultipleChoiceVisualQuestionComponent {
     }
 
     addNewAnswer() {
+        if (this.question.answerOptions === undefined) {
+            this.question.answerOptions = [];
+        }
+
         this.question.answerOptions?.push(this.newOption);
         this.newOption = new AnswerOption();
 
