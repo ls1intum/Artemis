@@ -142,6 +142,9 @@ export class MarkdownEditorComponent implements AfterViewInit {
     /** {previewMode} when editor is created the preview is set to false, since the edit mode is set active */
     previewMode = false;
 
+    /** {visualMode} when editor is created the visual mode is set to false, since the edit mode is set active */
+    visualMode = false;
+
     /** {previewChild} Is not null when the parent component is responsible for the preview content
      * -> parent component has to implement ng-content and set the showPreviewButton on true through an input */
     @ContentChild('preview', { static: false }) previewChild: ElementRef;
@@ -384,6 +387,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     changeNavigation(event: any): void {
         this.previewMode = event.nextId === 'editor_preview';
+        this.visualMode = event.nextId === 'editor_visual';
 
         if (this.previewMode) {
             this.onPreviewSelect.emit();
