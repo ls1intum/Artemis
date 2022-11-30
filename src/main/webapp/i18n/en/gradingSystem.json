@@ -35,7 +35,7 @@
             "plagiarismGrade": "Plagiarism Grade",
             "plagiarismGradeHelp": "This special failing grade is assigned when a student has a confirmed \"Plagiarism\" verdict in any exercise.",
             "noParticipationGrade": "No-participation Grade",
-            "noParticipationGradeHelp": "This special failing grade is assigned when a student did not participate. For courses, this means the student did not start any exercise. For exams, this means the student did not started or not submitted.",
+            "noParticipationGradeHelp": "This special failing grade is assigned when a student did not participate. For courses, this means the student did not start any exercise. For exams, this means the student did not start or did not submit.",
             "defaultGradeName": "Default: {{default}}",
             "info": {
                 "title": "Grading Key Help",
