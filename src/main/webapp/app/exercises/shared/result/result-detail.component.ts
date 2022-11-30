@@ -35,8 +35,6 @@ export enum FeedbackItemType {
     Subsequent,
 }
 
-type FeedbackItemNewType = 'missing' | 'wrong' | 'warning' | 'info' | 'correct';
-
 export class FeedbackItem {
     type: FeedbackItemType;
     category: string;
