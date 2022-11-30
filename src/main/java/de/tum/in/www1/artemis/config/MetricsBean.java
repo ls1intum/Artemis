@@ -73,6 +73,7 @@ public class MetricsBean {
 
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
+        registerExerciseAndExamMetrics();
         // the data source is optional as it is not used during testing
         hikariDataSource.ifPresent(this::registerDatasourceMetrics);
     }
@@ -124,7 +125,9 @@ public class MetricsBean {
         // Publish the number of currently (via WebSockets) connected users
         Gauge.builder("artemis.instance.websocket.users", webSocketHandler, MetricsBean::extractWebsocketUserCount).strongReference(true)
                 .description("Number of users connected to this Artemis instance").register(meterRegistry);
+    }
 
+    private void registerExerciseAndExamMetrics() {
         int[] ranges = new int[] { 5, 15, 30, 45, 60, 120 };
         for (int range : ranges) {
             for (var exerciseType : ExerciseType.values()) {
