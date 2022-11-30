@@ -24,8 +24,9 @@ import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datat
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { FeedbackService, FeedbackServiceImpl } from 'app/exercises/shared/feedback/feedback.service';
-import { ProgrammingExerciseFeedbackService } from 'app/exercises/shared/feedback/programming-exercise-feedback.service';
+import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/feedback-item-service';
+import { ProgrammingExerciseFeedbackItemService } from 'app/exercises/shared/feedback/programming-exercise-feedback-item.service';
+import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
 
 export enum FeedbackItemType {
     Issue,
@@ -121,7 +122,7 @@ export class ResultDetailComponent implements OnInit {
 
     numberOfAggregatedTestCases = 0;
 
-    feedbackService: FeedbackService;
+    feedbackItemService: FeedbackItemService;
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -129,7 +130,7 @@ export class ResultDetailComponent implements OnInit {
         private buildLogService: BuildLogService,
         private translateService: TranslateService,
         private profileService: ProfileService,
-        private feedbackServiceImpl: FeedbackServiceImpl,
+        private feedbackService: FeedbackService,
         private injector: Injector,
     ) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
@@ -147,7 +148,8 @@ export class ResultDetailComponent implements OnInit {
 
         this.initializeExerciseInformation();
 
-        this.feedbackService = this.exerciseType === ExerciseType.PROGRAMMING ? this.injector.get(ProgrammingExerciseFeedbackService) : this.injector.get(FeedbackServiceImpl);
+        this.feedbackItemService =
+            this.exerciseType === ExerciseType.PROGRAMMING ? this.injector.get(ProgrammingExerciseFeedbackItemService) : this.injector.get(FeedbackItemServiceImpl);
         this.fetchAdditionalInformation();
 
         this.commitHash = this.getCommitHash().slice(0, 11);
@@ -191,7 +193,7 @@ export class ResultDetailComponent implements OnInit {
                     if (feedbacks?.length) {
                         return of(feedbacks);
                     } else {
-                        return this.feedbackServiceImpl.getDetailsForResult(this.result.participation!.id!, this.result.id!);
+                        return this.feedbackService.getDetailsForResult(this.result.participation!.id!, this.result.id!);
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
@@ -201,12 +203,12 @@ export class ResultDetailComponent implements OnInit {
                      */
                     if (feedbacks && feedbacks.length) {
                         this.result.feedbacks = feedbacks!;
-                        const filteredFeedback = this.feedbackServiceImpl.filterFeedback(feedbacks, this.feedbackFilter);
+                        const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
 
-                        this.feedbackList = this.feedbackService.createFeedbackItems(filteredFeedback, this.showTestDetails);
-                        this.filteredFeedbackList = this.feedbackService.filterFeedbackItems(this.feedbackList, this.showTestDetails);
-                        this.numberOfAggregatedTestCases = this.feedbackService.getPositiveTestCasesWithoutDetailText(this.feedbackList).length;
+                        this.feedbackList = this.feedbackItemService.createFeedbackItems(filteredFeedback, this.showTestDetails);
+                        this.filteredFeedbackList = this.feedbackItemService.filterFeedbackItems(this.feedbackList, this.showTestDetails);
+                        this.numberOfAggregatedTestCases = this.feedbackItemService.getPositiveTestCasesWithoutDetailText(this.feedbackList).length;
                         this.backupFilteredFeedbackList = this.filteredFeedbackList;
 
                         this.countFeedbacks();

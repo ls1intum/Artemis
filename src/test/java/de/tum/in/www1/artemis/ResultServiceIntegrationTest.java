@@ -159,7 +159,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             assertThat(pathWithoutWorkingDir).isEqualTo(issueJSON.get("filePath"));
         }
 
-        // 2. Test that null or empty paths default to FeedbackService.DEFAULT_FILEPATH
+        // 2. Test that null or empty paths default to FeedbackItemService.DEFAULT_FILEPATH
         var resultNotification2 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
                 ProgrammingLanguage.JAVA);
         var reports2 = resultNotification2.getBuild().jobs().iterator().next().staticCodeAnalysisReports();

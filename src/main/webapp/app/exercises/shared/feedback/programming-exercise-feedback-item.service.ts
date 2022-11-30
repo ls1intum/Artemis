@@ -1,4 +1,4 @@
-import { FeedbackService, FeedbackServiceImpl } from 'app/exercises/shared/feedback/feedback.service';
+import { FeedbackItemService } from 'app/exercises/shared/feedback/feedback-item-service';
 import { Injectable } from '@angular/core';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/result-detail.component';
@@ -7,8 +7,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 
 @Injectable({ providedIn: 'root' })
-export class ProgrammingExerciseFeedbackService implements FeedbackService {
-    constructor(private translateService: TranslateService, private feedbackServiceImpl: FeedbackServiceImpl) {}
+export class ProgrammingExerciseFeedbackItemService implements FeedbackItemService {
+    constructor(private translateService: TranslateService) {}
 
     getPositiveTestCasesWithoutDetailText(feedbackItems: FeedbackItem[]): FeedbackItem[] {
         return feedbackItems.filter((feedbackItem) => {
