@@ -1008,7 +1008,10 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(1), ZonedDateTime.now().plusMinutes(5), QuizMode.INDIVIDUAL, course).duration(360);
         quizEx = exerciseRepo.save(quizEx);
         var participation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        quizEx.setRemainingNumberOfAttempts(1);
         assertThat(participation.getExercise()).as("Participation contains exercise").isEqualTo(quizEx);
+        assertThat(((QuizExercise) participation.getExercise()).getRemainingNumberOfAttempts()).as("remainingNumberOfAttempts are returned correctly")
+                .isEqualTo(quizEx.getRemainingNumberOfAttempts());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
