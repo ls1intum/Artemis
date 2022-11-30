@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.config;
 
 import static de.tum.in.www1.artemis.config.Constants.*;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
 
@@ -57,8 +59,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
 
-    @Value("${spring.prometheus.monitoringIp:#{null}}")
-    private Optional<String> monitoringIpAddress;
+    @Value("#{'${spring.prometheus.monitoringIp:#{127.0.0.1}'.split(',')}")
+    private List<String> monitoringIpAddresses;
 
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
             CorsFilter corsFilter, SecurityProblemSupport problemSupport, PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
@@ -175,8 +177,12 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/websocket/**").permitAll()
             .antMatchers("/management/health").permitAll()
             .antMatchers("/management/info").permitAll()
-            // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
-            .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
+            // Only allow the configured IP addresses to access the prometheus endpoint
+            // This adds an access check like .access("hasIpAddress('127.0.0.1') or hasIpAddress('::1')")
+            .antMatchers("/management/prometheus/**").access(monitoringIpAddresses
+                .stream()
+                .map(ip -> String.format("hasIpAddress('%s')", ip))
+                .collect(Collectors.joining(" or ")))
             .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/time").permitAll()
         .and()
