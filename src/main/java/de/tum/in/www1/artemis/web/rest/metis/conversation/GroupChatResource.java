@@ -72,11 +72,9 @@ public class GroupChatResource {
         loginsToSearchFor.add(requestingUser.getLogin());
         var chatMembers = conversationService.findUsersInDatabase(loginsToSearchFor.stream().toList());
 
-        if (chatMembers.size() >= MAX_GROUP_CHAT_PARTICIPANTS) {
-            throw new BadRequestAlertException("You can only add " + MAX_GROUP_CHAT_PARTICIPANTS + " participants to a group chat", "groupChat", "tooManyParticipants");
-        }
-        if (!chatMembers.contains(requestingUser)) {
-            throw new BadRequestAlertException("The requesting user must be part of the group chat", "groupChat", "invalidUser");
+        if (chatMembers.size() < 2 || chatMembers.size() > MAX_GROUP_CHAT_PARTICIPANTS) {
+            throw new BadRequestAlertException("The number of participants in a group chat must be between 2 and " + MAX_GROUP_CHAT_PARTICIPANTS, GROUP_CHAT_ENTITY_NAME,
+                    "invalidNumberOfParticipants");
         }
 
         var groupChat = groupChatService.startGroupChat(course, chatMembers);
@@ -128,7 +126,7 @@ public class GroupChatResource {
         groupChatAuthorizationService.isAllowedToAddUsersToGroupChat(groupChatFromDatabase, requestingUser);
         var usersToRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.registerUsersToConversation(course, usersToRegister, groupChatFromDatabase, Optional.of(MAX_GROUP_CHAT_PARTICIPANTS));
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -155,7 +153,8 @@ public class GroupChatResource {
         groupChatAuthorizationService.isAllowedToRemoveUsersFromGroupChat(groupChatFromDatabase, requestingUser);
         var usersToDeRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, groupChatFromDatabase);
-        return ResponseEntity.noContent().build();
+        // ToDo: Discuss if we should delete the group chat if it has no participants left, but maybe we want to keep it for data analysis purposes
+        return ResponseEntity.ok().build();
     }
 
     private void checkEntityIdMatchesPathIds(GroupChat groupChat, Optional<Long> courseId, Optional<Long> conversationId) {

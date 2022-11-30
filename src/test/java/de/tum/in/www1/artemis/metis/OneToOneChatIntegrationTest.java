@@ -10,8 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
@@ -26,10 +24,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of("student2"), OneToOneChatDTO.class, HttpStatus.CREATED);
         // then
         assertThat(chat).isNotNull();
-        var participants = this.getParticipants(chat.getId());
-        assertThat(participants).hasSize(2);
-        assertThat(participants).extracting(ConversationParticipant::getUser).extracting(User::getLogin).containsExactlyInAnyOrder("student1", "student2");
-
+        assertParticipants(chat.getId(), 2, "student1", "student2");
         // members of the created one to one chat are only notified in case the first message within the conversation is created
         verify(this.messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(ConversationWebsocketDTO.class));
     }
@@ -63,6 +58,7 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         assertThat(chat).isNotNull();
         assertThat(chat2).isNotNull();
         assertThat(chat.getId()).isEqualTo(chat2.getId());
+        assertParticipants(chat.getId(), 2, "student1", "student2");
 
         // members of the created one to one chat are only notified in case the first message within the conversation is created
         verify(this.messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(ConversationWebsocketDTO.class));

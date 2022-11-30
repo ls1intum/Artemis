@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ConversationReposito
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
@@ -134,7 +135,7 @@ public class ConversationService {
         if (memberLimit.isPresent()) {
             var currentMemberCount = conversationParticipantRepository.countByConversationId(conversation.getId());
             if (currentMemberCount + usersToRegisterWithoutExistingParticipants.size() > memberLimit.get()) {
-                throw new IllegalArgumentException("The member limit of the conversation would be exceeded");
+                throw new BadRequestAlertException("The maximum number of members has been reached", "conversation", "memberLimitReached");
             }
         }
         Set<ConversationParticipant> newConversationParticipants = new HashSet<>();
