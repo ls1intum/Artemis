@@ -43,24 +43,21 @@ public class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJir
         exerciseRepository.save(database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(3), QuizMode.SYNCHRONIZED));
 
         // Only one of the two quizzes ends in the next 15 minutes
-        var gauge = meterRegistry.get("artemis.scheduled.exercises.due.count").tag("exerciseType", ExerciseType.QUIZ.getExerciseTypeAsReadableString()).tag("range", "15").gauge();
+        var gauge = meterRegistry.get("artemis.scheduled.exercises.due.count").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "15").gauge();
         assertEquals(1, gauge.value());
-        gauge = meterRegistry.get("artemis.scheduled.exercises.due.student_multiplier").tag("exerciseType", ExerciseType.QUIZ.getExerciseTypeAsReadableString()).tag("range", "15")
-                .gauge();
+        gauge = meterRegistry.get("artemis.scheduled.exercises.due.student_multiplier").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "15").gauge();
         assertEquals(3 * 1, gauge.value());
 
         // Only one quiz is released within the next 30 minutes
-        gauge = meterRegistry.get("artemis.scheduled.exercises.release.count").tag("exerciseType", ExerciseType.QUIZ.getExerciseTypeAsReadableString()).tag("range", "30").gauge();
+        gauge = meterRegistry.get("artemis.scheduled.exercises.release.count").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "30").gauge();
         assertEquals(1, gauge.value());
-        gauge = meterRegistry.get("artemis.scheduled.exercises.release.student_multiplier").tag("exerciseType", ExerciseType.QUIZ.getExerciseTypeAsReadableString())
-                .tag("range", "30").gauge();
+        gauge = meterRegistry.get("artemis.scheduled.exercises.release.student_multiplier").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "30").gauge();
         assertEquals(3 * 1, gauge.value());
 
         // Both quizzes end within the next 120 minutes
-        gauge = meterRegistry.get("artemis.scheduled.exercises.due.count").tag("exerciseType", ExerciseType.QUIZ.getExerciseTypeAsReadableString()).tag("range", "120").gauge();
+        gauge = meterRegistry.get("artemis.scheduled.exercises.due.count").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "120").gauge();
         assertEquals(2, gauge.value());
-        gauge = meterRegistry.get("artemis.scheduled.exercises.due.student_multiplier").tag("exerciseType", ExerciseType.QUIZ.getExerciseTypeAsReadableString()).tag("range", "120")
-                .gauge();
+        gauge = meterRegistry.get("artemis.scheduled.exercises.due.student_multiplier").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "120").gauge();
         assertEquals(3 * 2, gauge.value());
     }
 
@@ -110,7 +107,7 @@ public class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertEquals(1 * 2 + 1 * 1, gauge.value());
 
         // Exam exercises are not returned in the exercises metrics
-        gauge = meterRegistry.get("artemis.scheduled.exercises.due.count").tag("exerciseType", ExerciseType.QUIZ.getExerciseTypeAsReadableString()).tag("range", "60").gauge();
+        gauge = meterRegistry.get("artemis.scheduled.exercises.due.count").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "60").gauge();
         assertEquals(0, gauge.value());
     }
 }

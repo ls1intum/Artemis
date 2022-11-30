@@ -129,19 +129,19 @@ public class MetricsBean {
         for (int range : ranges) {
             for (var exerciseType : ExerciseType.values()) {
                 Gauge.builder("artemis.scheduled.exercises.due.count", () -> this.getUpcomingDueExercisesCount(range, exerciseType)).strongReference(true)
-                        .tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.getExerciseTypeAsReadableString())
-                        .description("Number of exercises ending within the next minutes").register(meterRegistry);
+                        .tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString()).description("Number of exercises ending within the next minutes")
+                        .register(meterRegistry);
 
                 Gauge.builder("artemis.scheduled.exercises.due.student_multiplier", () -> this.getUpcomingDueExercisesCountWithStudentMultiplier(range, exerciseType))
-                        .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.getExerciseTypeAsReadableString())
+                        .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString())
                         .description("Number of exercises ending within the next minutes multiplied with students in the course").register(meterRegistry);
 
                 Gauge.builder("artemis.scheduled.exercises.release.count", () -> this.getUpcomingReleasedExercisesCount(range, exerciseType)).strongReference(true)
-                        .tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.getExerciseTypeAsReadableString())
-                        .description("Number of exercises starting within the next minutes").register(meterRegistry);
+                        .tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString()).description("Number of exercises starting within the next minutes")
+                        .register(meterRegistry);
 
                 Gauge.builder("artemis.scheduled.exercises.release.student_multiplier", () -> this.getUpcomingReleasedExercisesCountWithStudentMultiplier(range, exerciseType))
-                        .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.getExerciseTypeAsReadableString())
+                        .strongReference(true).tag("range", String.valueOf(range)).tag("exerciseType", exerciseType.toString())
                         .description("Number of exercises starting within the next minutes multiplied with students in the course").register(meterRegistry);
             }
 
