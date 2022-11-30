@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 
 /**
  * this test should be completely independent of any profiles or configurations (e.g. VCS, CIS)
@@ -106,6 +107,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
 
     @SpyBean
     protected TextBlockService textBlockService;
+
+    @SpyBean
+    protected QuizScheduleService quizScheduleService;
 
     @Autowired
     protected DatabaseUtilService database;

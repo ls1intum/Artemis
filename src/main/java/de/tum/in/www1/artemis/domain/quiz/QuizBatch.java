@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -43,6 +44,10 @@ public class QuizBatch extends DomainObject {
     @JsonIgnore
     private QuizExercise quizExercise;
 
+    @OneToMany(mappedBy = "quizBatch", fetch = FetchType.EAGER)
+    @JsonIgnore
+    private Set<QuizSubmission> quizSubmissions;
+
     @Nullable
     public ZonedDateTime getStartTime() {
         return startTime;
@@ -75,6 +80,17 @@ public class QuizBatch extends DomainObject {
 
     public void setQuizExercise(QuizExercise quizExercise) {
         this.quizExercise = quizExercise;
+    }
+
+    public boolean isSubmitted() {
+        if (getQuizSubmissions() != null && getQuizSubmissions().stream().findFirst().isPresent()) {
+            return getQuizSubmissions().stream().findFirst().get().isSubmitted();
+        }
+        return false;
+    }
+
+    public Set<QuizSubmission> getQuizSubmissions() {
+        return quizSubmissions;
     }
 
     /**

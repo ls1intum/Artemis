@@ -604,7 +604,7 @@ public class QuizScheduleService {
 
                 if (quizBatch != null) {
                     // record which batch the submission belongs to
-                    quizSubmission.setQuizBatch(quizBatch.getId());
+                    quizSubmission.setQuizBatch(quizBatch);
                 }
 
                 count++;

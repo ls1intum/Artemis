@@ -646,7 +646,7 @@ public class ParticipationResource {
 
             // quiz has ended => get participation from database and add full quizExercise
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
-            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin());
+            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), true);
             if (participation == null) {
                 return null;
             }
@@ -662,13 +662,13 @@ public class ParticipationResource {
         quizExercise.setQuizBatches(null); // not available here
         var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
 
-        if (quizBatch.isPresent() && quizBatch.get().isSubmissionAllowed()) {
+        if (quizBatch.isPresent() && quizBatch.get().isStarted()) {
             // Quiz is active => construct Participation from
             // filtered quizExercise and submission from HashMap
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             quizExercise.filterForStudentsDuringQuiz();
-            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin());
+            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), quizBatch.get().isSubmitted());
             // set view
             var view = quizExercise.viewForStudentsInQuizExercise(quizBatch.get());
             MappingJacksonValue value = new MappingJacksonValue(participation);
@@ -837,8 +837,8 @@ public class ParticipationResource {
      */
     // TODO: we should move this method (and others related to quizzes) into a QuizParticipationService (or similar) to make this resource independent of specific quiz exercise
     // functionality
-    private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
-        if (quizExercise.isQuizEnded()) {
+    private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username, boolean isEnded) {
+        if (isEnded) {
             // try getting participation from database
             Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 

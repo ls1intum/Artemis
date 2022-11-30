@@ -27,8 +27,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
+import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -1037,5 +1036,54 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "student3", roles = "USER")
     void getParticipation_notStudentInCourse() throws Exception {
         request.get("/api/exercises/" + textExercise.getId() + "/participation", HttpStatus.FORBIDDEN, StudentParticipation.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void getParticipation_submittedNotEndedQuizBatch() throws Exception {
+        QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().plusMinutes(10), QuizMode.BATCHED, course);
+        quizExercise.addQuestions(database.createShortAnswerQuestion());
+        quizExercise.setDuration(600);
+        quizExercise.setQuizPointStatistic(new QuizPointStatistic());
+        quizExercise = exerciseRepo.save(quizExercise);
+
+        quizUtilService.prepareBatchForSubmitting(quizExercise, SecurityUtils.makeAuthorizationObject("instructor1"), SecurityContextHolder.getContext().getAuthentication());
+
+        ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(0);
+        List<ShortAnswerSpot> spots = saQuestion.getSpots();
+        ShortAnswerSubmittedAnswer submittedAnswer = new ShortAnswerSubmittedAnswer();
+        submittedAnswer.setQuizQuestion(saQuestion);
+
+        ShortAnswerSubmittedText text = new ShortAnswerSubmittedText();
+        text.setSpot(spots.get(0));
+        text.setText("test");
+        submittedAnswer.addSubmittedTexts(text);
+
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.addSubmittedAnswers(submittedAnswer);
+        request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, QuizSubmission.class, HttpStatus.OK);
+
+        quizScheduleService.processCachedQuizSubmissions();
+
+        var actualParticipation = request.get("/api/exercises/" + quizExercise.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
+        assertThat(actualParticipation.getInitializationState()).isEqualTo(InitializationState.FINISHED);
+
+        var actualResults = actualParticipation.getResults();
+        assertThat(actualResults).hasSize(1);
+
+        var actualSubmission = (QuizSubmission) actualResults.stream().findFirst().get().getSubmission();
+        assertThat(actualSubmission.getType()).isEqualTo(SubmissionType.MANUAL);
+        assertThat(actualSubmission.isSubmitted()).isTrue();
+
+        var actualSubmittedAnswers = actualSubmission.getSubmittedAnswers();
+        assertThat(actualSubmittedAnswers).hasSize(1);
+
+        var actualSubmittedAnswer = (ShortAnswerSubmittedAnswer) actualSubmittedAnswers.stream().findFirst().get();
+        assertThat(actualSubmittedAnswer.getQuizQuestion()).isEqualTo(saQuestion);
+        assertThat(actualSubmittedAnswer.getSubmittedTexts().stream().findFirst().isPresent()).isTrue();
+
+        var actualSubmittedAnswerText = (ShortAnswerSubmittedText) actualSubmittedAnswer.getSubmittedTexts().stream().findFirst().get();
+        assertThat(actualSubmittedAnswerText.getText()).isEqualTo("test");
+        assertThat(actualSubmittedAnswerText.isIsCorrect()).isFalse();
     }
 }
