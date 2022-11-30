@@ -2565,9 +2565,9 @@ public class DatabaseUtilService {
             courseRepo.save(course);
             exerciseRepo.save(textExercise);
         }
-        else if ("ClassDiagram".equals(title)) {
+        else if (title.startsWith("ClassDiagram")) {
             ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
-            modelingExercise.setTitle("ClassDiagram");
+            modelingExercise.setTitle(title);
             course.addExercises(modelingExercise);
             courseRepo.save(course);
             exerciseRepo.save(modelingExercise);
