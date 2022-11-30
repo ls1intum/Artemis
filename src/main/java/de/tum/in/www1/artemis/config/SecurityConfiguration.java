@@ -59,7 +59,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
 
     private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
 
-    @Value("#{'${spring.prometheus.monitoringIp:#{127.0.0.1}'.split(',')}")
+    @Value("#{'${spring.prometheus.monitoringIp:127.0.0.1}'.split(',')}")
     private List<String> monitoringIpAddresses;
 
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
@@ -181,7 +181,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             // This adds an access check like .access("hasIpAddress('127.0.0.1') or hasIpAddress('::1')")
             .antMatchers("/management/prometheus/**").access(monitoringIpAddresses
                 .stream()
-                .map(ip -> String.format("hasIpAddress('%s')", ip))
+                .map(ip -> String.format("hasIpAddress(\"%s\")", ip))
                 .collect(Collectors.joining(" or ")))
             .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/time").permitAll()
