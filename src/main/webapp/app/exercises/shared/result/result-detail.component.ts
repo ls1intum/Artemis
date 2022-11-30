@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
@@ -33,6 +33,8 @@ export enum FeedbackItemType {
     Policy,
     Subsequent,
 }
+
+type FeedbackItemNewType = 'missing' | 'wrong' | 'warning' | 'info' | 'correct';
 
 export class FeedbackItem {
     type: FeedbackItemType;
@@ -185,7 +187,7 @@ export class ResultDetailComponent implements OnInit {
                     if (feedbacks?.length) {
                         return of(feedbacks);
                     } else {
-                        return this.getFeedbackDetailsForResult(this.result.participation!.id!, this.result.id!);
+                        return this.feedbackService.getDetailsForResult(this.result.participation!.id!, this.result.id!);
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
@@ -195,7 +197,7 @@ export class ResultDetailComponent implements OnInit {
                      */
                     if (feedbacks && feedbacks.length) {
                         this.result.feedbacks = feedbacks!;
-                        const filteredFeedback = this.filterFeedback(feedbacks);
+                        const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
 
                         const isProgrammingExercise = this.exerciseType === ExerciseType.PROGRAMMING;
@@ -230,28 +232,6 @@ export class ResultDetailComponent implements OnInit {
                 this.isLoading = false;
             });
     }
-
-    /**
-     * Loads the missing feedback details
-     * @param participationId the current participation
-     * @param resultId the current result
-     * @private
-     */
-    private getFeedbackDetailsForResult(participationId: number, resultId: number) {
-        return this.resultService.getFeedbackDetailsForResult(participationId, resultId).pipe(map(({ body: feedbackList }) => feedbackList!));
-    }
-
-    /**
-     * Filters the feedback based on the filter input
-     * @param feedbackList The full list of feedback
-     */
-    private filterFeedback = (feedbackList: Feedback[]) => {
-        if (!this.feedbackFilter) {
-            return [...feedbackList];
-        } else {
-            return this.feedbackFilter.map((filterText) => feedbackList.find(({ text }) => text === filterText)).filter(Boolean) as Feedback[];
-        }
-    };
 
     /**
      * Fetches build logs for a participation

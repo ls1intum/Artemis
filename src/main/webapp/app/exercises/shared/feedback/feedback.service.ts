@@ -4,10 +4,12 @@ import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/resu
 import { TranslateService } from '@ngx-translate/core';
 import { computeFeedbackPreviewText } from 'app/exercises/shared/feedback/feedback.util';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
+import { ResultService } from 'app/exercises/shared/result/result.service';
+import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackService {
-    constructor(private translateService: TranslateService) {}
+    constructor(private translateService: TranslateService, private resultService: ResultService) {}
 
     /**
      * Creates a feedback item with a category, title and text for each feedback object.
@@ -32,10 +34,30 @@ export class FeedbackService {
     }
 
     /**
+     * Filters the feedback based on the filter input
+     * @param feedbacks The full list of feedback
+     * @param filter an array of strings that the feedback needs to contain in its text attribute.
+     */
+    public filterFeedback = (feedbacks: Feedback[], filter: string[]): Feedback[] => {
+        if (!filter) {
+            return [...feedbacks];
+        }
+        return feedbacks.filter(({ text }) => text && filter.includes(text));
+    };
+
+    /**
+     * Loads the missing feedback details
+     * @param participationId the current participation
+     * @param resultId the current result
+     */
+    public getDetailsForResult(participationId: number, resultId: number) {
+        return this.resultService.getFeedbackDetailsForResult(participationId, resultId).pipe(map(({ body: feedbackList }) => feedbackList!));
+    }
+
+    /**
      * Creates a feedback item for feedback received for a programming exercise.
      * @param feedback The feedback from which the feedback item should be created.
      * @param showTestDetails
-     * @private
      */
     private createProgrammingExerciseFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         const previewText = computeFeedbackPreviewText(feedback.detailText);
