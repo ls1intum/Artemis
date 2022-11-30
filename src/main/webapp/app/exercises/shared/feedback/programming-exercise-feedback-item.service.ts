@@ -17,7 +17,7 @@ export class ProgrammingExerciseFeedbackItemService implements FeedbackItemServi
     }
 
     createFeedbackItems(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
-        return feedbacks.map((feedback) => this.createProgrammingExerciseFeedbackItem(feedback, showTestDetails));
+        return feedbacks.map((feedback) => this.createFeedbackItem(feedback, showTestDetails));
     }
 
     filterFeedbackItems(feedbackItems: FeedbackItem[], showTestDetails: boolean): FeedbackItem[] {
@@ -54,19 +54,19 @@ export class ProgrammingExerciseFeedbackItemService implements FeedbackItemServi
      * @param feedback The feedback from which the feedback item should be created.
      * @param showTestDetails
      */
-    private createProgrammingExerciseFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
+    private createFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         const previewText = computeFeedbackPreviewText(feedback.detailText);
 
         if (Feedback.isSubmissionPolicyFeedback(feedback)) {
-            return this.createProgrammingExerciseSubmissionPolicyFeedbackItem(feedback, previewText);
+            return this.createSubmissionPolicyFeedbackItem(feedback, previewText);
         } else if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
-            return this.createProgrammingExerciseScaFeedbackItem(feedback, showTestDetails);
+            return this.createScaFeedbackItem(feedback, showTestDetails);
         } else if (feedback.type === FeedbackType.AUTOMATIC) {
-            return this.createProgrammingExerciseAutomaticFeedbackItem(feedback, showTestDetails, previewText);
+            return this.createAutomaticFeedbackItem(feedback, showTestDetails, previewText);
         } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
-            return this.createProgrammingExerciseGradingInstructionFeedbackItem(feedback, showTestDetails, previewText);
+            return this.createGradingInstructionFeedbackItem(feedback, showTestDetails, previewText);
         } else {
-            return this.createProgrammingExerciseTutorFeedbackItem(feedback, showTestDetails, previewText);
+            return this.createTutorFeedbackItem(feedback, showTestDetails, previewText);
         }
     }
 
@@ -76,7 +76,7 @@ export class ProgrammingExerciseFeedbackItemService implements FeedbackItemServi
      * @param previewText The preview text for the feedback item.
      * @private
      */
-    private createProgrammingExerciseSubmissionPolicyFeedbackItem(feedback: Feedback, previewText?: string): FeedbackItem {
+    private createSubmissionPolicyFeedbackItem(feedback: Feedback, previewText?: string): FeedbackItem {
         const submissionPolicyTitle = feedback.text!.substring(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER.length);
 
         return {
@@ -96,7 +96,7 @@ export class ProgrammingExerciseFeedbackItemService implements FeedbackItemServi
      * @param showTestDetails
      * @private
      */
-    private createProgrammingExerciseScaFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
+    private createScaFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
         const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
         const text = showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message;
@@ -121,7 +121,7 @@ export class ProgrammingExerciseFeedbackItemService implements FeedbackItemServi
      * @param previewText The preview text for the feedback item.
      * @private
      */
-    private createProgrammingExerciseAutomaticFeedbackItem(feedback: Feedback, showTestDetails: boolean, previewText?: string): FeedbackItem {
+    private createAutomaticFeedbackItem(feedback: Feedback, showTestDetails: boolean, previewText?: string): FeedbackItem {
         let title = undefined;
         if (showTestDetails) {
             if (feedback.positive === undefined) {
@@ -151,7 +151,7 @@ export class ProgrammingExerciseFeedbackItemService implements FeedbackItemServi
      * @param previewText The preview text for the feedback item.
      * @private
      */
-    private createProgrammingExerciseGradingInstructionFeedbackItem(feedback: Feedback, showTestDetails: boolean, previewText?: string): FeedbackItem {
+    private createGradingInstructionFeedbackItem(feedback: Feedback, showTestDetails: boolean, previewText?: string): FeedbackItem {
         const gradingInstruction = feedback.gradingInstruction!;
 
         return {
@@ -172,7 +172,7 @@ export class ProgrammingExerciseFeedbackItemService implements FeedbackItemServi
      * @param previewText The preview text for the feedback item.
      * @private
      */
-    private createProgrammingExerciseTutorFeedbackItem(feedback: Feedback, showTestDetails: boolean, previewText?: string): FeedbackItem {
+    private createTutorFeedbackItem(feedback: Feedback, showTestDetails: boolean, previewText?: string): FeedbackItem {
         return {
             type: FeedbackItemType.Feedback,
             category: showTestDetails ? this.translateService.instant('artemisApp.course.tutor') : this.translateService.instant('artemisApp.result.detail.feedback'),
