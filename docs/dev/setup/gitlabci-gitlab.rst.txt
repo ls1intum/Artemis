@@ -80,35 +80,35 @@ Artemis
 
     .. code:: yaml
 
-    artemis:
-        course-archives-path: ./exports/courses
-        repo-clone-path: ./repos
-        repo-download-clone-path: ./repos-download
-        encryption-password: artemis_admin           # LEGACY: arbitrary password for encrypting database values
-        bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
-        # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
-        user-management:
-            use-external: false
-            internal-admin:
-                username: artemis_admin
-                password: artemis_admin
-            accept-terms: false
-            login:
-                account-name: TUM
-        version-control:
-            url: http://gitlab # TODO
-            user: root
-            password: password # TODO
-            token: gitlab-personal-access-token # TODO
-        continuous-integration:
-            build-timeout: 30
-            artemis-authentication-token-value: notification-plugin-token # TODO
-        git:
-            name: Artemis
-            email: artemis.in@tum.de
-    server:
-        port: 8080
-        url: http://artemis:8080 # TODO
+        artemis:
+            course-archives-path: ./exports/courses
+            repo-clone-path: ./repos
+            repo-download-clone-path: ./repos-download
+            encryption-password: artemis_admin           # LEGACY: arbitrary password for encrypting database values
+            bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
+            # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
+            user-management:
+                use-external: false
+                internal-admin:
+                    username: artemis_admin
+                    password: artemis_admin
+                accept-terms: false
+                login:
+                    account-name: TUM
+            version-control:
+                url: http://gitlab # TODO
+                user: root
+                password: password # TODO
+                token: gitlab-personal-access-token # TODO
+            continuous-integration:
+                build-timeout: 30
+                artemis-authentication-token-value: notification-plugin-token # TODO
+            git:
+                name: Artemis
+                email: artemis.in@tum.de
+        server:
+            port: 8080
+            url: http://artemis:8080 # TODO
 
 3. Start Artemis
     Start Artemis with the ``gitlab`` and ``gitlabci`` profile.
