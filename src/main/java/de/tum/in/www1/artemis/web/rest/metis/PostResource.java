@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.service.metis.PostService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
@@ -112,7 +112,7 @@ public class PostResource {
      */
     @GetMapping("courses/{courseId}/posts")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Post>> getPostsInCourse(@ApiParam Pageable pageable, @RequestParam(defaultValue = "false") boolean pagingEnabled,
+    public ResponseEntity<List<Post>> getPostsInCourse(@Parameter Pageable pageable, @RequestParam(defaultValue = "false") boolean pagingEnabled,
             PostContextFilter postContextFilter) {
 
         Page<Post> coursePosts = postService.getPostsInCourse(pagingEnabled, pageable, postContextFilter);
