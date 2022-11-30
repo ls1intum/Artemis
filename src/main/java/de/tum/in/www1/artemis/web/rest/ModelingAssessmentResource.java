@@ -6,6 +6,7 @@ import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,8 +22,10 @@ import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.ErrorConstants;
-import io.swagger.annotations.ApiResponse;
-import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 /** REST controller for managing ModelingAssessment. */
 @RestController
@@ -90,8 +93,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return result after saving/submitting modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
-    @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
-            @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = PUT_SUBMIT_ASSESSMENT_200_REASON, content = {
+                    @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = Result.class)) }),
+            @ApiResponse(responseCode = "403", description = ErrorConstants.REQ_403_REASON), @ApiResponse(responseCode = "404", description = ErrorConstants.REQ_404_REASON) })
     @PutMapping("/modeling-submissions/{submissionId}/result/{resultId}/assessment")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> saveModelingAssessment(@PathVariable long submissionId, @PathVariable long resultId,
@@ -108,8 +113,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return result after saving example modeling assessment
      */
     @ResponseStatus(HttpStatus.OK)
-    @ApiResponses({ @ApiResponse(code = 200, message = PUT_SUBMIT_ASSESSMENT_200_REASON, response = Result.class),
-            @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = PUT_SUBMIT_ASSESSMENT_200_REASON, content = {
+                    @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = Result.class)) }),
+            @ApiResponse(responseCode = "403", description = ErrorConstants.REQ_403_REASON), @ApiResponse(responseCode = "404", description = ErrorConstants.REQ_404_REASON) })
     @PutMapping("/modeling-submissions/{exampleSubmissionId}/example-assessment")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> saveModelingExampleAssessment(@PathVariable long exampleSubmissionId, @RequestBody List<Feedback> feedbacks) {
@@ -126,8 +133,10 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @return the updated result
      */
     @ResponseStatus(HttpStatus.OK)
-    @ApiResponses({ @ApiResponse(code = 200, message = POST_ASSESSMENT_AFTER_COMPLAINT_200_REASON, response = Result.class),
-            @ApiResponse(code = 403, message = ErrorConstants.REQ_403_REASON), @ApiResponse(code = 404, message = ErrorConstants.REQ_404_REASON) })
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = POST_ASSESSMENT_AFTER_COMPLAINT_200_REASON, content = {
+                    @Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(implementation = Result.class)) }),
+            @ApiResponse(responseCode = "403", description = ErrorConstants.REQ_403_REASON), @ApiResponse(responseCode = "404", description = ErrorConstants.REQ_404_REASON) })
     @PutMapping("/modeling-submissions/{submissionId}/assessment-after-complaint")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> updateModelingAssessmentAfterComplaint(@PathVariable Long submissionId, @RequestBody AssessmentUpdate assessmentUpdate) {

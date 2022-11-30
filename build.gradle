@@ -26,6 +26,7 @@ plugins {
     id "info.solidsoft.pitest" version "1.9.11"
     id "org.owasp.dependencycheck" version "7.4.1"
     id "com.adarshr.test-logger" version "3.2.0"
+    id "org.springdoc.openapi-gradle-plugin" version "1.4.0"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -206,7 +207,6 @@ dependencies {
     implementation "org.jsoup:jsoup:1.15.3"
     implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
-    implementation "org.springdoc:springdoc-openapi-ui:1.6.12"
     implementation "com.vdurmont:semver4j:3.1.0"
 
     // import JHipster dependencies BOM
@@ -269,10 +269,7 @@ dependencies {
     implementation "org.bouncycastle:bcprov-jdk15on:1.70"
     runtimeOnly "io.jsonwebtoken:jjwt-impl:0.11.5"
     runtimeOnly "io.jsonwebtoken:jjwt-jackson:0.11.5"
-    implementation ("io.springfox:springfox-swagger2:3.0.0") {
-        exclude module: "mapstruct"
-    }
-    implementation "io.springfox:springfox-bean-validators:3.0.0"
+    implementation "org.springdoc:springdoc-openapi-ui:1.6.12"
     implementation "mysql:mysql-connector-java:8.0.31"
     implementation "org.postgresql:postgresql:42.5.0"
     implementation "com.h2database:h2:2.1.214"

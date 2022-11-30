@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
 import tech.jhipster.web.util.PaginationUtil;
 import tech.jhipster.web.util.ResponseUtil;
 
@@ -98,7 +98,7 @@ public class NotificationResource {
      */
     @GetMapping("notifications")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
+    public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@Parameter Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         log.debug("REST request to get all Notifications for current user {} filtered by settings", currentUser);
         Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
