@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.exception.QuizSubmissionException;
 import de.tum.in.www1.artemis.service.QuizSubmissionService;
 
 @Service
-@Profile("quiz")
+@Profile("decoupling && quiz")  // TODO: Remove !decoupling
 public class JMSListenerService {
 
     private final ObjectMapper objectMapper;

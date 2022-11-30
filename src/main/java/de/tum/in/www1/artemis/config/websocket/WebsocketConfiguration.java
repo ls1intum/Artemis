@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -91,6 +92,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final ExamRepository examRepository;
 
+    private final Environment env;
+
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
     private List<String> brokerAddresses;
@@ -103,7 +106,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler, TokenProvider tokenProvider,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            UserRepository userRepository, ExamRepository examRepository) {
+            UserRepository userRepository, ExamRepository examRepository, Environment env) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.tokenProvider = tokenProvider;
@@ -112,6 +115,7 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
         this.examRepository = examRepository;
+        this.env = env;
     }
 
     @Override
@@ -121,10 +125,12 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
         TcpOperations<byte[]> tcpClient = createTcpClient();
         if (tcpClient != null) {
             log.info("Enabling StompBrokerRelay for WebSocket messages using {}", String.join(", ", brokerAddresses));
+            Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+
             config
                     // .setApplicationDestinationPrefixes("/topic/team")
                     // Enable the relay for "/topic"
-                    .enableStompBrokerRelay("/topic", "/queue")
+                    .enableStompBrokerRelay(activeProfiles.contains("quiz") ? new String[] { "/topic" } : new String[] { "/topic", "/queue" })
                     // Messages that could not be sent to a user (as he is not connected to this server) will be forwarded to "/topic/unresolved-user"
                     .setUserDestinationBroadcast("/topic/unresolved-user")
                     // Information about connected users will be sent to "/topic/user-registry"

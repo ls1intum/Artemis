@@ -6,7 +6,9 @@ import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Controller;
@@ -21,6 +23,7 @@ import de.tum.in.www1.artemis.service.QuizSubmissionService;
 
 @SuppressWarnings("unused")
 @Controller
+@Profile("!decoupling || quiz")  // TODO: Remove !decoupling
 public class QuizSubmissionWebsocketService {
 
     private static final Logger log = LoggerFactory.getLogger(QuizSubmissionWebsocketService.class);
@@ -54,8 +57,7 @@ public class QuizSubmissionWebsocketService {
      * @param quizSubmission the submission which should be saved
      * @param principal      refers to the user who initiated the request
      */
-    // @MessageMapping("/queue/quizExercise/{exerciseId}/submission")
-    // @JmsListener(destination = "/queue/quizExercise/*/submission", containerFactory = )
+    @MessageMapping("/queue/quizExercise/{exerciseId}/submission")
     public void saveSubmission(@DestinationVariable Long exerciseId, @Valid @Payload QuizSubmission quizSubmission, Principal principal) {
         // Without this, custom jpa repository methods don't work in websocket channel.
         SecurityUtils.setAuthorizationObject();
