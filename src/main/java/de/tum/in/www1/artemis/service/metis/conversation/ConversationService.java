@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -215,9 +216,15 @@ public class ConversationService {
      * @param usersToMessage  the users to be messaged
      */
     public void broadcastOnConversationMembershipChannel(Course course, MetisCrudAction metisCrudAction, Conversation conversation, Set<User> usersToMessage) {
-        String courseTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + course.getId();
-        String conversationParticipantTopicName = courseTopicName + "/conversations/user/";
+        String conversationParticipantTopicName = getConversationParticipantTopicName(course.getId());
         usersToMessage.forEach(user -> sendToConversationMembershipChannel(metisCrudAction, conversation, user, conversationParticipantTopicName));
+    }
+
+    @NotNull
+    public static String getConversationParticipantTopicName(Long courseId) {
+        String courseTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
+        String conversationParticipantTopicName = courseTopicName + "/conversations/user/";
+        return conversationParticipantTopicName;
     }
 
     private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName) {
