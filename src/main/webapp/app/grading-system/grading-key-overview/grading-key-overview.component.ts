@@ -100,8 +100,8 @@ export class GradingKeyOverviewComponent implements OnInit {
                         gradeType: source.gradeType,
                         gradeSteps: source.gradeSteps,
                         maxPoints: this.gradingSystemService.getGradingScaleMaxPoints(source),
-                        plagiarismGrade: source.plagiarismGrade ?? GradingScale.DEFAULT_PLAGIARISM_GRADE,
-                        noParticipationGrade: source.noParticipationGrade ?? GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
+                        plagiarismGrade: source.plagiarismGrade || GradingScale.DEFAULT_PLAGIARISM_GRADE,
+                        noParticipationGrade: source.noParticipationGrade || GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
                     };
                 }),
             );
