@@ -267,7 +267,7 @@ public class ProgrammingExerciseParticipationService {
         Repository targetRepo = gitService.getOrCheckoutRepository(targetURL, true);
         Repository sourceRepo = gitService.getOrCheckoutRepository(sourceURL, true);
 
-        // Replace everything but the .git folder
+        // Replace everything but the files corresponding to git (such as the .git folder or the .gitignore file)
         FilenameFilter filter = (dir, name) -> !dir.isDirectory() || !name.contains(".git");
         for (java.io.File file : targetRepo.getLocalPath().toFile().listFiles(filter)) {
             FileSystemUtils.deleteRecursively(file);
