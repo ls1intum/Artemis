@@ -145,11 +145,11 @@ export class ResultDetailComponent implements OnInit {
      *
      */
     ngOnInit(): void {
-        this.feedbackService = this.exerciseType === ExerciseType.PROGRAMMING ? this.programmingExerciseFeedbackService : this.feedbackServiceImpl;
-
         this.isLoading = true;
 
         this.initializeExerciseInformation();
+
+        this.feedbackService = this.exerciseType === ExerciseType.PROGRAMMING ? this.programmingExerciseFeedbackService : this.feedbackServiceImpl;
         this.fetchAdditionalInformation();
 
         this.commitHash = this.getCommitHash().slice(0, 11);
@@ -207,7 +207,8 @@ export class ResultDetailComponent implements OnInit {
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
 
                         this.feedbackList = this.feedbackService.createFeedbackItems(filteredFeedback, this.showTestDetails);
-                        this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
+                        this.filteredFeedbackList = this.feedbackService.filterFeedbackItems(this.feedbackList, this.showTestDetails);
+                        this.numberOfAggregatedTestCases = this.feedbackService.getPositiveTestCasesWithoutDetailText(this.feedbackList).length;
                         this.backupFilteredFeedbackList = this.filteredFeedbackList;
 
                         this.countFeedbacks();
@@ -261,48 +262,6 @@ export class ResultDetailComponent implements OnInit {
             }),
         );
     };
-
-    /**
-     * Filters / Summarizes positive test cases for a student and programming exercise result
-     * @param feedbackList The list of feedback items
-     * @private
-     */
-    private filterFeedbackItems(feedbackList: FeedbackItem[]) {
-        if (this.exerciseType !== ExerciseType.PROGRAMMING) {
-            return [...feedbackList];
-        }
-
-        if (this.showTestDetails) {
-            return [...feedbackList];
-        }
-
-        const positiveTestCasesWithoutDetailText = feedbackList.filter((feedbackItem) => {
-            return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive && !feedbackItem.text;
-        });
-
-        if (positiveTestCasesWithoutDetailText.length > 0) {
-            this.numberOfAggregatedTestCases = positiveTestCasesWithoutDetailText.length;
-
-            // Add summary of positive test cases
-            return [
-                {
-                    type: FeedbackItemType.Test,
-                    category: this.showTestDetails
-                        ? this.translateService.instant('artemisApp.result.detail.test.name')
-                        : this.translateService.instant('artemisApp.result.detail.feedback'),
-                    title:
-                        positiveTestCasesWithoutDetailText.length > 1
-                            ? this.translateService.instant('artemisApp.result.detail.test.passedTests', { number: positiveTestCasesWithoutDetailText.length })
-                            : this.translateService.instant('artemisApp.result.detail.test.passedTest'),
-                    positive: true,
-                    credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.credits ?? 0), 0),
-                },
-                ...feedbackList.filter((feedbackItem) => !positiveTestCasesWithoutDetailText.includes(feedbackItem)),
-            ];
-        }
-
-        return [...feedbackList];
-    }
 
     /**
      * Calculates and updates the values of the score chart

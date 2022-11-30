@@ -13,12 +13,26 @@ export interface FeedbackService {
      * @param showTestDetails
      */
     createFeedbackItems(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[];
+
+    /**
+     * Filters / Summarizes positive test cases for a student and programming exercise result
+     * @param feedbackItems The list of feedback items
+     * @param showTestDetails
+     */
+    filterFeedbackItems(feedbackItems: FeedbackItem[], showTestDetails: boolean): FeedbackItem[];
+
+    /**
+     * Gets positive test cases without detail texts
+     * @param feedbackItems
+     */
+    getPositiveTestCasesWithoutDetailText(feedbackItems: FeedbackItem[]): FeedbackItem[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackServiceImpl implements FeedbackService {
     constructor(private translateService: TranslateService, private resultService: ResultService) {}
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     public createFeedbackItems(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
         return feedbacks.map((feedback) => ({
             type: FeedbackItemType.Feedback,
@@ -29,6 +43,15 @@ export class FeedbackServiceImpl implements FeedbackService {
             positive: feedback.positive,
             credits: feedback.credits,
         }));
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    getPositiveTestCasesWithoutDetailText(feedbacks: FeedbackItem[]): FeedbackItem[] {
+        return [];
+    }
+
+    filterFeedbackItems(feedbackList: FeedbackItem[]): FeedbackItem[] {
+        return [...feedbackList];
     }
 
     /**

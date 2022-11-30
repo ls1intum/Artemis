@@ -10,8 +10,43 @@ import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue
 export class ProgrammingExerciseFeedbackService implements FeedbackService {
     constructor(private translateService: TranslateService, private feedbackServiceImpl: FeedbackServiceImpl) {}
 
+    getPositiveTestCasesWithoutDetailText(feedbacks: FeedbackItem[]): FeedbackItem[] {
+        return feedbacks.filter((feedbackItem) => {
+            return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive && !feedbackItem.text;
+        });
+    }
+
     createFeedbackItems(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
         return feedbacks.map((feedback) => this.createProgrammingExerciseFeedbackItem(feedback, showTestDetails));
+    }
+
+    filterFeedbackItems(feedbackList: FeedbackItem[], showTestDetails: boolean): FeedbackItem[] {
+        if (showTestDetails) {
+            return [...feedbackList];
+        }
+
+        const positiveTestCasesWithoutDetailText = this.getPositiveTestCasesWithoutDetailText(feedbackList);
+
+        if (positiveTestCasesWithoutDetailText.length > 0) {
+            // Add summary of positive test cases
+            return [
+                {
+                    type: FeedbackItemType.Test,
+                    category: showTestDetails
+                        ? this.translateService.instant('artemisApp.result.detail.test.name')
+                        : this.translateService.instant('artemisApp.result.detail.feedback'),
+                    title:
+                        positiveTestCasesWithoutDetailText.length > 1
+                            ? this.translateService.instant('artemisApp.result.detail.test.passedTests', { number: positiveTestCasesWithoutDetailText.length })
+                            : this.translateService.instant('artemisApp.result.detail.test.passedTest'),
+                    positive: true,
+                    credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.credits ?? 0), 0),
+                },
+                ...feedbackList.filter((feedbackItem) => !positiveTestCasesWithoutDetailText.includes(feedbackItem)),
+            ];
+        }
+
+        return [...feedbackList];
     }
 
     /**
