@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Injector, Input, OnInit } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
@@ -132,7 +132,7 @@ export class ResultDetailComponent implements OnInit {
         private translateService: TranslateService,
         private profileService: ProfileService,
         private feedbackServiceImpl: FeedbackServiceImpl,
-        private programmingExerciseFeedbackService: ProgrammingExerciseFeedbackService,
+        private injector: Injector,
     ) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
@@ -149,7 +149,7 @@ export class ResultDetailComponent implements OnInit {
 
         this.initializeExerciseInformation();
 
-        this.feedbackService = this.exerciseType === ExerciseType.PROGRAMMING ? this.programmingExerciseFeedbackService : this.feedbackServiceImpl;
+        this.feedbackService = this.exerciseType === ExerciseType.PROGRAMMING ? this.injector.get(ProgrammingExerciseFeedbackService) : this.injector.get(FeedbackServiceImpl);
         this.fetchAdditionalInformation();
 
         this.commitHash = this.getCommitHash().slice(0, 11);
