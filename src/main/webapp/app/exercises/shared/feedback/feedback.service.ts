@@ -46,12 +46,12 @@ export class FeedbackServiceImpl implements FeedbackService {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    getPositiveTestCasesWithoutDetailText(feedbacks: FeedbackItem[]): FeedbackItem[] {
+    getPositiveTestCasesWithoutDetailText(feedbackItems: FeedbackItem[]): FeedbackItem[] {
         return [];
     }
 
-    filterFeedbackItems(feedbackList: FeedbackItem[]): FeedbackItem[] {
-        return [...feedbackList];
+    filterFeedbackItems(feedbackItems: FeedbackItem[]): FeedbackItem[] {
+        return [...feedbackItems];
     }
 
     /**

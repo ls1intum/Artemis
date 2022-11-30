@@ -10,8 +10,8 @@ import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue
 export class ProgrammingExerciseFeedbackService implements FeedbackService {
     constructor(private translateService: TranslateService, private feedbackServiceImpl: FeedbackServiceImpl) {}
 
-    getPositiveTestCasesWithoutDetailText(feedbacks: FeedbackItem[]): FeedbackItem[] {
-        return feedbacks.filter((feedbackItem) => {
+    getPositiveTestCasesWithoutDetailText(feedbackItems: FeedbackItem[]): FeedbackItem[] {
+        return feedbackItems.filter((feedbackItem) => {
             return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive && !feedbackItem.text;
         });
     }
@@ -20,12 +20,12 @@ export class ProgrammingExerciseFeedbackService implements FeedbackService {
         return feedbacks.map((feedback) => this.createProgrammingExerciseFeedbackItem(feedback, showTestDetails));
     }
 
-    filterFeedbackItems(feedbackList: FeedbackItem[], showTestDetails: boolean): FeedbackItem[] {
+    filterFeedbackItems(feedbackItems: FeedbackItem[], showTestDetails: boolean): FeedbackItem[] {
         if (showTestDetails) {
-            return [...feedbackList];
+            return [...feedbackItems];
         }
 
-        const positiveTestCasesWithoutDetailText = this.getPositiveTestCasesWithoutDetailText(feedbackList);
+        const positiveTestCasesWithoutDetailText = this.getPositiveTestCasesWithoutDetailText(feedbackItems);
 
         if (positiveTestCasesWithoutDetailText.length > 0) {
             // Add summary of positive test cases
@@ -42,11 +42,11 @@ export class ProgrammingExerciseFeedbackService implements FeedbackService {
                     positive: true,
                     credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.credits ?? 0), 0),
                 },
-                ...feedbackList.filter((feedbackItem) => !positiveTestCasesWithoutDetailText.includes(feedbackItem)),
+                ...feedbackItems.filter((feedbackItem) => !positiveTestCasesWithoutDetailText.includes(feedbackItem)),
             ];
         }
 
-        return [...feedbackList];
+        return [...feedbackItems];
     }
 
     /**
