@@ -3,7 +3,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { Component, Injectable, Input } from '@angular/core';
+import { Component, Injectable, Input, OnInit } from '@angular/core';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
@@ -19,7 +19,7 @@ interface TestCaseResult {
 @Component({
     selector: 'jhi-exercise-scores-export-button',
     template: `
-        <div ngbDropdown class="d-inline">
+        <div *ngIf="isProgrammingExerciseResults" ngbDropdown class="d-inline">
             <button id="export-results-dropdown" class="btn btn-info btn-sm me-1" ngbDropdownToggle>
                 <fa-icon [icon]="faDownload"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults.title">Export Results</span>
@@ -46,17 +46,27 @@ interface TestCaseResult {
                 </button>
             </div>
         </div>
+        <button *ngIf="!isProgrammingExerciseResults" class="btn btn-info btn-sm me-1" (click)="exportResults(false, false)">
+            <fa-icon [icon]="faDownload"></fa-icon>
+            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults.title">Export Results</span>
+        </button>
     `,
 })
 @Injectable({ providedIn: 'root' })
-export class ExerciseScoresExportButtonComponent {
+export class ExerciseScoresExportButtonComponent implements OnInit {
     @Input() exercises: Exercise[] = []; // Used to export multiple scores together
     @Input() exercise: Exercise | ProgrammingExercise;
+
+    isProgrammingExerciseResults = false;
 
     // Icons
     faDownload = faDownload;
 
     constructor(private resultService: ResultService, private alertService: AlertService) {}
+
+    ngOnInit(): void {
+        this.isProgrammingExerciseResults = this.exercises.concat(this.exercise).every((exercise) => exercise.type === ExerciseType.PROGRAMMING);
+    }
 
     /**
      * Exports the exercise results as a CSV file.
