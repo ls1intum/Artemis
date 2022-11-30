@@ -24,7 +24,8 @@ import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datat
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { FeedbackService } from 'app/exercises/shared/feedback/feedback.service';
+import { FeedbackService, FeedbackServiceImpl } from 'app/exercises/shared/feedback/feedback.service';
+import { ProgrammingExerciseFeedbackService } from 'app/exercises/shared/feedback/programming-exercise-feedback.service';
 
 export enum FeedbackItemType {
     Issue,
@@ -122,13 +123,16 @@ export class ResultDetailComponent implements OnInit {
 
     numberOfAggregatedTestCases = 0;
 
+    feedbackService: FeedbackService;
+
     constructor(
         public activeModal: NgbActiveModal,
         private resultService: ResultService,
         private buildLogService: BuildLogService,
         private translateService: TranslateService,
         private profileService: ProfileService,
-        private feedbackService: FeedbackService,
+        private feedbackServiceImpl: FeedbackServiceImpl,
+        private programmingExerciseFeedbackService: ProgrammingExerciseFeedbackService,
     ) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
         const deductionsLabel = translateService.instant('artemisApp.result.chart.deductions');
@@ -141,6 +145,8 @@ export class ResultDetailComponent implements OnInit {
      *
      */
     ngOnInit(): void {
+        this.feedbackService = this.exerciseType === ExerciseType.PROGRAMMING ? this.programmingExerciseFeedbackService : this.feedbackServiceImpl;
+
         this.isLoading = true;
 
         this.initializeExerciseInformation();
@@ -187,7 +193,7 @@ export class ResultDetailComponent implements OnInit {
                     if (feedbacks?.length) {
                         return of(feedbacks);
                     } else {
-                        return this.feedbackService.getDetailsForResult(this.result.participation!.id!, this.result.id!);
+                        return this.feedbackServiceImpl.getDetailsForResult(this.result.participation!.id!, this.result.id!);
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
@@ -197,11 +203,10 @@ export class ResultDetailComponent implements OnInit {
                      */
                     if (feedbacks && feedbacks.length) {
                         this.result.feedbacks = feedbacks!;
-                        const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
+                        const filteredFeedback = this.feedbackServiceImpl.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
 
-                        const isProgrammingExercise = this.exerciseType === ExerciseType.PROGRAMMING;
-                        this.feedbackList = this.feedbackService.createFeedbackItems(filteredFeedback, isProgrammingExercise, this.showTestDetails);
+                        this.feedbackList = this.feedbackService.createFeedbackItems(filteredFeedback, this.showTestDetails);
                         this.filteredFeedbackList = this.filterFeedbackItems(this.feedbackList);
                         this.backupFilteredFeedbackList = this.filteredFeedbackList;
 
@@ -263,34 +268,40 @@ export class ResultDetailComponent implements OnInit {
      * @private
      */
     private filterFeedbackItems(feedbackList: FeedbackItem[]) {
-        if (this.exerciseType !== ExerciseType.PROGRAMMING || this.showTestDetails) {
+        if (this.exerciseType !== ExerciseType.PROGRAMMING) {
             return [...feedbackList];
-        } else {
-            const positiveTestCasesWithoutDetailText = feedbackList.filter((feedbackItem) => {
-                return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive && !feedbackItem.text;
-            });
-            if (positiveTestCasesWithoutDetailText.length > 0) {
-                this.numberOfAggregatedTestCases = positiveTestCasesWithoutDetailText.length;
-
-                return [
-                    {
-                        type: FeedbackItemType.Test,
-                        category: this.showTestDetails
-                            ? this.translateService.instant('artemisApp.result.detail.test.name')
-                            : this.translateService.instant('artemisApp.result.detail.feedback'),
-                        title:
-                            positiveTestCasesWithoutDetailText.length > 1
-                                ? this.translateService.instant('artemisApp.result.detail.test.passedTests', { number: positiveTestCasesWithoutDetailText.length })
-                                : this.translateService.instant('artemisApp.result.detail.test.passedTest'),
-                        positive: true,
-                        credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.credits ?? 0), 0),
-                    },
-                    ...feedbackList.filter((feedbackItem) => !positiveTestCasesWithoutDetailText.includes(feedbackItem)),
-                ];
-            } else {
-                return [...feedbackList];
-            }
         }
+
+        if (this.showTestDetails) {
+            return [...feedbackList];
+        }
+
+        const positiveTestCasesWithoutDetailText = feedbackList.filter((feedbackItem) => {
+            return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive && !feedbackItem.text;
+        });
+
+        if (positiveTestCasesWithoutDetailText.length > 0) {
+            this.numberOfAggregatedTestCases = positiveTestCasesWithoutDetailText.length;
+
+            // Add summary of positive test cases
+            return [
+                {
+                    type: FeedbackItemType.Test,
+                    category: this.showTestDetails
+                        ? this.translateService.instant('artemisApp.result.detail.test.name')
+                        : this.translateService.instant('artemisApp.result.detail.feedback'),
+                    title:
+                        positiveTestCasesWithoutDetailText.length > 1
+                            ? this.translateService.instant('artemisApp.result.detail.test.passedTests', { number: positiveTestCasesWithoutDetailText.length })
+                            : this.translateService.instant('artemisApp.result.detail.test.passedTest'),
+                    positive: true,
+                    credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.credits ?? 0), 0),
+                },
+                ...feedbackList.filter((feedbackItem) => !positiveTestCasesWithoutDetailText.includes(feedbackItem)),
+            ];
+        }
+
+        return [...feedbackList];
     }
 
     /**
