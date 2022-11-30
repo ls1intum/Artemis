@@ -49,7 +49,12 @@ public abstract class ConversationDTO {
         this.type = type;
     }
 
+    public ConversationDTO(String type) {
+        this.type = type;
+    }
+
     public ConversationDTO() {
+        // default constructor
     }
 
     public String getType() {

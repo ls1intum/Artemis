@@ -71,12 +71,6 @@ public class OneToOneChatResource {
         if (chatMembers.size() != 2) {
             throw new BadRequestAlertException("A one-to-one chat can only be started with two users", "OneToOneChat", "invalidUserCount");
         }
-        if (!chatMembers.contains(requestingUser)) {
-            throw new BadRequestAlertException("The requesting user must be part of the one-to-one chat", "OneToOneChat", "invalidUser");
-        }
-        if (chatMembers.get(0).equals(chatMembers.get(1))) {
-            throw new BadRequestAlertException("The two users in a one-to-one chat must be different", "OneToOneChat", "invalidUser");
-        }
 
         var userA = chatMembers.get(0);
         var userB = chatMembers.get(1);

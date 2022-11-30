@@ -10,6 +10,10 @@ public class OneToOneChatDTO extends ConversationDTO {
         super(conversation, "oneToOneChat");
     }
 
+    public OneToOneChatDTO() {
+        super("oneToOneChat");
+    }
+
     public Set<ConversationUserDTO> members;
 
     public Set<ConversationUserDTO> getMembers() {

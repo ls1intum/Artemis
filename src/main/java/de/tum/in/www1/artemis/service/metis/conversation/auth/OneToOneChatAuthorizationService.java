@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Service
 public class OneToOneChatAuthorizationService extends ConversationAuthorizationService {
@@ -36,7 +37,7 @@ public class OneToOneChatAuthorizationService extends ConversationAuthorizationS
         user = getUserIfNecessary(user);
         var createdOneToOneChats = oneToOneChatRepository.countByCreatorIdAndCourseId(user.getId(), course.getId());
         if (createdOneToOneChats >= MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE) {
-            throw new IllegalArgumentException("You can only create " + MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE + "one to one chats per course");
+            throw new AccessForbiddenException("You can only create " + MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE + "one to one chats per course");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
     }
