@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
-import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbDropdown, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -14,7 +14,7 @@ import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -71,7 +71,7 @@ describe('NavbarComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockModule(NgbModule)],
             declarations: [
                 NavbarComponent,
                 MockDirective(NgbCollapse),
