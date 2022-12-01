@@ -1,3 +1,8 @@
 .calculation-sign {
     font-size: 3rem;
 }
+
+.dynamic-example {
+    padding-left: calc(0.5rem - 2px); // Padding of td above - border width of input
+    width: 50%;
+}

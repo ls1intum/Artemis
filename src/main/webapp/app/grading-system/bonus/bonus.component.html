@@ -1,6 +1,6 @@
 <ng-template #helpTextTemplate let-translationKey="translationKey">
     <ng-template #tipContent><span [innerHTML]="translationKey | artemisTranslate | safeHtml"></span></ng-template>
-    <fa-icon *ngIf="bonus.id" [icon]="faQuestionCircle" class="text-secondary" placement="right auto" [ngbTooltip]="tipContent"></fa-icon>
+    <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="right auto" [ngbTooltip]="tipContent"></fa-icon>
     <label *ngIf="!bonus.id" [innerHTML]="translationKey | artemisTranslate | safeHtml" class="d-block py-1"></label>
 </ng-template>
 <h2>{{ 'artemisApp.bonus.title' | artemisTranslate }}</h2>
@@ -47,10 +47,10 @@
                 <tr *ngFor="let gradeStep of bonus.sourceGradingScale?.gradeSteps; let i = index; let last = last">
                     <td>{{ gradeStep.gradeName }}</td>
                     <td>
-                        <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.PERCENTAGE : last | safeHtml"></span>
+                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE:last | safeHtml"></span>
                     </td>
                     <td *ngIf="hasPointsSet()">
-                        <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.POINTS : last | safeHtml"></span>
+                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS:last | safeHtml"></span>
                     </td>
                 </tr>
             </tbody>
@@ -61,7 +61,7 @@
     <h5>{{ 'artemisApp.bonus.formula.title' | artemisTranslate }}</h5>
     <div *ngIf="bonus.bonusStrategy && bonus.weight && bonusToGradeStepsDTO" class="fs-3 pb-5">
         <div class="d-flex py-2 align-items-center">
-            <div class="p-2">
+            <div class="pe-2">
                 <strong [innerHTML]="'artemisApp.bonus.formula.' + (bonus.bonusStrategy === BonusStrategy.POINTS ? 'examPoints' : 'examGrade') | artemisTranslate | safeHtml"
                     >Exam<br />Grade</strong
                 >
@@ -81,7 +81,7 @@
             {{ 'artemisApp.bonus.formula.finalGradeFromPoints' | artemisTranslate }}
         </div>
         <div class="row fs-5 ps-2">
-            {{ 'artemisApp.bonus.formula.finalGradeLimit' | artemisTranslate : { maxPossibleGrade: maxPossibleGrade() } }}
+            {{ 'artemisApp.bonus.formula.finalGradeLimit' | artemisTranslate: { maxPossibleGrade: maxPossibleGrade() } }}
         </div>
     </div>
     <div *ngIf="hasBonusStrategyWeightMismatch" class="alert alert-warning" jhiTranslate="artemisApp.bonus.warnStrategyWeightMismatch">sadsgd gfhfgh</div>
@@ -130,9 +130,20 @@
                     </td>
                 </tr>
                 <tr>
-                    <td><input [(ngModel)]="dynamicExample.studentPointsOfBonusTo" (change)="calculateDynamicExample()" type="number" step="0.5" min="0" /></td>
+                    <td class="ps-0">
+                        <input [(ngModel)]="dynamicExample.studentPointsOfBonusTo" (change)="calculateDynamicExample()" type="number" step="0.5" min="0" class="dynamic-example" />
+                    </td>
                     <td>{{ dynamicExample.examGrade }}</td>
-                    <td><input [(ngModel)]="dynamicExample.studentPointsOfBonusSource" (change)="calculateDynamicExample()" type="number" step="0.5" min="0" /></td>
+                    <td class="ps-0">
+                        <input
+                            [(ngModel)]="dynamicExample.studentPointsOfBonusSource"
+                            (change)="calculateDynamicExample()"
+                            type="number"
+                            step="0.5"
+                            min="0"
+                            class="dynamic-example"
+                        />
+                    </td>
                     <td>{{ dynamicExample.bonusGrade }}</td>
                     <td *ngIf="bonus.bonusStrategy === BonusStrategy.POINTS">
                         <ng-container *ngIf="dynamicExample.finalPoints != undefined">
