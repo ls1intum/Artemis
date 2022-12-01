@@ -7,7 +7,6 @@ import java.util.Optional;
 
 import javax.validation.Valid;
 
-import io.swagger.v3.oas.annotations.Parameter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,6 +35,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.errors.LoginAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import io.swagger.v3.oas.annotations.Parameter;
 import tech.jhipster.web.util.PaginationUtil;
 
 /**
