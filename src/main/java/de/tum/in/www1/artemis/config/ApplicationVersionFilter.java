@@ -17,9 +17,9 @@ import org.springframework.stereotype.Component;
 
 @Profile({ SPRING_PROFILE_PRODUCTION, SPRING_PROFILE_TEST })
 @Component
-public class ApiVersionFilter implements Filter {
+public class ApplicationVersionFilter implements Filter {
 
-    private static final Logger logger = LoggerFactory.getLogger(ApiVersionFilter.class);
+    private static final Logger logger = LoggerFactory.getLogger(ApplicationVersionFilter.class);
 
     public static final String CONTENT_VERSION_HEADER = "Content-Version";
 
