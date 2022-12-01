@@ -1,0 +1,22 @@
+<div *ngIf="feedbackItem" [ngClass]="['feedback-item', 'alert', getClassNameForFeedbackItem(feedbackItem)]">
+    <span>{{ feedbackItem.category }}</span>
+    <span id="feedback-points" class="feedback-points" *ngIf="feedbackItem.credits">
+        {{ roundValueSpecifiedByCourseSettings(feedbackItem.actualCredits ?? feedbackItem.credits, course) }}P
+        <fa-icon
+            *ngIf="feedbackItem.type === FeedbackItemType.Subsequent"
+            [icon]="faExclamationTriangle"
+            [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
+        ></fa-icon>
+        <fa-icon
+            *ngIf="feedbackItem.type === FeedbackItemType.Issue && feedbackItem.actualCredits !== feedbackItem.credits"
+            [icon]="faExclamationTriangle"
+            [ngbTooltip]="'artemisApp.programmingAssessment.codeIssueNotApplied' | artemisTranslate : { points: feedbackItem.credits }"
+        >
+        </fa-icon>
+    </span>
+    <span class="feedback-title" *ngIf="feedbackItem.title">{{ feedbackItem.title }}</span>
+    <jhi-feedback-collapse id="feedback-text" *ngIf="feedbackItem.text" [text]="feedbackItem.text!" [previewText]="feedbackItem.previewText"></jhi-feedback-collapse>
+    <p *ngElse jhiTranslate="artemisApp.result.noFeedback">No feedback available</p>
+</div>
+
+<ng-container *ngIf="feedbackItemGroup"> GROUP </ng-container>

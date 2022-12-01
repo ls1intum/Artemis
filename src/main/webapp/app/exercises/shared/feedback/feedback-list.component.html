@@ -23,24 +23,7 @@
         </div>
     </div>
 
-    <div *ngFor="let feedback of filteredFeedbackList" [ngClass]="['feedback-item', 'alert', getClassNameForFeedbackItem(feedback)]" id="feedback-message">
-        <span>{{ feedback.category }}</span>
-        <span id="feedback-points" class="feedback-points" *ngIf="feedback.credits">
-            {{ roundValueSpecifiedByCourseSettings(feedback.actualCredits ?? feedback.credits, course) }}P
-            <fa-icon
-                *ngIf="feedback.type === FeedbackItemType.Subsequent"
-                [icon]="faExclamationTriangle"
-                [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
-            ></fa-icon>
-            <fa-icon
-                *ngIf="feedback.type === FeedbackItemType.Issue && feedback.actualCredits !== feedback.credits"
-                [icon]="faExclamationTriangle"
-                [ngbTooltip]="'artemisApp.programmingAssessment.codeIssueNotApplied' | artemisTranslate : { points: feedback.credits }"
-            >
-            </fa-icon>
-        </span>
-        <span class="feedback-title" *ngIf="feedback.title">{{ feedback.title }}</span>
-        <jhi-feedback-collapse id="feedback-text" *ngIf="feedback.text" [text]="feedback.text!" [previewText]="feedback.previewText"></jhi-feedback-collapse>
-        <p *ngElse jhiTranslate="artemisApp.result.noFeedback">No feedback available</p>
+    <div *ngFor="let feedbackItem of filteredFeedbackList">
+        <jhi-feedback-item-node [feedbackNode]="feedbackItem" [course]="course"></jhi-feedback-item-node>
     </div>
 </div>

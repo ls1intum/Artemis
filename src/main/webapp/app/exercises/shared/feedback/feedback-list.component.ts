@@ -34,24 +34,4 @@ export class FeedbackListComponent {
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
-
-    /**
-     * Handles the coloring of each feedback items based on its type and credits.
-     * @param feedback The feedback item
-     */
-    getClassNameForFeedbackItem(feedback: FeedbackItem): string {
-        if (feedback.type === FeedbackItemType.Issue) {
-            return 'alert-warning';
-        } else if (feedback.type === FeedbackItemType.Test) {
-            return feedback.positive ? 'alert-success' : 'alert-danger';
-        } else if (feedback.type === FeedbackItemType.Subsequent) {
-            return 'alert-secondary';
-        } else {
-            if (feedback.credits === 0) {
-                return 'alert-warning';
-            } else {
-                return feedback.positive || (feedback.credits && feedback.credits > 0) ? 'alert-success' : 'alert-danger';
-            }
-        }
-    }
 }
