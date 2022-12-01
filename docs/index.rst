@@ -46,6 +46,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    dev/guidelines
    dev/system-design
    dev/migration
+   dev/api-versioning
    dev/use-local-user-management
    Guided Tour <dev/guided-tour>
    dev/testservers
