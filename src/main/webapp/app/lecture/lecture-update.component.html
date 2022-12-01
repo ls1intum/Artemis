@@ -1,7 +1,28 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm">
-            <h2 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel">Create or edit a Lecture</h2>
+        <jhi-lecture-update-wizard
+            *ngIf="isShowingWizardMode"
+            [toggleModeFunction]="toggleModeFunction"
+            [saveLectureFunction]="saveLectureFunction"
+            [validateDatesFunction]="onDatesValuesChanged"
+            [lecture]="lecture"
+            [isSaving]="isSaving"
+            [startDate]="startDate"
+            [endDate]="endDate"
+        ></jhi-lecture-update-wizard>
+        <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm" *ngIf="!isShowingWizardMode">
+            <div class="d-flex">
+                <div class="flex-grow-1">
+                    <h2 id="jhi-lecture-heading" jhiTranslate="artemisApp.lecture.home.createOrEditLabel">Create or edit a Lecture</h2>
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <div class="guided-mode-button">
+                        <button type="button" id="guided.mode" class="btn btn-primary" (click)="toggleWizardMode()">
+                            <fa-icon [icon]="faHandShakeAngle"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lecture.home.switchToGuidedModeLabel">Switch to guided mode</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
             <div>
                 <div class="form-group" [hidden]="!lecture.id">
                     <label for="id" jhiTranslate="global.field.id">ID</label>
@@ -25,6 +46,7 @@
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.lecture.startDate' | artemisTranslate }}"
                             [(ngModel)]="lecture.startDate"
+                            (valueChange)="onDatesValuesChanged()"
                             name="startDate"
                             id="start-date"
                         ></jhi-date-time-picker>
@@ -33,6 +55,7 @@
                         <jhi-date-time-picker
                             labelName="{{ 'artemisApp.lecture.endDate' | artemisTranslate }}"
                             [(ngModel)]="lecture.endDate"
+                            (valueChange)="onDatesValuesChanged()"
                             name="endDate"
                             id="end-date"
                         ></jhi-date-time-picker>

@@ -12,7 +12,7 @@
                 <ol>
                     <li class="d-flex align-items-center">
                         <span>{{
-                            'artemisApp.examStatus.preparation.configureExercises' | artemisTranslate: { amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0 }
+                            'artemisApp.examStatus.preparation.configureExercises' | artemisTranslate : { amount: exam.exerciseGroups ? exam.exerciseGroups.length : 0 }
                         }}</span>
                         <fa-icon *ngIf="configuredExercises" [icon]="faCheckCircle" class="check"></fa-icon>
                         <fa-icon *ngIf="!configuredExercises" [icon]="faTimes" class="cross"></fa-icon>
@@ -23,12 +23,12 @@
                             <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
                         </ng-container>
                         <ng-container *ngIf="maxPointExercises !== exam.maxPoints">
-                            <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsWrong' | artemisTranslate: { points: maxPointExercises } }} </span>
+                            <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsWrong' | artemisTranslate : { points: maxPointExercises } }} </span>
                             <fa-icon [icon]="faTimes" class="cross"></fa-icon>
                         </ng-container>
                     </li>
                     <li class="d-flex align-items-center" *ngIf="!isTestExam">
-                        <span>{{ 'artemisApp.examStatus.preparation.registerStudents' | artemisTranslate: { registered: exam.numberOfRegisteredUsers } }} </span>
+                        <span>{{ 'artemisApp.examStatus.preparation.registerStudents' | artemisTranslate : { registered: exam.numberOfRegisteredUsers } }} </span>
                         <fa-icon *ngIf="registeredStudents" [icon]="faCheckCircle" class="check"></fa-icon>
                         <fa-icon *ngIf="!registeredStudents" [icon]="faTimes" class="cross"></fa-icon>
                     </li>
@@ -83,7 +83,7 @@
             </div>
             <ol *ngIf="course?.isAtLeastInstructor && examChecklist && examConductionState !== examConductionStateEnum.ERROR">
                 <li>
-                    <span> {{ 'artemisApp.examStatus.conduction.workingTime' | artemisTranslate }}: {{ exam.workingTime! | artemisDurationFromSeconds: true }} </span>
+                    <span> {{ 'artemisApp.examStatus.conduction.workingTime' | artemisTranslate }}: {{ exam.workingTime! | artemisDurationFromSeconds : true }} </span>
                 </li>
                 <li *ngIf="isTestExam">
                     <span> {{ 'artemisApp.examStatus.conduction.testExam.numberOfStudents' | artemisTranslate }}: {{ exam.numberOfRegisteredUsers }} </span>
@@ -126,7 +126,7 @@
                 <div *ngIf="examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && numberOfSubmitted !== 0">
                     <li *ngFor="let finishedByCorrectionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound; let i = index">
                         <span>
-                            {{ 'artemisApp.examStatus.correction.correctionRoundProgress' | artemisTranslate: { index: i + 1 } }}
+                            {{ 'artemisApp.examStatus.correction.correctionRoundProgress' | artemisTranslate : { index: i + 1 } }}
                             :
                             {{
                                 Math.min(

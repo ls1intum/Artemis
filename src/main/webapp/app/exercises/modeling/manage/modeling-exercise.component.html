@@ -12,6 +12,7 @@
             *ngIf="course && course.isAtLeastEditor"
             class="btn btn-primary jh-create-entity create-modeling-exercise text-truncate mb-1 me-1"
             [routerLink]="['/course-management', course.id, 'modeling-exercises', 'new']"
+            queryParamsHandling="merge"
         >
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.modelingExercise.home.createLabel">Create new Modeling Exercise</span>

@@ -7,7 +7,6 @@ import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -81,7 +80,6 @@ public class LectureUnitService {
      *
      * @param lectureUnit lecture unit to delete
      */
-    @Transactional // ok because of delete
     public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithLearningGoalsElseThrow(lectureUnit.getId());
 
