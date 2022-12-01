@@ -135,6 +135,15 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         // @formatter:on
     }
 
+    /**
+     * Only allow the configured IP addresses to access the prometheus endpoint
+     *
+     * @return an access check like "hasIpAddress('127.0.0.1') or hasIpAddress('::1') that can be used as argument for {@link org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer.AuthorizedUrl#access(String)}}
+     */
+    private String getMonitoringAccessDefinition() {
+        return monitoringIpAddresses.stream().map(ip -> String.format("hasIpAddress(\"%s\")", ip)).collect(Collectors.joining(" or "));
+    }
+
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         // @formatter:off
@@ -177,12 +186,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/websocket/**").permitAll()
             .antMatchers("/management/health").permitAll()
             .antMatchers("/management/info").permitAll()
-            // Only allow the configured IP addresses to access the prometheus endpoint
-            // This adds an access check like .access("hasIpAddress('127.0.0.1') or hasIpAddress('::1')")
-            .antMatchers("/management/prometheus/**").access(monitoringIpAddresses
-                .stream()
-                .map(ip -> String.format("hasIpAddress(\"%s\")", ip))
-                .collect(Collectors.joining(" or ")))
+            .antMatchers("/management/prometheus/**").access(getMonitoringAccessDefinition())
             .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/time").permitAll()
         .and()
