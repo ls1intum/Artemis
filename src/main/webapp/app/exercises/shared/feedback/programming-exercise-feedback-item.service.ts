@@ -5,6 +5,7 @@ import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/resu
 import { computeFeedbackPreviewText } from 'app/exercises/shared/feedback/feedback.util';
 import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
+import { FeedbackItemGroup, getAllFeedbackItemGroups } from 'app/exercises/shared/feedback/programming-feedback-item-groups';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseFeedbackItemService implements FeedbackItemService {
@@ -18,6 +19,12 @@ export class ProgrammingExerciseFeedbackItemService implements FeedbackItemServi
 
     createFeedbackItems(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
         return feedbacks.map((feedback) => this.createFeedbackItem(feedback, showTestDetails));
+    }
+
+    groupFeedbackItems(feedbackItems: FeedbackItem[]): FeedbackItemGroup[] {
+        return getAllFeedbackItemGroups()
+            .map((group) => group.addAll(feedbackItems.filter(group.shouldContain)))
+            .filter((group) => group.isEmpty());
     }
 
     filterFeedbackItems(feedbackItems: FeedbackItem[], showTestDetails: boolean): FeedbackItem[] {

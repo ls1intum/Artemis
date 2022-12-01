@@ -52,6 +52,7 @@ export class FeedbackItem {
     selector: 'jhi-result-detail',
     templateUrl: './result-detail.component.html',
     styleUrls: ['./result-detail.scss'],
+    providers: [ProgrammingExerciseFeedbackItemService, FeedbackItemServiceImpl],
 })
 export class ResultDetailComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
