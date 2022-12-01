@@ -11,7 +11,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import de.tum.in.www1.artemis.config.ApiVersionFilter;
+import de.tum.in.www1.artemis.config.ApplicationVersionFilter;
 
 class ContentVersionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -27,7 +27,7 @@ class ContentVersionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void testContentVersionHeaderIsSetCorrectly() throws Exception {
         MvcResult res = request.getMvc().perform(MockMvcRequestBuilders.get(new URI("/api/account"))).andReturn();
         final MockHttpServletResponse response = res.getResponse();
-        final String contentVersionHeader = response.getHeader(ApiVersionFilter.CONTENT_VERSION_HEADER);
+        final String contentVersionHeader = response.getHeader(ApplicationVersionFilter.CONTENT_VERSION_HEADER);
         assertThat(contentVersionHeader).isEqualTo("1.3.3-beta7");
     }
 
