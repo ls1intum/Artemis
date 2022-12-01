@@ -111,31 +111,28 @@ public class SecurityConfiguration {
     protected SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
         // @formatter:off
         http
-            .csrf()
-            .disable()
+            .csrf().disable()
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling().authenticationEntryPoint(problemSupport)
                 .accessDeniedHandler(problemSupport)
-        .and()
+            .and()
             .headers()
-            .contentSecurityPolicy("script-src 'self' 'unsafe-inline' 'unsafe-eval'")
-            // TODO: investigate exactly whether the following works in our setup or not
-            // .contentSecurityPolicy("default-src 'self'; connect-src: 'self' 'https://sentry.io' 'ws:' 'wss:'; frame-src * data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src * data:; font-src 'self' data:")
-        .and()
-            .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
-        .and()
-            .permissionsPolicy().policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")
-        .and()
-            .frameOptions()
-            .deny()
-        .and()
+                .contentSecurityPolicy("script-src 'self' 'unsafe-inline' 'unsafe-eval'")
+                // TODO: investigate exactly whether the following works in our setup or not
+                // .contentSecurityPolicy("default-src 'self'; connect-src: 'self' 'https://sentry.io' 'ws:' 'wss:'; frame-src * data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src * data:; font-src 'self' data:")
+                .and()
+                .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
+                .and()
+                .permissionsPolicy().policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")
+                .and()
+                .frameOptions().deny()
+            .and()
             .headers()
-            .httpStrictTransportSecurity()
-            .disable() // this is already configured using nginx
-        .and()
+                .httpStrictTransportSecurity().disable() // this is already configured using nginx
+            .and()
             .sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        .and()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
             .authorizeHttpRequests(auth -> auth
                 // options
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -171,7 +168,7 @@ public class SecurityConfiguration {
                 .antMatchers("/api-docs/**").permitAll()
                 .antMatchers(CustomLti13Configurer.JWKS_PATH).permitAll()
             )
-        .apply(securityConfigurerAdapter());
+            .apply(securityConfigurerAdapter());
         // @formatter:on
 
         http.apply(new CustomLti13Configurer());

@@ -152,9 +152,8 @@ public class SAML2Configuration {
                 .antMatchers("/saml2/**")
                 .antMatchers("/login/**")
             .and()
-            .csrf()
-                // Needed for SAML to work properly
-                .disable()
+            // Needed for SAML to work properly
+            .csrf().disable()
             .authorizeHttpRequests(auth -> auth
                 // The request to the api is permitted and checked directly
                 // This allows returning a 401 if the user is not logged in via SAML2
