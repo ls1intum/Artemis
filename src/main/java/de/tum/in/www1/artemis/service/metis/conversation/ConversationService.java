@@ -99,7 +99,7 @@ public class ConversationService {
     public List<ConversationDTO> getConversationsOfUser(Long courseId, User requestingUser) {
         var oneToOneChatsOfUser = oneToOneChatRepository.findActiveOneToOneChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
         var channelsOfUser = channelRepository.findChannelsOfUser(courseId, requestingUser.getId());
-        var groupChatsOfUser = groupChatRepository.findActiveGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
+        var groupChatsOfUser = groupChatRepository.findGroupChatsOfUserWithParticipantsAndUserGroups(courseId, requestingUser.getId());
 
         var conversations = new ArrayList<Conversation>();
         conversations.addAll(oneToOneChatsOfUser);

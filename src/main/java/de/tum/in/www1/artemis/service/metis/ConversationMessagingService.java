@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
-import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -83,14 +82,16 @@ public class ConversationMessagingService extends PostingService {
         conversation = conversationService.updateConversation(conversation);
         broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
 
-        if (conversation instanceof OneToOneChat || conversation instanceof GroupChat) {
+        if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
-            if (getNumberOfPosts == 1) { // first message in one to one message chat or group chat --> notify all participants that a conversation with them has been created
+            if (getNumberOfPosts == 1) { // first message in one to one chat --> notify all participants that a conversation with them has been created
                 var participants = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream()
                         .map(ConversationParticipant::getUser).filter(Objects::nonNull).collect(Collectors.toSet());
                 conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, participants);
             }
         }
+        // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
+
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
         conversationService.notifyConversationMembersAboutUpdate(conversation);
         return savedMessage;

@@ -1,8 +1,6 @@
 package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
-import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
-import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 class GroupChatIntegrationTest extends AbstractConversationTest {
@@ -22,12 +18,13 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     @WithMockUser(username = "student1", roles = "USER")
     void startGroupChat_asStudent1WithStudent2AndStudent3_shouldCreateGroupChat() throws Exception {
         // when
-        GroupChatDTO chat = createGroupChatWithStudent1To3();
+        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", List.of("student2", "student3"), GroupChatDTO.class, HttpStatus.CREATED);
         // then
         assertThat(chat).isNotNull();
         assertParticipants(chat.getId(), 3, "student1", "student2", "student3");
-        // members of the created group chat are only notified in case the first message within the conversation is created
-        verify(this.messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(ConversationWebsocketDTO.class));
+        // all conversation participants should be notified that the conversation has been "created"
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), "student2", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE);
     }
 
     @Test
@@ -43,7 +40,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         // chat with too few users
         // then
         request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", List.of(), GroupChatDTO.class, HttpStatus.BAD_REQUEST);
-
+        verifyNoParticipantTopicWebsocketSent();
     }
 
     @Test
@@ -51,33 +48,20 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     void startGroupChat_notAllowedAsNotStudentInCourse_shouldReturnBadRequest() throws Exception {
         // then
         request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", List.of("student2", "student3"), GroupChatDTO.class, HttpStatus.FORBIDDEN);
+        verifyNoParticipantTopicWebsocketSent();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void postInGroupChat_firstPost_chatPartnerShouldBeNotifiedAboutNewConversation() throws Exception {
+    void postInGroupChat_firstPost_noWebsocketDTOSent() throws Exception {
         // given
-        var student1 = database.getUserByLogin("student1");
-        var student2 = database.getUserByLogin("student2");
-        var student3 = database.getUserByLogin("student3");
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
         this.postInConversation(chat.getId(), "student1");
         // then
-        // all conversation participants should be notified that the conversation has been "created" by the first message being posted
-        var topic1 = ConversationService.getConversationParticipantTopicName(exampleCourseId) + student1.getId();
-        var topic2 = ConversationService.getConversationParticipantTopicName(exampleCourseId) + student2.getId();
-        var topic3 = ConversationService.getConversationParticipantTopicName(exampleCourseId) + student3.getId();
-        verify(messagingTemplate).convertAndSendToUser(eq("student1"), eq(topic1),
-                argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).getCrudAction().equals(MetisCrudAction.CREATE)
-                        && ((ConversationWebsocketDTO) argument).getConversation().getId().equals(chat.getId())));
-        verify(messagingTemplate).convertAndSendToUser(eq("student2"), eq(topic2),
-                argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).getCrudAction().equals(MetisCrudAction.CREATE)
-                        && ((ConversationWebsocketDTO) argument).getConversation().getId().equals(chat.getId())));
-        verify(messagingTemplate).convertAndSendToUser(eq("student3"), eq(topic3),
-                argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).getCrudAction().equals(MetisCrudAction.CREATE)
-                        && ((ConversationWebsocketDTO) argument).getConversation().getId().equals(chat.getId())));
-
+        // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, chat.getId(), "student1", "student2", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
     }
 
     @Test
@@ -92,8 +76,8 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         var updatedGroupChat = groupChatRepository.findById(chat.getId()).get();
         assertParticipants(updatedGroupChat.getId(), 3, "student1", "student2", "student3");
         assertThat(updatedGroupChat.getName()).isEqualTo("updated");
-
-        // ToDO: add verify of websocket
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, chat.getId(), "student1", "student2", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
 
     }
 
@@ -110,9 +94,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         var groupChat = groupChatRepository.findById(chat.getId()).get();
         assertParticipants(groupChat.getId(), 3, "student1", "student2", "student3");
         assertThat(groupChat.getName()).isNotEqualTo("updated");
-
-        // ToDO: add verify of websocket
-
+        verifyNoParticipantTopicWebsocketSent();
     }
 
     @Test
@@ -126,9 +108,9 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
                 HttpStatus.OK);
         // then
         assertParticipants(chat.getId(), 5, "student1", "student2", "student3", "student4", "student5");
-
-        // ToDO: add verify of websocket
-
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), "student4", "student5");
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, chat.getId(), "student1", "student2", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE, MetisCrudAction.UPDATE);
     }
 
     @Test
@@ -143,9 +125,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
 
         // then
         assertParticipants(chat.getId(), 3, "student1", "student2", "student3");
-
-        // ToDO: add verify of websocket
-
+        verifyNoParticipantTopicWebsocketSent();
     }
 
     @Test
@@ -160,6 +140,7 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         }
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/register", loginList, HttpStatus.BAD_REQUEST);
         assertParticipants(chat.getId(), 3, "student1", "student2", "student3");
+        verifyNoParticipantTopicWebsocketSent();
     }
 
     @Test
@@ -171,22 +152,23 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/deregister", List.of("student2"), HttpStatus.OK);
         // then
         assertParticipants(chat.getId(), 2, "student1", "student3");
-
-        // ToDO: add verify of websocket
-
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, chat.getId(), "student2");
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, chat.getId(), "student1", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.DELETE, MetisCrudAction.UPDATE);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void deregisterUsersFromGroupChat_selfDeregistration_shouldRequestingMember() throws Exception {
+    void deregisterUsersFromGroupChat_selfDeregistration_shouldRemoveRequestingMember() throws Exception {
         // given
         GroupChatDTO chat = createGroupChatWithStudent1To3();
         // when
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/deregister", List.of("student1"), HttpStatus.OK);
         // then
         assertParticipants(chat.getId(), 2, "student2", "student3");
-
-        // ToDO: add verify of websocket
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, chat.getId(), "student1");
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, chat.getId(), "student2", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.DELETE, MetisCrudAction.UPDATE);
 
     }
 
@@ -200,14 +182,12 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/group-chats/" + chat.getId() + "/deregister", List.of("student2"), HttpStatus.FORBIDDEN);
         // then
         assertParticipants(chat.getId(), 3, "student1", "student2", "student3");
-
-        // ToDO: add verify of websocket
+        verifyNoParticipantTopicWebsocketSent();
     }
 
     private GroupChatDTO createGroupChatWithStudent1To3() throws Exception {
-        return request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", List.of("student2", "student3"), GroupChatDTO.class, HttpStatus.CREATED);
+        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", List.of("student2", "student3"), GroupChatDTO.class, HttpStatus.CREATED);
+        this.resetWebsocketMock();
+        return chat;
     }
-
-    // ToDo: ich glaube beim group chat es waere es besser wie beim channel das nutzer gleich benachrichtigt werden wenn sie teilnehmen!! --> AENDERN
-
 }

@@ -23,11 +23,10 @@ public interface GroupChatRepository extends JpaRepository<GroupChat, Long> {
                  LEFT JOIN groupChat.conversationParticipants conversationParticipant
                  LEFT JOIN FETCH groupChat.conversationParticipants
                  WHERE groupChat.course.id = :#{#courseId}
-                 AND (groupChat.lastMessageDate IS NOT NULL OR groupChat.creator.id = :#{#userId})
                  AND conversationParticipant.user.id = :#{#userId}
                  ORDER BY groupChat.lastMessageDate DESC
             """)
-    List<GroupChat> findActiveGroupChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
+    List<GroupChat> findGroupChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
 

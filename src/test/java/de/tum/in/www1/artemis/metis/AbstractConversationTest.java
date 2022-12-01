@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
+import java.util.Arrays;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -24,8 +27,11 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 /**
  * Contains useful methods for testing the channel feature
@@ -113,6 +119,32 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
         assertThat(participants).extracting(ConversationParticipant::getUser).extracting(User::getLogin).containsExactlyInAnyOrder(expectedUserLogins);
     }
 
-    // ToDo: Add helper methods to assert the websocket crud methods
+    void verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction crudAction, Long conversationId, String... expectedUserLogins) {
+        for (String expectedUserLogin : expectedUserLogins) {
+            verifyParticipantTopicWebsocketSent(crudAction, conversationId, expectedUserLogin);
+        }
+    }
+
+    void verifyParticipantTopicWebsocketSent(MetisCrudAction crudAction, Long conversationId, String receivingUserLogin) {
+        var receivingUser = database.getUserByLogin(receivingUserLogin);
+        var topic = ConversationService.getConversationParticipantTopicName(exampleCourseId) + receivingUser.getId();
+        verify(messagingTemplate, times(1)).convertAndSendToUser(eq(receivingUserLogin), eq(topic),
+                argThat((argument) -> argument instanceof ConversationWebsocketDTO && ((ConversationWebsocketDTO) argument).getCrudAction().equals(crudAction)
+                        && ((ConversationWebsocketDTO) argument).getConversation().getId().equals(conversationId)));
+
+    }
+
+    void verifyNoParticipantTopicWebsocketSent() {
+        verify(this.messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(ConversationWebsocketDTO.class));
+    }
+
+    void verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction... actions) {
+        verify(this.messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(),
+                argThat((argument) -> argument instanceof ConversationWebsocketDTO && !Arrays.asList(actions).contains(((ConversationWebsocketDTO) argument).getCrudAction())));
+    }
+
+    void resetWebsocketMock() {
+        reset(this.messagingTemplate);
+    }
 
 }

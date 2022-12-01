@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.GroupChatService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.GroupChatAuthorizationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -78,6 +79,9 @@ public class GroupChatResource {
         }
 
         var groupChat = groupChatService.startGroupChat(course, chatMembers);
+
+        conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, groupChat, chatMembers);
+
         return ResponseEntity.created(new URI("/api/group-chats/" + groupChat.getId())).body(conversationDTOService.convertGroupChatToDto(requestingUser, groupChat));
     }
 
