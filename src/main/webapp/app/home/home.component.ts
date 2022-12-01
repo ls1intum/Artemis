@@ -214,16 +214,14 @@ export class HomeComponent implements OnInit, AfterViewChecked {
     currentUserCallback(account: User) {
         this.account = account;
         if (account) {
-            // previousState was set in the authExpiredInterceptor before being redirected to login modal.
+            // previousState was set in the authExpiredInterceptor before being redirected to the login modal.
             // since login is successful, go to stored previousState and clear previousState
             const redirect = this.stateStorageService.getUrl();
             if (redirect && redirect !== '') {
                 this.stateStorageService.storeUrl('');
                 this.router.navigateByUrl(redirect);
             } else {
-                // TODO: Remove redirect after summer 2021 term. New deep links should no longer use /#.
-                const url = this.router.url.startsWith('/#') ? this.router.url.slice(2) : 'courses';
-                this.router.navigate([url]);
+                this.router.navigate(['courses']);
             }
         }
     }

@@ -10,6 +10,18 @@
                 label="artemisApp.exercise.releaseDate"
                 tooltipText="artemisApp.programmingExercise.timeline.releaseDateTooltip"
             ></jhi-programming-exercise-test-schedule-date-picker>
+            <jhi-programming-exercise-test-schedule-date-picker
+                *ngIf="!isExamMode"
+                [(ngModel)]="exercise.startDate"
+                (ngModelChange)="updateStartDate($event)"
+                (onDateReset)="exercise.startDate = undefined"
+                [startAt]="exercise.releaseDate"
+                [min]="exercise.releaseDate"
+                [readOnly]="readOnly"
+                class="test-schedule-date px-1"
+                label="artemisApp.exercise.startDate"
+                tooltipText="artemisApp.programmingExercise.timeline.startDateTooltip"
+            ></jhi-programming-exercise-test-schedule-date-picker>
             <div class="test-schedule-date px-1">
                 <div class="mb-2 text-nowrap">
                     <span class="fw-bold" jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
@@ -25,8 +37,8 @@
                 [(ngModel)]="exercise.dueDate"
                 (ngModelChange)="updateExampleSolutionPublicationDate($event)"
                 (onDateReset)="exercise.buildAndTestStudentSubmissionsAfterDueDate = undefined"
-                [startAt]="exercise.releaseDate"
-                [min]="exercise.releaseDate"
+                [startAt]="exercise.startDate ?? exercise.releaseDate"
+                [min]="exercise.startDate ?? exercise.releaseDate"
                 [readOnly]="readOnly"
                 class="test-schedule-date px-1"
                 label="artemisApp.exercise.dueDate"
@@ -138,8 +150,8 @@
                 *ngIf="!isExamMode"
                 [(ngModel)]="exercise.exampleSolutionPublicationDate"
                 [readOnly]="readOnly"
-                [startAt]="exercise.dueDate || exercise.releaseDate"
-                [min]="(exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED ? exercise.dueDate : undefined) || exercise.releaseDate"
+                [startAt]="exercise.dueDate ?? exercise.startDate ?? exercise.releaseDate"
+                [min]="(exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED ? exercise.dueDate : undefined) ?? exercise.startDate ?? exercise.releaseDate"
                 class="test-schedule-date px-1"
                 label="artemisApp.exercise.exampleSolutionPublicationDate"
                 tooltipText="artemisApp.programmingExercise.timeline.exampleSolutionPublicationDateTooltip"

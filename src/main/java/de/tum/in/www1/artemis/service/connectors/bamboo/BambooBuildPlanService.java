@@ -202,9 +202,9 @@ public class BambooBuildPlanService {
 
                 // This conversion is required because the attributes are passed as varargs-parameter which is only possible
                 // for array collections
-                var defaultTasksArray = defaultTasks.toArray(new Task<?, ?>[defaultTasks.size()]);
-                var finalTasksArray = finalTasks.toArray(new Task<?, ?>[finalTasks.size()]);
-                var artifactsArray = artifacts.toArray(new Artifact[artifacts.size()]);
+                var defaultTasksArray = defaultTasks.toArray(new Task<?, ?>[0]);
+                var finalTasksArray = finalTasks.toArray(new Task<?, ?>[0]);
+                var artifactsArray = artifacts.toArray(new Artifact[0]);
 
                 // assign tasks and artifacts to job
                 defaultJob.tasks(defaultTasksArray);

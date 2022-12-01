@@ -21,7 +21,7 @@
             <div class="tour-block__header">
                 <h3 class="headline" *ngIf="currentTourStep.headlineTranslateKey">
                     <span *ngIf="!guidedTourService.isOnResizeMessage && guidedTourService.currentTour && guidedTourService.currentTour.steps.length > 1"
-                        >{{ 'tour.step' | artemisTranslate: { string: guidedTourService.getCurrentStepString() } }} </span
+                        >{{ 'tour.step' | artemisTranslate : { string: guidedTourService.getCurrentStepString() } }} </span
                     >{{ currentTourStep.headlineTranslateKey | artemisTranslate }}
                 </h3>
                 <div
