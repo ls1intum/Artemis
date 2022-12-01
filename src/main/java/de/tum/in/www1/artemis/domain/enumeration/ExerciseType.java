@@ -1,5 +1,14 @@
 package de.tum.in.www1.artemis.domain.enumeration;
 
+import javax.persistence.DiscriminatorValue;
+
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.FileUploadExercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+
 public enum ExerciseType {
 
     TEXT, PROGRAMMING, MODELING, FILE_UPLOAD, QUIZ;
@@ -10,5 +19,20 @@ public enum ExerciseType {
      */
     public String getExerciseTypeAsReadableString() {
         return this.toString().toLowerCase().replace('_', ' ');
+    }
+
+    public String getDiscriminator() {
+        final DiscriminatorValue value = getExerciseClass().getAnnotation(DiscriminatorValue.class);
+        return value.value();
+    }
+
+    private Class<? extends Exercise> getExerciseClass() {
+        return switch (this) {
+            case TEXT -> TextExercise.class;
+            case PROGRAMMING -> ProgrammingExercise.class;
+            case MODELING -> ModelingExercise.class;
+            case FILE_UPLOAD -> FileUploadExercise.class;
+            case QUIZ -> QuizExercise.class;
+        };
     }
 }

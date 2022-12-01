@@ -41,6 +41,7 @@ public class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJir
         var course = database.createCourse();
         exerciseRepository.save(database.createQuiz(course, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusMinutes(55), QuizMode.SYNCHRONIZED));
         exerciseRepository.save(database.createQuiz(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(3), QuizMode.SYNCHRONIZED));
+        exerciseRepository.save(database.createIndividualTextExercise(course, ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(25), null));
 
         // Only one of the two quizzes ends in the next 15 minutes
         var gauge = meterRegistry.get("artemis.scheduled.exercises.due.count").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "15").gauge();
@@ -59,6 +60,10 @@ public class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJir
         assertEquals(2, gauge.value());
         gauge = meterRegistry.get("artemis.scheduled.exercises.due.student_multiplier").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "120").gauge();
         assertEquals(3 * 2, gauge.value());
+
+        // One text exercise is released within the next 30 minutes
+        gauge = meterRegistry.get("artemis.scheduled.exercises.release.count").tag("exerciseType", ExerciseType.TEXT.toString()).tag("range", "30").gauge();
+        assertEquals(1, gauge.value());
     }
 
     @Test

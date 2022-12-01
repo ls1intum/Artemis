@@ -70,22 +70,50 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate(@Param("now") ZonedDateTime now);
 
     @Query("""
-            SELECT e FROM Exercise e
+            SELECT COUNT(e.id)
+            FROM Exercise e
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :#{#now}
             	AND e.dueDate <= :#{#maxDate}
-            ORDER BY e.dueDate ASC
+                AND e.class = :#{#exerciseType}
             """)
-    Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate);
+    Integer countExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
+            @Param("exerciseType") String exerciseTypeDiscriminator);
 
     @Query("""
-            SELECT e FROM Exercise e
+            SELECT COUNT(user.id)
+            FROM Exercise e
+            JOIN User user ON e.course.studentGroupName member of user.groups
+            WHERE e.course.testCourse = FALSE
+            	AND e.dueDate >= :#{#now}
+            	AND e.dueDate <= :#{#maxDate}
+                AND e.class = :#{#exerciseType}
+            """)
+    Integer countStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
+            @Param("exerciseType") String exerciseTypeDiscriminator);
+
+    @Query("""
+            SELECT COUNT(e.id)
+            FROM Exercise e
             WHERE e.course.testCourse = FALSE
             	AND e.releaseDate >= :#{#now}
             	AND e.releaseDate <= :#{#maxDate}
-            ORDER BY e.dueDate ASC
+                AND e.class = :#{#exerciseType}
             """)
-    Set<Exercise> findAllExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate);
+    Integer countExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
+            @Param("exerciseType") String exerciseTypeDiscriminator);
+
+    @Query("""
+            SELECT COUNT(user.id)
+            FROM Exercise e
+            JOIN User user ON e.course.studentGroupName member of user.groups
+            WHERE e.course.testCourse = FALSE
+            	AND e.releaseDate >= :#{#now}
+            	AND e.releaseDate <= :#{#maxDate}
+                AND e.class = :#{#exerciseType}
+            """)
+    Integer countStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(@Param("now") ZonedDateTime now, @Param("maxDate") ZonedDateTime maxDate,
+            @Param("exerciseType") String exerciseTypeDiscriminator);
 
     @Query("""
             SELECT e FROM Exercise e

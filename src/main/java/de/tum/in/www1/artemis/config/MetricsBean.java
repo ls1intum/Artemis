@@ -175,30 +175,28 @@ public class MetricsBean {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate).stream().filter(e -> e.getExerciseType() == exerciseType).count();
+        return exerciseRepository.countExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator());
     }
 
     private double getUpcomingDueExercisesCountWithStudentMultiplier(int minutes, ExerciseType exerciseType) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.findAllExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate).stream().filter(e -> e.getExerciseType() == exerciseType)
-                .map(e -> userRepository.countUserInGroup(e.getCourseViaExerciseGroupOrCourseMember().getStudentGroupName())).reduce(0L, Long::sum);
+        return exerciseRepository.countStudentsInExercisesWithCurrentOrUpcomingDueDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator());
     }
 
     private double getUpcomingReleasedExercisesCount(int minutes, ExerciseType exerciseType) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.findAllExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate).stream().filter(e -> e.getExerciseType() == exerciseType).count();
+        return exerciseRepository.countExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator());
     }
 
     private double getUpcomingReleasedExercisesCountWithStudentMultiplier(int minutes, ExerciseType exerciseType) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return exerciseRepository.findAllExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate).stream().filter(e -> e.getExerciseType() == exerciseType)
-                .map(e -> userRepository.countUserInGroup(e.getCourseViaExerciseGroupOrCourseMember().getStudentGroupName())).reduce(0L, Long::sum);
+        return exerciseRepository.countStudentsInExercisesWithCurrentOrUpcomingReleaseDateWithinTimeRange(now, endDate, exerciseType.getDiscriminator());
     }
 
     private double getUpcomingEndingExamCount(int minutes) {
