@@ -10,7 +10,6 @@ export class CypressUserManagement {
     public getAdmin(): CypressCredentials {
         const adminUsername = Cypress.env('adminUsername') ?? 'admin';
         const adminPassword = Cypress.env('adminPassword') ?? 'admin';
-        console.log(Cypress.env('adminUsername'));
         return { username: adminUsername, password: adminPassword };
     }
 
