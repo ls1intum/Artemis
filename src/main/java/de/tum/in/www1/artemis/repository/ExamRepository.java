@@ -59,7 +59,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Integer countExamsWithEndDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @Query("""
-            SELECT COUNT(exam)
+            SELECT COUNT(registeredUsers)
             FROM Exam exam
             JOIN exam.registeredUsers registeredUsers
             WHERE exam.course.testCourse = false
@@ -78,7 +78,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Integer countExamsWithStartDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @Query("""
-            SELECT COUNT(exam)
+            SELECT COUNT(registeredUsers)
             FROM Exam exam
             JOIN exam.registeredUsers registeredUsers
             WHERE exam.course.testCourse = false
