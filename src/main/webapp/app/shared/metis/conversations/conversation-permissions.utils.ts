@@ -9,16 +9,7 @@ export function canAddUsersToConversation(conversation: ConversationDto): boolea
         return false;
     }
     const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
-    const channelCheck = (channel: ChannelDTO): boolean => {
-        if (channel.hasChannelAdminRights) {
-            return true;
-        }
-        if (channel.isPublic) {
-            return !!channel.isMember;
-        } else {
-            return !!channel.isAdmin || !!channel.hasChannelAdminRights;
-        }
-    };
+    const channelCheck = (channel: ChannelDTO): boolean => hasChannelAdminRightsCheck(channel);
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);
@@ -83,14 +74,10 @@ export function canJoinChannel(channel: ChannelDTO): boolean {
     if (channel.isMember) {
         return false;
     }
-
-    // with admin rights you can always join a channel private or public
-    if (channel.hasChannelAdminRights) {
+    if (hasChannelAdminRightsCheck(channel)) {
         return true;
-    } else {
-        // without admin rights you can only join a channel if it is public
-        return !!channel.isPublic;
     }
+    return !!channel.isPublic;
 }
 
 export function canChangeChannelArchivalState(channel: ChannelDTO): boolean {

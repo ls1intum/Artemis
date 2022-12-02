@@ -280,6 +280,29 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void grantRevokeChannelAdminRights_asUserWithoutChannelAdminRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
+        // given
+        var channel = createChannel(isPublicChannel);
+
+        // then
+        database.changeUser("student1");
+        expectGrantRevokeChannelAdminRightsForbidden(channel, true);
+        expectGrantRevokeChannelAdminRightsForbidden(channel, false);
+        database.changeUser("tutor1");
+        expectGrantRevokeChannelAdminRightsForbidden(channel, true);
+        expectGrantRevokeChannelAdminRightsForbidden(channel, false);
+        database.changeUser("editor1");
+        expectGrantRevokeChannelAdminRightsForbidden(channel, true);
+        expectGrantRevokeChannelAdminRightsForbidden(channel, false);
+        database.changeUser("instructor42");
+        expectGrantRevokeChannelAdminRightsForbidden(channel, true);
+        expectGrantRevokeChannelAdminRightsForbidden(channel, false);
+        verifyNoParticipantTopicWebsocketSent();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void registerUsersToChannel_asUserWithChannelAdminRights_shouldRegisterUsersToChannel(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
@@ -316,6 +339,29 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         allUserLogins.addAll(allInstructorLogins);
         String[] allUserLoginsArray = allUserLogins.toArray(new String[0]);
         assertUsersAreConversationMembers(channel.getId(), allUserLoginsArray);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void registerUsersToChannel_asUserWithoutChannelAdminRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
+        // given
+        var channel = createChannel(isPublicChannel);
+
+        // then
+        database.changeUser("student1");
+        expectRegisterDeregisterForbidden(channel, true);
+        expectRegisterDeregisterForbidden(channel, false);
+        database.changeUser("tutor1");
+        expectRegisterDeregisterForbidden(channel, true);
+        expectRegisterDeregisterForbidden(channel, false);
+        database.changeUser("editor1");
+        expectRegisterDeregisterForbidden(channel, true);
+        expectRegisterDeregisterForbidden(channel, false);
+        database.changeUser("instructor42");
+        expectRegisterDeregisterForbidden(channel, true);
+        expectRegisterDeregisterForbidden(channel, false);
+        verifyNoParticipantTopicWebsocketSent();
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {
@@ -418,6 +464,18 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         participant.setUser(newParticipant);
         participant.setConversation(this.channelRepository.findById(channel.getId()).get());
         conversationParticipantRepository.save(participant);
+    }
+
+    private void expectGrantRevokeChannelAdminRightsForbidden(ChannelDTO channel, boolean shouldGrant) throws Exception {
+        // prepare channel in db
+        var postfix = shouldGrant ? "/grant-channel-admin" : "/revoke-channel-admin";
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of("student1", "student2"), HttpStatus.FORBIDDEN);
+    }
+
+    private void expectRegisterDeregisterForbidden(ChannelDTO channel, boolean shouldRegister) throws Exception {
+        // prepare channel in db
+        var postfix = shouldRegister ? "/register" : "/deregister";
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of("student1", "student2"), HttpStatus.FORBIDDEN);
     }
 
     private void expectCreateBadRequest(ChannelDTO channelDTO) throws Exception {

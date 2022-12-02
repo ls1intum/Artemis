@@ -39,8 +39,8 @@ describe('ConversationPermissionUtils', () => {
                 expect(canAddUsersToConversation(channelWhereUsersCanBeAdded)).toBeTrue();
             });
 
-            it('should return true if the user is not a channel admin and channel is public', () => {
-                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, hasChannelAdminRights: false } as ChannelDTO)).toBeTrue();
+            it('should return false if the user is not a channel admin and channel is public', () => {
+                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, hasChannelAdminRights: false, isAdmin: false } as ChannelDTO)).toBeFalse();
             });
 
             it('should return false if the user is not a channel admin and channel is private', () => {

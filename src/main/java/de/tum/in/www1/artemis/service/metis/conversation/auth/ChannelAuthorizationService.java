@@ -109,21 +109,16 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      */
     public void isAllowedToRegisterUsersToChannel(@NotNull Channel channel, List<String> userLogins, @Nullable User user) {
         user = getUserIfNecessary(user);
-        // users with channel admin rights can always register users to a channel
-        if (hasChannelAdminRights(channel.getId(), user)) {
-            return;
-        }
-        if (Boolean.TRUE.equals(channel.getIsPublic())) {
-            var isSelfRegistration = userLogins.size() == 1 && userLogins.get(0).equals(user.getLogin());
-            var isMember = isMember(channel.getId(), user.getId());
-            // users can register themselves to a public channel, and if they are already a member, they can register other users to the channel
-            if (!(isSelfRegistration || isMember)) {
-                throw new AccessForbiddenException("You are not allowed to register users to this channel");
+        var isJoinRequest = userLogins.size() == 1 && userLogins.get(0).equals(user.getLogin());
+        var hasChannelAdminRights = hasChannelAdminRights(channel.getId(), user);
+        var isPrivateChannel = !channel.getIsPublic();
+        if (isJoinRequest) {
+            if (isPrivateChannel && !hasChannelAdminRights) {
+                throw new AccessForbiddenException("You are not allowed to join this channel");
             }
         }
-        else { // private channel
-               // only channel admins can register users to a private channel and self registration is not allowed
-            if (!isChannelAdmin(channel.getId(), user.getId())) {
+        else {
+            if (!hasChannelAdminRights) {
                 throw new AccessForbiddenException("You are not allowed to register users to this channel");
             }
         }

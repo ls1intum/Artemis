@@ -121,9 +121,6 @@ public class ChannelResource {
         log.debug("REST request to update channel {} with properties : {}", channelId, channelDTO);
 
         var originalChannel = channelService.getChannelOrThrow(channelId);
-        if (originalChannel.getIsArchived()) {
-            throw new BadRequestAlertException("Archived channels cannot be edited", CHANNEL_ENTITY_NAME, "channelIsArchived");
-        }
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         if (!originalChannel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
