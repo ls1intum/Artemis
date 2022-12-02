@@ -11,7 +11,6 @@ import { Course } from 'app/entities/course.model';
 @Component({
     selector: 'jhi-feedback-list',
     templateUrl: './feedback-list.component.html',
-    styleUrls: ['./feedback-list.scss'],
 })
 export class FeedbackListComponent {
     readonly AssessmentType = AssessmentType;

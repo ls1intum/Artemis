@@ -8,6 +8,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-feedback-item-node',
     templateUrl: './feedback-item-node.component.html',
+    styleUrls: ['./feedback-item-node.scss'],
 })
 export class FeedbackItemNode implements OnInit {
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
