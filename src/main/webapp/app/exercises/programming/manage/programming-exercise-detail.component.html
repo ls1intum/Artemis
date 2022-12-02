@@ -20,7 +20,7 @@
                         style="margin-bottom: 10px"
                     >
                         <fa-icon [icon]="faPencilAlt"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
+                        <span jhiTranslate="entity.action.editInEditor">Edit in Editor</span>
                     </a>
 
                     <a
@@ -30,7 +30,7 @@
                         style="margin-bottom: 10px"
                     >
                         <fa-icon [icon]="faPencilAlt"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.manageHints">Manage Hints</span>
+                        <span jhiTranslate="entity.action.manageHints">Manage Hints</span>
                         <!-- New Badge -->
                         <span class="position-absolute top-0 end-0 translate-middle-y badge rounded-pill bg-info">New</span>
                     </a>
@@ -42,18 +42,18 @@
                         style="margin-bottom: 10px"
                     >
                         <fa-icon [icon]="faUserCheck"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
+                        <span jhiTranslate="artemisApp.programmingExercise.configureGrading.shortTitle">Grading</span>
                     </a>
                     <jhi-external-submission *ngIf="programmingExercise.isAtLeastInstructor" [exercise]="programmingExercise" class="me-1"> </jhi-external-submission>
                 </div>
                 <div>
                     <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="baseResource + 'submissions'" class="btn btn-success btn-sm me-1" style="margin-bottom: 10px">
                         <fa-icon [icon]="faBook"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
+                        <span jhiTranslate="artemisApp.exercise.submissions">Submissions</span>
                     </a>
                     <a *ngIf="programmingExercise.isAtLeastTutor" [routerLink]="baseResource + 'participations'" class="btn btn-primary btn-sm me-1" style="margin-bottom: 10px">
                         <fa-icon [icon]="faListAlt"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
+                        <span jhiTranslate="artemisApp.exercise.participations">Participations</span>
                     </a>
                     <!-- Teams -->
                     <a
@@ -63,7 +63,7 @@
                         style="margin-bottom: 10px"
                     >
                         <fa-icon [icon]="faUsers"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.teams">Teams</span>
+                        <span jhiTranslate="artemisApp.exercise.teams">Teams</span>
                     </a>
                     <a
                         *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC || programmingExercise.allowComplaintsForAutomaticAssessments"
@@ -72,7 +72,7 @@
                         style="margin-bottom: 10px"
                     >
                         <fa-icon [icon]="faListAlt"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
+                        <span jhiTranslate="entity.action.exerciseDashboard">Exercise Dashboard</span>
                     </a>
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && plagiarismCheckSupported"
@@ -96,7 +96,7 @@
                 <div>
                     <a *ngIf="programmingExercise.isAtLeastTutor" [routerLink]="baseResource + 'scores'" class="btn btn-info btn-sm me-1" style="margin-bottom: 10px">
                         <fa-icon [icon]="faTable"></fa-icon>
-                        <span class="d-none d-md-inline" jhiTranslate="entity.action.scores">Scores</span>
+                        <span jhiTranslate="entity.action.scores">Scores</span>
                     </a>
                     <jhi-programming-exercise-instructor-exercise-download
                         *ngIf="programmingExercise.isAtLeastInstructor"
