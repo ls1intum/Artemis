@@ -46,7 +46,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * REST controller for managing ExerciseGroup.
  */
 @RestController
-@RequestMapping("/api")
 public class StudentExamResource {
 
     private final Logger log = LoggerFactory.getLogger(StudentExamResource.class);

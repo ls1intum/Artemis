@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing QuizSubmission.
  */
 @RestController
-@RequestMapping("/api")
 public class QuizSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(QuizSubmissionResource.class);

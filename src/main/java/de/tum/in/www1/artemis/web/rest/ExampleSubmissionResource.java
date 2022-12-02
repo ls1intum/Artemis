@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing ExampleSubmission.
  */
 @RestController
-@RequestMapping("/api")
 public class ExampleSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(ExampleSubmissionResource.class);

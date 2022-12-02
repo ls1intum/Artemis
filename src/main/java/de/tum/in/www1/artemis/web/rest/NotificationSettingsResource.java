@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing NotificationSettings (NotificationSettings).
  */
 @RestController
-@RequestMapping("api/")
 public class NotificationSettingsResource {
 
     private final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);

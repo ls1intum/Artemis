@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupFreePeriodServ
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @RestController
-@RequestMapping("/api")
 public class TutorialGroupFreePeriodResource {
 
     private static final String ENTITY_NAME = "tutorialGroupFreePeriod";

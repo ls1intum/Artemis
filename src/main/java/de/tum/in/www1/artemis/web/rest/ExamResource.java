@@ -52,7 +52,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing Exam.
  */
 @RestController
-@RequestMapping("api/")
 public class ExamResource {
 
     private final Logger log = LoggerFactory.getLogger(ExamResource.class);

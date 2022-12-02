@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @RestController
-@RequestMapping("/api")
 public class TutorialGroupsConfigurationResource {
 
     private static final String ENTITY_NAME = "tutorialGroupsConfiguration";

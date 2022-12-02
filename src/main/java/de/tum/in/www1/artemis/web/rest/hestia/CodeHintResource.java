@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  * REST controller for managing {@link CodeHint}.
  */
 @RestController
-@RequestMapping("api/")
 public class CodeHintResource {
 
     private final Logger log = LoggerFactory.getLogger(CodeHintResource.class);

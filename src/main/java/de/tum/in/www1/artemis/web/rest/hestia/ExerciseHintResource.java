@@ -31,7 +31,6 @@ import tech.jhipster.web.util.HeaderUtil;
  * REST controller for managing {@link de.tum.in.www1.artemis.domain.hestia.ExerciseHint}.
  */
 @RestController
-@RequestMapping("api/")
 public class ExerciseHintResource {
 
     private static final String EXERCISE_HINT_ENTITY_NAME = "exerciseHint";

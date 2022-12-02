@@ -36,7 +36,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing Lecture.
  */
 @RestController
-@RequestMapping("/api")
 public class LectureResource {
 
     private final Logger log = LoggerFactory.getLogger(LectureResource.class);

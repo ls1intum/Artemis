@@ -21,7 +21,6 @@ import de.tum.in.www1.artemis.service.metis.ConversationService;
  * REST controller for managing Conversation.
  */
 @RestController
-@RequestMapping("/api/courses")
 public class ConversationResource {
 
     private final ConversationService conversationService;
@@ -37,12 +36,12 @@ public class ConversationResource {
     }
 
     /**
-     * GET /courses/{courseId}/conversations : get all conversations for user within course by courseId
+     * GET courses/{courseId}/conversations : get all conversations for user within course by courseId
      *
      * @param courseId the courseId which the searched conversations belong to
      * @return the ResponseEntity with status 200 (OK) and with body
      */
-    @GetMapping("/{courseId}/conversations")
+    @GetMapping("courses/{courseId}/conversations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Conversation>> getConversationsOfUser(@PathVariable Long courseId) {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), null);
@@ -52,14 +51,14 @@ public class ConversationResource {
     }
 
     /**
-     * POST /courses/{courseId}/conversations : create a new conversation
+     * POST courses/{courseId}/conversations : create a new conversation
      *
      * @param courseId        course to associate the new conversation
      * @param conversation    conversation to create
      * @return ResponseEntity with status 201 (Created) containing the created conversation in the response body,
      * or with status 400 (Bad Request) if the checks on user or course validity fail
      */
-    @PostMapping("/{courseId}/conversations")
+    @PostMapping("courses/{courseId}/conversations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Conversation> createConversation(@PathVariable Long courseId, @Valid @RequestBody Conversation conversation) throws URISyntaxException {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), null);

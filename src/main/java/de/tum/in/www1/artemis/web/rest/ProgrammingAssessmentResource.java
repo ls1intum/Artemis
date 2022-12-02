@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /** REST controller for managing ProgrammingAssessment. */
 @RestController
-@RequestMapping("/api")
 public class ProgrammingAssessmentResource extends AssessmentResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingAssessmentResource.class);

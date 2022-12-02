@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * REST controller for managing TextSubmission.
  */
 @RestController
-@RequestMapping("/api")
 public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "textSubmission";

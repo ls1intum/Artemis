@@ -11,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.service.connectors.apollon.ApollonConversionService;
@@ -21,7 +20,6 @@ import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
  * REST controller for managing ApollonDiagram.
  */
 @RestController
-@RequestMapping("/api")
 @Profile("apollon")
 public class ApollonConversionResource {
 

@@ -40,7 +40,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Executes repository actions on repositories related to the participation id transmitted. Available to the owner of the participation, TAs/Instructors of the exercise and Admins.
  */
 @RestController
-@RequestMapping("/api")
 @PreAuthorize("hasRole('USER')")
 public class RepositoryProgrammingExerciseParticipationResource extends RepositoryResource {
 

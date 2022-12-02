@@ -42,7 +42,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
  * REST controller for managing ModelingSubmission.
  */
 @RestController
-@RequestMapping("/api")
 public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);

@@ -25,7 +25,6 @@ import tech.jhipster.web.util.PaginationUtil;
  * REST controller for managing Message Posts.
  */
 @RestController
-@RequestMapping("/api")
 public class MessageResource {
 
     private final MessageService messageService;

@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.service.metis.AnswerMessageService;
 
 @RestController
-@RequestMapping("/api")
 public class AnswerMessageResource {
 
     private final AnswerMessageService answerMessageService;
