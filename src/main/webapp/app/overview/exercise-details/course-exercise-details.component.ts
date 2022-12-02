@@ -73,6 +73,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public courseId: number;
     public course: Course;
     public exercise?: Exercise;
+    public programmingExercise?: ProgrammingExercise;
     public resultWithComplaint?: Result;
     public latestRatedResult?: Result;
     public complaint?: Complaint;
@@ -101,7 +102,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public modelingExercise?: ModelingExercise;
     public exampleSolution?: SafeHtml;
     public exampleSolutionUML?: UMLModel;
-    public isProgrammingExerciseExampleSolutionPublished = false;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -199,11 +199,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     handleNewExercise(newExercise: Exercise) {
         this.exercise = newExercise;
+
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.exercise.participationStatus = participationStatus(this.exercise, false);
-        const now = dayjs();
-        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || now.isAfter(this.exercise.assessmentDueDate);
+        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exercise.categories || [];
         this.allowComplaintsForAutomaticAssessments = false;
 
@@ -212,7 +212,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             const isAfterDateForComplaint =
                 !this.exercise.dueDate ||
                 (hasExerciseDueDatePassed(this.exercise, this.gradedStudentParticipation) &&
-                    (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
+                    (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || dayjs().isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
             this.hasSubmissionPolicy = false;
@@ -249,21 +249,24 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.modelingExercise = undefined;
         this.exampleSolution = undefined;
         this.exampleSolutionUML = undefined;
-        this.isProgrammingExerciseExampleSolutionPublished = false;
 
-        if (newExercise.type === ExerciseType.MODELING) {
-            this.modelingExercise = newExercise as ModelingExercise;
-            if (this.modelingExercise.exampleSolutionModel) {
-                this.exampleSolutionUML = JSON.parse(this.modelingExercise.exampleSolutionModel);
-            }
-        } else if (newExercise.type === ExerciseType.TEXT || newExercise.type === ExerciseType.FILE_UPLOAD) {
-            const exercise = newExercise as TextExercise & FileUploadExercise;
-            if (exercise.exampleSolution) {
-                this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(exercise.exampleSolution);
-            }
-        } else if (newExercise.type === ExerciseType.PROGRAMMING) {
-            const exercise = newExercise as ProgrammingExercise;
-            this.isProgrammingExerciseExampleSolutionPublished = exercise.exampleSolutionPublished || false;
+        switch (newExercise.type) {
+            case ExerciseType.MODELING:
+                this.modelingExercise = newExercise as ModelingExercise;
+                if (this.modelingExercise.exampleSolutionModel) {
+                    this.exampleSolutionUML = JSON.parse(this.modelingExercise.exampleSolutionModel);
+                }
+                break;
+            case ExerciseType.TEXT:
+            case ExerciseType.FILE_UPLOAD:
+                const exercise = newExercise as TextExercise & FileUploadExercise;
+                if (exercise.exampleSolution) {
+                    this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(exercise.exampleSolution);
+                }
+                break;
+            case ExerciseType.PROGRAMMING:
+                this.programmingExercise = newExercise as ProgrammingExercise;
+                break;
         }
         // For TAs the example solution is collapsed on default to avoid spoiling, as the example solution is always shown to TAs
         this.exampleSolutionCollapsed = !!this.exercise?.isAtLeastTutor;

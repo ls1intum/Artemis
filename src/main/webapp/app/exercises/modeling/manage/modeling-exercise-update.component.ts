@@ -190,7 +190,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.isSaving = true;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
-            .save(this.modelingExercise, this.notificationText)
+            .save(this.modelingExercise, this.isExamMode, this.notificationText)
             .subscribe({
                 next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),
