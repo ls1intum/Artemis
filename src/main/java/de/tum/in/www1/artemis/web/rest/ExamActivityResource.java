@@ -7,7 +7,6 @@ import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -23,7 +22,6 @@ import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringS
  * (Websocket) controller for managing ExamActivityResource.
  */
 @RestController
-@Controller
 public class ExamActivityResource {
 
     private final ExamMonitoringScheduleService examMonitoringScheduleService;
@@ -55,26 +53,26 @@ public class ExamActivityResource {
     }
 
     /**
-     * GET api/exam-monitoring/{examId}/load-actions: returns all actions of the exam.
+     * GET exam-monitoring/{examId}/load-actions: returns all actions of the exam.
      *
      * @param examId the exam to which the student exams belong to
      * @return all exam actions of the exam
      */
-    @GetMapping("api/exam-monitoring/{examId}/load-actions")
+    @GetMapping("exam-monitoring/{examId}/load-actions")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ExamAction>> loadAllActions(@PathVariable Long examId) {
         return ResponseEntity.ok().body(examMonitoringScheduleService.getAllExamActions(examId));
     }
 
     /**
-     * PUT api/courses/{courseId}/exams/{examId}/statistics: disable or enable the monitoring
+     * PUT courses/{courseId}/exams/{examId}/statistics: disable or enable the monitoring
      *
      * @param courseId the course to which the exam belongs to
      * @param examId the exam to which the student exams belong to
      * @param monitoring new status of the monitoring
      * @return all exam actions of the exam
      */
-    @PutMapping("api/courses/{courseId}/exams/{examId}/statistics")
+    @PutMapping("courses/{courseId}/exams/{examId}/statistics")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.ExamLiveStatistics)
     public ResponseEntity<Boolean> updateMonitoring(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody boolean monitoring) {
