@@ -16,9 +16,7 @@
                 <span class="guided-tour result" [ngbTooltip]="resultTooltip | artemisTranslate">
                     {{ resultString }}
                 </span>
-                <span class="result" [ngbTooltip]="result.submission?.submissionDate ?? result.completionDate | artemisDate">
-                    ({{ result.submission?.submissionDate ?? result.completionDate! | artemisTimeAgo }})
-                </span>
+                <span class="result" [ngbTooltip]="result.completionDate | artemisDate"> ({{ result.completionDate | artemisTimeAgo }}) </span>
             </span>
             <span *ngIf="hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING">
                 <a (click)="downloadBuildResult(participation.id)">
