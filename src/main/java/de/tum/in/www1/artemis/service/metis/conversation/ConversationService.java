@@ -166,6 +166,12 @@ public class ConversationService {
         broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.UPDATE, conversation, usersToContact);
     }
 
+    public void notifyConversationMembersAboutNewMessage(Conversation conversation) {
+        var usersToContact = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+                .collect(Collectors.toSet());
+        broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.NEW_MESSAGE, conversation, usersToContact);
+    }
+
     /**
      * Removes users from a conversation
      *
@@ -229,7 +235,15 @@ public class ConversationService {
     }
 
     private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName) {
-        var dto = conversationDTOService.convertToDTO(conversation, user);
+        ConversationDTO dto;
+        if (metisCrudAction.equals(MetisCrudAction.NEW_MESSAGE)) {
+            // we do not want to recalculate the whole dto for a new message, just the information needed for updating the unread messages
+            dto = conversationDTOService.convertToDTOWithoutExtraDBCalls(conversation);
+        }
+        else {
+            dto = conversationDTOService.convertToDTO(conversation, user);
+        }
+
         var websocketDTO = new ConversationWebsocketDTO(dto, metisCrudAction);
         messagingTemplate.convertAndSendToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), websocketDTO);
     }

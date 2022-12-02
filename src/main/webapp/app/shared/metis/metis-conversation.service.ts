@@ -237,6 +237,9 @@ export class MetisConversationService implements OnDestroy {
             case MetisPostAction.DELETE:
                 this.handleDeleteConversation(conversationDTO);
                 break;
+            case MetisPostAction.NEW_MESSAGE:
+                this.handleNewMessage(conversationDTO);
+                break;
         }
         this._conversationsOfUser$.next(this._conversationsOfUser);
     }
@@ -277,6 +280,18 @@ export class MetisConversationService implements OnDestroy {
             conversationsCopy.push(updatedConversation);
         } else {
             conversationsCopy[indexOfCachedConversation] = updatedConversation;
+        }
+        this._conversationsOfUser = conversationsCopy;
+    }
+
+    private handleNewMessage(conversationWithNewMessage: ConversationDto) {
+        const conversationsCopy = [...this._conversationsOfUser];
+        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === conversationWithNewMessage.id);
+        if (indexOfCachedConversation === -1) {
+            console.error('Conversation with id ' + conversationWithNewMessage.id + " doesn't exist in cache, but was sent as 'NEW_MESSAGE' action");
+        } else {
+            // we update just the last message date as the dto here is minimal to save extra db calls and does not contain all the information
+            conversationsCopy[indexOfCachedConversation].lastMessageDate = conversationWithNewMessage.lastMessageDate;
         }
         this._conversationsOfUser = conversationsCopy;
     }

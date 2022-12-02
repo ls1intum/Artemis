@@ -19,6 +19,7 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { ConversationWebsocketDTO } from 'app/entities/metis/conversation/conversation-websocket-dto.model';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { MetisPostAction } from 'app/shared/metis/metis.util';
+import dayjs from 'dayjs/esm';
 
 describe('MetisConversationService', () => {
     let metisConversationService: MetisConversationService;
@@ -255,7 +256,29 @@ describe('MetisConversationService', () => {
         });
     });
 
-    it('should remove conversation in conversations of user on conversation update removal', () => {
+    it('should update conversation last message date in conversations of user on conversation new message received', () => {
+        return new Promise((done) => {
+            metisConversationService.setUpConversationService(1).subscribe({
+                complete: () => {
+                    const websocketDTO = new ConversationWebsocketDTO();
+                    websocketDTO.crudAction = MetisPostAction.NEW_MESSAGE;
+                    // 1 of january 2022
+                    const lastMessageDate = dayjs('2022-01-01T00:00:00.000Z');
+                    websocketDTO.conversation = { ...channel, lastMessageDate } as ChannelDTO;
+
+                    receiveMockSubject.next(websocketDTO);
+                    metisConversationService.conversationsOfUser$.subscribe((conversationsOfUser) => {
+                        // find updated conversation in cache
+                        const updatedConversation = conversationsOfUser.find((conversation) => conversation.id === channel.id);
+                        expect(updatedConversation!.lastMessageDate!.isSame(lastMessageDate)).toBeTrue();
+                        done({});
+                    });
+                },
+            });
+        });
+    });
+
+    it('should remove conversation in conversations of user on conversation delete received', () => {
         return new Promise((done) => {
             metisConversationService.setUpConversationService(1).subscribe({
                 complete: () => {

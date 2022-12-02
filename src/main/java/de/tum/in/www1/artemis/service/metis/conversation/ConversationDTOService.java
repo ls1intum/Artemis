@@ -57,6 +57,19 @@ public class ConversationDTOService {
         throw new IllegalArgumentException("Conversation type not supported");
     }
 
+    public ConversationDTO convertToDTOWithoutExtraDBCalls(Conversation conversation) {
+        if (conversation instanceof Channel channel) {
+            return new ChannelDTO(channel);
+        }
+        if (conversation instanceof OneToOneChat oneToOneChat) {
+            return new OneToOneChatDTO(oneToOneChat);
+        }
+        if (conversation instanceof GroupChat groupChat) {
+            return new GroupChatDTO(groupChat);
+        }
+        throw new IllegalArgumentException("Conversation type not supported");
+    }
+
     /**
      * Creates a ChannelDTO from a Channel
      *
