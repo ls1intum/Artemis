@@ -44,26 +44,19 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         exerciseRepository.save(database.createIndividualTextExercise(course, ZonedDateTime.now().plusMinutes(1), ZonedDateTime.now().plusMinutes(25), null));
 
         // Only one of the two quizzes ends in the next 15 minutes
-        var gauge = meterRegistry.get("artemis.scheduled.exercises.due.count").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "15").gauge();
-        assertEquals(1, gauge.value());
-        gauge = meterRegistry.get("artemis.scheduled.exercises.due.student_multiplier").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "15").gauge();
-        assertEquals(3 * 1, gauge.value());
+        assertMetricEquals(1, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
+        assertMetricEquals(3 * 1, "artemis.scheduled.exercises.due.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "15");
 
         // Only one quiz is released within the next 30 minutes
-        gauge = meterRegistry.get("artemis.scheduled.exercises.release.count").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "30").gauge();
-        assertEquals(1, gauge.value());
-        gauge = meterRegistry.get("artemis.scheduled.exercises.release.student_multiplier").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "30").gauge();
-        assertEquals(3 * 1, gauge.value());
+        assertMetricEquals(1, "artemis.scheduled.exercises.release.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "30");
+        assertMetricEquals(3 * 1, "artemis.scheduled.exercises.release.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "30");
 
         // Both quizzes end within the next 120 minutes
-        gauge = meterRegistry.get("artemis.scheduled.exercises.due.count").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "120").gauge();
-        assertEquals(2, gauge.value());
-        gauge = meterRegistry.get("artemis.scheduled.exercises.due.student_multiplier").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "120").gauge();
-        assertEquals(3 * 2, gauge.value());
+        assertMetricEquals(2, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "120");
+        assertMetricEquals(3 * 2, "artemis.scheduled.exercises.due.student_multiplier", "exerciseType", ExerciseType.QUIZ.toString(), "range", "120");
 
         // One text exercise is released within the next 30 minutes
-        gauge = meterRegistry.get("artemis.scheduled.exercises.release.count").tag("exerciseType", ExerciseType.TEXT.toString()).tag("range", "30").gauge();
-        assertEquals(1, gauge.value());
+        assertMetricEquals(1, "artemis.scheduled.exercises.release.count", "exerciseType", ExerciseType.TEXT.toString(), "range", "30");
     }
 
     @Test
@@ -82,37 +75,31 @@ class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         courseRepository.save(course);
 
         // One exam ends within the next 60 minutes
-        var gauge = meterRegistry.get("artemis.scheduled.exams.due.count").tag("range", "60").gauge();
-        assertEquals(1, gauge.value());
-        gauge = meterRegistry.get("artemis.scheduled.exams.due.student_multiplier").tag("range", "60").gauge();
-        assertEquals(1 * 2, gauge.value()); // 2 students are registered for the exam
+        assertMetricEquals(1, "artemis.scheduled.exams.due.count", "range", "60");
+        assertMetricEquals(1 * 2, "artemis.scheduled.exams.due.student_multiplier", "range", "60"); // 2 students are registered for the exam
 
         // Two exams ends within the next 120 minutes
-        gauge = meterRegistry.get("artemis.scheduled.exams.due.count").tag("range", "120").gauge();
-        assertEquals(2, gauge.value());
-        gauge = meterRegistry.get("artemis.scheduled.exams.due.student_multiplier").tag("range", "120").gauge();
-        assertEquals(1 * 2 + 1 * 1, gauge.value()); // 2 + 1 students are registered for the exam
+        assertMetricEquals(2, "artemis.scheduled.exams.due.count", "range", "120");
+        assertMetricEquals(1 * 2 + 1 * 1, "artemis.scheduled.exams.due.student_multiplier", "range", "120"); // 2 + 1 students are registered for the exam
 
         // No exam starts within the next 5 minutes
-        gauge = meterRegistry.get("artemis.scheduled.exams.release.count").tag("range", "5").gauge();
-        assertEquals(0, gauge.value());
-        gauge = meterRegistry.get("artemis.scheduled.exams.release.student_multiplier").tag("range", "5").gauge();
-        assertEquals(0, gauge.value());
+        assertMetricEquals(0, "artemis.scheduled.exams.release.count", "range", "5");
+        assertMetricEquals(0, "artemis.scheduled.exams.release.student_multiplier", "range", "5");
 
         // One exam starts within the next 15 minutes
-        gauge = meterRegistry.get("artemis.scheduled.exams.release.count").tag("range", "15").gauge();
-        assertEquals(1, gauge.value());
-        gauge = meterRegistry.get("artemis.scheduled.exams.release.student_multiplier").tag("range", "15").gauge();
-        assertEquals(1 * 2, gauge.value()); // 2 registered students
+        assertMetricEquals(1, "artemis.scheduled.exams.release.count", "range", "15");
+        assertMetricEquals(1 * 2, "artemis.scheduled.exams.release.student_multiplier", "range", "15"); // 2 registered students
 
         // Two exams start within the next 120 minutes
-        gauge = meterRegistry.get("artemis.scheduled.exams.release.count").tag("range", "120").gauge();
-        assertEquals(2, gauge.value());
-        gauge = meterRegistry.get("artemis.scheduled.exams.release.student_multiplier").tag("range", "120").gauge();
-        assertEquals(1 * 2 + 1 * 1, gauge.value());
+        assertMetricEquals(2, "artemis.scheduled.exams.release.count", "range", "120");
+        assertMetricEquals(1 * 2 + 1 * 1, "artemis.scheduled.exams.release.student_multiplier", "range", "120");
 
         // Exam exercises are not returned in the exercises metrics
-        gauge = meterRegistry.get("artemis.scheduled.exercises.due.count").tag("exerciseType", ExerciseType.QUIZ.toString()).tag("range", "60").gauge();
-        assertEquals(0, gauge.value());
+        assertMetricEquals(0, "artemis.scheduled.exercises.due.count", "exerciseType", ExerciseType.QUIZ.toString(), "range", "60");
+    }
+
+    private void assertMetricEquals(double expectedValue, String metricName, String... tags) {
+        var gauge = meterRegistry.get(metricName).tags(tags).gauge();
+        assertEquals(expectedValue, gauge.value());
     }
 }
