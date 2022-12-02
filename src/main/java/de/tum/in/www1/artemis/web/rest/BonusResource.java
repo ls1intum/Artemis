@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing bonus
  */
 @RestController
-@RequestMapping("api")
 public class BonusResource {
 
     private final Logger log = LoggerFactory.getLogger(BonusResource.class);

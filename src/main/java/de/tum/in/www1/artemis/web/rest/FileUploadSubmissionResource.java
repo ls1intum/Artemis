@@ -36,7 +36,6 @@ import jakarta.validation.constraints.NotNull;
  * REST controller for managing FileUploadSubmission.
  */
 @RestController
-@RequestMapping("api")
 public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "fileUploadSubmission";

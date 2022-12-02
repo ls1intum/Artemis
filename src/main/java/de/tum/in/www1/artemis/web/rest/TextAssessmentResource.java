@@ -39,7 +39,6 @@ import jakarta.annotation.Nullable;
  * REST controller for managing TextAssessment.
  */
 @RestController
-@RequestMapping("api")
 public class TextAssessmentResource extends AssessmentResource {
 
     @Value("${jhipster.clientApp.name}")

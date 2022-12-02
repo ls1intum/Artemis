@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 @RestController
-@RequestMapping("api")
 public class VideoUnitResource {
 
     @Value("${jhipster.clientApp.name}")

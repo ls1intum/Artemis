@@ -29,7 +29,6 @@ import jakarta.servlet.http.HttpServletResponse;
  * REST controller to handle LTI10 launches.
  */
 @RestController
-@RequestMapping("api")
 public class LtiResource {
 
     private final Logger log = LoggerFactory.getLogger(LtiResource.class);

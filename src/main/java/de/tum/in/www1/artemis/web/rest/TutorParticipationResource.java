@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing TutorParticipation.
  */
 @RestController
-@RequestMapping("api")
 public class TutorParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(TutorParticipationResource.class);

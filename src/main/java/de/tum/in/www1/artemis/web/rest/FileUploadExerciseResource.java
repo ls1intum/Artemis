@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /** REST controller for managing FileUploadExercise. */
 @RestController
-@RequestMapping(FileUploadExerciseResource.Endpoints.ROOT)
 public class FileUploadExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadExerciseResource.class);

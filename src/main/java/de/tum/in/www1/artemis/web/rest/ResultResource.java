@@ -49,7 +49,6 @@ import jakarta.annotation.Nullable;
  * REST controller for managing Result.
  */
 @RestController
-@RequestMapping("api")
 public class ResultResource {
 
     private final Logger log = LoggerFactory.getLogger(ResultResource.class);

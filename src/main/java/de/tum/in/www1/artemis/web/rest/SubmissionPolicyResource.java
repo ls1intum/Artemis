@@ -21,16 +21,11 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
-@RequestMapping(SubmissionPolicyResource.ROOT)
 public class SubmissionPolicyResource {
 
     private final Logger log = LoggerFactory.getLogger(SubmissionPolicyResource.class);
 
     public static final String ENTITY_NAME = "programmingExercise.submissionPolicy";
-
-    public static final String ROOT = "api/";
-
-    public static final String PROGRAMMING_EXERCISE_SUBMISSION_POLICY = "programming-exercises/{exerciseId}/submission-policy";
 
     @Value("${jhipster.clientApp.name}")
     private String applicationName;
@@ -56,7 +51,7 @@ public class SubmissionPolicyResource {
      *         the programming exercise does not exist and status 403 when the requester is not at least a student
      *         in the course the programming exercise belongs to.
      */
-    @GetMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
+    @GetMapping("programming-exercises/{exerciseId}/submission-policy")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<SubmissionPolicy> getSubmissionPolicyOfExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get submission policy of programming exercise {}", exerciseId);
@@ -81,7 +76,7 @@ public class SubmissionPolicyResource {
      *         in the course the programming exercise belongs to and 400 when the submission policy has an id or
      *         is invalid. More information on submission policy validation can be found at {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
      */
-    @PostMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
+    @PostMapping("programming-exercises/{exerciseId}/submission-policy")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<SubmissionPolicy> addSubmissionPolicyToProgrammingExercise(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy submissionPolicy)
             throws URISyntaxException {
@@ -104,8 +99,7 @@ public class SubmissionPolicyResource {
         SubmissionPolicy addedSubmissionPolicy = submissionPolicyService.addSubmissionPolicyToProgrammingExercise(submissionPolicy, programmingExercise);
         HttpHeaders responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, Long.toString(addedSubmissionPolicy.getId()));
 
-        return ResponseEntity.created(new URI(PROGRAMMING_EXERCISE_SUBMISSION_POLICY.replace("{exerciseId}", Long.toString(exerciseId)))).headers(responseHeaders)
-                .body(addedSubmissionPolicy);
+        return ResponseEntity.created(new URI("programming-exercises/" + exerciseId + "/submission-policy")).headers(responseHeaders).body(addedSubmissionPolicy);
     }
 
     /**
@@ -120,7 +114,7 @@ public class SubmissionPolicyResource {
      *         the programming exercise does not exist, status 403 when the requester is not at least an instructor
      *         in the course the programming exercise belongs to and 400 when the programming exercise does not have a submission policy.
      */
-    @DeleteMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
+    @DeleteMapping("programming-exercises/{exerciseId}/submission-policy")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeSubmissionPolicyFromProgrammingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to remove submission policy from programming exercise {}", exerciseId);
@@ -154,7 +148,7 @@ public class SubmissionPolicyResource {
      *         in the course the programming exercise belongs to and 400 when activate matches the current status of
      *         the submission policy or the programming exercise has no submission policy.
      */
-    @PutMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
+    @PutMapping("programming-exercises/{exerciseId}/submission-policy")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> toggleSubmissionPolicy(@PathVariable Long exerciseId, @RequestParam Boolean activate) {
         log.debug("REST request to toggle the submission policy for programming exercise {}", exerciseId);
@@ -202,7 +196,7 @@ public class SubmissionPolicyResource {
      *         {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
      */
     // TODO: I think we should use PUT here
-    @PatchMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
+    @PatchMapping("programming-exercises/{exerciseId}/submission-policy")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<SubmissionPolicy> updateSubmissionPolicy(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy updatedSubmissionPolicy) {
         log.debug("REST request to update the submission policy of programming exercise {}", exerciseId);

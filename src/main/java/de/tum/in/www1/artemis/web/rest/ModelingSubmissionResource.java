@@ -40,7 +40,6 @@ import jakarta.validation.constraints.NotNull;
  * REST controller for managing ModelingSubmission.
  */
 @RestController
-@RequestMapping("api")
 public class ModelingSubmissionResource extends AbstractSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(ModelingSubmissionResource.class);

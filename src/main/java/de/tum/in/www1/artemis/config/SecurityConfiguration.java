@@ -143,8 +143,8 @@ public class SecurityConfiguration {
             .requestMatchers(HttpMethod.POST, "/api/{v\\d*}" + PROGRAMMING_SUBMISSION_RESOURCE_PATH + "*").permitAll()
             .requestMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*").permitAll()
             .requestMatchers(HttpMethod.POST, "/api/{v\\d*}" + TEST_CASE_CHANGED_PATH + "*").permitAll()
-            .requestMatchers(HttpMethod.POST, ATHENE_RESULT_API_PATH + "*").permitAll()
-            .requestMatchers(HttpMethod.POST, "/api/{v\\d*}" + ATHENE_RESULT_PATH + "*").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/athene-result/*").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/{v\\d*}/api/athene-result/*").permitAll()
             .requestMatchers("/api/**").authenticated()
             // websockets
             .requestMatchers("/websocket/**").permitAll()

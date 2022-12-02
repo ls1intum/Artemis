@@ -49,10 +49,6 @@ public final class Constants {
 
     public static final String PROGRAMMING_SUBMISSION_RESOURCE_API_PATH = "/api" + PROGRAMMING_SUBMISSION_RESOURCE_PATH;
 
-    public static final String ATHENE_RESULT_PATH = "/athene-result/";
-
-    public static final String ATHENE_RESULT_API_PATH = "/api" + ATHENE_RESULT_PATH;
-
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active";

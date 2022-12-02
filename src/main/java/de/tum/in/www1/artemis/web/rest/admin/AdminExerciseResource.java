@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
  * REST controller for administrating Exercise.
  */
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminExerciseResource.class);

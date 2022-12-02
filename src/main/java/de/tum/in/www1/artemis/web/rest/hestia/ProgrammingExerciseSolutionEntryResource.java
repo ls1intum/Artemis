@@ -34,7 +34,6 @@ import tech.jhipster.web.util.HeaderUtil;
  * REST controller for managing {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry}.
  */
 @RestController
-@RequestMapping("api")
 public class ProgrammingExerciseSolutionEntryResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseSolutionEntryResource.class);

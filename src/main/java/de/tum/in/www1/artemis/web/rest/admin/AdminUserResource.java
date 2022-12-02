@@ -58,7 +58,7 @@ import tech.jhipster.web.util.PaginationUtil;
  * Another option would be to have a specific JPA entity graph to handle this case.
  */
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminUserResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminUserResource.class);

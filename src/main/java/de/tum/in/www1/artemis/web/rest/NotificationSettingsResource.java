@@ -25,7 +25,6 @@ import jakarta.validation.constraints.NotNull;
  * REST controller for managing NotificationSettings (NotificationSettings).
  */
 @RestController
-@RequestMapping("api")
 public class NotificationSettingsResource {
 
     private final Logger log = LoggerFactory.getLogger(NotificationSettingsResource.class);

@@ -44,7 +44,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 @RestController
-@RequestMapping("api")
 public class TutorialGroupResource {
 
     private static final String TITLE_REGEX = "^[a-zA-Z0-9][a-zA-Z0-9- ]{0,19}$";

@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.StatisticsService;
  * REST controller for administrating statistics.
  */
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminStatisticsResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminStatisticsResource.class);

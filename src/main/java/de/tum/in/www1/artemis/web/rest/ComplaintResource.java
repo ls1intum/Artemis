@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing complaints.
  */
 @RestController
-@RequestMapping("api")
 public class ComplaintResource {
 
     private final Logger log = LoggerFactory.getLogger(ComplaintResource.class);

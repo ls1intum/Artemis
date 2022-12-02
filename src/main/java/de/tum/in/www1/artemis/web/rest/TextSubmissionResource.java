@@ -30,7 +30,6 @@ import jakarta.validation.constraints.NotNull;
  * REST controller for managing TextSubmission.
  */
 @RestController
-@RequestMapping("api")
 public class TextSubmissionResource extends AbstractSubmissionResource {
 
     private static final String ENTITY_NAME = "textSubmission";
