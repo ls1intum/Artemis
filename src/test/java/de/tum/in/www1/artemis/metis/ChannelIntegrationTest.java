@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.HttpStatus;
@@ -362,6 +363,74 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         expectRegisterDeregisterForbidden(channel, true);
         expectRegisterDeregisterForbidden(channel, false);
         verifyNoParticipantTopicWebsocketSent();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void leaveChannel_asNormalUser_canLeaveChannel(boolean isPublicChannel) throws Exception {
+        // given
+        var channel = createChannel(isPublicChannel);
+        addUsersToConversation(channel.getId(), "student1");
+
+        // then
+        database.changeUser("student1");
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister", List.of("student1"), HttpStatus.OK);
+        assertUserAreNotConversationMembers(channel.getId(), "student1");
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1");
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, channel.getId(), "student1");
+        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE, MetisCrudAction.DELETE);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void leaveChannel_asCreator_shouldReturnBadRequest(boolean isPublicChannel) throws Exception {
+        // given
+        var channel = createChannel(isPublicChannel);
+        // then
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister", List.of("instructor1"), HttpStatus.BAD_REQUEST);
+        assertUsersAreConversationMembers(channel.getId(), "instructor1");
+        verifyNoParticipantTopicWebsocketSent();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void joinPublicChannel_asNormalUser_canJoinPublicChannel() throws Exception {
+        // given
+        var channel = createChannel(true);
+
+        // then
+        database.changeUser("student1");
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of("student1"), HttpStatus.OK);
+        assertUsersAreConversationMembers(channel.getId(), "student1");
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1");
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, channel.getId(), "student1");
+        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE, MetisCrudAction.CREATE);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void joinPrivateChannel_asNormalUser_canNotJoinPrivateChannel() throws Exception {
+        // given
+        var channel = createChannel(false);
+
+        // then
+        database.changeUser("student1");
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of("student1"), HttpStatus.FORBIDDEN);
+        assertUserAreNotConversationMembers(channel.getId(), "student1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void joinPrivateChannel_asInstructor_canJoinPrivateChannel() throws Exception {
+        // given
+        var channel = createChannel(false);
+
+        // then
+        database.changeUser("instructor2");
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of("instructor2"), HttpStatus.OK);
+        assertUsersAreConversationMembers(channel.getId(), "instructor2");
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {

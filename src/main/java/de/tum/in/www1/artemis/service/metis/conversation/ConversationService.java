@@ -189,7 +189,7 @@ public class ConversationService {
         if (conversation instanceof Channel) {
             var creator = conversation.getCreator();
             if (usersWithExistingParticipants.contains(creator)) {
-                throw new IllegalArgumentException("The creator of a channel cannot be deregistered");
+                throw new BadRequestAlertException("You are not allowed to deregister the creator of a channel", "conversation", "creatorDeregistration");
             }
         }
         if (participantsToRemove.size() > 0) {
