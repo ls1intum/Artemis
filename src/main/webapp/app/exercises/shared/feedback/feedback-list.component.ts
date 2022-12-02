@@ -4,7 +4,7 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { resultIsPreliminary } from 'app/exercises/shared/result/result.utils';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { Exercise } from 'app/entities/exercise.model';
-import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/result-detail.component';
+import { FeedbackItem } from 'app/exercises/shared/result/result-detail.component';
 import { Result } from 'app/entities/result.model';
 import { Course } from 'app/entities/course.model';
 
@@ -17,7 +17,6 @@ export class FeedbackListComponent {
     readonly AssessmentType = AssessmentType;
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly resultIsPreliminary = resultIsPreliminary;
-    readonly FeedbackItemType = FeedbackItemType;
 
     @Input() exercise?: Exercise;
     @Input() course?: Course;
