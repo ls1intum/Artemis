@@ -69,8 +69,8 @@ class OneToOneChatIntegrationTest extends AbstractConversationTest {
         this.postInConversation(chat.getId(), "student1");
         // then
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), "student1", "student2");
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, chat.getId(), "student1", "student2");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE, MetisCrudAction.UPDATE);
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.NEW_MESSAGE, chat.getId(), "student1", "student2");
+        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE, MetisCrudAction.NEW_MESSAGE);
     }
 
 }

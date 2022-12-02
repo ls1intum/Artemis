@@ -60,8 +60,8 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
         this.postInConversation(chat.getId(), "student1");
         // then
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, chat.getId(), "student1", "student2", "student3");
-        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.NEW_MESSAGE, chat.getId(), "student1", "student2", "student3");
+        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.NEW_MESSAGE);
     }
 
     @Test
