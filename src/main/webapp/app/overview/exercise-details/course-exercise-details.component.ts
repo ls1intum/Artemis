@@ -68,7 +68,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public courseId: number;
     public course: Course;
     public exercise?: Exercise;
-    public programmingExercise?: ProgrammingExercise;
     public resultWithComplaint?: Result;
     public latestRatedResult?: Result;
     public complaint?: Complaint;

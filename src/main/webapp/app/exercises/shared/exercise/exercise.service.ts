@@ -30,7 +30,7 @@ export type ExampleSolutionInfo = {
     modelingExercise?: ModelingExercise;
     exampleSolution?: SafeHtml;
     exampleSolutionUML: any;
-    isProgrammingExerciseExampleSolutionPublished: boolean;
+    programmingExercise?: ProgrammingExercise;
 };
 
 export interface ExerciseServicable<T extends Exercise> {
@@ -537,28 +537,32 @@ export class ExerciseService {
         let modelingExercise = undefined;
         let exampleSolution = undefined;
         let exampleSolutionUML = undefined;
-        let isProgrammingExerciseExampleSolutionPublished = false;
+        let programmingExercise = undefined;
 
-        if (exercise.type === ExerciseType.MODELING) {
-            modelingExercise = exercise as ModelingExercise;
-            if (modelingExercise.exampleSolutionModel) {
-                exampleSolutionUML = JSON.parse(modelingExercise.exampleSolutionModel);
-            }
-        } else if (exercise.type === ExerciseType.TEXT || exercise.type === ExerciseType.FILE_UPLOAD) {
-            const textExercise = exercise as TextExercise & FileUploadExercise;
-            if (textExercise.exampleSolution) {
-                exampleSolution = artemisMarkdown.safeHtmlForMarkdown(textExercise.exampleSolution);
-            }
-        } else if (exercise.type === ExerciseType.PROGRAMMING) {
-            const programmingExercise = exercise as ProgrammingExercise;
-            isProgrammingExerciseExampleSolutionPublished = programmingExercise.exampleSolutionPublished || false;
+        switch (exercise.type) {
+            case ExerciseType.MODELING:
+                modelingExercise = exercise as ModelingExercise;
+                if (modelingExercise.exampleSolutionModel) {
+                    exampleSolutionUML = JSON.parse(modelingExercise.exampleSolutionModel);
+                }
+                break;
+            case ExerciseType.TEXT:
+            case ExerciseType.FILE_UPLOAD:
+                const textOrFileUploadExercise = exercise as TextExercise & FileUploadExercise;
+                if (textOrFileUploadExercise.exampleSolution) {
+                    exampleSolution = artemisMarkdown.safeHtmlForMarkdown(textOrFileUploadExercise.exampleSolution);
+                }
+                break;
+            case ExerciseType.PROGRAMMING:
+                programmingExercise = exercise as ProgrammingExercise;
+                break;
         }
 
         return {
             modelingExercise,
             exampleSolution,
             exampleSolutionUML,
-            isProgrammingExerciseExampleSolutionPublished,
+            programmingExercise,
         };
     }
 }
