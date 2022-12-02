@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 @Service
 public class ChannelService {
@@ -131,9 +132,6 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createChannel(Course course, Channel channel) {
-        if (channel.getId() != null) {
-            throw new BadRequestAlertException("A new channel cannot already have an ID", "channel", "idexists");
-        }
         if (StringUtils.hasText(channel.getName())) {
             channel.setName(StringUtils.trimAllWhitespace(channel.getName().toLowerCase()));
         }
@@ -150,6 +148,7 @@ public class ChannelService {
         conversationParticipantOfRequestingUser = conversationParticipantRepository.save(conversationParticipantOfRequestingUser);
         savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
         savedChannel = channelRepository.save(savedChannel);
+        conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, savedChannel, Set.of(user));
         return savedChannel;
     }
 

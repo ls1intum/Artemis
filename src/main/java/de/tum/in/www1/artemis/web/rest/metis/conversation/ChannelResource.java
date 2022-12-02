@@ -1,11 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation;
 
-import static de.tum.in.www1.artemis.domain.metis.conversation.ConversationSettings.MAX_REGISTRATIONS_TO_CHANNEL_AT_ONCE;
 import static de.tum.in.www1.artemis.service.metis.conversation.ChannelService.CHANNEL_ENTITY_NAME;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -230,8 +230,11 @@ public class ChannelResource {
         }
         channelAuthorizationService.isAllowedToRevokeChannelAdmin(channel, userRepository.getUserWithGroupsAndAuthorities());
         var usersToGrantChannelAdmin = conversationService.findUsersInDatabase(userLogins);
-        // nobody is allowed to revoke admin rights from the creator of the channel
-        usersToGrantChannelAdmin.removeIf(user -> user.getId().equals(channel.getCreator().getId()));
+        // nobody is allowed to revoke admin rights from the creator of the channel throw bad request
+        if (usersToGrantChannelAdmin.contains(channel.getCreator())) {
+            throw new BadRequestAlertException("The creator of the channel cannot be revoked from the channel admin role", CHANNEL_ENTITY_NAME, "channel.creator.revoke");
+        }
+
         channelService.revokeChannelAdmin(channel, usersToGrantChannelAdmin);
         return ResponseEntity.ok().build();
     }
@@ -253,23 +256,16 @@ public class ChannelResource {
     public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins,
             @RequestParam(defaultValue = "false") Boolean addAllStudents, @RequestParam(defaultValue = "false") Boolean addAllTutors,
             @RequestParam(defaultValue = "false") Boolean addAllEditors, @RequestParam(defaultValue = "false") Boolean addAllInstructors) {
-        var anyAddAllTrue = addAllStudents || addAllTutors || addAllEditors || addAllInstructors;
-        if (!anyAddAllTrue) {
-            if (userLogins == null || userLogins.isEmpty()) {
-                throw new BadRequestAlertException("No user logins provided", CHANNEL_ENTITY_NAME, "userLoginsEmpty");
-            }
-            if (userLogins.size() > MAX_REGISTRATIONS_TO_CHANNEL_AT_ONCE) {
-                throw new BadRequestAlertException("Too many user logins provided.", CHANNEL_ENTITY_NAME, "userLoginsTooMany");
-            }
+        var usersLoginsToRegister = Objects.requireNonNullElseGet(userLogins, () -> new HashSet<>(userLogins)).stream().filter(Objects::nonNull).map(String::trim)
+                .collect(Collectors.toSet());
+        if (!userLogins.isEmpty()) {
             log.debug("REST request to register {} users to channel : {}", userLogins.size(), channelId);
         }
-        else {
+        if (addAllStudents || addAllTutors || addAllEditors || addAllInstructors) {
             var registerAllString = "addAllStudents: " + addAllStudents + ", addAllTutors: " + addAllTutors + ", addAllEditors: " + addAllEditors + ", addAllInstructors: "
                     + addAllInstructors;
             log.debug("REST request to register {} to channel : {}", registerAllString, channelId);
-            userLogins = new ArrayList<>();
         }
-
         var course = courseRepository.findByIdElseThrow(courseId);
         var channelFromDatabase = this.channelService.getChannelOrThrow(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
@@ -278,15 +274,9 @@ public class ChannelResource {
         }
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToRegisterUsersToChannel(channelFromDatabase, userLogins, requestingUser);
-        Set<User> usersToRegister;
-
-        if (!anyAddAllTrue) {
-            usersToRegister = conversationService.findUsersInDatabase(userLogins);
-        }
-        else {
-            usersToRegister = conversationService.findUsersInDatabase(course, addAllStudents, addAllTutors, addAllEditors, addAllInstructors);
-        }
-
+        Set<User> usersToRegister = new HashSet<>();
+        usersToRegister.addAll(conversationService.findUsersInDatabase(course, addAllStudents, addAllTutors, addAllEditors, addAllInstructors));
+        usersToRegister.addAll(conversationService.findUsersInDatabase(usersLoginsToRegister.stream().toList()));
         conversationService.registerUsersToConversation(course, usersToRegister, channelFromDatabase, Optional.empty());
         return ResponseEntity.noContent().build();
     }

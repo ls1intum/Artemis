@@ -9,7 +9,16 @@ export function canAddUsersToConversation(conversation: ConversationDto): boolea
         return false;
     }
     const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
-    const channelCheck = (channel: ChannelDTO): boolean => !!channel.hasChannelAdminRights && !channel?.isArchived;
+    const channelCheck = (channel: ChannelDTO): boolean => {
+        if (channel.hasChannelAdminRights) {
+            return true;
+        }
+        if (channel.isPublic) {
+            return !!channel.isMember;
+        } else {
+            return !!channel.isAdmin || !!channel.hasChannelAdminRights;
+        }
+    };
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);
@@ -35,7 +44,7 @@ export function canRemoveUsersFromConversation(conversation: ConversationDto): b
         return false;
     }
     const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
-    const channelCheck = (channel: ChannelDTO): boolean => !!channel.hasChannelAdminRights && !channel?.isArchived && channel?.isPublic === false;
+    const channelCheck = (channel: ChannelDTO): boolean => !!channel.hasChannelAdminRights;
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);
@@ -52,7 +61,7 @@ export function canLeaveConversation(conversation: ConversationDto): boolean {
     if (!conversation) {
         return false;
     }
-    // not  possible to leave a conversation as not a member
+    // not possible to leave a conversation as not a member
     if (!conversation.isMember) {
         return false;
     }
@@ -60,11 +69,9 @@ export function canLeaveConversation(conversation: ConversationDto): boolean {
     if (isChannelDto(conversation) && conversation?.isCreator === true) {
         return false;
     }
-
     if (isOneToOneChatDto(conversation)) {
         return false;
     }
-
     return true;
 }
 
@@ -81,8 +88,8 @@ export function canJoinChannel(channel: ChannelDTO): boolean {
     if (channel.hasChannelAdminRights) {
         return true;
     } else {
-        // without admin rights you can only join a channel if it is public and not archived
-        return !!channel.isPublic && !channel.isArchived;
+        // without admin rights you can only join a channel if it is public
+        return !!channel.isPublic;
     }
 }
 
@@ -102,7 +109,7 @@ export function canChangeChannelProperties(channel: ChannelDTO): boolean {
     if (!channel) {
         return false;
     }
-    return !channel.isArchived && !!channel.hasChannelAdminRights;
+    return !!channel.hasChannelAdminRights;
 }
 
 export function canChangeGroupChatProperties(groupChat: GroupChatDto): boolean {

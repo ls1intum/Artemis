@@ -39,12 +39,16 @@ describe('ConversationPermissionUtils', () => {
                 expect(canAddUsersToConversation(channelWhereUsersCanBeAdded)).toBeTrue();
             });
 
-            it('should return false if the user is not a channel admin', () => {
-                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, hasChannelAdminRights: false } as ChannelDTO)).toBeFalse();
+            it('should return true if the user is not a channel admin and channel is public', () => {
+                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, hasChannelAdminRights: false } as ChannelDTO)).toBeTrue();
             });
 
-            it('should return false if the channel is archived', () => {
-                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, isArchived: true } as ChannelDTO)).toBeFalse();
+            it('should return false if the user is not a channel admin and channel is private', () => {
+                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, hasChannelAdminRights: false, isPublic: false, isAdmin: false } as ChannelDTO)).toBeFalse();
+            });
+
+            it('should return true if the channel is archived', () => {
+                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, isPublic: true, isArchived: true } as ChannelDTO)).toBeTrue();
             });
         });
 
@@ -59,12 +63,12 @@ describe('ConversationPermissionUtils', () => {
                 expect(canRemoveUsersFromConversation({ ...channelsWhereUsersCanBeRemoved, hasChannelAdminRights: false } as ChannelDTO)).toBeFalse();
             });
 
-            it('should return false if the channel is archived', () => {
-                expect(canRemoveUsersFromConversation({ ...channelsWhereUsersCanBeRemoved, isArchived: true } as ChannelDTO)).toBeFalse();
+            it('should return true if the channel is archived', () => {
+                expect(canRemoveUsersFromConversation({ ...channelsWhereUsersCanBeRemoved, isArchived: true } as ChannelDTO)).toBeTrue();
             });
 
-            it('should return false if the channel is public', () => {
-                expect(canRemoveUsersFromConversation({ ...channelsWhereUsersCanBeRemoved, isPublic: true } as ChannelDTO)).toBeFalse();
+            it('should return true if the channel is public', () => {
+                expect(canRemoveUsersFromConversation({ ...channelsWhereUsersCanBeRemoved, isPublic: true } as ChannelDTO)).toBeTrue();
             });
         });
 
@@ -138,8 +142,8 @@ describe('ConversationPermissionUtils', () => {
                 expect(canChangeChannelProperties({ ...channelThatCanBeChanged, hasChannelAdminRights: false })).toBeFalse();
             });
 
-            it('cannot change channel properties of channel that is already archived', () => {
-                expect(canChangeChannelProperties({ ...channelThatCanBeChanged, isArchived: true })).toBeFalse();
+            it('can change channel properties of channel that is already archived', () => {
+                expect(canChangeChannelProperties({ ...channelThatCanBeChanged, isArchived: true })).toBeTrue();
             });
         });
 
@@ -158,16 +162,12 @@ describe('ConversationPermissionUtils', () => {
                 expect(canJoinChannel({ ...channelThatCanBeJoined, isPublic: false })).toBeFalse();
             });
 
-            it('can not join an archived channel without admin rights', () => {
-                expect(canJoinChannel({ ...channelThatCanBeJoined, isArchived: true })).toBeFalse();
+            it('can join an archived public channel without admin rights', () => {
+                expect(canJoinChannel({ ...channelThatCanBeJoined, isArchived: true })).toBeTrue();
             });
 
             it('can join a private channel with admin rights', () => {
                 expect(canJoinChannel({ ...channelThatCanBeJoined, isPublic: false, hasChannelAdminRights: true })).toBeTrue();
-            });
-
-            it('can join an archived channel with admin rights', () => {
-                expect(canJoinChannel({ ...channelThatCanBeJoined, isArchived: true, hasChannelAdminRights: true })).toBeTrue();
             });
         });
     });

@@ -113,10 +113,11 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
         return post;
     }
 
-    void assertParticipants(Long conversationId, int expectedSize, String... expectedUserLogins) {
+    Set<ConversationParticipant> assertParticipants(Long conversationId, int expectedSize, String... expectedUserLogins) {
         var participants = this.getParticipants(conversationId);
         assertThat(participants).hasSize(expectedSize);
         assertThat(participants).extracting(ConversationParticipant::getUser).extracting(User::getLogin).containsExactlyInAnyOrder(expectedUserLogins);
+        return participants;
     }
 
     void verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction crudAction, Long conversationId, String... expectedUserLogins) {
