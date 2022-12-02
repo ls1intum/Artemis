@@ -80,14 +80,14 @@ describe('ConversationPermissionUtils', () => {
             });
         });
         describe('canDeleteChannel', () => {
-            const channelThatCanBeDeleted = generateExampleChannelDTO({ hasChannelAdminRights: true });
+            const courseWithCorrectRights = { isAtLeastInstructor: true } as Course;
 
-            it('can delete channel', () => {
-                expect(canDeleteChannel(channelThatCanBeDeleted)).toBeTrue();
+            it('can delete channel as instructor', () => {
+                expect(canDeleteChannel(courseWithCorrectRights)).toBeTrue();
             });
 
-            it('cannot delete channel without admin rights', () => {
-                expect(canDeleteChannel({ ...channelThatCanBeDeleted, hasChannelAdminRights: false })).toBeFalse();
+            it('can not delete channel as tutor', () => {
+                expect(canDeleteChannel({ isAtLeastInstructor: false, isAtLeastTutor: true } as Course)).toBeFalse();
             });
         });
 

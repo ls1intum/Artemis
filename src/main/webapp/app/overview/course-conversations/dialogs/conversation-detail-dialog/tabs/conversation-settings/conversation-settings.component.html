@@ -16,7 +16,7 @@
                     {{ 'artemisApp.pages.unArchiveChannel.confirmButton' | artemisTranslate }}
                 </button>
             </div>
-            <div class="col-12 settings-section text-center" *ngIf="canDeleteChannel(channel)">
+            <div class="col-12 settings-section text-center" *ngIf="canDeleteChannel(course)">
                 <button
                     class="btn btn-danger delete"
                     [id]="'delete-' + channel.id"

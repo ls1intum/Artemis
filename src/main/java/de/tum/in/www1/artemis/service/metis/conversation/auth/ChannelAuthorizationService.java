@@ -55,14 +55,12 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
     /**
      * Checks if a user is allowed to delete a channel or throws an exception if not
      *
-     * @param channel the channel that should be deleted
-     * @param user    the user that wants to delete the channel
+     * @param course the course in which the channel is located
+     * @param user   the user that wants to delete the channel
      */
-    public void isAllowedToDeleteChannel(@NotNull Channel channel, @Nullable User user) {
+    public void isAllowedToDeleteChannel(@NotNull Course course, @Nullable User user) {
         user = getUserIfNecessary(user);
-        if (!hasChannelAdminRights(channel.getId(), user)) {
-            throw new AccessForbiddenException("You are not allowed to update this channel");
-        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
     }
 
     /**

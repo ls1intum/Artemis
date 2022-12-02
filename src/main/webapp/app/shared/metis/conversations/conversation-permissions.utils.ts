@@ -90,8 +90,8 @@ export function canChangeChannelArchivalState(channel: ChannelDTO): boolean {
     return hasChannelAdminRightsCheck(channel);
 }
 
-export function canDeleteChannel(channel: ChannelDTO): boolean {
-    return hasChannelAdminRightsCheck(channel);
+export function canDeleteChannel(course: Course): boolean {
+    return course?.isAtLeastInstructor ?? false;
 }
 
 export function canCreateChannel(course: Course): boolean {
