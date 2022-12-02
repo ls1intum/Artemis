@@ -15,7 +15,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
-import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -206,14 +205,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         modalRef.closed.subscribe(() => {
             location.reload();
         });
-    }
-
-    openRepoExportModal() {
-        const modalRef = this.modalService.open(ProgrammingAssessmentRepoExportDialogComponent, {
-            size: 'lg',
-            backdrop: 'static',
-        });
-        modalRef.componentInstance.selectedProgrammingExercises = this.selectedProgrammingExercises;
     }
 
     /**

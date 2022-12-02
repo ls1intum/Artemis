@@ -5,10 +5,10 @@
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
     <!-- EXERCISE ACTIONS START -->
-    <div class="tab-bar tab-bar-exercise-details ps-3 pe-3 justify-content-between">
+    <div class="tab-bar tab-bar-exercise-details ps-3 pe-3 justify-content-end">
         <jhi-exercise-details-student-actions
             class="col"
-            *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise, showResult: showResults && latestRatedResult != undefined }"
+            *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise, showResult: showResults && latestRatedResult }"
             [courseId]="courseId"
             [exercise]="exercise"
             [studentParticipation]="gradedStudentParticipation"
@@ -36,8 +36,8 @@
                 >
                 </jhi-submission-result-status>
             </div>
-            <div class="col-auto d-md-flex align-items-center" *ngIf="exercise.isAtLeastTutor">
-                <span class="me-1">{{
+            <div class="col-auto d-md-flex align-items-center instructor-actions" *ngIf="exercise.isAtLeastTutor">
+                <span class="me-1 d-none d-md-inline">{{
                     'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise.isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate
                 }}</span>
                 <div class="gap-1">
@@ -190,7 +190,7 @@
             >
             </jhi-reset-repo-button>
             <!-- PROBLEM STATEMENT END -->
-            <ng-container *ngIf="exampleSolutionUML || exampleSolution || isProgrammingExerciseExampleSolutionPublished">
+            <ng-container *ngIf="exampleSolutionUML || exampleSolution || programmingExercise?.exampleSolutionPublished">
                 <div class="row mb-2 mt-2 align-items-baseline">
                     <div class="control-label" (click)="changeExampleSolution()">
                         <span class="h3 pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</span>
@@ -208,9 +208,24 @@
                         ></jhi-modeling-editor>
                     </dd>
                     <dd *ngIf="exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolution"></dd>
-                    <dd *ngIf="isProgrammingExerciseExampleSolutionPublished" class="editor-outline-background">
-                        <jhi-programming-exercise-example-solution-repo-download class="ms-2" [exerciseId]="exercise.id!"></jhi-programming-exercise-example-solution-repo-download>
-                    </dd>
+                    <ng-container *ngIf="programmingExercise?.exampleSolutionPublished">
+                        <dd class="editor-outline-background">
+                            <jhi-programming-exercise-example-solution-repo-download
+                                class="ms-2"
+                                [exerciseId]="exercise.id!"
+                                [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
+                            ></jhi-programming-exercise-example-solution-repo-download>
+                        </dd>
+                        <dd *ngIf="programmingExercise?.releaseTestsWithExampleSolution" class="editor-outline-background">
+                            <jhi-programming-exercise-example-solution-repo-download
+                                class="ms-2"
+                                [exerciseId]="exercise.id!"
+                                [includeTests]="true"
+                                [title]="'artemisApp.programmingExercise.export.downloadTestsWithExampleSolution'"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.studentDownloadTestsTooltip' | artemisTranslate }}"
+                            ></jhi-programming-exercise-example-solution-repo-download>
+                        </dd>
+                    </ng-container>
                 </dl>
             </ng-container>
             <jhi-complaint-student-view
