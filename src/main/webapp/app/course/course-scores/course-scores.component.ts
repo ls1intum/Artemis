@@ -533,7 +533,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
                 gradeName: gradingScale.plagiarismGrade || GradingScale.DEFAULT_PLAGIARISM_GRADE,
             } as GradeStep;
         } else {
-            const overallPercentageForStudent = student.overallPoints > 0 && this.maxNumberOfOverallPoints > 0 ? (student.overallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
+            const overallPercentageForStudent = student.overallPoints && this.maxNumberOfOverallPoints  ? (student.overallPoints / this.maxNumberOfOverallPoints) * 100 : 0;
             return this.gradingSystemService.findMatchingGradeStep(gradingScale.gradeSteps, overallPercentageForStudent);
         }
     }
