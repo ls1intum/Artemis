@@ -25,7 +25,7 @@ import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-grap
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/feedback-item-service';
-import { ProgrammingExerciseFeedbackItemService } from 'app/exercises/shared/feedback/programming-exercise-feedback-item.service';
+import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/programming-feedback-item.service';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
 
 export enum FeedbackItemType {
@@ -52,7 +52,7 @@ export class FeedbackItem {
     selector: 'jhi-result-detail',
     templateUrl: './result-detail.component.html',
     styleUrls: ['./result-detail.scss'],
-    providers: [ProgrammingExerciseFeedbackItemService, FeedbackItemServiceImpl],
+    providers: [ProgrammingFeedbackItemService, FeedbackItemServiceImpl],
 })
 export class ResultDetailComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
@@ -149,8 +149,7 @@ export class ResultDetailComponent implements OnInit {
 
         this.initializeExerciseInformation();
 
-        this.feedbackItemService =
-            this.exerciseType === ExerciseType.PROGRAMMING ? this.injector.get(ProgrammingExerciseFeedbackItemService) : this.injector.get(FeedbackItemServiceImpl);
+        this.feedbackItemService = this.exerciseType === ExerciseType.PROGRAMMING ? this.injector.get(ProgrammingFeedbackItemService) : this.injector.get(FeedbackItemServiceImpl);
         this.fetchAdditionalInformation();
 
         this.commitHash = this.getCommitHash().slice(0, 11);

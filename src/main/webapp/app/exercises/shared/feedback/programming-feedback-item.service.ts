@@ -8,7 +8,7 @@ import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue
 import { FeedbackItemGroup, getAllFeedbackItemGroups } from 'app/exercises/shared/feedback/programming-feedback-item-groups';
 
 @Injectable({ providedIn: 'root' })
-export class ProgrammingExerciseFeedbackItemService implements FeedbackItemService {
+export class ProgrammingFeedbackItemService implements FeedbackItemService {
     constructor(private translateService: TranslateService) {}
 
     getPositiveTestCasesWithoutDetailText(feedbackItems: FeedbackItem[]): FeedbackItem[] {
