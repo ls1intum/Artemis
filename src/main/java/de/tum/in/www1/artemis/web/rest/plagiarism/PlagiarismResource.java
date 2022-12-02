@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
- * REST controller for managing TextExercise.
+ * REST controller for managing Plagiarism Cases.
  */
 @RestController
 @RequestMapping("api/")

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-instructor-repo-download.component';
 
@@ -16,9 +16,11 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercise
     ></jhi-button>`,
 })
 export class ProgrammingExerciseExampleSolutionRepoDownloadComponent extends ProgrammingExerciseInstructorRepoDownloadComponent {
+    @Input() includeTests?: boolean;
+
     exportRepository() {
         if (this.exerciseId) {
-            this.programmingExerciseService.exportSolutionRepository(this.exerciseId).subscribe((response) => {
+            this.programmingExerciseService.exportStudentRequestedRepository(this.exerciseId, this.includeTests ?? false).subscribe((response) => {
                 downloadZipFileFromResponse(response);
                 this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
             });

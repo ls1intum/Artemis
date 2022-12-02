@@ -68,6 +68,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public courseId: number;
     public course: Course;
     public exercise?: Exercise;
+    public programmingExercise?: ProgrammingExercise;
     public resultWithComplaint?: Result;
     public latestRatedResult?: Result;
     public complaint?: Complaint;
@@ -191,11 +192,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     handleNewExercise(newExercise: Exercise) {
         this.exercise = newExercise;
+
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
         this.exercise.participationStatus = participationStatus(this.exercise, false);
-        const now = dayjs();
-        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || now.isAfter(this.exercise.assessmentDueDate);
+        this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exercise.categories || [];
         this.allowComplaintsForAutomaticAssessments = false;
 
@@ -204,7 +205,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             const isAfterDateForComplaint =
                 !this.exercise.dueDate ||
                 (hasExerciseDueDatePassed(this.exercise, this.gradedStudentParticipation) &&
-                    (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
+                    (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || dayjs().isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
             this.hasSubmissionPolicy = false;
@@ -238,7 +239,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      */
     showIfExampleSolutionPresent(newExercise: Exercise) {
         this.exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo(newExercise, this.artemisMarkdown);
-
         // For TAs the example solution is collapsed on default to avoid spoiling, as the example solution is always shown to TAs
         this.exampleSolutionCollapsed = !!newExercise?.isAtLeastTutor;
     }

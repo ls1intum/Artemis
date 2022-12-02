@@ -31,8 +31,6 @@
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
             },
-            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students. But they can only participate after the currently defined start date.",
-            "noReleaseAndStartDateWarning": "You have not defined a release and start date for this exercise, this means that it will be immediately published and students cam participate in the exercise.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
             "templateRepositoryUrl": "Template Repository Url",
@@ -234,6 +232,9 @@
             "export": {
                 "downloadRepo": "Download Repo",
                 "downloadExampleSolutionRepo": "Download Solution Repo",
+                "downloadExampleSolution": "Download example solution",
+                "downloadTests": "Download tests",
+                "downloadTestsWithExampleSolution": "Download tests with example solution",
                 "downloadExercise": "Download Exercise",
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",
@@ -293,16 +294,13 @@
                 "assessmentDueDateTooltip": "The deadline for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
                 "notSet": "not set",
                 "allowFeedbackRequests": "Allow feedback requests",
-                "feedbackRequestsEnabledTooltip": "Students can request manual feedback before the deadline",
-                "feedbackRequestsDisabledTooltip": "Students cannot request manual feedback before the deadline",
-                "feedbackRequestsEnabled": "Feedback requests are possible",
-                "feedbackRequestsDisabled": "Feedback requests are not possible",
+                "manualFeedbackRequests": "Manual feedback requests",
+                "manualFeedbackRequestsTooltip": "Students can request manual feedback before the deadline to receive feedback.",
                 "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
-                "allowComplaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment",
-                "disallowComplaintOnAutomaticAssessmentTooltip": "Students cannot complain after receiving an automatic assessment",
-                "complaintOnAutomaticAssessmentEnabled": "Complaints are possible",
-                "complaintOnAutomaticAssessmentDisabled": "Complaints are not possible",
-                "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable."
+                "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
+                "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
+                "releaseTestsWithExampleSolution": "Publish tests",
+                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the deadline."
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
@@ -456,7 +454,8 @@
                 "totalJobDuration": "Total Job",
                 "dependenciesDownloadedCount": "Number of downloaded dependencies",
                 "tooltip": "The average build duration is calculated based on all builds (template, solution and student submissions). The number of downloaded dependencies can be reduced by caching dependencies in the Docker image."
-            }
+            },
+            "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing."
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."
