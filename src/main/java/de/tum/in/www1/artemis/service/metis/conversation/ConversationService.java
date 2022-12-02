@@ -184,14 +184,6 @@ public class ConversationService {
                 usersToDeregister.stream().map(User::getId).collect(Collectors.toSet()));
         var usersWithExistingParticipants = usersToDeregister.stream()
                 .filter(user -> participantsToRemove.stream().anyMatch(participant -> participant.getUser().getId().equals(user.getId()))).collect(Collectors.toSet());
-
-        // you are not allowed to deregister the creator of A channel
-        if (conversation instanceof Channel) {
-            var creator = conversation.getCreator();
-            if (usersWithExistingParticipants.contains(creator)) {
-                throw new BadRequestAlertException("You are not allowed to deregister the creator of a channel", "conversation", "creatorDeregistration");
-            }
-        }
         if (participantsToRemove.size() > 0) {
             conversationParticipantRepository.deleteAll(participantsToRemove);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversation, usersWithExistingParticipants);

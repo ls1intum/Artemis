@@ -74,8 +74,7 @@ public class ChannelResource {
         var filteredStream = result;
         // only instructors / admins can see all channels
         if (!isAtLeastInstructor) {
-            filteredStream = result // we only want to show archived channels where the requestingUser is a member
-                    .filter(channelDTO -> !channelDTO.getIsArchived() || channelDTO.getIsMember())
+            filteredStream = result
                     // we only want to show public channels and in addition private channels that the requestingUser is a member of
                     .filter(channelDTO -> channelDTO.getIsPublic() || channelDTO.getIsMember());
         }
@@ -270,9 +269,6 @@ public class ChannelResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var channelFromDatabase = this.channelService.getChannelOrThrow(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
-        if (channelFromDatabase.getIsArchived()) {
-            throw new BadRequestAlertException("Users can not be registered to an archived channel.", CHANNEL_ENTITY_NAME, "channelIsArchived");
-        }
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToRegisterUsersToChannel(channelFromDatabase, usersLoginsToRegister, requestingUser);
         Set<User> usersToRegister = new HashSet<>();
@@ -307,6 +303,12 @@ public class ChannelResource {
 
         channelAuthorizationService.isAllowedToDeregisterUsersFromChannel(channelFromDatabase, userLogins, requestingUser);
         var usersToDeRegister = conversationService.findUsersInDatabase(userLogins);
+        // you are not allowed to deregister the creator of a channel{
+        var creator = channelFromDatabase.getCreator();
+        if (usersToDeRegister.contains(creator)) {
+            throw new BadRequestAlertException("You are not allowed to deregister the creator of a channel", "conversation", "creatorDeregistration");
+        }
+
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, channelFromDatabase);
         return ResponseEntity.ok().build();
     }

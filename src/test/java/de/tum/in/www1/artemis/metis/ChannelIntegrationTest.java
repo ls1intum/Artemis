@@ -433,6 +433,44 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         assertUsersAreConversationMembers(channel.getId(), "instructor2");
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void getCourseChannelsOverview_asNormalUser_canSeeAllPublicChannelsAndPrivateChannelsWhereMember() throws Exception {
+        // given
+        var publicChannelWhereMember = createChannel(true, "public1");
+        addUsersToConversation(publicChannelWhereMember.getId(), "student1");
+        var publicChannelWhereNotMember = createChannel(true, "public2");
+        var privateChannelWhereMember = createChannel(false, "private1");
+        addUsersToConversation(privateChannelWhereMember.getId(), "student1");
+        createChannel(false, "private2");
+
+        // then
+        database.changeUser("student1");
+        var channnels = request.getList("/api/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
+        assertThat(channnels).hasSize(3);
+        assertThat(channnels.stream().map(ChannelDTO::getId).collect(Collectors.toList())).containsExactlyInAnyOrder(publicChannelWhereMember.getId(),
+                publicChannelWhereNotMember.getId(), privateChannelWhereMember.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void getCourseChannelsOverview_asCourseInstructor_canSeeAllPublicChannelsAndAllPrivateChannels() throws Exception {
+        // given
+        var publicChannelWhereMember = createChannel(true, "public1");
+        addUsersToConversation(publicChannelWhereMember.getId(), "student1");
+        var publicChannelWhereNotMember = createChannel(true, "public2");
+        var privateChannelWhereMember = createChannel(false, "private1");
+        addUsersToConversation(privateChannelWhereMember.getId(), "student1");
+        var privateChannelWhereNotMember = createChannel(false, "private2");
+
+        // then
+        database.changeUser("instructor2");
+        var channnels = request.getList("/api/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
+        assertThat(channnels).hasSize(4);
+        assertThat(channnels.stream().map(ChannelDTO::getId).collect(Collectors.toList())).containsExactlyInAnyOrder(publicChannelWhereMember.getId(),
+                publicChannelWhereNotMember.getId(), privateChannelWhereMember.getId(), privateChannelWhereNotMember.getId());
+    }
+
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {
         // prepare channel in db
         if (shouldArchive) {
@@ -590,8 +628,12 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     }
 
     private ChannelDTO createChannel(boolean isPublicChannel) throws Exception {
+        return createChannel(isPublicChannel, "general");
+    }
+
+    private ChannelDTO createChannel(boolean isPublicChannel, String name) throws Exception {
         var channelDTO = new ChannelDTO();
-        channelDTO.setName("general");
+        channelDTO.setName(name);
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setDescription("general channel");
 
