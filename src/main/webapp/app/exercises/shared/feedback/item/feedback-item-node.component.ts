@@ -25,12 +25,15 @@ export class FeedbackItemNode implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
 
     ngOnInit(): void {
-        // TODO: I don't think instanceof works as it should
-        if (this.feedbackNode instanceof FeedbackItemGroup) {
-            this.feedbackItemGroup = this.feedbackNode;
-        } else {
+        if (!this.isFeedbackItemGroup(this.feedbackNode)) {
             this.feedbackItem = this.feedbackNode;
+        } else {
+            this.feedbackItemGroup = this.feedbackNode;
         }
+    }
+
+    private isFeedbackItemGroup(node: FeedbackItem | FeedbackItemGroup): node is FeedbackItemGroup {
+        return (node as FeedbackItemGroup).members !== undefined;
     }
 
     /**
