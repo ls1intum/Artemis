@@ -11,7 +11,7 @@ import { ProgrammingExerciseInstructorRepoDownloadComponent } from 'app/exercise
         [shouldSubmit]="false"
         [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
         [icon]="faDownload"
-        [title]="'artemisApp.programmingExercise.export.downloadExampleSolutionRepo'"
+        [title]="title"
         (onClick)="exportRepository()"
     ></jhi-button>`,
 })
