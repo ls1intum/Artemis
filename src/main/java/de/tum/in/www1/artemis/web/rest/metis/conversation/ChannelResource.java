@@ -253,13 +253,17 @@ public class ChannelResource {
      */
     @PostMapping("/{courseId}/channels/{channelId}/register")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins,
+    public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody(required = false) List<String> userLogins,
             @RequestParam(defaultValue = "false") Boolean addAllStudents, @RequestParam(defaultValue = "false") Boolean addAllTutors,
             @RequestParam(defaultValue = "false") Boolean addAllEditors, @RequestParam(defaultValue = "false") Boolean addAllInstructors) {
-        var usersLoginsToRegister = Objects.requireNonNullElseGet(userLogins, () -> new HashSet<>(userLogins)).stream().filter(Objects::nonNull).map(String::trim)
-                .collect(Collectors.toSet());
-        if (!userLogins.isEmpty()) {
-            log.debug("REST request to register {} users to channel : {}", userLogins.size(), channelId);
+        List<String> usersLoginsToRegister = new ArrayList<>();
+        if (userLogins != null) {
+            usersLoginsToRegister.addAll(userLogins);
+        }
+        usersLoginsToRegister = usersLoginsToRegister.stream().filter(Objects::nonNull).map(String::trim).collect(Collectors.toSet()).stream().toList();
+
+        if (!usersLoginsToRegister.isEmpty()) {
+            log.debug("REST request to register {} users to channel : {}", usersLoginsToRegister.size(), channelId);
         }
         if (addAllStudents || addAllTutors || addAllEditors || addAllInstructors) {
             var registerAllString = "addAllStudents: " + addAllStudents + ", addAllTutors: " + addAllTutors + ", addAllEditors: " + addAllEditors + ", addAllInstructors: "
@@ -273,12 +277,12 @@ public class ChannelResource {
             throw new BadRequestAlertException("Users can not be registered to an archived channel.", CHANNEL_ENTITY_NAME, "channelIsArchived");
         }
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        channelAuthorizationService.isAllowedToRegisterUsersToChannel(channelFromDatabase, userLogins, requestingUser);
+        channelAuthorizationService.isAllowedToRegisterUsersToChannel(channelFromDatabase, usersLoginsToRegister, requestingUser);
         Set<User> usersToRegister = new HashSet<>();
         usersToRegister.addAll(conversationService.findUsersInDatabase(course, addAllStudents, addAllTutors, addAllEditors, addAllInstructors));
         usersToRegister.addAll(conversationService.findUsersInDatabase(usersLoginsToRegister.stream().toList()));
         conversationService.registerUsersToConversation(course, usersToRegister, channelFromDatabase, Optional.empty());
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
     }
 
     /**
@@ -307,7 +311,7 @@ public class ChannelResource {
         channelAuthorizationService.isAllowedToDeregisterUsersFromChannel(channelFromDatabase, userLogins, requestingUser);
         var usersToDeRegister = conversationService.findUsersInDatabase(userLogins);
         conversationService.deregisterUsersFromAConversation(course, usersToDeRegister, channelFromDatabase);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
     }
 
     private void checkEntityIdMatchesPathIds(Channel channel, Optional<Long> courseId, Optional<Long> conversationId) {

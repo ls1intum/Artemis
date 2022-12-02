@@ -144,6 +144,39 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
                 argThat((argument) -> argument instanceof ConversationWebsocketDTO && !Arrays.asList(actions).contains(((ConversationWebsocketDTO) argument).getCrudAction())));
     }
 
+    void assertUsersAreConversationMembers(Long channelId, String... userLogin) {
+        var conversationMembers = getParticipants(channelId).stream().map(ConversationParticipant::getUser);
+        assertThat(conversationMembers).extracting(User::getLogin).contains(userLogin);
+    }
+
+    void assertUserAreNotConversationMembers(Long channelId, String... userLogin) {
+        var conversationMembers = getParticipants(channelId).stream().map(ConversationParticipant::getUser);
+        assertThat(conversationMembers).extracting(User::getLogin).doesNotContain(userLogin);
+    }
+
+    void removeUsersFromConversation(Long conversationId, String... userLogin) throws Exception {
+        for (String login : userLogin) {
+            var user = database.getUserByLogin(login);
+            var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, user.getId());
+            participant.ifPresent(conversationParticipant -> conversationParticipantRepository.delete(conversationParticipant));
+        }
+    }
+
+    void addUsersToConversation(Long conversationId, String... userLogin) throws Exception {
+        for (String login : userLogin) {
+            var user = database.getUserByLogin(login);
+            var existing = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, user.getId());
+            if (existing.isPresent()) {
+                continue;
+            }
+            var participant = new ConversationParticipant();
+            participant.setConversation(conversationRepository.findByIdElseThrow(conversationId));
+            participant.setIsAdmin(false);
+            participant.setUser(user);
+            conversationParticipantRepository.save(participant);
+        }
+    }
+
     void resetWebsocketMock() {
         reset(this.messagingTemplate);
     }

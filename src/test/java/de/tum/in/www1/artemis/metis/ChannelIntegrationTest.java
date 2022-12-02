@@ -2,7 +2,9 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -178,7 +180,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, true);
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
-        resetWebsocketMock();
     }
 
     @ParameterizedTest
@@ -262,26 +263,59 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // then
         // every instructor automatically has admin rights for every channel
         database.changeUser("instructor2");
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/grant-channel-admin", List.of("student1", "student2"),
-                HttpStatus.OK);
-        assertUsersAreChannelAdmin(channel.getId(), "student1", "student2");
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/revoke-channel-admin", List.of("student1", "student2"),
-                HttpStatus.OK);
-        assertUserAreNotChannelAdmin(channel.getId(), "student1", "student2");
+        testGrantRevokeChannelAdminRightsWorks(channel, true);
+        testGrantRevokeChannelAdminRightsWorks(channel, false);
 
         // channel admins can also grand and revoke channel admin rights
         database.changeUser("tutor1");
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/grant-channel-admin", List.of("student1", "student2"),
-                HttpStatus.OK);
-        assertUsersAreChannelAdmin(channel.getId(), "student1", "student2");
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/revoke-channel-admin", List.of("student1", "student2"),
-                HttpStatus.OK);
-        assertUserAreNotChannelAdmin(channel.getId(), "student1", "student2");
+        testGrantRevokeChannelAdminRightsWorks(channel, true);
+        testGrantRevokeChannelAdminRightsWorks(channel, false);
 
         // note: you can NOT revoke channel admin rights of the creator to guarantee that there is always at least one channel admin
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/revoke-channel-admin", List.of("instructor1"),
                 HttpStatus.BAD_REQUEST);
         assertUsersAreChannelAdmin(channel.getId(), "instructor1");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void registerUsersToChannel_asUserWithChannelAdminRights_shouldRegisterUsersToChannel(boolean isPublicChannel) throws Exception {
+        // given
+        var channel = createChannel(isPublicChannel);
+        addUserAsChannelAdmin(channel, "tutor1");
+
+        // then
+        // every instructor automatically has admin rights for every channel
+        database.changeUser("instructor2");
+        testRegisterAndDeregisterUserWorks(channel, true);
+        testRegisterAndDeregisterUserWorks(channel, false);
+
+        // channel admins can also grant and revoke channel admin rights
+        database.changeUser("tutor1");
+        testRegisterAndDeregisterUserWorks(channel, true);
+        testRegisterAndDeregisterUserWorks(channel, false);
+
+        removeUsersFromConversation(channel.getId(), "student1", "student2", "tutor1");
+        database.changeUser("instructor1");
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("addAllStudents", String.valueOf(true));
+        params.add("addAllTutors", String.valueOf(true));
+        params.add("addAllEditors", String.valueOf(true));
+        params.add("addAllInstructors", String.valueOf(true));
+
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", HttpStatus.OK, params);
+        var course = courseRepository.findByIdElseThrow(exampleCourseId);
+        var allStudentLogins = userRepository.findAllInGroup(course.getStudentGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        var allTutorLogins = userRepository.findAllInGroup(course.getTeachingAssistantGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        var allEditorLogins = userRepository.findAllInGroup(course.getEditorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        var allInstructorLogins = userRepository.findAllInGroup(course.getInstructorGroupName()).stream().map(User::getLogin).collect(Collectors.toSet());
+        var allUserLogins = new HashSet<>(allStudentLogins);
+        allUserLogins.addAll(allTutorLogins);
+        allUserLogins.addAll(allEditorLogins);
+        allUserLogins.addAll(allInstructorLogins);
+        String[] allUserLoginsArray = allUserLogins.toArray(new String[0]);
+        assertUsersAreConversationMembers(channel.getId(), allUserLoginsArray);
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {
@@ -295,6 +329,59 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var postfix = shouldArchive ? "/archive" : "/unarchive";
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, HttpStatus.OK, new LinkedMultiValueMap<>());
         this.assertChannelProperties(channel.getId(), channel.getName(), channel.getTopic(), channel.getDescription(), isPublicChannel, shouldArchive);
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
+        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+        resetWebsocketMock();
+    }
+
+    private void testRegisterAndDeregisterUserWorks(ChannelDTO channel, boolean shouldRegister) throws Exception {
+        // prepare channel in db
+        if (shouldRegister) {
+            this.removeUsersFromConversation(channel.getId(), "student1", "student2");
+        }
+        else {
+            this.addUsersToConversation(channel.getId(), "student1", "student2");
+        }
+        var postfix = shouldRegister ? "/register" : "/deregister";
+
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of("student1", "student2"), HttpStatus.OK);
+        if (shouldRegister) {
+            assertUsersAreConversationMembers(channel.getId(), "student1", "student2");
+        }
+        else {
+            assertUserAreNotConversationMembers(channel.getId(), "student1", "student2");
+        }
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
+        if (shouldRegister) {
+            verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, channel.getId(), "student1", "student2");
+            verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE, MetisCrudAction.CREATE);
+        }
+        else {
+            verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, channel.getId(), "student1", "student2");
+            verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE, MetisCrudAction.DELETE);
+        }
+        resetWebsocketMock();
+    }
+
+    private void testGrantRevokeChannelAdminRightsWorks(ChannelDTO channel, boolean shouldGrant) throws Exception {
+        // prepare channel in db
+        if (shouldGrant) {
+            this.revokeChannelAdminRights(channel.getId(), "student1");
+            this.revokeChannelAdminRights(channel.getId(), "student1");
+        }
+        else {
+            this.grantChannelAdminRights(channel.getId(), "student1");
+            this.grantChannelAdminRights(channel.getId(), "student1");
+        }
+        var postfix = shouldGrant ? "/grant-channel-admin" : "/revoke-channel-admin";
+
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of("student1", "student2"), HttpStatus.OK);
+        if (shouldGrant) {
+            assertUsersAreChannelAdmin(channel.getId(), "student1", "student2");
+        }
+        else {
+            assertUserAreNotChannelAdmin(channel.getId(), "student1", "student2");
+        }
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
         resetWebsocketMock();
@@ -361,6 +448,20 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         channelRepository.save(dbChannel);
     }
 
+    private void revokeChannelAdminRights(Long channelId, String userLogin) {
+        var user = userRepository.findOneByLogin(userLogin).get();
+        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId()).get();
+        participant.setIsAdmin(false);
+        conversationParticipantRepository.save(participant);
+    }
+
+    private void grantChannelAdminRights(Long channelId, String userLogin) {
+        var user = userRepository.findOneByLogin(userLogin).get();
+        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId()).get();
+        participant.setIsAdmin(true);
+        conversationParticipantRepository.save(participant);
+    }
+
     private ChannelDTO createChannel(boolean isPublicChannel) throws Exception {
         var channelDTO = new ChannelDTO();
         channelDTO.setName("general");
@@ -389,6 +490,5 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     private void assertUserAreNotChannelAdmin(Long channelId, String... userLogin) {
         var channelAdmins = getParticipants(channelId).stream().filter(ConversationParticipant::getIsAdmin).map(ConversationParticipant::getUser);
         assertThat(channelAdmins).extracting(User::getLogin).doesNotContain(userLogin);
-
     }
 }
