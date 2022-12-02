@@ -1,34 +1,36 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { HttpClient } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
-import { Subject, of } from 'rxjs';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { ExerciseMode, ExerciseType } from 'app/entities/exercise.model';
-import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ArtemisTestModule } from '../../../test.module';
-import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
-import { Team } from 'app/entities/team.model';
-import { User } from 'app/core/user/user.model';
+import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { Router } from '@angular/router';
+import { User } from 'app/core/user/user.model';
+import { Exercise, ExerciseMode, ExerciseType } from 'app/entities/exercise.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Result } from 'app/entities/result.model';
+import { Team } from 'app/entities/team.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { of, Subject } from 'rxjs';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { Router } from '@angular/router';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { HttpClient } from '@angular/common/http';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { Result } from 'app/entities/result.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import dayjs from 'dayjs/esm';
+import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../../test.module';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -288,4 +290,45 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             expect(startExerciseButton.componentInstance.overwriteDisabled).toBeTrue();
         }),
     );
+
+    describe('onInit', () => {
+        it('should determine if it is an uninitialized quiz', () => {
+            comp.exercise = { type: ExerciseType.QUIZ, quizBatches: [{ started: false }, { started: true }] } as QuizExercise;
+            comp.ngOnInit();
+            expect(comp.uninitializedQuiz).toBeTrue();
+            comp.exercise = { type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] } as QuizExercise;
+            comp.ngOnInit();
+            expect(comp.uninitializedQuiz).toBeFalse();
+            comp.exercise = { type: ExerciseType.TEXT } as TextExercise;
+            comp.ngOnInit();
+            expect(comp.uninitializedQuiz).toBeFalse();
+        });
+
+        it('should determine if quiz is not started', () => {
+            comp.exercise = { type: ExerciseType.QUIZ, studentParticipations: [] as StudentParticipation[] } as QuizExercise;
+            comp.ngOnInit();
+            expect(comp.quizNotStarted).toBeTrue();
+            comp.exercise = { type: ExerciseType.QUIZ, studentParticipations: [{ initializationState: InitializationState.UNINITIALIZED }] } as QuizExercise;
+            comp.ngOnInit();
+            expect(comp.quizNotStarted).toBeTrue();
+            comp.exercise = { type: ExerciseType.QUIZ, studentParticipations: [{ initializationState: InitializationState.FINISHED }] } as QuizExercise;
+            comp.ngOnInit();
+            expect(comp.quizNotStarted).toBeFalse();
+        });
+
+        it('should determine participations', () => {
+            const gradedParticipation = { id: 42 };
+            const practiceParticipation = { id: 43, testRun: true };
+
+            comp.studentParticipation = gradedParticipation;
+            comp.exercise = {} as Exercise;
+            comp.ngOnInit();
+            expect(comp.gradedParticipation).toEqual(gradedParticipation);
+            comp.studentParticipation = undefined;
+            comp.exercise = { studentParticipations: [gradedParticipation, practiceParticipation] } as Exercise;
+            comp.ngOnInit();
+            expect(comp.gradedParticipation).toEqual(gradedParticipation);
+            expect(comp.practiceParticipation).toEqual(practiceParticipation);
+        });
+    });
 });
