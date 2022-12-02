@@ -128,9 +128,11 @@ public class ConversationResource {
         checkEntityIdMatchesPathIds(conversationFromDatabase, Optional.of(courseId), Optional.of(conversationId));
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var isMember = conversationService.isMember(conversationId, requestingUser.getId());
-        // ToDo: if we allow instructors to search for users, we need to check if the requesting user is an instructor
         if (!isMember) {
-            throw new AccessForbiddenException("Only members of a conversation can search the members of a conversation.");
+            var atLeastInstructorInCourse = authorizationCheckService.isAtLeastInstructorInCourse(course, requestingUser);
+            if (!atLeastInstructorInCourse) {
+                throw new AccessForbiddenException("Only members of a conversation can search the members of a conversation.");
+            }
         }
         var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";
         var originalPage = conversationService.searchMembersOfConversation(course, conversationFromDatabase, pageable, searchTerm, Optional.ofNullable(filter));

@@ -209,6 +209,69 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
         }
     }
 
+    void hideConversation(Long conversationId, String userLogin) throws Exception {
+        var user = database.getUserByLogin(userLogin);
+        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, user.getId());
+        participant.ifPresent(conversationParticipant -> {
+            conversationParticipant.setIsHidden(true);
+            conversationParticipantRepository.save(conversationParticipant);
+        });
+    }
+
+    void favoriteConversation(Long conversationId, String userLogin) throws Exception {
+        var user = database.getUserByLogin(userLogin);
+        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, user.getId());
+        participant.ifPresent(conversationParticipant -> {
+            conversationParticipant.setIsFavorite(true);
+            conversationParticipantRepository.save(conversationParticipant);
+        });
+    }
+
+    void revokeChannelAdminRights(Long channelId, String userLogin) {
+        var user = userRepository.findOneByLogin(userLogin).get();
+        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId()).get();
+        participant.setIsAdmin(false);
+        conversationParticipantRepository.save(participant);
+    }
+
+    void grantChannelAdminRights(Long channelId, String userLogin) {
+        var user = userRepository.findOneByLogin(userLogin).get();
+        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId()).get();
+        participant.setIsAdmin(true);
+        conversationParticipantRepository.save(participant);
+    }
+
+    void archiveChannel(Long channelId) {
+        var dbChannel = channelRepository.findById(channelId).get();
+        dbChannel.setIsArchived(true);
+        channelRepository.save(dbChannel);
+    }
+
+    void unArchiveChannel(Long channelId) {
+        var dbChannel = channelRepository.findById(channelId).get();
+        dbChannel.setIsArchived(false);
+        channelRepository.save(dbChannel);
+    }
+
+    void assertUsersAreChannelAdmin(Long channelId, String... userLogin) {
+        var channelAdmins = getParticipants(channelId).stream().filter(ConversationParticipant::getIsAdmin).map(ConversationParticipant::getUser);
+        assertThat(channelAdmins).extracting(User::getLogin).contains(userLogin);
+    }
+
+    void assertUserAreNotChannelAdmin(Long channelId, String... userLogin) {
+        var channelAdmins = getParticipants(channelId).stream().filter(ConversationParticipant::getIsAdmin).map(ConversationParticipant::getUser);
+        assertThat(channelAdmins).extracting(User::getLogin).doesNotContain(userLogin);
+    }
+
+    void addUserAsChannelAdmin(ChannelDTO channel, String login) {
+        var newAdmin = userRepository.findOneByLogin(login).get();
+        var adminParticipant = new ConversationParticipant();
+        adminParticipant.setIsAdmin(true);
+        adminParticipant.setUser(newAdmin);
+        adminParticipant.setConversation(this.channelRepository.findById(channel.getId()).get());
+        conversationParticipantRepository.save(adminParticipant);
+    }
+
     void resetWebsocketMock() {
         reset(this.messagingTemplate);
     }

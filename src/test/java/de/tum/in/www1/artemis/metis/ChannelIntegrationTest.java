@@ -14,7 +14,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
@@ -259,8 +258,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // given
         var channel = createChannel(isPublicChannel);
         addUserAsChannelAdmin(channel, "tutor1");
-        addUserToChannel(channel, "student1");
-        addUserToChannel(channel, "student2");
+        addUsersToConversation(channel.getId(), "student1");
+        addUsersToConversation(channel.getId(), "student2");
 
         // then
         // every instructor automatically has admin rights for every channel
@@ -466,9 +465,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         database.changeUser("instructor2");
-        var channnels = request.getList("/api/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
-        assertThat(channnels).hasSize(4);
-        assertThat(channnels.stream().map(ChannelDTO::getId).collect(Collectors.toList())).containsExactlyInAnyOrder(publicChannelWhereMember.getId(),
+        var channels = request.getList("/api/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
+        assertThat(channels).hasSize(4);
+        assertThat(channels.stream().map(ChannelDTO::getId).collect(Collectors.toList())).containsExactlyInAnyOrder(publicChannelWhereMember.getId(),
                 publicChannelWhereNotMember.getId(), privateChannelWhereMember.getId(), privateChannelWhereNotMember.getId());
     }
 
@@ -556,24 +555,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         resetWebsocketMock();
     }
 
-    private void addUserAsChannelAdmin(ChannelDTO channel, String login) {
-        var newAdmin = userRepository.findOneByLogin(login).get();
-        var adminParticipant = new ConversationParticipant();
-        adminParticipant.setIsAdmin(true);
-        adminParticipant.setUser(newAdmin);
-        adminParticipant.setConversation(this.channelRepository.findById(channel.getId()).get());
-        conversationParticipantRepository.save(adminParticipant);
-    }
-
-    private void addUserToChannel(ChannelDTO channel, String login) {
-        var newParticipant = userRepository.findOneByLogin(login).get();
-        var participant = new ConversationParticipant();
-        participant.setIsAdmin(false);
-        participant.setUser(newParticipant);
-        participant.setConversation(this.channelRepository.findById(channel.getId()).get());
-        conversationParticipantRepository.save(participant);
-    }
-
     private void expectGrantRevokeChannelAdminRightsForbidden(ChannelDTO channel, boolean shouldGrant) throws Exception {
         // prepare channel in db
         var postfix = shouldGrant ? "/grant-channel-admin" : "/revoke-channel-admin";
@@ -602,32 +583,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channelId, updateDTO, ChannelDTO.class, HttpStatus.FORBIDDEN);
     }
 
-    private void archiveChannel(Long channelId) {
-        var dbChannel = channelRepository.findById(channelId).get();
-        dbChannel.setIsArchived(true);
-        channelRepository.save(dbChannel);
-    }
-
-    private void unArchiveChannel(Long channelId) {
-        var dbChannel = channelRepository.findById(channelId).get();
-        dbChannel.setIsArchived(false);
-        channelRepository.save(dbChannel);
-    }
-
-    private void revokeChannelAdminRights(Long channelId, String userLogin) {
-        var user = userRepository.findOneByLogin(userLogin).get();
-        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId()).get();
-        participant.setIsAdmin(false);
-        conversationParticipantRepository.save(participant);
-    }
-
-    private void grantChannelAdminRights(Long channelId, String userLogin) {
-        var user = userRepository.findOneByLogin(userLogin).get();
-        var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId()).get();
-        participant.setIsAdmin(true);
-        conversationParticipantRepository.save(participant);
-    }
-
     private void assertChannelProperties(Long channelId, String name, String topic, String description, Boolean isPublic, Boolean isArchived) {
         var channel = channelRepository.findById(channelId).orElseThrow();
         assertThat(channel.getName()).isEqualTo(name);
@@ -637,13 +592,4 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         assertThat(channel.getIsArchived()).isEqualTo(isArchived);
     }
 
-    private void assertUsersAreChannelAdmin(Long channelId, String... userLogin) {
-        var channelAdmins = getParticipants(channelId).stream().filter(ConversationParticipant::getIsAdmin).map(ConversationParticipant::getUser);
-        assertThat(channelAdmins).extracting(User::getLogin).contains(userLogin);
-    }
-
-    private void assertUserAreNotChannelAdmin(Long channelId, String... userLogin) {
-        var channelAdmins = getParticipants(channelId).stream().filter(ConversationParticipant::getIsAdmin).map(ConversationParticipant::getUser);
-        assertThat(channelAdmins).extracting(User::getLogin).doesNotContain(userLogin);
-    }
 }
