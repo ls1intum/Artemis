@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -30,6 +31,9 @@ import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatReposito
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
@@ -73,7 +77,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
     }
 
     @BeforeEach
-    void setupTestScenario() {
+    void setupTestScenario() throws Exception {
         // creating the users student1-student20, tutor1-tutor10, editor1-editor10 and instructor1-instructor10
         this.database.addUsers(20, 10, 10, 10);
 
@@ -160,6 +164,34 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
             var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, user.getId());
             participant.ifPresent(conversationParticipant -> conversationParticipantRepository.delete(conversationParticipant));
         }
+    }
+
+    ChannelDTO createChannel(boolean isPublicChannel) throws Exception {
+        return createChannel(isPublicChannel, "general");
+    }
+
+    ChannelDTO createChannel(boolean isPublicChannel, String name) throws Exception {
+        var channelDTO = new ChannelDTO();
+        channelDTO.setName(name);
+        channelDTO.setIsPublic(isPublicChannel);
+        channelDTO.setDescription("general channel");
+
+        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
+        resetWebsocketMock();
+        return chat;
+    }
+
+    GroupChatDTO createGroupChat(String... userLogins) throws Exception {
+        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", Arrays.stream(userLogins).toList(), GroupChatDTO.class, HttpStatus.CREATED);
+        this.resetWebsocketMock();
+        return chat;
+    }
+
+    OneToOneChatDTO createAndPostInOneToOneChat(String withUserLogin) throws Exception {
+        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(withUserLogin), OneToOneChatDTO.class, HttpStatus.CREATED);
+        this.postInConversation(chat.getId(), "student1");
+        this.resetWebsocketMock();
+        return chat;
     }
 
     void addUsersToConversation(Long conversationId, String... userLogin) throws Exception {

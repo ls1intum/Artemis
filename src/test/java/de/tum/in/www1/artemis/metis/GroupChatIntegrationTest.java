@@ -186,8 +186,6 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
     }
 
     private GroupChatDTO createGroupChatWithStudent1To3() throws Exception {
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", List.of("student2", "student3"), GroupChatDTO.class, HttpStatus.CREATED);
-        this.resetWebsocketMock();
-        return chat;
+        return this.createGroupChat("student2", "student3");
     }
 }

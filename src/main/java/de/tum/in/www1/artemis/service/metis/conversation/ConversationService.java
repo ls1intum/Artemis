@@ -143,9 +143,9 @@ public class ConversationService {
             ConversationParticipant conversationParticipant = new ConversationParticipant();
             conversationParticipant.setUser(user);
             conversationParticipant.setConversation(conversation);
-            if (conversation instanceof Channel) {
-                conversationParticipant.setIsAdmin(false); // special case just for channels
-            }
+            conversationParticipant.setIsAdmin(false);
+            conversationParticipant.setIsHidden(false);
+            conversationParticipant.setIsFavorite(false);
             newConversationParticipants.add(conversationParticipant);
         }
         if (newConversationParticipants.size() > 0) {

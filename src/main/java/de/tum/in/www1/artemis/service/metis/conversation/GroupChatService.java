@@ -76,6 +76,10 @@ public class GroupChatService {
         var participant = new ConversationParticipant();
         participant.setUser(user);
         participant.setConversation(groupChat);
+        // makes no sense for group chats
+        participant.setIsAdmin(false);
+        participant.setIsFavorite(false);
+        participant.setIsHidden(false);
         return participant;
     }
 

@@ -35,6 +35,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // then
         this.assertChannelProperties(chat.getId(), channelDTO.getName(), null, channelDTO.getDescription(), channelDTO.getIsPublic(), false);
         var participants = assertParticipants(chat.getId(), 1, "instructor1");
+        // creator is automatically added as channel admin
         assertThat(participants.stream().findFirst().get().getIsAdmin()).isTrue();
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), "instructor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE);
@@ -625,21 +626,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId()).get();
         participant.setIsAdmin(true);
         conversationParticipantRepository.save(participant);
-    }
-
-    private ChannelDTO createChannel(boolean isPublicChannel) throws Exception {
-        return createChannel(isPublicChannel, "general");
-    }
-
-    private ChannelDTO createChannel(boolean isPublicChannel, String name) throws Exception {
-        var channelDTO = new ChannelDTO();
-        channelDTO.setName(name);
-        channelDTO.setIsPublic(isPublicChannel);
-        channelDTO.setDescription("general channel");
-
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
-        resetWebsocketMock();
-        return chat;
     }
 
     private void assertChannelProperties(Long channelId, String name, String topic, String description, Boolean isPublic, Boolean isArchived) {

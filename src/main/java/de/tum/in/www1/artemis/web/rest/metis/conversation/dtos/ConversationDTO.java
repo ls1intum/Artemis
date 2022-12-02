@@ -2,8 +2,14 @@ package de.tum.in.www1.artemis.web.rest.metis.conversation.dtos;
 
 import java.time.ZonedDateTime;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes({ @JsonSubTypes.Type(value = OneToOneChatDTO.class, name = "oneToOneChat"), @JsonSubTypes.Type(value = GroupChatDTO.class, name = "groupChat"),
+        @JsonSubTypes.Type(value = ChannelDTO.class, name = "channel"), })
 public abstract class ConversationDTO {
 
     /**
