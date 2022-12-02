@@ -131,7 +131,7 @@ public class ConversationResource {
         if (!isMember) {
             var atLeastInstructorInCourse = authorizationCheckService.isAtLeastInstructorInCourse(course, requestingUser);
             if (!atLeastInstructorInCourse) {
-                throw new AccessForbiddenException("Only members of a conversation can search the members of a conversation.");
+                throw new AccessForbiddenException("Only members of a conversation or instructors can search the members of a conversation.");
             }
         }
         var searchTerm = loginOrName != null ? loginOrName.toLowerCase().trim() : "";

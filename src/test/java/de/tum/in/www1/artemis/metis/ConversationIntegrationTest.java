@@ -9,6 +9,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationUserDTO;
 
 public class ConversationIntegrationTest extends AbstractConversationTest {
 
@@ -95,6 +96,67 @@ public class ConversationIntegrationTest extends AbstractConversationTest {
         falseParams.add("isHidden", String.valueOf(false));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, falseParams);
         this.assertHiddenStatus(channel.getId(), "tutor1", false);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void searchMembersOfConversation_shouldFindMembersWhereLoginOrNameMatches() throws Exception {
+        var channel = createChannel(false);
+        // add students 1-10 to the channel
+        for (int i = 1; i <= 5; i++) {
+            addUsersToConversation(channel.getId(), "student" + i);
+        }
+        // add editor1
+        addUsersToConversation(channel.getId(), "editor1");
+        addUsersToConversation(channel.getId(), "tutor1");
+        grantChannelAdminRights(channel.getId(), "tutor1");
+
+        // search for students
+        database.changeUser("tutor1");
+        // <server>/api/courses/:courseId/conversations/:conversationId/members/search?loginOrName=:searchTerm&sort=firstName,asc&sort=lastName,asc&page=0&size=10
+        // optional filter attribute to further : filter=INSTRUCTOR or EDITOR or TUTOR or STUDENT or CHANNEL_ADMIN
+        var params = new LinkedMultiValueMap<String, String>();
+        params.add("loginOrName", "");
+        params.add("sort", "firstName,asc");
+        params.add("sort", "lastName,asc");
+        params.add("page", "0");
+        params.add("size", "20");
+        var members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class,
+                params);
+        assertThat(members).hasSize(8);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("student1", "student2", "student3", "student4", "student5", "tutor1", "instructor1",
+                "editor1");
+        // same request but now we only search for editor1
+        params.set("loginOrName", "editor1");
+        members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
+        assertThat(members).hasSize(1);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("editor1");
+        params.set("loginOrName", "");
+        // same request but now we only search for students
+        params.set("filter", "STUDENT");
+        members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
+        assertThat(members).hasSize(5);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("student1", "student2", "student3", "student4", "student5");
+        // same request but now we only search for tutors
+        params.set("filter", "TUTOR");
+        members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
+        assertThat(members).hasSize(1);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("tutor1");
+        // same request but now we only search for editors
+        params.set("filter", "EDITOR");
+        members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
+        assertThat(members).hasSize(1);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("editor1");
+        // same request but now we only search for instructors
+        params.set("filter", "INSTRUCTOR");
+        members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
+        assertThat(members).hasSize(1);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("instructor1");
+        // same request but now we only search for channel admins
+        params.set("filter", "CHANNEL_ADMIN");
+        members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
+        assertThat(members).hasSize(2);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("tutor1", "instructor1");
     }
 
     private void assertConversationDTOTransientProperties(ConversationDTO conversationDTO, Boolean isCreator, Boolean isMember, Boolean hasChannelAdminRights,
