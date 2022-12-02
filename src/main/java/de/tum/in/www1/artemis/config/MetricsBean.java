@@ -22,7 +22,6 @@ import com.zaxxer.hikari.HikariDataSource;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import io.micrometer.core.instrument.Gauge;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -56,11 +55,9 @@ public class MetricsBean {
 
     private final ExamRepository examRepository;
 
-    private final UserRepository userRepository;
-
     public MetricsBean(MeterRegistry meterRegistry, Environment env, TaskScheduler taskScheduler, WebSocketMessageBrokerStats webSocketStats, SimpUserRegistry userRegistry,
             WebSocketHandler websocketHandler, List<HealthContributor> healthContributors, Optional<HikariDataSource> hikariDataSource, ExerciseRepository exerciseRepository,
-            ExamRepository examRepository, UserRepository userRepository) {
+            ExamRepository examRepository) {
         this.meterRegistry = meterRegistry;
         this.env = env;
         this.taskScheduler = taskScheduler;
@@ -69,7 +66,6 @@ public class MetricsBean {
         this.webSocketHandler = websocketHandler;
         this.exerciseRepository = exerciseRepository;
         this.examRepository = examRepository;
-        this.userRepository = userRepository;
 
         registerHealthContributors(healthContributors);
         registerWebsocketMetrics();
@@ -203,28 +199,28 @@ public class MetricsBean {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.findAllByEndDateGreaterThanEqualButLessOrEqualThan(now, endDate).size();
+        return examRepository.countExamsWithEndDateGreaterThanEqualButLessOrEqualThan(now, endDate);
     }
 
     private double getUpcomingEndingExamCountWithStudentMultiplier(int minutes) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.findAllByEndDateGreaterThanEqualButLessOrEqualThan(now, endDate).stream().map(exam -> exam.getRegisteredUsers().size()).reduce(0, Integer::sum);
+        return examRepository.countRegisteredStudentsInExamsWithEndDateGreaterThanEqualButLessOrEqualThan(now, endDate);
     }
 
     private double getUpcomingStartingExamCount(int minutes) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.findAllByStartDateGreaterThanEqualButLessOrEqualThan(now, endDate).size();
+        return examRepository.countExamsWithStartDateGreaterThanEqualButLessOrEqualThan(now, endDate);
     }
 
     private double getUpcomingStartingExamCountWithStudentMultiplier(int minutes) {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
-        return examRepository.findAllByStartDateGreaterThanEqualButLessOrEqualThan(now, endDate).stream().map(exam -> exam.getRegisteredUsers().size()).reduce(0, Integer::sum);
+        return examRepository.countRegisteredStudentsInExamsWithStartDateGreaterThanEqualButLessOrEqualThan(now, endDate);
     }
 
     private void registerDatasourceMetrics(HikariDataSource dataSource) {

@@ -138,7 +138,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     /**
      * Only allow the configured IP addresses to access the prometheus endpoint
      *
-     * @return an access check like "hasIpAddress('127.0.0.1') or hasIpAddress('::1') that can be used as argument for {@link org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer.AuthorizedUrl#access(String)}}
+     * @return an access check like "hasIpAddress('127.0.0.1') or hasIpAddress('::1')" that can be used as argument for {@link org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer.AuthorizedUrl#access(String)}}
      */
     private String getMonitoringAccessDefinition() {
         return monitoringIpAddresses.stream().map(ip -> String.format("hasIpAddress(\"%s\")", ip)).collect(Collectors.joining(" or "));

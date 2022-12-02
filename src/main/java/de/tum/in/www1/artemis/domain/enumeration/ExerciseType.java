@@ -21,6 +21,11 @@ public enum ExerciseType {
         return this.toString().toLowerCase().replace('_', ' ');
     }
 
+    /**
+     * The discriminator value can be used to filter polymorphic relations, e.g. by using `exercise.class = "P"` to select only programming exercises from the exercises table.
+     *
+     * @return the discriminator value for the exercise type (e.g. "P" for ExerciseType.PROGRAMMING)
+     */
     public String getDiscriminator() {
         final DiscriminatorValue value = getExerciseClass().getAnnotation(DiscriminatorValue.class);
         return value.value();

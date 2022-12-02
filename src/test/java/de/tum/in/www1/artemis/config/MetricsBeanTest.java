@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.service.CourseService;
 import io.micrometer.core.instrument.MeterRegistry;
 
-public class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     MeterRegistry meterRegistry;
@@ -36,7 +36,7 @@ public class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    public void testPrometheusMetricsExercises() {
+    void testPrometheusMetricsExercises() {
         database.addUsers(3, 0, 0, 0);
         var course = database.createCourse();
         exerciseRepository.save(database.createQuiz(course, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusMinutes(55), QuizMode.SYNCHRONIZED));
@@ -67,7 +67,7 @@ public class MetricsBeanTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    public void testPrometheusMetricsExams() {
+    void testPrometheusMetricsExams() {
         var users = database.addUsers(3, 0, 0, 0);
         var course = database.createCourse();
         var exam1 = database.addExam(course, ZonedDateTime.now(), ZonedDateTime.now().plusMinutes(10), ZonedDateTime.now().plusMinutes(40));

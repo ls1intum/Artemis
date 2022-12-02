@@ -49,27 +49,43 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
-    @EntityGraph(type = LOAD, attributePaths = "registeredUsers")
     @Query("""
-            SELECT exam
+            SELECT COUNT(exam)
             FROM Exam exam
             WHERE exam.course.testCourse = false
                 AND exam.endDate >= :#{#minDate}
                 AND exam.endDate <= :#{#maxDate}
-            ORDER BY exam.startDate asc
             """)
-    List<Exam> findAllByEndDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+    Integer countExamsWithEndDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
-    @EntityGraph(type = LOAD, attributePaths = "registeredUsers")
     @Query("""
-            SELECT exam
+            SELECT COUNT(exam)
+            FROM Exam exam
+            JOIN exam.registeredUsers registeredUsers
+            WHERE exam.course.testCourse = false
+                AND exam.endDate >= :#{#minDate}
+                AND exam.endDate <= :#{#maxDate}
+            """)
+    Integer countRegisteredStudentsInExamsWithEndDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    @Query("""
+            SELECT COUNT(exam)
             FROM Exam exam
             WHERE exam.course.testCourse = false
                 AND exam.startDate >= :#{#minDate}
                 AND exam.startDate <= :#{#maxDate}
-            ORDER BY exam.startDate asc
             """)
-    List<Exam> findAllByStartDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+    Integer countExamsWithStartDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
+
+    @Query("""
+            SELECT COUNT(exam)
+            FROM Exam exam
+            JOIN exam.registeredUsers registeredUsers
+            WHERE exam.course.testCourse = false
+                AND exam.startDate >= :#{#minDate}
+                AND exam.startDate <= :#{#maxDate}
+            """)
+    Integer countRegisteredStudentsInExamsWithStartDateGreaterThanEqualButLessOrEqualThan(@Param("minDate") ZonedDateTime minDate, @Param("maxDate") ZonedDateTime maxDate);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
     Optional<Exam> findWithExerciseGroupsById(long examId);
