@@ -23,7 +23,6 @@ import tech.jhipster.web.util.ResponseUtil;
 
 /** REST controller for managing SystemNotification. */
 @RestController
-@RequestMapping("api/")
 public class SystemNotificationResource {
 
     private final Logger log = LoggerFactory.getLogger(SystemNotificationResource.class);

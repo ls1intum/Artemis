@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing grading scale
  */
 @RestController
-@RequestMapping("/api")
 public class GradingScaleResource {
 
     private final Logger log = LoggerFactory.getLogger(GradingScaleResource.class);

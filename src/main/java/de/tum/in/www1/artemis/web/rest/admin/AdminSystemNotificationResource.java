@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for administrating system notifications.
  */
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminSystemNotificationResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminSystemNotificationResource.class);

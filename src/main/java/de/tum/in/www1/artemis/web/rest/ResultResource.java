@@ -50,7 +50,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing Result.
  */
 @RestController
-@RequestMapping("/api")
 public class ResultResource {
 
     private final Logger log = LoggerFactory.getLogger(ResultResource.class);

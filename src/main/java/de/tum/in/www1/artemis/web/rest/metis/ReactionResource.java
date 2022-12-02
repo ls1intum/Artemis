@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.service.metis.ReactionService;
  * REST controller for Reaction on Postings.
  */
 @RestController
-@RequestMapping("/api")
 public class ReactionResource {
 
     private final ReactionService reactionService;

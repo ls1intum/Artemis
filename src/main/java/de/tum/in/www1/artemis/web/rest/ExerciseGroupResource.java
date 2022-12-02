@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing ExerciseGroup.
  */
 @RestController
-@RequestMapping("/api")
 public class ExerciseGroupResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseGroupResource.class);

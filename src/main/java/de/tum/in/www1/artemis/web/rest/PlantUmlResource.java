@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.service.PlantUmlService;
  */
 
 @RestController
-@RequestMapping(PlantUmlResource.Endpoints.ROOT)
 @PreAuthorize("hasRole('USER')")
 public class PlantUmlResource {
 
@@ -35,7 +34,7 @@ public class PlantUmlResource {
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the PNG
      */
-    @GetMapping(value = Endpoints.GENERATE_PNG)
+    @GetMapping("plantuml/png")
     public ResponseEntity<byte[]> generatePng(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
             throws IOException {
         long start = System.currentTimeMillis();
@@ -54,24 +53,12 @@ public class PlantUmlResource {
      * @return ResponseEntity PNG stream
      * @throws IOException if generateImage can't create the PNG
      */
-    @GetMapping(Endpoints.GENERATE_SVG)
+    @GetMapping("plantuml/svg")
     public ResponseEntity<String> generateSvg(@RequestParam("plantuml") String plantuml, @RequestParam(value = "useDarkTheme", defaultValue = "false") boolean useDarkTheme)
             throws IOException {
         long start = System.currentTimeMillis();
         final var svg = plantUmlService.generateSvg(plantuml, useDarkTheme);
         log.info("PlantUml.generateSvg took {}ms", System.currentTimeMillis() - start);
         return new ResponseEntity<>(svg, HttpStatus.OK);
-    }
-
-    public static final class Endpoints {
-
-        public static final String ROOT = "/api/plantuml";
-
-        public static final String GENERATE_PNG = "/png";
-
-        public static final String GENERATE_SVG = "/svg";
-
-        private Endpoints() {
-        }
     }
 }

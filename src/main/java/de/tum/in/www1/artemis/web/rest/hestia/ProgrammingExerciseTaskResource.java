@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -22,7 +21,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
  * REST controller for managing {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask}.
  */
 @RestController
-@RequestMapping("api/")
 public class ProgrammingExerciseTaskResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTaskResource.class);

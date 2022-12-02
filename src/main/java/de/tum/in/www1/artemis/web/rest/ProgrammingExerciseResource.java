@@ -49,7 +49,6 @@ import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseState
  * REST controller for managing ProgrammingExercise.
  */
 @RestController
-@RequestMapping(ROOT)
 public class ProgrammingExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseResource.class);

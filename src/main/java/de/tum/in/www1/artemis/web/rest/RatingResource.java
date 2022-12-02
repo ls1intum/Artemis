@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  */
 @Validated
 @RestController
-@RequestMapping("/api")
 public class RatingResource {
 
     private static final String ENTITY_NAME = "rating";

@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
  * REST controller for administrating Exam.
  */
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminExamResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminExamResource.class);

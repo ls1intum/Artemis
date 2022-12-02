@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class ManagementResource {
 
     private final FeatureToggleService featureToggleService;

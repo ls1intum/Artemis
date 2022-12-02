@@ -27,7 +27,6 @@ import tech.jhipster.web.util.ResponseUtil;
  * REST controller for managing complaints.
  */
 @RestController
-@RequestMapping("/api")
 public class ComplaintResponseResource {
 
     private final Logger log = LoggerFactory.getLogger(ComplaintResponseResource.class);

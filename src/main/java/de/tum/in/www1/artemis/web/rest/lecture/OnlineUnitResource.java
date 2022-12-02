@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @RestController
-@RequestMapping("/api")
 public class OnlineUnitResource {
 
     private final Logger log = LoggerFactory.getLogger(OnlineUnitResource.class);

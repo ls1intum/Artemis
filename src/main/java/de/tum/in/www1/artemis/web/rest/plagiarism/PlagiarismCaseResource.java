@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  * REST controller for managing Plagiarism Cases.
  */
 @RestController
-@RequestMapping("api/")
 public class PlagiarismCaseResource {
 
     private static final String ENTITY_NAME = "plagiarismCase";

@@ -34,7 +34,6 @@ import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
  * Executes requested actions on the test repository of a programming exercise. Only available to TAs, Instructors and Admins.
  */
 @RestController
-@RequestMapping("/api")
 @PreAuthorize("hasRole('TA')")
 public class TestRepositoryResource extends RepositoryResource {
 

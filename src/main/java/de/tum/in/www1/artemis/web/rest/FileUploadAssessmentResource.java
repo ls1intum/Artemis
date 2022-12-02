@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationServic
  * REST controller for managing FileUploadAssessment.
  */
 @RestController
-@RequestMapping("/api")
 public class FileUploadAssessmentResource extends AssessmentResource {
 
     private final Logger log = LoggerFactory.getLogger(FileUploadAssessmentResource.class);

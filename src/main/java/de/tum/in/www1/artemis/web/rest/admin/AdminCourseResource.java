@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing Course.
  */
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminCourseResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);

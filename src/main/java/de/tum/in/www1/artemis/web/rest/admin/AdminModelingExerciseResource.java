@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /** REST controller for administrating ModelingExercise. */
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminModelingExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminModelingExerciseResource.class);

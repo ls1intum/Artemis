@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for administrating the Organization entities
  */
 @RestController
-@RequestMapping("api/admin/")
+@RequestMapping("admin/")
 public class AdminOrganizationResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminOrganizationResource.class);

@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  * REST controller for managing ApollonDiagram.
  */
 @RestController
-@RequestMapping("/api")
 public class ApollonDiagramResource {
 
     private final Logger log = LoggerFactory.getLogger(ApollonDiagramResource.class);

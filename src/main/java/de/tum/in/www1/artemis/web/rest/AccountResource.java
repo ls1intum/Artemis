@@ -32,7 +32,6 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
  * REST controller for managing the current user's account.
  */
 @RestController
-@RequestMapping("/api")
 public class AccountResource {
 
     @Value("${artemis.user-management.registration.enabled:#{null}}")
