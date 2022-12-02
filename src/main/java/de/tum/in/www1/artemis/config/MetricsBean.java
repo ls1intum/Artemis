@@ -124,7 +124,7 @@ public class MetricsBean {
     }
 
     private void registerExerciseAndExamMetrics() {
-        int[] ranges = new int[] { 5, 15, 30, 45, 60, 120 };
+        int[] ranges = { 5, 15, 30, 45, 60, 120 };
         for (int range : ranges) {
             for (var exerciseType : ExerciseType.values()) {
                 Gauge.builder("artemis.scheduled.exercises.due.count", () -> this.getUpcomingDueExercisesCount(range, exerciseType)).strongReference(true)
