@@ -2,3 +2,13 @@
     justify-content: flex-end;
     display: flex;
 }
+
+.start-practice-popover {
+    max-width: 75vw;
+}
+
+@media (min-width: 900px) {
+    .start-practice-popover {
+        max-width: 660px;
+    }
+}

@@ -35,7 +35,7 @@ $dark: $gray-800;
 
 $min-contrast-ratio: 1.9;
 
-$body-color: $white;
+$body-color: $gray-100;
 $text-muted: $gray-600;
 $body-bg: $gray-900;
 
@@ -444,8 +444,6 @@ $exam-students-dropdown-item-already-registered-background-hover-color: #daf2e0;
 $exam-students-datatable-row-newly-registered-background-color: $neutral-dark-l-20;
 
 // Data table
-$data-table-icon-right: white;
-$data-table-icon-down: white;
 $data-table-transitioning-container-active-background-color: rgba(0, 0, 0, 0.5);
 $data-table-dropdown-item-selected-background-color: $primary;
 

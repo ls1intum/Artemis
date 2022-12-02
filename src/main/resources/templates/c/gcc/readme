@@ -9,7 +9,7 @@ Die Aufgabenstellung entnehmen Sie bitte [https://gbs.cm.in.tum.de](https://gbs.
 2. [task][rückgabewert == 0](TestReturnCode)
 3. [task][ausgabe prüfen](TestOutput)
 
-#### Adress Sanitizer
+#### Address Sanitizer
 
 1. [task][kompilieren mit address sanitizer](TestCompileASan)
 2. [task][ausgabe prüfen mit address sanitizer](TestOutputASan)
