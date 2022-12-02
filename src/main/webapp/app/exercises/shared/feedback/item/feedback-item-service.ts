@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
-import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/result-detail.component';
+import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/detail/result-detail.component';
 import { TranslateService } from '@ngx-translate/core';
 import { computeFeedbackPreviewText } from 'app/exercises/shared/feedback/feedback.util';
 

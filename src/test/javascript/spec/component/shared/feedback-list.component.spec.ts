@@ -1,5 +1,5 @@
-import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/result-detail.component';
-import { FeedbackListComponent } from 'app/exercises/shared/feedback/feedback-list.component';
+import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/detail/result-detail.component';
+import { FeedbackListComponent } from 'app/exercises/shared/feedback/list/feedback-list.component';
 
 describe('FeedbackListComponent', () => {
     const comp = new FeedbackListComponent();

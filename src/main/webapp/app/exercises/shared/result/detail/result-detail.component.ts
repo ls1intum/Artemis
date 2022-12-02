@@ -24,8 +24,8 @@ import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datat
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/feedback-item-service';
-import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/programming-feedback-item.service';
+import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
+import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item.service';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
 
 export enum FeedbackItemType {

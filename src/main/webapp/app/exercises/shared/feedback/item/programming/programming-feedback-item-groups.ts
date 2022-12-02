@@ -1,4 +1,4 @@
-import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/result-detail.component';
+import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/detail/result-detail.component';
 
 // NOTE: This type definition does not constrict that FeedbackItems can exactly belong to one group.
 // You need to check manually if shouldContain leads to disjunctive subset.

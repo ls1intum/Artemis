@@ -12,7 +12,7 @@ import { Participation, ParticipationType, getExercise } from 'app/entities/part
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
+import { ResultDetailComponent } from 'app/exercises/shared/result/detail/result-detail.component';
 import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';

@@ -1,7 +1,7 @@
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Component, Input, OnInit } from '@angular/core';
-import { FeedbackItemGroup } from 'app/exercises/shared/feedback/programming-feedback-item-groups';
-import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/result-detail.component';
+import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item-groups';
+import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/detail/result-detail.component';
 import { Course } from 'app/entities/course.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 
