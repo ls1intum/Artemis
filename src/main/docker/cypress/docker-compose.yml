@@ -42,7 +42,7 @@ services:
             artemis.continuous-integration.password: "${CI_PASSWORD}"
             artemis.continuous-integration.token: "${CI_TOKEN}"
             artemis.continuous-integration.artemis-authentication-token-value: "${CI_AUTH_TOKEN}"
-            server.url: "http://${HOST_HOSTNAME}"
+            server.url: "http://${HOST_HOSTNAME}:54321"
         ports:
             - 8080:8080
         networks:
@@ -116,6 +116,7 @@ services:
         ports:
             - 80:80
             - 443:443
+            - 54321:54321
         depends_on:
             artemis-app:
                 condition: service_started
