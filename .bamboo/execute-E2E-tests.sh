@@ -7,6 +7,8 @@ mv *.war build/libs/
 # Start Artemis docker containers with docker-compose
 cd src/main/docker/cypress
 
+export HOST_HOSTNAME=$(hostname)
+
 #TODO: recheck docker compose version and do it in one command
 docker-compose --env-file ./bamboo-E2E-testing.env pull
 docker-compose --env-file ./bamboo-E2E-testing.env build --no-cache --pull
