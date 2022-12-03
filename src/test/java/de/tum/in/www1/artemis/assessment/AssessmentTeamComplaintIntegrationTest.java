@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "assessmentteamcomplaintintegrationtest"; // only lower case is supported
+    private static final String TEST_PREFIX = "assmentteamcomplaint"; // only lower case is supported
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -129,7 +129,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
         // Only one complaint is possible for exercise regardless of its type
         request.post(resourceUrl, moreFeedbackRequest, HttpStatus.BAD_REQUEST);
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).get().getComplaintType()).as("more feedback request is not saved")
-            .isNotEqualTo(ComplaintType.MORE_FEEDBACK);
+                .isNotEqualTo(ComplaintType.MORE_FEEDBACK);
     }
 
     @Test
@@ -207,7 +207,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
 
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
         Result receivedResult = request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
-            Result.class, HttpStatus.OK);
+                Result.class, HttpStatus.OK);
 
         assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).get();
@@ -237,7 +237,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
 
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedback).complaintResponse(complaintResponse);
         request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
-            HttpStatus.FORBIDDEN);
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -265,8 +265,8 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     private void saveModelingSubmissionAndAssessment() throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         modelingSubmission = database.addModelingTeamSubmission(modelingExercise, modelingSubmission, team);
-        modelingAssessment = database.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json", TEST_PREFIX + "tutor1",
-            true);
+        modelingAssessment = database.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json",
+                TEST_PREFIX + "tutor1", true);
     }
 
     @Test
@@ -275,7 +275,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
         complaint.setParticipant(team);
         complaintRepo.save(complaint);
         Long nrOfAllowedComplaints = request.get("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/allowed-complaints?isTeamMode=true",
-            HttpStatus.OK, Long.class);
+                HttpStatus.OK, Long.class);
         assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxTeamComplaints());
     }
 

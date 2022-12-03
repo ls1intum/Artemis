@@ -51,6 +51,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "progsubresbitbuckbamb";
+
     private enum IntegrationTestParticipationType {
         STUDENT, TEMPLATE, SOLUTION
     }
@@ -112,13 +114,13 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
 
-        database.addUsers(3, 2, 0, 2);
+        database.addUsers(TEST_PREFIX, 3, 2, 0, 2);
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
 
-        database.addStudentParticipationForProgrammingExercise(exercise, "student1");
-        database.addStudentParticipationForProgrammingExercise(exercise, "student2");
+        database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
 
         exerciseId = exercise.getId();
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
@@ -142,7 +144,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * However the participation id provided by the VCS on the request is invalid.
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotCreateSubmissionOnNotifyPushForInvalidParticipationId() throws Exception {
         long fakeParticipationId = 9999L;
         JSONParser jsonParser = new JSONParser();
@@ -177,7 +179,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateSubmissionOnNotifyPushForSubmission(IntegrationTestParticipationType participationType) throws Exception {
         String commitHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         Long participationId = getParticipationIdByType(participationType, 0);
@@ -206,17 +208,17 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * After that the CI builds the code submission and notifies Artemis so it can create the result.
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldHandleNewBuildResultCreatedByCommitWithSpecificTests() throws Exception {
         var course = database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
-        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(course).get(0);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
 
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         bitbucketRequestMockProvider.mockPutDefaultBranch(exercise.getProjectKey());
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student3");
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student3");
         ProgrammingSubmission submission = postSubmission(participation.getId(), HttpStatus.OK);
         final long submissionId = submission.getId();
         postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
@@ -254,7 +256,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("participationTypeAndAdditionalCommitProvider")
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldHandleNewBuildResultCreatedByCommit(IntegrationTestParticipationType participationType, boolean additionalCommit) throws Exception {
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
@@ -299,7 +301,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotLinkTwoResultsToTheSameSubmission(IntegrationTestParticipationType participationType) throws Exception {
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
         doReturn(defaultBranch).when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
@@ -343,7 +345,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldNotCreateTwoSubmissionsForTwoIdenticalCommits(IntegrationTestParticipationType participationType) throws Exception {
         bitbucketRequestMockProvider.mockGetDefaultBranch(defaultBranch, exercise.getProjectKey());
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
@@ -380,7 +382,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionForManualBuildRun(IntegrationTestParticipationType participationType) throws Exception {
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         Long participationId = getParticipationIdByType(participationType, 0);
@@ -412,7 +414,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldTriggerManualBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
         Long participationId = getParticipationIdByType(participationType, 0);
         final var programmingParticipation = (ProgrammingExerciseParticipation) participationRepository.findById(participationId).get();
@@ -453,7 +455,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(IntegrationTestParticipationType.class)
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldTriggerInstructorBuildRunForLastCommit(IntegrationTestParticipationType participationType) throws Exception {
         // Set buildAndTestAfterDueDate in future.
         setBuildAndTestAfterDueDateForProgrammingExercise(ZonedDateTime.now().plusDays(1));
@@ -493,7 +495,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCaseChanged() throws Exception {
         final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).get();
         bambooRequestMockProvider.mockTriggerBuild(templateParticipation);
@@ -509,7 +511,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * The reason for this is that the test repository update will trigger a build run in the CI for every participation.
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateSubmissionsForAllParticipationsOfExerciseAfterTestRepositoryCommit() throws Exception {
         final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).get();
         bambooRequestMockProvider.mockTriggerBuild(templateParticipation);
@@ -572,9 +574,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      * This test ensures that in such a situation, the submission dates are set according to the commit dates and are therefore in the correct order.
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
-        testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived();
+        testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(TEST_PREFIX);
         var pushJSON = (JSONObject) new JSONParser().parse(BITBUCKET_PUSH_EVENT_REQUEST);
         var changes = (JSONArray) pushJSON.get("changes");
         var firstChange = (JSONObject) changes.get(0);
@@ -612,10 +614,10 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSaveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission but no result.
-        String userLogin = "student1";
+        String userLogin = TEST_PREFIX + "student1";
         var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
         var exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
@@ -638,10 +640,10 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("shouldSavebuildLogsOnStudentParticipationArguments")
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldSaveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming submission.
-        String userLogin = "student1";
+        String userLogin = TEST_PREFIX + "student1";
         var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
         var exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
@@ -667,10 +669,10 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldExtractBuildLogAnalytics_noSca() throws Exception {
         // Precondition: Database has participation and a programming submission but no result.
-        String userLogin = "student1";
+        String userLogin = TEST_PREFIX + "student1";
         database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
@@ -689,10 +691,10 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldExtractBuildLogAnalytics_sca() throws Exception {
         // Precondition: Database has participation and a programming submission but no result.
-        String userLogin = "student1";
+        String userLogin = TEST_PREFIX + "student1";
         Course course = database.addCourseWithOneProgrammingExercise(true, false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
@@ -712,10 +714,10 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldExtractBuildLogAnalytics_unsupportedProgrammingLanguage() throws Exception {
         // Precondition: Database has participation and a programming submission but no result.
-        String userLogin = "student1";
+        String userLogin = TEST_PREFIX + "student1";
         Course course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON); // Python is not supported
         ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
@@ -753,9 +755,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateIllegalSubmissionOnNotifyPushForExamProgrammingExerciseAfterDueDateWithoutGracePeriod() throws Exception {
-        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin("student1").get();
+        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get();
 
         // The exam has to be over.
         // Create an exam with programming exercise and no grace period.
@@ -803,9 +805,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldCreateLegalSubmissionOnNotifyPushForExamProgrammingExerciseAfterDueDateWithGracePeriod() throws Exception {
-        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin("student1").get();
+        var user = userRepository.findUserWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1").get();
 
         // The exam has to be over.
         // Create an exam with programming exercise and no grace period.

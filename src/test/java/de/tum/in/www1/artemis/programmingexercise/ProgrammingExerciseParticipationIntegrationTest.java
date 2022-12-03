@@ -95,8 +95,8 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
             boolean expectLastCreatedResult) throws Exception {
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExerciseRepository.save(programmingExercise);
-        addStudentParticipationWithResult(assessmentType, completionDate);
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
+        var result = addStudentParticipationWithResult(assessmentType, completionDate);
+        StudentParticipation participation = (StudentParticipation) result.getParticipation();
         var expectedStatus = expectLastCreatedResult ? HttpStatus.OK : HttpStatus.NOT_FOUND;
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", expectedStatus,
                 ProgrammingExerciseStudentParticipation.class);
@@ -119,7 +119,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         programmingExerciseRepository.save(programmingExercise);
         // Add a parameterized second result
         var secondResult = database.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
-        StudentParticipation participation = studentParticipationRepository.findAll().get(0);
+        StudentParticipation participation = (StudentParticipation) secondResult.getParticipation();
 
         // Expect the request to always be ok because it should at least return the first automatic result
         var requestedParticipation = request.get(participationsBaseUrl + participation.getId() + "/student-participation-with-latest-result-and-feedbacks", HttpStatus.OK,
