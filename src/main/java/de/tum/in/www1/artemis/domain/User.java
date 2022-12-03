@@ -394,6 +394,10 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.tutorialGroupRegistrations = tutorialGroupRegistrations;
     }
 
+    /**
+     * removes variables that are typically unnecessary in the client.
+     * Do NOT invoke this before saving the user, but before sending a user object in a response
+     */
     public void removeUnnecessaryVariables() {
         setLastNotificationRead(null);
         setActivationKey(null);

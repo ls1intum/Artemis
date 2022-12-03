@@ -169,8 +169,18 @@ repositories {
 dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
 
-    implementation files("lib/gitlab4j-api-5.0.2.jar")
 //    implementation "org.gitlab4j:gitlab4j-api:5.0.1"
+    implementation files("lib/gitlab4j-api-5.0.2.jar")
+
+    // The following 5 + 2 dependencies are explicitly integrated as transitive dependencies of gitlab4j-api-5.0.2.jar
+    implementation "org.glassfish.jersey.inject:jersey-hk2:${jersey_version}"
+    implementation "org.glassfish.jersey.core:jersey-client:${jersey_version}"
+    implementation "org.glassfish.jersey.connectors:jersey-apache-connector:${jersey_version}"
+    implementation "org.glassfish.jersey.media:jersey-media-multipart:${jersey_version}"
+    implementation "org.glassfish.jersey.media:jersey-media-json-jackson:${jersey_version}"
+    implementation "jakarta.activation:jakarta.activation-api:${activation_version}"
+    implementation "jakarta.platform:jakarta.jakartaee-api:${jakartaee_version}"
+
 
     implementation "de.jplag:jplag:${jplag_version}"
     implementation "de.jplag:java:${jplag_version}"
