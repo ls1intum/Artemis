@@ -180,8 +180,10 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     private updateChannel(channel: ChannelDTO, propertyName: string, updateValue: string) {
+        const updateDTO = new ChannelDTO();
+        updateDTO[propertyName] = updateValue;
         this.channelService
-            .update(this.course?.id!, channel.id!, { [propertyName]: updateValue })
+            .update(this.course?.id!, channel.id!, updateDTO)
             .pipe(
                 map((res: HttpResponse<ChannelDTO>) => res.body),
                 takeUntil(this.ngUnsubscribe),

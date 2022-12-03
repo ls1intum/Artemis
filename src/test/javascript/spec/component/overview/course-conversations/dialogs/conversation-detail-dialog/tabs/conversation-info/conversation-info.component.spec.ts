@@ -9,8 +9,8 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
 import { Course } from 'app/entities/course.model';
-import { isChannelDto } from 'app/entities/metis/conversation/channel.model';
-import { isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
+import { ChannelDTO, isChannelDto } from 'app/entities/metis/conversation/channel.model';
+import { GroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { channelRegex } from 'app/overview/course-conversations/dialogs/channels-create-dialog/channel-form/channel-form.component';
@@ -193,13 +193,17 @@ examples.forEach((activeConversation) => {
                     expect(mockModalRef.componentInstance[key]).toEqual(value);
                 }
                 if (isGroupChatDto(activeConversation)) {
+                    const expectedUpdateDTO = new GroupChatDto();
+                    expectedUpdateDTO[expectedComponentInstance['propertyName']] = 'updated';
                     expect(updateGroupChatSpy).toHaveBeenCalledOnce();
-                    expect(updateGroupChatSpy).toHaveBeenCalledWith(course.id, activeConversation.id, { [expectedComponentInstance['propertyName']]: 'updated' });
+                    expect(updateGroupChatSpy).toHaveBeenCalledWith(course.id, activeConversation.id, expectedUpdateDTO);
                 }
 
                 if (isChannelDto(activeConversation)) {
+                    const expectedUpdateDTO = new ChannelDTO();
+                    expectedUpdateDTO[expectedComponentInstance['propertyName']] = 'updated';
                     expect(updateChannelSpy).toHaveBeenCalledOnce();
-                    expect(updateChannelSpy).toHaveBeenCalledWith(course.id, activeConversation.id, { [expectedComponentInstance['propertyName']]: 'updated' });
+                    expect(updateChannelSpy).toHaveBeenCalledWith(course.id, activeConversation.id, expectedUpdateDTO);
                 }
 
                 expect(activeConversation[expectedComponentInstance['propertyName']]).toBe('updated');
