@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.web.rest.errors;
 import java.io.IOException;
 import java.util.List;
 
-import javax.ws.rs.BadRequestException;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
@@ -27,15 +25,13 @@ import org.zalando.problem.spring.web.advice.security.SecurityAdviceTrait;
 import org.zalando.problem.violations.ConstraintViolationProblem;
 
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
-import jakarta.annotation.Nonnull;
-import jakarta.annotation.Nullable;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.constraints.NotNull;
 import tech.jhipster.web.util.HeaderUtil;
 
 /**
  * Controller advice to translate the server side exceptions to client-friendly json structures. The error response follows RFC7807 - Problem Details for HTTP APIs
- * (https://tools.ietf.org/html/rfc7807)
+ * (<a href="https://tools.ietf.org/html/rfc7807">RFC7807</a>)
  */
 @ControllerAdvice
 public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait {
@@ -57,10 +53,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
      * Post-process the Problem payload to add the message key for the front-end if needed.
      */
     @Override
-    public ResponseEntity<Problem> process(@Nullable ResponseEntity<Problem> entity, @NotNull NativeWebRequest request) {
-        if (entity == null) {
-            return null;
-        }
+    public ResponseEntity<Problem> process(ResponseEntity<Problem> entity, @NotNull NativeWebRequest request) {
         Problem problem = entity.getBody();
         if (!(problem instanceof ConstraintViolationProblem || problem instanceof DefaultProblem)) {
             return entity;
@@ -82,7 +75,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     @Override
-    public ResponseEntity<Problem> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, @Nonnull NativeWebRequest request) {
+    public ResponseEntity<Problem> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, @NotNull NativeWebRequest request) {
         BindingResult result = ex.getBindingResult();
         List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream().map(f -> new FieldErrorVM(f.getObjectName().replaceFirst("DTO$", ""), f.getField(), f.getCode()))
                 .toList();
@@ -93,19 +86,21 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     @ExceptionHandler
-    public ResponseEntity<Problem> handleEmailAlreadyUsedException(EmailAlreadyUsedException ex, NativeWebRequest request) {
+    public ResponseEntity<Problem> handleEmailAlreadyUsedException(@SuppressWarnings("UnusedParameters") EmailAlreadyUsedException ex, NativeWebRequest request) {
         EmailAlreadyUsedException problem = new EmailAlreadyUsedException();
         return create(problem, request, HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage()));
     }
 
     @ExceptionHandler
-    public ResponseEntity<Problem> handleUsernameAlreadyUsedException(de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException ex, NativeWebRequest request) {
+    public ResponseEntity<Problem> handleUsernameAlreadyUsedException(@SuppressWarnings("UnusedParameters") de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException ex,
+            NativeWebRequest request) {
         LoginAlreadyUsedException problem = new LoginAlreadyUsedException();
         return create(problem, request, HeaderUtil.createFailureAlert(applicationName, true, problem.getEntityName(), problem.getErrorKey(), problem.getMessage()));
     }
 
     @ExceptionHandler
-    public ResponseEntity<Problem> handlePasswordViolatesRequirementsException(PasswordViolatesRequirementsException ex, NativeWebRequest request) {
+    public ResponseEntity<Problem> handlePasswordViolatesRequirementsException(@SuppressWarnings("UnusedParameters") PasswordViolatesRequirementsException ex,
+            NativeWebRequest request) {
         return create(new PasswordViolatesRequirementsException(), request);
     }
 
@@ -133,12 +128,6 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
         return create(ex, problem, request);
     }
 
-    @ExceptionHandler
-    public ResponseEntity<Problem> handleBadRequest(BadRequestException exception, NativeWebRequest request) {
-        Problem problem = Problem.builder().withStatus(Status.BAD_REQUEST).with(MESSAGE_KEY, ErrorConstants.REQ_400_REASON).build();
-        return create(exception, problem, request);
-    }
-
     /**
      * @param e a specific exception
      * @param request the request
@@ -147,7 +136,7 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     @ExceptionHandler(IOException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
     // taken from https://mtyurt.net/post/spring-how-to-handle-ioexception-broken-pipe.html
-    public Object exceptionHandler(IOException e, HttpServletRequest request) {
+    public Object exceptionHandler(IOException e, @SuppressWarnings("UnusedParameters") HttpServletRequest request) {
         if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(e), "Broken pipe")) {
             log.info("Broken pipe IOException occurred: {}", e.getMessage());
             // socket is closed, cannot return any response
@@ -159,20 +148,20 @@ public class ExceptionTranslator implements ProblemHandling, SecurityAdviceTrait
     }
 
     /**
-     * @param e a specific exception
+     * @param ex a specific exception
      * @param request the request
      * @return the exception wrapped into a http entity
      */
     @ExceptionHandler(SockJsMessageDeliveryException.class)
     @ResponseStatus(HttpStatus.SERVICE_UNAVAILABLE)
-    public Object exceptionHandler(SockJsMessageDeliveryException e, HttpServletRequest request) {
-        if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(e), "Session closed")) {
+    public Object exceptionHandler(SockJsMessageDeliveryException ex, @SuppressWarnings("UnusedParameters") HttpServletRequest request) {
+        if (StringUtils.containsIgnoreCase(ExceptionUtils.getRootCauseMessage(ex), "Session closed")) {
             // session is closed, cannot return any response
-            log.info("Session closed SockJsMessageDeliveryException occurred: {}", e.getMessage());
+            log.info("Session closed SockJsMessageDeliveryException occurred: {}", ex.getMessage());
             return null;
         }
         else {
-            return new HttpEntity<>(e.getMessage());
+            return new HttpEntity<>(ex.getMessage());
         }
     }
 

@@ -5,8 +5,6 @@ import java.net.URISyntaxException;
 import java.time.LocalDate;
 import java.util.Optional;
 
-import javax.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -74,12 +72,12 @@ public class TutorialGroupsConfigurationResource {
             throws URISyntaxException {
         log.debug("REST request to create TutorialGroupsConfiguration: {} for course: {}", tutorialGroupsConfiguration, courseId);
         if (tutorialGroupsConfiguration.getId() != null) {
-            throw new BadRequestException("A new tutorial group configuration cannot already have an ID");
+            throw new BadRequestAlertException("A new tutorial group configuration cannot already have an ID", ENTITY_NAME, "idMustBeNull");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         if (tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(course.getId()).isPresent()) {
-            throw new BadRequestException("A tutorial group configuration already exists for this course");
+            throw new BadRequestAlertException("A tutorial group configuration already exists for this course", ENTITY_NAME, "configurationAlreadyExists");
         }
         isValidTutorialGroupConfiguration(tutorialGroupsConfiguration);
         tutorialGroupsConfiguration.setCourse(course);
@@ -104,12 +102,12 @@ public class TutorialGroupsConfigurationResource {
             @RequestBody @Valid TutorialGroupsConfiguration updatedTutorialGroupConfiguration) {
         log.debug("REST request to update TutorialGroupsConfiguration: {} of course: {}", updatedTutorialGroupConfiguration, courseId);
         if (updatedTutorialGroupConfiguration.getId() == null) {
-            throw new BadRequestException("A tutorial group cannot be updated without an id");
+            throw new BadRequestAlertException("A tutorial group cannot be updated without an id", ENTITY_NAME, "idCannotBeNull");
         }
         isValidTutorialGroupConfiguration(updatedTutorialGroupConfiguration);
         var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(updatedTutorialGroupConfiguration.getId());
         if (configurationFromDatabase.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
+            throw new BadRequestAlertException("The course has no time zone", ENTITY_NAME, "timeZoneMissing");
         }
         checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
@@ -123,10 +121,10 @@ public class TutorialGroupsConfigurationResource {
 
     private static void isValidTutorialGroupConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
         if (tutorialGroupsConfiguration.getTutorialPeriodStartInclusive() == null || tutorialGroupsConfiguration.getTutorialPeriodEndInclusive() == null) {
-            throw new BadRequestException("Tutorial period start and end must be set");
+            throw new BadRequestAlertException("Tutorial period start and end must be set", ENTITY_NAME, "illegalConfiguration");
         }
         if (LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive()).isAfter(LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive()))) {
-            throw new BadRequestException("Tutorial period start must be before tutorial period end");
+            throw new BadRequestAlertException("Tutorial period start must be before tutorial period end", ENTITY_NAME, "illegalConfiguration");
         }
     }
 

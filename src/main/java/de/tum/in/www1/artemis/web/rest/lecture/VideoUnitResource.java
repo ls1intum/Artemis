@@ -5,8 +5,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import javax.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +18,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.VideoUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 @RestController
@@ -59,7 +58,7 @@ public class VideoUnitResource {
             new URL(videoUnit.getSource());
         }
         catch (MalformedURLException exception) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("The video unit URL is malformed", ENTITY_NAME, "videUnitUrlMalformed");
         }
     }
 
@@ -103,7 +102,7 @@ public class VideoUnitResource {
     public ResponseEntity<VideoUnit> updateVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) {
         log.debug("REST request to update an video unit : {}", videoUnit);
         if (videoUnit.getId() == null) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("The unit must have an ID to be updated", ENTITY_NAME, "unitIdMissing");
         }
 
         if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
@@ -136,7 +135,7 @@ public class VideoUnitResource {
     public ResponseEntity<VideoUnit> createVideoUnit(@PathVariable Long lectureId, @RequestBody VideoUnit videoUnit) throws URISyntaxException {
         log.debug("REST request to create VideoUnit : {}", videoUnit);
         if (videoUnit.getId() != null) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("The unit must not have an ID to be created", ENTITY_NAME, "unitHasId");
         }
 
         normalizeVideoUrl(videoUnit);

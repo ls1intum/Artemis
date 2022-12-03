@@ -9,8 +9,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import javax.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -51,6 +49,8 @@ public class StudentExamResource {
 
     private final Logger log = LoggerFactory.getLogger(StudentExamResource.class);
 
+    public static final String ENTITY_NAME = "StudentExam";
+
     private final ExamAccessService examAccessService;
 
     private final StudentExamService studentExamService;
@@ -66,8 +66,6 @@ public class StudentExamResource {
     private final ExamDateService examDateService;
 
     private final ExamSessionService examSessionService;
-
-    private final QuizExerciseRepository quizExerciseRepository;
 
     private final StudentParticipationRepository studentParticipationRepository;
 
@@ -88,8 +86,8 @@ public class StudentExamResource {
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
-            ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository,
-            ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository, AuthorizationCheckService authorizationCheckService, ExamService examService,
+            ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, ExamRepository examRepository,
+            SubmittedAnswerRepository submittedAnswerRepository, AuthorizationCheckService authorizationCheckService, ExamService examService,
             InstanceMessageSendService instanceMessageSendService, WebsocketMessagingService messagingService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
@@ -100,7 +98,6 @@ public class StudentExamResource {
         this.examDateService = examDateService;
         this.examSessionService = examSessionService;
         this.studentParticipationRepository = studentParticipationRepository;
-        this.quizExerciseRepository = quizExerciseRepository;
         this.examRepository = examRepository;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -183,14 +180,14 @@ public class StudentExamResource {
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
         if (workingTime <= 0) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("Working time must be positive", ENTITY_NAME, "workingTimeError");
         }
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
         if (!studentExam.isTestRun()) {
             Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
             // when the exam is already visible, the working time cannot be changed, due to permission issues with unlock and lock operations for programming exercises
             if (ZonedDateTime.now().isAfter(exam.getVisibleDate())) {
-                throw new BadRequestAlertException("Working time can not be changed after exam becomes visible", "StudentExam", "workingTimeError");
+                throw new BadRequestAlertException("Working time can not be changed after exam becomes visible", ENTITY_NAME, "workingTimeError");
             }
             if (ZonedDateTime.now().isBefore(examDateService.getLatestIndividualExamEndDate(exam)) && exam.getStartDate() != null
                     && ZonedDateTime.now().isBefore(exam.getStartDate().plusSeconds(workingTime))) {
@@ -235,7 +232,7 @@ public class StudentExamResource {
 
         if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
             log.error("Student exam with id {} for user {} is already submitted.", studentExam.getId(), currentUser.getLogin());
-            throw new ConflictException("You have already submitted.", "studentExam", "alreadySubmitted");
+            throw new ConflictException("You have already submitted.", ENTITY_NAME, "alreadySubmitted");
         }
 
         // checks if student exam is live (after start date, before end date + grace period)
@@ -317,10 +314,10 @@ public class StudentExamResource {
         log.debug("REST request to get the test run for exam {} with id {}", examId, testRunId);
 
         // 1st: load the testRun with all associated exercises
-        StudentExam testRun = studentExamRepository.findWithExercisesById(testRunId).orElseThrow(() -> new EntityNotFoundException("StudentExam", testRunId));
+        StudentExam testRun = studentExamRepository.findWithExercisesById(testRunId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, testRunId));
 
         if (!currentUser.equals(testRun.getUser())) {
-            throw new ConflictException("Current user is not the user of the test run", "StudentExam", "userMismatch");
+            throw new ConflictException("Current user is not the user of the test run", ENTITY_NAME, "userMismatch");
         }
 
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
@@ -465,7 +462,7 @@ public class StudentExamResource {
     public ResponseEntity<StudentExam> createTestRun(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam testRunConfiguration) {
         log.info("REST request to create a test run of exam {}", examId);
         if (testRunConfiguration.getExam() == null || !testRunConfiguration.getExam().getId().equals(examId)) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("A test run must be connected to the correct exam", ENTITY_NAME, "testRunConfigurationWrong");
         }
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
@@ -495,8 +492,8 @@ public class StudentExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, exam);
 
         if (!this.examDateService.isExamWithGracePeriodOver(exam)) {
-            // you can only grade not submitted exams if the exam is over
-            throw new BadRequestException();
+            // you can only assess "not submitted exams" if the exam is over
+            throw new BadRequestAlertException("You can only assess 'not submitted exams' if the exam is over", ENTITY_NAME, "assessmentNotPossible");
         }
 
         // delete all test runs if the instructor forgot to delete them
@@ -547,7 +544,7 @@ public class StudentExamResource {
         final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         if (exam.isTestExam()) {
-            throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
+            throw new BadRequestAlertException("Start exercises is only allowed for real exams", ENTITY_NAME, "startExerciseOnlyForRealExams");
         }
 
         examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
@@ -668,9 +665,9 @@ public class StudentExamResource {
         User instructor = userRepository.getUser();
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
-        StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("studentExam", studentExamId));
+        StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, studentExamId));
         if (studentExam.isSubmitted()) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("The student exam was already submitted", ENTITY_NAME, "submitStudentExamNotPossible");
         }
         if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(ZonedDateTime.now())) {
             throw new AccessForbiddenException("Exam", examId);
@@ -705,9 +702,9 @@ public class StudentExamResource {
 
         examAccessService.checkCourseAndExamAndStudentExamAccessElseThrow(courseId, examId, studentExamId);
 
-        StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("studentExam", studentExamId));
+        StudentExam studentExam = studentExamRepository.findById(studentExamId).orElseThrow(() -> new EntityNotFoundException(ENTITY_NAME, studentExamId));
         if (!studentExam.isSubmitted()) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("The student exam was already unsubmitted", ENTITY_NAME, "unsubmitStudentExamNotPossible");
         }
         if (studentExam.getIndividualEndDateWithGracePeriod().isAfter(ZonedDateTime.now())) {
             throw new AccessForbiddenException("Exam", examId);

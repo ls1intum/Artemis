@@ -6,8 +6,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
-import javax.ws.rs.BadRequestException;
-
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -24,6 +22,7 @@ import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -32,6 +31,8 @@ import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 public class OnlineUnitResource {
 
     private final Logger log = LoggerFactory.getLogger(OnlineUnitResource.class);
+
+    private static final String ENTITY_NAME = "onlineUnit";
 
     private final OnlineUnitRepository onlineUnitRepository;
 
@@ -79,7 +80,7 @@ public class OnlineUnitResource {
     public ResponseEntity<OnlineUnit> updateOnlineUnit(@PathVariable Long lectureId, @RequestBody OnlineUnit onlineUnit) {
         log.debug("REST request to update an online unit : {}", onlineUnit);
         if (onlineUnit.getId() == null) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("The unit must have an ID to be updated", ENTITY_NAME, "unitIdMissing");
         }
 
         if (onlineUnit.getLecture() == null || onlineUnit.getLecture().getCourse() == null) {
@@ -111,7 +112,7 @@ public class OnlineUnitResource {
     public ResponseEntity<OnlineUnit> createOnlineUnit(@PathVariable Long lectureId, @RequestBody final OnlineUnit onlineUnit) throws URISyntaxException {
         log.debug("REST request to create onlineUnit : {}", onlineUnit);
         if (onlineUnit.getId() != null) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("The unit must not have an ID to be created", ENTITY_NAME, "unitHasId");
         }
 
         validateUrl(onlineUnit);
@@ -156,7 +157,7 @@ public class OnlineUnitResource {
             return new OnlineResourceDTO(url.toString(), title, description);
         }
         catch (MalformedURLException e) {
-            throw new BadRequestException("The specified link is not a valid URL");
+            throw new BadRequestAlertException("The specified link is not a valid URL", ENTITY_NAME, "urlNotValid");
         }
         catch (IOException e) {
             throw new InternalServerErrorException("Error while retrieving metadata from link");
@@ -192,7 +193,7 @@ public class OnlineUnitResource {
             new URL(onlineUnit.getSource());
         }
         catch (MalformedURLException exception) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("The online unit source is not a valid URL", ENTITY_NAME, "urlNotValid");
         }
     }
 }

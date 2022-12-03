@@ -10,8 +10,6 @@ import java.time.ZoneId;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import javax.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -112,11 +110,11 @@ public class TutorialGroupSessionResource {
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToUpdate.getTutorialGroup(), null);
         var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration");
+            throw new BadRequestAlertException("The course has no tutorial groups configuration", ENTITY_NAME, "configurationMissing");
         }
         var configuration = configurationOptional.get();
         if (configuration.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
+            throw new BadRequestAlertException("The course has no time zone", ENTITY_NAME, "timeZoneMissing");
         }
 
         var updatedSession = tutorialGroupSessionDTO.toEntity(configuration);
@@ -191,11 +189,11 @@ public class TutorialGroupSessionResource {
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(tutorialGroup, null);
         var configurationOptional = this.tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration");
+            throw new BadRequestAlertException("The course has no tutorial groups configuration", ENTITY_NAME, "configurationMissing");
         }
         var configuration = configurationOptional.get();
         if (configuration.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
+            throw new BadRequestAlertException("The course has no time zone", ENTITY_NAME, "timeZoneMissing");
         }
 
         TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(configuration);
@@ -237,7 +235,7 @@ public class TutorialGroupSessionResource {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToCancel = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         if (sessionToCancel.getTutorialGroupFreePeriod() != null) {
-            throw new BadRequestException("You can not cancel a session that is cancelled by a overlapping with a free period");
+            throw new BadRequestAlertException("You can not cancel a session that is cancelled by a overlapping with a free period", ENTITY_NAME, "overlapCannotCancel");
         }
         checkEntityIdMatchesPathIds(sessionToCancel, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToCancel.getTutorialGroup(), null);
@@ -264,9 +262,9 @@ public class TutorialGroupSessionResource {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToActivate = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         if (sessionToActivate.getTutorialGroupFreePeriod() != null) {
-            throw new BadRequestException("You can not activate a session that is cancelled by a overlapping with a free period");
+            throw new BadRequestAlertException("You can not activate a session that is cancelled by a overlapping with a free period", ENTITY_NAME, "overlapCannotCancel");
         }
-        checkEntityIdMatchesPathIds(sessionToActivate, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.ofNullable(sessionId));
+        checkEntityIdMatchesPathIds(sessionToActivate, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
         tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToActivate.getTutorialGroup(), null);
         sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);
         sessionToActivate.setStatusExplanation(null);

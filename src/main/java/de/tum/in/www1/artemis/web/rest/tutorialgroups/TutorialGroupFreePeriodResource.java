@@ -7,8 +7,6 @@ import java.net.URISyntaxException;
 import java.time.*;
 import java.util.Optional;
 
-import javax.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -96,11 +94,11 @@ public class TutorialGroupFreePeriodResource {
 
         Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration");
+            throw new BadRequestAlertException("The course has no tutorial groups configuration", ENTITY_NAME, "configurationMissing");
         }
         var configuration = configurationOptional.get();
         if (configuration.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
+            throw new BadRequestAlertException("The course has no time zone", ENTITY_NAME, "timeZoneMissing");
         }
 
         TutorialGroupFreePeriod updatedFreePeriod = new TutorialGroupFreePeriod();
@@ -139,7 +137,7 @@ public class TutorialGroupFreePeriodResource {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository
                 .findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
         if (tutorialGroupsConfiguration.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
+            throw new BadRequestAlertException("The course has no time zone", ENTITY_NAME, "timeZoneMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupsConfiguration.getCourse(), null);
 

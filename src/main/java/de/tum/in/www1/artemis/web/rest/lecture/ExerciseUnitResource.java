@@ -4,11 +4,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import javax.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +16,7 @@ import de.tum.in.www1.artemis.repository.ExerciseUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 @RestController
@@ -34,9 +32,6 @@ public class ExerciseUnitResource {
     private final ExerciseUnitRepository exerciseUnitRepository;
 
     private final LectureRepository lectureRepository;
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     public ExerciseUnitResource(LectureRepository lectureRepository, ExerciseUnitRepository exerciseUnitRepository, AuthorizationCheckService authorizationCheckService) {
         this.exerciseUnitRepository = exerciseUnitRepository;
@@ -57,7 +52,7 @@ public class ExerciseUnitResource {
     public ResponseEntity<ExerciseUnit> createExerciseUnit(@PathVariable Long lectureId, @RequestBody ExerciseUnit exerciseUnit) throws URISyntaxException {
         log.debug("REST request to create ExerciseUnit : {}", exerciseUnit);
         if (exerciseUnit.getId() != null) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("The unit must not have an ID to be created", ENTITY_NAME, "unitHasId");
         }
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
         if (lecture.getCourse() == null) {

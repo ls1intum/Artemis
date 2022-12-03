@@ -5,8 +5,6 @@ import java.net.URISyntaxException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -138,7 +136,7 @@ public class LearningGoalResource {
         var relations = learningGoalRelationRepository.findAllByLearningGoalId(learningGoal.getId());
 
         if (!relations.isEmpty()) {
-            throw new BadRequestException("Can not delete a learning goal that has active relations");
+            throw new BadRequestAlertException("Can not delete a learning goal that has active relations", ENTITY_NAME, "cannotDeleteWithRelation");
         }
 
         learningGoalRepository.deleteById(learningGoal.getId());
@@ -226,11 +224,11 @@ public class LearningGoalResource {
     public ResponseEntity<LearningGoal> updateLearningGoal(@PathVariable Long courseId, @RequestBody LearningGoal learningGoal) {
         log.debug("REST request to update LearningGoal : {}", learningGoal);
         if (learningGoal.getId() == null) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("ID cannot be null when updating", ENTITY_NAME, "idNull");
         }
         var existingLearningGoal = this.learningGoalRepository.findByIdElseThrow(learningGoal.getId());
         if (existingLearningGoal.getCourse() == null || !existingLearningGoal.getCourse().getId().equals(courseId)) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("Learning goal course configuration is wrong", ENTITY_NAME, "configWrong");
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingLearningGoal.getCourse(), null);
@@ -268,11 +266,11 @@ public class LearningGoalResource {
         log.debug("REST request to create LearningGoal : {}", learningGoalFromClient);
 
         if (learningGoalFromClient.getId() != null || learningGoalFromClient.getTitle() == null) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("ID must be null when creating", ENTITY_NAME, "idNotNull");
         }
         Course course = courseRepository.findWithEagerLearningGoalsByIdElseThrow(courseId);
         if (course.getLearningGoals().stream().map(LearningGoal::getTitle).anyMatch(title -> title.equals(learningGoalFromClient.getTitle()))) {
-            throw new BadRequestException();
+            throw new BadRequestAlertException("Learning goals cannot have the same title", ENTITY_NAME, "duplicatedTitle");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
@@ -335,7 +333,7 @@ public class LearningGoalResource {
             return ResponseEntity.ok().body(relation);
         }
         catch (IllegalArgumentException e) {
-            throw new BadRequestException("Invalid value for relation type");
+            throw new BadRequestAlertException("Invalid value for relation type", ENTITY_NAME, e.getMessage());
         }
     }
 
@@ -355,7 +353,7 @@ public class LearningGoalResource {
         var relation = learningGoalRelationRepository.findById(learningGoalRelationId).orElseThrow();
 
         if (!relation.getTailLearningGoal().getId().equals(learningGoal.getId())) {
-            throw new BadRequestException("The relation does not belong to the specified learning goal");
+            throw new BadRequestAlertException("The relation does not belong to the specified learning goal", ENTITY_NAME, "relationWrong");
         }
 
         learningGoalRelationRepository.delete(relation);

@@ -4,8 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
-import javax.ws.rs.BadRequestException;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -186,7 +184,7 @@ public class TutorialGroupResource {
     public ResponseEntity<TutorialGroup> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroup tutorialGroup) throws URISyntaxException {
         log.debug("REST request to create TutorialGroup: {} in course: {}", tutorialGroup, courseId);
         if (tutorialGroup.getId() != null) {
-            throw new BadRequestException("A new tutorial group cannot already have an ID");
+            throw new BadRequestAlertException("A new tutorial group cannot already have an ID", ENTITY_NAME, "isMustBeNull");
         }
         var course = courseRepository.findByIdElseThrow(courseId);
         var responsibleUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -223,11 +221,11 @@ public class TutorialGroupResource {
     private TutorialGroupsConfiguration validateConfiguration(Long courseId) {
         Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId);
         if (configurationOptional.isEmpty()) {
-            throw new BadRequestException("The course has no tutorial groups configuration");
+            throw new BadRequestAlertException("The course has no tutorial groups configuration", ENTITY_NAME, "configurationWrong");
         }
         var configuration = configurationOptional.get();
         if (configuration.getCourse().getTimeZone() == null) {
-            throw new BadRequestException("The course has no time zone");
+            throw new BadRequestAlertException("The course has no time zone", ENTITY_NAME, "timeZoneMissing");
         }
         return configuration;
     }
@@ -278,7 +276,7 @@ public class TutorialGroupResource {
         TutorialGroup updatedTutorialGroup = tutorialGroupUpdateDTO.tutorialGroup();
         log.debug("REST request to update TutorialGroup : {}", updatedTutorialGroup);
         if (updatedTutorialGroup.getId() == null) {
-            throw new BadRequestException("A tutorial group cannot be updated without an id");
+            throw new BadRequestAlertException("A tutorial group cannot be updated without an id", ENTITY_NAME, "idCannotBeNull");
         }
         var oldTutorialGroup = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         updatedTutorialGroup.setCourse(oldTutorialGroup.getCourse());
@@ -429,10 +427,10 @@ public class TutorialGroupResource {
 
     private void checkTitleIsValid(TutorialGroup tutorialGroup) {
         if (tutorialGroupRepository.existsByTitleAndCourse(tutorialGroup.getTitle(), tutorialGroup.getCourse())) {
-            throw new BadRequestException("A tutorial group with this title already exists in the course.");
+            throw new BadRequestAlertException("A tutorial group with this title already exists in the course.", ENTITY_NAME, "titleConflict");
         }
         if (!tutorialGroup.getTitle().matches(TITLE_REGEX)) {
-            throw new BadRequestException("Title can only contain letters, numbers, spaces and dashes.");
+            throw new BadRequestAlertException("Title can only contain letters, numbers, spaces and dashes.", ENTITY_NAME, "titleWrong");
         }
     }
 
