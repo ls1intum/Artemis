@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 
 class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "partlcservice";
+
     @Autowired
     private ParticipationLifecycleService participationLifecycleService;
 
@@ -36,10 +38,10 @@ class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationBambooB
     void reset() {
         SecurityUtils.setAuthorizationObject();
 
-        database.addUsers(1, 1, 1, 1);
+        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         Course course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        participation = database.addStudentParticipationForProgrammingExercise(this.programmingExercise, "student1");
+        participation = database.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");
     }
 
     @AfterEach

@@ -31,6 +31,8 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInt
 
 class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
+    private static final String TEST_PREFIX = "jenkinsauthintercept";
+
     @Value("${artemis.continuous-integration.url}")
     private URL jenkinsServerUrl;
 
@@ -60,7 +62,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrationJenki
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testAuthorizationInterceptorSetCrumbCorrectly() throws Exception {
         // Create a mocked request with a header which shouldn't be erased after the request is intercepted.
         var request = mockHttpRequestWithHeaders();
@@ -82,7 +84,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrationJenki
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testAuthorizationInterceptorCrumbNotSet() throws Exception {
         // Create a mocked request with a header which shouldn't be erased after the request is intercepted.
         var request = mockHttpRequestWithHeaders();
@@ -99,7 +101,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrationJenki
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testAuthorizationInterceptorCrumbException() throws Exception {
         // Create a mocked request with a header which shouldn't be erased after the request is intercepted.
         var request = mockHttpRequestWithHeaders();

@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -24,6 +25,8 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "courseservice";
 
     @Autowired
     private CourseService courseService;
@@ -42,6 +45,11 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Autowired
     private ExerciseRepository exerciseRepo;
+
+    @BeforeEach
+    void initTestCase() {
+        database.addUsers(TEST_PREFIX, 2, 0, 0, 1);
+    }
 
     @AfterEach
     void tearDown() {
@@ -63,12 +71,11 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         course.addExercises(exercise);
         exercise = exerciseRepo.save(exercise);
 
-        var users = database.addUsers(2, 0, 0, 0);
-        var student1 = users.get(0);
+        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         var participation1 = new StudentParticipation();
         participation1.setParticipant(student1);
         participation1.exercise(exercise);
-        var student2 = users.get(1);
+        var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
         var participation2 = new StudentParticipation();
         participation2.setParticipant(student2);
         participation2.exercise(exercise);
@@ -125,8 +132,7 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         course.addExercises(exercise);
         exercise = exerciseRepo.save(exercise);
 
-        var users = database.addUsers(2, 0, 0, 0);
-        var student1 = users.get(0);
+        var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         var participation1 = new StudentParticipation();
         participation1.setParticipant(student1);
         participation1.exercise(exercise);
@@ -158,9 +164,6 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
         courseRepository.save(inactiveCourse);
 
-        // 'addUsers' adds the admin as well
-        database.addUsers(0, 0, 0, 0);
-
         var courses = courseService.getAllCoursesForManagementOverview(false);
         assertThat(courses).contains(inactiveCourse, course);
 
@@ -170,7 +173,7 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetOverviewAsInstructor() {
         // Testcase: Instructors see their courses
         // Add three courses, containing one not active and one not belonging to the instructor
@@ -183,8 +186,7 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepository.save(instructorsCourse);
 
-        var users = database.addUsers(0, 0, 0, 1);
-        var instructor = users.get(0);
+        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
         var groups = new HashSet<String>();
         groups.add("test-instructors");
         instructor.setGroups(groups);
@@ -204,7 +206,7 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetOverviewAsStudent() {
         // Testcase: Students should not see courses
         // Add three courses, containing one not active and one not belonging to the student
@@ -217,8 +219,7 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         instructorsCourse.setStudentGroupName("test-students");
         courseRepository.save(instructorsCourse);
 
-        var users = database.addUsers(1, 0, 0, 0);
-        var student = users.get(0);
+        var student = database.getUserByLogin(TEST_PREFIX + "student1");
         var groups = new HashSet<String>();
         groups.add("test-students");
         student.setGroups(groups);

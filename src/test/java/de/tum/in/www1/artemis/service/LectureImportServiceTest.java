@@ -21,6 +21,8 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 
 class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "lectureimport";
+
     @Autowired
     private LectureImportService lectureImportService;
 
@@ -36,7 +38,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(0, 0, 0, 1);
+        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         List<Course> courses = this.database.createCoursesWithExercisesAndLecturesAndLectureUnits(false, true);
         Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         long lecture1Id = course1.getLectures().stream().findFirst().get().getId();
@@ -55,7 +57,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportLectureToCourse() {
         int lectureCount = this.course2.getLectures().size();
 
