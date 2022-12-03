@@ -798,7 +798,11 @@ public class DatabaseUtilService {
     }
 
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations, boolean withFiles) throws Exception {
-        List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations, withFiles);
+        return createCoursesWithExercisesAndLecturesAndLectureUnits("", withParticipations, withFiles);
+    }
+
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles) throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             for (int i = 0; i < lectures.size(); i++) {
@@ -865,6 +869,10 @@ public class DatabaseUtilService {
 
     public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations, boolean withFiles) throws Exception {
         return createCoursesWithExercisesAndLectures("", withParticipations, withFiles);
+    }
+
+    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations) throws Exception {
+        return createCoursesWithExercisesAndLectures(prefix, withParticipations, false);
     }
 
     public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, boolean withFiles) throws Exception {
@@ -2919,7 +2927,7 @@ public class DatabaseUtilService {
      * @param validModel                    model for the modeling submission
      * @return - the generated course
      */
-    public Course addCourseWithExercisesAndSubmissions(int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints,
+    public Course addCourseWithExercisesAndSubmissions(String userPrefix, int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints,
             boolean typeComplaint, int numberComplaintResponses, String validModel) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         var tutors = userRepo.getTutors(course);
@@ -2934,9 +2942,9 @@ public class DatabaseUtilService {
                 course = courseRepo.save(course);
                 exerciseRepo.save(modelingExercise);
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
-                    StudentParticipation participation = createAndSaveParticipationForExercise(modelingExercise, "student" + j);
+                    StudentParticipation participation = createAndSaveParticipationForExercise(modelingExercise, userPrefix + "student" + j);
                     ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-                    var user = getUserByLogin("student" + j);
+                    var user = getUserByLogin(userPrefix + "student" + j);
                     modelSubmissionService.handleModelingSubmission(submission, modelingExercise, user);
                     studentParticipationRepo.save(participation);
                     if (numberOfAssessments >= j) {
@@ -2945,7 +2953,7 @@ public class DatabaseUtilService {
                         participation.addResult(result);
                         studentParticipationRepo.save(participation);
                         modelingSubmissionRepo.save(submission);
-                        generateComplaintAndResponses(j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
+                        generateComplaintAndResponses(userPrefix, j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
                     }
                 }
 
@@ -2958,13 +2966,13 @@ public class DatabaseUtilService {
                 exerciseRepo.save(textExercise);
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
                     TextSubmission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
-                    submission = saveTextSubmission(textExercise, submission, "student" + j);
+                    submission = saveTextSubmission(textExercise, submission, userPrefix + "student" + j);
                     if (numberOfAssessments >= j) {
                         Result result = generateResult(submission, currentUser);
                         submission.addResult(result);
                         saveResultInParticipation(submission, result);
                         textSubmissionRepo.save(submission);
-                        generateComplaintAndResponses(j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
+                        generateComplaintAndResponses(userPrefix, j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
                     }
                 }
             }
@@ -2976,12 +2984,12 @@ public class DatabaseUtilService {
                 exerciseRepo.save(fileUploadExercise);
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
                     FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
-                    saveFileUploadSubmission(fileUploadExercise, submission, "student" + j);
+                    saveFileUploadSubmission(fileUploadExercise, submission, userPrefix + "student" + j);
                     if (numberOfAssessments >= j) {
                         Result result = generateResult(submission, currentUser);
                         saveResultInParticipation(submission, result);
                         fileUploadSubmissionRepo.save(submission);
-                        generateComplaintAndResponses(j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
+                        generateComplaintAndResponses(userPrefix, j, numberOfComplaints, numberComplaintResponses, typeComplaint, result, currentUser);
                     }
                 }
             }
@@ -3008,14 +3016,15 @@ public class DatabaseUtilService {
         return result;
     }
 
-    private void generateComplaintAndResponses(int j, int numberOfComplaints, int numberComplaintResponses, boolean typeComplaint, Result result, User currentUser) {
+    private void generateComplaintAndResponses(String userPrefix, int j, int numberOfComplaints, int numberComplaintResponses, boolean typeComplaint, Result result,
+            User currentUser) {
         result = resultRepo.save(result);
         if (numberOfComplaints >= j) {
             Complaint complaint = typeComplaint ? new Complaint().complaintType(ComplaintType.COMPLAINT) : new Complaint().complaintType(ComplaintType.MORE_FEEDBACK);
             complaint.setResult(result);
             complaint = complaintRepo.save(complaint);
             if (numberComplaintResponses >= j) {
-                ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? "tutor5" : currentUser.getLogin(), complaint);
+                ComplaintResponse complaintResponse = createInitialEmptyResponse(typeComplaint ? userPrefix + "tutor5" : currentUser.getLogin(), complaint);
                 complaintResponse.getComplaint().setAccepted(true);
                 complaintResponse.setResponseText(typeComplaint ? "Accepted" : "SomeMoreFeedback");
                 complaintResponseRepo.save(complaintResponse);
@@ -4250,30 +4259,30 @@ public class DatabaseUtilService {
         }
     }
 
-    public Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions() throws Exception {
+    public Course createCourseWithTestModelingAndFileUploadExercisesAndSubmissions(String loginPrefix) throws Exception {
         Course course = addCourseWithModelingAndTextAndFileUploadExercise();
         course.setEndDate(ZonedDateTime.now().minusMinutes(5));
         course = courseRepo.save(course);
 
         var fileUploadExercise = findFileUploadExerciseWithTitle(course.getExercises(), "FileUpload");
-        createFileUploadSubmissionWithFile(fileUploadExercise, "uploaded-file.png");
+        createFileUploadSubmissionWithFile(loginPrefix, fileUploadExercise, "uploaded-file.png");
 
         var textExercise = findTextExerciseWithTitle(course.getExercises(), "Text");
         var textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        saveTextSubmission(textExercise, textSubmission, "student1");
+        saveTextSubmission(textExercise, textSubmission, loginPrefix + "student1");
 
         var modelingExercise = findModelingExerciseWithTitle(course.getExercises(), "Modeling");
-        createAndSaveParticipationForExercise(modelingExercise, "student1");
+        createAndSaveParticipationForExercise(modelingExercise, loginPrefix + "student1");
         String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, true);
-        addSubmission(modelingExercise, submission, "student1");
+        addSubmission(modelingExercise, submission, loginPrefix + "student1");
 
         return course;
     }
 
-    public void createFileUploadSubmissionWithFile(FileUploadExercise fileUploadExercise, String filename) throws IOException {
+    public void createFileUploadSubmissionWithFile(String loginPrefix, FileUploadExercise fileUploadExercise, String filename) throws IOException {
         var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+        fileUploadSubmission = addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, loginPrefix + "student1");
 
         // Create a dummy file
         var uploadedFileDir = Path.of("./", FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()));
@@ -4286,14 +4295,14 @@ public class DatabaseUtilService {
         fileUploadSubmissionRepo.save(fileUploadSubmission);
     }
 
-    public Course createCourseWithExamAndExercises() throws IOException {
+    public Course createCourseWithExamAndExercises(String loginPrefix) throws IOException {
         var course = addEmptyCourse();
 
         // Create a file upload exercise with a dummy submission file
         var exerciseGroup1 = exerciseGroupRepository.save(new ExerciseGroup());
         var fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(".png", exerciseGroup1);
         fileUploadExercise = exerciseRepo.save(fileUploadExercise);
-        createFileUploadSubmissionWithFile(fileUploadExercise, "uploaded-file.png");
+        createFileUploadSubmissionWithFile(loginPrefix, fileUploadExercise, "uploaded-file.png");
         exerciseGroup1.addExercise(fileUploadExercise);
         exerciseGroup1 = exerciseGroupRepository.save(exerciseGroup1);
 
@@ -4302,7 +4311,7 @@ public class DatabaseUtilService {
         var textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup2);
         textExercise = exerciseRepo.save(textExercise);
         var textSubmission = ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true);
-        saveTextSubmission(textExercise, textSubmission, "student1");
+        saveTextSubmission(textExercise, textSubmission, loginPrefix + "student1");
         exerciseGroup2.addExercise(textExercise);
         exerciseGroup2 = exerciseGroupRepository.save(exerciseGroup2);
 
@@ -4312,7 +4321,7 @@ public class DatabaseUtilService {
         modelingExercise = exerciseRepo.save(modelingExercise);
         String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         var modelingSubmission = ModelFactory.generateModelingSubmission(emptyActivityModel, true);
-        addSubmission(modelingExercise, modelingSubmission, "student1");
+        addSubmission(modelingExercise, modelingSubmission, loginPrefix + "student1");
         exerciseGroup3.addExercise(modelingExercise);
         exerciseGroupRepository.save(exerciseGroup3);
 
