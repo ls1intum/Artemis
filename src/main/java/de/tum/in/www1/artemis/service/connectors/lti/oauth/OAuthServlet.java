@@ -10,12 +10,13 @@ public class OAuthServlet {
      * parameters in the query string and/or form encoded body. The header
      * parameters come first, followed by the rest in the order they came from
      * request.getParameterMap().
-     *
+     * @param request
      * @param URL
      *            the official URL of this service; that is the URL a legitimate
      *            client would use to compute the digital signature. If this
      *            parameter is null, this method will try to reconstruct the URL
      *            from the HTTP request; which may be wrong in some cases.
+     * @return the OAuthMessage object that was part of the request
      */
     public static OAuthMessage getMessage(HttpServletRequest request, String URL) {
         if (URL == null) {
@@ -30,7 +31,11 @@ public class OAuthServlet {
         return new HttpRequestMessage(request, URL);
     }
 
-    /** Reconstruct the requested URL, complete with query string (if any). */
+    /**
+     * Reconstruct the requested URL, complete with query string (if any).
+     * @param request
+     * @return the url that was used in the given request
+     */
     public static String getRequestURL(HttpServletRequest request) {
         StringBuffer url = request.getRequestURL();
         String queryString = request.getQueryString();

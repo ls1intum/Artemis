@@ -5,6 +5,13 @@ import jakarta.servlet.http.HttpServletRequest;
 
 public class LtiOauthVerifier {
 
+    /**
+     * verify the request based on the given secret
+     * @param request
+     * @param secret
+     * @return the verification result (success / error)
+     * @throws LtiVerificationException
+     */
     public LtiVerificationResult verify(HttpServletRequest request, String secret) throws LtiVerificationException {
         OAuthMessage oam = OAuthServlet.getMessage(request, OAuthServlet.getRequestURL(request));
         String oauth_consumer_key;

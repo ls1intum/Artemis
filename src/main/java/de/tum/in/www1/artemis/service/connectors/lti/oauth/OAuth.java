@@ -3,9 +3,9 @@ package de.tum.in.www1.artemis.service.connectors.lti.oauth;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -19,9 +19,6 @@ import java.util.Map;
 public class OAuth {
 
     public static final String VERSION_1_0 = "1.0";
-
-    /** The encoding used to represent characters as bytes. */
-    public static final String ENCODING = "UTF-8";
 
     public static final String OAUTH_CONSUMER_KEY = "oauth_consumer_key";
 
@@ -68,45 +65,28 @@ public class OAuth {
         public static final String OAUTH_PARAMETERS_REJECTED = "oauth_parameters_rejected";
 
         public static final String OAUTH_PROBLEM_ADVICE = "oauth_problem_advice";
-
-    }
-
-    private static final String characterEncoding = ENCODING;
-
-    public static String decodeCharacters(byte[] from) {
-        try {
-            return new String(from, characterEncoding);
-        }
-        catch (UnsupportedEncodingException e) {
-            System.err.println(e + "");
-        }
-        return new String(from);
-    }
-
-    public static byte[] encodeCharacters(String from) {
-        try {
-            return from.getBytes(characterEncoding);
-        }
-        catch (UnsupportedEncodingException e) {
-            System.err.println(e + "");
-        }
-        return from.getBytes();
     }
 
     /**
      * Construct a form-urlencoded document containing the given sequence of
      * name/value pairs. Use OAuth percent encoding (not exactly the encoding
      * mandated by HTTP).
+     * @param parameters
+     * @return a string which encodes the given parameters
+     * @throws IOException
      */
     public static String formEncode(Iterable<? extends Map.Entry<String, String>> parameters) throws IOException {
-        ByteArrayOutputStream b = new ByteArrayOutputStream();
-        formEncode(parameters, b);
-        return decodeCharacters(b.toByteArray());
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        formEncode(parameters, outputStream);
+        return outputStream.toString(StandardCharsets.UTF_8);
     }
 
     /**
      * Write a form-urlencoded document into the given stream, containing the
      * given sequence of name/value pairs.
+     * @param parameters
+     * @param into
+     * @throws IOException
      */
     public static void formEncode(Iterable<? extends Map.Entry<String, String>> parameters, OutputStream into) throws IOException {
         if (parameters != null) {
@@ -118,14 +98,18 @@ public class OAuth {
                 else {
                     into.write('&');
                 }
-                into.write(encodeCharacters(percentEncode(toString(parameter.getKey()))));
+                into.write(percentEncode(toString(parameter.getKey())).getBytes(StandardCharsets.UTF_8));
                 into.write('=');
-                into.write(encodeCharacters(percentEncode(toString(parameter.getValue()))));
+                into.write(percentEncode(toString(parameter.getValue())).getBytes(StandardCharsets.UTF_8));
             }
         }
     }
 
-    /** Parse a form-urlencoded document. */
+    /**
+     * Parse a form-urlencoded document
+     * @param form
+     * @return the list of parameters decoded from the given string
+     */
     public static List<OAuth.Parameter> decodeForm(String form) {
         List<OAuth.Parameter> list = new ArrayList<>();
         if (!isEmpty(form)) {
@@ -147,47 +131,52 @@ public class OAuth {
         return list;
     }
 
-    /** Construct a &-separated list of the given values, percentEncoded. */
-    public static String percentEncode(Iterable<?> values) {
-        StringBuilder p = new StringBuilder();
-        for (Object v : values) {
-            if (p.length() > 0) {
-                p.append("&");
+    /**
+     * Construct a &-separated list of the given values, percentEncoded.
+     * @param values
+     * @return a string which encodes the given values correctly for a URL
+     */
+    public static String percentEncode(Iterable<String> values) {
+        StringBuilder builder = new StringBuilder();
+        for (String value : values) {
+            if (builder.length() > 0) {
+                builder.append("&");
             }
-            p.append(OAuth.percentEncode(toString(v)));
+            builder.append(OAuth.percentEncode(toString(value)));
         }
-        return p.toString();
+        return builder.toString();
     }
 
-    public static String percentEncode(String s) {
-        if (s == null) {
+    /**
+     * Creates a URL encoded string
+     * @param string
+     * @return a URL encoded string
+     */
+    public static String percentEncode(String string) {
+        if (string == null) {
             return "";
         }
-        try {
-            return URLEncoder.encode(s, ENCODING)
-                    // OAuth encodes some characters differently:
-                    .replace("+", "%20").replace("*", "%2A").replace("%7E", "~");
-            // This could be done faster with more hand-crafted code.
-        }
-        catch (UnsupportedEncodingException wow) {
-            throw new RuntimeException(wow.getMessage(), wow);
-        }
+        return URLEncoder.encode(string, StandardCharsets.UTF_8)
+                // OAuth encodes some characters differently:
+                .replace("+", "%20").replace("*", "%2A").replace("%7E", "~");
+        // This could be done faster with more hand-crafted code.
     }
 
-    public static String decodePercent(String s) {
-        try {
-            return URLDecoder.decode(s, ENCODING);
-            // This implements http://oauth.pbwiki.com/FlexibleDecoding
-        }
-        catch (java.io.UnsupportedEncodingException wow) {
-            throw new RuntimeException(wow.getMessage(), wow);
-        }
+    /**
+     * decodes the given string with a
+     * @param string
+     * @return a decoded string
+     */
+    public static String decodePercent(String string) {
+        return URLDecoder.decode(string, StandardCharsets.UTF_8);
+        // This implements http://oauth.pbwiki.com/FlexibleDecoding
     }
 
     /**
      * Construct a Map containing a copy of the given parameters. If several
-     * parameters have the same name, the Map will contain the first value,
-     * only.
+     * parameters have the same name, the Map will contain the first value, only.
+     * @param from
+     * @return the copied map
      */
     public static Map<String, String> newMap(Iterable<? extends Map.Entry<String, String>> from) {
         Map<String, String> map = new HashMap<>();
@@ -214,14 +203,17 @@ public class OAuth {
 
         private String value;
 
+        @Override
         public String getKey() {
             return key;
         }
 
+        @Override
         public String getValue() {
             return value;
         }
 
+        @Override
         public String setValue(String value) {
             try {
                 return this.value;

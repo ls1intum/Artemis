@@ -108,7 +108,10 @@ public class OAuthMessage {
         return parameterMap;
     }
 
-    /** All HTTP headers.  You can add headers to this list. */
+    /**
+     * All HTTP headers.  You can add headers to this list.
+     * @return a list of headers
+     */
     public final List<Map.Entry<String, String>> getHeaders() {
         return headers;
     }
@@ -117,6 +120,7 @@ public class OAuthMessage {
      * Verify that the required parameter names are contained in the actual
      * collection.
      *
+     * @param names
      * @throws OAuthProblemException
      *                 one or more parameters are absent.
      */
@@ -137,7 +141,7 @@ public class OAuthMessage {
 
     /**
      * Add a signature to the message.
-     *
+     * @param accessor
      */
     public void sign(OAuthAccessor accessor) throws IOException, OAuthException, URISyntaxException {
         OAuthSignatureMethod.newSigner(this, accessor).sign(this);
@@ -147,18 +151,20 @@ public class OAuthMessage {
      * Parse the parameters from an OAuth Authorization or WWW-Authenticate
      * header. The realm is included as a parameter. If the given header doesn't
      * start with "OAuth ", return an empty list.
+     * @param authorization
+     * @return list of parameters related to authorization
      */
     public static List<OAuth.Parameter> decodeAuthorization(String authorization) {
         List<OAuth.Parameter> into = new ArrayList<>();
         if (authorization != null) {
-            Matcher m = AUTHORIZATION.matcher(authorization);
-            if (m.matches()) {
-                if (AUTH_SCHEME.equalsIgnoreCase(m.group(1))) {
-                    for (String nvp : m.group(2).split("\\s*,\\s*")) {
-                        m = NVP.matcher(nvp);
-                        if (m.matches()) {
-                            String name = OAuth.decodePercent(m.group(1));
-                            String value = OAuth.decodePercent(m.group(2));
+            Matcher matcher = AUTHORIZATION.matcher(authorization);
+            if (matcher.matches()) {
+                if (AUTH_SCHEME.equalsIgnoreCase(matcher.group(1))) {
+                    for (String nvp : matcher.group(2).split("\\s*,\\s*")) {
+                        matcher = NVP.matcher(nvp);
+                        if (matcher.matches()) {
+                            String name = OAuth.decodePercent(matcher.group(1));
+                            String value = OAuth.decodePercent(matcher.group(2));
                             into.add(new OAuth.Parameter(name, value));
                         }
                     }

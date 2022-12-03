@@ -31,6 +31,11 @@ public class HttpRequestMessage extends OAuthMessage {
         }
     }
 
+    /**
+     * get the parameters of a request and return them in a list
+     * @param request
+     * @return list of parameters of the given request
+     */
     public static List<OAuth.Parameter> getParameters(HttpServletRequest request) {
         List<OAuth.Parameter> list = new ArrayList<>();
         for (Enumeration<String> headers = request.getHeaders("Authorization"); headers != null && headers.hasMoreElements();) {

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.connectors.lti.oauth.signature;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.KeyFactory;
@@ -174,10 +173,10 @@ public class RSA_SHA1 extends OAuthSignatureMethod {
     @Override
     protected String getSignature(String baseString) throws OAuthException {
         try {
-            byte[] signature = sign(baseString.getBytes(OAuth.ENCODING));
+            byte[] signature = sign(baseString.getBytes(StandardCharsets.UTF_8));
             return base64Encode(signature);
         }
-        catch (UnsupportedEncodingException | GeneralSecurityException e) {
+        catch (GeneralSecurityException e) {
             throw new OAuthException(e);
         }
     }
@@ -185,9 +184,9 @@ public class RSA_SHA1 extends OAuthSignatureMethod {
     @Override
     protected boolean isValid(String signature, String baseString) throws OAuthException {
         try {
-            return verify(decodeBase64(signature), baseString.getBytes(OAuth.ENCODING));
+            return verify(decodeBase64(signature), baseString.getBytes(StandardCharsets.UTF_8));
         }
-        catch (UnsupportedEncodingException | GeneralSecurityException e) {
+        catch (GeneralSecurityException e) {
             throw new OAuthException(e);
         }
     }

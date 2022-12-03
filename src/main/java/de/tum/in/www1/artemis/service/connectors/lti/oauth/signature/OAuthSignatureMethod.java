@@ -21,15 +21,23 @@ import de.tum.in.www1.artemis.service.connectors.lti.oauth.*;
  */
 public abstract class OAuthSignatureMethod {
 
-    /** Add a signature to the message.    */
+    /**
+     * Add a signature to the message
+     * @param message
+     * @throws OAuthException
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     public void sign(OAuthMessage message) throws OAuthException, IOException, URISyntaxException {
         message.addParameter(new OAuth.Parameter("oauth_signature", getSignature(message)));
     }
 
     /**
      * Check whether the message has a valid signature.
-     * @throws OAuthProblemException
-     *             the signature is invalid
+     * @param message
+     * @throws IOException
+     * @throws OAuthException   the signature is invalid
+     * @throws URISyntaxException
      */
     public void validate(OAuthMessage message) throws IOException, OAuthException, URISyntaxException {
         message.requireParameters("oauth_signature");
@@ -97,6 +105,13 @@ public abstract class OAuthSignatureMethod {
         this.tokenSecret = tokenSecret;
     }
 
+    /**
+     *
+     * @param message
+     * @return the base string of the given message
+     * @throws IOException
+     * @throws URISyntaxException
+     */
     public static String getBaseString(OAuthMessage message) throws IOException, URISyntaxException {
         List<Map.Entry<String, String>> parameters;
         String url = message.URL;
@@ -152,16 +167,19 @@ public abstract class OAuthSignatureMethod {
      * Determine whether the given strings contain the same sequence of
      * characters. The implementation discourages a <a
      * href="http://codahale.com/a-lesson-in-timing-attacks/">timing attack</a>.
+     * @param s1
+     * @param s2
+     * @return whether s1 and s2 are equal
      */
-    public static boolean equals(String x, String y) {
-        if (x == null)
-            return y == null;
-        else if (y == null)
+    public static boolean equals(String s1, String s2) {
+        if (s1 == null)
+            return s2 == null;
+        else if (s2 == null)
             return false;
-        else if (y.length() == 0)
-            return x.length() == 0;
-        char[] a = x.toCharArray();
-        char[] b = y.toCharArray();
+        else if (s2.length() == 0)
+            return s1.length() == 0;
+        char[] a = s1.toCharArray();
+        char[] b = s2.toCharArray();
         char diff = (char) ((a.length == b.length) ? 0 : 1);
         int j = 0;
         for (char c : a) {
@@ -173,25 +191,33 @@ public abstract class OAuthSignatureMethod {
 
     /**
      * Determine whether the given arrays contain the same sequence of bytes.
-     * The implementation discourages a <a
-     * href="http://codahale.com/a-lesson-in-timing-attacks/">timing attack</a>.
+     * The implementation discourages b1 <b1
+     * href="http://codahale.com/a-lesson-in-timing-attacks/">timing attack</b1>.
+     * @param b1
+     * @param b2
+     * @return whether b1 and b2 are equal
      */
-    public static boolean equals(byte[] a, byte[] b) {
-        if (a == null)
-            return b == null;
-        else if (b == null)
+    public static boolean equals(byte[] b1, byte[] b2) {
+        if (b1 == null)
+            return b2 == null;
+        else if (b2 == null)
             return false;
-        else if (b.length == 0)
-            return a.length == 0;
-        byte diff = (byte) ((a.length == b.length) ? 0 : 1);
+        else if (b2.length == 0)
+            return b1.length == 0;
+        byte diff = (byte) ((b1.length == b2.length) ? 0 : 1);
         int j = 0;
-        for (byte value : a) {
-            diff |= value ^ b[j];
-            j = (j + 1) % b.length;
+        for (byte value : b1) {
+            diff |= value ^ b2[j];
+            j = (j + 1) % b2.length;
         }
         return diff == 0;
     }
 
+    /**
+     *
+     * @param s
+     * @return a byte array for the given base64 string
+     */
     public static byte[] decodeBase64(String s) {
         byte[] b;
         try {
@@ -204,6 +230,11 @@ public abstract class OAuthSignatureMethod {
         return BASE64.decode(b);
     }
 
+    /**
+     *
+     * @param b
+     * @return a base64 encoded string for the given byte array
+     */
     public static String base64Encode(byte[] b) {
         byte[] b2 = BASE64.encode(b);
         try {
@@ -225,13 +256,19 @@ public abstract class OAuthSignatureMethod {
 
     public static OAuthSignatureMethod newSigner(OAuthMessage message, OAuthAccessor accessor) throws OAuthException {
         message.requireParameters(OAuth.OAUTH_SIGNATURE_METHOD);
-        OAuthSignatureMethod signer = newMethod(message.getSignatureMethod(), accessor);
+        OAuthSignatureMethod signer = newInstance(message.getSignatureMethod(), accessor);
         signer.setTokenSecret(accessor.tokenSecret);
         return signer;
     }
 
-    /** The factory for signature methods. */
-    public static OAuthSignatureMethod newMethod(String name, OAuthAccessor accessor) throws OAuthException {
+    /**
+     * The factory for signature methods
+     * @param name
+     * @param accessor
+     * @return creates a new instance of OAuthSignatureMethod based on the used algorithm
+     * @throws OAuthException
+     */
+    public static OAuthSignatureMethod newInstance(String name, OAuthAccessor accessor) throws OAuthException {
         try {
             Class<? extends OAuthSignatureMethod> methodClass = NAME_TO_CLASS.get(name);
             if (methodClass != null) {
@@ -252,8 +289,11 @@ public abstract class OAuthSignatureMethod {
     }
 
     /**
-     * Subsequently, newMethod(name) will attempt to instantiate the given
+     * Subsequently, newInstance(name) will attempt to instantiate the given
      * class, with no constructor parameters.
+     * @param name
+     * @param clazz
+     * @param <T>
      */
     public static <T extends OAuthSignatureMethod> void registerMethodClass(String name, Class<T> clazz) {
         if (clazz == null) {

@@ -61,6 +61,9 @@ public class IMSPOXRequest {
         return new String(output);
     }
 
+    /**
+     * parse the post body used in the request
+     */
     public void parsePostBody() {
         try {
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -153,6 +156,20 @@ public class IMSPOXRequest {
         return buildReplaceResult(url, key, secret, sourcedid, score, resultData, isUrl, null);
     }
 
+    /**
+     * create the http post and by replacing the template elements in ReplaceResultMessageTemplate with the given values
+     * @param url
+     * @param key
+     * @param secret
+     * @param sourcedid
+     * @param score
+     * @param resultData
+     * @param isUrl
+     * @param messageId
+     * @return a new http post
+     * @throws OAuthException
+     * @throws GeneralSecurityException
+     */
     public static HttpPost buildReplaceResult(String url, String key, String secret, String sourcedid, String score, String resultData, Boolean isUrl, String messageId)
             throws OAuthException, GeneralSecurityException {
         String dataXml = "";

@@ -81,6 +81,10 @@ public class OAuthProblemException extends OAuthException {
         return (String) getParameters().get(OAUTH_PROBLEM);
     }
 
+    /**
+     * get the http status code of the exception
+     * @return the status code as int
+     */
     public int getHttpStatusCode() {
         Object code = getParameters().get(HTTP_STATUS_CODE);
         if (code == null) {

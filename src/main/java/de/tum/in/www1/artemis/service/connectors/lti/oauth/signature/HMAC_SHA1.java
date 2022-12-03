@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.lti.oauth.signature;
 
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 
 import javax.crypto.Mac;
@@ -44,19 +45,16 @@ class HMAC_SHA1 extends OAuthSignatureMethod {
         synchronized (this) {
             if (this.key == null) {
                 String keyString = OAuth.percentEncode(getConsumerSecret()) + '&' + OAuth.percentEncode(getTokenSecret());
-                byte[] keyBytes = keyString.getBytes(ENCODING);
+                byte[] keyBytes = keyString.getBytes(StandardCharsets.UTF_8);
                 this.key = new SecretKeySpec(keyBytes, MAC_NAME);
             }
             key = this.key;
         }
         Mac mac = Mac.getInstance(MAC_NAME);
         mac.init(key);
-        byte[] text = baseString.getBytes(ENCODING);
+        byte[] text = baseString.getBytes(StandardCharsets.UTF_8);
         return mac.doFinal(text);
     }
-
-    /** ISO-8859-1 or US-ASCII would work, too. */
-    private static final String ENCODING = OAuth.ENCODING;
 
     private static final String MAC_NAME = "HmacSHA1";
 
