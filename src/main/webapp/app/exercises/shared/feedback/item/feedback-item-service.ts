@@ -11,9 +11,10 @@ export interface FeedbackItemService {
      * @param feedbacks The list of feedback objects.
      * @param showTestDetails
      */
-    createFeedbackItems(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[];
+    create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[];
 
     /**
+     * @deprecated TODO: remove
      * Filters / Summarizes positive test cases for a student and programming exercise result
      * @param feedbackItems The list of feedback items
      * @param showTestDetails
@@ -21,6 +22,7 @@ export interface FeedbackItemService {
     filterFeedbackItems(feedbackItems: FeedbackItem[], showTestDetails: boolean): FeedbackItem[];
 
     /**
+     * @deprecated TODO: refactor by exposing summary() method
      * Gets positive test cases without detail texts
      * @param feedbackItems
      */
@@ -38,7 +40,7 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    createFeedbackItems(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
+    create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
         return feedbacks.map((feedback) => ({
             type: FeedbackItemType.Feedback,
             category: this.translateService.instant('artemisApp.result.detail.feedback'),

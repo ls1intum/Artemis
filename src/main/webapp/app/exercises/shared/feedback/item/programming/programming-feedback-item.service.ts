@@ -17,7 +17,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         });
     }
 
-    createFeedbackItems(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
+    create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
         return feedbacks.map((feedback) => this.createFeedbackItem(feedback, showTestDetails));
     }
 

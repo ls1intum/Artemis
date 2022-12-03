@@ -209,7 +209,7 @@ export class ResultDetailComponent implements OnInit {
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
 
-                        this.feedbackList = this.feedbackItemService.createFeedbackItems(filteredFeedback, this.showTestDetails);
+                        this.feedbackList = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
                         this.filteredFeedbackList = this.feedbackItemService.filterFeedbackItems(this.feedbackList, this.showTestDetails);
                         this.numberOfAggregatedTestCases = this.feedbackItemService.getPositiveTestCasesWithoutDetailText(this.feedbackList).length;
 
