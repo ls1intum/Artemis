@@ -10,11 +10,6 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.BasicResponseHandler;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.imsglobal.lti.launch.LtiOauthVerifier;
-import org.imsglobal.lti.launch.LtiVerificationException;
-import org.imsglobal.lti.launch.LtiVerificationResult;
-import org.imsglobal.lti.launch.LtiVerifier;
-import org.imsglobal.pox.IMSPOXRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,6 +23,10 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.LtiOutcomeUrlRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.connectors.lti.IMSPOXRequest;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiOauthVerifier;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiVerificationException;
+import de.tum.in.www1.artemis.service.connectors.lti.LtiVerificationResult;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -75,10 +74,9 @@ public class Lti10Service {
             return message;
         }
 
-        LtiVerifier ltiVerifier = new LtiOauthVerifier();
+        LtiOauthVerifier ltiVerifier = new LtiOauthVerifier();
         try {
-            // TODO: we need a better solution than casting here, which will probably fail
-            LtiVerificationResult ltiResult = ltiVerifier.verify((javax.servlet.http.HttpServletRequest) request, onlineCourseConfiguration.getLtiSecret());
+            LtiVerificationResult ltiResult = ltiVerifier.verify(request, onlineCourseConfiguration.getLtiSecret());
             if (!ltiResult.getSuccess()) {
                 final var message = "LTI signature verification failed with message: " + ltiResult.getMessage() + "; error: " + ltiResult.getError() + ", launch result: "
                         + ltiResult.getLtiLaunchResult();
