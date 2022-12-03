@@ -22,7 +22,12 @@
             ></li>
             <ng-container *ngIf="hiddenConversations && hiddenConversations.length > 0">
                 <li (click)="showHiddenConversations = !showHiddenConversations" class="hidden-conversation-divider text-center">
-                    {{ hiddenConversations.length }} {{ showHiddenConversations ? 'shown' : 'hidden' }}
+                    {{ hiddenConversations.length }}
+                    {{
+                        showHiddenConversations
+                            ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.shown' | artemisTranslate)
+                            : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hidden' | artemisTranslate)
+                    }}
                 </li>
                 <ng-container *ngIf="showHiddenConversations">
                     <li

@@ -6,8 +6,8 @@
             </span>
             <span>{{ channel.name }}</span>
         </div>
-        <span *ngIf="channel.isMember" class="badge bg-success rounded-pill">{{ 'artemisApp.entities.channel.status.joined' | artemisTranslate }}</span>
-        <span> {{ channel.numberOfMembers }} {{ 'artemisApp.entities.channel.members' | artemisTranslate }}</span>
+        <span *ngIf="channel.isMember" class="badge bg-success rounded-pill">{{ 'artemisApp.dialogs.channelOverview.channelItem.joined:' | artemisTranslate }}</span>
+        <span> {{ channel.numberOfMembers }} {{ 'artemisApp.dialogs.channelOverview.channelItem.members' | artemisTranslate }}</span>
         <div *ngIf="channel.description && channel.description.length > 0">
             <span class="d-inline-block text-truncate long-text fst-italic"> {{ channel.description }}</span>
         </div>
@@ -15,16 +15,16 @@
     <div class="interaction">
         <ng-container *ngIf="canJoinChannel(channel)">
             <button [id]="'register' + channel.id" type="button" class="btn btn-primary" (click)="emitChannelAction($event, 'register')">
-                {{ 'artemisApp.actions.join' | artemisTranslate }}
+                {{ 'artemisApp.dialogs.channelOverview.actions.join' | artemisTranslate }}
             </button>
             <!--ToDo:  Introduce method to view public channel even if no participant maybe hacky around with visitor status or something? -->
         </ng-container>
         <ng-container *ngIf="canLeaveConversation(channel)">
             <button [id]="'view' + channel.id" type="button" class="btn btn-secondary" (click)="emitChannelAction($event, 'view')">
-                {{ 'artemisApp.actions.view' | artemisTranslate }}
+                {{ 'artemisApp.dialogs.channelOverview.actions.view' | artemisTranslate }}
             </button>
             <button [id]="'deregister' + channel.id" type="button" class="btn btn-danger" (click)="emitChannelAction($event, 'deregister')">
-                {{ 'artemisApp.actions.leave' | artemisTranslate }}
+                {{ 'artemisApp.dialogs.channelOverview.actions.leave' | artemisTranslate }}
             </button>
         </ng-container>
     </div>

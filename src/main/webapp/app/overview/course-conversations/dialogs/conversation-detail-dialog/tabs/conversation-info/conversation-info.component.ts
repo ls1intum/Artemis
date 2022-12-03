@@ -74,12 +74,12 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         }
 
         const keys = {
-            labelKey: 'artemisApp.forms.channelForm.nameInput.label',
-            titleKey: 'artemisApp.forms.channelForm.nameInput.label',
+            labelKey: 'artemisApp.dialogs.createChannel.channelForm.nameInput.label',
+            titleKey: 'artemisApp.dialogs.createChannel.channelForm.nameInput.label',
             helpKey: '',
-            maxLengthErrorKey: 'artemisApp.forms.channelForm.nameInput.maxLengthValidationError',
-            requiredErrorKey: 'artemisApp.forms.channelForm.nameInput.requiredValidationError',
-            regexErrorKey: 'artemisApp.forms.channelForm.nameInput.regexValidationError',
+            maxLengthErrorKey: 'artemisApp.dialogs.createChannel.channelForm.nameInput.maxLengthValidationError',
+            requiredErrorKey: 'artemisApp.dialogs.createChannel.channelForm.nameInput.requiredValidationError',
+            regexErrorKey: 'artemisApp.dialogs.createChannel.channelForm.nameInput.regexValidationError',
         };
 
         event.stopPropagation();
@@ -93,10 +93,10 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         }
 
         const keys = {
-            labelKey: 'artemisApp.forms.channelForm.topicInput.label',
-            titleKey: 'artemisApp.forms.channelForm.topicInput.label',
-            helpKey: 'artemisApp.forms.channelForm.topicInput.topicHelp',
-            maxLengthErrorKey: 'artemisApp.forms.channelForm.topicInput.maxLengthValidationError',
+            labelKey: 'artemisApp.dialogs.editChannelTopic.topicInput.label',
+            titleKey: 'artemisApp.dialogs.editChannelTopic.topicInput.topicHelp',
+            helpKey: 'artemisApp.dialogs.editChannelTopic.topicInput.topicHelp',
+            maxLengthErrorKey: 'artemisApp.dialogs.editChannelTopic.topicInput.maxLengthValidationError',
             requiredErrorKey: '',
             regexErrorKey: '',
         };
@@ -112,10 +112,10 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         }
 
         const keys = {
-            labelKey: 'artemisApp.forms.channelForm.descriptionInput.label',
-            titleKey: 'artemisApp.forms.channelForm.descriptionInput.label',
-            helpKey: 'artemisApp.forms.channelForm.descriptionInput.descriptionHelp',
-            maxLengthErrorKey: 'artemisApp.forms.channelForm.descriptionInput.maxLengthValidationError',
+            labelKey: 'artemisApp.dialogs.createChannel.channelForm.descriptionInput.label',
+            titleKey: 'artemisApp.dialogs.createChannel.channelForm.descriptionInput.label',
+            helpKey: 'artemisApp.dialogs.createChannel.channelForm.descriptionInput.descriptionHelp',
+            maxLengthErrorKey: 'artemisApp.dialogs.createChannel.channelForm.descriptionInput.maxLengthValidationError',
             requiredErrorKey: '',
             regexErrorKey: '',
         };
@@ -161,8 +161,11 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
     }
 
     private updateGroupChat(groupChat: GroupChatDto, propertyName: string, updateValue: string) {
+        const updateDTO = new GroupChatDto();
+        updateDTO[propertyName] = updateValue;
+
         this.groupChatService
-            .update(this.course?.id!, groupChat.id!, { [propertyName]: updateValue })
+            .update(this.course?.id!, groupChat.id!, updateDTO)
             .pipe(
                 map((res: HttpResponse<GroupChatDto>) => res.body),
                 takeUntil(this.ngUnsubscribe),

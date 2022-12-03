@@ -43,7 +43,7 @@ export class ConversationService {
         if (isChannelDto(conversation)) {
             let channelName = conversation.name ?? '';
             if (conversation.isArchived) {
-                channelName += ' (' + this.translationService.instant('artemisApp.entities.channel.archived') + ')';
+                channelName += ' (' + this.translationService.instant('artemisApp.conversationsLayout.archived') + ')';
             }
             return channelName;
         } else if (isOneToOneChatDto(conversation)) {
@@ -58,7 +58,7 @@ export class ConversationService {
             const containsCurrentUser = members.some((member) => member.isRequestingUser);
             const membersWithoutUser = members.filter((member) => member.isRequestingUser === false);
             if (membersWithoutUser.length === 0) {
-                return containsCurrentUser ? this.translationService.instant('artemisApp.messages.conversation.onlyYou') : '';
+                return containsCurrentUser ? this.translationService.instant('artemisApp.conversationsLayout.onlyYou') : '';
             } else if (membersWithoutUser.length === 1) {
                 return getUserLabel(membersWithoutUser[0], true);
             } else if (membersWithoutUser.length === 2) {
@@ -66,7 +66,7 @@ export class ConversationService {
             } else {
                 return (
                     `${getUserLabel(membersWithoutUser[0], false)}, ${getUserLabel(membersWithoutUser[1], false)}, ` +
-                    this.translationService.instant('artemisApp.messages.conversation.others', { count: members.length - 2 })
+                    this.translationService.instant('artemisApp.conversationsLayout.others', { count: members.length - 2 })
                 );
             }
         } else {

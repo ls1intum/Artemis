@@ -106,7 +106,7 @@ describe('ConversationService', () => {
         // group chat without any other user
         const groupChatWithoutOtherUser = generateExampleGroupChatDTO({ name: '' });
         groupChatWithoutOtherUser.members = [requestingUser];
-        expect(service.getConversationName(groupChatWithoutOtherUser)).toBe('artemisApp.messages.conversation.onlyYou');
+        expect(service.getConversationName(groupChatWithoutOtherUser)).toBe('artemisApp.conversationsLayout.onlyYou');
         // group chat without explicit name and one other
         const groupChatWithOneOther = generateExampleGroupChatDTO({ name: '' });
         groupChatWithOneOther.members = [requestingUser, otherUser];
@@ -118,6 +118,6 @@ describe('ConversationService', () => {
         // group chat without explicit name and three others
         const groupChatWithThreeOthers = generateExampleGroupChatDTO({ name: '' });
         groupChatWithThreeOthers.members = [requestingUser, otherUser, otherUserTwo, otherUserThree];
-        expect(service.getConversationName(groupChatWithThreeOthers)).toBe('timo moritz, albert einstein, artemisApp.messages.conversation.others');
+        expect(service.getConversationName(groupChatWithThreeOthers)).toBe('timo moritz, albert einstein, artemisApp.conversationsLayout.others');
     });
 });

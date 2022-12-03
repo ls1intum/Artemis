@@ -6,10 +6,14 @@
         </div>
         <div class="card">
             <!-- header -->
-            <div class="card-header d-flex bg-primary text-white" [ngbTooltip]="'artemisApp.messages.thread.close' | artemisTranslate" (click)="closePostThread.emit()">
+            <div
+                class="card-header d-flex bg-primary text-white"
+                [ngbTooltip]="'artemisApp.conversationsLayout.threadSideBar.close' | artemisTranslate"
+                (click)="closePostThread.emit()"
+            >
                 <div class="row flex-grow-1">
                     <div class="col">
-                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.messages.thread.label">Thread</h5>
+                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.conversationsLayout.threadSideBar.label">Thread</h5>
                     </div>
                     <div class="col-auto">
                         <fa-icon [icon]="faXmark"></fa-icon>

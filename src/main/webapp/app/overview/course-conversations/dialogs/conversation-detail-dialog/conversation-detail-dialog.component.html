@@ -17,17 +17,17 @@
         <ul class="nav nav-tabs">
             <li class="nav-item">
                 <a class="nav-link info-tab" [class.active]="selectedTab === Tabs.INFO" role="button" (click)="selectedTab = Tabs.INFO">
-                    {{ 'artemisApp.messages.conversationDetail.tabs.info' | artemisTranslate }}
+                    {{ 'artemisApp.dialogs.conversationDetail.tabs.info' | artemisTranslate }}
                 </a>
             </li>
             <li class="nav-item members-tab">
                 <a class="nav-link" [class.active]="selectedTab === Tabs.MEMBERS" role="button" (click)="selectedTab = Tabs.MEMBERS">
-                    {{ 'artemisApp.messages.conversationDetail.tabs.members' | artemisTranslate }}
+                    {{ 'artemisApp.dialogs.conversationDetail.tabs.members' | artemisTranslate }}
                 </a>
             </li>
             <li class="nav-item settings-tab" *ngIf="!isOneToOneChat(activeConversation)">
                 <a class="nav-link" [class.active]="selectedTab === Tabs.SETTINGS" role="button" (click)="selectedTab = Tabs.SETTINGS">
-                    {{ 'artemisApp.messages.conversationDetail.tabs.settings' | artemisTranslate }}
+                    {{ 'artemisApp.dialogs.conversationDetail.tabs.settings' | artemisTranslate }}
                 </a>
             </li>
         </ul>

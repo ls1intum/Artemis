@@ -1,7 +1,7 @@
 <div *ngIf="isInitialized">
     <div class="modal-header">
         <h4 class="modal-title">
-            <span> Start a direct conversation </span>
+            <span>{{ 'artemisApp.dialogs.createOneToOneChat.title' | artemisTranslate }}</span>
         </h4>
         <button type="button" class="btn-close dismiss" (click)="clear()"></button>
     </div>
@@ -12,7 +12,7 @@
             [multiSelect]="false"
             [showUserList]="false"
             [courseId]="course.id!"
-            [label]="'Select a user to chat with'"
+            [label]="'artemisApp.dialogs.createOneToOneChat.userSelectorLabel' | artemisTranslate"
         ></jhi-course-users-selector>
     </div>
 </div>

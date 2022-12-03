@@ -222,7 +222,7 @@ examples.forEach((activeConversation) => {
                 const deregisterUsersFromChannelSpy = jest
                     .spyOn(channelService, 'deregisterUsersFromChannel')
                     .mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
-                genericConfirmationDialogTest(component.openRemoveFromPrivateChannelDialog.bind(component));
+                genericConfirmationDialogTest(component.openRemoveFromChannelDialog.bind(component));
                 expect(deregisterUsersFromChannelSpy).toHaveBeenCalledOnce();
                 expect(deregisterUsersFromChannelSpy).toHaveBeenCalledWith(course.id!, activeConversation.id!, [conversationMember.login]);
                 expect(changesPerformedSpy).toHaveBeenCalledOnce();

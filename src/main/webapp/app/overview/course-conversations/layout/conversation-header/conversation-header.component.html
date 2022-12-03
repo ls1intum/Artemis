@@ -13,8 +13,8 @@
             </h3>
         </div>
         <div>
-            <div class="btn-toolbar p-2" role="toolbar" aria-label="Toolbar with button groups">
-                <div class="btn-group me-2" role="group" aria-label="First group">
+            <div class="btn-toolbar p-2" role="toolbar">
+                <div class="btn-group me-2" role="group">
                     <button type="button" class="btn btn-outline-secondary members" (click)="openConversationDetailDialog($event, MEMBERS)">
                         <fa-icon [icon]="faUserGroup"></fa-icon> {{ activeConversation.numberOfMembers || 0 }}
                     </button>

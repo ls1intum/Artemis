@@ -8,7 +8,7 @@
         <fa-icon
             *ngIf="isChannel(activeConversation) && conversationMember?.isChannelAdmin"
             [icon]="faUserGear"
-            [ngbTooltip]="'artemisApp.messages.conversation.channelAdminToolTip' | artemisTranslate"
+            [ngbTooltip]="'artemisApp.dialogs.conversationDetail.memberTab.memberRow.channelAdminTooltip' | artemisTranslate"
         ></fa-icon>
         {{ userLabel }}
     </span>
@@ -23,13 +23,13 @@
         </button>
         <div ngbDropdownMenu>
             <button ngbDropdownItem *ngIf="canBeRemovedFromConversation" class="text-danger remove-member" (click)="openRemoveFromConversationDialog($event)">
-                {{ 'artemisApp.actions.removeUser' | artemisTranslate }}
+                {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.removeUser' | artemisTranslate }}
             </button>
             <button ngbDropdownItem *ngIf="canBeGrantedChannelAdminRights" class="text-danger grant-admin" (click)="openGrantChannelAdminRightsDialog($event)">
-                {{ 'artemisApp.pages.makeChannelAdmin.confirmButton' | artemisTranslate }}
+                {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.grantAdminRights' | artemisTranslate }}
             </button>
             <button ngbDropdownItem *ngIf="canBeRevokedChannelAdminRights" class="text-danger revoke-admin" (click)="openRevokeChannelAdminRightsDialog($event)">
-                {{ 'artemisApp.pages.revokeChannelAdmin.confirmButton' | artemisTranslate }}
+                {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.revokeAdminRights' | artemisTranslate }}
             </button>
         </div>
     </div>

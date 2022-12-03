@@ -36,7 +36,7 @@ const routes: Routes = [
         path: '',
         pathMatch: 'full',
         data: {
-            pageTitle: 'artemisApp.messages.label',
+            pageTitle: 'artemisApp.conversationsLayout.tabTitle',
         },
         component: CourseConversationsComponent,
     },

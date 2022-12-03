@@ -84,10 +84,10 @@ export class ConversationSettingsComponent implements OnDestroy {
         }
 
         const keys = {
-            titleKey: 'artemisApp.pages.archiveChannel.title',
-            questionKey: 'artemisApp.pages.archiveChannel.question',
-            descriptionKey: 'artemisApp.pages.archiveChannel.description',
-            confirmButtonKey: 'artemisApp.pages.archiveChannel.confirmButton',
+            titleKey: 'artemisApp.dialogs.archiveChannel.title',
+            questionKey: 'artemisApp.dialogs.archiveChannel.question',
+            descriptionKey: 'artemisApp.dialogs.archiveChannel.description',
+            confirmButtonKey: 'artemisApp.dialogs.archiveChannel.confirmButton',
         };
 
         const translationParams = {
@@ -120,10 +120,10 @@ export class ConversationSettingsComponent implements OnDestroy {
         }
 
         const keys = {
-            titleKey: 'artemisApp.pages.unArchiveChannel.title',
-            questionKey: 'artemisApp.pages.unArchiveChannel.question',
-            descriptionKey: 'artemisApp.pages.unArchiveChannel.description',
-            confirmButtonKey: 'artemisApp.pages.unArchiveChannel.confirmButton',
+            titleKey: 'artemisApp.dialogs.unArchiveChannel.title',
+            questionKey: 'artemisApp.dialogs.unArchiveChannel.question',
+            descriptionKey: 'artemisApp.dialogs.unArchiveChannel.description',
+            confirmButtonKey: 'artemisApp.dialogs.unArchiveChannel.confirmButton',
         };
 
         const translationParams = {

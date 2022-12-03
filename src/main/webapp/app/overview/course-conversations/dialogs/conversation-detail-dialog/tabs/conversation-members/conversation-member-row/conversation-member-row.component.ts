@@ -113,10 +113,10 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             return;
         }
         const translationKeys = {
-            titleKey: 'artemisApp.pages.makeChannelAdmin.title',
-            questionKey: 'artemisApp.pages.makeChannelAdmin.question',
-            descriptionKey: 'artemisApp.pages.makeChannelAdmin.description',
-            confirmButtonKey: 'artemisApp.pages.makeChannelAdmin.confirmButton',
+            titleKey: 'artemisApp.dialogs.grantChannelAdmin.title',
+            questionKey: 'artemisApp.dialogs.grantChannelAdmin.question',
+            descriptionKey: 'artemisApp.dialogs.grantChannelAdmin.description',
+            confirmButtonKey: 'artemisApp.dialogs.grantChannelAdmin.confirmButton',
         };
         const translationParams = {
             channelName: channel.name!,
@@ -133,10 +133,10 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             return;
         }
         const translationKeys = {
-            titleKey: 'artemisApp.pages.revokeChannelAdmin.title',
-            questionKey: 'artemisApp.pages.revokeChannelAdmin.question',
-            descriptionKey: 'artemisApp.pages.revokeChannelAdmin.description',
-            confirmButtonKey: 'artemisApp.pages.revokeChannelAdmin.confirmButton',
+            titleKey: 'artemisApp.dialogs.revokeChannelAdmin.title',
+            questionKey: 'artemisApp.dialogs.revokeChannelAdmin.question',
+            descriptionKey: 'artemisApp.dialogs.revokeChannelAdmin.description',
+            confirmButtonKey: 'artemisApp.dialogs.revokeChannelAdmin.confirmButton',
         };
         const translationParams = {
             channelName: channel.name!,
@@ -146,18 +146,29 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
-    openRemoveFromPrivateChannelDialog(event: MouseEvent) {
+    openRemoveFromChannelDialog(event: MouseEvent) {
         event.stopPropagation();
         const channel = getAsChannelDto(this.activeConversation);
         if (!channel) {
             return;
         }
-        const translationKeys = {
-            titleKey: 'artemisApp.messages.removeUserPrivateChannel.title',
-            questionKey: 'artemisApp.messages.removeUserPrivateChannel.question',
-            descriptionKey: 'artemisApp.messages.removeUserPrivateChannel.warning',
-            confirmButtonKey: 'artemisApp.messages.removeUserPrivateChannel.remove',
-        };
+        let translationKeys: { titleKey: string; questionKey: string; descriptionKey: string; confirmButtonKey: string };
+        if (channel.isPublic) {
+            translationKeys = {
+                titleKey: 'artemisApp.dialogs.removeUserPublicChannel.title',
+                questionKey: 'artemisApp.dialogs.removeUserPublicChannel.question',
+                descriptionKey: 'artemisApp.dialogs.removeUserPublicChannel.warning',
+                confirmButtonKey: 'artemisApp.dialogs.removeUserPublicChannel.remove',
+            };
+        } else {
+            translationKeys = {
+                titleKey: 'artemisApp.dialogs.removeUserPrivateChannel.title',
+                questionKey: 'artemisApp.dialogs.removeUserPrivateChannel.question',
+                descriptionKey: 'artemisApp.dialogs.removeUserPrivateChannel.warning',
+                confirmButtonKey: 'artemisApp.dialogs.removeUserPrivateChannel.remove',
+            };
+        }
+
         const translationParams = {
             userName: this.userLabel,
             channelName: channel.name!,
@@ -173,10 +184,10 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             return;
         }
         const translationKeys = {
-            titleKey: 'artemisApp.messages.removeUserGroupChat.title',
-            questionKey: 'artemisApp.messages.removeUserGroupChat.question',
-            descriptionKey: 'artemisApp.messages.removeUserGroupChat.warning',
-            confirmButtonKey: 'artemisApp.messages.removeUserGroupChat.remove',
+            titleKey: 'artemisApp.dialogs.removeUserGroupChat.title',
+            questionKey: 'artemisApp.dialogs.removeUserGroupChat.question',
+            descriptionKey: 'artemisApp.dialogs.removeUserGroupChat.warning',
+            confirmButtonKey: 'artemisApp.dialogs.removeUserGroupChat.remove',
         };
         const translationParams = {
             userName: this.userLabel,
@@ -213,7 +224,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     openRemoveFromConversationDialog(event: MouseEvent) {
         if (isChannelDto(this.activeConversation)) {
-            this.openRemoveFromPrivateChannelDialog(event);
+            this.openRemoveFromChannelDialog(event);
         } else if (isGroupChatDto(this.activeConversation)) {
             this.openRemoveFromGroupChatDialog(event);
         } else {

@@ -10,7 +10,7 @@
                         name="searchText"
                         [(ngModel)]="searchText"
                         class="form-control"
-                        placeholder="{{ 'artemisApp.messages.searchBarPlaceholder' | artemisTranslate }}"
+                        placeholder="{{ 'artemisApp.conversationsLayout.conversationMessages.searchBarPlaceholder' | artemisTranslate }}"
                     />
                     <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSearch()"></jhi-button>
                     <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSearch()"></jhi-button>

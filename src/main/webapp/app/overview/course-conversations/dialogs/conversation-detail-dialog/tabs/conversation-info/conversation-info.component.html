@@ -9,10 +9,10 @@
                         readonly
                         placeholder="dummyPlaceholder"
                         id="name"
-                        value="{{ channelOrGroupChat.name ?? ('artemisApp.messages.conversationDetail.infoTab.noName' | artemisTranslate) }}"
+                        value="{{ channelOrGroupChat.name ?? ('artemisApp.dialogs.conversationDetail.infoTab.noName' | artemisTranslate) }}"
                     >
                     </textarea>
-                    <label for="name">{{ 'artemisApp.entities.channel.name' | artemisTranslate }}</label>
+                    <label for="name">{{ 'artemisApp.dialogs.conversationDetail.infoTab.name' | artemisTranslate }}</label>
 
                     <button
                         class="action-button right btn btn-outline-primary btn-sm"
@@ -22,7 +22,7 @@
                             (isGroupChat(channelOrGroupChat) && canChangeGroupChatProperties(channelOrGroupChat))
                         "
                     >
-                        {{ 'artemisApp.messages.conversationDetail.infoTab.editName' | artemisTranslate }}
+                        {{ 'artemisApp.dialogs.conversationDetail.infoTab.editName' | artemisTranslate }}
                     </button>
                 </div>
             </div>
@@ -36,12 +36,12 @@
                         readonly
                         placeholder="dummyPlaceholder"
                         id="topic"
-                        value="{{ channel.topic ?? ('artemisApp.messages.conversationDetail.infoTab.noTopic' | artemisTranslate) }}"
+                        value="{{ channel.topic ?? ('artemisApp.dialogs.conversationDetail.infoTab.noTopic' | artemisTranslate) }}"
                     >
                     </textarea>
-                    <label for="topic">{{ 'artemisApp.entities.channel.topic' | artemisTranslate }}</label>
+                    <label for="topic">{{ 'artemisApp.dialogs.conversationDetail.infoTab.topic' | artemisTranslate }}</label>
                     <button class="action-button right btn btn-outline-primary btn-sm" (click)="openEditTopicModal($event)" *ngIf="canChangeChannelProperties(channel)">
-                        {{ 'artemisApp.messages.conversationDetail.infoTab.editTopic' | artemisTranslate }}
+                        {{ 'artemisApp.dialogs.conversationDetail.infoTab.editTopic' | artemisTranslate }}
                     </button>
                 </div>
             </div>
@@ -55,12 +55,12 @@
                         readonly
                         placeholder="dummyPlaceholder"
                         id="description"
-                        value="{{ channel.description ?? ('artemisApp.messages.conversationDetail.infoTab.noDescription' | artemisTranslate) }}"
+                        value="{{ channel.description ?? ('artemisApp.dialogs.conversationDetail.infoTab.noDescription' | artemisTranslate) }}"
                     >
                     </textarea>
-                    <label for="description">{{ 'artemisApp.entities.channel.description' | artemisTranslate }}</label>
+                    <label for="description">{{ 'artemisApp.dialogs.conversationDetail.infoTab.description' | artemisTranslate }}</label>
                     <button class="action-button right btn btn-outline-primary btn-sm" (click)="openDescriptionTopicModal($event)" *ngIf="canChangeChannelProperties(channel)">
-                        {{ 'artemisApp.messages.conversationDetail.infoTab.editDescription' | artemisTranslate }}
+                        {{ 'artemisApp.dialogs.conversationDetail.infoTab.editDescription' | artemisTranslate }}
                     </button>
                 </div>
             </div>
@@ -68,15 +68,15 @@
         <!-- More Info -->
         <div id="moreinfo-section" class="col-12 info-section">
             <div>
-                <h6>{{ 'artemisApp.messages.conversationDetail.infoTab.moreInfo' | artemisTranslate }}</h6>
+                <h6>{{ 'artemisApp.dialogs.conversationDetail.infoTab.moreInfo' | artemisTranslate }}</h6>
             </div>
             <ul>
                 <li>
-                    {{ 'artemisApp.messages.conversationDetail.infoTab.createdBy' | artemisTranslate }}:
+                    {{ 'artemisApp.dialogs.conversationDetail.infoTab.createdBy' | artemisTranslate }}:
                     {{ activeConversation.creator ? getUserLabel(activeConversation.creator) : '' }}
                 </li>
                 <li>
-                    {{ 'artemisApp.messages.conversationDetail.infoTab.createdOn' | artemisTranslate }}:
+                    {{ 'artemisApp.dialogs.conversationDetail.infoTab.createdOn' | artemisTranslate }}:
                     {{ activeConversation.creationDate ? (activeConversation.creationDate | artemisDate) : '' }}
                 </li>
                 <li>Id: {{ activeConversation.id ?? '' }}</li>
