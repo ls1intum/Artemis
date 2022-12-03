@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -11,8 +11,15 @@ import { Course } from 'app/entities/course.model';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faHandshakeAngle, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faHandshakeAngle, faPuzzlePiece, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
+import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+
+export interface FileProperties {
+    file?: File;
+    fileName?: string;
+}
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -22,9 +29,15 @@ import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-up
 export class LectureUpdateComponent implements OnInit {
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
 
+    // A human-readable list of allowed file extensions
+    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
+    // The list of file extensions for the "accept" attribute of the file input field
+    readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+
     EditorMode = EditorMode;
     lecture: Lecture;
     isSaving: boolean;
+    processUnit: boolean;
     isShowingWizardMode: boolean;
 
     courses: Course[];
@@ -34,9 +47,18 @@ export class LectureUpdateComponent implements OnInit {
     domainCommandsDescription = [new KatexCommand()];
 
     // Icons
+    faQuestionCircle = faQuestionCircle;
     faSave = faSave;
+    faPuzzleProcess = faPuzzlePiece;
     faBan = faBan;
     faHandShakeAngle = faHandshakeAngle;
+
+    // have to handle the file input as a special case at is not part of the reactive form
+    @ViewChild('fileInput', { static: false })
+    fileInput: ElementRef;
+    file: File;
+    fileName?: string;
+    fileInputTouched = false;
 
     toggleModeFunction = () => this.toggleWizardMode();
     saveLectureFunction = () => this.save();
@@ -55,6 +77,7 @@ export class LectureUpdateComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
+        this.processUnit = false;
         this.isShowingWizardMode = false;
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
@@ -103,7 +126,25 @@ export class LectureUpdateComponent implements OnInit {
     toggleWizardMode() {
         this.isShowingWizardMode = !this.isShowingWizardMode;
     }
+    // ---------------------
+    proceedToUnitSplit() {
+        console.log('test');
+    }
 
+    onSelectProcessUnit() {
+        this.processUnit = !this.processUnit;
+    }
+
+    onFileChange(event: any): void {
+        if (event.target.files.length) {
+            const fileList = event.target.files;
+            this.file = fileList[0];
+            this.fileName = this.file.name;
+        }
+        console.log(this.file);
+        console.log(this.fileName);
+    }
+    // ---------------------
     /**
      * @callback Callback function after saving a lecture, handles appropriate action in case of error
      * @param result The Http response from the server

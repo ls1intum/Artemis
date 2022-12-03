@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "lecture": {
+            "processUnit": "Automatic unit processing",
             "home": {
                 "title": "Lectures",
                 "createLabel": "Create Lecture",

@@ -209,6 +209,7 @@
             "generate": "Generate",
             "open": "Open",
             "save": "Save",
+            "processUnits": "Process Units",
             "saving": "Saving...",
             "view": "View",
             "preview": "Preview",

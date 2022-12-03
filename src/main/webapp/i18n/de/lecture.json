@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "lecture": {
+            "processUnit": "Automatische Einheitenverarbeitung",
             "home": {
                 "title": "Vorlesungen",
                 "createLabel": "Vorlesung erstellen",
