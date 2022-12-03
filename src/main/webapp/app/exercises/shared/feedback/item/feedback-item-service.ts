@@ -3,6 +3,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/detail/result-detail.component';
 import { TranslateService } from '@ngx-translate/core';
 import { computeFeedbackPreviewText } from 'app/exercises/shared/feedback/feedback.util';
+import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item-groups';
 
 export interface FeedbackItemService {
     /**
@@ -24,11 +25,17 @@ export interface FeedbackItemService {
      * @param feedbackItems
      */
     getPositiveTestCasesWithoutDetailText(feedbackItems: FeedbackItem[]): FeedbackItem[];
+
+    group(feedbackItems: FeedbackItem[]): (FeedbackItem | FeedbackItemGroup)[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackItemServiceImpl implements FeedbackItemService {
     constructor(private translateService: TranslateService) {}
+
+    group(feedbackItems: FeedbackItem[]): (FeedbackItem | FeedbackItemGroup)[] {
+        return feedbackItems;
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     createFeedbackItems(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {

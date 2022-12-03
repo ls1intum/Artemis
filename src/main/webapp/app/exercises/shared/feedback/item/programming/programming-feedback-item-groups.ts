@@ -4,26 +4,30 @@ import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/deta
 // You need to check manually if shouldContain leads to disjunctive subset.
 export abstract class FeedbackItemGroup {
     name: string;
-    members: FeedbackItem[];
+    members: FeedbackItem[] = [];
+
     abstract shouldContain(feedbackItem: FeedbackItem): boolean;
 
-    addAll(feedbackItems: FeedbackItem[]) {
+    addAllItems(feedbackItems: FeedbackItem[]) {
         this.members = [...this.members, ...feedbackItems];
         return this;
-    }
-
-    isEmpty(): boolean {
-        return this.members.length === 0;
     }
 }
 
 export const getAllFeedbackItemGroups = (): FeedbackItemGroup[] => {
-    return [new FeedbackItemGroupMissing(), new FeedbackItemGroupWrong()];
+    return [new FeedbackItemGroupAll(), new FeedbackItemGroupMissing(), new FeedbackItemGroupWrong()];
 };
+
+class FeedbackItemGroupAll extends FeedbackItemGroup {
+    name = 'all';
+
+    shouldContain(feedbackItem: FeedbackItem): boolean {
+        return true;
+    }
+}
 
 class FeedbackItemGroupMissing extends FeedbackItemGroup {
     name = 'missing';
-    members: FeedbackItem[];
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return feedbackItem.type === FeedbackItemType.Test && feedbackItem.credits === 0;
@@ -31,8 +35,7 @@ class FeedbackItemGroupMissing extends FeedbackItemGroup {
 }
 
 class FeedbackItemGroupWrong extends FeedbackItemGroup {
-    name: 'wrong';
-    members: FeedbackItem[];
+    name = 'wrong';
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return feedbackItem.type === FeedbackItemType.Test && feedbackItem.credits === 0;

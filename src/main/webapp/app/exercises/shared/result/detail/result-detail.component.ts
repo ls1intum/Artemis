@@ -27,6 +27,7 @@ import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item.service';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
+import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item-groups';
 
 export enum FeedbackItemType {
     Issue,
@@ -125,6 +126,8 @@ export class ResultDetailComponent implements OnInit {
 
     feedbackItemService: FeedbackItemService;
 
+    feedbackItemNodes: (FeedbackItem | FeedbackItemGroup)[];
+
     constructor(
         public activeModal: NgbActiveModal,
         private resultService: ResultService,
@@ -209,6 +212,9 @@ export class ResultDetailComponent implements OnInit {
                         this.feedbackList = this.feedbackItemService.createFeedbackItems(filteredFeedback, this.showTestDetails);
                         this.filteredFeedbackList = this.feedbackItemService.filterFeedbackItems(this.feedbackList, this.showTestDetails);
                         this.numberOfAggregatedTestCases = this.feedbackItemService.getPositiveTestCasesWithoutDetailText(this.feedbackList).length;
+
+                        this.feedbackItemNodes = this.feedbackItemService.group(this.filteredFeedbackList);
+
                         this.backupFilteredFeedbackList = this.filteredFeedbackList;
 
                         this.countFeedbacks();

@@ -21,10 +21,8 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         return feedbacks.map((feedback) => this.createFeedbackItem(feedback, showTestDetails));
     }
 
-    groupFeedbackItems(feedbackItems: FeedbackItem[]): FeedbackItemGroup[] {
-        return getAllFeedbackItemGroups()
-            .map((group) => group.addAll(feedbackItems.filter(group.shouldContain)))
-            .filter((group) => group.isEmpty());
+    group(feedbackItems: FeedbackItem[]): FeedbackItemGroup[] {
+        return getAllFeedbackItemGroups().map((group) => group.addAllItems(feedbackItems.filter(group.shouldContain)));
     }
 
     filterFeedbackItems(feedbackItems: FeedbackItem[], showTestDetails: boolean): FeedbackItem[] {
