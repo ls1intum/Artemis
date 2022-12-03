@@ -32,7 +32,7 @@ import org.springframework.security.web.SecurityFilterChain;
 /**
  * Describes the security configuration for SAML2.
  * <p>
- * Since this is annotated with {@link Order} and {@link SecurityConfiguration}
+ * Since this configuration is annotated with {@link Order} and {@link SecurityConfiguration}
  * is not, this configuration is evaluated first when the SAML2 Profile is active.
  */
 @Configuration
@@ -157,8 +157,8 @@ public class SAML2Configuration {
                 // This filter chain is only applied if the URL matches
                 // Else the request is filtered by {@link SecurityConfiguration}.
                 .requestMatchers("/api/saml2").permitAll()
-                .requestMatchers("/saml2/**").permitAll()
-                .requestMatchers("/login/**").permitAll()
+                .requestMatchers("/saml2/**").authenticated()
+                .requestMatchers("/login/**").authenticated()
                 // Every other request must be authenticated. Any request triggers a SAML2
                 // authentication flow
                 .anyRequest().authenticated()
