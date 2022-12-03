@@ -51,7 +51,7 @@ public class SAML2Configuration {
      */
     public SAML2Configuration(final SAML2Properties properties) {
         this.properties = properties;
-
+        // TODO: we should describe why this line is actually needed
         Security.addProvider(new BouncyCastleProvider());
     }
 

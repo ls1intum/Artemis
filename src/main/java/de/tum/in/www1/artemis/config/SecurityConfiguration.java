@@ -7,7 +7,7 @@ import java.util.Optional;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
@@ -17,25 +17,25 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
+import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.filter.CorsFilter;
-import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
-import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import jakarta.annotation.PostConstruct;
 
+@Configuration
 @EnableWebSecurity
 @EnableMethodSecurity(securedEnabled = true)
-@Import(SecurityProblemSupport.class)
 public class SecurityConfiguration {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
@@ -46,8 +46,6 @@ public class SecurityConfiguration {
 
     private final CorsFilter corsFilter;
 
-    private final SecurityProblemSupport problemSupport;
-
     private final PasswordService passwordService;
 
     private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
@@ -56,12 +54,11 @@ public class SecurityConfiguration {
     private Optional<String> monitoringIpAddress;
 
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
-            CorsFilter corsFilter, SecurityProblemSupport problemSupport, PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
+            CorsFilter corsFilter, PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
         this.corsFilter = corsFilter;
-        this.problemSupport = problemSupport;
         this.passwordService = passwordService;
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
     }
@@ -109,10 +106,11 @@ public class SecurityConfiguration {
         http
             .csrf()
             .disable()
-            .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling().authenticationEntryPoint(problemSupport)
-                .accessDeniedHandler(problemSupport)
-        .and()
+//            .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling((exceptions) -> exceptions
+                    .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
+                    .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
+                )
             .headers()
             .contentSecurityPolicy("script-src 'self' 'unsafe-inline' 'unsafe-eval'")
         .and()
@@ -127,6 +125,7 @@ public class SecurityConfiguration {
             .httpStrictTransportSecurity()
             .disable() // this is already configured using nginx
         .and()
+            .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
             .sessionManagement()
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
@@ -134,7 +133,6 @@ public class SecurityConfiguration {
             // options
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
             // api
-                .requestMatchers("/api/register").permitAll()
                 .requestMatchers("/api/register").permitAll()
                 .requestMatchers("/api/activate").permitAll()
                 .requestMatchers("/api/authenticate").permitAll()
@@ -169,7 +167,7 @@ public class SecurityConfiguration {
             )
         .apply(securityConfigurerAdapter());
 
-        http.apply(new CustomLti13Configurer());
+//        http.apply(new CustomLti13Configurer());
         // @formatter:on
 
         return http.build();

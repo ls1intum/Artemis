@@ -14,6 +14,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -23,6 +24,10 @@ import jakarta.annotation.Nullable;
  * Utility class for Spring Security.
  */
 public final class SecurityUtils {
+
+    public static final MacAlgorithm JWT_ALGORITHM = MacAlgorithm.HS512;
+
+    public static final String AUTHORITIES_KEY = "auth";
 
     private SecurityUtils() {
     }

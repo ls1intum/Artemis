@@ -34,9 +34,9 @@ public class CustomLti13Configurer extends Lti13Configurer {
     public static final String JWKS_PATH = "/.well-known/jwks.json";
 
     public CustomLti13Configurer() {
-        super.ltiPath(LTI13_BASE_PATH);
-        super.loginInitiationPath(LOGIN_INITIATION_PATH);
-        super.loginPath(LOGIN_PATH);
+        ltiPath(LTI13_BASE_PATH);
+        loginInitiationPath(LOGIN_INITIATION_PATH);
+        loginPath(LOGIN_PATH);
     }
 
     @Override
