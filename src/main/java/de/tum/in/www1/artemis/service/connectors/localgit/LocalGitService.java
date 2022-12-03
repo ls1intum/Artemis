@@ -118,9 +118,9 @@ public class LocalGitService extends AbstractVersionControlService {
      * REST-call to setup branch protection.
      * The branch protection is applied to all branches and prevents rewriting the
      * history (force-pushes) and deletion of branches.
-     *
+     * <p>
      * projectKey     The project key of the repository that should be
-     *                       protected
+     * protected
      * repositorySlug The slug of the repository that should be protected
      */
 //    private void protectBranches(String projectKey, String repositorySlug) {
@@ -152,7 +152,6 @@ public class LocalGitService extends AbstractVersionControlService {
 //
 //        log.debug("Branch protection for repository {} set up", repositorySlug);
 //    }
-
     @Override
     protected void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName) {
         // Webhooks must not be added for the local git server. The JGitPushFilter notifies Artemis on every push.
@@ -168,10 +167,9 @@ public class LocalGitService extends AbstractVersionControlService {
     @Override
     public void deleteProject(String projectKey) {
         try {
-            String folderName =  localGitPath + File.separator + projectKey;
+            String folderName = localGitPath + File.separator + projectKey;
             FileUtils.deleteDirectory(new File(folderName));
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             log.error("Could not delete project", e);
         }
     }
@@ -181,8 +179,7 @@ public class LocalGitService extends AbstractVersionControlService {
         try {
             String folderName = localGitPath + repositoryUrl.folderNameForRepositoryUrl();
             FileUtils.deleteDirectory(new File(folderName));
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             log.error("Could not delete repository", e);
         }
     }
@@ -197,8 +194,7 @@ public class LocalGitService extends AbstractVersionControlService {
         // Try to find the folder in the file system. If it is not found, throw an exception.
         if (new File(localGitPath + "/" + projectKey).exists()) {
             return new LocalGitProjectDTO(projectKey, projectName);
-        }
-        else {
+        } else {
             throw new LocalGitException("Could not find local git project.");
         }
     }
@@ -471,8 +467,7 @@ public class LocalGitService extends AbstractVersionControlService {
             var project = getLocalGitProject(projectKey, projectName);
             log.warn("Local git project with key {} already exists: {}", projectKey, project.name());
             return true;
-        }
-        catch (LocalGitException e) {
+        } catch (LocalGitException e) {
             log.debug("Local git project {} does not exist", projectKey);
             return false;
         }
@@ -503,7 +498,7 @@ public class LocalGitService extends AbstractVersionControlService {
             // Nachschauen wie langfristig die Dateien damit gespeichert sind!
             File localPath = new File(localGitPath + File.separator + projectKey);
 
-            if(!localPath.mkdirs()) {
+            if (!localPath.mkdirs()) {
                 throw new IOException("Could not create directory " + localPath);
             }
         } catch (Exception e) {
@@ -540,7 +535,7 @@ public class LocalGitService extends AbstractVersionControlService {
         try {
             File remoteDir = new File(localGitPath + "/" + projectKey + "/" + repoName + ".git");
 
-            if(!remoteDir.mkdirs()) {
+            if (!remoteDir.mkdirs()) {
                 throw new IOException("Could not create directory " + remoteDir);
             }
 
@@ -550,9 +545,14 @@ public class LocalGitService extends AbstractVersionControlService {
             RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
             refUpdate.setForceUpdate(true);
             refUpdate.link("refs/heads/" + defaultBranch);
+
+            // Enable pushing without credentials, authentication is handled by the JGitPushFilter.
+            // Wäre eigentlich schön, wenn man das hier direkt einstellen kann aber klappt nicht, findet stattdessen für jedes
+            // gefundene Repository in der JGitServletConfiguration statt.
+            // repository.getConfig().setBoolean("http", null, "receivepack", true);
+
             git.close();
-        }
-        catch (GitAPIException | IOException e) {
+        } catch (GitAPIException | IOException e) {
             log.error("Could not create local git repo {} with project key {}", repoName, projectKey, e);
             throw new LocalGitException("Error while creating local git project.");
         }
@@ -592,8 +592,7 @@ public class LocalGitService extends AbstractVersionControlService {
         try {
             projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
             repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
-        }
-        catch (LocalGitException e) {
+        } catch (LocalGitException e) {
             // Either the project Key or the repository slug could not be extracted,
             // therefore this can't be a valid URL
             return false;
@@ -601,8 +600,7 @@ public class LocalGitService extends AbstractVersionControlService {
 
         try {
             //restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug, HttpMethod.GET, null, Void.class);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             return false;
         }
         return true;
@@ -640,8 +638,7 @@ public class LocalGitService extends AbstractVersionControlService {
             }
             commit.setAuthorName(name);
             commit.setAuthorEmail(email);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             // silently fail because this step is not absolutely necessary
             log.error("Error when getting hash of last commit. Able to continue.", e);
         }
@@ -653,16 +650,15 @@ public class LocalGitService extends AbstractVersionControlService {
         // If the event object is supplied we try to retrieve the push date from there
         // to save one call
         // if (eventObject != null) {
-            JsonNode node = new ObjectMapper().convertValue(eventObject, JsonNode.class);
-            String dateString = node.get("date").asText(null);
-           //  if (dateString != null) {
-                try {
-                    return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
-                }
-                catch (DateTimeParseException e) {
-                    throw new LocalGitException("Unable to get the push date from participation.");
-                }
-            // }
+        JsonNode node = new ObjectMapper().convertValue(eventObject, JsonNode.class);
+        String dateString = node.get("date").asText(null);
+        //  if (dateString != null) {
+        try {
+            return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
+        } catch (DateTimeParseException e) {
+            throw new LocalGitException("Unable to get the push date from participation.");
+        }
+        // }
         // }
 
 //        boolean isLastPage = false;
@@ -706,22 +702,20 @@ public class LocalGitService extends AbstractVersionControlService {
             // It should not be possible that the cloneLinks array is empty.
             if (cloneLinks.size() > 1 && !cloneLinks.get(0).get("name").asText().contains("http")) {
                 repositoryURL = new VcsRepositoryUrl(cloneLinks.get(1).get("href").asText());
-            }
-            else {
+            } else {
                 repositoryURL = new VcsRepositoryUrl(cloneLinks.get(0).get("href").asText());
             }
             final var projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryURL);
             final var slug = urlService.getRepositorySlugFromRepositoryUrl(repositoryURL);
             //final var uriBuilder = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI())
-             //   .pathSegment("rest", "api", "1.0", "projects", projectKey, "repos", slug, "commits", hash).build();
+            //   .pathSegment("rest", "api", "1.0", "projects", projectKey, "repos", slug, "commits", hash).build();
             final JsonNode commitInfo = null; //restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, null, JsonNode.class).getBody();
             if (commitInfo == null) {
                 throw new LocalGitException("Unable to fetch commit info from local git for hash " + hash);
             }
 
             return commitInfo;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             log.warn("Cannot fetch commit info for hash {} due to error: {}", hash, e.getMessage());
         }
         return null;
@@ -738,8 +732,7 @@ public class LocalGitService extends AbstractVersionControlService {
             final var urlString = localGitServerUrl + buildRepositoryPath(projectKey, repositorySlug);
             try {
                 this.uri = new URI(urlString);
-            }
-            catch (URISyntaxException e) {
+            } catch (URISyntaxException e) {
                 throw new LocalGitException("Could not create local git Repository URL", e);
             }
         }
@@ -747,8 +740,7 @@ public class LocalGitService extends AbstractVersionControlService {
         private LocalGitRepositoryUrl(String urlString) {
             try {
                 this.uri = new URI(urlString);
-            }
-            catch (URISyntaxException e) {
+            } catch (URISyntaxException e) {
                 throw new LocalGitException("Could not create local git Repository URL", e);
             }
         }

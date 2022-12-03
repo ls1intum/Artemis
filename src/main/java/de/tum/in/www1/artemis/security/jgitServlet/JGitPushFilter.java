@@ -56,22 +56,32 @@ public class JGitPushFilter extends OncePerRequestFilter {
         String login = basicAuthCredentials.split(":")[0];
         String password = basicAuthCredentials.split(":")[1];
 
+        // TODO: Remove!
         log.debug("Found user with login {} and password {} in push request.", login, password);
 
-        // Zum testen wird hier erstmal einfach der Nutzer gefetcht, ohne das Passwort zu prüfen. Eventuell muss man das später über Spring-Security machen.
         User user = userRepository.findOneByLogin(login).orElse(null);
 
+        // Check that the user exists
         if (user == null) {
             servletResponse.setStatus(401);
             return;
         }
 
+        // Check that the user's password is correct.
+
+        // ---- Requesting one of the base repositories ("exercise", "tests", or "solution") ----
+        // Check that the user is at least an instructor in the course the repository belongs to.
+
+        // ---- Requesting one of the participant repositories ----
+        // Retrieve the repository owner's username from the Request URL.
+        // Check that the user is at least a student in the course.
+        // Check that the user participates in the exercise the repository belongs to.
+        // Check that the exercise's Release Date is either not set or is in the past.
+        // Check that the exercise's Due Date is either not set or is in the future.
+
         // TODO: Add Webhooks -> notifies Artemis on Push
 
-        // TODO: Add branch protection (prevent rewriting the history (force-push) and deletion of branches).
-
-        //Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        //boolean hasPermissions = authCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        // TODO: Add branch protection (prevent rewriting the history (force-push) and deletion of branches). + no renaming of the repository.
 
         filterChain.doFilter(servletRequest, servletResponse);
 
