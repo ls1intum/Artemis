@@ -1,6 +1,7 @@
 {
     "artemisApp": {
         "lecture": {
+            "lectureFileToolTip": "Please click to proceed with automatic separation of lecture units",
             "processUnit": "Automatic unit processing",
             "home": {
                 "title": "Lectures",

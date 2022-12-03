@@ -2,6 +2,7 @@
     "artemisApp": {
         "lecture": {
             "processUnit": "Automatische Einheitenverarbeitung",
+            "lectureFileToolTip": "Bitte klicken, um mit der automatischen Trennung von Vorlesungseinheiten fortzufahren",
             "home": {
                 "title": "Vorlesungen",
                 "createLabel": "Vorlesung erstellen",
