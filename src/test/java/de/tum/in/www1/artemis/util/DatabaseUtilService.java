@@ -73,7 +73,10 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
@@ -220,6 +223,15 @@ public class DatabaseUtilService {
 
     @Autowired
     private ConversationRepository conversationRepository;
+
+    @Autowired
+    private ChannelRepository channelRepository;
+
+    @Autowired
+    private GroupChatRepository groupChatRepository;
+
+    @Autowired
+    private OneToOneChatRepository oneToOneChatRepository;
 
     @Autowired
     private ConversationParticipantRepository conversationParticipantRepository;
@@ -845,7 +857,7 @@ public class DatabaseUtilService {
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
                 CourseWideContext.ANNOUNCEMENT };
         posts.addAll(createBasicPosts(course1, courseWideContexts));
-        posts.addAll(createBasicPosts(createDirectConversation(course1)));
+        posts.addAll(createBasicPosts(createOneToOneChat(course1)));
 
         return posts;
     }
@@ -977,28 +989,6 @@ public class DatabaseUtilService {
         for (int i = 0; i < numberOfCoursesWithLectures; i++) {
             createCoursesWithExercisesAndLecturesAndLectureUnits(true, true);
         }
-    }
-
-    public Conversation createDirectConversation(Course course) {
-        Conversation conversation = new OneToOneChat();
-        conversation.setCourse(course);
-        conversation = conversationRepository.save(conversation);
-
-        List<ConversationParticipant> conversationParticipants = new ArrayList<>();
-        conversationParticipants.add(createConversationParticipant(conversation, "tutor1"));
-        conversationParticipants.add(createConversationParticipant(conversation, "tutor2"));
-
-        conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
-        return conversationRepository.save(conversation);
-    }
-
-    private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
-        ConversationParticipant conversationParticipant = new ConversationParticipant();
-        conversationParticipant.setConversation(conversation);
-        conversationParticipant.setLastRead(conversation.getLastMessageDate());
-        conversationParticipant.setUser(getUserByLogin(userName));
-
-        return conversationParticipantRepository.save(conversationParticipant);
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {
@@ -4335,5 +4325,27 @@ public class DatabaseUtilService {
         course = courseRepo.save(course);
         persistedConfiguration.setCourse(course);
         return persistedConfiguration;
+    }
+
+    public Conversation createOneToOneChat(Course course) {
+        Conversation conversation = new OneToOneChat();
+        conversation.setCourse(course);
+        conversation = conversationRepository.save(conversation);
+
+        List<ConversationParticipant> conversationParticipants = new ArrayList<>();
+        conversationParticipants.add(createConversationParticipant(conversation, "tutor1"));
+        conversationParticipants.add(createConversationParticipant(conversation, "tutor2"));
+
+        conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
+        return conversationRepository.save(conversation);
+    }
+
+    private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
+        ConversationParticipant conversationParticipant = new ConversationParticipant();
+        conversationParticipant.setConversation(conversation);
+        conversationParticipant.setLastRead(conversation.getLastMessageDate());
+        conversationParticipant.setUser(getUserByLogin(userName));
+
+        return conversationParticipantRepository.save(conversationParticipant);
     }
 }

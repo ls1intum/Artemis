@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.times;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,9 +28,14 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
@@ -37,6 +43,15 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Autowired
     private ConversationMessageRepository conversationMessageRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private OneToOneChatRepository oneToOneChatRepository;
+
+    @Autowired
+    private ConversationParticipantRepository conversationParticipantRepository;
 
     private List<Post> existingPostsAndConversationPosts;
 
@@ -89,9 +104,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     void testCreateConversationPost() throws Exception {
-        Post postToSave = createPostWithConversation();
+        Post postToSave = createPostWithOneToOneChat();
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedMessagePost(postToSave, createdPost);
@@ -110,7 +125,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     void testCreateConversationPost_forbidden() throws Exception {
         // only participants of a conversation can create posts for it
 
-        Post postToSave = createPostWithConversation();
+        Post postToSave = createPostWithOneToOneChat();
         // attempt to save new post under someone else's conversation
         postToSave.setConversation(existingConversationPosts.get(0).getConversation());
 
@@ -125,26 +140,26 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testValidatePostContextConstraintViolation() throws Exception {
-        Post invalidPost = createPostWithConversation();
+        Post invalidPost = createPostWithOneToOneChat();
         invalidPost.setCourseWideContext(CourseWideContext.RANDOM);
         request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         Set<ConstraintViolation<Post>> constraintViolations = validator.validate(invalidPost);
         assertThat(constraintViolations).hasSize(1);
 
-        invalidPost = createPostWithConversation();
+        invalidPost = createPostWithOneToOneChat();
         invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
         request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         constraintViolations = validator.validate(invalidPost);
         assertThat(constraintViolations).hasSize(1);
 
-        invalidPost = createPostWithConversation();
+        invalidPost = createPostWithOneToOneChat();
         invalidPost.setCourseWideContext(CourseWideContext.ORGANIZATION);
         invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
         request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
         constraintViolations = validator.validate(invalidPost);
         assertThat(constraintViolations).hasSize(1);
 
-        invalidPost = createPostWithConversation();
+        invalidPost = createPostWithOneToOneChat();
         invalidPost.setLecture(existingLecturePosts.get(0).getLecture());
         invalidPost.setExercise(existingExercisePosts.get(0).getExercise());
         request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
@@ -220,11 +235,28 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
-    private Post createPostWithConversation() {
+    private Post createPostWithOneToOneChat() {
+        var student1 = userRepository.findOneWithGroupsAndAuthoritiesByLogin("student1").get();
+        var student2 = userRepository.findOneWithGroupsAndAuthoritiesByLogin("student2").get();
+        var chat = new OneToOneChat();
+        chat.setCourse(course);
+        chat.setCreator(student1);
+        chat.setCreationDate(ZonedDateTime.now());
+        chat.setLastMessageDate(ZonedDateTime.now());
+        chat = oneToOneChatRepository.save(chat);
+        var participant1 = new ConversationParticipant();
+        participant1.setConversation(chat);
+        participant1.setUser(student1);
+        conversationParticipantRepository.save(participant1);
+        var participant2 = new ConversationParticipant();
+        participant2.setConversation(chat);
+        participant2.setUser(student2);
+        conversationParticipantRepository.save(participant2);
+        chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).get();
         Post post = new Post();
-        post.setAuthor(database.getUserByLogin("student1"));
+        post.setAuthor(student1);
         post.setDisplayPriority(DisplayPriority.NONE);
-        post.setConversation(ConversationIntegrationTest.directConversationToCreate(course, database.getUserByLogin("student2")));
+        post.setConversation(chat);
         return post;
     }
 
