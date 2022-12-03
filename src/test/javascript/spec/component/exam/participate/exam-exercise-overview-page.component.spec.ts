@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';

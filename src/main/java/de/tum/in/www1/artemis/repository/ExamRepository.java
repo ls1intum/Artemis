@@ -33,12 +33,20 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
 
     @Query("""
             SELECT DISTINCT ex
-            FROM Exam ex LEFT JOIN FETCH ex.exerciseGroups eg LEFT JOIN FETCH eg.exercises
+            FROM Exam ex
+                LEFT JOIN FETCH ex.exerciseGroups eg
+                LEFT JOIN FETCH eg.exercises
             WHERE ex.course.id = :courseId
             """)
     List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
 
-    @Query("select exam from Exam exam where exam.course.testCourse = false and exam.endDate >= :#{#date} order by exam.startDate asc")
+    @Query("""
+            SELECT exam
+            FROM Exam exam
+            WHERE exam.course.testCourse = false
+                AND exam.endDate >= :#{#date}
+            ORDER BY exam.startDate asc
+            """)
     List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
@@ -57,16 +65,21 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Optional<Exam> findWithStudentExamsExercisesById(long id);
 
     @Query("""
-            select distinct e
-            from Exam e left join fetch e.exerciseGroups eg left join fetch eg.exercises ex
-            where e.course.instructorGroupName in :#{#userGroups} and TYPE(ex) = QuizExercise
+            SELECT DISTINCT e
+            FROM Exam e
+                LEFT JOIN FETCH e.exerciseGroups eg
+                LEFT JOIN FETCH eg.exercises ex
+            WHERE e.course.instructorGroupName IN :#{#userGroups}
+                AND TYPE(ex) = QuizExercise
             """)
     List<Exam> getExamsWithQuizExercisesForWhichUserHasInstructorAccess(@Param("userGroups") List<String> userGroups);
 
     @Query("""
-            select distinct e
-            from Exam e left join fetch e.exerciseGroups eg left join fetch eg.exercises ex
-            where TYPE(ex) = QuizExercise
+            SELECT DISTINCT e
+            FROM Exam e
+                LEFT JOIN FETCH e.exerciseGroups eg
+                LEFT JOIN FETCH eg.exercises ex
+            WHERE TYPE(ex) = QuizExercise
             """)
     List<Exam> findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises();
 
@@ -79,10 +92,10 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return Page with search results
      */
     @Query("""
-            SELECT DISTINCT e FROM Exam e
-                    WHERE e.course.instructorGroupName IN :groups
-                    AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
-              """)
+            SELECT e FROM Exam e
+            WHERE e.course.instructorGroupName IN :groups
+                AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
+            """)
     Page<Exam> queryBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
 
     /**
@@ -94,11 +107,11 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return Page with search results
      */
     @Query("""
-            SELECT DISTINCT e FROM Exam e
-                    WHERE e.course.instructorGroupName IN :groups
-                    AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
-                    AND e.exerciseGroups IS NOT EMPTY
-              """)
+            SELECT e FROM Exam e
+            WHERE e.course.instructorGroupName IN :groups
+                AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
+                AND e.exerciseGroups IS NOT EMPTY
+            """)
     Page<Exam> queryNonEmptyBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
 
     /**
@@ -109,9 +122,10 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return Page with search results
      */
     @Query("""
-            SELECT DISTINCT e FROM Exam e
-                    WHERE (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
-              """)
+            SELECT e
+            FROM Exam e
+                WHERE (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
+            """)
     Page<Exam> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     /**
@@ -122,17 +136,25 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @return Page with search results
      */
     @Query("""
-            SELECT DISTINCT e FROM Exam e
-                    WHERE (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
-                    AND e.exerciseGroups IS NOT EMPTY
-              """)
+            SELECT e
+            FROM Exam e
+            WHERE (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
+                AND e.exerciseGroups IS NOT EMPTY
+            """)
     Page<Exam> queryNonEmptyBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     // IMPORTANT: NEVER use the following EntityGraph because it will lead to crashes for exams with many users
     // The problem is that 2000 student Exams with 10 exercises and 2000 existing participations would load 2000*10*2000 = 40 mio objects
     // @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises", "studentExams.exercises.participations" })
 
-    @Query("select distinct exam from Exam exam left join fetch exam.studentExams studentExams left join fetch exam.exerciseGroups exerciseGroups left join fetch exerciseGroups.exercises where (exam.id = :#{#examId})")
+    @Query("""
+            SELECT DISTINCT exam
+            FROM Exam exam
+                LEFT JOIN FETCH exam.studentExams studentExams
+                LEFT JOIN FETCH exam.exerciseGroups exerciseGroups
+                LEFT JOIN FETCH exerciseGroups.exercises
+            WHERE (exam.id = :#{#examId})
+            """)
     Exam findOneWithEagerExercisesGroupsAndStudentExams(@Param("examId") long examId);
 
     /**
@@ -142,13 +164,30 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @param userId the id of the user
      * @return true if the user is registered for the exam
      */
-    @Query("SELECT CASE WHEN COUNT(exam) > 0 THEN true ELSE false END FROM Exam exam LEFT JOIN exam.registeredUsers registeredUsers WHERE exam.id = :#{#examId} AND registeredUsers.id = :#{#userId}")
+    @Query("""
+            SELECT CASE WHEN COUNT(exam) > 0 THEN true ELSE false END
+            FROM Exam exam
+                LEFT JOIN exam.registeredUsers registeredUsers
+            WHERE exam.id = :#{#examId}
+                AND registeredUsers.id = :#{#userId}
+            """)
     boolean isUserRegisteredForExam(@Param("examId") long examId, @Param("userId") long userId);
 
-    @Query("select exam.id, count(registeredUsers) from Exam exam left join exam.registeredUsers registeredUsers where exam.id in :#{#examIds} group by exam.id")
+    @Query("""
+            SELECT exam.id, count(registeredUsers)
+            FROM Exam exam
+                LEFT JOIN exam.registeredUsers registeredUsers
+            WHERE exam.id in :#{#examIds}
+            GROUP BY exam.id
+            """)
     List<long[]> countRegisteredUsersByExamIds(@Param("examIds") List<Long> examIds);
 
-    @Query("select count(studentExam) from StudentExam studentExam where studentExam.testRun = FALSE AND studentExam.exam.id = :#{#examId}")
+    @Query("""
+            SELECT count(studentExam)
+            FROM StudentExam studentExam
+            WHERE studentExam.testRun = FALSE
+                AND studentExam.exam.id = :#{#examId}
+            """)
     long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
 
     /**

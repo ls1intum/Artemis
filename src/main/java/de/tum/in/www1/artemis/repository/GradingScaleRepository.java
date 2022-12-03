@@ -56,6 +56,20 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     Optional<GradingScale> findByExamId(@Param("examId") Long examId);
 
     /**
+     * Find a grading scale for exam by id with applied bonus
+     *
+     * @param examId the exam id
+     * @return an Optional with the grading scale if such scale exists and an empty Optional otherwise
+     */
+    @Query("""
+                SELECT gradingScale
+                FROM GradingScale gradingScale
+                LEFT JOIN FETCH gradingScale.bonusFrom
+                WHERE gradingScale.exam.id = :#{#examId}
+            """)
+    Optional<GradingScale> findByExamIdWithBonusFrom(@Param("examId") Long examId);
+
+    /**
      * Finds a grading scale for course by id or throws an exception if no such grading scale exists.
      * If there is more the one grading scale for the course, all but the first one saved will get deleted
      * and the first one saved will be returned. This is necessary to avoid potential concurrency issues
@@ -203,7 +217,11 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return grade step corresponding to the given points
      */
     default GradeStep matchPointsToGradeStep(double points, GradingScale gradingScale) {
-        double maxPoints = gradingScale.getMaxPoints();
+        int maxPoints = gradingScale.getMaxPoints();
+        if (maxPoints <= 0) {
+            throw new BadRequestAlertException("Max points for the grading scale must be set to a value greater than 0", "gradingScale", "invalidMaxPoints");
+        }
+
         double percentage = points / maxPoints * 100.0;
 
         return this.matchPercentageToGradeStep(percentage, gradingScale.getGradeSteps());

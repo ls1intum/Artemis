@@ -1,9 +1,9 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { CourseWideContext, DisplayPriority } from 'app/shared/metis/metis.util';
+import { CourseWideContext, DisplayPriority, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import {
     metisCourse,
     metisCoursePosts,
@@ -115,7 +115,18 @@ describe('Post Service', () => {
             const returnedFromService = [metisCoursePostsWithCourseWideContext.filter((post) => post.courseWideContext === CourseWideContext.RANDOM)];
             const expected = returnedFromService;
             service
-                .getPosts(metisCourse.id!, { courseWideContext: CourseWideContext.RANDOM })
+                .getPosts(metisCourse.id!, {
+                    courseWideContext: CourseWideContext.RANDOM,
+                    searchText: 'Text to search for',
+                    filterToOwn: true,
+                    filterToAnsweredOrReacted: true,
+                    filterToUnresolved: true,
+                    pagingEnabled: true,
+                    page: 0,
+                    pageSize: 50,
+                    postSortCriterion: PostSortCriterion.CREATION_DATE,
+                    sortingOrder: SortDirection.ASCENDING,
+                })
                 .pipe(take(2))
                 .subscribe((resp) => expect(resp.body).toEqual(expected));
             const req = httpMock.expectOne({ method: 'GET' });

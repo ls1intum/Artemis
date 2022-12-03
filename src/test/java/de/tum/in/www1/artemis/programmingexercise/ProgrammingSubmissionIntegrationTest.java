@@ -757,7 +757,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         if (isIndividualDueDateInFuture) {
             // the submission should not be returned as the due date is in the future
-            request.get(url, HttpStatus.NOT_FOUND, String.class);
+            request.get(url, HttpStatus.FORBIDDEN, String.class);
         }
         else {
             ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
@@ -765,9 +765,10 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "tutor1", roles = "TA")
-    void getProgrammingSubmissionWithoutAssessmentAlreadyAssessedNoFound() throws Exception {
+    void testGetProgrammingSubmissionWithoutAssessmentNothingAvailable(boolean lock) throws Exception {
         exercise.setDueDate(ZonedDateTime.now().minusDays(2));
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
@@ -776,8 +777,10 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         final var tutor = database.getUserByLogin("tutor1");
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, tutor);
 
-        String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
-        request.get(url, HttpStatus.NOT_FOUND, String.class);
+        String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=" + lock;
+
+        var storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
+        assertThat(storedSubmission).isNull();
     }
 
     private void createTenLockedSubmissionsForExercise(String assessor) {

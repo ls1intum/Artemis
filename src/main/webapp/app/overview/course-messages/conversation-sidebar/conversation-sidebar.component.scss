@@ -1,0 +1,119 @@
+@import 'src/main/webapp/content/scss/artemis-variables';
+
+$draggable-width: 15px;
+$conversation-section-card-min-width: 215px;
+
+.expanded-conversations {
+    display: flex;
+    height: 100%;
+    width: calc(#{$draggable-width} + #{$conversation-section-card-min-width});
+    margin-left: auto;
+
+    .draggable-right {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-width: $draggable-width;
+    }
+
+    .card {
+        width: inherit;
+        min-width: $conversation-section-card-min-width;
+
+        .card-header {
+            display: inline-flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+
+            .card-title {
+                display: flex;
+            }
+
+            .row > .col-auto:last-child {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+            }
+        }
+
+        .card-body {
+            padding: 0;
+
+            .user-searchbar {
+                padding: 5px 5px 0 5px;
+            }
+
+            .conversation-list {
+                margin: 0;
+                padding: 0;
+
+                &-item {
+                    cursor: pointer;
+                    display: flex;
+                    padding: 0.2rem;
+                    color: var(--metis-light-gray);
+                    justify-content: space-between;
+
+                    &-user {
+                        font-size: 14px;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                    }
+
+                    &.selected {
+                        background-color: var(--metis-light-blue);
+                    }
+
+                    &:hover {
+                        color: var(--metis-course-discussion-select-bg);
+                        background-color: var(--metis-blue);
+                    }
+                }
+            }
+
+            .conversation-empty {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                opacity: 0.75;
+                padding-top: 30px;
+                gap: 10px;
+            }
+        }
+    }
+}
+
+.collapsed-conversations {
+    display: flex;
+    width: 38px;
+    justify-content: space-between;
+    flex-flow: column;
+    cursor: pointer;
+
+    span {
+        writing-mode: vertical-lr;
+        transform: rotate(180deg);
+        margin: auto;
+    }
+
+    .expand-conversations-icon {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        place-self: center;
+    }
+}
+
+@media screen and (max-width: 992px) {
+    .expanded-conversations {
+        width: 94vw;
+
+        .draggable-right {
+            display: none;
+        }
+    }
+}

@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { Router } from '@angular/router';
-import { EMPTY, from } from 'rxjs';
-import { catchError, switchMap, tap } from 'rxjs/operators';
+import { finalize } from 'rxjs/operators';
 
 import { AuthServerProvider, Credentials } from 'app/core/auth/auth-jwt.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -63,15 +62,6 @@ export class LoginService {
     }
 
     /**
-     * Login with JWT token.
-     * @param jwt {string} The JWT token.
-     * @param rememberMe {boolean} True to save JWT in localStorage, false to save it in sessionStorage.
-     */
-    loginWithToken(jwt: string, rememberMe: boolean) {
-        return this.authServerProvider.loginWithToken(jwt, rememberMe);
-    }
-
-    /**
      * Log out the user and remove all traces of the login from the browser:
      * Tokens, Alerts, User object in memory.
      * Will redirect to home when done.
@@ -79,40 +69,25 @@ export class LoginService {
     logout(wasInitiatedByUser: boolean) {
         this.logoutWasForceful = !wasInitiatedByUser;
 
-        this.authServerProvider
-            // 1: Clear the auth tokens from the browser's caches.
-            .removeAuthTokenFromCaches()
-            .pipe(
-                // 2: Clear all other caches (this is important so if a new user logs in, no old values are available
-                tap(() => {
-                    if (wasInitiatedByUser) {
-                        // only clear caches on an intended logout. Do not clear the caches, when the user was logged out automatically
-                        return this.authServerProvider.clearCaches();
-                    }
-                }),
-                // 3: Set the user's auth object to null as components might have to act on the user being logged out.
-                tap(() => {
-                    return this.accountService.authenticate(undefined);
-                }),
-                // 4: Clear all existing alerts of the user.
-                tap(() => {
-                    return this.alertService.closeAll();
-                }),
-                // 5: Clean up notification service.
-                tap(() => {
-                    return this.notificationService.cleanUp();
-                }),
-                // 6: Navigate to the login screen.
-                switchMap(() => {
-                    return from(this.router.navigateByUrl('/'));
-                }),
-                // If something happens during the logout, show the error to the user.
-                catchError((error: any) => {
-                    this.alertService.error('logout.failed', { error });
-                    return EMPTY;
-                }),
-            )
-            .subscribe();
+        if (wasInitiatedByUser) {
+            this.authServerProvider
+                .logout()
+                .pipe(
+                    finalize(() => {
+                        this.onLogout();
+                    }),
+                )
+                .subscribe();
+        } else {
+            this.onLogout();
+        }
+    }
+
+    private onLogout(): void {
+        this.accountService.authenticate(undefined);
+        this.alertService.closeAll();
+        this.notificationService.cleanUp();
+        this.router.navigateByUrl('/');
     }
 
     lastLogoutWasForceful(): boolean {

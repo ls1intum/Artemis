@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -59,6 +60,9 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
     @Autowired
     TeamRepository teamRepository;
 
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
+
     @AfterEach
     void resetDatabase() {
         database.resetDatabase();
@@ -101,6 +105,8 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
         // Creating result for team2
         Team team2 = teamRepository.findById(idOfTeam2).get();
         database.createParticipationSubmissionAndResult(idOfTeamTextExercise, team2, 10.0, 10.0, 90, true);
+
+        await().until(() -> participantScoreRepository.findAll().size() == 5);
     }
 
     @Test

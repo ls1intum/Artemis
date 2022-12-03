@@ -56,7 +56,11 @@ export class PlagiarismSidebarComponent implements OnChanges {
             const comparisons: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>[] = changes.comparisons.currentValue;
 
             this.currentPage = 0;
-            this.numberOfPages = this.computeNumberOfPages(comparisons.length);
+            if (!comparisons) {
+                this.numberOfPages = 0;
+            } else {
+                this.numberOfPages = this.computeNumberOfPages(comparisons.length);
+            }
             this.pagedComparisons = this.getPagedComparisons();
         }
     }
@@ -71,7 +75,6 @@ export class PlagiarismSidebarComponent implements OnChanges {
 
     getPagedComparisons() {
         const startIndex = this.currentPage * this.pageSize;
-
         return this.comparisons?.slice(startIndex, startIndex + this.pageSize);
     }
 

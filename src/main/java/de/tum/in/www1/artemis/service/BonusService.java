@@ -61,4 +61,17 @@ public class BonusService {
                 calculationSign);
     }
 
+    /**
+     * Improves the points and/or grade of the bonusTo exam by applying bonus according to the parameters defined in {@code bonus}.
+     * This method is a wrapper for {@link #calculateGradeWithBonus(IBonusStrategy, GradingScale, Double, GradingScale, Double, double)}.
+     *
+     * @param bonus the bonus instance determining the bonus calculation strategy and weight
+     * @param achievedPointsOfBonusTo points received by the student from bonusTo exam before bonus calculations
+     * @param achievedPointsOfSource points received by the student from source exam/course
+     * @return bonus strategy, weight, points and grades achieved from the bonusTo exam, source course/exam and the final points and grade
+     */
+    public BonusExampleDTO calculateGradeWithBonus(Bonus bonus, Double achievedPointsOfBonusTo, Double achievedPointsOfSource) {
+        return calculateGradeWithBonus(bonus.getBonusToGradingScale().getBonusStrategy(), bonus.getBonusToGradingScale(), achievedPointsOfBonusTo, bonus.getSourceGradingScale(),
+                achievedPointsOfSource, bonus.getWeight());
+    }
 }

@@ -6,7 +6,7 @@ import { Result } from 'app/entities/result.model';
 
 export class MockParticipationWebsocketService implements IParticipationWebsocketService {
     addParticipation = (participation: Participation, exercise?: Exercise) => {};
-    getParticipationForExercise = (exerciseId: number) => undefined;
+    getParticipationsForExercise = (exerciseId: number) => undefined;
     subscribeForParticipationChanges = () => new BehaviorSubject<Participation | undefined>(undefined);
     subscribeForLatestResultOfParticipation = (participationId: number) => new BehaviorSubject<Result | undefined>(undefined);
     unsubscribeForLatestResultOfParticipation = (participationId: number, exercise: Exercise) => {};

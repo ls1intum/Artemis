@@ -15,6 +15,9 @@
             "problemStatement": "Aufgabenstellung",
             "sampleSolution": "Beispiellösung",
             "assessmentInstructions": "Bewertungsanweisungen",
+            "structuredGradingInstructions": "Strukturierte Bewertungskriterien",
+            "expandAll": "Alle ausklappen",
+            "collapseAll": "Alle einklappen",
             "usageCount": "Anzahl Verwendung",
             "trainingEvaluationCriteria": {
                 "title": "Bewertungskriterien für das Beurteilungstraining",

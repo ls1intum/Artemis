@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
@@ -16,6 +16,9 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { of } from 'rxjs';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 describe('Course Management Service', () => {
     let service: CourseExerciseService;
@@ -177,6 +180,8 @@ describe('Course Management Service', () => {
             },
             participation,
         );
+        jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo));
+
         service
             .startExercise(exerciseId)
             .pipe(take(1))
@@ -186,6 +191,39 @@ describe('Course Management Service', () => {
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));
+
+    it.each([true, false])(
+        'should start practice',
+        fakeAsync((useGradedParticipation: boolean) => {
+            const participationId = 12345;
+            const participation = new StudentParticipation();
+            participation.id = participationId;
+            participation.exercise = programmingExercise;
+            returnedFromService = { ...participation };
+            const expected = Object.assign(
+                {
+                    initializationDate: undefined,
+                },
+                participation,
+            );
+            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo));
+
+            service
+                .startPractice(exerciseId, useGradedParticipation)
+                .pipe(take(1))
+                .subscribe((res) => expect(res).toEqual(expected));
+
+            requestAndExpectDateConversion(
+                'POST',
+                SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`,
+                returnedFromService,
+                participation.exercise,
+                true,
+            );
+            expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
+            tick();
+        }),
+    );
 
     it('should resume programming exercise', fakeAsync(() => {
         const participationId = 12345;
@@ -199,12 +237,20 @@ describe('Course Management Service', () => {
             },
             participation,
         );
+        jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo));
+
         service
-            .resumeProgrammingExercise(exerciseId)
+            .resumeProgrammingExercise(exerciseId, participationId)
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(expected));
 
-        requestAndExpectDateConversion('PUT', SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation`, returnedFromService, participation.exercise, true);
+        requestAndExpectDateConversion(
+            'PUT',
+            SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation/${participationId}`,
+            returnedFromService,
+            participation.exercise,
+            true,
+        );
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));

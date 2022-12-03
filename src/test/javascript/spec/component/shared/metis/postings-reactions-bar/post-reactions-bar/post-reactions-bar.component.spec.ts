@@ -12,7 +12,7 @@ import { ReactionService } from 'app/shared/metis/reaction.service';
 import { MockReactionService } from '../../../../../helpers/mocks/service/mock-reaction.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
-import { EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
+import { EmojiData, EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
@@ -37,6 +37,11 @@ describe('PostReactionsBarComponent', () => {
     let post: Post;
     let reactionToCreate: Reaction;
     let reactionToDelete: Reaction;
+
+    const SPEECH_BALLOON_UNICODE = '1F4AC';
+    const ARCHIVE_EMOJI_UNICODE = '1F4C2';
+    const PIN_EMOJI_UNICODE = '1F4CC';
+    const HEAVY_MULTIPLICATION_UNICODE = '2716';
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -123,6 +128,16 @@ describe('PostReactionsBarComponent', () => {
         // set correct tooltips for tutor and post that is not pinned and not archived
         expect(component.archiveTooltip).toBe('artemisApp.metis.archivePostTutorTooltip');
         expect(component.pinTooltip).toBe('artemisApp.metis.pinPostTutorTooltip');
+    });
+
+    it.each`
+        input                           | expect
+        ${PIN_EMOJI_UNICODE}            | ${false}
+        ${ARCHIVE_EMOJI_UNICODE}        | ${false}
+        ${SPEECH_BALLOON_UNICODE}       | ${false}
+        ${HEAVY_MULTIPLICATION_UNICODE} | ${false}
+    `('should remove unavailable reactions from the emoji selector', (param: { input: string | EmojiData; expect: boolean }) => {
+        expect(component.emojisToShowFilter(param.input)).toBe(param.expect);
     });
 
     it('should invoke metis service method with correctly built reaction to create it', () => {

@@ -1,5 +1,5 @@
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ProgrammingExerciseImportComponent, TableColumn } from 'app/exercises/programming/manage/programming-exercise-import.component';
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';

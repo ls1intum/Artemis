@@ -5,7 +5,7 @@ import { distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
 /**
- * FeatureToggle, currently only supports PROGRAMMING_EXERCISES
+ * FeatureToggles
  * @readonly
  * @enum {string}
  */
@@ -14,6 +14,7 @@ export enum FeatureToggle {
     PlagiarismChecks = 'PlagiarismChecks',
     Exports = 'Exports',
     ExamLiveStatistics = 'ExamLiveStatistics',
+    TutorialGroups = 'TutorialGroups',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 
@@ -97,7 +98,7 @@ export class FeatureToggleService {
      * Setter method for the state of a feature toggle.
      */
     setFeatureToggleState(featureToggle: FeatureToggle, active: boolean) {
-        const url = '/api/management/feature-toggle';
+        const url = '/api/admin/management/feature-toggle';
         const toggleParam = { [featureToggle]: active };
         return this.http.put(url, toggleParam);
     }

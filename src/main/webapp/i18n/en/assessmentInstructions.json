@@ -15,6 +15,9 @@
             "problemStatement": "Problem Statement",
             "sampleSolution": "Example Solution",
             "assessmentInstructions": "Assessment Instructions",
+            "structuredGradingInstructions": "Structured Assessment Criteria",
+            "expandAll": "Expand All",
+            "collapseAll": "Collapse All",
             "usageCount": "Usage Count",
             "trainingEvaluationCriteria": {
                 "title": "Assessment Training Evaluation Criteria",

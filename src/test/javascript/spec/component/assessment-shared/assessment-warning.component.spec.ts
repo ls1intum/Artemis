@@ -29,7 +29,7 @@ describe('AssessmentWarningComponent', function () {
         component.ngOnChanges();
 
         expect(component.isBeforeExerciseDueDate).toBeFalse();
-        expect(component.isBeforeLatestDueDate).toBeFalse();
+        expect(component.showWarning).toBeFalse();
     });
 
     it('should be before the exercise due date if the exercise due date is in the future', () => {
@@ -40,7 +40,7 @@ describe('AssessmentWarningComponent', function () {
         component.ngOnChanges();
 
         expect(component.isBeforeExerciseDueDate).toBeTrue();
-        expect(component.isBeforeLatestDueDate).toBeTrue();
+        expect(component.showWarning).toBeTrue();
     });
 
     it('should be before the latest due date if the exercise due date is in the past but individual due dates in the future', () => {
@@ -70,6 +70,6 @@ describe('AssessmentWarningComponent', function () {
         component.ngOnChanges();
 
         expect(component.isBeforeExerciseDueDate).toBeFalse();
-        expect(component.isBeforeLatestDueDate).toBeTrue();
+        expect(component.showWarning).toBeTrue();
     });
 });

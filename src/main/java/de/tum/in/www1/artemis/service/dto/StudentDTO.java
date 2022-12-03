@@ -7,8 +7,25 @@ import javax.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.User;
+
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StudentDTO {
+
+    public StudentDTO(String login, String firstName, String lastName, String registrationNumber) {
+        this.login = login;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.registrationNumber = registrationNumber;
+    }
+
+    public StudentDTO(User user) {
+        this(user.getLogin(), user.getFirstName(), user.getLastName(), user.getRegistrationNumber());
+    }
+
+    public StudentDTO() {
+        // for jackson
+    }
 
     @Size(max = 50)
     private String login;

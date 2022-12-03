@@ -16,6 +16,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -43,6 +44,9 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Autowired
     private UserRepository userRepository;
+
+    @Captor
+    ArgumentCaptor<Set<Exercise>> exerciseSetCaptor;
 
     private Exercise exerciseReleasedYesterdayAndNotYetDue;
 
@@ -100,7 +104,7 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         course.setExercises(allTestExercises);
         courseRepository.save(course);
 
-        allTestExercises.forEach(exercise -> exerciseRepository.save(exercise));
+        exerciseRepository.saveAll(allTestExercises);
 
         weeklyEmailSummaryService.setScheduleInterval(Duration.ofDays(7));
 
@@ -109,9 +113,7 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         currentUsers.remove(userWithActivatedWeeklySummaries);
         currentUsers.remove(userWithDeactivatedWeeklySummaries);
         if (!currentUsers.isEmpty()) {
-            currentUsers.forEach(user -> {
-                notificationSettingRepository.save(new NotificationSetting(user, false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY));
-            });
+            currentUsers.forEach(user -> notificationSettingRepository.save(new NotificationSetting(user, false, false, NOTIFICATION__WEEKLY_SUMMARY__BASIC_WEEKLY_SUMMARY)));
         }
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
@@ -127,7 +129,6 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
      */
     @Test
     void testIfPrepareWeeklyEmailSummariesCorrectlySelectsExercisesAndCreatesEmail() {
-        ArgumentCaptor<Set<Exercise>> exerciseSetCaptor = ArgumentCaptor.forClass((Class) Set.class);
 
         weeklyEmailSummaryService.prepareEmailSummaries();
 
@@ -138,6 +139,6 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(capturedExerciseSet.size()).as("Weekly summary should not contain any other of the test exercises.").isEqualTo(1);
 
         // check if email is created/send
-        verify(javaMailSender, timeout(1000).times(1)).createMimeMessage();
+        verify(javaMailSender, timeout(1000).times(1)).send(any(MimeMessage.class));
     }
 }

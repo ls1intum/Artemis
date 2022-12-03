@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
@@ -19,6 +19,8 @@ import { MockProvider } from 'ng-mocks';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ModelingExercise Management Update Component', () => {
     let comp: ModelingExerciseUpdateComponent;
@@ -36,7 +38,8 @@ describe('ModelingExercise Management Update Component', () => {
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(TranslateService),
             ],
         })

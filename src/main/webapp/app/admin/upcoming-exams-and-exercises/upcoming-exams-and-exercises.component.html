@@ -35,10 +35,8 @@
                         </span>
                     </td>
                     <ng-template #noExerciseCourse><td>-</td></ng-template>
-                    <td *ngIf="exercise.releaseDate as exerciseReleaseDate; else noExerciseReleaseDate">{{ exerciseReleaseDate.format(DATE_FORMAT) }}</td>
-                    <ng-template #noExerciseReleaseDate><td>-</td></ng-template>
-                    <td *ngIf="exercise.dueDate as exerciseDueDate; else noExerciseDueDate">{{ exerciseDueDate.format(DATE_FORMAT) }}</td>
-                    <ng-template #noExerciseDueDate><td>-</td></ng-template>
+                    <td>{{ exercise.releaseDate | artemisDate }}</td>
+                    <td>{{ exercise.dueDate | artemisDate }}</td>
                 </tr>
             </tbody>
         </table>
@@ -84,12 +82,9 @@
                             </span>
                         </td>
                         <ng-template #noExamCourse><td>-</td></ng-template>
-                        <td *ngIf="exam.visibleDate as examVisibleDate; else noExamVisibleDate">{{ examVisibleDate.format(DATE_FORMAT) }}</td>
-                        <ng-template #noExamVisibleDate><td>-</td></ng-template>
-                        <td *ngIf="exam.startDate as examStartDate; else noExamStartDate">{{ examStartDate.format(DATE_FORMAT) }}</td>
-                        <ng-template #noExamStartDate><td>-</td></ng-template>
-                        <td *ngIf="exam.endDate as examEndDate; else noExamEndDate">{{ examEndDate.format(DATE_FORMAT) }}</td>
-                        <ng-template #noExamEndDate><td>-</td></ng-template>
+                        <td>{{ exam.visibleDate | artemisDate }}</td>
+                        <td>{{ exam.startDate | artemisDate }}</td>
+                        <td>{{ exam.endDate | artemisDate }}</td>
                     </tr>
                 </tbody>
             </table>

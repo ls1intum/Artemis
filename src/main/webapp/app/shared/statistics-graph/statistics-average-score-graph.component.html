@@ -14,6 +14,7 @@
         ></fa-icon>
         <div #containerRef class="col-lg-8 ps-0 chart-container">
             <ngx-charts-bar-vertical
+                [roundEdges]="false"
                 [view]="[containerRef.offsetWidth, 300]"
                 [results]="ngxData"
                 [scheme]="ngxColor"
@@ -57,7 +58,7 @@
                 >
                     <fa-icon [icon]="faFilter"></fa-icon>
                     <span>{{
-                        'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: typeFilter.numberOfActiveFilters + chartCategoryFilter.numberOfActiveFilters }
+                        'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate : { num: typeFilter.numberOfActiveFilters + chartCategoryFilter.numberOfActiveFilters }
                     }}</span>
                 </button>
                 <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">

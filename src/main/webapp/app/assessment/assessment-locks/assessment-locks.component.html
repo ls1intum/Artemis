@@ -28,13 +28,12 @@
                     <td>
                         <fa-icon
                             [icon]="getIcon(submission.participation!.exercise!.type)"
-                            placement="right"
+                            placement="right auto"
                             [ngbTooltip]="getIconTooltip(submission.participation!.exercise!.type) | artemisTranslate"
-                            container="body"
                         ></fa-icon>
                     </td>
                     <td>{{ submission.participation!.exercise!.title || '' }}</td>
-                    <td>{{ submission.submissionDate | artemisDate: 'long-date' }}</td>
+                    <td>{{ submission.submissionDate | artemisDate : 'long-date' }}</td>
                     <td>{{ submission.participation!.submissions ? submission.participation!.submissions.length : 0 }}</td>
                     <td>
                         <span *ngIf="submission.latestResult?.score != undefined">{{ submission.latestResult!.score }}%</span>

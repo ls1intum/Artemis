@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
@@ -14,9 +15,10 @@ import org.springframework.util.FileSystemUtils;
 
 import de.jplag.JPlag;
 import de.jplag.JPlagResult;
+import de.jplag.Language;
+import de.jplag.clustering.ClusteringOptions;
 import de.jplag.exceptions.ExitException;
 import de.jplag.options.JPlagOptions;
-import de.jplag.options.LanguageOption;
 import de.tum.in.www1.artemis.domain.PlagiarismCheckState;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
@@ -71,7 +73,7 @@ public class TextPlagiarismDetectionService {
      * Download all submissions of the exercise, run JPlag, and return the result
      *
      * @param textExercise        to detect plagiarism for
-     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (%)
+     * @param similarityThreshold ignore comparisons whose similarity is below this threshold (in % between 0 and 100)
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
      * @param minimumSize         consider only submissions whose size is greater or equal to this value
      * @return a zip file that can be returned to the client
@@ -100,12 +102,8 @@ public class TextPlagiarismDetectionService {
             log.info("Save text submissions for JPlag text comparison with {} submissions", submissionsSize);
 
             if (textSubmissions.size() < 2) {
-                log.info("Insufficient amount of submissions for plagiarism detection. Return empty result.");
-                TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
-                textPlagiarismResult.setExercise(textExercise);
-                textPlagiarismResult.setSimilarityDistribution(new int[0]);
-
-                return textPlagiarismResult;
+                log.info("Insufficient amount of submissions for plagiarism detection. Inform the client with a bad request response.");
+                throw new BadRequestAlertException("Insufficient amount of valid and long enough submissions available for comparison", "Plagiarism Check", "notEnoughSubmissions");
             }
 
             AtomicInteger processedSubmissionCount = new AtomicInteger(1);
@@ -135,17 +133,17 @@ public class TextPlagiarismDetectionService {
 
             log.info("Saving text submissions done");
 
-            JPlagOptions options = new JPlagOptions(submissionsFolderName, LanguageOption.TEXT);
-            options.setMinimumTokenMatch(minimumSize);
-
             // Important: for large courses with more than 1000 students, we might get more than one million results and 10 million files in the file system due to many 0% results,
             // therefore we limit the results to at least 50% or 0.5 similarity, the passed threshold is between 0 and 100%
-            options.setSimilarityThreshold(similarityThreshold);
+            Language language = new de.jplag.text.Language();
+            JPlagOptions options = new JPlagOptions(language, Set.of(submissionFolderFile), Set.of())
+                    // JPlag expects a value between 0.0 and 1.0
+                    .withSimilarityThreshold(similarityThreshold / 100.0).withClusteringOptions(new ClusteringOptions().withEnabled(false));
 
             log.info("Start JPlag Text comparison");
             JPlag jplag = new JPlag(options);
             JPlagResult jPlagResult = jplag.run();
-            log.info("JPlag Text comparison finished with {} comparisons. Will limit the number of comparisons to 500", jPlagResult.getComparisons().size());
+            log.info("JPlag Text comparison finished with {} comparisons. Will limit the number of comparisons to 500", jPlagResult.getAllComparisons().size());
 
             log.info("Delete submission folder");
             if (submissionFolderFile.exists()) {
@@ -153,12 +151,15 @@ public class TextPlagiarismDetectionService {
             }
 
             TextPlagiarismResult textPlagiarismResult = new TextPlagiarismResult();
-            textPlagiarismResult.convertJPlagResult(jPlagResult);
-            textPlagiarismResult.setExercise(textExercise);
+            textPlagiarismResult.convertJPlagResult(jPlagResult, textExercise);
 
             log.info("JPlag text comparison for {} submissions done in {}", submissionsSize, TimeLogUtil.formatDurationFrom(start));
             plagiarismWebsocketService.notifyInstructorAboutPlagiarismState(topic, PlagiarismCheckState.COMPLETED, List.of());
             return textPlagiarismResult;
+        }
+        catch (Exception ex) {
+            log.warn("Text plagiarism detection NOT successful", ex);
+            throw new BadRequestAlertException(ex.getMessage(), "Plagiarism Check", "jplagException");
         }
         finally {
             plagiarismCacheService.setInactivePlagiarismCheck(courseId);

@@ -75,12 +75,14 @@ export abstract class Exercise implements BaseEntity {
     public title?: string;
     public shortName?: string;
     public releaseDate?: dayjs.Dayjs;
+    public startDate?: dayjs.Dayjs;
     public dueDate?: dayjs.Dayjs;
     public assessmentDueDate?: dayjs.Dayjs;
     public maxPoints?: number;
     public bonusPoints?: number;
     public assessmentType?: AssessmentType;
     public allowComplaintsForAutomaticAssessments?: boolean;
+    public allowManualFeedbackRequests?: boolean;
     public difficulty?: DifficultyLevel;
     public mode?: ExerciseMode = ExerciseMode.INDIVIDUAL; // default value
     public includedInOverallScore?: IncludedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY; // default value
@@ -124,6 +126,7 @@ export abstract class Exercise implements BaseEntity {
     public teamMode?: boolean;
     public assessmentDueDateError?: boolean;
     public dueDateError?: boolean;
+    public startDateError?: boolean;
     public exampleSolutionPublicationDateError?: boolean;
     public exampleSolutionPublicationDateWarning?: boolean;
     public loading?: boolean;
@@ -143,9 +146,11 @@ export abstract class Exercise implements BaseEntity {
         this.teamMode = false; // default value
         this.assessmentDueDateError = false;
         this.dueDateError = false;
+        this.startDateError = false;
         this.exampleSolutionPublicationDateError = false;
         this.presentationScoreEnabled = false; // default value;
         this.allowComplaintsForAutomaticAssessments = false; // default value;
+        this.allowManualFeedbackRequests = false; // default value;
     }
 
     /**
@@ -254,6 +259,7 @@ export function getExerciseUrlSegment(exerciseType?: ExerciseType): string {
 
 export function resetDates(exercise: Exercise) {
     exercise.releaseDate = undefined;
+    exercise.startDate = undefined;
     exercise.dueDate = undefined;
     exercise.assessmentDueDate = undefined;
     exercise.exampleSolutionPublicationDate = undefined;

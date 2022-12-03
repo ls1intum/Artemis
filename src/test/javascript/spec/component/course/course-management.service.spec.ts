@@ -1,5 +1,5 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
@@ -20,6 +20,7 @@ import { take } from 'rxjs/operators';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
@@ -34,6 +35,7 @@ describe('Course Management Service', () => {
     let syncGroupsSpy: jest.SpyInstance;
     const resourceUrl = SERVER_API_URL + 'api/courses';
     let course: Course;
+    let onlineCourseConfiguration: OnlineCourseConfiguration;
     let exercises: Exercise[];
     let returnedFromService: any;
     let participations: StudentParticipation[];
@@ -68,6 +70,10 @@ describe('Course Management Service', () => {
         course.endDate = undefined;
         course.learningGoals = [];
         course.prerequisites = [];
+        onlineCourseConfiguration = new OnlineCourseConfiguration();
+        onlineCourseConfiguration.id = 234;
+        onlineCourseConfiguration.ltiKey = 'key';
+        onlineCourseConfiguration.ltiSecret = 'secret';
         returnedFromService = { ...course } as Course;
         participations = [new StudentParticipation()];
         convertExercisesDateFromServerSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
@@ -93,26 +99,24 @@ describe('Course Management Service', () => {
         }
     };
 
-    it('should create course', fakeAsync(() => {
-        delete course.id;
-
+    it('should update course', fakeAsync(() => {
         courseManagementService
-            .create({ ...course })
+            .update(1, { ...course })
             .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({ ...course, id: 1234 }));
+            .subscribe((res) => expect(res.body).toEqual(course));
 
-        const req = httpMock.expectOne({ method: 'POST', url: resourceUrl });
+        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1` });
         req.flush(returnedFromService);
         tick();
     }));
 
-    it('should update course', fakeAsync(() => {
+    it('should update online course configuration', fakeAsync(() => {
         courseManagementService
-            .update({ ...course })
+            .updateOnlineCourseConfiguration(1, onlineCourseConfiguration)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
 
-        const req = httpMock.expectOne({ method: 'PUT', url: resourceUrl });
+        const req = httpMock.expectOne({ method: 'PUT', url: `${resourceUrl}/1/onlineCourseConfiguration` });
         req.flush(returnedFromService);
         tick();
     }));
@@ -286,16 +290,6 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should delete a course', fakeAsync(() => {
-        courseManagementService
-            .delete(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual({}));
-        const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}` });
-        req.flush({});
-        tick();
-    }));
-
     it('should get all exercise details', fakeAsync(() => {
         returnedFromService = [{ ...course }] as Course[];
         courseManagementService
@@ -409,6 +403,18 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res).toEqual(stats));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/statistics-lifetime-overview` });
         req.flush(stats);
+        tick();
+    }));
+
+    it('should search other users within course', fakeAsync(() => {
+        const users = [new User(1, 'user1')];
+        returnedFromService = [...users];
+        courseManagementService
+            .searchOtherUsersInCourse(course.id!, 'user1')
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(users));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/search-other-users?nameOfUser=user1` });
+        req.flush(returnedFromService);
         tick();
     }));
 

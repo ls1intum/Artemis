@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, UrlSegment } from '@angular/router';
@@ -51,6 +51,8 @@ import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { By } from '@angular/platform-browser';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -106,7 +108,8 @@ describe('ProgrammingExercise Management Update Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                { provide: ActivatedRoute, useValue: new MockActivatedRoute() },
+                { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
             .compileComponents()
@@ -129,6 +132,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             jest.spyOn(programmingExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
             // WHEN
             comp.save();
@@ -145,6 +149,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 2 } })));
             comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
             // WHEN
             comp.save();
@@ -162,6 +167,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             entity.title = 'My Exercise   ';
             jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 1 } })));
             comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
 
             // WHEN
@@ -376,14 +382,15 @@ describe('ProgrammingExercise Management Update Component', () => {
         });
 
         it.each([
-            [true, 80],
-            [false, undefined],
+            [true, 80, ProjectType.PLAIN_MAVEN],
+            [false, undefined, ProjectType.PLAIN_GRADLE],
         ])(
             'should activate recreate build plans and update template when sca changes',
-            fakeAsync((scaActivatedOriginal: boolean, maxPenalty: number | undefined) => {
+            fakeAsync((scaActivatedOriginal: boolean, maxPenalty: number | undefined, projectType: ProjectType) => {
                 const newMaxPenalty = 50;
                 const programmingExercise = new ProgrammingExercise(undefined, undefined);
                 programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+                programmingExercise.projectType = projectType;
                 programmingExercise.staticCodeAnalysisEnabled = scaActivatedOriginal;
                 programmingExercise.maxStaticCodeAnalysisPenalty = maxPenalty;
                 route.data = of({ programmingExercise });
@@ -403,9 +410,13 @@ describe('ProgrammingExercise Management Update Component', () => {
                 expect(scaCheckbox.checked).toBe(scaActivatedOriginal);
                 expect(!!maxPenaltyInput).toBe(scaActivatedOriginal);
                 expect(recreateBuildPlanCheckbox.checked).toBeFalse();
-                expect(updateTemplateCheckbox.checked).toBeFalse();
                 expect(comp.programmingExercise).toBe(programmingExercise);
                 expect(courseService.find).toHaveBeenCalledWith(courseId);
+
+                // Only available for Maven
+                if (projectType === ProjectType.PLAIN_MAVEN) {
+                    expect(updateTemplateCheckbox.checked).toBeFalse();
+                }
 
                 // Activate SCA and set a max penalty
                 scaCheckbox.click();

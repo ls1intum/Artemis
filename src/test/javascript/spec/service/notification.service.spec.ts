@@ -1,7 +1,7 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { TranslateTestingModule } from '../helpers/mocks/service/mock-translate.service';
@@ -10,7 +10,7 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../helpers/mocks/service/mock-course-management.service';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../helpers/mocks/service/mock-account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -20,6 +20,9 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockMetisService } from '../helpers/mocks/service/mock-metis-service.service';
+import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
+import { MockProvider } from 'ng-mocks';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 describe('Notification Service', () => {
     let notificationService: NotificationService;
@@ -30,6 +33,9 @@ describe('Notification Service', () => {
     let wsSubscribeStub: jest.SpyInstance;
     let wsReceiveNotificationStub: jest.SpyInstance;
     let wsNotificationSubject: Subject<Notification | undefined>;
+    let tutorialGroupNotificationService: TutorialGroupsNotificationService;
+    let getTutorialGroupsForNotificationsSpy: jest.SpyInstance;
+    let tutorialGroup: TutorialGroup;
 
     let wsQuizExerciseSubject: Subject<QuizExercise | undefined>;
 
@@ -66,6 +72,14 @@ describe('Notification Service', () => {
     };
     const groupNotification = generateGroupNotification();
 
+    const generateTutorialGroupNotification = () => {
+        const generatedNotification = { title: 'tutorial group notification', text: 'This is a simple tutorial group notification' } as Notification;
+        generatedNotification.notificationDate = dayjs();
+        return generatedNotification;
+    };
+
+    const tutorialGroupNotification = generateTutorialGroupNotification();
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, TranslateTestingModule, RouterTestingModule.withRoutes([])],
@@ -77,6 +91,7 @@ describe('Notification Service', () => {
                 { provide: AccountService, useClass: MockAccountService },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: MetisService, useClass: MockMetisService },
+                MockProvider(TutorialGroupsNotificationService),
             ],
         })
             .compileComponents()
@@ -91,6 +106,11 @@ describe('Notification Service', () => {
                 wsReceiveNotificationStub = jest.spyOn(websocketService, 'receive').mockReturnValue(wsNotificationSubject);
 
                 wsQuizExerciseSubject = new Subject<QuizExercise | undefined>();
+                tutorialGroupNotificationService = TestBed.inject(TutorialGroupsNotificationService);
+
+                tutorialGroup = new TutorialGroup();
+                tutorialGroup.id = 99;
+                getTutorialGroupsForNotificationsSpy = jest.spyOn(tutorialGroupNotificationService, 'getTutorialGroupsForNotifications').mockReturnValue(of([]));
 
                 courseManagementService = TestBed.inject(CourseManagementService);
                 cmCoursesSubject = new Subject<[Course] | undefined>();
@@ -155,6 +175,20 @@ describe('Notification Service', () => {
             // add new single user notification
             wsNotificationSubject.next(singleUserNotification);
             // calls addNotificationToObserver i.e. calls next on subscribeToNotificationUpdates' ReplaySubject
+        }));
+
+        it('should subscribe to tutorial group notification updates and receive new tutorial group notifications', fakeAsync(() => {
+            getTutorialGroupsForNotificationsSpy = jest.spyOn(tutorialGroupNotificationService, 'getTutorialGroupsForNotifications').mockReturnValue(of([tutorialGroup]));
+
+            notificationService.subscribeToNotificationUpdates().subscribe((notification) => {
+                expect(notification).toEqual(tutorialGroupNotification);
+            });
+            expect(getTutorialGroupsForNotificationsSpy).toHaveBeenCalledOnce();
+            const notificationTopic = `/topic/tutorial-group/${tutorialGroup.id}/notifications`;
+            expect(wsSubscribeStub).toHaveBeenCalledOnce();
+            expect(wsSubscribeStub).toHaveBeenCalledWith(notificationTopic);
+            expect(wsReceiveNotificationStub).toHaveBeenCalledOnce();
+            wsNotificationSubject.next(tutorialGroupNotification);
         }));
 
         it('should subscribe to group notification updates and receive new group notification', fakeAsync(() => {

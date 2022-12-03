@@ -3,6 +3,7 @@
 pipeline {
         options {
             timeout(time: #jenkinsTimeout, unit: 'MINUTES')
+            timestamps()
         }
         agent {
             docker {
@@ -21,15 +22,13 @@ pipeline {
             }
             stage('Build') {
                 steps {
-                    timestamps {
-                        withMaven {
-                            dir("structural") {
-                                sh 'mvn clean test -B'
-                            }
+                    withMaven {
+                        dir("structural") {
+                            sh 'mvn clean test -B'
+                        }
 
-                            dir("behavior") {
-                                sh 'mvn clean test -B'
-                            }
+                        dir("behavior") {
+                            sh 'mvn clean test -B'
                         }
                     }
                 }

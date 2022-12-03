@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
-import { Observable, of, Subject, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { HttpClient, HttpErrorResponse, HttpResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpParams, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { catchError, map, tap } from 'rxjs/operators';

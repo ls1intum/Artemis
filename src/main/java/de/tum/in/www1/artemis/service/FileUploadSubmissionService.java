@@ -67,7 +67,7 @@ public class FileUploadSubmissionService extends SubmissionService {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
         final var participation = optionalParticipation.get();
-        final var dueDate = exerciseDateService.getDueDate(participation);
+        final var dueDate = ExerciseDateService.getDueDate(participation);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
         if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
             throw new AccessForbiddenException();
@@ -92,7 +92,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<FileUploadSubmission> getRandomFileUploadSubmissionEligibleForNewAssessment(FileUploadExercise fileUploadExercise, boolean examMode, int correctionRound) {
-        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(fileUploadExercise, examMode, correctionRound);
+        var submissionWithoutResult = super.getRandomAssessableSubmission(fileUploadExercise, examMode, correctionRound);
         if (submissionWithoutResult.isPresent()) {
             FileUploadSubmission fileUploadSubmission = (FileUploadSubmission) submissionWithoutResult.get();
             return Optional.of(fileUploadSubmission);
@@ -121,6 +121,11 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.setType(SubmissionType.MANUAL);
         participation.addSubmission(fileUploadSubmission);
 
+        if (participation.getInitializationState() != InitializationState.FINISHED) {
+            participation.setInitializationState(InitializationState.FINISHED);
+            studentParticipationRepository.save(participation);
+        }
+
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         fileUploadSubmission.setResults(new ArrayList<>());
 
@@ -129,11 +134,6 @@ public class FileUploadSubmissionService extends SubmissionService {
         fileUploadSubmission.setFilePath(newFilePath);
         // Note: we save again so that the new file is stored on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-
-        if (participation.getInitializationState() != InitializationState.FINISHED) {
-            participation.setInitializationState(InitializationState.FINISHED);
-            studentParticipationRepository.save(participation);
-        }
 
         return fileUploadSubmission;
     }

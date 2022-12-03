@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.BuildPlanType.TEMPLATE;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.*;
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceErrorKeys.*;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -692,6 +693,11 @@ class ProgrammingExerciseIntegrationTestService {
         mockDelegate.mockRepositoryUrlIsValid(programmingExercise.getVcsSolutionRepositoryUrl(), programmingExercise.getProjectKey(), true);
     }
 
+    private void mockConfigureRepository(ProgrammingExercise programmingExercise) throws Exception {
+        mockDelegate.mockConfigureRepository(programmingExercise, participation1.getParticipantIdentifier(), participation1.getStudents(), true);
+        mockDelegate.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), true);
+    }
+
     void updateProgrammingExercise_staticCodeAnalysisMustNotChange_falseToTrue_badRequest() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
         programmingExercise.setStaticCodeAnalysisEnabled(true);
@@ -794,6 +800,7 @@ class ProgrammingExerciseIntegrationTestService {
 
     void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
+        mockConfigureRepository(programmingExercise);
 
         final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
 
@@ -1533,8 +1540,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void unlockAllRepositories() throws Exception {
-        mockDelegate.mockConfigureRepository(programmingExercise, participation1.getParticipantIdentifier(), participation1.getStudents(), true);
-        mockDelegate.mockConfigureRepository(programmingExercise, participation2.getParticipantIdentifier(), participation2.getStudents(), true);
+        mockConfigureRepository(programmingExercise);
         mockDelegate.mockDefaultBranch(programmingExercise);
 
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
@@ -1571,11 +1577,18 @@ class ProgrammingExerciseIntegrationTestService {
         assertThat(jplagZipArchive).isNotNull();
         assertThat(jplagZipArchive).exists();
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
-            assertThat(zipFile.getEntry("index.html")).isNotNull();
-            assertThat(zipFile.getEntry("match0.html")).isNotNull();
-            assertThat(zipFile.getEntry("matches_avg.csv")).isNotNull();
-            // only one match exists
-            assertThat(zipFile.getEntry("match1.html")).isNull();
+            // var entries = zipFile.entries();
+            // while(entries.hasMoreElements()) {
+            // System.out.println(entries.nextElement().getName());
+            // }
+            assertThat(zipFile.getEntry("overview.json")).isNotNull();
+            assertThat(zipFile.getEntry("submissions/Submission-1.java/Submission-1.java")).isNotNull();
+            assertThat(zipFile.getEntry("submissions/Submission-2.java/Submission-2.java")).isNotNull();
+
+            // it is random which of the following two exists, but one of them must be part of the zip file
+            var json1 = zipFile.getEntry("Submission-2.java-Submission-1.java.json");
+            var json2 = zipFile.getEntry("Submission-1.java-Submission-2.java.json");
+            assertTrue(json1 != null || json2 != null);
         }
     }
 

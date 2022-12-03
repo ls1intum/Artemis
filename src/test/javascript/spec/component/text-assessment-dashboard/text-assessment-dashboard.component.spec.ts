@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -25,8 +25,10 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import dayjs from 'dayjs/esm';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
-const textExercise = {
+const textExercise: TextExercise = {
+    allowManualFeedbackRequests: false,
     id: 22,
     course: { id: 91 },
     type: ExerciseType.TEXT,
@@ -35,7 +37,8 @@ const textExercise = {
     numberOfAssessmentsOfCorrectionRounds: [],
     secondCorrectionEnabled: true,
 };
-const textExerciseOfExam = {
+const textExerciseOfExam: TextExercise = {
+    allowManualFeedbackRequests: false,
     id: 23,
     exerciseGroup: { id: 111, exam: { id: 112, course: { id: 91 } } },
     type: ExerciseType.TEXT,
@@ -132,7 +135,7 @@ describe('TextAssessmentDashboardComponent', () => {
         // setup
         jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
         const getTextSubmissionStub = jest
-            .spyOn(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound')
+            .spyOn(textSubmissionService, 'getSubmissions')
             .mockReturnValue(of(new HttpResponse({ body: [textSubmission], headers: new HttpHeaders() })));
 
         // test for init values
@@ -156,7 +159,7 @@ describe('TextAssessmentDashboardComponent', () => {
         // test getSubmissions
         jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
         const getTextSubmissionStub = jest
-            .spyOn(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound')
+            .spyOn(textSubmissionService, 'getSubmissions')
             .mockReturnValue(of(new HttpResponse({ body: [textSubmission], headers: new HttpHeaders() })));
         jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
 
@@ -171,9 +174,7 @@ describe('TextAssessmentDashboardComponent', () => {
     }));
 
     it('should not get Submissions', () => {
-        const getTextSubmissionStub = jest
-            .spyOn(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound')
-            .mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
+        const getTextSubmissionStub = jest.spyOn(textSubmissionService, 'getSubmissions').mockReturnValue(of(new HttpResponse({ body: [], headers: new HttpHeaders() })));
         jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
         const findExerciseStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise, headers: new HttpHeaders() })));
         component.exercise = textExercise;
@@ -279,9 +280,7 @@ describe('TextAssessmentDashboardComponent', () => {
             // test getSubmissions
             const body = [unassessedSubmission, textSubmission, semiautomaticAssessedSubmission];
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: textExercise })));
-            const getTextSubmissionStub = jest
-                .spyOn(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound')
-                .mockReturnValue(of(new HttpResponse({ body, headers: new HttpHeaders() })));
+            const getTextSubmissionStub = jest.spyOn(textSubmissionService, 'getSubmissions').mockReturnValue(of(new HttpResponse({ body, headers: new HttpHeaders() })));
             jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(true);
             route.queryParams = new BehaviorSubject({ filterOption });
 

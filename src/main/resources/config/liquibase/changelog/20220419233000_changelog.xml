@@ -1,0 +1,17 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet author="sleiss" id="20220419233000">
+        <createTable tableName="build_log_statistics_entry">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="build_log_statistics_entryPK"/>
+            </column>
+            <column name="programming_submission_id" type="BIGINT"/>
+            <column name="agent_setup_duration" type="SMALLINT UNSIGNED"/>
+            <column name="test_duration" type="SMALLINT UNSIGNED"/>
+            <column name="sca_duration" type="SMALLINT UNSIGNED"/>
+            <column name="total_job_duration" type="SMALLINT UNSIGNED"/>
+            <column name="dependencies_downloaded_count" type="SMALLINT UNSIGNED"/>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="programming_submission_id" baseTableName="build_log_statistics_entry" constraintName="FKarrnc5l01jjyixrw6jbu18k6b" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="submission" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

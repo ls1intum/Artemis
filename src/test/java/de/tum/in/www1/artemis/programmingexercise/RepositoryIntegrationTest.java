@@ -125,6 +125,8 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
 
         studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");
 
@@ -803,12 +805,14 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void testCommitChangesAllowedForAutomaticallyAssessedAfterDueDate() throws Exception {
-        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
+    void testCommitChangesAllowedForPracticeModeAfterDueDate() throws Exception {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
-        programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
+        programmingExercise.setAssessmentType(AssessmentType.MANUAL);
         programmingExerciseRepository.save(programmingExercise);
+
+        participation.setTestRun(true);
+        studentParticipationRepository.save(participation);
 
         testCommitChanges();
     }

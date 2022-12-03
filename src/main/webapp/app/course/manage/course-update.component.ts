@@ -3,7 +3,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { Observable } from 'rxjs';
+import { Observable, OperatorFunction, Subject, debounceTime, distinctUntilChanged, filter, map, merge, tap } from 'rxjs';
 import { regexValidator } from 'app/shared/form/shortname-validator.directive';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
@@ -16,13 +16,15 @@ import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
 import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-course-update',
@@ -33,16 +35,19 @@ export class CourseUpdateComponent implements OnInit {
     CachingStrategy = CachingStrategy;
     ProgrammingLanguage = ProgrammingLanguage;
 
+    @ViewChild('timeZoneInput') tzTypeAhead: NgbTypeahead;
+    tzFocus$ = new Subject<string>();
+    tzClick$ = new Subject<string>();
+    timeZones: string[] = [];
+    originalTimeZone?: string;
+
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     courseForm: FormGroup;
     course: Course;
     isSaving: boolean;
-    courseImageFile?: Blob | File;
-    courseImageFileName: string;
-    isUploadingCourseImage: boolean;
-    imageChangedEvent: any = '';
-    croppedImage: any = '';
+    courseImageUploadFile?: File;
+    croppedImage?: string;
     showCropper = false;
     presentationScoreEnabled = false;
     complaintsEnabled = true; // default value
@@ -50,7 +55,6 @@ export class CourseUpdateComponent implements OnInit {
     customizeGroupNames = false; // default value
     presentationScorePattern = /^[0-9]{0,4}$/; // makes sure that the presentation score is a positive natural integer greater than 0 and not too large
     courseOrganizations: Organization[];
-
     // Icons
     faSave = faSave;
     faBan = faBan;
@@ -63,9 +67,11 @@ export class CourseUpdateComponent implements OnInit {
     // Currently set to 65535 as this is the limit of TEXT
     readonly COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
     readonly COMPLAINT_TEXT_LIMIT = 65535;
+    tutorialGroupsFeatureActivated = false;
 
     constructor(
-        private courseService: CourseManagementService,
+        private courseManagementService: CourseManagementService,
+        private courseAdminService: CourseAdminService,
         private activatedRoute: ActivatedRoute,
         private fileUploaderService: FileUploaderService,
         private alertService: AlertService,
@@ -74,9 +80,11 @@ export class CourseUpdateComponent implements OnInit {
         private modalService: NgbModal,
         private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,
+        private featureToggleService: FeatureToggleService,
     ) {}
 
     ngOnInit() {
+        this.timeZones = (Intl as any).supportedValuesOf('timeZone');
         this.isSaving = false;
         // create a new course, and only overwrite it if we fetch a course to edit
         this.course = new Course();
@@ -86,6 +94,7 @@ export class CourseUpdateComponent implements OnInit {
                 this.organizationService.getOrganizationsByCourse(course.id).subscribe((organizations) => {
                     this.courseOrganizations = organizations;
                 });
+                this.originalTimeZone = this.course.timeZone;
 
                 // complaints are only enabled when at least one complaint is allowed and the complaint duration is positive
                 this.complaintsEnabled =
@@ -184,9 +193,37 @@ export class CourseUpdateComponent implements OnInit {
             },
             { validators: CourseValidator },
         );
-        this.courseImageFileName = this.course.courseIcon!;
-        this.croppedImage = this.course.courseIcon ? this.course.courseIcon : '';
+        this.croppedImage = this.course.courseIcon;
         this.presentationScoreEnabled = this.course.presentationScore !== 0;
+
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.TutorialGroups)
+            .pipe(
+                tap((active) => {
+                    this.tutorialGroupsFeatureActivated = active;
+                }),
+            )
+            .subscribe(() => {
+                if (this.tutorialGroupsFeatureActivated && this.courseForm) {
+                    this.courseForm.addControl('timeZone', new FormControl(this.course?.timeZone));
+                }
+            });
+    }
+    tzResultFormatter = (timeZone: string) => timeZone;
+    tzInputFormatter = (timeZone: string) => timeZone;
+
+    tzSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
+        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
+        const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead.isPopupOpen()));
+        const inputFocus$ = this.tzFocus$;
+
+        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
+            map((term) => (term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().indexOf(term.toLowerCase()) > -1))),
+        );
+    };
+
+    get timeZoneChanged() {
+        return this.course?.id && this.originalTimeZone && this.originalTimeZone !== this.courseForm.value.timeZone;
     }
 
     /**
@@ -207,10 +244,18 @@ export class CourseUpdateComponent implements OnInit {
         if (this.courseForm.controls['organizations'] !== undefined) {
             this.courseForm.controls['organizations'].setValue(this.courseOrganizations);
         }
+
+        let file = undefined;
+        if (this.courseImageUploadFile && this.croppedImage) {
+            const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
+            file = base64StringToBlob(base64Data, 'image/*');
+        }
+
+        const course = this.courseForm.getRawValue();
         if (this.course.id !== undefined) {
-            this.subscribeToSaveResponse(this.courseService.update(this.courseForm.getRawValue()));
+            this.subscribeToSaveResponse(this.courseManagementService.update(this.course.id, course, file));
         } else {
-            this.subscribeToSaveResponse(this.courseService.create(this.courseForm.getRawValue()));
+            this.subscribeToSaveResponse(this.courseAdminService.create(course, file));
         }
     }
 
@@ -245,12 +290,10 @@ export class CourseUpdateComponent implements OnInit {
      * @function set course icon
      * @param event {object} Event object which contains the uploaded file
      */
-    setCourseImage(event: any): void {
-        this.imageChangedEvent = event;
-        if (event.target.files.length) {
-            const fileList: FileList = event.target.files;
-            this.courseImageFile = fileList[0];
-            this.courseImageFileName = this.courseImageFile['name'];
+    setCourseImage(event: Event): void {
+        const element = event.currentTarget as HTMLInputElement;
+        if (element.files?.[0]) {
+            this.courseImageUploadFile = element.files[0];
         }
     }
 
@@ -263,33 +306,6 @@ export class CourseUpdateComponent implements OnInit {
 
     imageLoaded() {
         this.showCropper = true;
-    }
-
-    /**
-     * @function uploadBackground
-     * @desc Upload the selected file (from "Upload Background") and use it for the question's backgroundFilePath
-     */
-    uploadCourseImage(): void {
-        const contentType = 'image/*';
-        const base64Data = this.croppedImage.replace('data:image/png;base64,', '');
-        const file = base64StringToBlob(base64Data, contentType);
-        file['name'] = this.courseImageFileName;
-
-        this.isUploadingCourseImage = true;
-        this.fileUploaderService.uploadFile(file, file['name']).then(
-            (response) => {
-                this.courseForm.patchValue({ courseIcon: response.path });
-                this.isUploadingCourseImage = false;
-                this.courseImageFile = undefined;
-                this.courseImageFileName = response.path!;
-            },
-            () => {
-                this.isUploadingCourseImage = false;
-                this.courseImageFile = undefined;
-                this.courseImageFileName = this.course.courseIcon!;
-            },
-        );
-        this.showCropper = false;
     }
 
     /**
@@ -459,6 +475,13 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
+     * Auxiliary method checking if online course is currently true
+     */
+    isOnlineCourse(): boolean {
+        return this.courseForm.controls['onlineCourse'].value === true;
+    }
+
+    /**
      * Returns whether the dates are valid or not
      * @return true if the dats are valid
      */
@@ -481,6 +504,15 @@ export class CourseUpdateComponent implements OnInit {
 
     get isValidConfiguration(): boolean {
         return this.isValidDate;
+    }
+
+    /**
+     * Deletes the course icon
+     */
+    deleteCourseIcon() {
+        this.course.courseIcon = undefined;
+        this.croppedImage = undefined;
+        this.courseForm.controls['courseIcon'].setValue(undefined);
     }
 }
 

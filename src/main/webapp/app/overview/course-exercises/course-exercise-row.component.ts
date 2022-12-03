@@ -4,11 +4,11 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Exercise, ExerciseType, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { getExerciseDueDate, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
@@ -40,6 +40,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     public exerciseCategories: ExerciseCategory[];
     isAfterAssessmentDueDate: boolean;
     dueDate?: dayjs.Dayjs;
+    gradedStudentParticipation?: StudentParticipation;
 
     participationUpdateListener: Subscription;
 
@@ -52,31 +53,40 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     ) {}
 
     ngOnInit() {
+        if (this.exercise.id) {
+            this.exerciseService.getExerciseDetails(this.exercise.id).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
+                if (exerciseResponse.body) {
+                    this.exercise = exerciseResponse.body!;
+                    this.exercise.participationStatus = participationStatus(this.exercise);
+                    if (this.exercise.studentParticipations?.length) {
+                        this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
+                    }
+                }
+            });
+        }
+
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
-            if (changedParticipation && this.exercise && changedParticipation.exercise!.id === this.exercise.id) {
-                this.exercise.studentParticipations =
-                    this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0
-                        ? this.exercise.studentParticipations.map((el) => {
-                              return el.id === changedParticipation.id ? changedParticipation : el;
-                          })
-                        : [changedParticipation];
+            if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
+                this.exercise.studentParticipations = this.exercise.studentParticipations?.length
+                    ? this.exercise.studentParticipations.map((el) => {
+                          return el.id === changedParticipation.id ? changedParticipation : el;
+                      })
+                    : [changedParticipation];
                 this.exercise.participationStatus = participationStatus(this.exercise);
-                this.dueDate = getExerciseDueDate(this.exercise, changedParticipation);
+                this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
+                this.dueDate = getExerciseDueDate(this.exercise, this.gradedStudentParticipation);
             }
         });
     }
 
     ngOnChanges(): void {
-        const cachedParticipation = this.participationWebsocketService.getParticipationForExercise(this.exercise.id!);
-        if (cachedParticipation) {
-            this.exercise.studentParticipations = [cachedParticipation];
+        const cachedParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exercise.id!);
+        if (cachedParticipations) {
+            this.exercise.studentParticipations = cachedParticipations;
+            this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations, false);
         }
-        this.dueDate = getExerciseDueDate(this.exercise, cachedParticipation);
-        this.exercise.participationStatus = participationStatus(this.exercise);
-        if (this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
-            this.exercise.studentParticipations[0].exercise = this.exercise;
-            this.dueDate = getExerciseDueDate(this.exercise, this.exercise.studentParticipations[0]);
-        }
+        this.dueDate = getExerciseDueDate(this.exercise, this.gradedStudentParticipation);
+        this.exercise.participationStatus = participationStatus(this.exercise, false);
         this.exercise.isAtLeastTutor = this.accountService.isAtLeastTutorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);
         this.exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course || this.exercise.exerciseGroup!.exam!.course);

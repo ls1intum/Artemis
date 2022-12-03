@@ -96,6 +96,7 @@ public class BitbucketService extends AbstractVersionControlService {
             }
         }
 
+        // TODO: we should separate access (above) from protecting branches
         protectBranches(urlService.getProjectKeyFromRepositoryUrl(participation.getVcsRepositoryUrl()),
                 urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()));
     }

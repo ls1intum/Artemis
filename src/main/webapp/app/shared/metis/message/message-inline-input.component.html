@@ -1,0 +1,29 @@
+<form [formGroup]="formGroup" (ngSubmit)="confirm()">
+    <div class="message-inline-input-form__wrapper">
+        <jhi-posting-markdown-editor
+            formControlName="content"
+            [editorHeight]="editorHeight"
+            [maxContentLength]="maxContentLength"
+            [isInputLengthDisplayed]="false"
+            (keydown.enter)="confirm()"
+        >
+        </jhi-posting-markdown-editor>
+        <div class="col text-end">
+            <button
+                *ngIf="editType == EditType.UPDATE"
+                jhi-posting-button
+                [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate"
+                class="btn btn-sm btn-outline-secondary"
+                (click)="isModalOpen.emit()"
+            ></button>
+            <button
+                jhi-posting-button
+                [buttonLoading]="isLoading"
+                [disabled]="!formGroup.valid"
+                [buttonLabel]="'artemisApp.messages.submit' | artemisTranslate"
+                class="btn btn-sm btn-outline-secondary"
+                type="submit"
+            ></button>
+        </div>
+    </div>
+</form>

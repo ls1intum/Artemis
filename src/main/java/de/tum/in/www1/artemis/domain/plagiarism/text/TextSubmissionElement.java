@@ -1,9 +1,13 @@
 package de.tum.in.www1.artemis.domain.plagiarism.text;
 
+import java.io.File;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 
 import de.jplag.Token;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmissionElement;
 
@@ -18,6 +22,7 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
 
     private String file;
 
+    // TODO: remove this column, we don't really need it
     @Column(name = "token_type")
     private int type;
 
@@ -28,15 +33,28 @@ public class TextSubmissionElement extends PlagiarismSubmissionElement {
      *
      * @param token the JPlag Token to create the TextSubmissionElement from
      * @param plagiarismSubmission the PlagiarismSubmission the TextSubmissionElement belongs to
+     * @param exercise the exercise to which the element belongs, either Text or Programming
+     * @param submissionDirectory the directory to which all student submissions have been downloaded / stored
      * @return a new TextSubmissionElement instance
      */
-    public static TextSubmissionElement fromJPlagToken(Token token, PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission) {
+    public static TextSubmissionElement fromJPlagToken(Token token, PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission, Exercise exercise, File submissionDirectory) {
         TextSubmissionElement textSubmissionElement = new TextSubmissionElement();
 
         textSubmissionElement.setColumn(token.getColumn());
         textSubmissionElement.setLine(token.getLine());
-        textSubmissionElement.setFile(token.file);
-        textSubmissionElement.setType(token.type);
+        if (exercise instanceof ProgrammingExercise) {
+            // Note: for text submissions 'file' must be null
+            // Note: we want to get the relative path within the repository and not the absolute path
+            var submissionDirectoryAbsoluteFile = submissionDirectory.getAbsoluteFile();
+            var tokenAbsoluteFile = token.getFile().getAbsoluteFile();
+            var filePath = submissionDirectoryAbsoluteFile.toPath().relativize(tokenAbsoluteFile.toPath());
+            // remove the first element, because it is the parent folder in which the whole repo was saved
+            var fileStringWithinRepository = filePath.toString();
+            if (filePath.getNameCount() > 1) {
+                fileStringWithinRepository = filePath.subpath(1, filePath.getNameCount()).toString();
+            }
+            textSubmissionElement.setFile(fileStringWithinRepository);
+        }
         textSubmissionElement.setLength(token.getLength());
         textSubmissionElement.setPlagiarismSubmission(plagiarismSubmission);
 

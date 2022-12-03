@@ -26,6 +26,8 @@ import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { RouteComponents } from 'app/shared/metis/metis.util';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { TutorialGroupsNotificationService } from 'app/course/tutorial-groups/services/tutorial-groups-notification.service';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
@@ -41,6 +43,7 @@ export class NotificationService {
         private accountService: AccountService,
         private courseManagementService: CourseManagementService,
         private serializer: UrlSerializer,
+        private tutorialGroupsNotificationService: TutorialGroupsNotificationService,
     ) {
         this.initNotificationObserver();
     }
@@ -147,6 +150,11 @@ export class NotificationService {
                 this.subscribeToQuizUpdates(courses);
             }
         });
+        this.tutorialGroupsNotificationService.getTutorialGroupsForNotifications().subscribe((tutorialGroups) => {
+            if (tutorialGroups) {
+                this.subscribeToTutorialGroupNotificationUpdates(tutorialGroups);
+            }
+        });
         return this.notificationObserver;
     }
 
@@ -179,6 +187,19 @@ export class NotificationService {
                 this.subscribedTopics.push(courseTopic);
                 this.jhiWebsocketService.subscribe(courseTopic);
                 this.jhiWebsocketService.receive(courseTopic).subscribe((notification: Notification) => {
+                    this.addNotificationToObserver(notification);
+                });
+            }
+        });
+    }
+
+    private subscribeToTutorialGroupNotificationUpdates(tutorialGroups: TutorialGroup[]): void {
+        tutorialGroups.forEach((tutorialGroup) => {
+            const tutorialGroupTopic = '/topic/tutorial-group/' + tutorialGroup.id + '/notifications';
+            if (!this.subscribedTopics.includes(tutorialGroupTopic)) {
+                this.subscribedTopics.push(tutorialGroupTopic);
+                this.jhiWebsocketService.subscribe(tutorialGroupTopic);
+                this.jhiWebsocketService.receive(tutorialGroupTopic).subscribe((notification: Notification) => {
                     this.addNotificationToObserver(notification);
                 });
             }

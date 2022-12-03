@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -436,7 +437,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
             final FileUploadSubmission submission2 = ModelFactory.generateFileUploadSubmission(true);
             database.addFileUploadSubmission(fileUploadExercise, submission2, "student2");
 
-            final var participations = studentParticipationRepository.findByExerciseId(fileUploadExercise.getId());
+            final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(fileUploadExercise.getId()));
             assertThat(participations).hasSize(2);
             participations.get(0).setIndividualDueDate(ZonedDateTime.now().plusHours(2));
             participations.get(1).setIndividualDueDate(individualDueDate);

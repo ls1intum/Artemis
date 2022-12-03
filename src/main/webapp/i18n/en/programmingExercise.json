@@ -31,7 +31,6 @@
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
             },
-            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
             "templateRepositoryUrl": "Template Repository Url",
@@ -164,6 +163,7 @@
                     "couldNotBeUpdated": "The following test cases could not be updated: {{testCases}}.",
                     "weightSumError": "The sum of all test case weights is 0 or below. Please adjust at least one test case weight to be greater than 0",
                     "showInactive": "Show inactive test cases",
+                    "exercisePoints": "Exercise Points:",
                     "settingNull": "Test case {{testCase}} must not have settings that are empty.",
                     "settingNegative": "Test case {{testCase}} must not have settings set to negative values."
                 },
@@ -181,7 +181,8 @@
                     "preview": "Preview",
                     "resetFilter": "Reset Filter",
                     "testCaseWeights": {
-                        "title": "Weight Distribution",
+                        "title": "Test Case Weights",
+                        "sumOfTestWeights": "Sum of test weights:",
                         "description": "The distribution of test case weights in the exercise. This shows how much impact any test case has on the overall score of a student. The first bar accounts just for the weight, and the second bar also includes the bonus points given for a test case.<br/>Hover over a colored block to see more details.",
                         "weight": "Weight",
                         "weightTooltip": "Weight: {{ percentage }}% of all weights.",
@@ -199,6 +200,16 @@
                         "description": "The distribution of categories across the metrics 'Penalty', 'Issues' and 'Points'. This shows how much each category accounts for in each of the three metrics.<br/>The <b>Penalty</b> bar shows the distribution of penalties across the categories.<br/>The <b>Issues</b> bar shows how many issues were detected in each respective category.<br/>The <b>Points</b> bar indicates how many points were actually deducted in each respective category, based on the information in the first two bars. Hover over a colored block to see the category details."
                     }
                 },
+                "gradingTableHeader": {
+                    "testName": "Test Name",
+                    "weight": "Weight",
+                    "bonusMultiplier": "Bonus Multiplier",
+                    "bonusPoints": "Bonus Points",
+                    "visibility": "Visibility",
+                    "resultingPoints": "Resulting Points",
+                    "testType": "Type",
+                    "passedPercent": "Passed %"
+                },
                 "help": {
                     "state": "Determines whether issues in this category should be shown to the students and used for grading.",
                     "penalty": "Penalty points given on each detected issue of this category.",
@@ -208,6 +219,7 @@
                     "bonusMultiplier": "This multiplies the points given for passing a test case without affecting the fractions of other test cases. Multipliers greater than 1 can result in student scores greater than 100%.",
                     "bonusPoints": "Bonus points added on top of the regular points for passing a test case. Setting bonus points can result in student scores greater than 100%.",
                     "visibility": "Feedback and points for test cases marked as ‘After Due Date’ only become visible to students after the due date has passed. Tests with visibility ‘Never’ do not influence the student score.",
+                    "points": "The amount of points the student gets for passing this test. This value is rounded according to the course settings.",
                     "type": "The type of the test case determines if the test case has been generated from the test.json (STRUCTURAL), or has been written manually (BEHAVIORAL)."
                 },
                 "updatedGradingConfigShort": "Updated grading",
@@ -219,6 +231,9 @@
             },
             "export": {
                 "downloadRepo": "Download Repo",
+                "downloadExampleSolution": "Download example solution",
+                "downloadTests": "Download tests",
+                "downloadTestsWithExampleSolution": "Download tests with example solution",
                 "downloadExercise": "Download Exercise",
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",
@@ -266,8 +281,9 @@
                 "automaticTestsAfterDueDateTooltip": "As soon as the specified due date passes, all submissions will be tested again using ALL tests in the test repository, including tests specified to be run after the due date.",
                 "assessmentTypeTooltipAutomaticAssessment": "The type of assessment after the deadline: No manual assessment",
                 "assessmentTypeTooltipManualAssessment": "The type of assessment after the deadline: Manual assessment by a tutors and complaints allowed if possible",
-                "releaseDateTooltip": "The release date of the exercise. Students will only be able to participate in the exercise starting on the specified date",
-                "dueDateTooltip": "The deadline, upon which submitting and committing new code will be deactivated for all students",
+                "releaseDateTooltip": "The release date of the exercise. Students will be able to see the exercise starting on the specified date. If no start date is defined, students can also start their participation after this date.",
+                "startDateTooltip": "The start date of the exercise. If this date is set, students can only see the exercise before but only participate after this date.",
+                "dueDateTooltip": "The deadline, upon which submitting and committing new code will be deactivated for all students.",
                 "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. These generated results will be marked as 'graded' even though the due date has passed.",
                 "alertNewDueDate": "The due date has been set to the release date!",
                 "alertNewAfterDueDate": "The date of the additional test runs has been set to the release date!",
@@ -276,16 +292,18 @@
                 "assessmentDueDate": "Assessment Due Date",
                 "assessmentDueDateTooltip": "The deadline for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
                 "notSet": "not set",
+                "allowFeedbackRequests": "Allow feedback requests",
+                "manualFeedbackRequests": "Manual feedback requests",
+                "manualFeedbackRequestsTooltip": "Students can request manual feedback before the deadline to receive feedback.",
                 "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
-                "allowComplaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment",
-                "disallowComplaintOnAutomaticAssessmentTooltip": "Students cannot complain after receiving an automatic assessment",
-                "complaintOnAutomaticAssessmentEnabled": "Complaints are possible",
-                "complaintOnAutomaticAssessmentDisabled": "Complaints are not possible",
-                "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable."
+                "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
+                "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
+                "releaseTestsWithExampleSolution": "Publish tests",
+                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the deadline."
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
-                "tooltip": "The due date has passed, your repository is locked. You may still read the code but you may not make any changes to it."
+                "tooltip": "You are outside of the participation timeframe, your repository is locked. You may still read the code but you may not make any changes to it."
             },
             "preview": {
                 "label": "Preview",
@@ -405,8 +423,8 @@
                 "lineStatTooltipFullEntry": "Filtered lines that were added and removed when comparing the template and solution versions of this file. This excludes empty lines."
             },
             "projectTypes": {
-                "PLAIN_MAVEN": "Maven",
                 "PLAIN_GRADLE": "Gradle",
+                "PLAIN_MAVEN": "Maven",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",
                 "FACT": "FACT",
@@ -425,7 +443,18 @@
                 "selectTests": "Select the tests for which the covered lines are marked:",
                 "filePath": "File Path",
                 "coveredLines": "Covered Lines"
-            }
+            },
+            "buildLogStatistics": {
+                "title": "Average build log statistics",
+                "numberOfBuilds": "# Builds",
+                "agentSetupDuration": "Setup build agent",
+                "testDuration": "Test execution",
+                "scaDuration": "Static Code Analysis",
+                "totalJobDuration": "Total Job",
+                "dependenciesDownloadedCount": "Number of downloaded dependencies",
+                "tooltip": "The average build duration is calculated based on all builds (template, solution and student submissions). The number of downloaded dependencies can be reduced by caching dependencies in the Docker image."
+            },
+            "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing."
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."

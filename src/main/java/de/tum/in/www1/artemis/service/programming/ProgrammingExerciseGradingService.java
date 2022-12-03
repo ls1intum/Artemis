@@ -19,6 +19,8 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
+import com.google.common.base.Strings;
+
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
@@ -127,7 +129,7 @@ public class ProgrammingExerciseGradingService {
         Result newResult = null;
         try {
             var buildResult = continuousIntegrationService.get().convertBuildResult(requestBody);
-            checkCorrectBranchElseThrow(participation.getProgrammingExercise(), buildResult);
+            checkCorrectBranchElseThrow(participation, buildResult);
 
             newResult = continuousIntegrationService.get().createResultFromBuildResult(buildResult, participation);
 
@@ -139,17 +141,23 @@ public class ProgrammingExerciseGradingService {
 
             if (buildResult.hasLogs()) {
                 var programmingLanguage = participation.getProgrammingExercise().getProgrammingLanguage();
+                var projectType = participation.getProgrammingExercise().getProjectType();
                 var buildLogs = buildResult.extractBuildLogs(programmingLanguage);
-                buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
-                var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
 
-                // Set the received logs in order to avoid duplicate entries (this removes existing logs)
-                latestSubmission.setBuildLogEntries(savedBuildLogs);
+                continuousIntegrationService.get().extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
+
+                if (latestSubmission.isBuildFailed()) {
+                    buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
+                    var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
+
+                    // Set the received logs in order to avoid duplicate entries (this removes existing logs)
+                    latestSubmission.setBuildLogEntries(savedBuildLogs);
+                }
             }
 
             // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
             newResult.setSubmission(latestSubmission);
-            newResult.setRatedIfNotExceeded(exerciseDateService.getDueDate(participation).orElse(null), latestSubmission);
+            newResult.setRatedIfNotExceeded(ExerciseDateService.getDueDate(participation).orElse(null), latestSubmission, (Participation) participation);
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
@@ -160,18 +168,26 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Checks that the build result belongs to the default branch of the exercise.
+     * Checks that the build result belongs to the default branch of the student participation (in case it has a branch).
+     * For all other cases (template/solution or student participation without a branch) it falls back to check the default branch of the programming exercise.
      *
-     * @param exercise The exercise in which the submission was made.
-     * @param buildResult The build result received from the CI system.
+     * @param participation The programming exercise participation in which the submission was made (including a reference to the programming exercise)
+     * @param buildResult   The build result received from the CI system.
      * @throws IllegalArgumentException Thrown if the result does not belong to the default branch of the exercise.
      */
-    private void checkCorrectBranchElseThrow(final ProgrammingExercise exercise, final AbstractBuildResultNotificationDTO buildResult) throws IllegalArgumentException {
+    private void checkCorrectBranchElseThrow(final ProgrammingExerciseParticipation participation, final AbstractBuildResultNotificationDTO buildResult)
+            throws IllegalArgumentException {
         // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
         buildResult.getBranchNameFromAssignmentRepo().ifPresent(branchName -> {
-            final String exerciseDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(exercise);
+            String participationDefaultBranch = null;
+            if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+                participationDefaultBranch = studentParticipation.getBranch();
+            }
+            if (Strings.isNullOrEmpty(participationDefaultBranch)) {
+                participationDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+            }
 
-            if (!branchName.equals(exerciseDefaultBranch)) {
+            if (!Objects.equals(branchName, participationDefaultBranch)) {
                 throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
             }
         });
@@ -267,7 +283,7 @@ public class ProgrammingExerciseGradingService {
                 submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
             }
 
-            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
+            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isTestRun()) {
                 // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
                 Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), processedResult);
                 // Adding back dropped submission
@@ -355,7 +371,7 @@ public class ProgrammingExerciseGradingService {
         if (haveTestCasesChanged) {
             // Notify the client about the updated testCases
             Set<ProgrammingExerciseTestCase> testCases = testCaseService.findByExerciseId(exercise.getId());
-            messagingTemplate.convertAndSend("/topic/programming-exercise/" + exercise.getId() + "/test-cases", testCases);
+            messagingTemplate.convertAndSend("/topic/programming-exercises/" + exercise.getId() + "/test-cases", testCases);
         }
     }
 
@@ -651,12 +667,6 @@ public class ProgrammingExerciseGradingService {
         // Remove automatic feedbacks not associated with test cases
         result.getFeedbacks().removeIf(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()
                 && testCases.stream().noneMatch(test -> test.getTestName().equalsIgnoreCase(feedback.getText())));
-
-        // If there are no feedbacks left after filtering those not valid, also setHasFeedback to false.
-        if (result.getFeedbacks().stream().noneMatch(feedback -> Boolean.FALSE.equals(feedback.isPositive())
-                || feedback.getType() != null && (feedback.getType().equals(FeedbackType.MANUAL) || feedback.getType().equals(FeedbackType.MANUAL_UNREFERENCED)))) {
-            result.setHasFeedback(false);
-        }
     }
 
     /**
@@ -705,8 +715,6 @@ public class ProgrammingExerciseGradingService {
                     .toList();
             result.addFeedbacks(feedbacksForDuplicateTestCases);
 
-            // Enables to view the result details in case all test cases are positive
-            result.setHasFeedback(true);
             String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
             groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
 
@@ -952,7 +960,6 @@ public class ProgrammingExerciseGradingService {
      */
     private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<Feedback> staticCodeAnalysisFeedback) {
         result.setFeedbacks(staticCodeAnalysisFeedback);
-        result.hasFeedback(!staticCodeAnalysisFeedback.isEmpty());
         result.setScore(0D);
         result.setTestCaseCount(0);
         result.setPassedTestCaseCount(0);

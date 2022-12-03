@@ -1,5 +1,6 @@
 <div #containerRef>
     <ngx-charts-bar-vertical
+        [roundEdges]="false"
         [view]="[containerRef.offsetWidth, height]"
         [results]="ngxData"
         [scheme]="ngxColor"

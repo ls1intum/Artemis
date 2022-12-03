@@ -11,6 +11,7 @@ import interact from 'interactjs';
 })
 export class CollapsableAssessmentInstructionsComponent implements AfterViewInit {
     @Input() isAssessmentTraining = false;
+    @Input() showAssessmentInstructions = true;
     @Input() exercise: Exercise;
     @Input() collapsed = false;
     @Input() readOnly: boolean;

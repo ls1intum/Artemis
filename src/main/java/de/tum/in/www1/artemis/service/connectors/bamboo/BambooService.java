@@ -2,9 +2,11 @@ package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
+import static de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,11 +40,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
@@ -71,19 +75,18 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final UrlService urlService;
 
-    private final TestwiseCoverageService testwiseCoverageService;
-
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
+            UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate,
+                testwiseCoverageService);
         this.gitService = gitService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.mapper = mapper;
         this.urlService = urlService;
-        this.testwiseCoverageService = testwiseCoverageService;
     }
 
     @Override
@@ -327,9 +330,11 @@ public class BambooService extends AbstractContinuousIntegrationService {
         // Return the logs from Bamboo (and filter them now)
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
         ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
+        ProjectType projectType = programmingExerciseParticipation.getProgrammingExercise().getProjectType();
 
-        var buildLogEntries = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()),
-                programmingLanguage);
+        var buildLogEntries = retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId());
+        extractAndPersistBuildLogStatistics(programmingSubmission, programmingLanguage, projectType, buildLogEntries);
+        buildLogEntries = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
         var savedBuildLogs = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
 
         // Set the received logs in order to avoid duplicate entries (this removes existing logs) & save them into the database
@@ -337,6 +342,43 @@ public class BambooService extends AbstractContinuousIntegrationService {
         programmingSubmissionRepository.save(programmingSubmission);
 
         return buildLogEntries;
+    }
+
+    @Override
+    public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
+            List<BuildLogEntry> buildLogEntries) {
+        if (buildLogEntries.isEmpty()) {
+            // No logs received -> Do nothing
+            return;
+        }
+
+        if (programmingLanguage != ProgrammingLanguage.JAVA) {
+            // Not supported -> Do nothing
+            return;
+        }
+
+        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, "started building on agent");
+        ZonedDateTime agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "Executing build");
+        ZonedDateTime testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Tests'");
+        ZonedDateTime testsFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Tests' with result");
+        ZonedDateTime scaStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Static Code Analysis'");
+        ZonedDateTime scaFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Static Code Analysis'");
+        ZonedDateTime jobFinished = getTimestampForLogEntry(buildLogEntries, "Finished building");
+
+        Integer dependenciesDownloadedCount = null;
+
+        if (ProjectType.isMavenProject(projectType)) {
+            // Not supported for GRADLE projects
+            dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
+        }
+
+        var agentSetupDuration = new BuildJobPartDuration(jobStarted, agentSetupCompleted);
+        var testDuration = new BuildJobPartDuration(testsStarted, testsFinished);
+        var scaDuration = new BuildJobPartDuration(scaStarted, scaFinished);
+        var totalJobDuration = new BuildJobPartDuration(jobStarted, jobFinished);
+
+        buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
+                dependenciesDownloadedCount);
     }
 
     /**
@@ -571,53 +613,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
     private boolean isFirstBuildForThisPlan(BambooBuildResultNotificationDTO buildResult) {
         final var reason = buildResult.getBuild().reason();
         return reason != null && reason.contains("First build for this plan");
-    }
-
-    @Override
-    // TODO: extract common parts with JenkinsService.addFeedbackToResult into a common method. If necessary provide additional (abstract) methods in
-    // AbstractBuildResultNotificationDTO. An alternative would be to first convert the two different build results (Jenkins/Bamboo) into an intermediate common representation and
-    // then apply the logic
-    protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
-        final var jobs = ((BambooBuildResultNotificationDTO) buildResult).getBuild().jobs();
-        final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
-        final var programmingLanguage = programmingExercise.getProgrammingLanguage();
-        final var projectType = programmingExercise.getProjectType();
-
-        for (final var job : jobs) {
-            // 1) add feedback for failed test cases
-            for (final var failedTest : job.failedTests()) {
-                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(failedTest.name(), failedTest.errors(), false, programmingLanguage, projectType));
-            }
-            result.setTestCaseCount(result.getTestCaseCount() + job.failedTests().size());
-
-            // 2) add feedback for passed test cases
-            for (final var successfulTest : job.successfulTests()) {
-                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.name(), successfulTest.errors(), true, programmingLanguage, projectType));
-            }
-            result.setTestCaseCount(result.getTestCaseCount() + job.successfulTests().size());
-            result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.successfulTests().size());
-
-            // 3) process static code analysis feedback
-            final var staticCodeAnalysisReports = job.staticCodeAnalysisReports();
-            if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
-                var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
-                result.addFeedbacks(scaFeedbackList);
-                result.setCodeIssueCount(scaFeedbackList.size());
-            }
-
-            // 4) process testwise coverage analysis report
-            if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled())) {
-                var report = job.testwiseCoverageReport();
-                if (report != null) {
-                    // since the test cases are not saved to the database yet, the test case is null for the entries
-                    var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(report);
-                    result.setCoverageFileReportsByTestCaseName(coverageFileReportsWithoutTestsByTestCaseName);
-                }
-            }
-
-            // Relevant feedback is negative
-            result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive()));
-        }
     }
 
     /**

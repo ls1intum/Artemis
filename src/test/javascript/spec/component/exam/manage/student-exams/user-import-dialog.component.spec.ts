@@ -86,7 +86,6 @@ describe('UsersImportButtonComponent', () => {
         expect(component.usersToImport).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
     });
-
     it('should read students from csv file', async () => {
         const csv = `${studentCsvColumns}\n"1","Max","Mustermann"\n"2","John","Wick"`;
         const event = { target: { files: [csv] } };

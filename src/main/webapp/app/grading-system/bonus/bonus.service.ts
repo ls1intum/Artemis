@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
@@ -53,9 +53,11 @@ export class BonusService {
      *
      * @param courseId the course to which the exam belongs
      * @param examId the exam for which the bonus will be retrieved
+     * @param includeSourceGradeSteps optional, specifies whether the returned result should include the grade steps of sourceGradingScale. By default, they are excluded
      */
-    findBonusForExam(courseId: number, examId: number): Observable<EntityResponseType> {
-        return this.http.get<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus`, { observe: 'response' });
+    findBonusForExam(courseId: number, examId: number, includeSourceGradeSteps?: boolean): Observable<EntityResponseType> {
+        const params = includeSourceGradeSteps != undefined ? new HttpParams().set('includeSourceGradeSteps', includeSourceGradeSteps.toString()) : undefined;
+        return this.http.get<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus`, { observe: 'response', params });
     }
 
     /**

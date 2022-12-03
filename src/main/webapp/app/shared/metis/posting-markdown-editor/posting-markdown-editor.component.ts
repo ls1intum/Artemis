@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, forwardRef, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation, forwardRef } from '@angular/core';
 import { Command } from 'app/shared/markdown-editor/commands/command';
 import { BoldCommand } from 'app/shared/markdown-editor/commands/bold.command';
 import { ItalicCommand } from 'app/shared/markdown-editor/commands/italic.command';
@@ -27,7 +27,7 @@ import { LectureAttachmentReferenceCommand } from 'app/shared/markdown-editor/co
 })
 export class PostingMarkdownEditorComponent implements OnInit, ControlValueAccessor, AfterContentChecked {
     @Input() maxContentLength: number;
-    @Input() editorHeight: MarkdownEditorHeight;
+    @Input() editorHeight: MarkdownEditorHeight = MarkdownEditorHeight.SMALL;
     @Input() isInputLengthDisplayed = true;
     @Output() valueChange = new EventEmitter();
     defaultCommands: Command[];

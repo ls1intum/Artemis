@@ -1,7 +1,6 @@
 pluginManagement {
     plugins {
         id 'org.springframework.boot' version "${spring_boot_version}"
-        id 'com.google.cloud.tools.jib' version "${jib_plugin_version}"
         id 'com.github.node-gradle.node' version "${gradle_node_plugin_version}"
         id 'org.liquibase.gradle' version "${liquibase_plugin_version}"
         id 'net.ltgt.apt-eclipse' version "${apt_plugin_version}"

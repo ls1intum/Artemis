@@ -14,7 +14,7 @@
                 </span>
                 <span class="d-inline-block ms-2">
                     <span class="text-muted font-weight-bolder">Created:</span>
-                    <span ngbTooltip="{{ team.createdDate | artemisDate }}" placement="top" tooltipClass="date-tooltip">
+                    <span ngbTooltip="{{ team.createdDate | artemisDate }}" tooltipClass="date-tooltip">
                         {{ team.createdDate!.fromNow() }}
                     </span>
                     <a *ngIf="isAdmin" [routerLink]="['/admin', 'user-management', team.createdBy]">({{ team.createdBy }})</a>
@@ -46,7 +46,7 @@
             ></jhi-team-delete-button>
         </div>
     </div>
-    <jhi-data-table [isLoading]="isLoading" [isTransitioning]="isTransitioning" [showPageSizeDropdownAndSearchField]="false" [allEntities]="team?.students || []">
+    <jhi-data-table [isLoading]="isLoading" [isTransitioning]="isTransitioning" [showPageSizeDropdown]="false" [showSearchField]="false" [allEntities]="team?.students || []">
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
                 class="bootstrap"
@@ -101,7 +101,7 @@
 
     <ng-container *ngIf="exercise && team">
         <h4 class="mt-4 d-flex align-items-baseline">
-            {{ 'artemisApp.team.detail.participationsTable.title' | artemisTranslate: { courseTitle: exercise.course!.title } }}
+            {{ 'artemisApp.team.detail.participationsTable.title' | artemisTranslate : { courseTitle: exercise.course!.title } }}
             <code class="ms-2 team-short-name">{{ team.shortName }}</code>
         </h4>
         <jhi-team-participation-table

@@ -6,6 +6,7 @@ import { Range } from 'app/shared/util/utils';
 export class PlagiarismInspectorService {
     /**
      * Filters the given comparisons and returns only those that have a similarity within the range [minimumSimilarity, maximumSimilarity)
+     * Note: similarities are defined as doubles between 0 and 100
      * @param range the similarity range the comparisons should be filtered against
      * @param comparisons the comparisons that should be filtered
      */

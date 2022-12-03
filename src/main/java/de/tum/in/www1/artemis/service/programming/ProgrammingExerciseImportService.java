@@ -250,8 +250,7 @@ public class ProgrammingExerciseImportService {
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements, List.of("gradle-wrapper.jar"));
         gitService.stageAllChanges(repository);
-        // TODO: bug: it seems that this does not work any more
-        gitService.commitAndPush(repository, "Template adjusted by Artemis", false, user);
+        gitService.commitAndPush(repository, "Template adjusted by Artemis", true, user);
         repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
 

@@ -1,7 +1,15 @@
 import dayjs from 'dayjs/esm';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
+import {
+    getExerciseDueDate,
+    hasExerciseDueDatePassed,
+    isResumeExerciseAvailable,
+    isStartExerciseAvailable,
+    isStartPracticeAvailable,
+} from 'app/exercises/shared/exercise/exercise.utils';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 
 describe('ExerciseUtils', () => {
     const exerciseWithDueDate = (dueDate?: dayjs.Dayjs) => {
@@ -62,5 +70,104 @@ describe('ExerciseUtils', () => {
         const participation = participationWithDueDate(dayjs().add(1, 'hour'));
 
         expect(hasExerciseDueDatePassed(exercise, participation)).toBeFalse();
+    });
+
+    it.each([
+        { isOpenForPractice: true, quizEnded: true },
+        { isOpenForPractice: true, quizEnded: false },
+        { isOpenForPractice: undefined, quizEnded: true },
+    ])('should determine correctly if the student can practice a quiz', ({ isOpenForPractice, quizEnded }) => {
+        const exercise: QuizExercise = {
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            type: ExerciseType.QUIZ,
+            isOpenForPractice,
+            quizEnded,
+        };
+
+        expect(isStartPracticeAvailable(exercise)).toBe(!!isOpenForPractice && !!quizEnded);
+    });
+
+    it.each([
+        { dueDate: dayjs().subtract(1, 'day'), startPracticeAvailable: true },
+        { dueDate: dayjs().add(1, 'day'), startPracticeAvailable: false },
+        { dueDate: undefined, startPracticeAvailable: false },
+    ])('should determine correctly if the student can practice a programming exercise', ({ dueDate, startPracticeAvailable }) => {
+        const exercise: ProgrammingExercise = {
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            type: ExerciseType.PROGRAMMING,
+            dueDate,
+        };
+
+        expect(isStartPracticeAvailable(exercise)).toBe(startPracticeAvailable);
+    });
+
+    it.each([ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD, undefined])('should not allow practicing for other exercises', (type) => {
+        const exercise: Exercise = {
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+            type,
+        };
+
+        expect(isStartPracticeAvailable(exercise)).toBeFalse();
+    });
+
+    it('should allow students to start the exercise if there is no due date', () => {
+        const exercise = exerciseWithDueDate(undefined);
+        expect(isStartExerciseAvailable(exercise)).toBeTrue();
+    });
+
+    it('should allow students to start the exercise if the due date is in the future', () => {
+        const exercise = exerciseWithDueDate(dayjs().add(1, 'hour'));
+        expect(isStartExerciseAvailable(exercise)).toBeTrue();
+    });
+
+    it('should not allow students to start the exercise if the due date is in the past', () => {
+        const exercise = exerciseWithDueDate(dayjs().subtract(1, 'day'));
+        expect(isStartExerciseAvailable(exercise)).toBeFalse();
+    });
+
+    it('should allow students to resume the exercise if there is no due date', () => {
+        const exercise = exerciseWithDueDate(undefined);
+        expect(isResumeExerciseAvailable(exercise, undefined)).toBeTrue();
+    });
+
+    it('should allow students to resume the exercise if the exercise due date is in the future', () => {
+        const exercise = exerciseWithDueDate(dayjs().add(1, 'hour'));
+        const participation = participationWithDueDate(undefined);
+
+        expect(isResumeExerciseAvailable(exercise, participation)).toBeTrue();
+    });
+
+    it('should not allow students to resume the exercise if the exercise due date is in the past', () => {
+        const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
+        const participation = participationWithDueDate(undefined);
+
+        expect(isResumeExerciseAvailable(exercise, participation)).toBeFalse();
+    });
+
+    it('should allow students to resume the exercise if the individual due date is in the future', () => {
+        const exercise = exerciseWithDueDate(undefined);
+        const participation = participationWithDueDate(dayjs().add(1, 'hour'));
+
+        expect(isResumeExerciseAvailable(exercise, participation)).toBeTrue();
+    });
+
+    it('should allow students to resume the exercise between regular and individual due date', () => {
+        const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
+        const participation = participationWithDueDate(dayjs().add(1, 'hour'));
+
+        expect(isResumeExerciseAvailable(exercise, participation)).toBeTrue();
+    });
+
+    it('should not allow students to resume the exercise if the individual due date is in the past', () => {
+        const exercise = exerciseWithDueDate(dayjs().add(1, 'hour'));
+        const participation = participationWithDueDate(dayjs().subtract(1, 'hour'));
+
+        expect(isResumeExerciseAvailable(exercise, participation)).toBeFalse();
     });
 });

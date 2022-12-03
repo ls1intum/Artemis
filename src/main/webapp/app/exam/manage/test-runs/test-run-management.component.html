@@ -19,7 +19,11 @@
                     </button>
                 </div>
 
-                <div [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate" [disableTooltip]="testRunCanBeAssessed">
+                <div
+                    *ngIf="exam && !exam.testExam"
+                    [ngbTooltip]="'artemisApp.examManagement.testRun.assessTestRunDisabled' | artemisTranslate"
+                    [disableTooltip]="testRunCanBeAssessed"
+                >
                     <a
                         class="btn btn-primary btn-sm me-1 mb-1"
                         style="height: 40px; display: inline-flex; align-items: center"

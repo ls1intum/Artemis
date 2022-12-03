@@ -8,6 +8,7 @@ import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-ti
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProviders } from 'ng-mocks';
+
 describe('AttachmentUnitFormComponent', () => {
     let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentUnitFormComponent>;
     let attachmentUnitFormComponent: AttachmentUnitFormComponent;
@@ -42,8 +43,7 @@ describe('AttachmentUnitFormComponent', () => {
     });
 
     it('should correctly set form values in edit mode', () => {
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        fakeBlob['name'] = 'Test-File.pdf';
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
 
         attachmentUnitFormComponent.isEditMode = true;
         const formData: AttachmentUnitFormData = {
@@ -55,7 +55,7 @@ describe('AttachmentUnitFormComponent', () => {
                 updateNotificationText: 'lorem ipsum',
             },
             fileProperties: {
-                file: fakeBlob,
+                file: fakeFile,
                 fileName: 'lorem ipsum',
             },
         };
@@ -84,9 +84,8 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
         attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        fakeBlob['name'] = 'Test-File.pdf';
-        attachmentUnitFormComponent.file = fakeBlob;
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        attachmentUnitFormComponent.file = fakeFile;
         const exampleFileName = 'lorem Ipsum';
         attachmentUnitFormComponent.fileName = exampleFileName;
 
@@ -109,7 +108,7 @@ describe('AttachmentUnitFormComponent', () => {
                 updateNotificationText: exampleUpdateNotificationText,
             },
             fileProperties: {
-                file: fakeBlob,
+                file: fakeFile,
                 fileName: exampleFileName,
             },
         });
@@ -127,11 +126,9 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponent.versionControl!.setValue(exampleVersion);
         const exampleUpdateNotificationText = 'updated';
         attachmentUnitFormComponent.updateNotificationTextControl!.setValue(exampleUpdateNotificationText);
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        fakeBlob['name'] = 'Test-File.pdf';
-        attachmentUnitFormComponent.file = fakeBlob;
-        const exampleFileName = 'lorem Ipsum';
-        attachmentUnitFormComponent.fileName = exampleFileName;
+        const fakeFile = new File([''], 'Test-File.pdf', { type: 'application/pdf' });
+        attachmentUnitFormComponent.file = fakeFile;
+        attachmentUnitFormComponent.fileName = 'lorem Ipsum';
 
         expect(attachmentUnitFormComponent.form.invalid).toBeTrue();
         const submitFormSpy = jest.spyOn(attachmentUnitFormComponent, 'submitForm');
@@ -146,6 +143,7 @@ describe('AttachmentUnitFormComponent', () => {
 
     it('calls on file change on changed file', () => {
         const fakeBlob = new Blob([''], { type: 'application/pdf' });
+        // @ts-ignore
         fakeBlob['name'] = 'Test-File.pdf';
         const onFileChangeStub = jest.spyOn(attachmentUnitFormComponent, 'onFileChange');
         attachmentUnitFormComponentFixture.detectChanges();

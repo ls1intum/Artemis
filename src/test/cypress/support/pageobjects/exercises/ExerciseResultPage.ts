@@ -1,4 +1,4 @@
-import { GET, BASE_API } from '../../constants';
+import { BASE_API, GET } from '../../constants';
 /**
  * A class which encapsulates UI selectors and actions for the exercise result page.
  */
@@ -12,7 +12,7 @@ export class ExerciseResultPage {
     }
 
     shouldShowScore(percentage: number) {
-        cy.contains(`Score ${percentage}`).should('be.visible');
+        cy.contains(`${percentage}%`).should('be.visible');
     }
 
     clickViewSubmission() {

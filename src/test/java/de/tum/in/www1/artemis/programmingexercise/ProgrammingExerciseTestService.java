@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
@@ -69,7 +70,7 @@ import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.GitUtilService.MockFileRepositoryUrl;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
-import de.tum.in.www1.artemis.web.rest.ParticipationResource;
+import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 
 /**
  * Note: this class should be independent of the actual VCS and CIS and contains common test logic for both scenarios:
@@ -119,6 +120,9 @@ public class ProgrammingExerciseTestService {
     private SubmissionRepository submissionRepository;
 
     @Autowired
+    private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
+
+    @Autowired
     @Qualifier("staticCodeAnalysisConfiguration")
     private Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations;
 
@@ -130,9 +134,6 @@ public class ProgrammingExerciseTestService {
 
     @Autowired(required = false)
     private AutomaticProgrammingExerciseCleanupService automaticProgrammingExerciseCleanupService;
-
-    @Value("${artemis.lti.user-prefix-edx:#{null}}")
-    private Optional<String> userPrefixEdx;
 
     @Value("${artemis.course-archives-path}")
     private String courseArchivesDirPath;
@@ -862,8 +863,8 @@ public class ProgrammingExerciseTestService {
             participant = setupTeam(user);
         }
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
-        final var path = ParticipationResource.Endpoints.ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId()))
-                .replace("{exerciseId}", String.valueOf(exercise.getId()));
+        final var path = "/api/exercises/{exerciseId}/participations".replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
+                String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
@@ -880,8 +881,8 @@ public class ProgrammingExerciseTestService {
 
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
 
-        final var path = ParticipationResource.Endpoints.ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId()))
-                .replace("{exerciseId}", String.valueOf(exercise.getId()));
+        final var path = "/api/exercises/{exerciseId}/participations".replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
+                String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
@@ -898,7 +899,7 @@ public class ProgrammingExerciseTestService {
     // TEST
     void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
         final Course course = setupCourseWithProgrammingExercise(exerciseMode);
-        request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
+        request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation/" + 42, null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.NOT_FOUND);
     }
 
@@ -914,8 +915,8 @@ public class ProgrammingExerciseTestService {
         var participant = participation.getParticipant();
         mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
 
-        participation = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
-                HttpStatus.OK);
+        participation = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
+                ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         assertThat(participation.getBuildPlanId()).as("Build Plan Id should be set")
@@ -995,7 +996,7 @@ public class ProgrammingExerciseTestService {
 
         if (!buildPlanExists) {
             mockDelegate.mockConnectorRequestsForResumeParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true);
-            participation = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null,
+            participation = request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation/" + participation.getId(), null,
                     ProgrammingExerciseStudentParticipation.class, HttpStatus.OK);
         }
 
@@ -1050,13 +1051,13 @@ public class ProgrammingExerciseTestService {
 
     // Test
     void exportInstructorRepositories_shouldReturnFile() throws Exception {
-        String zip = exportInstructorRepository("TEMPLATE", exerciseRepo, HttpStatus.OK);
+        String zip = exportInstructorRepository(RepositoryType.TEMPLATE, exerciseRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
 
-        zip = exportInstructorRepository("SOLUTION", solutionRepo, HttpStatus.OK);
+        zip = exportInstructorRepository(RepositoryType.SOLUTION, solutionRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
 
-        zip = exportInstructorRepository("TESTS", testRepo, HttpStatus.OK);
+        zip = exportInstructorRepository(RepositoryType.TESTS, testRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
     }
 
@@ -1065,34 +1066,29 @@ public class ProgrammingExerciseTestService {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
         course.setInstructorGroupName("test");
         courseRepository.save(course);
-        exportInstructorRepository("TEMPLATE", exerciseRepo, HttpStatus.FORBIDDEN);
-        exportInstructorRepository("SOLUTION", solutionRepo, HttpStatus.FORBIDDEN);
-        exportInstructorRepository("TESTS", testRepo, HttpStatus.FORBIDDEN);
+        exportInstructorRepository(RepositoryType.TEMPLATE, exerciseRepo, HttpStatus.FORBIDDEN);
+        exportInstructorRepository(RepositoryType.SOLUTION, solutionRepo, HttpStatus.FORBIDDEN);
+        exportInstructorRepository(RepositoryType.TESTS, testRepo, HttpStatus.FORBIDDEN);
     }
 
-    private String exportInstructorRepository(String repositoryType, LocalRepository localRepository, HttpStatus expectedStatus) throws Exception {
+    private String exportInstructorRepository(RepositoryType repositoryType, LocalRepository localRepository, HttpStatus expectedStatus) throws Exception {
         generateProgrammingExerciseForExport();
 
-        var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf(repositoryType));
-        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepository.localRepoFile.toPath(), null);
-        disableAutoGC(repository);
-        createAndCommitDummyFileInLocalRepository(localRepository, "some-file.java");
-        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
+        setupMockRepo(localRepository, repositoryType, "some-file.java");
 
-        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType;
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-repository/" + repositoryType.name();
         return request.get(url, expectedStatus, String.class);
     }
 
-    private String exportSolutionRepository(LocalRepository localRepository, HttpStatus expectedStatus) throws Exception {
+    private String exportStudentRequestedRepository(HttpStatus expectedStatus, boolean includeTests) throws Exception {
         generateProgrammingExerciseForExport();
 
-        var vcsUrl = exercise.getRepositoryURL(RepositoryType.valueOf("SOLUTION"));
-        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepository.localRepoFile.toPath(), null);
-        disableAutoGC(repository);
-        createAndCommitDummyFileInLocalRepository(localRepository, "some-file.java");
-        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
+        setupMockRepo(exerciseRepo, RepositoryType.SOLUTION, "some-file.java");
+        if (includeTests) {
+            setupMockRepo(testRepo, RepositoryType.TESTS, "some-test-file.java");
+        }
 
-        var url = "/api/programming-exercises/" + exercise.getId() + "/export-solution-repository/";
+        var url = "/api/programming-exercises/" + exercise.getId() + "/export-student-requested-repository?includeTests=" + includeTests;
         return request.get(url, expectedStatus, String.class);
     }
 
@@ -1152,6 +1148,15 @@ public class ProgrammingExerciseTestService {
         exercise = database.addTemplateParticipationForProgrammingExercise(exercise);
         exercise = database.addSolutionParticipationForProgrammingExercise(exercise);
         exercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(exercise.getId()).get();
+    }
+
+    private void setupMockRepo(LocalRepository localRepo, RepositoryType repoType, String fileName) throws GitAPIException, IOException {
+        VcsRepositoryUrl vcsUrl = exercise.getRepositoryURL(repoType);
+        Repository repository = gitService.getExistingCheckedOutRepositoryByLocalPath(localRepo.localRepoFile.toPath(), null);
+        disableAutoGC(repository);
+        createAndCommitDummyFileInLocalRepository(localRepo, fileName);
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), anyString(), anyBoolean());
+        doReturn(repository).when(gitService).getOrCheckoutRepository(eq(vcsUrl), (Path) any(), anyBoolean());
     }
 
     // Test
@@ -1492,7 +1497,7 @@ public class ProgrammingExerciseTestService {
         setupTeamExercise();
 
         // create a team for the user (necessary condition before starting an exercise)
-        final String edxUsername = userPrefixEdx.get() + "student";
+        final String edxUsername = "edx_student";
         User edxStudent = ModelFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).get(0);
         edxStudent.setInternal(true);
         edxStudent.setPassword(passwordService.hashPassword(edxStudent.getPassword()));
@@ -1706,7 +1711,7 @@ public class ProgrammingExerciseTestService {
     }
 
     private ProgrammingExerciseStudentParticipation createUserParticipation(Course course) throws Exception {
-        final var path = ROOT + ParticipationResource.Endpoints.START_PARTICIPATION.replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
+        final var path = "/api/exercises/{exerciseId}/participations".replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
                 String.valueOf(exercise.getId()));
         return request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
     }
@@ -1834,25 +1839,70 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void exportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
-
         // Test example solution publication date not set.
         exercise.setExampleSolutionPublicationDate(null);
         programmingExerciseRepository.save(exercise);
 
-        exportSolutionRepository(exerciseRepo, HttpStatus.FORBIDDEN);
+        exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
 
         // Test example solution publication date in the past.
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(exercise);
 
-        String zip = exportSolutionRepository(exerciseRepo, HttpStatus.OK);
+        String zip = exportStudentRequestedRepository(HttpStatus.OK, false);
+        assertThat(zip).isNotNull();
+
+        // Test include tests but not allowed
+        exportStudentRequestedRepository(HttpStatus.FORBIDDEN, true);
+
+        // Test include tests
+        exercise.setReleaseTestsWithExampleSolution(true);
+        programmingExerciseRepository.save(exercise);
+
+        zip = exportStudentRequestedRepository(HttpStatus.OK, true);
         assertThat(zip).isNotNull();
 
         // Test example solution publication date in the future.
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(exercise);
 
-        exportSolutionRepository(exerciseRepo, HttpStatus.FORBIDDEN);
+        exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
+    }
 
+    // TEST
+    void buildLogStatistics_unauthorized() throws Exception {
+        exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
+        request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.FORBIDDEN, BuildLogStatisticsDTO.class);
+    }
+
+    // TEST
+    void buildLogStatistics_noStatistics() throws Exception {
+        exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
+        var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
+        assertThat(statistics.getBuildCount()).isEqualTo(0);
+        assertThat(statistics.getAgentSetupDuration()).isNull();
+        assertThat(statistics.getTestDuration()).isNull();
+        assertThat(statistics.getScaDuration()).isNull();
+        assertThat(statistics.getTotalJobDuration()).isNull();
+        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+    }
+
+    // TEST
+    void buildLogStatistics() throws Exception {
+        exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
+        var participation = createStudentParticipationWithSubmission(INDIVIDUAL);
+        var submission1 = database.createProgrammingSubmission(participation, false);
+        var submission2 = database.createProgrammingSubmission(participation, false);
+
+        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission1, 10, 20, 30, 60, 5));
+        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission2, 8, 15, null, 30, 0));
+
+        var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
+        assertThat(statistics.getBuildCount()).isEqualTo(2);
+        assertThat(statistics.getAgentSetupDuration()).isEqualTo(9);
+        assertThat(statistics.getTestDuration()).isEqualTo(17.5);
+        assertThat(statistics.getScaDuration()).isEqualTo(30);
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(45);
+        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(2.5);
     }
 }

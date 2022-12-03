@@ -5,11 +5,11 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ExerciseScoresComponent } from 'app/exercises/shared/exercise-scores/exercise-scores.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ActivatedRoute } from '@angular/router';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { of, Subscription } from 'rxjs';
+import { Subscription, of } from 'rxjs';
 import { NgModel } from '@angular/forms';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
@@ -326,14 +326,6 @@ describe('Exercise Scores Component', () => {
         expect(component.results).toEqual([result]);
         expect(component.filteredResults).toEqual([result]);
         expect(component.isLoading).toBeFalse();
-    });
-
-    it('should format date correctly', () => {
-        const date = new Date(2021, 4, 8, 21, 47, 17);
-
-        expect(component.formatDate(date)).toBe('2021-05-08 21:47:17');
-
-        expect(component.formatDate(undefined)).toBe('');
     });
 
     it.each(filterRanges)('should filter results correctly and reset the filter', (rangeFilter: Range) => {

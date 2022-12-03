@@ -49,15 +49,6 @@ artemis:
         vcs-credentials: fake-key
         artemis-authentication-token-key: fake-key
         artemis-authentication-token-value: fake-token
-
-    lti:
-        id: artemis_lti
-        oauth-key: artemis_lti_key
-        oauth-secret: fake-secret
-        user-prefix-edx: edx_
-        user-prefix-u4i: u4i_
-        user-group-name-edx: edx
-        user-group-name-u4i: u4i
     git:
         name: Artemis
         email: artemis@in.tum.de

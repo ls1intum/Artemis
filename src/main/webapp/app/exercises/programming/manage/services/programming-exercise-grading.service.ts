@@ -35,7 +35,7 @@ export interface IProgrammingExerciseGradingService {
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingExerciseGradingService implements IProgrammingExerciseGradingService, OnDestroy {
-    public resourceUrl = `${SERVER_API_URL}api/programming-exercise`;
+    public resourceUrl = `${SERVER_API_URL}api/programming-exercises`;
 
     private connections: { [exerciseId: string]: string } = {};
     private subjects: { [exerciseId: string]: BehaviorSubject<ProgrammingExerciseTestCase[] | undefined> } = {};
@@ -128,7 +128,7 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      * @param initialValue
      */
     private initTestCaseSubscription(exerciseId: number, initialValue: ProgrammingExerciseTestCase[] | undefined) {
-        const testCaseTopic = `/topic/programming-exercise/${exerciseId}/test-cases`;
+        const testCaseTopic = `/topic/programming-exercises/${exerciseId}/test-cases`;
         this.jhiWebsocketService.subscribe(testCaseTopic);
         this.connections[exerciseId] = testCaseTopic;
         this.subjects[exerciseId] = new BehaviorSubject(initialValue);

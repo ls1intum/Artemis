@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { map, take } from 'rxjs/operators';
 import { FileUploadSubmissionService } from 'app/exercises/file-upload/participate/file-upload-submission.service';
@@ -43,7 +43,7 @@ describe('FileUploadSubmission Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         service
-            .update(new FileUploadSubmission(), 1, new Blob())
+            .update(new FileUploadSubmission(), 1, new File([''], ''))
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
         const req = httpMock.expectOne({ method: 'POST' });
@@ -60,7 +60,7 @@ describe('FileUploadSubmission Service', () => {
         );
         const expected = Object.assign({}, returnedFromService);
         service
-            .getFileUploadSubmissionsForExerciseByCorrectionRound(1, { submittedOnly: true })
+            .getSubmissions(1, { submittedOnly: true })
             .pipe(
                 take(1),
                 map((resp) => resp.body),
@@ -75,7 +75,7 @@ describe('FileUploadSubmission Service', () => {
     it('should return next submission with no assessment', fakeAsync(() => {
         const returnedFromService = Object.assign({}, elemDefault);
         service
-            .getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(123)
+            .getSubmissionWithoutAssessment(123)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject(elemDefault));
 

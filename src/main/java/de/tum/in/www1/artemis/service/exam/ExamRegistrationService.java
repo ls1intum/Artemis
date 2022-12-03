@@ -224,7 +224,7 @@ public class ExamRegistrationService {
         if (deleteParticipationsAndSubmission) {
             List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam);
             for (var participation : participations) {
-                participationService.delete(participation.getId(), true, true);
+                participationService.delete(participation.getId(), true, true, true);
             }
         }
 
@@ -248,7 +248,7 @@ public class ExamRegistrationService {
         examRepository.save(exam);
 
         // remove all students exams
-        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exam.getId());
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());
         studentExams.forEach(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();

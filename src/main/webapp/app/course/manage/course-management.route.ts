@@ -1,10 +1,10 @@
+// tslint:disable:max-line-length
 import { Routes } from '@angular/router';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { CourseManagementComponent } from './course-management.component';
 import { CourseDetailComponent } from './detail/course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
 import { CourseManagementExercisesComponent } from './course-management-exercises.component';
-import { CourseGroupComponent } from 'app/course/manage/course-group.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
 import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
@@ -16,6 +16,12 @@ import { GradingSystemComponent } from 'app/grading-system/grading-system.compon
 import { isOrion } from 'app/shared/orion/orion';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
+import { TutorialGroupManagementResolve } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-management-resolve.service';
+import { TutorialGroupsChecklistComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-checklist/tutorial-groups-checklist.component';
+import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
+import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
+import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 
 export const courseManagementState: Routes = [
     {
@@ -68,12 +74,61 @@ export const courseManagementState: Routes = [
         loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
     },
     {
+        path: ':courseId/tutorial-groups',
+        resolve: {
+            course: TutorialGroupManagementResolve,
+        },
+        loadChildren: () => import('app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.module').then((m) => m.ArtemisTutorialGroupsManagementModule),
+    },
+    {
         path: ':courseId/plagiarism-cases',
         loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
     },
     {
         path: ':courseId/exams/:examId/plagiarism-cases',
         loadChildren: () => import('../plagiarism-cases/instructor-view/plagiarism-cases-instructor-view.module').then((m) => m.ArtemisPlagiarismCasesInstructorViewModule),
+    },
+    {
+        path: ':courseId/tutorial-groups-checklist',
+        component: TutorialGroupsChecklistComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.pages.checklist.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/create-tutorial-groups-configuration',
+        component: CreateTutorialGroupsConfigurationComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/lti-configuration',
+        component: CourseLtiConfigurationComponent,
+        resolve: {
+            course: CourseManagementResolve,
+        },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.lti.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':courseId/lti-configuration/edit',
+        component: EditCourseLtiConfigurationComponent,
+        resolve: {
+            course: CourseManagementResolve,
+        },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.lti.home.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
     {
         // Create a new path without a component defined to prevent resolver caching and the CourseDetailComponent from being always rendered
@@ -112,7 +167,7 @@ export const courseManagementState: Routes = [
             },
             {
                 path: 'groups/:courseGroup',
-                component: CourseGroupComponent,
+                component: CourseGroupMembershipComponent,
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'artemisApp.userManagement.groups',

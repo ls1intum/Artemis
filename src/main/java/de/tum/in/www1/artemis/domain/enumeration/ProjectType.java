@@ -50,4 +50,13 @@ public enum ProjectType {
             };
         }
     }
+
+    /**
+     * Returns if a project type is for a Maven project: legacy projects have no project type, but are Maven projects.
+     * @param projectType the project type that should be checked
+     * @return whether the project is a Maven project
+     */
+    public static boolean isMavenProject(ProjectType projectType) {
+        return projectType == null || projectType.isMaven();
+    }
 }

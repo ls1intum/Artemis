@@ -63,6 +63,9 @@ public class Post extends Posting {
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
 
+    @ManyToOne
+    private Conversation conversation;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "display_priority")
     private DisplayPriority displayPriority;
@@ -71,6 +74,15 @@ public class Post extends Posting {
     @JoinColumn(name = "plagiarism_case_id")
     @JsonIncludeProperties({ "id" })
     private PlagiarismCase plagiarismCase;
+
+    @Column(name = "resolved")
+    private boolean resolved;
+
+    @Column(name = "answer_count")
+    private int answerCount;
+
+    @Column(name = "vote_count")
+    private int voteCount;
 
     public String getTitle() {
         return title;
@@ -168,6 +180,14 @@ public class Post extends Posting {
         this.courseWideContext = courseWideContext;
     }
 
+    public Conversation getConversation() {
+        return conversation;
+    }
+
+    public void setConversation(Conversation conversation) {
+        this.conversation = conversation;
+    }
+
     public DisplayPriority getDisplayPriority() {
         return displayPriority;
     }
@@ -182,6 +202,33 @@ public class Post extends Posting {
 
     public void setPlagiarismCase(PlagiarismCase plagiarismCase) {
         this.plagiarismCase = plagiarismCase;
+    }
+
+    public boolean isResolved() {
+        return resolved;
+    }
+
+    public void setResolved(Boolean resolved) {
+        // the case "null" should NOT happen and is only a safety measurement
+        this.resolved = resolved != null ? resolved : false;
+    }
+
+    public int getAnswerCount() {
+        return answerCount;
+    }
+
+    public void setAnswerCount(Integer answerCount) {
+        // the case "null" should NOT happen and is only a safety measurement
+        this.answerCount = answerCount != null ? answerCount : 0;
+    }
+
+    public int getVoteCount() {
+        return voteCount;
+    }
+
+    public void setVoteCount(Integer voteCount) {
+        // the case "null" should NOT happen and is only a safety measurement
+        this.voteCount = voteCount != null ? voteCount : 0;
     }
 
     /**
@@ -217,6 +264,12 @@ public class Post extends Posting {
         }
         else if (this.exercise != null) {
             return this.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        }
+        else if (this.plagiarismCase != null) {
+            return this.plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        }
+        else if (this.conversation != null) {
+            return this.conversation.getCourse();
         }
 
         return null;

@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 
 @Service
 public class TextExerciseUtilService {
@@ -27,6 +28,9 @@ public class TextExerciseUtilService {
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private final Random random = new Random();
 
@@ -116,8 +120,10 @@ public class TextExerciseUtilService {
         for (int i = 0; i < submissionCount; i++) {
             TextSubmission submission = new TextSubmission();
             StudentParticipation studentParticipation = new StudentParticipation();
+            studentParticipation.setParticipant(userRepository.getUser());
             studentParticipation.setExercise(textExercise);
             studentParticipation = participationRepository.save(studentParticipation);
+
             submission.setParticipation(studentParticipation);
             submission.setLanguage(Language.ENGLISH);
             submission.setText("Test123");
@@ -128,6 +134,8 @@ public class TextExerciseUtilService {
 
             studentParticipation.addSubmission(submission);
             textSubmissionRepository.save(submission);
+
+            textExercise.getStudentParticipations().add(studentParticipation);
         }
         return textExercise;
     }

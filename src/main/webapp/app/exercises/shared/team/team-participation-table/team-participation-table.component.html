@@ -1,5 +1,5 @@
 <jhi-assessment-warning *ngIf="exercise && exercise.isAtLeastInstructor" [exercise]="exercise" [submissions]="submissions"></jhi-assessment-warning>
-<jhi-data-table [isLoading]="isLoading" [showPageSizeDropdownAndSearchField]="false" [allEntities]="exercises">
+<jhi-data-table [isLoading]="isLoading" [showPageSizeDropdown]="false" [showSearchField]="false" [allEntities]="exercises">
     <ng-template let-settings="settings" let-controls="controls">
         <ngx-datatable
             class="bootstrap"
@@ -35,7 +35,7 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" class="me-5">
-                    {{ value ? (dayjs(value) | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | artemisTranslate) }}
+                    {{ value ? (dayjs(value) | artemisDate : 'short-date') : ('artemisApp.exercise.dateNotSet' | artemisTranslate) }}
                 </ng-template>
             </ngx-datatable-column>
 
@@ -47,7 +47,7 @@
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" class="me-5">
-                    {{ value ? (dayjs(value) | artemisDate: 'short-date') : ('artemisApp.exercise.dateNotSet' | artemisTranslate) }}
+                    {{ value ? (dayjs(value) | artemisDate : 'short-date') : ('artemisApp.exercise.dateNotSet' | artemisTranslate) }}
                 </ng-template>
             </ngx-datatable-column>
 
@@ -118,8 +118,7 @@
                         <div
                             ngbTooltip="{{ 'artemisApp.team.detail.participationsTable.columns.assessment.tooltip' | artemisTranslate }}"
                             [disableTooltip]="!isAssessmentButtonDisabled(value, value.submission)"
-                            placement="left"
-                            container="body"
+                            placement="left auto"
                         >
                             <a
                                 [class.disabled]="isAssessmentButtonDisabled(value, value.submission)"

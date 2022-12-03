@@ -12,6 +12,7 @@ import java.util.regex.Matcher;
 
 import javax.persistence.*;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -22,6 +23,8 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -103,6 +106,10 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Boolean onlineCourse = false;
 
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "online_course_configuration_id")
+    private OnlineCourseConfiguration onlineCourseConfiguration;
+
     @Column(name = "max_complaints")
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints;
@@ -161,6 +168,12 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Integer accuracyOfScores;
 
+    /**
+     * Note: Currently just used in the scope of the tutorial groups feature
+     */
+    @Column(name = "time_zone")
+    private String timeZone;
+
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
@@ -176,9 +189,9 @@ public class Course extends DomainObject {
     private Set<LearningGoal> learningGoals = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("course")
-    private Set<TutorGroup> tutorGroups = new HashSet<>();
+    @JsonIgnoreProperties(value = "course", allowSetters = true)
+    @OrderBy("title")
+    private Set<TutorialGroup> tutorialGroups = new HashSet<>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -197,6 +210,11 @@ public class Course extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("consecutiveCourses")
     private Set<LearningGoal> prerequisites = new HashSet<>();
+
+    @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "tutorial_groups_configuration_id")
+    @JsonIgnoreProperties("course")
+    private TutorialGroupsConfiguration tutorialGroupsConfiguration;
 
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
@@ -335,12 +353,20 @@ public class Course extends DomainObject {
         this.defaultProgrammingLanguage = defaultProgrammingLanguage;
     }
 
-    public Boolean isOnlineCourse() {
+    public boolean isOnlineCourse() {
         return Boolean.TRUE.equals(onlineCourse);
     }
 
-    public void setOnlineCourse(Boolean onlineCourse) {
+    public void setOnlineCourse(boolean onlineCourse) {
         this.onlineCourse = onlineCourse;
+    }
+
+    public OnlineCourseConfiguration getOnlineCourseConfiguration() {
+        return Hibernate.isInitialized(onlineCourseConfiguration) ? onlineCourseConfiguration : null;
+    }
+
+    public void setOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
+        this.onlineCourseConfiguration = onlineCourseConfiguration;
     }
 
     public Integer getMaxComplaints() {
@@ -483,14 +509,6 @@ public class Course extends DomainObject {
 
     public void setLectures(Set<Lecture> lectures) {
         this.lectures = lectures;
-    }
-
-    public Set<TutorGroup> getTutorGroups() {
-        return tutorGroups;
-    }
-
-    public void setTutorGroups(Set<TutorGroup> tutorGroups) {
-        this.tutorGroups = tutorGroups;
     }
 
     public Set<Exam> getExams() {
@@ -659,6 +677,25 @@ public class Course extends DomainObject {
         this.accuracyOfScores = accuracyOfScores;
     }
 
+    public Set<TutorialGroup> getTutorialGroups() {
+        return tutorialGroups;
+    }
+
+    public void setTutorialGroups(Set<TutorialGroup> tutorialGroups) {
+        this.tutorialGroups = tutorialGroups;
+    }
+
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public void setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
+    }
+
+    /**
+     * Validates that only one of onlineCourse and registrationEnabled is selected
+     */
     public void validateOnlineCourseAndRegistrationEnabled() {
         if (isOnlineCourse() && isRegistrationEnabled()) {
             throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
@@ -769,5 +806,13 @@ public class Course extends DomainObject {
             case "editors" -> getEditorGroupName();
             default -> throw new IllegalArgumentException("The course group does not exist");
         };
+    }
+
+    public TutorialGroupsConfiguration getTutorialGroupsConfiguration() {
+        return tutorialGroupsConfiguration;
+    }
+
+    public void setTutorialGroupsConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
+        this.tutorialGroupsConfiguration = tutorialGroupsConfiguration;
     }
 }

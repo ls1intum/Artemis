@@ -1,0 +1,9 @@
+<div *ngIf="isLoading" class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+    </div>
+</div>
+
+<div *ngIf="!isLoading" class="container-fluid">
+    <ng-content></ng-content>
+</div>

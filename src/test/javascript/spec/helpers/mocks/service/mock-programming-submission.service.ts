@@ -1,5 +1,5 @@
 import { IProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
-import { of, Observable, EMPTY } from 'rxjs';
+import { EMPTY, Observable, of } from 'rxjs';
 import { Exercise } from 'app/entities/exercise.model';
 
 export class MockProgrammingSubmissionService implements IProgrammingSubmissionService {

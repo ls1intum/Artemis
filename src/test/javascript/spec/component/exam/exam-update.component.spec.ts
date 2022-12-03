@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
 import { TranslateModule } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -23,7 +23,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, convertToParamMap, Params, UrlSegment } from '@angular/router';
+import { ActivatedRoute, Params, UrlSegment, convertToParamMap } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';

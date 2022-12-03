@@ -11,14 +11,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Exercise;
-import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository
 public interface ParticipationRepository extends JpaRepository<Participation, Long> {
-
-    Optional<Participation> findByResults(Result result);
 
     @Query("""
             SELECT DISTINCT p FROM Participation p
@@ -63,6 +60,14 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
                 AND p.individualDueDate IS NOT null
             """)
     Optional<ZonedDateTime> findLatestIndividualDueDate(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT min(p.individualDueDate)
+            FROM Participation p
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.individualDueDate IS NOT null
+            """)
+    Optional<ZonedDateTime> findEarliestIndividualDueDate(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT p

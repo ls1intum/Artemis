@@ -26,7 +26,7 @@ export class NewStudentParticipationResolver implements Resolve<StudentParticipa
         const correctionRound = Number(route.queryParamMap.get('correction-round'));
         if (exerciseId) {
             return this.textSubmissionService
-                .getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, 'lock', correctionRound)
+                .getSubmissionWithoutAssessment(exerciseId, 'lock', correctionRound)
                 .pipe(map((submission) => <StudentParticipation>submission.participation))
                 .pipe(catchError(() => of(undefined)));
         }

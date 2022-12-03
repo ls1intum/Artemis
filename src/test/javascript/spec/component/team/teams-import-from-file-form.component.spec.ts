@@ -79,10 +79,12 @@ describe('TeamsImportFromFileFormComponent', () => {
             convertTeamsStub = jest.spyOn(comp, 'convertTeams').mockReturnValue(mockFileTeamsConverted);
             comp.teamsChanged.subscribe((value: Team[]) => (teams = value));
             control = { ...element, value: 'test' };
+            // @ts-ignore
             getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
         });
 
         it('should parse json file and send converted teams', () => {
+            // @ts-ignore
             reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
             comp.importFile = new File([''], 'file.json', { type: 'application/json' });
             comp.importFileName = 'file.json';
@@ -102,6 +104,7 @@ describe('TeamsImportFromFileFormComponent', () => {
         });
 
         it('should parse csv file and send converted teams', async () => {
+            // @ts-ignore
             reader = {
                 ...reader,
                 result: unparse(mockFileStudents, {

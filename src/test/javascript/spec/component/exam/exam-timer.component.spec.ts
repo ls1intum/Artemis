@@ -1,4 +1,4 @@
-import { ComponentFixture, discardPeriodicTasks, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ExamTimerComponent } from 'app/exam/participate/timer/exam-timer.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

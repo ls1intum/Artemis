@@ -9,6 +9,6 @@ export class StudentParticipation extends Participation {
     public testRun?: boolean;
 
     constructor(type?: ParticipationType) {
-        super(type ? type : ParticipationType.STUDENT);
+        super(type ?? ParticipationType.STUDENT);
     }
 }

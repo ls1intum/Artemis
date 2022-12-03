@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpClient } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
@@ -11,7 +11,7 @@ import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-po
 import { Result } from 'app/entities/result.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { ParticipationType } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -146,72 +146,96 @@ describe('ResultService', () => {
             translateServiceSpy = jest.spyOn(translateService, 'instant');
         });
 
-        it('should return correct string for non programming exercise', () => {
-            expect(resultService.getResultString(modelingResult, modelingExercise)).toBe('artemisApp.result.resultStringNonProgramming');
+        it('should return correct string for non programming exercise long format', () => {
+            expect(resultService.getResultString(modelingResult, modelingExercise)).toBe('artemisApp.result.resultString.nonProgramming');
             expect(translateServiceSpy).toHaveBeenCalledOnce();
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringNonProgramming', { relativeScore: 42, points: 21, maxPoints: 50 });
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.nonProgramming', { relativeScore: 42, points: 21 });
         });
 
-        it('should return correct string for programming exercise with build failure', () => {
-            expect(resultService.getResultString(result1, programmingExercise)).toBe('artemisApp.result.resultStringProgramming');
-            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildFailed');
-            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
-                relativeScore: 0,
-                buildAndTestMessage: 'artemisApp.result.resultStringBuildFailed',
-                points: 0,
-                maxPoints: 200,
-            });
+        it('should return correct string for non programming exercise short format', () => {
+            expect(resultService.getResultString(modelingResult, modelingExercise, true)).toBe('artemisApp.result.resultString.short');
+            expect(translateServiceSpy).toHaveBeenCalledOnce();
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.short', { relativeScore: 42 });
         });
 
-        it('should return correct string for programming exercise with no tests', () => {
-            expect(resultService.getResultString(result2, programmingExercise)).toBe('artemisApp.result.resultStringProgramming');
+        it.each([true, false])('should return correct string for programming exercise with build failure', (short: boolean) => {
+            const expectedProgrammingString = short ? 'artemisApp.result.resultString.programmingShort' : 'artemisApp.result.resultString.programming';
+            expect(resultService.getResultString(result1, programmingExercise, short)).toBe(expectedProgrammingString);
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulNoTests');
-            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
-                relativeScore: 20,
-                buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulNoTests',
-                points: 40,
-                maxPoints: 200,
-            });
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildFailed');
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 0,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildFailed',
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 0,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildFailed',
+                    points: 0,
+                });
+            }
         });
 
-        it('should return correct string for programming exercise with tests', () => {
-            expect(resultService.getResultString(result3, programmingExercise)).toBe('artemisApp.result.resultStringProgramming');
+        it.each([true, false])('should return correct string for programming exercise with no tests', (short: boolean) => {
+            const expectedProgrammingString = short ? 'artemisApp.result.resultString.programmingShort' : 'artemisApp.result.resultString.programming';
+            expect(resultService.getResultString(result2, programmingExercise, short)).toBe(expectedProgrammingString);
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
-            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
-                relativeScore: 60,
-                buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulTests',
-                points: 120,
-                maxPoints: 200,
-            });
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulNoTests');
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 20,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulNoTests',
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 20,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulNoTests',
+                    points: 40,
+                });
+            }
+        });
+
+        it.each([true, false])('should return correct string for programming exercise with tests', (short: boolean) => {
+            const expectedProgrammingString = short ? 'artemisApp.result.resultString.short' : 'artemisApp.result.resultString.programming';
+            expect(resultService.getResultString(result3, programmingExercise, short)).toBe(expectedProgrammingString);
+            expect(translateServiceSpy).toHaveBeenCalledTimes(2);
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
+            if (short) {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 60,
+                });
+            } else {
+                expect(translateServiceSpy).toHaveBeenCalledWith(expectedProgrammingString, {
+                    relativeScore: 60,
+                    buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulTests',
+                    points: 120,
+                });
+            }
         });
 
         it('should return correct string for programming exercise with code issues', () => {
-            expect(resultService.getResultString(result4, programmingExercise)).toBe('artemisApp.result.resultStringProgrammingCodeIssues');
+            expect(resultService.getResultString(result4, programmingExercise)).toBe('artemisApp.result.resultString.programmingCodeIssues');
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
-            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgrammingCodeIssues`, {
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulTests', { numberOfTestsPassed: 1, numberOfTestsTotal: 2 });
+            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultString.programmingCodeIssues`, {
                 relativeScore: 50,
-                buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulTests',
+                buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulTests',
                 numberOfIssues: 1,
                 points: 100,
-                maxPoints: 200,
             });
         });
 
         it('should return correct string for programming exercise preliminary', () => {
             programmingExercise.assessmentDueDate = dayjs().add(5, 'minutes');
 
-            expect(resultService.getResultString(result5, programmingExercise)).toBe('artemisApp.result.resultStringProgramming (artemisApp.result.preliminary)');
+            expect(resultService.getResultString(result5, programmingExercise)).toBe('artemisApp.result.resultString.programming (artemisApp.result.preliminary)');
             expect(translateServiceSpy).toHaveBeenCalledTimes(3);
-            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringBuildSuccessfulNoTests');
-            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultStringProgramming`, {
+            expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultString.buildSuccessfulNoTests');
+            expect(translateServiceSpy).toHaveBeenCalledWith(`artemisApp.result.resultString.programming`, {
                 relativeScore: 80,
-                buildAndTestMessage: 'artemisApp.result.resultStringBuildSuccessfulNoTests',
+                buildAndTestMessage: 'artemisApp.result.resultString.buildSuccessfulNoTests',
                 points: 160,
-                maxPoints: 200,
             });
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.preliminary');
         });
@@ -221,6 +245,38 @@ describe('ResultService', () => {
             expect(resultService.getResultString(undefined, undefined)).toBe('');
             expect(captureExceptionSpy).toHaveBeenCalledOnce();
             expect(captureExceptionSpy).toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
+        });
+    });
+
+    describe('evaluateBadge', () => {
+        it('should be calculated correctly for practice mode', () => {
+            const participation: StudentParticipation = { testRun: true, type: ParticipationType.STUDENT };
+            const result: Result = {};
+            expect(ResultService.evaluateBadge(participation, result)).toEqual({
+                badgeClass: 'bg-secondary',
+                text: 'artemisApp.result.practice',
+                tooltip: 'artemisApp.result.practiceTooltip',
+            });
+        });
+
+        it('should be calculated correctly for rated submission', () => {
+            const participation: Participation = {};
+            const result: Result = { rated: true };
+            expect(ResultService.evaluateBadge(participation, result)).toEqual({
+                badgeClass: 'bg-success',
+                text: 'artemisApp.result.graded',
+                tooltip: 'artemisApp.result.gradedTooltip',
+            });
+        });
+
+        it('should be calculated correctly for unrated submission', () => {
+            const participation: Participation = {};
+            const result: Result = { rated: false };
+            expect(ResultService.evaluateBadge(participation, result)).toEqual({
+                badgeClass: 'bg-info',
+                text: 'artemisApp.result.notGraded',
+                tooltip: 'artemisApp.result.notGradedTooltip',
+            });
         });
     });
 });

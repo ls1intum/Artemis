@@ -1,8 +1,8 @@
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { MockComponent } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
-import { of, Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { CommitState, FileType, GitConflictState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { triggerChanges } from '../../helpers/utils/general.utils';

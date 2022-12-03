@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { TextSubmissionService } from 'app/exercises/text/participate/text-submission.service';
@@ -90,7 +90,7 @@ describe('TextSubmission Service', () => {
     }));
 
     it('should not parse jwt from header', fakeAsync(() => {
-        service.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(1).subscribe((textSubmission) => {
+        service.getSubmissionWithoutAssessment(1).subscribe((textSubmission) => {
             expect(textSubmission.atheneTextAssessmentTrackingToken).toBeUndefined();
         });
 
@@ -100,7 +100,7 @@ describe('TextSubmission Service', () => {
     }));
 
     it('should parse jwt from header', fakeAsync(() => {
-        service.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(1).subscribe((textSubmission) => {
+        service.getSubmissionWithoutAssessment(1).subscribe((textSubmission) => {
             expect(textSubmission.atheneTextAssessmentTrackingToken).toBe('12345');
         });
 
@@ -118,7 +118,7 @@ describe('TextSubmission Service', () => {
         const expected = returnedFromService;
         let response: any;
         service
-            .getTextSubmissionsForExerciseByCorrectionRound(exerciseId, {})
+            .getSubmissions(exerciseId, {})
             .pipe(take(1))
             .subscribe((resp) => (response = resp));
         const req = httpMock.expectOne({ method: 'GET' });

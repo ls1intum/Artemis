@@ -665,7 +665,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 .collect(Collectors.toCollection(ArrayList::new));
         manualResultLockedFirstRound.setFeedbacks(feedbacks);
         manualResultLockedFirstRound.setRated(true);
-        manualResultLockedFirstRound.setHasFeedback(true);
         manualResultLockedFirstRound.setScore(80D);
 
         params = new LinkedMultiValueMap<>();
@@ -751,7 +750,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         final var manualResultLockedSecondRound = submissionWithoutSecondAssessment.getLatestResult();
         assertThat(manualResultLockedFirstRound).isNotEqualTo(manualResultLockedSecondRound);
         manualResultLockedSecondRound.setFeedbacks(feedbacks);
-        manualResultLockedSecondRound.setHasFeedback(true);
         manualResultLockedSecondRound.setRated(true);
         manualResultLockedSecondRound.setScore(90D);
 
@@ -807,7 +805,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         Result initialResult = ModelFactory.generateResult(true, 50);
         initialResult.setAssessor(tutor1);
         initialResult.setHasComplaint(true);
-        initialResult.setHasFeedback(false);
         initialResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         initialResult.setParticipation(participation);
         initialResult = resultRepository.save(initialResult);
@@ -842,7 +839,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(resultAfterComplaint).isNotNull();
         resultAfterComplaint.setFeedbacks(overrideFeedback);
         resultAfterComplaint.setRated(true);
-        resultAfterComplaint.setHasFeedback(true);
         resultAfterComplaint.setScore(10D);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -868,8 +864,33 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void unlockFeedbackRequestAfterAssessment() throws Exception {
+        programmingExercise.setAllowManualFeedbackRequests(true);
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(programmingExercise);
+
+        var participation = programmingExerciseStudentParticipation;
+        participation.setIndividualDueDate(ZonedDateTime.now().minusDays(1));
+        studentParticipationRepository.save(participation);
+
+        Result result = participation.getResults().stream().findFirst().orElseThrow();
+        result.setScore(100D);
+        resultRepository.save(result);
+
+        doNothing().when(programmingExerciseParticipationService).unlockStudentRepository(programmingExercise, participation);
+
+        var response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", result, Result.class, HttpStatus.OK);
+
+        var responseParticipation = response.getParticipation();
+        assertThat(responseParticipation.getIndividualDueDate()).isNull();
+
+        verify(programmingExerciseParticipationService, times(1)).unlockStudentRepository(programmingExercise, participation);
+    }
+
+    @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testdeleteResult() throws Exception {
+    void testDeleteResult() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions("modeling", 1, Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().findFirst().orElseThrow();
 

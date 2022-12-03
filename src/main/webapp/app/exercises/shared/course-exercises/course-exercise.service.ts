@@ -5,19 +5,27 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { map, Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 @Injectable({ providedIn: 'root' })
 export class CourseExerciseService {
     private resourceUrl = SERVER_API_URL + `api/courses`;
 
-    constructor(private http: HttpClient, private participationWebsocketService: ParticipationWebsocketService, private accountService: AccountService) {}
+    constructor(
+        private http: HttpClient,
+        private participationWebsocketService: ParticipationWebsocketService,
+        private accountService: AccountService,
+        private profileService: ProfileService,
+    ) {}
 
     /**
      * returns all programming exercises for the course corresponding to courseId
@@ -90,30 +98,57 @@ export class CourseExerciseService {
     }
 
     /**
+     * starts the exercise with the identifier exerciseId
+     * @param exerciseId - the unique identifier of the exercise
+     * @param useGradedParticipation - flag indicating if the student wants to continue from their graded participation
+     */
+    startPractice(exerciseId: number, useGradedParticipation: boolean): Observable<StudentParticipation> {
+        return this.http
+            .post<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice?useGradedParticipation=${useGradedParticipation}`, {})
+            .pipe(
+                map((participation: StudentParticipation) => {
+                    return this.handleParticipation(participation);
+                }),
+            );
+    }
+
+    /**
      * resumes the programming exercise with the identifier exerciseId
      * @param exerciseId - the unique identifier of the exercise
+     * @param participationId - the unique identifier of the participation to continue
      */
-    resumeProgrammingExercise(exerciseId: number): Observable<StudentParticipation> {
-        return this.http.put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation`, {}).pipe(
+    resumeProgrammingExercise(exerciseId: number, participationId: number): Observable<StudentParticipation> {
+        return this.http.put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation/${participationId}`, {}).pipe(
             map((participation: StudentParticipation) => {
                 return this.handleParticipation(participation);
             }),
         );
     }
 
+    requestFeedback(exerciseId: number): Observable<StudentParticipation> {
+        return this.http
+            .put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/request-feedback`, {})
+            .pipe(map((participation: StudentParticipation) => participation));
+    }
+
     /**
      * handle the given student participation by adding in the participationWebsocketService
      * @param participation - the participation to be handled
      */
-    handleParticipation(participation: StudentParticipation) {
+    handleParticipation(participation: StudentParticipation): StudentParticipation {
         if (participation) {
             // convert date
             participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
             if (participation.exercise) {
                 const exercise = participation.exercise;
-                exercise.dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
-                exercise.releaseDate = exercise.releaseDate ? dayjs(exercise.releaseDate) : undefined;
+                this.convertExerciseDatesFromServer(exercise);
                 exercise.studentParticipations = [participation];
+                if (exercise.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).publishBuildPlanUrl) {
+                    this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                        const programmingParticipations = participation.exercise!.studentParticipations as ProgrammingExerciseStudentParticipation[];
+                        setBuildPlanUrlForProgrammingParticipations(profileInfo, programmingParticipations, (participation.exercise as ProgrammingExercise).projectKey);
+                    });
+                }
             }
             this.participationWebsocketService.addParticipation(participation);
         }
@@ -122,7 +157,10 @@ export class CourseExerciseService {
 
     convertExerciseDatesFromServer<T extends Exercise>(res: T): T {
         res.releaseDate = convertDateFromServer(res.releaseDate);
+        res.startDate = convertDateFromServer(res.startDate);
         res.dueDate = convertDateFromServer(res.dueDate);
+        res.assessmentDueDate = convertDateFromServer(res.assessmentDueDate);
+        res.exampleSolutionPublicationDate = convertDateFromServer(res.exampleSolutionPublicationDate);
         return res;
     }
 
@@ -130,6 +168,7 @@ export class CourseExerciseService {
         if (res.body) {
             res.body.forEach((exercise: T) => {
                 exercise.releaseDate = convertDateFromServer(exercise.releaseDate);
+                exercise.startDate = convertDateFromServer(exercise.startDate);
                 exercise.dueDate = convertDateFromServer(exercise.dueDate);
                 exercise.assessmentDueDate = convertDateFromServer(exercise.assessmentDueDate);
                 exercise.exampleSolutionPublicationDate = convertDateFromServer(exercise.exampleSolutionPublicationDate);

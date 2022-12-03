@@ -45,7 +45,7 @@ public class TextAssessmentQueueService {
      * @throws IllegalArgumentException if textExercise isn't automatically assessable
      * @return a TextSubmission with the highest information Gain if there is one
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true) // TODO: remove transactional
     public Optional<TextSubmission> getProposedTextSubmission(TextExercise textExercise, List<Language> languages) {
         if (!textExercise.isAutomaticAssessmentEnabled()) {
             throw new IllegalArgumentException("The TextExercise is not automatic assessable");

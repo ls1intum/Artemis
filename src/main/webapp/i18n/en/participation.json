@@ -42,6 +42,7 @@
             "student": "Student",
             "team": "Team",
             "students": "Students",
+            "practiceMode": "Practice Mode",
             "templateParticipation": "Template Participation",
             "solutionParticipation": "Solution Participation",
             "noParticipation": "That participation could not be found!",

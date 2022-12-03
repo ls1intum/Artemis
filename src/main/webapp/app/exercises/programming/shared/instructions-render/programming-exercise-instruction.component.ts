@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleCha
 import { SafeHtml } from '@angular/platform-browser';
 import { TranslateService } from '@ngx-translate/core';
 import { ShowdownExtension } from 'showdown';
-import { catchError, filter, mergeMap, map, switchMap, tap } from 'rxjs/operators';
-import { merge, Observable, of, Subscription } from 'rxjs';
+import { catchError, filter, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { Observable, Subscription, merge, of } from 'rxjs';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
@@ -214,7 +214,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * This method is used for initially loading the results so that the instructions can be rendered.
      */
     loadInitialResult(): Observable<Result | undefined> {
-        if (this.participation && this.participation.id && this.participation.results && this.participation.results.length) {
+        if (this.participation?.id && this.participation?.results?.length) {
             // Get the result with the highest id (most recent result)
             const latestResult = findLatestResult(this.participation.results);
             if (!latestResult) {
@@ -234,7 +234,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      * If there is no result, return undefined.
      */
     loadLatestResult(): Observable<Result | undefined> {
-        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!).pipe(
+        return this.programmingExerciseParticipationService.getLatestResultWithFeedback(this.participation.id!, true).pipe(
             catchError(() => of(undefined)),
             mergeMap((latestResult: Result) => (latestResult && !latestResult.feedbacks ? this.loadAndAttachResultDetails(latestResult) : of(latestResult))),
         );

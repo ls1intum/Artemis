@@ -37,9 +37,23 @@
                     </div>
                 </div>
             </div>
+            <div class="form-group">
+                <label for="taxonomy">{{ 'artemisApp.learningGoal.taxonomy' | artemisTranslate }}</label>
+                <select class="form-select mb-2" id="taxonomy" formControlName="taxonomy">
+                    <option [ngValue]="undefined" selected></option>
+                    <option *ngFor="let taxonomy of learningGoalTaxonomy | keys" [ngValue]="taxonomy">
+                        {{ 'artemisApp.learningGoal.taxonomies.' + learningGoalTaxonomy[taxonomy] | artemisTranslate }}
+                    </option>
+                </select>
+            </div>
             <div>
-                <label> {{ 'artemisApp.learningGoal.createLearningGoal.connectWithLectureUnits' | artemisTranslate }}</label>
-                <div *ngIf="lecturesOfCourseWithLectureUnits && lecturesOfCourseWithLectureUnits.length > 0; else noLectures" ngbDropdown class="mb-2">
+                <label>{{ 'artemisApp.learningGoal.createLearningGoal.connectWithLectureUnits' | artemisTranslate }}</label>
+                <div
+                    [hidden]="isInSingleLectureMode"
+                    *ngIf="lecturesOfCourseWithLectureUnits && lecturesOfCourseWithLectureUnits.length > 0; else noLectures"
+                    ngbDropdown
+                    class="mb-2"
+                >
                     <button class="btn btn-outline-primary" ngbDropdownToggle type="button">
                         {{
                             selectedLectureInDropdown
@@ -97,8 +111,11 @@
                 </div>
             </div>
             <div>
-                <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                <button id="submitButton" class="btn btn-primary me-2" type="submit" [disabled]="!isSubmitPossible">
                     <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+                </button>
+                <button *ngIf="hasCancelButton" type="button" (click)="cancelForm()" class="btn btn-default">
+                    <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
             </div>
         </form>

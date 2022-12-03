@@ -57,11 +57,11 @@ module.exports = {
     ],
     coverageThreshold: {
         global: {
-            // TODO: in the future, the following values should be increase to at least 85%
-            statements: 84.3,
-            branches: 71.7,
-            functions: 77.3,
-            lines: 84.3,
+            // TODO: in the future, the following values should increase to at least 90%
+            statements: 85.0,
+            branches: 72.2,
+            functions: 78.1,
+            lines: 84.9,
         },
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],

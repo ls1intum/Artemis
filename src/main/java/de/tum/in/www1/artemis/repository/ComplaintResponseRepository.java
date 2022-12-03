@@ -5,9 +5,11 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.ComplaintResponse;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
@@ -99,14 +101,10 @@ public interface ComplaintResponseRepository extends JpaRepository<ComplaintResp
     List<ExerciseMapEntry> countComplaintsByExerciseIdsAndComplaintComplaintType(@Param("exerciseIds") Set<Long> exerciseIds, @Param("complaintType") ComplaintType complaintType);
 
     /**
-     * Delete all complaint responses that belong to complaints of submission results of a given participation
-     * @param participationId the id of the participation where the complaint response should be deleted
-     */
-    void deleteByComplaint_Result_Participation_Id(Long participationId);
-
-    /**
      * Delete all complaint responses that belong to the given result
      * @param resultId the id of the result where the complaint response should be deleted
      */
+    @Transactional // ok because of delete
+    @Modifying
     void deleteByComplaint_Result_Id(long resultId);
 }

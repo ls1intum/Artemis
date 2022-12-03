@@ -13,8 +13,8 @@ import { Submission } from 'app/entities/submission.model';
     selector: 'jhi-assessment-warning',
     template: `
         <h6>
-            <div class="card-header" *ngIf="isBeforeLatestDueDate">
-                <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom"></fa-icon>
+            <div class="card-header" *ngIf="showWarning">
+                <fa-icon [icon]="faExclamationTriangle" size="2x" class="text-warning" placement="bottom auto"></fa-icon>
                 <span *ngIf="isBeforeExerciseDueDate">{{ 'artemisApp.assessment.dashboard.warning' | artemisTranslate }}</span>
                 <span *ngIf="!isBeforeExerciseDueDate">{{ 'artemisApp.assessment.dashboard.warningIndividual' | artemisTranslate }}</span>
             </div>
@@ -26,7 +26,7 @@ export class AssessmentWarningComponent implements OnChanges {
     @Input() submissions: Submission[] = [];
 
     isBeforeExerciseDueDate = false;
-    isBeforeLatestDueDate = false;
+    showWarning = false;
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
@@ -38,19 +38,13 @@ export class AssessmentWarningComponent implements OnChanges {
         if (this.exercise.dueDate) {
             const now = dayjs();
             this.isBeforeExerciseDueDate = now.isBefore(this.exercise.dueDate);
-            this.isBeforeLatestDueDate = now.isBefore(this.getLatestDueDate());
+            this.showWarning = now.isBefore(this.getLatestDueDate()) && !this.exercise.allowManualFeedbackRequests;
         }
     }
 
     private getLatestDueDate(): dayjs.Dayjs | undefined {
         return this.submissions
             .map((submission) => submission.participation?.individualDueDate)
-            .reduce((latest, next) => {
-                if (next && next.isAfter(latest)) {
-                    return next;
-                } else {
-                    return latest;
-                }
-            }, this.exercise.dueDate);
+            .reduce((latest, next) => (next && next.isAfter(latest) ? next : latest), this.exercise.dueDate);
     }
 }

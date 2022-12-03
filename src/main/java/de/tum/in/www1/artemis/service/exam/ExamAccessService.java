@@ -252,6 +252,25 @@ public class ExamAccessService {
         checkExamBelongsToCourseElseThrow(courseId, examId);
     }
 
+    /**
+     * Checks if the current user is has a student exam in the given exam of the given course and that the exam
+     * belongs to the given course.
+     *
+     * @param courseId The id of the course
+     * @param examId   The id of the exam
+     */
+    public void checkCourseAndExamAccessForStudentElseThrow(Long courseId, Long examId) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
+        if (authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
+            checkExamBelongsToCourseElseThrow(courseId, examId);
+        }
+        else if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(courseId, examId, currentUser.getId())) {
+            throw new AccessForbiddenException("You are not allowed to access this exam!");
+        }
+    }
+
     private void checkExamBelongsToCourseElseThrow(Long courseId, Long examId) {
         Optional<Exam> exam = examRepository.findById(examId);
         if (exam.isEmpty()) {

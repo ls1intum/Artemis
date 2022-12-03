@@ -25,6 +25,8 @@ export class AssessmentInstructionsComponent {
     criteria: GradingCriterion[];
 
     @Input() isAssessmentTraining = false;
+    @Input() showAssessmentInstructions = true;
+
     @Input() readOnly: boolean;
     // For programming exercises we hand over the participation or use the template participation
     @Input() programmingParticipation?: ProgrammingExerciseStudentParticipation;

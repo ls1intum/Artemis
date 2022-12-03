@@ -4,7 +4,7 @@ import { ProgrammingExerciseTestScheduleDatePickerComponent } from 'app/exercise
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
-import { MockDirective, MockPipe, MockModule } from 'ng-mocks';
+import { MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';

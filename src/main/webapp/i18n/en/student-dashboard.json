@@ -29,9 +29,12 @@
                 "exercises": "Exercises",
                 "statistics": "Statistics",
                 "lectures": "Lectures",
+                "tutorialGroups": "Tutorial Groups",
                 "learningGoals": "Learning Goals",
                 "exams": "Exams",
+                "testExam": "Test Exam",
                 "communication": "Communication",
+                "messages": "Messages",
                 "plagiarismCases": "Plagiarism Cases"
             },
             "exerciseList": {
@@ -167,6 +170,7 @@
                 "exerciseStatus": "Exercise status:",
                 "points": "Points:",
                 "bonus": "Bonus:",
+                "of": " of ",
                 "problemStatement": "Problem statement:",
                 "noResults": "You have no results yet",
                 "instructorActions": {
@@ -188,6 +192,8 @@
                 "rated": "Rated",
                 "practice": "Practice",
                 "assessmentType": "Assessment:",
+                "startDate": "Start date:",
+                "startDateTooltip": "Students can work on this exercise from {{date}}.",
                 "submissionDue": "Submission due:",
                 "submissionDueTooltip": "The submission is due by {{date}}.",
                 "assessmentDue": "Assessment due:",
@@ -195,7 +201,7 @@
                 "complaintDue": "Complaint due:",
                 "complaintDueTooltip": "You can write a complain until {{date}}.",
                 "complaintPossible": "Complaint possible:",
-                "complaintPossibleTooltip": "A complaint will be possible later on."
+                "complaintPossibleTooltip": "After receiving an assessment, you will have {{days}} days to file a complaint."
             }
         }
     }

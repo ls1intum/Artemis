@@ -53,8 +53,8 @@
                             {{ plagiarismCase.student.name }} ({{ plagiarismCase.student.login }})
                         </a>
                     </div>
-                    <div class="col-2 text-center">
-                        {{ 'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate: { count: plagiarismCase.plagiarismSubmissions.length } }}
+                    <div *ngIf="plagiarismCase.plagiarismSubmissions" class="col-2 text-center">
+                        {{ 'artemisApp.plagiarism.plagiarismCases.appearsInComparisons' | artemisTranslate : { count: plagiarismCase.plagiarismSubmissions.length } }}
                     </div>
                     <div *ngIf="plagiarismCase.post" class="col-3 text-center">
                         {{ 'artemisApp.plagiarism.plagiarismCases.notifiedAt' | artemisTranslate }} {{ plagiarismCase.post.creationDate | artemisDate }}

@@ -125,7 +125,7 @@ public class ProgrammingExerciseGitDiffReportService {
      * @param programmingExercise The programming exercise
      * @return The report or null if none exists
      */
-    public ProgrammingExerciseGitDiffReport getReportOfExercise(ProgrammingExercise programmingExercise) {
+    private ProgrammingExerciseGitDiffReport getReportOfExercise(ProgrammingExercise programmingExercise) {
         var reports = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
         if (reports.isEmpty()) {
             return null;
@@ -139,6 +139,23 @@ public class ProgrammingExerciseGitDiffReportService {
         reportsToDelete.remove(latestReport);
         programmingExerciseGitDiffReportRepository.deleteAll(reportsToDelete);
         return latestReport;
+    }
+
+    /**
+     * Obtain the {@link ProgrammingExerciseGitDiffReport} of a programming exercise.
+     * If no report exists yet, it will try to generate one
+     *
+     * @param programmingExercise The programming exercise
+     * @return The report or null if none can be generated
+     */
+    public ProgrammingExerciseGitDiffReport getOrCreateReportOfExercise(ProgrammingExercise programmingExercise) {
+        var report = this.getReportOfExercise(programmingExercise);
+        if (report == null) {
+            return updateReport(programmingExercise);
+        }
+        else {
+            return report;
+        }
     }
 
     /**

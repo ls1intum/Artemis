@@ -16,7 +16,19 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface AnswerPostRepository extends JpaRepository<AnswerPost, Long> {
 
     @NotNull
-    default AnswerPost findByIdElseThrow(Long answerPostId) {
+    default AnswerPost findAnswerPostByIdElseThrow(Long answerPostId) {
+        return findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() == null)
+                .orElseThrow(() -> new EntityNotFoundException("Answer Post", answerPostId));
+    }
+
+    @NotNull
+    default AnswerPost findAnswerMessageByIdElseThrow(Long answerPostId) {
+        return findById(answerPostId).filter(answerPost -> answerPost.getPost().getConversation() != null)
+                .orElseThrow(() -> new EntityNotFoundException("Answer Post", answerPostId));
+    }
+
+    @NotNull
+    default AnswerPost findAnswerPostOrAnswerMessageByIdElseThrow(Long answerPostId) {
         return findById(answerPostId).orElseThrow(() -> new EntityNotFoundException("Answer Post", answerPostId));
     }
 }

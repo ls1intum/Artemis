@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { advanceTo } from 'jest-date-mock';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { Router, ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ArtemisTestModule } from '../../test.module';
 import { AuditsComponent } from 'app/admin/audits/audits.component';
 import { AuditsService } from 'app/admin/audits/audits.service';

@@ -205,7 +205,7 @@ public class PlagiarismCaseResource {
         Map<Long, PlagiarismCaseInfoDTO> plagiarismCaseInfoDTOs = plagiarismCasePerExerciseList.stream()
                 // the following line is already checked in the SQL statement, but we want to ensure it 100%
                 .filter(plagiarismCase -> plagiarismCase.getPost() != null).collect(Collectors.toMap(plagiarismCase -> plagiarismCase.getExercise().getId(),
-                        plagiarismCase -> new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict())));
+                        plagiarismCase -> new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict()), (case1, case2) -> case1));
 
         return ResponseEntity.ok(plagiarismCaseInfoDTOs);
     }

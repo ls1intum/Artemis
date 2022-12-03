@@ -61,12 +61,7 @@
             }
         }
 
-        .points-row {
-            display: flex;
-            align-items: center;
-        }
-
-        .assessment-row,
+        .points-assessment-row,
         .submission-row {
             white-space: nowrap;
             display: flex;
@@ -81,7 +76,7 @@
     }
 
     @media (max-width: 575px) {
-        font-size: 1.1em;
+        font-size: 1.1rem;
 
         .left-col .title-row .inner-row {
             font-size: 1.3em;

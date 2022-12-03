@@ -130,6 +130,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "branch", table = "programming_exercise_details")
     private String branch;
 
+    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
+    private boolean releaseTestsWithExampleSolution;
+
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
      * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
@@ -137,8 +140,7 @@ public class ProgrammingExercise extends Exercise {
      * This is currently only supported for HASKELL and OCAML on BAMBOO, thus the default value is false.
      */
     @Transient
-    @JsonProperty
-    private boolean checkoutSolutionRepository = false;
+    private boolean checkoutSolutionRepositoryTransient = false;
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -286,6 +288,14 @@ public class ProgrammingExercise extends Exercise {
 
     public String getBranch() {
         return branch;
+    }
+
+    public void setReleaseTestsWithExampleSolution(boolean releaseTestsWithExampleSolution) {
+        this.releaseTestsWithExampleSolution = releaseTestsWithExampleSolution;
+    }
+
+    public boolean isReleaseTestsWithExampleSolution() {
+        return releaseTestsWithExampleSolution;
     }
 
     /**
@@ -591,11 +601,6 @@ public class ProgrammingExercise extends Exercise {
         return super.getAssessmentType();
     }
 
-    public boolean needsLockOperation() {
-        return isExamExercise() || AssessmentType.AUTOMATIC != getAssessmentType() || getBuildAndTestStudentSubmissionsAfterDueDate() != null
-                || getAllowComplaintsForAutomaticAssessments();
-    }
-
     @Nullable
     public ProjectType getProjectType() {
         return projectType;
@@ -642,9 +647,18 @@ public class ProgrammingExercise extends Exercise {
      */
     public boolean areManualResultsAllowed() {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
-        final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
-        return (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments())
-                && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
+        if (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments()) {
+            // The relevantDueDate check below keeps us from assessing feedback requests,
+            // as their relevantDueDate is before the deadline
+            if (getAllowManualFeedbackRequests()) {
+                return true;
+            }
+
+            final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
+            return (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
+        }
+
+        return false;
     }
 
     /**
@@ -684,11 +698,11 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean getCheckoutSolutionRepository() {
-        return this.checkoutSolutionRepository;
+        return this.checkoutSolutionRepositoryTransient;
     }
 
     public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
-        this.checkoutSolutionRepository = checkoutSolutionRepository;
+        this.checkoutSolutionRepositoryTransient = checkoutSolutionRepository;
     }
 
     /**
@@ -766,6 +780,27 @@ public class ProgrammingExercise extends Exercise {
         // Static code analysis max penalty must be positive
         if (getMaxStaticCodeAnalysisPenalty() != null && getMaxStaticCodeAnalysisPenalty() < 0) {
             throw new BadRequestAlertException("The static code analysis penalty must not be negative", "Exercise", "staticCodeAnalysisPenaltyNotNegative");
+        }
+    }
+
+    /**
+     * Validates settings for exercises, where allowManualFeedbackRequests is set
+     */
+    public void validateManualFeedbackSettings() {
+        if (!this.getAllowManualFeedbackRequests()) {
+            return;
+        }
+
+        if (this.getAssessmentType() == AssessmentType.AUTOMATIC) {
+            throw new BadRequestAlertException("Assessment type is not manual", "Exercise", "invalidManualFeedbackSettings");
+        }
+
+        if (Objects.isNull(this.getDueDate())) {
+            throw new BadRequestAlertException("Exercise due date is not set", "Exercise", "invalidManualFeedbackSettings");
+        }
+
+        if (Objects.nonNull(this.buildAndTestStudentSubmissionsAfterDueDate)) {
+            throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
         }
     }
 

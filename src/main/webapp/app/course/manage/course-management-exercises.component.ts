@@ -1,8 +1,9 @@
 import { Component, ContentChild, OnInit, TemplateRef } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from './course-management.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
+import { faHandshakeAngle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-management-exercises',
@@ -10,7 +11,6 @@ import { ExerciseFilter } from 'app/entities/exercise-filter.model';
 })
 export class CourseManagementExercisesComponent implements OnInit {
     course: Course;
-    courseId = 0;
     showSearch = false;
     quizExercisesCount = 0;
     textExercisesCount = 0;
@@ -23,19 +23,34 @@ export class CourseManagementExercisesComponent implements OnInit {
     filteredModelingExercisesCount = 0;
     filteredFileUploadExercisesCount = 0;
     exerciseFilter: ExerciseFilter;
+    showBackToWizardModeButton = false;
+    lectureIdForGoingBack: number;
+    lectureWizardStepForGoingBack: number;
+
+    faHandshakeAngle = faHandshakeAngle;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideProgrammingExerciseCard') overrideProgrammingExerciseCard: TemplateRef<any>;
     @ContentChild('overrideNonProgrammingExerciseCard') overrideNonProgrammingExerciseCard: TemplateRef<any>;
 
-    constructor(private courseService: CourseManagementService, private route: ActivatedRoute) {}
+    constructor(private courseService: CourseManagementService, private router: Router, private route: ActivatedRoute) {}
 
     /**
-     * initializes courseId and course
+     * initializes course
      */
     ngOnInit(): void {
-        this.courseId = Number(this.route.parent!.snapshot.paramMap.get('courseId'));
-        this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
+        this.route.parent!.data.subscribe(({ course }) => {
+            if (course) {
+                this.course = course;
+            }
+        });
+
+        this.route.queryParams.subscribe((params) => {
+            this.showBackToWizardModeButton = params.shouldHaveBackButtonToWizard;
+            this.lectureIdForGoingBack = params.lectureId;
+            this.lectureWizardStepForGoingBack = params.step;
+        });
+
         this.exerciseFilter = new ExerciseFilter('');
     }
 
@@ -78,5 +93,12 @@ export class CourseManagementExercisesComponent implements OnInit {
 
     shouldHideExerciseCard(type: string): boolean {
         return !['all', type].includes(this.exerciseFilter.exerciseTypeSearch);
+    }
+
+    goBackToWizardMode() {
+        this.router.navigate(['/course-management', this.course.id, 'lectures', this.lectureIdForGoingBack, 'edit'], {
+            queryParams: { shouldBeInWizardMode: 'true', shouldOpenCreateExercise: 'true', step: this.lectureWizardStepForGoingBack },
+            queryParamsHandling: '',
+        });
     }
 }

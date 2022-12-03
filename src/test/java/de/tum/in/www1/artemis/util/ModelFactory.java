@@ -6,7 +6,10 @@ import static org.assertj.core.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
@@ -31,6 +34,8 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -566,6 +571,22 @@ public class ModelFactory {
         return course;
     }
 
+    public static OnlineCourseConfiguration generateOnlineCourseConfiguration(Course course, String key, String secret, String userPrefix, String originalUrl) {
+        OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
+        updateOnlineCourseConfiguration(onlineCourseConfiguration, key, secret, userPrefix, originalUrl, UUID.randomUUID().toString());
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        return onlineCourseConfiguration;
+    }
+
+    public static void updateOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration, String key, String secret, String userPrefix, String originalUrl,
+            String registrationId) {
+        onlineCourseConfiguration.setLtiKey(key);
+        onlineCourseConfiguration.setLtiSecret(secret);
+        onlineCourseConfiguration.setUserPrefix(userPrefix);
+        onlineCourseConfiguration.setOriginalUrl(originalUrl);
+        onlineCourseConfiguration.setRegistrationId(registrationId);
+    }
+
     /**
      * Generates a TextAssessment event with the given parameters
      *
@@ -1035,7 +1056,7 @@ public class ModelFactory {
      * Creates a dummy DTO with custom feedbacks used by Jenkins, which notifies about new programming exercise results.
      * Uses {@link #generateTestResultDTO(String, String, ZonedDateTime, ProgrammingLanguage, boolean, List, List, List, List, TestSuiteDTO)} as basis.
      * Then adds a new {@link TestSuiteDTO} with name "CustomFeedbacks" to it.
-     * This Testsuite has four {@link TestCaseDTO}s:
+     * This Testsuite has four {@link de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO TestCaseDTOs}:
      * <ul>
      *     <li>CustomSuccessMessage: successful test with a message</li>
      *     <li>CustomSuccessNoMessage: successful test without message</li>
@@ -1088,6 +1109,11 @@ public class ModelFactory {
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, String planKey, String testSummaryDescription, ZonedDateTime buildCompletionDate,
             List<String> successfulTestNames, List<String> failedTestNames, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos) {
+        return generateBambooBuildResult(repoName, planKey, testSummaryDescription, buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, failedTestNames.isEmpty());
+    }
+
+    public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, String planKey, String testSummaryDescription, ZonedDateTime buildCompletionDate,
+            List<String> successfulTestNames, List<String> failedTestNames, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean successful) {
 
         final var summary = new BambooBuildResultNotificationDTO.BambooTestSummaryDTO(42, 0, failedTestNames.size(), failedTestNames.size(), 0, successfulTestNames.size(),
                 testSummaryDescription, 0, 0, successfulTestNames.size() + failedTestNames.size(), failedTestNames.size());
@@ -1099,7 +1125,7 @@ public class ModelFactory {
         final var plan = new BambooBuildPlanDTO(planKey != null ? planKey : "TEST201904BPROGRAMMINGEXERCISE6-STUDENT1");
 
         final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO(false, 42, "foobar", buildCompletionDate != null ? buildCompletionDate : now().minusSeconds(5),
-                failedTestNames.isEmpty(), summary, vcsDtos != null && vcsDtos.size() > 0 ? vcsDtos : List.of(vcs), List.of(job));
+                successful, summary, vcsDtos != null && vcsDtos.size() > 0 ? vcsDtos : List.of(vcs), List.of(job));
 
         return new BambooBuildResultNotificationDTO("secret", "TestNotification", plan, build);
     }
@@ -1117,7 +1143,12 @@ public class ModelFactory {
      */
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
             List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos) {
-        var notification = generateBambooBuildResult(repoName, buildPlanKey, "No tests found", buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos);
+        return generateBambooBuildResultWithLogs(buildPlanKey, repoName, successfulTestNames, failedTestNames, buildCompletionDate, vcsDtos, failedTestNames.isEmpty());
+    }
+
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
+            List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean successful) {
+        var notification = generateBambooBuildResult(repoName, buildPlanKey, "No tests found", buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, successful);
 
         String logWith254Chars = "a".repeat(254);
 
@@ -1138,6 +1169,40 @@ public class ModelFactory {
         return notification;
     }
 
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithAnalyticsLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
+            List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean sca) {
+        var notification = generateBambooBuildResult(repoName, buildPlanKey, "Test executed", buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, true);
+
+        var jobStarted = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 14, 58, 30, 0, ZoneId.systemDefault()), "started building on agent 1", null);
+
+        var executingBuild = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 0, 0, ZoneId.systemDefault()), "Executing build", null);
+
+        var testingStarted = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 5, 0, ZoneId.systemDefault()), "Starting task 'Tests'", null);
+
+        var dependency1Downloaded = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 10, 0, ZoneId.systemDefault()), "Dependency 1 Downloaded from", null);
+
+        var testingFinished = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 15, 0, ZoneId.systemDefault()), "Finished task 'Tests' with result", null);
+
+        var scaStarted = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 16, 0, ZoneId.systemDefault()), "Starting task 'Static Code Analysis'", null);
+
+        var dependency2Downloaded = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 20, 0, ZoneId.systemDefault()), "Dependency 2 Downloaded from", null);
+
+        var scaFinished = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 27, 0, ZoneId.systemDefault()), "Finished task 'Static Code Analysis'", null);
+
+        var jobFinished = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 30, 0, ZoneId.systemDefault()), "Finished building", null);
+
+        notification.getBuild().jobs().get(0).logs().clear();
+        if (sca) {
+            notification.getBuild().jobs().get(0).logs().addAll(
+                    List.of(jobStarted, executingBuild, testingStarted, dependency1Downloaded, testingFinished, scaStarted, dependency2Downloaded, scaFinished, jobFinished));
+        }
+        else {
+            notification.getBuild().jobs().get(0).logs().addAll(List.of(jobStarted, executingBuild, testingStarted, dependency1Downloaded, testingFinished, jobFinished));
+        }
+
+        return notification;
+    }
+
     public static Feedback createSCAFeedbackWithInactiveCategory(Result result) {
         return new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"miscellaneous\"}")
                 .type(FeedbackType.AUTOMATIC).positive(false);
@@ -1145,7 +1210,7 @@ public class ModelFactory {
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
             List<String> failedTestNames, ProgrammingLanguage programmingLanguage) {
-        var notification = generateBambooBuildResult(repoName, null, null, null, successfulTestNames, failedTestNames, new ArrayList<>());
+        var notification = generateBambooBuildResult(repoName, null, null, null, successfulTestNames, failedTestNames, new ArrayList<>(), true);
         var reports = generateStaticCodeAnalysisReports(programmingLanguage);
         notification.getBuild().jobs().get(0).staticCodeAnalysisReports().addAll(reports);
         return notification;
@@ -1257,6 +1322,42 @@ public class ModelFactory {
         organization.setLogoUrl(logoUrl);
         organization.setEmailPattern(emailPattern);
         return organization;
+    }
+
+    /**
+     * Generates an example tutorial group
+     *
+     * @param title                 of tutorial group
+     * @param additionalInformation of tutorial group
+     * @param capacity              of tutorial group
+     * @param isOnline              of tutorial group
+     * @param language              of tutorial group
+     * @param campus                of tutorial group
+     * @return example tutorial gorup
+     */
+    public static TutorialGroup generateTutorialGroup(String title, String additionalInformation, Integer capacity, Boolean isOnline, Language language, String campus) {
+        TutorialGroup tutorialGroup = new TutorialGroup();
+        tutorialGroup.setTitle(title);
+        tutorialGroup.setAdditionalInformation(additionalInformation);
+        tutorialGroup.setCapacity(capacity);
+        tutorialGroup.setIsOnline(isOnline);
+        tutorialGroup.setLanguage(language);
+        tutorialGroup.setCampus(campus);
+        return tutorialGroup;
+    }
+
+    /**
+     * Generates an example tutorial group configuration
+     *
+     * @param start of configuration
+     * @param end   of configuration
+     * @return example configuration
+     */
+    public static TutorialGroupsConfiguration generateTutorialGroupsConfiguration(LocalDate start, LocalDate end) {
+        TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
+        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(start.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(end.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        return tutorialGroupsConfiguration;
     }
 
     /**

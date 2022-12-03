@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
+import javax.validation.Valid;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -27,6 +28,7 @@ public class ShortAnswerSubmittedAnswer extends SubmittedAnswer {
     @JoinColumn(name = "submitted_answer_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
+    @Valid
     private Set<ShortAnswerSubmittedText> submittedTexts = new HashSet<>();
 
     public Set<ShortAnswerSubmittedText> getSubmittedTexts() {

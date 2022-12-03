@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CourseWideContext, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
@@ -41,6 +41,7 @@ import {
     metisLecturePosts,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
+import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -49,6 +50,7 @@ describe('CourseDiscussionComponent', () => {
     let metisService: MetisService;
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
     let metisServiceGetUserStub: jest.SpyInstance;
+    let fetchNextPageSpy: jest.SpyInstance;
 
     const id = metisCourse.id;
     const parentRoute = {
@@ -64,6 +66,7 @@ describe('CourseDiscussionComponent', () => {
             imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbPaginationModule)],
             declarations: [
                 CourseDiscussionComponent,
+                MockComponent(VirtualScrollComponent),
                 MockComponent(PostingThreadComponent),
                 MockComponent(PostCreateEditModalComponent),
                 MockComponent(FaIconComponent),
@@ -94,6 +97,7 @@ describe('CourseDiscussionComponent', () => {
                 metisService = fixture.debugElement.injector.get(MetisService);
                 metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
                 metisServiceGetUserStub = jest.spyOn(metisService, 'getUser');
+                fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
             });
     });
 
@@ -370,6 +374,17 @@ describe('CourseDiscussionComponent', () => {
         );
     }));
 
+    it('should call fetchNextPage when virtual scroller component renders last part of fetched posts', fakeAsync(() => {
+        prepareComponent();
+
+        const onEndOfOriginalItemsReachedEvent = new CustomEvent('onEndOfOriginalItemsReached');
+
+        const scrollableDiv = getElement(fixture.debugElement, 'jhi-virtual-scroll');
+        scrollableDiv.dispatchEvent(onEndOfOriginalItemsReachedEvent);
+
+        expect(fetchNextPageSpy).toHaveBeenCalledOnce();
+    }));
+
     function expectGetFilteredPostsToBeCalled() {
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
             courseId: metisCourse.id,
@@ -405,4 +420,11 @@ describe('CourseDiscussionComponent', () => {
             expect(result).toBeFalse();
         });
     });
+
+    function prepareComponent() {
+        component.itemsPerPage = 5;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+    }
 });

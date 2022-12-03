@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
 import { Params } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { Post } from 'app/entities/metis/post.model';
@@ -11,7 +11,7 @@ import { PatternMatch, PostingContentPart, ReferenceType } from '../metis.util';
     templateUrl: './posting-content.component.html',
     styleUrls: ['./posting-content.component.scss'],
 })
-export class PostingContentComponent implements OnInit, OnDestroy {
+export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
     @Input() content?: string;
     @Input() previewMode?: boolean;
     @Input() isAnnouncement = false;
@@ -28,10 +28,24 @@ export class PostingContentComponent implements OnInit, OnDestroy {
     constructor(private metisService: MetisService) {}
 
     /**
-     * on initialization: subscribes to the currently loaded posts in the context, to be available for possible references,
-     * computes the PostingContentParts for rendering
+     * on initialization: calculate posting parts to be displayed
      */
     ngOnInit(): void {
+        this.computeContentPartsOfPosts();
+    }
+
+    /**
+     * on changes: update posting parts to be displayed
+     */
+    ngOnChanges(): void {
+        this.computeContentPartsOfPosts();
+    }
+
+    /**
+     * on initialization & on changes: subscribes to the currently loaded posts in the context, to be available for possible references,
+     * computes the PostingContentParts for rendering
+     */
+    private computeContentPartsOfPosts() {
         this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
             this.currentlyLoadedPosts = posts;
             const patternMatches: PatternMatch[] = this.getPatternMatches();

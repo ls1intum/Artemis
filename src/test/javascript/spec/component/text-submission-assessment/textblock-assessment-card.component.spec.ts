@@ -1,4 +1,4 @@
-import { TestBed, ComponentFixture } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
@@ -91,6 +91,20 @@ describe('TextblockAssessmentCardComponent', () => {
         expect(component.didDelete.emit).toHaveBeenCalledWith(component.textBlockRef);
     });
 
+    it('should delete feedback but not emit delete event when textblock is undeletable', () => {
+        component.textBlockRef.initFeedback();
+        component.textBlockRef.deletable = false;
+        fixture.detectChanges();
+
+        jest.spyOn(component.didDelete, 'emit');
+        const feedbackEditor = fixture.debugElement.query(By.directive(TextblockFeedbackEditorComponent));
+        const feedbackEditorComponent = feedbackEditor.componentInstance as TextblockFeedbackEditorComponent;
+        feedbackEditorComponent.dismiss();
+
+        expect(component.textBlockRef.feedback).toBeUndefined();
+        expect(component.didDelete.emit).not.toHaveBeenCalled();
+    });
+
     it('should send assessment event when selecting automatic text block', () => {
         component.selected = false;
         component.textBlockRef.feedback = {
@@ -100,5 +114,17 @@ describe('TextblockAssessmentCardComponent', () => {
         component.select();
         fixture.detectChanges();
         expect(sendAssessmentEvent).toHaveBeenCalledWith(TextAssessmentEventType.ADD_FEEDBACK_AUTOMATICALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.AUTOMATIC);
+    });
+
+    it('should not send assessment event when selecting text block that is unselectable', () => {
+        component.selected = false;
+        component.textBlockRef.feedback = {
+            type: FeedbackType.MANUAL,
+        };
+        component.textBlockRef.selectable = false;
+        const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
+        component.select();
+        fixture.detectChanges();
+        expect(sendAssessmentEvent).not.toHaveBeenCalled();
     });
 });

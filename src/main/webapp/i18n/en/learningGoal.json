@@ -7,6 +7,15 @@
             "learningGoalButton": "Learning Goals",
             "title": "Learning Goals",
             "description": "Description",
+            "taxonomy": "Taxonomy",
+            "taxonomies": {
+                "remember": "Remember",
+                "understand": "Understand",
+                "apply": "Apply",
+                "analyze": "Analyze",
+                "evaluate": "Evaluate",
+                "create": "Create"
+            },
             "manageLearningGoals": {
                 "title": "Learning Goal Management"
             },

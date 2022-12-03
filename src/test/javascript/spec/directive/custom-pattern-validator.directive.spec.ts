@@ -1,5 +1,5 @@
 import { CustomPatternValidatorDirective } from 'app/shared/validators/custom-pattern-validator.directive';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Component } from '@angular/core';

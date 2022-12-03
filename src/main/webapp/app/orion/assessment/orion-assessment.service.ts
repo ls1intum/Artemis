@@ -41,7 +41,7 @@ export class OrionAssessmentService {
     downloadSubmissionInOrion(exerciseId: number, submission: Submission | 'new', correctionRound = 0, testRun: boolean) {
         if (submission === 'new') {
             this.programmingSubmissionService
-                .getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, correctionRound)
+                .getSubmissionWithoutAssessment(exerciseId, true, correctionRound)
                 .subscribe((newSubmission) => this.sendSubmissionToOrionCancellable(exerciseId, newSubmission.id!, correctionRound, testRun));
         } else {
             this.sendSubmissionToOrion(exerciseId, submission.id!, correctionRound, testRun);

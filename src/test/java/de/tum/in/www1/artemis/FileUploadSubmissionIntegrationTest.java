@@ -21,6 +21,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -254,8 +255,8 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         database.updateExerciseDueDate(releasedFileUploadExercise.getId(), ZonedDateTime.now().minusHours(1));
         assertThat(releasedFileUploadExercise.getNumberOfSubmissions()).as("no submissions").isNull();
 
-        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment",
-                HttpStatus.NOT_FOUND, FileUploadSubmission.class);
+        FileUploadSubmission storedSubmission = request.get("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submission-without-assessment", HttpStatus.OK,
+                FileUploadSubmission.class);
 
         assertThat(storedSubmission).as("no submission eligible for new assessment").isNull();
     }
@@ -484,8 +485,11 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student3", roles = "USER")
     void submitExercise_beforeDueDate_allowed() throws Exception {
-        request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", validFile,
-                FileUploadSubmission.class, HttpStatus.OK);
+        FileUploadSubmission submission = request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
+                notSubmittedFileUploadSubmission, "submission", validFile, FileUploadSubmission.class, HttpStatus.OK);
+
+        assertThat(submission.getSubmissionDate()).isEqualToIgnoringNanos(ZonedDateTime.now());
+        assertThat(submission.getParticipation().getInitializationState()).isEqualTo(InitializationState.FINISHED);
     }
 
     @Test

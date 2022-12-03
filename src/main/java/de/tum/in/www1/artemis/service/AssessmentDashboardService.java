@@ -79,12 +79,12 @@ public class AssessmentDashboardService {
             DueDateStat totalNumberOfAssessments;
 
             if (exercise instanceof ProgrammingExercise) {
-                totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), examMode), 0L);
+                totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId()), 0L);
                 log.debug("Finished >> programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted << call for exercise {} in {}", exercise.getId(),
                         TimeLogUtil.formatDurationFrom(start));
             }
             else {
-                totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), examMode);
+                totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId());
                 log.debug("Finished >> resultRepository.countNumberOfFinishedAssessmentsForExercise << call for exercise {} in {}", exercise.getId(),
                         TimeLogUtil.formatDurationFrom(start));
             }
@@ -104,7 +104,11 @@ public class AssessmentDashboardService {
             }
 
             exercise.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
-            exercise.setTotalNumberOfAssessments(numberOfAssessmentsOfCorrectionRounds[0]);
+            // numberOfAssessmentsOfCorrectionRounds can be length 0 for test exams
+            if (numberOfAssessmentsOfCorrectionRounds.length > 0) {
+                exercise.setTotalNumberOfAssessments(numberOfAssessmentsOfCorrectionRounds[0]);
+            }
+
             start = System.nanoTime();
             Set<ExampleSubmission> exampleSubmissions = exampleSubmissionRepository.findAllWithResultByExerciseId(exercise.getId());
 
@@ -147,14 +151,12 @@ public class AssessmentDashboardService {
 
         // for all programming exercises and all non-programming-exercises we fetch the number of submissions here. The returned value comes in form of a list,
         // which has ExerciseMapEntries. With those for each individual exercise the number of submissions can be set.
+        programmingSubmissionsCounts = programmingExerciseRepository.countSubmissionsByExerciseIdsSubmittedIgnoreTestRun(programmingExerciseIds);
+        submissionCounts = submissionRepository.countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(nonProgrammingExerciseIds);
         if (examMode) {
-            programmingSubmissionsCounts = programmingExerciseRepository.countSubmissionsByExerciseIdsSubmittedIgnoreTestRun(programmingExerciseIds);
-            submissionCounts = submissionRepository.countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(nonProgrammingExerciseIds);
             lateSubmissionCounts = new ArrayList<>();
         }
         else {
-            programmingSubmissionsCounts = programmingExerciseRepository.countSubmissionsByExerciseIdsSubmitted(programmingExerciseIds);
-            submissionCounts = submissionRepository.countByExerciseIdsSubmittedBeforeDueDate(nonProgrammingExerciseIds);
             lateSubmissionCounts = submissionRepository.countByExerciseIdsSubmittedAfterDueDate(nonProgrammingExerciseIds);
         }
         // convert the data from the queries

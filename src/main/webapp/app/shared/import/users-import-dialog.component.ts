@@ -11,6 +11,8 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { parse } from 'papaparse';
 import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 
 const POSSIBLE_REGISTRATION_NUMBER_HEADERS = ['registrationnumber', 'matriculationnumber', 'matrikelnummer', 'number'];
 const POSSIBLE_LOGIN_HEADERS = ['login', 'user', 'username', 'benutzer', 'benutzername'];
@@ -33,6 +35,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     @Input() courseId: number;
     @Input() courseGroup: string;
     @Input() exam: Exam | undefined;
+    @Input() tutorialGroup: TutorialGroup | undefined;
 
     usersToImport: StudentDTO[] = [];
     notFoundUsers: StudentDTO[] = [];
@@ -57,6 +60,7 @@ export class UsersImportDialogComponent implements OnDestroy {
         private alertService: AlertService,
         private examManagementService: ExamManagementService,
         private courseManagementService: CourseManagementService,
+        private tutorialGroupService: TutorialGroupsService,
     ) {}
 
     ngOnDestroy(): void {
@@ -181,7 +185,12 @@ export class UsersImportDialogComponent implements OnDestroy {
      */
     importUsers() {
         this.isImporting = true;
-        if (this.courseGroup && !this.exam) {
+        if (this.tutorialGroup) {
+            this.tutorialGroupService.registerMultipleStudents(this.courseId, this.tutorialGroup.id!, this.usersToImport).subscribe({
+                next: (res) => this.onSaveSuccess(res),
+                error: () => this.onSaveError(),
+            });
+        } else if (this.courseGroup && !this.exam) {
             this.courseManagementService.addUsersToGroupInCourse(this.courseId, this.usersToImport, this.courseGroup).subscribe({
                 next: (res) => this.onSaveSuccess(res),
                 error: () => this.onSaveError(),

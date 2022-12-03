@@ -1,5 +1,5 @@
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -207,7 +207,7 @@ describe('CourseLectureDetails', () => {
 
     it('should download file for attachment', fakeAsync(() => {
         const fileService = TestBed.inject(FileService);
-        const downloadFileSpy = jest.spyOn(fileService, 'downloadFileWithAccessToken');
+        const downloadFileSpy = jest.spyOn(fileService, 'downloadFile');
         const attachment = getAttachmentUnit(lecture, 1, dayjs()).attachment!;
 
         courseLecturesDetailsComponent.downloadAttachment(attachment.link);

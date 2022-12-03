@@ -117,6 +117,42 @@ export const notificationSettingsStructure: UserSettingsStructure<NotificationSe
             ],
         },
         {
+            key: 'tutorialGroupNotifications',
+            restrictionLevels: [Authority.USER],
+            settings: [
+                {
+                    key: 'registrationTutorialGroup',
+                    descriptionKey: 'registrationTutorialGroupStudentDescription',
+                    settingId: SettingId.NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION,
+                    emailSupport: true,
+                },
+                {
+                    key: 'tutorialGroupUpdateDelete',
+                    descriptionKey: 'tutorialGroupUpdateDeleteDescription',
+                    settingId: SettingId.NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE,
+                    emailSupport: true,
+                },
+            ],
+        },
+        {
+            key: 'tutorNotifications',
+            restrictionLevels: [Authority.TA, Authority.EDITOR, Authority.INSTRUCTOR],
+            settings: [
+                {
+                    key: 'registrationTutorialGroup',
+                    descriptionKey: 'registrationTutorialGroupTutorDescription',
+                    settingId: SettingId.NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_REGISTRATION,
+                    emailSupport: true,
+                },
+                {
+                    key: 'assignUnassignTutorialGroup',
+                    descriptionKey: 'assignUnassignTutorialGroupDescription',
+                    settingId: SettingId.NOTIFICATION__TUTOR_NOTIFICATION__TUTORIAL_GROUP_ASSIGN_UNASSIGN,
+                    emailSupport: true,
+                },
+            ],
+        },
+        {
             key: 'editorNotifications',
             restrictionLevels: [Authority.EDITOR, Authority.INSTRUCTOR],
             settings: [

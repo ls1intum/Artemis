@@ -36,7 +36,7 @@
                 *ngIf="studentParticipation"
                 [exercise]="exercise"
                 [showUngradedResults]="true"
-                [showGradedBadge]="true"
+                [showBadge]="true"
                 [participation]="studentParticipation"
                 [short]="true"
                 [personalParticipation]="true"
@@ -65,20 +65,20 @@
         <span>{{ exercise.title }}</span>
         <span>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}]</span>
     </h4>
-    <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [showResult]="true"></jhi-exercise-details-student-actions>
+    <jhi-exercise-details-student-actions [exercise]="exercise" [courseId]="courseId" [showResult]="true" [examMode]="true"></jhi-exercise-details-student-actions>
     <div style="display: flex; justify-content: flex-end">
         <jhi-updating-result
             *ngIf="studentParticipation"
             [exercise]="exercise"
             [showUngradedResults]="true"
-            [showGradedBadge]="true"
+            [showBadge]="true"
             [participation]="studentParticipation"
             [short]="true"
             [personalParticipation]="true"
             class="me-2"
         ></jhi-updating-result>
     </div>
-    <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" [showGradedBadge]="true"></jhi-submission-result-status>
+    <jhi-submission-result-status [exercise]="exercise" [studentParticipation]="studentParticipation" [showBadge]="true"></jhi-submission-result-status>
     <jhi-programming-exercise-instructions
         *ngIf="exercise"
         [exercise]="exercise"

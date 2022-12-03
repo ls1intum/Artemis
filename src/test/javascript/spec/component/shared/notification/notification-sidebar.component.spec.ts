@@ -1,8 +1,8 @@
 import dayjs from 'dayjs/esm';
-import { BehaviorSubject, of, ReplaySubject } from 'rxjs';
+import { BehaviorSubject, ReplaySubject, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { LAST_READ_STORAGE_KEY, NotificationSidebarComponent, reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';

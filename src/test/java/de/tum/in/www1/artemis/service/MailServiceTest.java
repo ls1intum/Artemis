@@ -86,11 +86,11 @@ class MailServiceTest {
     @Test
     void testSendEmail() {
         mailService.sendEmail(student1, subject, content, false, true);
-        verify(javaMailSender, times(1)).send(mimeMessage);
+        verify(javaMailSender, times(1)).send(any(MimeMessage.class));
     }
 
     /**
-     * When the javaMailSender returns an exception, that exception should be catched and an ArtemisMailException should be thrown instead.
+     * When the javaMailSender returns an exception, that exception should be caught and an ArtemisMailException should be thrown instead.
      */
     @Test
     void testThrowException() {

@@ -11,6 +11,7 @@ export enum EntityType {
     DIAGRAM = 'DIAGRAM',
     ORGANIZATION = 'ORGANIZATION',
     EXAM = 'EXAM',
+    TUTORIAL_GROUP = 'TUTORIAL_GROUP',
 }
 
 const FETCH_FALLBACK_TIMEOUT = 3000;
@@ -116,6 +117,9 @@ export class EntityTitleService {
                 break;
             case EntityType.ORGANIZATION:
                 resourceUrl += 'organizations';
+                break;
+            case EntityType.TUTORIAL_GROUP:
+                resourceUrl += 'tutorial-groups';
                 break;
         }
 

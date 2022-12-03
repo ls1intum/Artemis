@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, TemplateRef } from '@angular/core';
+import { Component, EventEmitter, Input, Output, TemplateRef } from '@angular/core';
 import { TreeviewItem } from '../../models/treeview-item';
 import { TreeviewItemTemplateContext } from '../../models/treeview-item-template-context';
 

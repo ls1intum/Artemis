@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Lecture } from 'app/entities/lecture.model';
@@ -10,6 +10,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { LectureService } from 'app/lecture/lecture.service';
 
 @Component({
     selector: 'jhi-lecture-attachments',
@@ -18,15 +19,18 @@ import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants'
 })
 export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
+    @Input() lectureId: number | undefined;
+    @Input() showHeader = true;
+
     lecture: Lecture;
     attachments: Attachment[] = [];
     attachmentToBeCreated?: Attachment;
     attachmentBackup?: Attachment;
-    attachmentFile?: Blob;
+    attachmentFile?: File;
     isUploadingAttachment: boolean;
     isDownloadingAttachmentLink?: string;
     notificationText?: string;
-    erroredFile?: Blob;
+    erroredFile?: File;
     errorMessage?: string;
 
     // A human-readable list of allowed file extensions
@@ -47,6 +51,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     constructor(
         protected activatedRoute: ActivatedRoute,
         private attachmentService: AttachmentService,
+        private lectureService: LectureService,
         private httpClient: HttpClient,
         private fileUploaderService: FileUploaderService,
         private fileService: FileService,
@@ -55,10 +60,21 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.notificationText = undefined;
         this.activatedRoute.parent!.data.subscribe(({ lecture }) => {
-            this.lecture = lecture;
-            this.attachmentService.findAllByLectureId(this.lecture.id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
-                this.attachments = attachmentsResponse.body!;
-            });
+            if (this.lectureId) {
+                this.lectureService.findWithDetails(this.lectureId).subscribe((lectureResponse: HttpResponse<Lecture>) => {
+                    this.lecture = lectureResponse.body!;
+                    this.loadAttachments();
+                });
+            } else {
+                this.lecture = lecture;
+                this.loadAttachments();
+            }
+        });
+    }
+
+    loadAttachments() {
+        this.attachmentService.findAllByLectureId(this.lecture.id!).subscribe((attachmentsResponse: HttpResponse<Attachment[]>) => {
+            this.attachments = attachmentsResponse.body!;
         });
     }
 
@@ -150,7 +166,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     downloadAttachment(downloadUrl: string) {
         if (!this.isDownloadingAttachmentLink) {
             this.isDownloadingAttachmentLink = downloadUrl;
-            this.fileService.downloadFileWithAccessToken(downloadUrl);
+            this.fileService.downloadFile(downloadUrl);
             this.isDownloadingAttachmentLink = undefined;
         }
     }
@@ -165,7 +181,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
             const fileList: FileList = event.target.files;
             const attachmentFile = fileList[0];
             this.attachmentFile = attachmentFile;
-            this.attachmentToBeCreated!.link = attachmentFile['name'];
+            this.attachmentToBeCreated!.link = attachmentFile.name;
         }
     }
 
@@ -187,7 +203,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         this.isUploadingAttachment = true;
         this.erroredFile = undefined;
         this.errorMessage = undefined;
-        this.fileUploaderService.uploadFile(file, file['name'], { keepFileName: true }).then(
+        this.fileUploaderService.uploadFile(file, file.name, { keepFileName: true }).then(
             (result) => {
                 this.attachmentToBeCreated!.link = result.path;
                 this.isUploadingAttachment = false;

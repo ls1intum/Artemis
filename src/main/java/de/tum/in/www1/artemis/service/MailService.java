@@ -27,12 +27,12 @@ import org.thymeleaf.spring5.SpringTemplateEngine;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.exception.ArtemisMailException;
+import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import tech.jhipster.config.JHipsterProperties;
 
 /**
@@ -77,6 +77,8 @@ public class MailService {
     private static final String ASSESSED_SCORE = "assessedScore";
 
     private static final String RELATIVE_SCORE = "relativeScore";
+
+    private static final String NOTIFICATION_TYPE = "notificationType";
 
     // Translation that can not be done via i18n Resource Bundle (for Thymeleaf) but has to be set in this service via Java
     private final String newAnnouncementEN = "New announcement \"%s\" in course \"%s\"";
@@ -189,7 +191,13 @@ public class MailService {
         NotificationType notificationType = NotificationTitleTypeConstants.findCorrespondingNotificationType(notification.getTitle());
         log.debug("Sending \"{}\" notification email to '{}'", notificationType.name(), user.getEmail());
 
-        Locale locale = Locale.forLanguageTag(user.getLangKey());
+        String localeKey = user.getLangKey();
+        if (localeKey == null) {
+            throw new IllegalArgumentException(
+                    "The user object has no language key defined. This can happen if you do not load the user object from the database but take it straight from the client");
+        }
+
+        Locale locale = Locale.forLanguageTag(localeKey);
 
         Context context = new Context(locale);
         context.setVariable(USER, user);
@@ -207,6 +215,10 @@ public class MailService {
             context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
         }
 
+        if (notificationSubject instanceof SingleUserNotificationService.TutorialGroupNotificationSubject tutorialGroupNotificationSubject) {
+            setContextForTutorialGroupNotifications(context, notificationType, tutorialGroupNotificationSubject);
+        }
+
         if (notificationSubject instanceof Post post) {
             // posts use a different mechanism for the url
             context.setVariable(NOTIFICATION_URL, extractNotificationUrl(post, artemisServerUrl.toString()));
@@ -222,10 +234,42 @@ public class MailService {
         sendEmail(user, subject, content, false, true);
     }
 
+    private void setContextForTutorialGroupNotifications(Context context, NotificationType notificationType,
+            SingleUserNotificationService.TutorialGroupNotificationSubject notificationSubject) {
+
+        if (NotificationType.TUTORIAL_GROUP_REGISTRATION_STUDENT.equals(notificationType)) {
+            context.setVariable(NOTIFICATION_TYPE, "studentRegistration");
+            context.setVariable("student", notificationSubject.users().stream().findFirst().orElse(null));
+        }
+        if (NotificationType.TUTORIAL_GROUP_DEREGISTRATION_STUDENT.equals(notificationType)) {
+            context.setVariable(NOTIFICATION_TYPE, "studentDeregistration");
+            context.setVariable("student", notificationSubject.users().stream().findFirst().orElse(null));
+        }
+        if (NotificationType.TUTORIAL_GROUP_REGISTRATION_TUTOR.equals(notificationType)) {
+            context.setVariable(NOTIFICATION_TYPE, "tutorRegistration");
+            context.setVariable("student", notificationSubject.users().stream().findFirst().orElse(null));
+        }
+        if (NotificationType.TUTORIAL_GROUP_DEREGISTRATION_TUTOR.equals(notificationType)) {
+            context.setVariable(NOTIFICATION_TYPE, "tutorDeregistration");
+            context.setVariable("student", notificationSubject.users().stream().findFirst().orElse(null));
+        }
+        if (NotificationType.TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR.equals(notificationType)) {
+            context.setVariable(NOTIFICATION_TYPE, "tutorRegistrationMultiple");
+            context.setVariable("numberOfStudents", notificationSubject.users().size());
+        }
+        if (NotificationType.TUTORIAL_GROUP_ASSIGNED.equals(notificationType)) {
+            context.setVariable(NOTIFICATION_TYPE, "tutorialGroupAssigned");
+        }
+        if (NotificationType.TUTORIAL_GROUP_UNASSIGNED.equals(notificationType)) {
+            context.setVariable(NOTIFICATION_TYPE, "tutorialGroupUnassigned");
+        }
+    }
+
     /**
      * Creates content for a notification email based on its type
+     *
      * @param notificationType which is used to find the corresponding html template
-     * @param context which is needed for creating the content via the templateEngine
+     * @param context          which is needed for creating the content via the templateEngine
      * @return created content based on notification type
      */
     private String createContentForNotificationEmailByType(NotificationType notificationType, Context context) {
@@ -239,6 +283,10 @@ public class MailService {
             case DUPLICATE_TEST_CASE -> templateEngine.process("mail/notification/duplicateTestCasesEmail", context);
             case NEW_PLAGIARISM_CASE_STUDENT -> templateEngine.process("mail/notification/plagiarismCaseEmail", context);
             case PLAGIARISM_CASE_VERDICT_STUDENT -> templateEngine.process("mail/notification/plagiarismVerdictEmail", context);
+            case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED -> templateEngine
+                    .process("mail/notification/tutorialGroupBasicEmail", context);
+            case TUTORIAL_GROUP_DELETED -> templateEngine.process("mail/notification/tutorialGroupDeletedEmail", context);
+            case TUTORIAL_GROUP_UPDATED -> templateEngine.process("mail/notification/tutorialGroupUpdatedEmail", context);
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
     }
@@ -263,7 +311,7 @@ public class MailService {
     }
 
     @Async
-    public void sendNotificationEmailForMultipleUsers(GroupNotification notification, List<User> users, Object notificationSubject) {
+    public void sendNotificationEmailForMultipleUsers(Notification notification, List<User> users, Object notificationSubject) {
         users.forEach(user -> sendNotificationEmail(notification, user, notificationSubject));
     }
 

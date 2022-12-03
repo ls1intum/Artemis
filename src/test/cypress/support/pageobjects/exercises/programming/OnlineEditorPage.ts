@@ -1,6 +1,6 @@
 import { DELETE } from '../../../constants';
 import { artemis } from '../../../ArtemisTesting';
-import { GET, BASE_API, POST } from '../../../constants';
+import { BASE_API, GET, POST } from '../../../constants';
 import { CypressCredentials } from '../../../users';
 
 /**
@@ -84,7 +84,7 @@ export class OnlineEditorPage {
      */
     submit() {
         cy.get('#submit_button').click();
-        cy.get('#result-score-graded', { timeout: 140000 }).should('contain.text', 'GRADED').and('be.visible');
+        cy.get('#result-score-badge', { timeout: 140000 }).should('contain.text', 'GRADED').and('be.visible');
     }
 
     /**

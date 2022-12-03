@@ -239,16 +239,15 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @MethodSource("setResultRatedPermutations")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void setProgrammingExerciseResultRated(boolean shouldBeRated, ZonedDateTime buildAndTestAfterDueDate, SubmissionType submissionType, ZonedDateTime dueDate) {
-
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(submissionType).submitted(true)
                 .submissionDate(ZonedDateTime.now());
-        database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
+        programmingSubmission = database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
         Result result = database.addResultToParticipation(programmingExerciseStudentParticipation, programmingSubmission);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
         programmingExercise.setDueDate(dueDate);
         programmingExerciseRepository.save(programmingExercise);
 
-        result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
+        result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission, programmingSubmission.getParticipation());
         assertThat(result.isRated()).isSameAs(shouldBeRated);
     }
 
@@ -589,27 +588,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    void getLatestResultWithFeedbacks() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
-        result.setCompletionDate(ZonedDateTime.now().minusHours(10));
-        Result latestResult = database.addResultToParticipation(null, null, studentParticipation);
-        latestResult.setCompletionDate(ZonedDateTime.now());
-        database.addSampleFeedbackToResults(result);
-        latestResult = database.addSampleFeedbackToResults(latestResult);
-        Result returnedResult = request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.OK, Result.class);
-        assertThat(returnedResult).isNotNull().isEqualTo(latestResult);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void getLatestResultWithFeedbacks_asStudent() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
-        database.addSampleFeedbackToResults(result);
-        request.get("/api/participations/" + studentParticipation.getId() + "/latest-result", HttpStatus.FORBIDDEN, Result.class);
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
     void deleteResult() throws Exception {
         assertThrows(EntityNotFoundException.class, () -> resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> resultRepository.findByIdElseThrow(Long.MAX_VALUE));
@@ -775,11 +753,13 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetAssessmentCountByCorrectionRound() {
         // exercise
-        TextExercise textExercise = new TextExercise();
-        textExerciseRepository.save(textExercise);
+        var now = ZonedDateTime.now();
+        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.plusHours(2), course);
+        textExercise = textExerciseRepository.save(textExercise);
 
         // participation
         StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setParticipant(userRepository.findOneByLogin("student1").get());
         studentParticipation.setExercise(textExercise);
         studentParticipationRepository.save(studentParticipation);
 
@@ -820,10 +800,11 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         Course course = database.createCourse();
         ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
         programmingExercise.setDueDate(null);
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         // participation
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
+        programmingExerciseStudentParticipation.setParticipant(userRepository.findOneByLogin("student1").get());
         programmingExerciseStudentParticipation.setExercise(programmingExercise);
         programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
 

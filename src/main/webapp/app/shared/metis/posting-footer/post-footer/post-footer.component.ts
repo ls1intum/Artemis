@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -21,6 +21,9 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
 
     @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
     @Input() showAnswers: boolean;
+    @Input() isCourseMessagesPage: boolean;
+    @Output() openThread = new EventEmitter<void>();
+
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;

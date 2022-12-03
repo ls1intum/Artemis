@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
 import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
@@ -11,7 +11,7 @@ import { DragAndDropMouseEvent } from 'app/exercises/quiz/manage/drag-and-drop-q
 import { DragAndDropQuestionEditComponent } from 'app/exercises/quiz/manage/drag-and-drop-question/drag-and-drop-question-edit.component';
 import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
-import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-uploader.service';
+import { FileUploadResponse, FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainCommand';
 import { ExplanationCommand } from 'app/shared/markdown-editor/domainCommands/explanation.command';

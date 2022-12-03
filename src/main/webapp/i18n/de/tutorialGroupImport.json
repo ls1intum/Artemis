@@ -1,0 +1,78 @@
+{
+    "artemisApp": {
+        "tutorialGroupImportDialog": {
+            "warning": "Warnung",
+            "finishedWarning": "Artemis hat den Import der Übungsgruppe abgeschlossen. Beachte, dass die Übungsgruppen ohne Zeitplan und mit Standardeinstellungen erstellt wurden, z. B. mit dir als Tutor. Du kannst diese Einstellungen ändern und einen Zeitplan hinzufügen, indem du die jeweiligen Gruppen bearbeitest.",
+            "importButton": "Übunsgruppen importieren",
+            "dialogTitle": "Übungsgruppen importieren",
+            "explanations": {
+                "description": "Dieser Dialog kann verwendet werden, um Übungsgruppen und deren Registrierungen aus einer CSV-Datei zu importieren. Dabei werden Übungsgruppen erstellt, wenn sie noch nicht existieren. Die Studierende werden von ihrer aktuellen Übungsgruppe abgemeldet und in der neuen Übungsgruppe registriert.",
+                "requirements": "Jede Zeile muss immer einen Wert für den Übungsgruppen Titel enthalten. Wenn nicht nur Übungsgruppen erstellt werden sollen, sondern auch die Registrierungen von Studierenden, muss die Zeile einen Wert für die Immatrikulationsnummer oder für den Benutzernamen enthalten. Dies ist erforderlich, um den Studierenden zu identifizieren. Werte für den Nachnamen und Vornamen sind optional. Die erste Zeile muss die Spaltennamen angeben!"
+            },
+            "supportedHeaderNames": {
+                "label": "Unterstützte Spaltennamen (Versionen mit Leerzeichen, Unterstrichen, Bindestrichen und Grossbuchstaben werden ebenfalls unterstützt): ",
+                "alwaysRequired": "Immer erforderlich (um die Übungsgruppe zu identifizieren): ",
+                "requiredIfStudentRegistration": "Eines davon ist erforderlich, wenn Studierende registriert werden sollen (um Studierende zu identifizieren): ",
+                "alwaysOptional": "Immer optional (nur für Anzeigzwecke): ",
+                "tutorialGroupTitle": "Für den Tiel der Übungsgruppe: {{ headers }}",
+                "registrationNumber": "Für die Immatrikulationsnummer: {{ headers }}",
+                "login": "Für den Benutznermane: {{ headers }}",
+                "firstName": "Für den Vornamen: {{ headers }}",
+                "lastName": "Für den Nachnamen: {{ headers }}"
+            },
+            "errorMessages": {
+                "genericErrorMessage": "Import von Übungsgruppen sind fehlgeschlagen!",
+                "withoutTitle": "Die folgenden Zeilen enthalten keinen Übungsgruppen Titel: ",
+                "invalidTitle": "Die folgenden Zeilen haben einen ungültigen Titel für die Übungsgruppe (Titel dürfen nur Buchstaben, Zahlen, Leerzeichen und Bindestriche und maximal 19 Zeichen enthalten): ",
+                "noIdentificationInformation": "Die folgenden Zeilen geben einen Benutzer an, enthalten jedoch keinen Benutzernamen oder Immatrikulationsnummer: ",
+                "duplicatedLogins": "Die folgenden Benutzernamen werden mehreren Übungsgruppen zugeordnet: ",
+                "duplicatedRegistrationNumbers": "Die folgenden Immatrikulationsnummern werden mehreren Übungsgruppen zugeordnet: "
+            },
+            "serverErrors": {
+                "notitle": "Kein Übungsgruppen Titel",
+                "nologinorregistrationnumber": "Kein Benutzername oder Immatrikulationsnummer",
+                "nouserfound": "Kein passender Studierender im Kurs gefunden",
+                "multipleregistrations": "Mehrere Registrierungen in CSV für Studierenden"
+            },
+            "csvFile": {
+                "label": "Wähle eine .csv-Datei aus",
+                "validationFailed": "Bitte die Datei reparieren, sie wird aufgrund des folgenden Fehlers nicht als gültig angesehen: ",
+                "parseCSVButton": "CSV einlesen"
+            },
+            "fixedPlaceForm": {
+                "checkbox": {
+                    "label": "Möchtest du einen Spaltennamen und Wert eingeben, um die Zeilen zu filtern?",
+                    "explanation": "Nur die Zeilen, die den angegebenen Wert in der angegebenen Spalte enthalten werden aus der CSV ausgelesen."
+                },
+                "statusHeaderInput": {
+                    "label": "Spaltenname für Registrierungsstatus",
+                    "placeholder": "Gib den Spaltennamen ein, der den Status der Registrierung enthält. Z.B. 'Platz'",
+                    "maxLengthValidationError": "Der Spaltenname ist auf {{ max }} Zeichen beschränkt!"
+                },
+                "fixedPlaceValueInput": {
+                    "label": "Wert für Fixplatz-Markierung",
+                    "placeholder": "Gib den Wert ein, der eine Registrierung als fix markiert. Z.B. 'Fixplatz'",
+                    "maxLengthValidationError": "Der Wert ist auf {{ max }} Zeichen beschränkt!"
+                }
+            },
+            "table": {
+                "showNotImportedButton": "Nicht importierte Registrierungen",
+                "showImportedButton": "Importierte Registrierungen",
+                "showAllButton": "Alle Registrierungen",
+                "columns": {
+                    "title": "Übungsgruppe",
+                    "registrationNumber": "Matrikelnummer",
+                    "login": "Benutzername",
+                    "firstName": "Vorname",
+                    "lastName": "Nachname",
+                    "error": "Fehler"
+                },
+                "footer": {
+                    "imported": "Importiert: {{ count }} Registrierungen",
+                    "notImported": "Nicht importiert: {{ count }} Registrierungen",
+                    "total": "Gesamt: {{ count }} Registrierungen"
+                }
+            }
+        }
+    }
+}

@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
 import { ActivatedRoute } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
 import { Component, Input } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -18,6 +17,8 @@ import { By } from '@angular/platform-browser';
 import { CourseLearningGoalProgress, CourseLectureUnitProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import { cloneDeep } from 'lodash-es';
 import * as Sentry from '@sentry/browser';
+import { AccountService } from 'app/core/auth/account.service';
+import { ArtemisTestModule } from '../../test.module';
 
 @Component({ selector: 'jhi-learning-goal-card', template: '<div><ng-content></ng-content></div>' })
 class LearningGoalCardStubComponent {
@@ -32,7 +33,7 @@ describe('LearningGoalManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [
                 LearningGoalManagementComponent,
                 LearningGoalCardStubComponent,
@@ -42,7 +43,7 @@ describe('LearningGoalManagementComponent', () => {
                 MockDirective(HasAnyAuthorityDirective),
             ],
             providers: [
-                MockProvider(AlertService),
+                MockProvider(AccountService),
                 MockProvider(LearningGoalService),
                 {
                     provide: ActivatedRoute,
@@ -105,6 +106,7 @@ describe('LearningGoalManagementComponent', () => {
             status: 200,
         });
 
+        jest.spyOn(learningGoalService, 'getLearningGoalRelations').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsOfCourseResponse));
         const getProgressSpy = jest.spyOn(learningGoalService, 'getCourseProgress');
         jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));

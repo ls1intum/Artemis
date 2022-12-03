@@ -1,26 +1,28 @@
 package de.tum.in.www1.artemis.domain.lecture;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
-import javax.persistence.DiscriminatorValue;
+import javax.persistence.*;
 import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
 
+import org.hibernate.Hibernate;
+import org.hibernate.annotations.*;
 import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.LearningGoal;
 
 @Entity
 @DiscriminatorValue("E")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExerciseUnit extends LectureUnit {
 
-    // Note: Name and Release Date will always be taken from associated exercise
-    @ManyToOne
+    // Note: Name, release date and learning goals will always be taken from associated exercise
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Exercise exercise;
@@ -35,12 +37,7 @@ public class ExerciseUnit extends LectureUnit {
 
     @Override
     public boolean isVisibleToStudents() {
-        if (exercise == null) {
-            return true;
-        }
-        else {
-            return exercise.isVisibleToStudents();
-        }
+        return exercise == null || exercise.isVisibleToStudents();
     }
 
     @Override
@@ -61,5 +58,26 @@ public class ExerciseUnit extends LectureUnit {
     @Override
     public void setReleaseDate(ZonedDateTime releaseDate) {
         // Should be set in associated exercise
+    }
+
+    @Override
+    public Set<LearningGoal> getLearningGoals() {
+        return exercise == null || !Hibernate.isPropertyInitialized(exercise, "learningGoals") ? new HashSet<>() : exercise.getLearningGoals();
+    }
+
+    @Override
+    public void setLearningGoals(Set<LearningGoal> learningGoals) {
+        // Should be set in associated exercise
+    }
+
+    /**
+     * Ensure that we do not accidentally persist values taken from the corresponding exercise
+     */
+    @PrePersist
+    @PreUpdate
+    public void prePersistOrUpdate() {
+        this.name = null;
+        this.releaseDate = null;
+        this.learningGoals = new HashSet<>();
     }
 }

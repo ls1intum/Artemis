@@ -12,7 +12,7 @@
             "usersForImport": {
                 "label": "Users to import",
                 "tooltip": "These students will be imported when clicking on the \"Import\" button.",
-                "importFailed": "Please repair the file, it could not be read  due to the following error:",
+                "importFailed": "Please repair the file, it could not be read due to the following error:",
                 "failedRows": "The following rows are invalid and must contain a value in either login or matriculation number:"
             },
             "numberOfUsers": "Number of users:",

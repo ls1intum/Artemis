@@ -22,7 +22,9 @@
                 "weeklySummary": "Weekly Summary",
                 "exerciseNotifications": "Exercise Notifications",
                 "lectureNotifications": "Lecture Notifications",
+                "tutorialGroupNotifications": "Tutorial Group Notifications",
                 "courseWideDiscussionNotifications": "Course-wide Discussion Notifications",
+                "tutorNotifications": "Tutor Notifications",
                 "editorNotifications": "Editor Notifications",
                 "instructorNotifications": "Instructor Notifications"
             },
@@ -41,7 +43,10 @@
                 "newAnnouncementPost": "New Announcement",
                 "courseAndExamArchivingStarted": "Course & Exam Archiving Started",
                 "fileSubmissionSuccessful": "File Submission Successful",
-                "programmingTestCasesChanged": "Changed Test Cases for Programming Exercises"
+                "programmingTestCasesChanged": "Changed Test Cases for Programming Exercises",
+                "registrationTutorialGroup": "Registration and Deregistration for Tutorial Group",
+                "tutorialGroupUpdateDelete": "Update and Delete of Tutorial Groups",
+                "assignUnassignTutorialGroup": "Assign and Unassign of Tutorial Groups"
             },
             "settingDescriptions": {
                 "basicWeeklySummaryDescription": "Receive a basic weekly summary every Friday at 5pm (e.g. what new exercises have been released this week and are still open)",
@@ -58,7 +63,11 @@
                 "newAnnouncementPostDescription": "Receive a notification when a new announcement has been created",
                 "courseAndExamArchivingStartedDescription": "Receive a notification when the process of archiving a course or exam has been started",
                 "fileSubmissionSuccessfulDescription": "Receive a notification after you successfully submitted a file upload exercise",
-                "programmingTestCasesChangedDescription": "Get notified if test cases for a programming exercises have been changed"
+                "programmingTestCasesChangedDescription": "Get notified if test cases for a programming exercises have been changed",
+                "registrationTutorialGroupTutorDescription": "Get notified when a student was registered or deregistered from your tutorial group",
+                "registrationTutorialGroupStudentDescription": "Get notified when you were registered or deregistered from a tutorial group",
+                "tutorialGroupUpdateDeleteDescription": "Get notified when a tutorial group for which you are registered or a tutor was updated or deleted",
+                "assignUnassignTutorialGroupDescription": "Get notified when you were assigned or unassigned to lead a tutorial group"
             }
         }
     }

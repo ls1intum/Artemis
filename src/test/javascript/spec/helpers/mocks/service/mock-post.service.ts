@@ -3,6 +3,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { CourseWideContext, DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
 import {
+    messagesBetweenUser1User2,
     metisCoursePosts,
     metisExercisePosts,
     metisLecturePosts,
@@ -68,6 +69,14 @@ export class MockPostService {
                 body: metisLecturePosts,
                 headers: new HttpHeaders({
                     'X-Total-Count': metisLecturePosts.length.toString(),
+                }),
+            }) as Observable<HttpResponse<Post[]>>;
+        }
+        if (postContextFilter.conversationId) {
+            return of({
+                body: messagesBetweenUser1User2,
+                headers: new HttpHeaders({
+                    'X-Total-Count': messagesBetweenUser1User2.length.toString(),
                 }),
             }) as Observable<HttpResponse<Post[]>>;
         } else {

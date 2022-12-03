@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Optional;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -30,12 +29,6 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     @Value("${server.url}")
     protected String ARTEMIS_SERVER_URL;
-
-    @Value("${artemis.lti.user-prefix-edx:#{null}}")
-    protected Optional<String> userPrefixEdx;
-
-    @Value("${artemis.lti.user-prefix-u4i:#{null}}")
-    protected Optional<String> userPrefixU4I;
 
     @Value("${artemis.version-control.default-branch:main}")
     protected String defaultBranch;

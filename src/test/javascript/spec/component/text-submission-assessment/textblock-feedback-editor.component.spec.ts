@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entities/feedback.model';
@@ -23,7 +23,7 @@ import { NgModel } from '@angular/forms';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { getLatestSubmissionResult, SubmissionExerciseType } from 'app/entities/submission.model';
+import { SubmissionExerciseType, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { of } from 'rxjs';

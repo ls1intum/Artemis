@@ -1,8 +1,8 @@
-<div [id]="'exercise-card-' + exercise.id" class="course-exercise-row row align-items-center mb-2 mt-2 position-relative" [class.guided-tour]="hasGuidedTour">
+<div [id]="'exercise-card-' + exercise.id" class="course-exercise-row align-items-center mb-2 mt-2 position-relative" [class.guided-tour]="hasGuidedTour">
     <a class="stretched-link" [routerLink]="['/courses', course.id!, 'exercises', exercise.id!]"></a>
     <div class="col-auto d-none d-sm-block">
         <a class="exercise-row-icon" [routerLink]="['/courses', course.id!, 'exercises', exercise.id!]">
-            <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" size="2x" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
+            <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" size="2x" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate"></fa-icon>
         </a>
     </div>
     <div class="col">
@@ -18,10 +18,12 @@
             <jhi-submission-result-status
                 *ngIf="!isPresentationMode"
                 [exercise]="exercise"
-                [short]="true"
+                [studentParticipation]="gradedStudentParticipation"
                 [triggerLastGraded]="false"
+                [short]="true"
                 class="result"
-            ></jhi-submission-result-status>
+            >
+            </jhi-submission-result-status>
         </div>
         <div class="row" style="justify-content: space-between">
             <jhi-exercise-details-student-actions

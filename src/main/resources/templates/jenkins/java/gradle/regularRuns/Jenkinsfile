@@ -3,6 +3,7 @@
 pipeline {
         options {
             timeout(time: #jenkinsTimeout, unit: 'MINUTES')
+            timestamps()
         }
         agent {
             docker {
@@ -21,9 +22,7 @@ pipeline {
             }
             stage('Build') {
                 steps {
-                    timestamps {
-                        sh './gradlew clean test #testwiseCoverageGradleTask'
-                    }
+                    sh './gradlew clean test #testwiseCoverageGradleTask'
                 }
             }
         }

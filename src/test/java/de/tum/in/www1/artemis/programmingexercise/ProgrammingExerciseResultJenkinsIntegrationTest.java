@@ -114,6 +114,22 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    void shouldCreateResultOnParticipationDefaultBranch() {
+        var commit = new CommitDTO("abc123", "slug", "branch");
+        var notification = ModelFactory.generateTestResultDTO(null, "student1", null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(), List.of(commit), null);
+        programmingExerciseResultTestService.shouldCreateResultOnParticipationDefaultBranch(notification);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldIgnoreResultNotOnParticipationDefaultBranch() {
+        var commit = new CommitDTO("abc123", "slug", "other");
+        var notification = ModelFactory.generateTestResultDTO(null, "student1", null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(), List.of(commit), null);
+        programmingExerciseResultTestService.shouldIgnoreResultIfNotOnParticipationBranch(notification);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldCreateResultOnDefaultBranch() {
         var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
         var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),

@@ -28,6 +28,7 @@ import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { markdownForHtml } from 'app/shared/util/markdown.conversion.util';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
 import { faAngleDown, faAngleRight, faBan, faBars, faChevronDown, faChevronUp, faTrash, faUndo, faUnlink } from '@fortawesome/free-solid-svg-icons';
+import { MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-short-answer-question-edit',
@@ -62,6 +63,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     questionMoveUp = new EventEmitter();
     @Output()
     questionMoveDown = new EventEmitter();
+
+    readonly maxCharacterCount = MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH;
 
     /** Ace Editor configuration constants **/
     questionEditorText: any = '';
@@ -346,13 +349,13 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     addSpotAtCursor(): void {
         const editor = this.questionEditor.getEditor();
         const optionText = editor.getCopyText();
-        const addedText = '[-spot ' + this.numberOfSpot + ']';
+        const currentSpotNumber = this.numberOfSpot;
+        const addedText = '[-spot ' + currentSpotNumber + ']';
         editor.focus();
         editor.insert(addedText);
         editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
-        this.addOptionToSpot(editor, this.numberOfSpot, optionText, this.firstPressed);
+        this.addOptionToSpot(editor, currentSpotNumber, optionText, this.firstPressed);
 
-        this.numberOfSpot++;
         this.firstPressed++;
     }
 
@@ -439,6 +442,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const markedTextHTML = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
         const markedText = markdownForHtml(markedTextHTML).substring(startOfRange, endOfRange);
 
+        const currentSpotNumber = this.numberOfSpot;
+
         // split text before first option tag
         const questionText = editor
             .getValue()
@@ -447,18 +452,17 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(questionText);
         const textOfSelectedRow = this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]];
         this.textParts[selectedTextRowColumn[0]][selectedTextRowColumn[1]] =
-            textOfSelectedRow.substring(0, startOfRange) + '[-spot ' + this.numberOfSpot + ']' + textOfSelectedRow.substring(endOfRange);
+            textOfSelectedRow.substring(0, startOfRange) + '[-spot ' + currentSpotNumber + ']' + textOfSelectedRow.substring(endOfRange);
 
         // recreation of question text from array and update textParts and parse textParts to html
         this.shortAnswerQuestion.text = this.textParts.map((textPart) => textPart.join(' ')).join('\n');
         const textParts = this.shortAnswerQuestionUtil.divideQuestionTextIntoTextParts(this.shortAnswerQuestion.text);
         this.textParts = this.shortAnswerQuestionUtil.transformTextPartsIntoHTML(textParts);
         editor.setValue(this.generateMarkdown());
-        editor.moveCursorTo(editor.getLastVisibleRow() + this.numberOfSpot, Number.POSITIVE_INFINITY);
-        this.addOptionToSpot(editor, this.numberOfSpot, markedText, this.firstPressed);
+        editor.moveCursorTo(editor.getLastVisibleRow() + currentSpotNumber, Number.POSITIVE_INFINITY);
+        this.addOptionToSpot(editor, currentSpotNumber, markedText, this.firstPressed);
         this.parseMarkdown(editor.getValue());
 
-        this.numberOfSpot++;
         this.firstPressed++;
 
         this.questionUpdated.emit();
@@ -749,5 +753,28 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     toggleExactMatchCheckbox(checked: boolean): void {
         this.shortAnswerQuestion.similarityValue = checked ? 100 : 85;
         this.questionUpdated.emit();
+    }
+
+    onTextChange(newText: string) {
+        this.numberOfSpot = this.getHighestSpotNumbers(newText) + 1;
+        this.questionUpdated.emit();
+    }
+
+    getHighestSpotNumbers(text: string): number {
+        const regex = /\[-spot (\d+)\]/g;
+        let highest = 0;
+        let result = regex.exec(text);
+        while (result) {
+            const currentNumber = +result[1];
+            if (result.length > 0 && currentNumber > highest) {
+                highest = currentNumber;
+            }
+            result = regex.exec(text);
+        }
+        return highest;
+    }
+
+    setQuestionEditorValue(text: string): void {
+        this.questionEditor.getEditor().setValue(text);
     }
 }

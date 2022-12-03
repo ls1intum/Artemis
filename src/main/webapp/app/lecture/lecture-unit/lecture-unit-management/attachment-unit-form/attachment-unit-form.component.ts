@@ -2,7 +2,7 @@ import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, 
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 export interface AttachmentUnitFormData {
@@ -21,7 +21,7 @@ export interface FormProperties {
 
 // file input is a special case and is not included in the reactive form structure
 export interface FileProperties {
-    file?: File | Blob;
+    file?: File;
     fileName?: string;
 }
 
@@ -46,10 +46,17 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
     form: FormGroup;
 
+    @Input()
+    hasCancelButton: boolean;
+    @Output()
+    onCancel: EventEmitter<any> = new EventEmitter<any>();
+
+    faTimes = faTimes;
+
     // have to handle the file input as a special case at is not part of the reactive form
     @ViewChild('fileInput', { static: false })
     fileInput: ElementRef;
-    file: File | Blob;
+    file: File;
     fileName?: string;
     fileInputTouched = false;
 
@@ -83,7 +90,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         if (event.target.files.length) {
             const fileList = event.target.files;
             this.file = fileList[0];
-            this.fileName = this.file['name'];
+            this.fileName = this.file.name;
         }
     }
 
@@ -135,5 +142,9 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         if (formData?.fileProperties?.fileName) {
             this.fileName = formData?.fileProperties?.fileName;
         }
+    }
+
+    cancelForm() {
+        this.onCancel.emit();
     }
 }

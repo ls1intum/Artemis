@@ -152,7 +152,8 @@ public class ProgrammingExerciseParticipationService {
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation && studentParticipation.isOwnedBy(user)) {
             return true;
         }
-        final var programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation);
+
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.getProgrammingExerciseFromParticipation(participation);
         if (programmingExercise == null) {
             log.error("canAccessParticipation: could not find programming exercise of participation id {}", participation.getId());
             // Cannot access a programming participation that has no programming exercise associated with it
@@ -221,6 +222,7 @@ public class ProgrammingExerciseParticipationService {
      */
     public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
+            // TODO: this calls protect branches which might not be necessary if the branches have already been protected during "start exercise" which is typically the case
             versionControlService.get().configureRepository(programmingExercise, participation, true);
         }
         else {

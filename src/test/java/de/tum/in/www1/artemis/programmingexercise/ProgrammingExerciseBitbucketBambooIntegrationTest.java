@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
-import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService.studentLogin;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_PUSH_EVENT_REQUEST;
 import static org.mockito.ArgumentMatchers.*;
@@ -422,6 +421,24 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @WithMockUser(username = "student1", roles = "USER")
     void testExportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         programmingExerciseTestService.exportSolutionRepository_shouldReturnFileOrForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testBuildLogStatistics_unauthorized() throws Exception {
+        programmingExerciseTestService.buildLogStatistics_unauthorized();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testBuildLogStatistics_noStatistics() throws Exception {
+        programmingExerciseTestService.buildLogStatistics_noStatistics();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testBuildLogStatistics() throws Exception {
+        programmingExerciseTestService.buildLogStatistics();
     }
 
 }

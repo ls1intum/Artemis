@@ -1,6 +1,5 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subject, Subscription } from 'rxjs';
-import { Participation } from 'app/entities/participation/participation.model';
 import { ParticipationService } from './participation.service';
 import { ActivatedRoute } from '@angular/router';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -15,7 +14,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import dayjs from 'dayjs/esm';
-import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
@@ -28,6 +26,7 @@ enum FilterProp {
     ALL = 'all',
     FAILED = 'failed',
     NO_SUBMISSIONS = 'no-submissions',
+    NO_PRACTICE = 'no-practice',
 }
 
 @Component({
@@ -37,10 +36,10 @@ enum FilterProp {
 export class ParticipationComponent implements OnInit, OnDestroy {
     // make constants available to html for comparison
     readonly FilterProp = FilterProp;
-
     readonly ExerciseType = ExerciseType;
     readonly ActionType = ActionType;
     readonly FeatureToggle = FeatureToggle;
+    readonly dayjs = dayjs;
 
     participations: StudentParticipation[] = [];
     participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
@@ -94,6 +93,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => this.loadExercise(params['exerciseId']));
         this.registerChangeInParticipations();
+        this.isAdmin = this.accountService.isAdmin();
     }
 
     /**
@@ -119,7 +119,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             }
             this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
             this.presentationScoreEnabled = this.checkPresentationScoreConfig();
-            this.isAdmin = this.accountService.isAdmin();
         });
     }
 
@@ -149,11 +148,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
             .subscribe(() => (this.hasLoadedPendingSubmissions = true));
     }
 
-    formatDate(date: dayjs.Dayjs | Date | undefined) {
-        // TODO: we should try to use the artemis date pipe here
-        return date ? dayjs(date).format(defaultLongDateTimeFormat) : '';
-    }
-
     updateParticipationFilter(newValue: FilterProp) {
         this.isLoading = true;
         setTimeout(() => {
@@ -162,19 +156,21 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         });
     }
 
-    filterParticipationByProp = (participation: Participation) => {
+    filterParticipationByProp = (participation: StudentParticipation) => {
         switch (this.participationCriteria.filterProp) {
             case FilterProp.FAILED:
                 return this.hasFailedSubmission(participation);
             case FilterProp.NO_SUBMISSIONS:
                 return participation.submissionCount === 0;
+            case FilterProp.NO_PRACTICE:
+                return !participation.testRun;
             case FilterProp.ALL:
             default:
                 return true;
         }
     };
 
-    private hasFailedSubmission(participation: Participation) {
+    private hasFailedSubmission(participation: StudentParticipation) {
         const submissionStateObj = this.exerciseSubmissionState[participation.id!];
         if (submissionStateObj) {
             const { submissionState } = submissionStateObj;
@@ -183,7 +179,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         return false;
     }
 
-    trackId(index: number, item: Participation) {
+    trackId(index: number, item: StudentParticipation) {
         return item.id;
     }
 

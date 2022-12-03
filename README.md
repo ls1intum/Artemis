@@ -49,15 +49,16 @@
 The Artemis development team prioritizes the following issues in the future. We welcome feature requests from students, tutors, instructors, and administrators. We are happy to discuss any suggestions for improvements.
 
 * **Short term**: Further enhance the usability and user experience in different places based on best practices
-* **Short term**: Further increase the coverage of automatic tests to secure the quality of Artemis releases and to prevent bugs 
-* **Medium term**: Further improve discussions and provide communication channels
-* **Medium term**: Develop grading strategies (e.g., homework counts as bonus to an exam)
+* **Short term**: Further improve discussions and provide communication channels
+* **Short term**: Improve the integration of learning analytics for students and instructors
+* **Short term**: Simplify the setup of Artemis
 * **Medium term**: Improve semi-automatic assessment by reusing knowledge from previous exercises and by offering it for the manual assessment of programming exercises
-* **Medium term**: Improve the integration of learning analytics for students and instructors
-* **Medium term**: Microservices, Kubernetes based deployment, and micro frontends
+* **Medium term**: Integrate adaptive learning with different exercise difficulties and the automatic generation of hints
+* **Medium term**: Further improve the security of the involved systems (e.g. when executing code of programming exercises)
+* **Long term**: Microservices, Kubernetes based deployment, and micro frontends
 * **Long term**: Allow students to take notes on lecture slides and support the automatic updates of lecture slides
 * **Long term**: Develop an exchange platform for exercises
-* **Long term**: Integrate adaptive learning with different exercise difficulties and the automatic generation of hints
+
 
 ## Setup, guides, and contributing
 
@@ -66,7 +67,7 @@ The Artemis development team prioritizes the following issues in the future. We 
 * [How to set up your local development environment](https://docs.artemis.ase.in.tum.de/dev/setup/)
 * [Server coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/server/)
 * [Client coding and design guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/client/)
-* [Code Review Guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/code-review/)
+* [Code Review Guidelines](https://docs.artemis.ase.in.tum.de/dev/guidelines/development-process/#review)
 
 ### Documentation
 
@@ -75,7 +76,7 @@ You can find a guide on [how to write documentation](docs/README.md).
 
 ### Server setup
 
-You can set up Artemis in conjunction with either [`GitLab and Jenkins`](https://docs.artemis.ase.in.tum.de/dev/setup/jenkins-gitlab) or with [`Jira, Bitbucket and Bamboo`](https://docs.artemis.ase.in.tum.de/dev/setup/bamboo-bitbucket-jira).
+You can set up Artemis in conjunction with either [`GitLab and Jenkins`](https://docs.artemis.ase.in.tum.de/dev/setup/#jenkins-and-gitlab-setup) or with [`Jira, Bitbucket and Bamboo`](https://docs.artemis.ase.in.tum.de/dev/setup/#bamboo-bitbucket-and-jira-setup).
 Artemis uses these external tools for user management and the configuration of programming exercises.
 
 ### Administration setup
@@ -84,7 +85,7 @@ If needed, you can configure self service [user registration](https://docs.artem
 
 ### Contributing 
 
-Please read the guide on [how to contribute](/CONTRIBUTING.md) to Artemis.
+Please read the guide on [how to contribute](CONTRIBUTING.md) to Artemis.
 
 ### Building for production
 
@@ -181,7 +182,7 @@ The following universities are actively using Artemis or are currently evaluatin
 
 ##### Universität Passau
 
-* https://artemis.se2.fim.uni-passau.de
+* https://artemis.fim.uni-passau.de
 * Main contact person: [Benedikt Fein](mailto:fein@fim.uni-passau.de)
 
 ##### Karlsruhe Institute of Technology
@@ -194,7 +195,14 @@ The following universities are actively using Artemis or are currently evaluatin
 * https://artemis.cs.hm.edu
 * Main contact person: [Michael Eggers](mailto:michael.eggers@hm.edu)
 
+##### TU Dresden
+
+* Main contact person: [Martin Morgenstern](mailto:martin.morgenstern1@tu-dresden.de)
+
+##### Hochschule Heilbronn
+
+* Main contact person: [Jörg Winckler](mailto:joerg.winckler@hs-heilbronn.de)
+
 ##### Interested universities
 
-* TU Dresden
 * HU Berlin

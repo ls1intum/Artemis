@@ -1,11 +1,16 @@
 package de.tum.in.www1.artemis.service.user;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
-import static de.tum.in.www1.artemis.security.Role.*;
+import static de.tum.in.www1.artemis.security.Role.ADMIN;
+import static de.tum.in.www1.artemis.security.Role.STUDENT;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -21,9 +26,17 @@ import org.springframework.util.StringUtils;
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
+import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
+import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.AuthorityRepository;
+import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
+import de.tum.in.www1.artemis.repository.StudentScoreRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -34,6 +47,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.PasswordViolatesRequirementsException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -84,11 +98,16 @@ public class UserService {
 
     private final ExerciseHintActivationRepository exerciseHintActivationRepository;
 
+    private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
+
+    private final TutorialGroupRepository tutorialGroupRepository;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository, InstanceMessageSendService instanceMessageSendService,
-            ExerciseHintActivationRepository exerciseHintActivationRepository) {
+            ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
+            TutorialGroupRepository tutorialGroupRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -103,6 +122,8 @@ public class UserService {
         this.studentScoreRepository = studentScoreRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.exerciseHintActivationRepository = exerciseHintActivationRepository;
+        this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
+        this.tutorialGroupRepository = tutorialGroupRepository;
     }
 
     /**
@@ -409,7 +430,7 @@ public class UserService {
      *
      * @param login user login string
      */
-    @Transactional // ok because entities are deleted
+    @Transactional // ok because of delete
     public void deleteUser(String login) {
         // Delete the user in the connected VCS if necessary (e.g. for GitLab)
         optionalVcsUserManagementService.ifPresent(userManagementService -> userManagementService.deleteVcsUser(login));
@@ -421,7 +442,7 @@ public class UserService {
         });
     }
 
-    @Transactional // ok because entities are deleted
+    @Transactional // ok because of delete
     protected void deleteUser(User user) {
         // TODO: before we can delete the user, we need to make sure that all associated objects are deleted as well (or the connection to user is set to null)
         // 1) All participation connected to the user (as student)
@@ -434,9 +455,18 @@ public class UserService {
         // 8) Remove the user from its teams
         // 9) Delete the submissionVersion / remove the user from the submissionVersion
         // 10) Delete the tutor participation
+        // 11) All tutorial group registrations of the student
+        // 12) Set teaching assistant to null for all tutorial groups taught by the user
 
-        studentScoreRepository.deleteAllByUser(user);
+        studentScoreRepository.deleteAllByUserId(user.getId());
         exerciseHintActivationRepository.deleteAllByUser(user);
+
+        tutorialGroupRegistrationRepository.deleteAllByStudent(user);
+        var taughtTutorialGroups = tutorialGroupRepository.findAllByTeachingAssistant(user);
+        for (var tutorialGroup : taughtTutorialGroups) {
+            tutorialGroup.setTeachingAssistant(null);
+        }
+        tutorialGroupRepository.saveAll(taughtTutorialGroups);
 
         userRepository.delete(user);
         clearUserCaches(user);
@@ -463,6 +493,42 @@ public class UserService {
 
             log.debug("Changed password for User: {}", user);
         });
+    }
+
+    /**
+     * Check the username and password for validity. Throws Exception if invalid.
+     * @param username The username to check
+     * @param password The password to check
+     */
+    public void checkUsernameAndPasswordValidityElseThrow(String username, String password) {
+        checkUsernameOrThrow(username);
+        checkNullablePasswordOrThrow(password);
+    }
+
+    private void checkUsernameOrThrow(String username) {
+        if (username == null || username.length() < USERNAME_MIN_LENGTH) {
+            throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
+        }
+        else if (username.length() > USERNAME_MAX_LENGTH) {
+            throw new AccessForbiddenException("The username has to be less than " + USERNAME_MAX_LENGTH + " characters long");
+        }
+    }
+
+    /**
+     * <p>The password can be null, then a random one will be generated ({@code Create}) or it won't be changed ({@code Update}).
+     * <p>If the password is not null, its length has to be at least {@code PASSWORD_MIN_LENGTH}.
+     * @param password The password to check
+     */
+    private void checkNullablePasswordOrThrow(String password) {
+        if (password == null) {
+            return;
+        }
+        if (password.length() < PASSWORD_MIN_LENGTH) {
+            throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
+        }
+        if (password.length() > PASSWORD_MAX_LENGTH) {
+            throw new AccessForbiddenException("The password has to be less than " + PASSWORD_MAX_LENGTH + " characters long");
+        }
     }
 
     private void clearUserCaches(User user) {

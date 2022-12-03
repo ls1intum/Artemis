@@ -1,7 +1,8 @@
 <div class="row justify-content-center">
     <div class="col-6">
         <h1 class="text-center mb-3">
-            {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }} {{ title }}
+            {{ (forBonus ? 'artemisApp.gradingSystem.titleBonus' : isExam ? 'artemisApp.gradingSystem.titleExam' : 'artemisApp.gradingSystem.titleCourse') | artemisTranslate }}
+            {{ title }}
         </h1>
         <h6 *ngIf="!isExam">{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
         <div style="font-size: 1.1em">
@@ -17,10 +18,10 @@
                     <tr *ngFor="let gradeStep of gradeSteps; let i = index; let last = last" [class.highlighted]="gradeStep.gradeName == studentGrade">
                         <td>{{ gradeStep.gradeName }}</td>
                         <td>
-                            <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE:last | safeHtml"></span>
+                            <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.PERCENTAGE : last | safeHtml"></span>
                         </td>
                         <td *ngIf="hasPointsSet()">
-                            <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS:last | safeHtml"></span>
+                            <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.POINTS : last | safeHtml"></span>
                         </td>
                     </tr>
                 </tbody>

@@ -17,6 +17,7 @@
                     <input
                         class="short-answer-question-container__input"
                         type="text"
+                        [maxLength]="maxCharacterCount"
                         [disabled]="clickDisabled"
                         value="{{ getSubmittedTextForSpotAsString(element) }}"
                         id="solution-{{ i }}-{{ j }}-{{ shortAnswerQuestion.id }}"
@@ -39,7 +40,9 @@
                 >
                     <input
                         class="short-answer-question-container__input {{ classifyInputField(element) }}"
+                        type="text"
                         disabled
+                        [maxLength]="maxCharacterCount"
                         value="{{ getTextForSpotAsString(element) }}"
                         size="{{ getSizeForSpot(element) }}"
                     />
@@ -53,7 +56,7 @@
         <ng-template #renderedHint>
             <div [innerHTML]="renderedQuestion.hint"></div>
         </ng-template>
-        <span class="label label-info" [ngbPopover]="renderedHint" placement="right" triggers="mouseenter:mouseleave" *ngIf="shortAnswerQuestion.hint">
+        <span class="label label-info" [ngbPopover]="renderedHint" placement="right auto" triggers="mouseenter:mouseleave" *ngIf="shortAnswerQuestion.hint">
             <fa-icon [icon]="farQuestionCircle"></fa-icon>
             <span jhiTranslate="artemisApp.quizQuestion.hint"></span>
         </span>
@@ -64,7 +67,7 @@
         <span
             class="label label-primary"
             [ngbPopover]="renderedExplanation"
-            placement="right"
+            placement="right auto"
             triggers="mouseenter:mouseleave"
             *ngIf="shortAnswerQuestion.explanation && showResult"
         >

@@ -1,8 +1,8 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
-import { ActivatedRoute, convertToParamMap, RouterModule, UrlSegment } from '@angular/router';
+import { ActivatedRoute, RouterModule, UrlSegment, convertToParamMap } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { TutorParticipationGraphComponent } from 'app/shared/dashboards/tutor-participation-graph/tutor-participation-graph.component';
 import { TutorLeaderboardComponent } from 'app/shared/dashboards/tutor-leaderboard/tutor-leaderboard.component';

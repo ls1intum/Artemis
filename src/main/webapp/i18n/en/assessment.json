@@ -63,7 +63,8 @@
             "dashboard": {
                 "warning": "Warning: The submission period is not over yet and students are still allowed to submit their solutions. Please do not start with the assessment yet!",
                 "warningIndividual": "Warning: The general submission period is over but some students with individual due dates are still allowed to submit their solutions. Please check if that is the case for the participation you want to assess.",
-                "empty": "No Submissions for this exercise!",
+                "empty": "No Submissions found!",
+                "emptySearch": "Please enter a student name to find submissions.",
                 "loading": "Loading...",
                 "columns": {
                     "submissionDate": "Submission Date",

@@ -20,6 +20,7 @@ import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programmi
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
+import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -375,9 +376,13 @@ export class ProgrammingExerciseService {
     /**
      * Exports the example solution repository for a given exercise, suitable for distributing to students.
      * @param exerciseId
+     * @param includeTests flag that indicates whether the tests should also be exported
      */
-    exportSolutionRepository(exerciseId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-solution-repository`, {
+    exportStudentRequestedRepository(exerciseId: number, includeTests: boolean): Observable<HttpResponse<Blob>> {
+        let params = new HttpParams();
+        params = params.set('includeTests', includeTests.toString());
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-requested-repository`, {
+            params,
             observe: 'response',
             responseType: 'blob',
         });
@@ -498,6 +503,10 @@ export class ProgrammingExerciseService {
     }
 
     getAllTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
-        return this.http.get<ProgrammingExerciseTestCase[]>(`api/programming-exercise/${exerciseId}/test-cases`);
+        return this.http.get<ProgrammingExerciseTestCase[]>(`api/programming-exercises/${exerciseId}/test-cases`);
+    }
+
+    getBuildLogStatistics(exerciseId: number): Observable<BuildLogStatisticsDTO> {
+        return this.http.get<BuildLogStatisticsDTO>(`${this.resourceUrl}/${exerciseId}/build-log-statistics`);
     }
 }

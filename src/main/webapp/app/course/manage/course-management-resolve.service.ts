@@ -2,7 +2,7 @@ import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { Injectable } from '@angular/core';
-import { filter, map, Observable, of } from 'rxjs';
+import { Observable, filter, map, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 
 @Injectable({ providedIn: 'root' })

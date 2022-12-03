@@ -1,6 +1,6 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType, getCourseFromExercise, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getCourseFromExercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { Exam } from 'app/entities/exam.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
@@ -14,6 +14,17 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+
+export enum NextDate {
+    START_OR_RELEASE_DATE = 'START_OR_RELEASE_DATE',
+    SUBMISSION_DUE_DATE = 'SUBMISSION_DUE_DATE',
+    ASSESSMENT_DUE_DATE = 'ASSESSMENT_DUE_DATE',
+    COMPLAINT = 'COMPLAINT',
+    EXAM_END_DATE = 'EXAM_END_DATE',
+    RESULT_PUBLISH_DATE = 'RESULT_PUBLISH_DATE',
+    NONE = 'NONE',
+}
 
 @Component({
     selector: 'jhi-header-exercise-page-with-details',
@@ -27,22 +38,25 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     readonly getIcon = getIcon;
     readonly getIconTooltip = getIconTooltip;
     readonly dayjs = dayjs;
+    readonly NextDate = NextDate;
 
     @Input() public exercise: Exercise;
     @Input() public studentParticipation?: StudentParticipation;
     @Input() public title: string;
     @Input() public exam?: Exam;
+    @Input() public course?: Course;
     @Input() public isTestRun = false;
     @Input() public submissionPolicy?: SubmissionPolicy;
 
     public exerciseCategories: ExerciseCategory[];
     public dueDate?: dayjs.Dayjs;
+    public isBeforeStartDate: boolean;
     public programmingExercise?: ProgrammingExercise;
-    public course: Course;
     public individualComplaintDeadline?: dayjs.Dayjs;
-    public isNextDueDate: boolean[];
+    public nextDueDate = NextDate.NONE;
     public statusBadges: string[];
     public canComplainLaterOn: boolean;
+    public achievedPoints?: number;
     public numberOfSubmissions: number;
 
     icon: IconProp;
@@ -50,88 +64,103 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
     // Icons
     faQuestionCircle = faQuestionCircle;
 
-    constructor(private complaintService: ComplaintService) {}
-
-    ngOnInit(): void {
+    ngOnInit() {
         this.exerciseCategories = this.exercise.categories || [];
 
         this.setIcon(this.exercise.type);
 
         this.programmingExercise = this.exercise.type === ExerciseType.PROGRAMMING ? (this.exercise as ProgrammingExercise) : undefined;
-        this.course = getCourseFromExercise(this.exercise)!;
 
         if (this.exam) {
             this.setIsNextDueDateExamMode();
         } else {
             this.dueDate = getExerciseDueDate(this.exercise, this.studentParticipation);
-            this.individualComplaintDeadline = this.complaintService.getIndividualComplaintDueDate(this.exercise, this.course, this.studentParticipation);
-
+            this.isBeforeStartDate = this.exercise.startDate ? this.exercise.startDate.isAfter(dayjs()) : !!this.exercise.releaseDate?.isAfter(dayjs());
+            if (this.course?.maxComplaintTimeDays) {
+                this.individualComplaintDeadline = ComplaintService.getIndividualComplaintDueDate(
+                    this.exercise,
+                    this.course.maxComplaintTimeDays,
+                    this.studentParticipation?.results?.last(),
+                    this.studentParticipation,
+                );
+            }
             // The student can either still submit or there is a submission where the student did not have the chance to complain yet
             this.canComplainLaterOn =
-                (dayjs().isBefore(this.exercise.dueDate) || (!!this.studentParticipation?.submissionCount && !this.individualComplaintDeadline)) &&
-                (this.exercise.allowComplaintsForAutomaticAssessments || (!!this.exercise.assessmentType && this.exercise.assessmentType !== AssessmentType.AUTOMATIC));
+                (dayjs().isBefore(this.exercise.dueDate) ||
+                    (this.studentParticipation?.individualDueDate && dayjs().isBefore(this.studentParticipation.individualDueDate)) ||
+                    (!!this.studentParticipation?.submissionCount && !this.individualComplaintDeadline)) &&
+                (this.exercise.allowComplaintsForAutomaticAssessments || this.exercise.assessmentType !== AssessmentType.AUTOMATIC);
 
             this.setIsNextDueDateCourseMode();
         }
     }
 
-    ngOnChanges(): void {
+    ngOnChanges() {
+        this.course = this.course ?? getCourseFromExercise(this.exercise);
+
         if (this.submissionPolicy) {
             this.countSubmissions();
+        }
+        if (this.studentParticipation?.results?.[0].rated) {
+            this.achievedPoints = roundValueSpecifiedByCourseSettings((this.studentParticipation?.results?.[0].score! * this.exercise.maxPoints!) / 100, this.course);
         }
     }
 
     private setIcon(exerciseType?: ExerciseType) {
         if (exerciseType) {
-            this.icon = getIcon(exerciseType) as IconProp;
+            this.icon = getIcon(exerciseType);
         }
     }
 
     /**
      * Determines what element of the header should be highlighted. The highlighted deadline/time is the one being due next
-     * Arrays (for badge class (= statusBadges) and highlighting (= isNextDueDate)) consist of
+     * Array for badge class (= statusBadges) consist of
      * 0: Exam End Date
      * 1: Publish Results Date
      */
     private setIsNextDueDateExamMode() {
-        this.isNextDueDate = [false, false];
         const now = dayjs();
         if (this.exam?.endDate && now.isBefore(this.exam?.endDate)) {
-            this.isNextDueDate[0] = true;
+            this.nextDueDate = NextDate.EXAM_END_DATE;
             this.statusBadges = ['bg-success', 'bg-success'];
         } else if (this.exam?.publishResultsDate && now.isBefore(this.exam?.publishResultsDate)) {
-            this.isNextDueDate[1] = true;
+            this.nextDueDate = NextDate.RESULT_PUBLISH_DATE;
             this.statusBadges = ['bg-danger', 'bg-success'];
         } else {
+            this.nextDueDate = NextDate.NONE;
             this.statusBadges = ['bg-danger', 'bg-danger'];
         }
     }
 
     /**
      * Determines what element of the header should be highlighted. The highlighted deadline/time is the one being due next
-     * Arrays (for badge class (= statusBadges) and highlighting (= isNextDueDate)) consist of
-     * 0: Submission Due Date
-     * 1: Assessment Due Date
-     * 2: Individual Complaint Deadline
-     * 3: Complaint Possible (Yes / No)
+     * Array for badge class (= statusBadges) consist of
+     * 0: Start Date (either release date or start date if set)
+     * 1: Submission Due Date
+     * 2: Assessment Due Date
+     * 3: Individual Complaint Deadline
+     * 4: Complaint Possible (Yes / No)
      */
     private setIsNextDueDateCourseMode() {
-        this.isNextDueDate = [false, false, false, false];
         const now = dayjs();
-        if (this.dueDate && now.isBefore(this.dueDate)) {
-            this.isNextDueDate[0] = true;
-            this.statusBadges = ['bg-success', 'bg-success', 'bg-success'];
+        if (this.isBeforeStartDate) {
+            this.nextDueDate = NextDate.START_OR_RELEASE_DATE;
+            this.statusBadges = ['bg-success', 'bg-success', 'bg-success', 'bg-success'];
+        } else if (this.dueDate && now.isBefore(this.dueDate)) {
+            this.nextDueDate = NextDate.SUBMISSION_DUE_DATE;
+            this.statusBadges = ['bg-danger', 'bg-success', 'bg-success', 'bg-success'];
         } else if (this.exercise.assessmentDueDate && now.isBefore(this.exercise.assessmentDueDate)) {
-            this.isNextDueDate[1] = true;
-            this.statusBadges = ['bg-danger', 'bg-success', 'bg-success'];
+            this.nextDueDate = NextDate.ASSESSMENT_DUE_DATE;
+            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-success', 'bg-success'];
         } else if (this.individualComplaintDeadline && now.isBefore(this.individualComplaintDeadline)) {
-            this.isNextDueDate[2] = true;
-            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-success'];
+            this.nextDueDate = NextDate.COMPLAINT;
+            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger', 'bg-success'];
         } else if (this.canComplainLaterOn) {
-            this.isNextDueDate[3] = true;
-            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger'];
+            this.nextDueDate = NextDate.COMPLAINT;
+            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger', 'bg-danger'];
         } else {
-            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger'];
+            this.nextDueDate = NextDate.NONE;
+            this.statusBadges = ['bg-danger', 'bg-danger', 'bg-danger', 'bg-danger'];
         }
     }
 

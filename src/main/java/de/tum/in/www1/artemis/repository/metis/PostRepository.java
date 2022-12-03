@@ -69,7 +69,11 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
             """)
     List<Post> findPostsByPlagiarismCaseId(@Param("plagiarismCaseId") Long plagiarismCaseId);
 
-    default Post findByIdElseThrow(Long postId) throws EntityNotFoundException {
+    default Post findPostByIdElseThrow(Long postId) throws EntityNotFoundException {
+        return findById(postId).filter(post -> post.getConversation() == null).orElseThrow(() -> new EntityNotFoundException("Post", postId));
+    }
+
+    default Post findPostOrMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).orElseThrow(() -> new EntityNotFoundException("Post", postId));
     }
 }

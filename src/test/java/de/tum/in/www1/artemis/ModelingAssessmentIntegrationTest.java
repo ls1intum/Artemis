@@ -188,8 +188,13 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
                 HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
-        request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment",
-                HttpStatus.FORBIDDEN, Result.class);
+        var result = request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment",
+                HttpStatus.OK, Result.class);
+        for (Feedback feedback : result.getFeedbacks()) {
+            assertThat(feedback.getCredits()).isNull();
+            assertThat(feedback.getDetailText()).isNull();
+            assertThat(feedback.getReference()).isNotNull();
+        }
     }
 
     @Test()
@@ -1437,7 +1442,6 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         Result firstResult = ModelFactory.generateResult(true, 50);
         firstResult.setAssessor(tutor1);
         firstResult.setHasComplaint(true);
-        firstResult.setHasFeedback(false);
         firstResult.setParticipation(studentParticipation);
         firstResult = resultRepo.saveAndFlush(firstResult);
 

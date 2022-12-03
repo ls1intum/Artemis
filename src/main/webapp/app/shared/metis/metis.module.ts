@@ -35,6 +35,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
+import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
+import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
 
 @NgModule({
     imports: [
@@ -73,6 +75,8 @@ import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.compon
         PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
+        MessageInlineInputComponent,
+        MessageReplyInlineInputComponent,
         HtmlForPostingMarkdownPipe,
         ReactingUsersOnPostingPipe,
         EmojiComponent,
@@ -95,6 +99,8 @@ import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.compon
         PostingContentPartComponent,
         PostReactionsBarComponent,
         AnswerPostReactionsBarComponent,
+        MessageInlineInputComponent,
+        MessageReplyInlineInputComponent,
         HtmlForPostingMarkdownPipe,
         EmojiComponent,
         EmojiPickerComponent,

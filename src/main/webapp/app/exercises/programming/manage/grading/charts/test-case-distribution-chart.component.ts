@@ -27,6 +27,10 @@ enum TestCaseBarTitle {
                         {{ 'artemisApp.programmingExercise.configureGrading.charts.resetFilter' | artemisTranslate }}
                     </button>
                 </div>
+                <p>
+                    {{ 'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.sumOfTestWeights' | artemisTranslate }}
+                    {{ totalWeight }}
+                </p>
                 <p [innerHTML]="'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.description' | artemisTranslate"></p>
             </div>
             <div #containerRefWeight class="chart bg-light">
@@ -46,14 +50,14 @@ enum TestCaseBarTitle {
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip'
-                                        | artemisTranslate: { percentage: model.value.toFixed(2) }
+                                        | artemisTranslate : { percentage: model.value.toFixed(2) }
                                 }}
                             </span>
                             <br />
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
-                                        | artemisTranslate: { percentage: model.bonus.toFixed(2) }
+                                        | artemisTranslate : { percentage: model.bonus.toFixed(2) }
                                 }}
                             </span>
                         </div>
@@ -61,14 +65,14 @@ enum TestCaseBarTitle {
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip'
-                                        | artemisTranslate: { percentage: model.weight.toFixed(2) }
+                                        | artemisTranslate : { percentage: model.weight.toFixed(2) }
                                 }}
                             </span>
                             <br />
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
-                                        | artemisTranslate: { percentage: model.value.toFixed(2) }
+                                        | artemisTranslate : { percentage: model.value.toFixed(2) }
                                 }}
                             </span>
                         </div>
@@ -94,7 +98,7 @@ enum TestCaseBarTitle {
                         <b>{{ model.name }}</b>
                         <br />
                         <span>
-                            {{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
+                            {{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip' | artemisTranslate : { percentage: model.value.toFixed(2) } }}
                         </span>
                     </ng-template>
                 </ngx-charts-bar-horizontal-stacked>
@@ -112,6 +116,8 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
     @Output() testCaseRowFilter = new EventEmitter<number>();
 
     readonly testCaseBarTitle = TestCaseBarTitle;
+
+    totalWeight: number;
 
     // ngx
     // array containing the ngx-dedicated objects in order to display the weight and bonus chart
@@ -138,7 +144,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
         this.testCases = this.testCases.filter((testCase) => testCase.visibility !== Visibility.Never);
 
         // sum of all weights
-        const totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
+        this.totalWeight = this.testCases.reduce((sum, testCase) => sum + testCase.weight!, 0);
         // max points for the exercise
         const maxPoints = this.exercise.maxPoints!;
         // exercise max score with bonus in percent
@@ -149,7 +155,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
 
         const testCaseScores = this.testCases.map((testCase) => {
             // calculated score for this test case
-            const testCaseScore = (totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / totalWeight : 0) + (testCase.bonusPoints || 0) / maxPoints;
+            const testCaseScore = (this.totalWeight > 0 ? (testCase.weight! * testCase.bonusMultiplier!) / this.totalWeight : 0) + (testCase.bonusPoints || 0) / maxPoints;
 
             const score = Math.min(testCaseScore, maxScoreInPercent);
             const stats = this.testCaseStatsMap ? this.testCaseStatsMap[testCase.testName!] : undefined;
@@ -158,7 +164,7 @@ export class TestCaseDistributionChartComponent extends ProgrammingGradingCharts
                 id: testCase.id,
                 label: testCase.testName!,
                 // relative weight percentage
-                relWeight: totalWeight > 0 ? (testCase.weight! / totalWeight) * 100 : 0,
+                relWeight: this.totalWeight > 0 ? (testCase.weight! / this.totalWeight) * 100 : 0,
                 // relative score percentage
                 relScore: score * 100,
                 // relative points percentage

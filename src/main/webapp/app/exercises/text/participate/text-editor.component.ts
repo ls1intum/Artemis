@@ -8,7 +8,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { TextEditorService } from 'app/exercises/text/participate/text-editor.service';
 import dayjs from 'dayjs/esm';
-import { merge, Subject } from 'rxjs';
+import { Subject, merge } from 'rxjs';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
@@ -105,14 +105,10 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
         this.textExercise.participationStatus = participationStatus(this.textExercise);
         this.checkIfSubmitAlwaysEnabled();
         this.isAfterAssessmentDueDate = !!this.textExercise.course && (!this.textExercise.assessmentDueDate || dayjs().isAfter(this.textExercise.assessmentDueDate));
-        this.isAfterPublishDate =
-            !!this.textExercise.exerciseGroup &&
-            !!this.textExercise.exerciseGroup.exam &&
-            !!this.textExercise.exerciseGroup.exam.publishResultsDate &&
-            dayjs().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
+        this.isAfterPublishDate = !!this.textExercise.exerciseGroup?.exam?.publishResultsDate && dayjs().isAfter(this.textExercise.exerciseGroup.exam.publishResultsDate);
         this.course = getCourseFromExercise(this.textExercise);
 
-        if (participation.submissions && participation.submissions.length > 0) {
+        if (participation.submissions?.length) {
             this.submission = participation.submissions[0] as TextSubmission;
             setLatestSubmissionResult(this.submission, getLatestSubmissionResult(this.submission));
             if (this.submission && this.submission.results && participation.results && (this.isAfterAssessmentDueDate || this.isAfterPublishDate)) {
@@ -239,7 +235,7 @@ export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeact
                 this.textExercise.participationStatus = participationStatus(this.textExercise);
                 this.result = getLatestSubmissionResult(this.submission)!;
                 if (this.result) {
-                    this.result.participation = this.submission.participation;
+                    this.result.participation = this.participation;
                 }
                 this.isSaving = false;
 

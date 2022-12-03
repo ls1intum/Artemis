@@ -35,101 +35,123 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     @Override
     public void sendProgrammingExerciseSchedule(Long exerciseId) {
         log.info("Sending schedule for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed("programming-exercise-schedule", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE, exerciseId);
     }
 
     @Override
     public void sendProgrammingExerciseScheduleCancel(Long exerciseId) {
         log.info("Sending schedule cancel for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed("programming-exercise-schedule-cancel", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_SCHEDULE_CANCEL, exerciseId);
     }
 
     @Override
     public void sendModelingExerciseSchedule(Long exerciseId) {
         log.info("Sending schedule for modeling exercise {} to broker.", exerciseId);
-        sendMessageDelayed("modeling-exercise-schedule", exerciseId);
+        sendMessageDelayed(MessageTopic.MODELING_EXERCISE_SCHEDULE, exerciseId);
     }
 
     @Override
     public void sendModelingExerciseScheduleCancel(Long exerciseId) {
         log.info("Sending schedule cancel for modeling exercise {} to broker.", exerciseId);
-        sendMessageDelayed("modeling-exercise-schedule-cancel", exerciseId);
+        sendMessageDelayed(MessageTopic.MODELING_EXERCISE_SCHEDULE_CANCEL, exerciseId);
     }
 
     @Override
     public void sendModelingExerciseInstantClustering(Long exerciseId) {
         log.info("Sending schedule instant clustering for modeling exercise {} to broker.", exerciseId);
-        sendMessageDelayed("modeling-exercise-schedule-instant-clustering", exerciseId);
+        sendMessageDelayed(MessageTopic.MODELING_EXERCISE_INSTANT_CLUSTERING, exerciseId);
     }
 
     @Override
     public void sendTextExerciseSchedule(Long exerciseId) {
         log.info("Sending schedule for text exercise {} to broker.", exerciseId);
-        sendMessageDelayed("text-exercise-schedule", exerciseId);
+        sendMessageDelayed(MessageTopic.TEXT_EXERCISE_SCHEDULE, exerciseId);
     }
 
     @Override
     public void sendTextExerciseScheduleCancel(Long exerciseId) {
         log.info("Sending schedule cancel for text exercise {} to broker.", exerciseId);
-        sendMessageDelayed("text-exercise-schedule-cancel", exerciseId);
+        sendMessageDelayed(MessageTopic.TEXT_EXERCISE_SCHEDULE_CANCEL, exerciseId);
     }
 
     @Override
     public void sendTextExerciseInstantClustering(Long exerciseId) {
         log.info("Sending schedule instant clustering for text exercise {} to broker.", exerciseId);
-        sendMessageDelayed("text-exercise-schedule-instant-clustering", exerciseId);
+        sendMessageDelayed(MessageTopic.TEXT_EXERCISE_INSTANT_CLUSTERING, exerciseId);
     }
 
     @Override
     public void sendUnlockAllRepositories(Long exerciseId) {
         log.info("Sending unlock all repositories for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed("programming-exercise-unlock-repositories", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_REPOSITORIES, exerciseId);
     }
 
     @Override
     public void sendLockAllRepositories(Long exerciseId) {
         log.info("Sending lock all repositories for programming exercise {} to broker.", exerciseId);
-        sendMessageDelayed("programming-exercise-lock-repositories", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_REPOSITORIES, exerciseId);
+    }
+
+    @Override
+    public void sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(Long exerciseId) {
+        log.info("Sending unlock all repositories without an individual due date before now for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_UNLOCK_WITHOUT_EARLIER_DUE_DATE, exerciseId);
+    }
+
+    @Override
+    public void sendLockAllRepositoriesWithoutLaterIndividualDueDate(Long exerciseId) {
+        log.info("Sending lock all repositories without an individual due date after now for programming exercise {} to broker.", exerciseId);
+        sendMessageDelayed(MessageTopic.PROGRAMMING_EXERCISE_LOCK_WITHOUT_LATER_DUE_DATE, exerciseId);
     }
 
     @Override
     public void sendRemoveNonActivatedUserSchedule(Long userId) {
         log.info("Sending remove non-activated user {} to broker.", userId);
-        sendMessageDelayed("user-management-remove-non-activated-user", userId);
+        sendMessageDelayed(MessageTopic.USER_MANAGEMENT_REMOVE_NON_ACTIVATED_USERS, userId);
     }
 
     @Override
     public void sendCancelRemoveNonActivatedUserSchedule(Long userId) {
         log.info("Sending cancel removal of non-activated user {} to broker.", userId);
-        sendMessageDelayed("user-management-cancel-remove-non-activated-user", userId);
+        sendMessageDelayed(MessageTopic.USER_MANAGEMENT_CANCEL_REMOVE_NON_ACTIVATED_USERS, userId);
     }
 
     @Override
     public void sendExerciseReleaseNotificationSchedule(Long exerciseId) {
         log.info("Sending prepare release notification for exercise {} to broker.", exerciseId);
-        sendMessageDelayed("exercise-released-schedule", exerciseId);
+        sendMessageDelayed(MessageTopic.EXERCISE_RELEASED_SCHEDULE, exerciseId);
     }
 
     @Override
     public void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId) {
         log.info("Sending prepare assessed exercise submitted notification for exercise {} to broker.", exerciseId);
-        sendMessageDelayed("assessed-exercise-submission-notification-schedule", exerciseId);
+        sendMessageDelayed(MessageTopic.ASSESSED_EXERCISE_SUBMISSION_SCHEDULE, exerciseId);
     }
 
     @Override
     @FeatureToggle(Feature.ExamLiveStatistics)
     public void sendExamMonitoringSchedule(Long examId) {
         log.info("Sending schedule for exam monitoring {} to broker.", examId);
-        sendMessageDelayed("exam-monitoring-schedule", examId);
+        sendMessageDelayed(MessageTopic.EXAM_MONITORING_SCHEDULE, examId);
     }
 
     @Override
     public void sendExamMonitoringScheduleCancel(Long examId) {
         log.info("Sending schedule cancel for exam monitoring {} to broker.", examId);
-        sendMessageDelayed("exam-monitoring-schedule-cancel", examId);
+        sendMessageDelayed(MessageTopic.EXAM_MONITORING_SCHEDULE_CANCEL, examId);
     }
 
-    private void sendMessageDelayed(String destination, Long exerciseId) {
-        exec.schedule(() -> hazelcastInstance.getTopic(destination).publish(exerciseId), 1, TimeUnit.SECONDS);
+    @Override
+    public void sendParticipantScoreSchedule(Long exerciseId, Long participantId, Long resultId) {
+        log.info("Sending schedule participant score update for exercise {} and participant {}.", exerciseId, participantId);
+        sendMessageDelayed(MessageTopic.PARTICIPANT_SCORE_SCHEDULE, exerciseId, participantId, resultId);
+    }
+
+    private void sendMessageDelayed(MessageTopic topic, Long payload) {
+        exec.schedule(() -> hazelcastInstance.getTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
+    }
+
+    private void sendMessageDelayed(MessageTopic topic, Long... payload) {
+        exec.schedule(() -> hazelcastInstance.getTopic(topic.toString()).publish(payload), 1, TimeUnit.SECONDS);
     }
 }

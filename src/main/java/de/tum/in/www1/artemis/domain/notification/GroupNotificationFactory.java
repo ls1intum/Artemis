@@ -102,6 +102,11 @@ public class GroupNotificationFactory {
                 text = "The test cases of the programming exercise \"" + exercise.getTitle() + "\" in the course \"" + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle()
                         + "\" were updated." + " The students' submissions should be rebuilt and tested in order to create new results.";
             }
+            case NEW_MANUAL_FEEDBACK_REQUEST -> {
+                title = NEW_MANUAL_FEEDBACK_REQUEST_TITLE;
+                text = "The programming exercise \"" + exercise.getTitle() + "\" in the course \"" + exercise.getCourseViaExerciseGroupOrCourseMember().getTitle()
+                        + "\" has a new manual feedback request." + " Please assess the feedback before the deadline.";
+            }
             case DUPLICATE_TEST_CASE -> {
                 title = DUPLICATE_TEST_CASE_TITLE;
                 text = notificationText;

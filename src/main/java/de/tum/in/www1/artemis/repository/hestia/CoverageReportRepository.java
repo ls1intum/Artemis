@@ -4,9 +4,11 @@ import java.util.*;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -24,6 +26,8 @@ public interface CoverageReportRepository extends JpaRepository<CoverageReport, 
 
     Boolean existsBySubmissionId(@Param("submissionId") Long submissionId);
 
+    @Transactional // ok because of delete
+    @Modifying
     void deleteBySubmissionId(Long submissionId);
 
     @Query("""

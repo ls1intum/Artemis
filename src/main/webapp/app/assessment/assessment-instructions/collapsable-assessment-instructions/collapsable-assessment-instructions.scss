@@ -1,6 +1,6 @@
 .instructions-container {
     display: flex;
-    height: 100%;
+    height: 100vh;
 }
 
 .expanded-instructions {
@@ -31,6 +31,16 @@
         align-items: center;
         justify-content: center;
         min-width: 15px;
+    }
+
+    .scrollbar {
+        position: relative;
+        overflow: auto;
+    }
+
+    .wrapper-scroll-y {
+        display: block;
+        padding: 0 0.5rem;
     }
 }
 

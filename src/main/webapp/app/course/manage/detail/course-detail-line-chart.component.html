@@ -86,8 +86,8 @@
                 </div>
             </div>
             <div class="form-check flex-grow-0">
-                <input class="form-check-input" type="checkbox" [checked]="showAverage" (change)="toggleAverageLine()" />
-                <label class="form-check-label">{{ 'artemisApp.courseStatistics.meanReferenceLineCheckboxLabel' | artemisTranslate }}</label>
+                <input id="toggleAverageLine" class="form-check-input" type="checkbox" [checked]="showAverage" (change)="toggleAverageLine()" />
+                <label for="toggleAverageLine" class="form-check-label">{{ 'artemisApp.courseStatistics.meanReferenceLineCheckboxLabel' | artemisTranslate }}</label>
             </div>
         </div>
     </ng-container>

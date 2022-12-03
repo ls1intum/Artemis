@@ -1,10 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import dayjs from 'dayjs/esm';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Result } from 'app/entities/result.model';
-import { getLatestSubmissionResult, setLatestSubmissionResult, Submission } from 'app/entities/submission.model';
+import { Submission, getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { filter, map, tap } from 'rxjs/operators';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Feedback } from 'app/entities/feedback.model';
@@ -49,7 +48,7 @@ export class SubmissionService {
             filter((res) => !!res.body),
             tap((res) =>
                 res.body!.forEach((submission) => {
-                    this.reconnectSubmissionAndResult(submission);
+                    SubmissionService.reconnectSubmissionAndResult(submission);
                     this.setSubmissionAccessRights(submission);
                 }),
             ),
@@ -79,7 +78,7 @@ export class SubmissionService {
     protected convertDTOsFromServer(res: HttpResponse<SubmissionWithComplaintDTO[]>) {
         if (res.body) {
             res.body.forEach((dto) => {
-                dto.submission = this.convertSubmissionDateFromServer(dto.submission);
+                dto.submission = SubmissionService.convertSubmissionDateFromServer(dto.submission)!;
                 dto.complaint = this.convertComplaintDatesFromServer(dto.complaint);
                 this.setSubmissionAccessRights(dto.submission);
             });
@@ -87,9 +86,11 @@ export class SubmissionService {
         return res;
     }
 
-    protected convertSubmissionDateFromServer(submission: Submission) {
-        submission.submissionDate = submission.submissionDate ? dayjs(submission.submissionDate) : undefined;
-        this.reconnectSubmissionAndResult(submission);
+    public static convertSubmissionDateFromServer(submission: Submission | undefined) {
+        if (submission) {
+            submission.submissionDate = convertDateFromServer(submission.submissionDate);
+            this.reconnectSubmissionAndResult(submission);
+        }
         return submission;
     }
 
@@ -105,7 +106,7 @@ export class SubmissionService {
      * reconnect submission and result
      * @param submission
      */
-    private reconnectSubmissionAndResult(submission: Submission) {
+    private static reconnectSubmissionAndResult(submission: Submission) {
         const result = getLatestSubmissionResult(submission);
         if (result) {
             setLatestSubmissionResult(submission, result);
@@ -117,7 +118,7 @@ export class SubmissionService {
         const convertedResults: Result[] = [];
         if (results != undefined && results.length > 0) {
             results.forEach((result: Result) => {
-                result.completionDate = result.completionDate ? dayjs(result.completionDate) : undefined;
+                result.completionDate = convertDateFromServer(result.completionDate);
                 convertedResults.push(result);
             });
         }
@@ -129,8 +130,8 @@ export class SubmissionService {
         if (submissions != undefined && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {
                 if (submission !== null) {
-                    submission.submissionDate = submission.submissionDate ? dayjs(submission.submissionDate) : undefined;
-                    this.reconnectSubmissionAndResult(submission);
+                    submission.submissionDate = convertDateFromServer(submission.submissionDate);
+                    SubmissionService.reconnectSubmissionAndResult(submission);
                     convertedSubmissions.push(submission);
                 }
             });

@@ -10,7 +10,7 @@ import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.ser
 import { MultipleChoiceQuestionStatistic } from 'app/entities/quiz/multiple-choice-question-statistic.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { blueColor, greenColor, QuestionStatisticComponent, redColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
+import { QuestionStatisticComponent, blueColor, greenColor, redColor } from 'app/exercises/quiz/manage/statistics/question-statistic.component';
 import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 
 @Component({

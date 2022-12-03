@@ -62,9 +62,11 @@ export abstract class ProgrammingExerciseTriggerBuildButtonComponent implements 
                 const newestResult = !!this.participation.results && head(orderBy(this.participation.results, ['id'], ['desc']));
                 this.lastResultIsManual = !!newestResult && Result.isManualResult(newestResult);
             }
-            // We can trigger the build only if the participation is active (has build plan) or if the build plan was archived (new build plan will be created).
+            // We can trigger the build only if the participation is active (has build plan), if the build plan was archived (new build plan will be created)
+            // or the deadline is finished.
             this.participationBuildCanBeTriggered =
-                this.participation.initializationState === InitializationState.INITIALIZED || this.participation.initializationState === InitializationState.INACTIVE;
+                !!this.participation.initializationState &&
+                [InitializationState.INITIALIZED, InitializationState.INACTIVE, InitializationState.FINISHED].includes(this.participation.initializationState);
             if (this.participationBuildCanBeTriggered) {
                 this.setupSubmissionSubscription();
                 this.setupResultSubscription();

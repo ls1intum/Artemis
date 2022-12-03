@@ -1,9 +1,9 @@
 <div class="row justify-content-between align-items-start exam-navigation pt-3">
     <div class="col d-none d-lg-block h3 m-0 text-overflow" *ngIf="exercises && exercises.length > 0 && !overviewPageOpen">
-        {{ 'artemisApp.examParticipation.progress' | artemisTranslate: { current: exerciseIndex + 1, all: exercises.length } }}
+        {{ 'artemisApp.examParticipation.progress' | artemisTranslate : { current: exerciseIndex + 1, all: exercises.length } }}
     </div>
     <div class="col d-block d-lg-none h3 m-0 text-overflow" style="flex: 0.2" *ngIf="exercises && exercises.length > 0 && !overviewPageOpen">
-        {{ 'artemisApp.examParticipation.progressSmall' | artemisTranslate: { current: exerciseIndex + 1, all: exercises.length } }}
+        {{ 'artemisApp.examParticipation.progressSmall' | artemisTranslate : { current: exerciseIndex + 1, all: exercises.length } }}
     </div>
     <div class="h3 m-0 text-overflow d-block col" *ngIf="overviewPageOpen">
         {{ 'artemisApp.examParticipation.examOverview' | artemisTranslate }}
@@ -13,7 +13,7 @@
             <!-- exam overview item -->
             <div class="navigation-item overview">
                 <button
-                    class="btn w-100 synced"
+                    class="btn btn-primary w-100 synced"
                     [ngClass]="getOverviewStatus()"
                     [ngbTooltip]="'artemisApp.examParticipation.examOverview' | artemisTranslate"
                     (click)="changePage(true, -1)"
@@ -40,7 +40,7 @@
                 >
                     <button
                         id="exam-exercise-{{ i }}"
-                        class="btn w-100"
+                        class="btn btn-primary w-100"
                         [ngClass]="setExerciseButtonStatus(i)"
                         [ngbTooltip]="'artemisApp.examParticipation.' + getExerciseButtonTooltip(exercise) | artemisTranslate"
                         (click)="changePage(false, i, false)"

@@ -2,7 +2,7 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { NgModel } from '@angular/forms';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';
 import { Course } from 'app/entities/course.model';
@@ -17,7 +17,6 @@ import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
-import { defaultLongDateTimeFormat } from 'app/shared/pipes/artemis-date.pipe';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
@@ -88,8 +87,8 @@ describe('ParticipationComponent', () => {
         const theExercise = { ...exercise, type: ExerciseType.FILE_UPLOAD };
         const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
 
-        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max', internal: true };
-        const participation: StudentParticipation = { id: 1, student };
+        const student: User = { guidedTourSettings: [], id: 2, login: 'student', name: 'Max', internal: true };
+        const participation: StudentParticipation = { id: 3, student };
         const participationFindStub = jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse({ body: [participation] })));
 
         component.ngOnInit();
@@ -104,15 +103,15 @@ describe('ParticipationComponent', () => {
         expect(exerciseFindStub).toHaveBeenCalledOnce();
         expect(exerciseFindStub).toHaveBeenCalledWith(theExercise.id);
         expect(participationFindStub).toHaveBeenCalledOnce();
-        expect(participationFindStub).toHaveBeenCalledWith(participation.id, true);
+        expect(participationFindStub).toHaveBeenCalledWith(theExercise.id, true);
     }));
 
     it('should initialize for programming exercise', fakeAsync(() => {
         const theExercise = { ...exercise, type: ExerciseType.PROGRAMMING };
         const exerciseFindStub = jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: theExercise })));
 
-        const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max', internal: true };
-        const participation: StudentParticipation = { id: 1, student };
+        const student: User = { guidedTourSettings: [], id: 2, login: 'student', name: 'Max', internal: true };
+        const participation: StudentParticipation = { id: 3, student };
         const participationFindStub = jest.spyOn(participationService, 'findAllParticipationsByExercise').mockReturnValue(of(new HttpResponse({ body: [participation] })));
 
         const submissionState: ProgrammingSubmissionStateObj = { participationId: participation.id!, submissionState: ProgrammingSubmissionState.HAS_FAILED_SUBMISSION };
@@ -131,21 +130,10 @@ describe('ParticipationComponent', () => {
         expect(exerciseFindStub).toHaveBeenCalledOnce();
         expect(exerciseFindStub).toHaveBeenCalledWith(theExercise.id);
         expect(participationFindStub).toHaveBeenCalledOnce();
-        expect(participationFindStub).toHaveBeenCalledWith(participation.id, true);
+        expect(participationFindStub).toHaveBeenCalledWith(theExercise.id, true);
         expect(submissionGetStateStub).toHaveBeenCalledOnce();
-        expect(submissionGetStateStub).toHaveBeenCalledWith(participation.id);
+        expect(submissionGetStateStub).toHaveBeenCalledWith(theExercise.id);
     }));
-
-    it('should format a dates correctly', () => {
-        expect(component.formatDate(undefined)).toBe('');
-
-        const dayjsDate = dayjs();
-        expect(component.formatDate(dayjsDate)).toEqual(dayjsDate.format(defaultLongDateTimeFormat));
-
-        const date = new Date();
-        const dayjsFromDate = dayjs(date);
-        expect(component.formatDate(date)).toEqual(dayjsFromDate.format(defaultLongDateTimeFormat));
-    });
 
     it('should format student login or team name from participation', () => {
         const student: User = { guidedTourSettings: [], id: 1, login: 'student', name: 'Max', internal: true };

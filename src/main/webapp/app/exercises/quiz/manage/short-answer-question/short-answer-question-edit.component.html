@@ -154,7 +154,7 @@
                     [(text)]="questionEditorText"
                     [mode]="questionEditorMode"
                     [autoUpdateContent]="questionEditorAutoUpdate"
-                    (textChange)="questionUpdated.emit()"
+                    (textChange)="onTextChange($event)"
                     style="min-height: 200px; width: 100%; overflow: auto"
                     class="form-control"
                 >
@@ -189,6 +189,7 @@
                                 value="{{ element }}"
                                 size="{{ (element?.length || 0) + 1 }}"
                                 type="text"
+                                [maxLength]="maxCharacterCount"
                                 (change)="setQuestionText('element-' + i + '-' + j + '-textInput')"
                             />
                             <div *ngIf="shortAnswerQuestionUtil.isInputField(element || '')" class="short-answer-question-container">

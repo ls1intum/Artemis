@@ -39,7 +39,7 @@ public class AutomaticTextFeedbackService {
      *
      * @param result Result for the Submission
      */
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = true) // TODO: remove transactional
     public void suggestFeedback(@NotNull Result result) {
         final TextSubmission textSubmission = (TextSubmission) result.getSubmission();
         final var blocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmission.getId());

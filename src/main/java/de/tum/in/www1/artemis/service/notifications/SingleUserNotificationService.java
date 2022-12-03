@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants
 import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.SingleUserNotificationRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -51,8 +52,9 @@ public class SingleUserNotificationService {
 
     /**
      * Auxiliary method to call the correct factory method and start the process to save & sent the notification
-     * @param notificationSubject is the subject of the notification (e.g. exercise, attachment)
-     * @param notificationType is the discriminator for the factory
+     *
+     * @param notificationSubject     is the subject of the notification (e.g. exercise, attachment)
+     * @param notificationType        is the discriminator for the factory
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, Exercise -> user)
      */
     private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation, User author) {
@@ -65,7 +67,10 @@ public class SingleUserNotificationService {
             // Plagiarism related
             case NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT -> createNotification((PlagiarismCase) notificationSubject, notificationType,
                     (User) typeSpecificInformation, author);
-
+            // Tutorial Group related
+            case TUTORIAL_GROUP_REGISTRATION_STUDENT, TUTORIAL_GROUP_DEREGISTRATION_STUDENT, TUTORIAL_GROUP_REGISTRATION_TUTOR, TUTORIAL_GROUP_DEREGISTRATION_TUTOR, TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, TUTORIAL_GROUP_ASSIGNED, TUTORIAL_GROUP_UNASSIGNED -> createNotification(
+                    ((TutorialGroupNotificationSubject) notificationSubject).tutorialGroup, notificationType, ((TutorialGroupNotificationSubject) notificationSubject).users,
+                    ((TutorialGroupNotificationSubject) notificationSubject).responsibleUser);
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
         saveAndSend(singleUserNotification, notificationSubject);
@@ -83,7 +88,7 @@ public class SingleUserNotificationService {
 
         // Find student participations with eager legal submissions and latest results that have a completion date
         Set<StudentParticipation> filteredStudentParticipations = Set
-                .copyOf(studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsAndLatestResultWithCompletionDate(exercise.getId()));
+                .copyOf(studentParticipationRepository.findByExerciseIdAndTestRunWithEagerLegalSubmissionsAndLatestResultWithCompletionDate(exercise.getId(), false));
 
         // Load and assign all studentParticipations with results (this information is needed for the emails later)
         exercise.setStudentParticipations(filteredStudentParticipations);
@@ -98,7 +103,7 @@ public class SingleUserNotificationService {
     /**
      * Notify author of a post for an exercise that there is a new reply.
      *
-     * @param post that is replied
+     * @param post   that is replied
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewReplyForExercise(Post post, Course course) {
@@ -108,7 +113,7 @@ public class SingleUserNotificationService {
     /**
      * Notify author of a post for a lecture that there is a new reply.
      *
-     * @param post that is replied
+     * @param post   that is replied
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewReplyForLecture(Post post, Course course) {
@@ -119,7 +124,7 @@ public class SingleUserNotificationService {
      * Notify author of a course-wide that there is a new reply.
      * Also creates and sends an email.
      *
-     * @param post that is replied
+     * @param post   that is replied
      * @param course that the post belongs to
      */
     public void notifyUserAboutNewReplyForCoursePost(Post post, Course course) {
@@ -129,12 +134,11 @@ public class SingleUserNotificationService {
     /**
      * Notify student about the finished assessment for an exercise submission.
      * Also creates and sends an email.
-     *
+     * <p>
      * private because it is called by other methods that check e.g. if the time or results are correct
      *
-     * @param exercise that was assessed
+     * @param exercise  that was assessed
      * @param recipient who should be notified
-     *
      */
     private void notifyUserAboutAssessedExerciseSubmission(Exercise exercise, User recipient) {
         notifyRecipientWithNotificationType(exercise, EXERCISE_SUBMISSION_ASSESSED, recipient, null);
@@ -143,9 +147,9 @@ public class SingleUserNotificationService {
     /**
      * Checks if a new assessed-exercise-submission notification has to be created now
      *
-     * @param exercise which the submission is based on
+     * @param exercise  which the submission is based on
      * @param recipient of the notification (i.e. the student)
-     * @param result containing information needed for the email
+     * @param result    containing information needed for the email
      */
     public void checkNotificationForAssessmentExerciseSubmission(Exercise exercise, User recipient, Result result) {
         // only send the notification now if no assessment due date was set or if it is in the past
@@ -161,9 +165,9 @@ public class SingleUserNotificationService {
      * We saturate the wanted result information (e.g. score) in the exercise
      * This method is only called in those cases where no assessmentDueDate is set, i.e. individual/dynamic processes.
      *
-     * @param exercise that should contain information that is needed for emails
+     * @param exercise  that should contain information that is needed for emails
      * @param recipient who should be notified
-     * @param result that should be loaded as part of the exercise
+     * @param result    that should be loaded as part of the exercise
      * @return the input exercise with information about a result
      */
     public Exercise saturateExerciseWithResultAndStudentParticipationForGivenUserForEmail(Exercise exercise, User recipient, Result result) {
@@ -178,7 +182,7 @@ public class SingleUserNotificationService {
      * Notify student about successful submission of file upload exercise.
      * Also creates and sends an email.
      *
-     * @param exercise that was submitted
+     * @param exercise  that was submitted
      * @param recipient that should be notified
      */
     public void notifyUserAboutSuccessfulFileUploadSubmission(FileUploadExercise exercise, User recipient) {
@@ -187,8 +191,9 @@ public class SingleUserNotificationService {
 
     /**
      * Notify student about possible plagiarism case.
-     *  @param plagiarismCase that hold the major information for the plagiarism case
-     * @param student who should be notified
+     *
+     * @param plagiarismCase that hold the major information for the plagiarism case
+     * @param student        who should be notified
      */
     public void notifyUserAboutNewPlagiarismCase(PlagiarismCase plagiarismCase, User student) {
         notifyRecipientWithNotificationType(plagiarismCase, NEW_PLAGIARISM_CASE_STUDENT, student, userRepository.getUser());
@@ -196,18 +201,103 @@ public class SingleUserNotificationService {
 
     /**
      * Notify student about plagiarism case verdict.
-     *  @param plagiarismCase that hold the major information for the plagiarism case
-     * @param student who should be notified
+     *
+     * @param plagiarismCase that hold the major information for the plagiarism case
+     * @param student        who should be notified
      */
     public void notifyUserAboutPlagiarismCaseVerdict(PlagiarismCase plagiarismCase, User student) {
         notifyRecipientWithNotificationType(plagiarismCase, PLAGIARISM_CASE_VERDICT_STUDENT, student, userRepository.getUser());
     }
 
     /**
+     * Record to store tutorial group, users and responsible user in one notification subject.
+     */
+    public record TutorialGroupNotificationSubject(TutorialGroup tutorialGroup, Set<User> users, User responsibleUser) {
+    }
+
+    /**
+     * Notify a student that he or she has been registered for a tutorial group.
+     *
+     * @param tutorialGroup   the tutorial group the student has been registered for
+     * @param student         the student that has been registered for the tutorial group
+     * @param responsibleUser the user that has registered the student for the tutorial group
+     */
+    public void notifyStudentAboutRegistrationToTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
+        notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, Set.of(student), responsibleUser), TUTORIAL_GROUP_REGISTRATION_STUDENT, null, null);
+    }
+
+    /**
+     * Notify a student that he or she has been deregistered from a tutorial group.
+     *
+     * @param tutorialGroup   the tutorial group the student has been deregistered from
+     * @param student         the student that has been deregistered from the tutorial group
+     * @param responsibleUser the user that has deregistered the student from the tutorial group
+     */
+    public void notifyStudentAboutDeregistrationFromTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
+        notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, Set.of(student), responsibleUser), TUTORIAL_GROUP_DEREGISTRATION_STUDENT, null,
+                null);
+    }
+
+    /**
+     * Notify a tutor of tutorial group that multiple students have been registered for the tutorial group he or she is responsible for.
+     *
+     * @param tutorialGroup   the tutorial group the students have been registered for (containing the tutor that should be notified)
+     * @param students        the students that have been registered for the tutorial group
+     * @param responsibleUser the user that has registered the student for the tutorial group
+     */
+    public void notifyTutorAboutMultipleRegistrationsToTutorialGroup(TutorialGroup tutorialGroup, Set<User> students, User responsibleUser) {
+        notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, students, responsibleUser), TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR, null, null);
+    }
+
+    /**
+     * Notify a tutor of a tutorial group that a student has been registered for the tutorial group he or she is responsible for.
+     *
+     * @param tutorialGroup   the tutorial group the student has registered for (containing the tutor that should be notified)
+     * @param student         the student that has been registered for the tutorial group
+     * @param responsibleUser the user that has registered the student for the tutorial group
+     */
+    public void notifyTutorAboutRegistrationToTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
+        notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, Set.of(student), responsibleUser), TUTORIAL_GROUP_REGISTRATION_TUTOR, null, null);
+    }
+
+    /**
+     * Notify a tutor of a tutorial group that a student has been deregistered from the tutorial group he or she is responsible for.
+     *
+     * @param tutorialGroup   the tutorial group the student has been deregistered from (containing the tutor that should be notified)
+     * @param student         the student that has been deregistered from the tutorial group
+     * @param responsibleUser the user that has deregistered the student from the tutorial group
+     */
+    public void notifyTutorAboutDeregistrationFromTutorialGroup(TutorialGroup tutorialGroup, User student, User responsibleUser) {
+        notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, Set.of(student), responsibleUser), TUTORIAL_GROUP_DEREGISTRATION_TUTOR, null, null);
+    }
+
+    /**
+     * Notify a tutor that he or she has been assigned to lead a tutorial group.
+     *
+     * @param tutorialGroup   the tutorial group the tutor has been assigned to lead
+     * @param tutorToContact  the tutor that has been assigned to lead the tutorial group
+     * @param responsibleUser the user that has assigned the tutor to lead the tutorial group
+     */
+    public void notifyTutorAboutAssignmentToTutorialGroup(TutorialGroup tutorialGroup, User tutorToContact, User responsibleUser) {
+        notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, Set.of(tutorToContact), responsibleUser), TUTORIAL_GROUP_ASSIGNED, null, null);
+    }
+
+    /**
+     * Notify a tutor that he or she has been unassigned from the leadership of a tutorial group.
+     *
+     * @param tutorialGroup   the tutorial group the tutor has been unassigned from
+     * @param tutorToContact  the tutor that has been unassigned
+     * @param responsibleUser the user that has unassigned the tutor
+     */
+    public void notifyTutorAboutUnassignmentFromTutorialGroup(TutorialGroup tutorialGroup, User tutorToContact, User responsibleUser) {
+        notifyRecipientWithNotificationType(new TutorialGroupNotificationSubject(tutorialGroup, Set.of(tutorToContact), responsibleUser), TUTORIAL_GROUP_UNASSIGNED, null, null);
+    }
+
+    /**
      * Saves the given notification in database and sends it to the client via websocket.
      * Also creates and sends an email.
      *
-     * @param notification that should be saved and sent
+     * @param notification        that should be saved and sent
      * @param notificationSubject which information will be extracted to create the email
      */
     private void saveAndSend(SingleUserNotification notification, Object notificationSubject) {
@@ -223,7 +313,8 @@ public class SingleUserNotificationService {
     /**
      * Checks if an email should be created based on the provided notification, user, notification settings and type for SingleUserNotifications
      * If the checks are successful creates and sends a corresponding email
-     * @param notification that should be checked
+     *
+     * @param notification        that should be checked
      * @param notificationSubject which information will be extracted to create the email
      */
     private void prepareSingleUserNotificationEmail(SingleUserNotification notification, Object notificationSubject) {
