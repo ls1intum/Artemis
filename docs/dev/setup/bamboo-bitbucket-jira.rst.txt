@@ -69,7 +69,8 @@ under ``localhost:7990``.
    - Bitbucket: Select ``Bitbucket (Data Center)`` and ``not installed yet``
    - Jira: Select ``Jira Service Management (formerly Service Desk) (Data Center)`` and ``not installed yet``
 
-#. Provide the just created license key during the setup and create an admin user with the same credentials in all 3 applications.
+#. Provide the just created license key during the setup and create an admin user with the same credentials
+   in all 3 applications.
    For the Bamboo database you can choose H2.
    Also, you can select the evaluation/internal/test/dev setups if you are asked.
    Follow the additional steps for Jira and Bitbucket.
@@ -228,7 +229,8 @@ under ``localhost:7990``.
 
    #. Personal access token for Bamboo.
 
-      - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
+      - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens ->
+        Create token
 
           .. figure:: setup/bamboo-bitbucket-jira/bamboo-create-token.png
              :align: center
@@ -245,7 +247,8 @@ under ``localhost:7990``.
 
    # Personal access token for Bitbucket.
 
-      - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage account -> Personal access tokens -> Create token
+      - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage account ->
+        Personal access tokens -> Create token
 
           .. figure:: setup/bamboo-bitbucket-jira/bitbucket-create-token.png
              :align: center
@@ -282,7 +285,8 @@ under ``localhost:7990``.
     Open the public key file (usually called ``id_rsa.pub`` (when using RSA)) and copy it's content
     (you can also use ``cat id_rsa.pub`` to show the public key).
 
-    Navigate to ``BITBUCKET-URL/plugins/servlet/ssh/account/keys`` and add the SSH key by pasting the content of the public key.
+    Navigate to ``BITBUCKET-URL/plugins/servlet/ssh/account/keys`` and add the SSH key by pasting the content of
+    the public key.
 
     ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename).
     It will be used in the configuration of Artemis to specify where Artemis should look for the key and

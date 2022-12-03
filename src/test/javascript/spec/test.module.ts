@@ -18,6 +18,8 @@ import { ParseLinks } from 'app/core/util/parse-links.service';
 import { MockTranslateService } from './helpers/mocks/service/mock-translate.service';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { MockThemeService } from './helpers/mocks/service/mock-theme.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { MockProfileService } from './helpers/mocks/service/mock-profile.service';
 
 @NgModule({
     imports: [HttpClientTestingModule, FontAwesomeModule],
@@ -58,6 +60,10 @@ import { MockThemeService } from './helpers/mocks/service/mock-theme.service';
         {
             provide: ThemeService,
             useClass: MockThemeService,
+        },
+        {
+            provide: ProfileService,
+            useClass: MockProfileService,
         },
     ],
     declarations: [MockComponent(FaIconComponent)],

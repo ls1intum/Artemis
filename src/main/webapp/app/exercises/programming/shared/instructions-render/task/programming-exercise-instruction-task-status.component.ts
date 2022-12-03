@@ -83,5 +83,7 @@ export class ProgrammingExerciseInstructionTaskStatusComponent {
         componentInstance.feedbackFilter = this.tests;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         componentInstance.showTestDetails = this.showTestDetails;
+        componentInstance.taskName = this.taskName;
+        componentInstance.numberOfNotExecutedTests = this.notExecutedTests.length;
     }
 }

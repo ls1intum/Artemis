@@ -170,7 +170,7 @@ class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringIntegrat
         report2 = reportRepository.save(report2);
 
         assertThat(reportRepository.findAll()).hasSize(2);
-        var returnedReport = reportService.getReportOfExercise(exercise);
+        var returnedReport = reportService.getOrCreateReportOfExercise(exercise);
         assertThat(returnedReport).isEqualTo(report2);
         assertThat(reportRepository.findAll()).hasSize(1);
     }

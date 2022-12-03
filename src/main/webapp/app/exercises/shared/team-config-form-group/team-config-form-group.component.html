@@ -3,7 +3,7 @@
         <div class="col-auto">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.mode">Mode</label>
-                <jhi-help-icon placement="top auto" text="artemisApp.exercise.modeTooltip"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.exercise.modeTooltip"></jhi-help-icon>
             </div>
             <div>
                 <jhi-mode-picker
@@ -17,7 +17,7 @@
         <div class="col-auto" *ngIf="exercise.mode === TEAM">
             <div>
                 <label class="label-narrow" jhiTranslate="artemisApp.exercise.teamAssignmentConfig.teamSize">Team size</label>
-                <jhi-help-icon placement="top" text="artemisApp.exercise.teamAssignmentConfig.teamSizeTooltip"></jhi-help-icon>
+                <jhi-help-icon text="artemisApp.exercise.teamAssignmentConfig.teamSizeTooltip"></jhi-help-icon>
             </div>
             <div>
                 <div class="input-group">
@@ -52,12 +52,12 @@
                         #maxTeamSize="ngModel"
                     />
                 </div>
-                <ng-container *ngFor="let e of minTeamSize.errors! | keyvalue | removekeys: ['required']">
+                <ng-container *ngFor="let e of minTeamSize.errors! | keyvalue | removekeys : ['required']">
                     <div *ngIf="minTeamSize.invalid && (minTeamSize.dirty || minTeamSize.touched)" class="alert alert-danger">
                         <div [jhiTranslate]="'artemisApp.exercise.form.minTeamSize' + '.' + e.key"></div>
                     </div>
                 </ng-container>
-                <ng-container *ngFor="let e of maxTeamSize.errors! | keyvalue | removekeys: ['required']">
+                <ng-container *ngFor="let e of maxTeamSize.errors! | keyvalue | removekeys : ['required']">
                     <div *ngIf="maxTeamSize.invalid && (maxTeamSize.dirty || maxTeamSize.touched)" class="alert alert-danger">
                         <div [jhiTranslate]="'artemisApp.exercise.form.maxTeamSize' + '.' + e.key"></div>
                     </div>

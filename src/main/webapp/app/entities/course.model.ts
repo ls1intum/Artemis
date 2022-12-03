@@ -10,12 +10,12 @@ import { Post } from 'app/entities/metis/post.model';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
 export const enum Language {
     ENGLISH = 'ENGLISH',
     GERMAN = 'GERMAN',
 }
-
 export class Course implements BaseEntity {
     public id?: number;
     public title?: string;
@@ -49,6 +49,9 @@ export class Course implements BaseEntity {
     public maxRequestMoreFeedbackTimeDays?: number;
     public maxPoints?: number;
     public accuracyOfScores?: number;
+    public tutorialGroupsConfiguration?: TutorialGroupsConfiguration;
+    // Note: Currently just used in the scope of the tutorial groups feature
+    public timeZone?: string;
 
     // the following values are only used in course administration
     public numberOfStudents?: number;

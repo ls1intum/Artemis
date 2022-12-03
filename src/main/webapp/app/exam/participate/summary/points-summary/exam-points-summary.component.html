@@ -8,7 +8,7 @@
                 <th scope="col">{{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.exam.examSummary.points.yourPoints' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.exam.examSummary.points.maxPoints' | artemisTranslate }}</th>
-                <th scope="col" *ngIf="getMaxBonusPointsSum() != 0">{{ 'artemisApp.exam.examSummary.points.bonus' | artemisTranslate }}</th>
+                <th scope="col" *ngIf="getMaxBonusPointsSum() != 0">{{ 'artemisApp.exam.examSummary.points.maxBonus' | artemisTranslate }}</th>
             </tr>
         </thead>
         <tbody>
@@ -37,6 +37,21 @@
                 </td>
             </tr>
         </tbody>
+        <tfoot class="total-footer">
+            <tr>
+                <th scope="row" colspan="2">{{ 'artemisApp.exam.examSummary.points.total' | artemisTranslate }}</th>
+                <td>-</td>
+                <td>
+                    {{ getAchievedPointsSum() }}
+                </td>
+                <td>
+                    {{ getMaxNormalPointsSum() }}
+                </td>
+                <td *ngIf="getMaxBonusPointsSum() != 0">
+                    {{ getMaxBonusPointsSum() }}
+                </td>
+            </tr>
+        </tfoot>
     </table>
     <h5 *ngIf="getMaxBonusPointsSum() != 0">
         {{
@@ -44,8 +59,7 @@
                 | artemisTranslate
                     : {
                           achievedPoints: getAchievedPointsSum(),
-                          normalPoints: getMaxPointsSum(),
-                          bonusPoints: getMaxBonusPointsSum()
+                          normalPoints: getMaxNormalPointsSum()
                       }
         }}
     </h5>
@@ -55,7 +69,7 @@
                 | artemisTranslate
                     : {
                           achievedPoints: getAchievedPointsSum(),
-                          normalPoints: getMaxPointsSum()
+                          normalPoints: getMaxNormalPointsSum()
                       }
         }}
     </h5>

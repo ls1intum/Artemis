@@ -570,6 +570,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                     if (this.unassessedSubmissionByRound) {
                         this.unassessedSubmissionByRound.delete(correctionRound);
                     }
+                    return;
                 }
 
                 setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));

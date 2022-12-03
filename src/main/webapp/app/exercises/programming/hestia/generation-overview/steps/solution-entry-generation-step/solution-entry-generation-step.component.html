@@ -56,7 +56,7 @@
                 <th scope="col" class="text-left">{{ 'artemisApp.exerciseHint.content' | artemisTranslate }}</th>
                 <th scope="col" class="text-left">
                     <span jhiTranslate="artemisApp.codeHint.entryType">Type (S/B)</span>
-                    <jhi-help-icon placement="auto" text="artemisApp.codeHint.entryTypeTooltip"></jhi-help-icon>
+                    <jhi-help-icon text="artemisApp.codeHint.entryTypeTooltip"></jhi-help-icon>
                 </th>
             </tr>
         </thead>
@@ -68,7 +68,7 @@
                 <td class="text-left">
                     {{
                         (entry.code?.split('\n')?.length! === 1 ? 'artemisApp.codeHint.lineOfCode' : 'artemisApp.codeHint.linesOfCode')
-                            | artemisTranslate: { lines: entry.code?.split('\n')?.length! }
+                            | artemisTranslate : { lines: entry.code?.split('\n')?.length! }
                     }}
                 </td>
                 <td class="text-left">{{ 'artemisApp.codeHint.entryAbbreviation.' + entry.testCase?.type?.toString()?.toLocaleLowerCase() | artemisTranslate }}</td>

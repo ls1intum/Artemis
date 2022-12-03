@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
@@ -31,7 +32,6 @@ import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -246,23 +246,26 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // Check if the limit of simultaneously locked submissions has been reached
         fileUploadSubmissionService.checkSubmissionLockLimit(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
-        final FileUploadSubmission fileUploadSubmission;
+        final FileUploadSubmission submission;
         if (lockSubmission) {
-            fileUploadSubmission = fileUploadSubmissionService.lockAndGetFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise,
-                    fileUploadExercise.isExamExercise(), correctionRound);
+            submission = fileUploadSubmissionService.lockAndGetFileUploadSubmissionWithoutResult((FileUploadExercise) fileUploadExercise, fileUploadExercise.isExamExercise(),
+                    correctionRound);
         }
         else {
             Optional<FileUploadSubmission> optionalFileUploadSubmission = fileUploadSubmissionService
                     .getRandomFileUploadSubmissionEligibleForNewAssessment((FileUploadExercise) fileUploadExercise, fileUploadExercise.isExamExercise(), correctionRound);
-            fileUploadSubmission = optionalFileUploadSubmission.orElseThrow(() -> new EntityNotFoundException("File Upload Submission without Assessment"));
+            submission = optionalFileUploadSubmission.orElse(null);
         }
 
-        // Make sure the exercise is connected to the participation in the json response
-        final StudentParticipation studentParticipation = (StudentParticipation) fileUploadSubmission.getParticipation();
-        studentParticipation.setExercise(fileUploadExercise);
-        fileUploadSubmission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
-        this.fileUploadSubmissionService.hideDetails(fileUploadSubmission, user);
-        return ResponseEntity.ok(fileUploadSubmission);
+        if (Objects.nonNull(submission)) {
+            // Make sure the exercise is connected to the participation in the json response
+            final StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
+            studentParticipation.setExercise(fileUploadExercise);
+            submission.getParticipation().getExercise().setGradingCriteria(gradingCriteria);
+            this.fileUploadSubmissionService.hideDetails(submission, user);
+        }
+
+        return ResponseEntity.ok(submission);
     }
 
     /**

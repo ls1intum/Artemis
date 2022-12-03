@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -242,11 +243,8 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             }
             return studentExam.getExam().getStartDate().plusSeconds(studentExam.getWorkingTime());
         }
-        else if (participation.getIndividualDueDate() != null) {
-            return participation.getIndividualDueDate();
-        }
         else {
-            return exercise.getDueDate();
+            return ExerciseDateService.getDueDate(participation).orElse(null);
         }
     }
 

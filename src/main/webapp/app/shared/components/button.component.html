@@ -2,7 +2,6 @@
     [ngClass]="['jhi-btn', 'btn', btnType, btnSize]"
     [type]="shouldSubmit ? 'submit' : 'button'"
     ngbTooltip="{{ tooltip | artemisTranslate }}"
-    container="body"
     (click)="onClick.emit($event)"
     [jhiFeatureToggle]="featureToggle"
     [overwriteDisabled]="disabled || isLoading"

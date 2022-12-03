@@ -27,7 +27,7 @@ describe('Course Management Exercises Component', () => {
     const parentRoute = {
         data: of({ course }),
     } as any as ActivatedRoute;
-    const route = { parent: parentRoute } as any as ActivatedRoute;
+    const route = { parent: parentRoute, queryParams: of({}) } as any as ActivatedRoute;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],

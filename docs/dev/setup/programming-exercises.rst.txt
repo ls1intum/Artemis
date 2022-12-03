@@ -18,15 +18,19 @@ There are variables for several paths:
   This e.g. affects repositories from students which use the online code editor or
   the template/solution repositories of new exercises, as they are pushed to the VCS after modification.
 
-  Files in this directory are usually not critical, as the latest pushed version of these repositories are also stored at the VCS.
-  However, changed that are saved in the online code editor but not yet committed will be lost when this folder is deleted.
+  Files in this directory are usually not critical, as the latest pushed version of these repositories are
+  also stored at the VCS.
+  However, changed that are saved in the online code editor but not yet committed will be lost when
+  this folder is deleted.
 
 - ``artemis.repo-download-clone-path``
 
   Repositories that were downloaded from Artemis are stored in this directory.
 
-  Files in this directory can be removed without loss of data, if the downloaded repositories are still present at the VCS.
-  No changes to the data in the VCS are stored in this directory (or they can be retrieved by performing the download-action again).
+  Files in this directory can be removed without loss of data, if the downloaded repositories are still present
+  at the VCS.
+  No changes to the data in the VCS are stored in this directory (or they can be retrieved by performing
+  the download-action again).
 
 - ``artemis.template-path``
 
@@ -34,7 +38,8 @@ There are variables for several paths:
   The templates should fit to most environments, but there might be cases where one wants to change the templates.
 
   This value specifies the path to the templates which should overwrite the default ones.
-  Note that this is the path to the folder where the ``templates`` folder is located, not the path to the ``templates`` folder itself.
+  Note that this is the path to the folder where the ``templates`` folder is located, not the path to the
+  ``templates`` folder itself.
 
 
 
@@ -108,5 +113,7 @@ Adjust the agent-args and add the environment block.
 You have to add permissions to the folder (which will be located at the $HOME folder of the user that jenkins uses),
 e.g. with ``sudo chmod 777 maven-cache-docker -R``.
 
-Note that this might allow students to access shared resources (e.g. jars used by Maven), and they might be able to overwrite them.
-You can use `Ares <https://github.com/ls1intum/Ares>`__ to prevent this by restricting the resources the student's code can access.
+Note that this might allow students to access shared resources (e.g. jars used by Maven), and they might be able
+to overwrite them.
+You can use `Ares <https://github.com/ls1intum/Ares>`__ to prevent this by restricting the resources
+the student's code can access.

@@ -1,7 +1,7 @@
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { Exam } from 'app/entities/exam.model';
 import { BASE_API, GET } from '../../support/constants';
-import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
+import { CypressExamBuilder, convertCourseAfterMultiPart } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
 import dayjs from 'dayjs/esm';
 import submission from '../../fixtures/programming_exercise_submissions/all_successful/submission.json';
@@ -37,7 +37,7 @@ describe('Exam participation', () => {
     before(() => {
         cy.login(users.getAdmin());
         courseRequests.createCourse(true).then((response) => {
-            course = response.body;
+            course = convertCourseAfterMultiPart(response);
             const examContent = new CypressExamBuilder(course)
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))

@@ -3,7 +3,6 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { Result } from 'app/entities/result.model';
-import dayjs from 'dayjs/esm';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -16,6 +15,7 @@ import { Submission, getLatestSubmissionResult, getSubmissionResultByCorrectionR
 import { Participation } from 'app/entities/participation/participation.model';
 import { TextAssessmentEvent } from 'app/entities/text-assesment-event.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityResponseType = HttpResponse<Result>;
 type EntityResponseEventType = HttpResponse<TextAssessmentEvent>;
@@ -40,7 +40,7 @@ export class TextAssessmentService {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
             .put<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/text-assessment`, body, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
 
     /**
@@ -54,7 +54,7 @@ export class TextAssessmentService {
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
         return this.http
             .post<Result>(`${this.resourceUrl}/participations/${participationId}/results/${resultId}/submit-text-assessment`, body, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
 
     /**
@@ -64,7 +64,7 @@ export class TextAssessmentService {
     public addTextAssessmentEvent(assessmentEvent: TextAssessmentEvent): Observable<EntityResponseEventType> {
         const body = Object.assign({}, assessmentEvent);
         return this.http
-            .post<TextAssessmentEvent>(this.resourceUrl + '/analytics/text-assessment/events', body, { observe: 'response' })
+            .post<TextAssessmentEvent>(this.resourceUrl + '/event-insights/text-assessment/events', body, { observe: 'response' })
             .pipe(map((res: EntityResponseEventType) => Object.assign({}, res)));
     }
 
@@ -74,7 +74,7 @@ export class TextAssessmentService {
      * @param exerciseId the id of the respective assessment event exercise id
      */
     public getNumberOfTutorsInvolvedInAssessment(courseId: number, exerciseId: number): Observable<number> {
-        return this.http.get<number>(`${this.resourceUrl}/analytics/text-assessment/courses/${courseId}/text-exercises/${exerciseId}/tutors-involved`);
+        return this.http.get<number>(`${this.resourceUrl}/event-insights/text-assessment/courses/${courseId}/text-exercises/${exerciseId}/tutors-involved`);
     }
 
     /**
@@ -98,13 +98,13 @@ export class TextAssessmentService {
             textBlocks,
             complaintResponse,
         };
-        return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResponse(res)));
+        return this.http.put<Result>(url, assessmentUpdate, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
 
     saveExampleAssessment(exerciseId: number, exampleSubmissionId: number, feedbacks: Feedback[], textBlocks: TextBlock[]): Observable<EntityResponseType> {
         const url = `${this.resourceUrl}/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/example-text-assessment`;
         const body = TextAssessmentService.prepareFeedbacksAndTextblocksForRequest(feedbacks, textBlocks);
-        return this.http.put<Result>(url, body, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResponse(res)));
+        return this.http.put<Result>(url, body, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertResultEntityResponseTypeFromServer(res)));
     }
 
     /**
@@ -219,22 +219,16 @@ export class TextAssessmentService {
         return { feedbacks, textBlocks };
     }
 
-    private convertResponse(res: EntityResponseType): EntityResponseType {
+    private convertResultEntityResponseTypeFromServer(res: EntityResponseType): EntityResponseType {
         const result = TextAssessmentService.convertItemFromServer(res.body!);
+        result.completionDate = convertDateFromServer(result.completionDate);
 
-        if (result.completionDate) {
-            result.completionDate = dayjs(result.completionDate);
-        }
-        if (result.submission?.submissionDate) {
-            result.submission.submissionDate = dayjs(result.submission.submissionDate);
+        if (result.submission) {
+            result.submission.submissionDate = convertDateFromServer(result.submission.submissionDate);
         }
         if (result.participation) {
-            if (result.participation.initializationDate) {
-                result.participation.initializationDate = dayjs(result.participation.initializationDate);
-            }
-            if (result.participation.individualDueDate) {
-                result.participation.individualDueDate = dayjs(result.participation.individualDueDate);
-            }
+            result.participation.initializationDate = convertDateFromServer(result.participation.initializationDate);
+            result.participation.individualDueDate = convertDateFromServer(result.participation.individualDueDate);
             if (result.participation.exercise) {
                 this.accountService.setAccessRightsForExercise(result.participation.exercise);
             }

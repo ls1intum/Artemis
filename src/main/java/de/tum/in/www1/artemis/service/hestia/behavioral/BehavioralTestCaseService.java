@@ -71,7 +71,7 @@ public class BehavioralTestCaseService {
         if (testCases.isEmpty()) {
             throw new BehavioralSolutionEntryGenerationException("Test cases have not been received yet");
         }
-        var gitDiffReport = programmingExerciseGitDiffReportService.getReportOfExercise(programmingExercise);
+        var gitDiffReport = programmingExerciseGitDiffReportService.getOrCreateReportOfExercise(programmingExercise);
         if (gitDiffReport == null) {
             throw new BehavioralSolutionEntryGenerationException("Git-Diff Report has not been generated");
         }

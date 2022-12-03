@@ -51,13 +51,16 @@
                         <th>
                             <div class="form-check">
                                 <input
+                                    id="highlightBarAvergage"
                                     type="checkbox"
                                     class="form-check-input"
                                     [checked]="highlightedType === highlightType.AVERAGE"
                                     (click)="highlightBar(highlightType.AVERAGE)"
                                     ngbTooltip="{{ 'artemisApp.instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate }}"
                                 />
-                                <label class="form-check-label" jhiTranslate="artemisApp.instructorDashboard.statisticsTable.averagePoints">Average points (score)</label>
+                                <label for="highlightBarAvergage" class="form-check-label" jhiTranslate="artemisApp.instructorDashboard.statisticsTable.averagePoints"
+                                    >Average points (score)</label
+                                >
                             </div>
                         </th>
                         <td id="average_points" [ngClass]="highlightedType">
@@ -69,13 +72,16 @@
                         <th>
                             <div class="form-check">
                                 <input
+                                    id="highlightBarMedian"
                                     type="checkbox"
                                     class="form-check-input"
                                     [checked]="highlightedType === highlightType.MEDIAN"
                                     (click)="highlightBar(highlightType.MEDIAN)"
                                     ngbTooltip="{{ 'artemisApp.instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate }}"
                                 />
-                                <label class="form-check-label" jhiTranslate="artemisApp.instructorDashboard.statisticsTable.medianPoints">Median points (score)</label>
+                                <label for="highlightBarMedian" class="form-check-label" jhiTranslate="artemisApp.instructorDashboard.statisticsTable.medianPoints"
+                                    >Median points (score)</label
+                                >
                             </div>
                         </th>
                         <td id="median_points" [ngClass]="highlightedType">{{ this.medianPointsIncluded }} ({{ this.medianScoreIncluded }}%)</td>

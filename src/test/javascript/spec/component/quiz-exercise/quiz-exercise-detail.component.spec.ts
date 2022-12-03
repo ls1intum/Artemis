@@ -76,12 +76,13 @@ describe('QuizExercise Management Detail Component', () => {
         quizExercise.quizQuestions = [mcQuestion];
         quizExercise.quizBatches = [];
         quizExercise.releaseDate = undefined;
+        quizExercise.dueDate = undefined;
         quizExercise.quizMode = QuizMode.SYNCHRONIZED;
     };
 
     resetQuizExercise();
 
-    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }) } } as any as ActivatedRoute;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id }) }, queryParams: of({}) } as any as ActivatedRoute;
 
     const createValidMCQuestion = () => {
         const question = new MultipleChoiceQuestion();
@@ -221,6 +222,7 @@ describe('QuizExercise Management Detail Component', () => {
         describe('with exam id', () => {
             const testRoute = {
                 snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                queryParams: of({}),
             } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
@@ -240,7 +242,7 @@ describe('QuizExercise Management Detail Component', () => {
         });
 
         describe('with exam id but without exercise id', () => {
-            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }) } } as any as ActivatedRoute;
+            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id, examId: 1, exerciseGroupId: 2 }) }, queryParams: of({}) } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -259,7 +261,7 @@ describe('QuizExercise Management Detail Component', () => {
         });
 
         describe('without exam id and exercise id', () => {
-            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
+            const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, queryParams: of({}) } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
             it('should call exerciseGroupService.find', () => {
@@ -280,6 +282,7 @@ describe('QuizExercise Management Detail Component', () => {
         describe('with exercise id and exam with test runs', () => {
             const testRoute = {
                 snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                queryParams: of({}),
             } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
@@ -338,19 +341,19 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.quizExercise.releaseDate = now;
 
                 comp.validateDate();
-                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.hasErrorInQuizBatches()).toBeFalse();
 
                 comp.quizExercise!.quizBatches![0].startTime = now.add(1, 'days');
 
                 comp.validateDate();
-                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.hasErrorInQuizBatches()).toBeFalse();
 
                 comp.quizExercise.dueDate = now.add(2, 'days');
 
                 comp.validateDate();
-                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.hasErrorInQuizBatches()).toBeFalse();
             });
 
@@ -368,7 +371,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.quizExercise!.quizBatches![0].startTime = now.add(-1, 'days');
 
                 comp.validateDate();
-                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.hasErrorInQuizBatches()).toBeTrue();
 
                 comp.quizExercise.dueDate = now.add(-2, 'days');
@@ -381,7 +384,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.quizExercise.dueDate = now.add(1, 'days');
 
                 comp.validateDate();
-                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
                 if (quizMode !== QuizMode.SYNCHRONIZED) {
                     // dueDate for SYNCHRONIZED quizzes are calculated so no need to validate.
                     expect(comp.hasErrorInQuizBatches()).toBeTrue();
@@ -1210,6 +1213,19 @@ describe('QuizExercise Management Detail Component', () => {
             it('should not be valid if SA question has no correct mapping', () => {
                 const { question } = createValidSAQuestion();
                 removeCorrectMappingsAndExpectInvalidQuiz(question);
+            });
+
+            it('should be valid for synchronized mode when dueDate is less than releaseDate', () => {
+                const now = dayjs();
+                comp.quizExercise.quizMode = QuizMode.SYNCHRONIZED;
+                comp.scheduleQuizStart = true;
+                comp.quizExercise.quizBatches = [new QuizBatch()];
+                comp.quizExercise.releaseDate = now;
+                comp.quizExercise.startDate = now.add(1, 'day');
+                comp.quizExercise.dueDate = now.add(-1, 'day');
+                comp.cacheValidation();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
+                expect(comp.quizExercise.dueDate).toBeUndefined();
             });
         });
 

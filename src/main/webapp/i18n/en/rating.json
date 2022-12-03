@@ -6,8 +6,6 @@
         "ratingList": {
             "exercise": "Exercise",
             "exerciseType": "Exercise Type",
-            "assessorLogin": "Assessor's Login",
-            "assessorName": "Assessor's Name",
             "rating": "Rating",
             "actions": "Actions",
             "assessmentType": "Assessment Type",

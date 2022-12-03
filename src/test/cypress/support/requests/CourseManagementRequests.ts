@@ -7,7 +7,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { BASE_API, DELETE, GET, POST, PUT } from '../constants';
 import programmingExerciseTemplate from '../../fixtures/requests/programming_exercise_template.json';
-import { dayjsToString, generateUUID } from '../utils';
+import { dayjsToString, generateUUID, parseArrayBufferAsJsonObject } from '../utils';
 import examTemplate from '../../fixtures/requests/exam_template.json';
 import day from 'dayjs/esm';
 import { CypressCredentials } from '../users';
@@ -22,7 +22,7 @@ import lectureTemplate from '../../fixtures/lecture/lecture_template.json';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 export const COURSE_BASE = BASE_API + 'courses/';
-export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
+export const COURSE_ADMIN_BASE = BASE_API + 'admin/courses';
 export const EXERCISE_BASE = BASE_API + 'exercises/';
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 export const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
@@ -41,7 +41,7 @@ export class CourseManagementRequests {
     deleteCourse(courseId: number) {
         // Sometimes the server fails with a ConstraintViolationError if we delete the course immediately after a login
         cy.wait(100);
-        return cy.request({ method: DELETE, url: COURSE_BASE + courseId });
+        return cy.request({ method: DELETE, url: `${COURSE_ADMIN_BASE}/${courseId}` });
     }
 
     /**
@@ -51,6 +51,8 @@ export class CourseManagementRequests {
      * @param courseShortName the short name (will generate default name if not provided)
      * @param start the start date of the course (default: now() - 2 hours)
      * @param end the end date of the course (default: now() + 2 hours)
+     * @param fileName the course icon file name (default: undefined)
+     * @param file the course icon file blob (default: undefined)
      * @returns <Chainable> request response
      */
     createCourse(
@@ -59,6 +61,8 @@ export class CourseManagementRequests {
         courseShortName = 'cypress' + generateUUID(),
         start = day().subtract(2, 'hours'),
         end = day().add(2, 'hours'),
+        fileName?: string,
+        file?: Blob,
     ): Cypress.Chainable<Cypress.Response<Course>> {
         const course = new Course();
         course.title = courseName;
@@ -74,10 +78,15 @@ export class CourseManagementRequests {
             course.editorGroupName = Cypress.env('editorGroupName');
             course.instructorGroupName = Cypress.env('instructorGroupName');
         }
+        const formData = new FormData();
+        formData.append('course', new File([JSON.stringify(course)], 'course', { type: 'application/json' }));
+        if (file) {
+            formData.append('file', file, fileName);
+        }
         return cy.request({
-            url: BASE_API + 'courses',
+            url: COURSE_ADMIN_BASE,
             method: POST,
-            body: course,
+            body: formData,
         });
     }
 
@@ -629,4 +638,13 @@ export enum CypressExerciseType {
     MODELING,
     TEXT,
     QUIZ,
+}
+
+export function convertCourseAfterMultiPart(response: Cypress.Response<Course>): Course {
+    // Cypress currently has some issues with our multipart request, parsing this not as an object but as an ArrayBuffer
+    // Once this is fixed (and hence the expect statements below fail), we can remove the additional parsing
+    expect(response.body).not.to.be.an('object');
+    expect(response.body).to.be.an('ArrayBuffer');
+
+    return parseArrayBufferAsJsonObject(response.body as ArrayBuffer);
 }

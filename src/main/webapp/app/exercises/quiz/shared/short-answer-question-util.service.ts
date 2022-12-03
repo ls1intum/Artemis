@@ -307,7 +307,7 @@ export class ShortAnswerQuestionUtil {
 
         return questionText.split(/\n/g).map((line) => {
             const spots = line.match(spotRegExpo) || [];
-            const texts = line.split(spotRegExpo);
+            const texts = line.split(spotRegExpo).map((text) => text.trim());
             return interleave(texts, spots).filter((x) => x.length > 0);
         });
     }

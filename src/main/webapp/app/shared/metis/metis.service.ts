@@ -333,19 +333,6 @@ export class MetisService implements OnDestroy {
     }
 
     /**
-     * determines if the post is resolved by searching for resolving answer posts
-     * @param {Post} post of which the state is determined
-     * @return {boolean} flag that indicates if the post is resolved
-     */
-    isPostResolved(post: Post): boolean {
-        if (post.answers && post.answers.length > 0) {
-            return !!post.answers.find((answerPosts: AnswerPost) => answerPosts.resolvesPost);
-        } else {
-            return false;
-        }
-    }
-
-    /**
      * determines the router link components required for navigating to the detail view of the given post
      * @param {Post} post to be navigated to
      * @return {RouteComponents} array of router link components

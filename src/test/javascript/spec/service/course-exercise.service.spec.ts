@@ -16,6 +16,9 @@ import { MockRouter } from '../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { of } from 'rxjs';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 describe('Course Management Service', () => {
     let service: CourseExerciseService;
@@ -177,6 +180,8 @@ describe('Course Management Service', () => {
             },
             participation,
         );
+        jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo));
+
         service
             .startExercise(exerciseId)
             .pipe(take(1))
@@ -201,6 +206,8 @@ describe('Course Management Service', () => {
                 },
                 participation,
             );
+            jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo));
+
             service
                 .startPractice(exerciseId, useGradedParticipation)
                 .pipe(take(1))
@@ -230,6 +237,8 @@ describe('Course Management Service', () => {
             },
             participation,
         );
+        jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo').mockReturnValue(of({ buildPlanURLTemplate: 'testci.fake' } as ProfileInfo));
+
         service
             .resumeProgrammingExercise(exerciseId, participationId)
             .pipe(take(1))

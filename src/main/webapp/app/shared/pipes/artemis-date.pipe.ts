@@ -2,8 +2,13 @@ import { OnDestroy, Pipe, PipeTransform } from '@angular/core';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subscription } from 'rxjs';
 import dayjs from 'dayjs/esm';
+import { getDayTranslationKey } from 'app/course/tutorial-groups/shared/weekdays';
+import { dayOfWeekZeroSundayToZeroMonday } from 'app/utils/date.utils';
 
 export const defaultLongDateTimeFormat = 'YYYY-MM-DD HH:mm:ss';
+
+export type DateType = Date | dayjs.Dayjs | string | number | null | undefined;
+export type DateFormat = 'short' | 'long' | 'short-date' | 'long-date' | 'time';
 
 /**
  * Format a given date time that must be convertible to a dayjs object to a localized date time
@@ -30,6 +35,7 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
     private showDate = true;
     private showTime = true;
     private showSeconds = false;
+    private showWeekday = false;
     private static mobileDeviceSize = 768;
 
     constructor(private translateService: TranslateService) {}
@@ -39,24 +45,27 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
      * @param dateTime The date time that should be formatted. Must be convertible to dayjs().
      * @param format Format of the localized date time. Defaults to 'long'.
      * @param seconds Should seconds be displayed? Defaults to false.
+     * @param timeZone Explicit time zone that should be used instead of the local time zone.
+     * @param weekday Should the weekday be displayed? Defaults to false.
      */
-    transform(dateTime: Date | dayjs.Dayjs | string | number | null | undefined, format: 'short' | 'long' | 'short-date' | 'long-date' | 'time' = 'long', seconds = false): string {
+    transform(dateTime: DateType, format: DateFormat = 'long', seconds = false, timeZone: string | undefined = undefined, weekday = false): string {
         // Return empty string if given dateTime equals null or is not convertible to dayjs.
         if (!dateTime || !dayjs(dateTime).isValid()) {
             return '';
         }
-        this.dateTime = dayjs(dateTime);
+        this.dateTime = timeZone ? dayjs(dateTime).tz(timeZone) : dayjs(dateTime);
         this.long = format === 'long' || format === 'long-date';
         this.showDate = format !== 'time';
         this.showTime = format !== 'short-date' && format !== 'long-date';
         this.showSeconds = seconds;
+        this.showWeekday = weekday;
 
         // Evaluate the format length based on the current window width.
         this.formatLengthBasedOnWindowWidth(window.innerWidth);
 
         // Set locale to current language
         this.updateLocale(this.translateService.currentLang);
-        this.updateLocalizedDateTime();
+        this.updateLocalizedDateTime(timeZone);
 
         // Clean up a possibly existing subscription to onLangChange
         this.cleanUpSubscription();
@@ -79,7 +88,7 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
      * @param format Format of the localized date time. Defaults to 'long'.
      * @param seconds Should seconds be displayed? Defaults to false.
      */
-    static format(locale = 'en', format: 'short' | 'long' | 'short-date' | 'long-date' | 'time' = 'long', seconds = false): string {
+    static format(locale = 'en', format: DateFormat = 'long', seconds = false): string {
         const long = format === 'long' || format === 'long-date';
         const showDate = format !== 'time';
         const showTime = format !== 'short-date' && format !== 'long-date';
@@ -99,9 +108,17 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
         }
     }
 
-    private updateLocalizedDateTime(): void {
-        this.dateTime = this.dateTime.locale(this.locale);
-        this.localizedDateTime = this.dateTime.format(this.format());
+    private updateLocalizedDateTime(timeZone: string | undefined = undefined): void {
+        this.dateTime = timeZone ? this.dateTime.locale(this.locale).tz(timeZone) : this.dateTime.locale(this.locale);
+        const localizedDateTime = this.dateTime.format(this.format());
+        if (this.showWeekday && this.dateTime) {
+            const weekdayIndex = dayOfWeekZeroSundayToZeroMonday(this.dateTime.day()) + 1;
+            const key = getDayTranslationKey(weekdayIndex);
+            const translatedWeekday = this.translateService.instant(key);
+            this.localizedDateTime = translatedWeekday + ', ' + localizedDateTime;
+        } else {
+            this.localizedDateTime = localizedDateTime;
+        }
     }
 
     private format(): string {

@@ -5,6 +5,8 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
 import { Component } from '@angular/core';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import dayjs from 'dayjs/esm';
 
 describe('Exercise Update Warning Service', () => {
     let updateWarningService: ExerciseUpdateWarningService;
@@ -18,8 +20,8 @@ describe('Exercise Update Warning Service', () => {
     const gradingCriterionCreditsChanged = { ...gradingCriterion, structuredGradingInstructions: [gradingInstructionCreditsChanged] } as GradingCriterion;
     const gradingCriterionUsageCountChanged = { ...gradingCriterion, structuredGradingInstructions: [gradingInstructionUsageCountChanged] } as GradingCriterion;
     const gradingCriterionWithoutInstruction = { id: 1, title: 'testCriteria' } as GradingCriterion;
-    const exercise = { id: 1 } as Exercise;
-    const backupExercise = { id: 1 } as Exercise;
+    let exercise: Exercise;
+    let backupExercise: Exercise;
 
     beforeEach(() => {
         updateWarningService = TestBed.inject(ExerciseUpdateWarningService);
@@ -30,6 +32,10 @@ describe('Exercise Update Warning Service', () => {
         updateWarningService.instructionDeleted = false;
         updateWarningService.creditChanged = false;
         updateWarningService.usageCountChanged = false;
+        updateWarningService.immediateReleaseWarning = '';
+
+        exercise = { id: 1 } as Exercise;
+        backupExercise = { id: 1 } as Exercise;
     });
 
     afterEach(() => {
@@ -64,14 +70,69 @@ describe('Exercise Update Warning Service', () => {
         expect(updateWarningService.usageCountChanged).toBeTrue();
     });
 
+    it.each([
+        { newExercise: {} as ProgrammingExercise, oldExercise: {} as ProgrammingExercise, expectedMessage: 'artemisApp.exercise.noReleaseAndStartDateWarning' },
+        { newExercise: { startDate: dayjs() } as ProgrammingExercise, oldExercise: {} as ProgrammingExercise, expectedMessage: 'artemisApp.exercise.noReleaseDateWarning' },
+        { newExercise: { releaseDate: dayjs() } as ProgrammingExercise, oldExercise: {} as ProgrammingExercise, expectedMessage: '' },
+        { newExercise: { id: 1 } as ProgrammingExercise, oldExercise: { id: 1 } as ProgrammingExercise, expectedMessage: '' },
+        { newExercise: { id: 1, releaseDate: dayjs() } as ProgrammingExercise, oldExercise: { id: 1 } as ProgrammingExercise, expectedMessage: '' },
+        {
+            newExercise: { id: 1 } as ProgrammingExercise,
+            oldExercise: { id: 1, releaseDate: dayjs() } as ProgrammingExercise,
+            expectedMessage: 'artemisApp.exercise.noReleaseAndStartDateWarning',
+        },
+        {
+            newExercise: { id: 1, startDate: dayjs() } as ProgrammingExercise,
+            oldExercise: { id: 1, releaseDate: dayjs() } as ProgrammingExercise,
+            expectedMessage: 'artemisApp.exercise.noReleaseDateWarning',
+        },
+        { newExercise: { id: 1, releaseDate: dayjs() } as ProgrammingExercise, oldExercise: { id: 1, releaseDate: dayjs() } as ProgrammingExercise, expectedMessage: '' },
+    ])('should correctly ask user about exercise without release date', ({ newExercise, oldExercise, expectedMessage }) => {
+        updateWarningService.checkExerciseBeforeUpdate(newExercise, oldExercise, false);
+
+        expect(updateWarningService.immediateReleaseWarning).toBe(expectedMessage);
+    });
+
+    it('should not check in test course', () => {
+        exercise.gradingCriteria = [gradingCriterionUsageCountChanged];
+        exercise.releaseDate = undefined;
+        exercise.course = { testCourse: true };
+        backupExercise.gradingCriteria = [gradingCriterion];
+        backupExercise.releaseDate = dayjs();
+        updateWarningService.checkExerciseBeforeUpdate(exercise, backupExercise, false);
+
+        expect(updateWarningService.usageCountChanged).toBeFalse();
+        expect(updateWarningService.immediateReleaseWarning).toBe('');
+    });
+
+    it('should not check releaseDate but grading criteria in exam', () => {
+        exercise.gradingCriteria = [gradingCriterionUsageCountChanged];
+        exercise.releaseDate = undefined;
+        backupExercise.gradingCriteria = [gradingCriterion];
+        backupExercise.releaseDate = dayjs();
+        updateWarningService.checkExerciseBeforeUpdate(exercise, backupExercise, true);
+
+        expect(updateWarningService.usageCountChanged).toBeTrue();
+        expect(updateWarningService.immediateReleaseWarning).toBe('');
+    });
+
+    it('should not check releaseDate in Exam', () => {
+        backupExercise.releaseDate = dayjs();
+        updateWarningService.isExamMode = true;
+        updateWarningService.checkImmediateRelease(exercise, backupExercise);
+
+        expect(updateWarningService.immediateReleaseWarning).toBe('');
+    });
+
     it('should loadExercise and not open warning modal', () => {
         exercise.gradingCriteria = [gradingCriterion];
         backupExercise.gradingCriteria = [gradingCriterion];
-        updateWarningService.checkExerciseBeforeUpdate(exercise, backupExercise);
+        updateWarningService.checkExerciseBeforeUpdate(exercise, backupExercise, false);
 
         expect(updateWarningService.instructionDeleted).toBeFalse();
         expect(updateWarningService.creditChanged).toBeFalse();
         expect(updateWarningService.usageCountChanged).toBeFalse();
+        expect(updateWarningService.immediateReleaseWarning).toBe('');
 
         expect(loadExerciseSpy).toHaveBeenCalledOnce();
         expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
@@ -81,10 +142,10 @@ describe('Exercise Update Warning Service', () => {
     it('should loadExercise and open warning model', () => {
         exercise.gradingCriteria = undefined;
         backupExercise.gradingCriteria = [gradingCriterion];
-        updateWarningService.checkExerciseBeforeUpdate(exercise, backupExercise);
+        updateWarningService.checkExerciseBeforeUpdate(exercise, backupExercise, false);
 
-        expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
         expect(loadExerciseSpy).toHaveBeenCalledOnce();
+        expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
         expect(openSpy).toHaveBeenCalledWith(ExerciseUpdateWarningComponent as Component);
         expect(openSpy).toHaveBeenCalledOnce();
     });
