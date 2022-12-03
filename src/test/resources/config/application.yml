@@ -71,7 +71,7 @@ spring:
     jmx:
         enabled: false
     jpa:
-        database-platform: tech.jhipster.domain.util.FixedH2Dialect
+        database-platform: org.hibernate.dialect.MySQLDialect
         open-in-view: false
         show-sql: false
         hibernate:
