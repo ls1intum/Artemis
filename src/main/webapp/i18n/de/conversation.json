@@ -1,0 +1,214 @@
+{
+    "artemisApp": {
+        "errors": {
+            "channelNameDuplicate": "Kanal mit Name {{ channelName }} existiert bereits"
+        },
+        "conversationsLayout": {
+            "tabTitle": "Kursnachrichten",
+            "breadCrumbLabel": "Nachrichten",
+            "others": "{{ count }} andere",
+            "onlyYou": "Nur du",
+            "archived": "Archiviert",
+            "sendMessage": "Senden",
+            "conversationMessages": {
+                "searchBarPlaceholder": "Suche in der aktuellen Konversation nach einer Nachricht"
+            },
+            "threadSideBar": {
+                "label": "Thread",
+                "close": "Thread schließen",
+                "reply": "Antworten im Thread"
+            },
+            "conversationSelectionSideBar": {
+                "header": "Konversationen",
+                "show": "Konversationen zeigen",
+                "hide": "Konversationen ausblenden",
+                "notFound": "Keine Konversation gefunden",
+                "favorites": "Favoriten",
+                "channels": "Kanäle",
+                "createChannel": "Kanal erstellen",
+                "browseChannels": "Kanäle durchsuchen",
+                "expandAll": "Alle aufklappen",
+                "collapseAll": "Alle zusammenklappen",
+                "groupChats": "Gruppen-Chats",
+                "oneToOneChats": "Direktnachrichten",
+                "sideBarSection": {
+                    "shown": "gezeigt",
+                    "hidden": "ausgeblendet",
+                    "show": "Zeigen",
+                    "hide": "Ausblenden",
+                    "favorite": "Zu Favoriten hinzufügen",
+                    "unfavorite": "Aus Favoriten entfernen",
+                    "settings": "Einstellungen"
+                }
+            }
+        },
+        "dialogs": {
+            "archiveChannel": {
+                "title": "{{ channelName }} archivieren?",
+                "question": "Möchtest du den Kanal {{ channelName }} wirklich archivieren?",
+                "description": "Niemand kann Nachrichten an den Kanal senden. Du kannst die Archivierung jederzeit rückgängig machen.",
+                "confirmButton": "Archiviere Kanal"
+            },
+            "unArchiveChannel": {
+                "title": "Archivierung des Kanals {{ channelName }} rückgängig machen?",
+                "question": "Möchtest du die Archivierung des Kanals {{ channelName }} wirklich rückgängig machen?",
+                "description": "Mitglieder:innen können wieder Nachrichten senden. Du kannst den Kanal jederzeit wieder archivieren.",
+                "confirmButton": "Archivierung rückgängig machen"
+            },
+            "deleteChannel": {
+                "question": "Möchtest du wirklich den Kanal mit Namen '{{ title }}' löschen? Das ist eine permanente Aktion und kann nicht rückgängig gemacht werden.",
+                "confirm": "Bitte gib den Namen des Kanals ein, um zu die Löschung zu bestätigen."
+            },
+            "grantChannelAdmin": {
+                "title": "{{ userName }} zu einem/einer Administrator:in von {{ channelName }} machen?",
+                "question": "Möchtest du wirklich {{ userName }} zu einem/einer Administrator:in von {{ channelName }} machen?",
+                "description": "Dies ermöglicht es {{ userName }}, den Kanal und seine Mitglieder:innen zu verwalten.",
+                "confirmButton": "Zum/Zur Administrator:in machen"
+            },
+            "revokeChannelAdmin": {
+                "title": "{{ userName }} als Administrator:in von {{ channelName }} entfernen?",
+                "question": "Möchtest du wirklich {{ userName }} als Administrator:in von {{ channelName }} entfernen?",
+                "description": "Du kannst den/die Nutzer:in jederzeit wieder zum/zur Administrator:in machen.",
+                "confirmButton": "Als Administrator:in entfernen"
+            },
+            "removeUserPrivateChannel": {
+                "title": "Nutzer:in aus privaten Kanal entfernen?",
+                "question": "Möchtest du {{ userName }} aus dem privaten Kanal {{ channelName }} entfernen?",
+                "warning": "Der/Die Nutzer:in wird nicht mehr in der Lage sein, auf diesen Kanal zuzugreifen, es sei denn, er/sie wird erneut eingeladen.",
+                "remove": "Nutzer:in entfernen"
+            },
+            "removeUserPublicChannel": {
+                "title": "Nutzer:in aus öffentlichen Kanal entfernen?",
+                "question": "Möchtest du {{ userName }} aus dem öffentlichen Kanal {{ channelName }} entfernen?",
+                "warning": "Der/Die Nutzer:in wird nicht mehr in der Lage sein, auf diesen Kanal zuzugreifen, es sei denn, er/sie meldet sich erneut an.",
+                "remove": "Nutzer:in entfernen"
+            },
+            "removeUserGroupChat": {
+                "title": "Nutzer:in aus Gruppenchat entfernen?",
+                "question": "Möchtest du {{ userName }} aus dem Gruppenchat entfernen?",
+                "warning": "Der/Die Nutzer:in wird nicht mehr in der Lage sein, auf diesen Gruppenchat zugreifen zu können, es sei denn, er/sie wird erneut eingeladen.",
+                "remove": "Nutzer:in entfernen"
+            },
+            "conversationSettings": {
+                "actions": {
+                    "leave": "Konversation verlassen",
+                    "archiveChannel": "Kanal archivieren",
+                    "unarchiveChannel": "Archivierung des Kanals rückgängig machen"
+                }
+            },
+            "conversationDetail": {
+                "tabs": {
+                    "members": "Mitglieder:innen",
+                    "info": "Die Info",
+                    "settings": "Einstellungen"
+                },
+                "memberTab": {
+                    "findMembers": "Mitglieder:innen finden",
+                    "searching": "Suche ...",
+                    "addUsers": "Nutzer:innen hinzufügen",
+                    "filter": "Wähle einen Filter aus",
+                    "allFilter": "Alle Mitglieder:innen",
+                    "instructorFilter": "Lehrende",
+                    "editorFilter": "Editor:innen",
+                    "tutorFilter": "Tutor:innen",
+                    "studentFilter": "Studierende",
+                    "channelAdminFilter": "Kanaladministrator:innen",
+                    "memberRow": {
+                        "channelAdminTooltip": "Kanaladministrator:in, der/die den Kanal und seine Mitglieder:innen verwalten kann",
+                        "removeUser": "Nutzer:in entfernen",
+                        "grantAdminRights": "Zum/Zur Administrator:in machen",
+                        "revokeAdminRights": "Als Administrator:in entfernen"
+                    }
+                },
+                "infoTab": {
+                    "name": "Name",
+                    "topic": "Aktuelles Thema",
+                    "description": "Beschreibung",
+                    "noName": "Kein Name gesetzt ...",
+                    "noTopic": "Kein aktuelles Thema gesetzt...",
+                    "editTopic": "Thema bearbeiten",
+                    "noDescription": "Keine Beschreibung gesetzt ...",
+                    "editDescription": "Beschreibung bearbeiten",
+                    "editName": "Namen bearbeiten",
+                    "moreInfo": "Mehr Info",
+                    "createdBy": "Erstellt von",
+                    "createdOn": "Erstellt am"
+                }
+            },
+            "addUsers": {
+                "addUsersToGroupChat": "Fügen Sie Nutzer:innen zum Gruppenchat hinzu",
+                "addUsersToChannel": "Nutzer:innen hinzufügen zu:",
+                "addUsersForm": {
+                    "addUsersButton": "Nutzer:in hinzufügen",
+                    "requiredError": "Du musst mindestens einen/eine Nutzer:in auswählen",
+                    "maxError": "Du kannst nur {{ max }} Nutzer:innen hinzufügen",
+                    "addUserLabel": "Suche im Kurs nach Nutzer:innen",
+                    "maxUsersNote": "Hinweis: Du kannst dieser Konversation nur {{ max }} Nutzer:innen hinzufügen",
+                    "addIndividualUsers": "Füge einzelne Nutzer:innen hinzu",
+                    "addWholeGroups": "Füge ganze Nutzergruppen hinzu",
+                    "addAllStudents": "Füge alle Studierende hinzu",
+                    "addAllTutors": "Füge alle Tutor:innen hinzu",
+                    "addAllEditors": "Füge alle Editor:innen hinzu",
+                    "addAllInstructors": "Füge alle Lehrende hinzu"
+                }
+            },
+            "createOneToOneChat": {
+                "title": "Starte ein direktes Gespräch mit einem/einer anderen Nutzer:in",
+                "userSelectorLabel": "Wähle einen/eine Nutzer:in aus, mit dem du chatten möchtest"
+            },
+            "createGroupChat": {
+                "title": "Starte einen Gruppenchat zwischen dir und maximal 9 anderen Nutzer:innen",
+                "userSelectorLabel": "Suche nach Nutzer:innen, die du zum Gruppenchat hinzufügen möchtest",
+                "requiredError": "Du musst mindestens einen/eine Nutzer:in auswählen",
+                "maxError": "Du kannst nur {{ max }} Nutzer:innen hinzufügen",
+                "confirmButton": "Gruppenchat erstellen"
+            },
+            "editChannelTopic": {
+                "topicInput": {
+                    "label": "Thema (optional)",
+                    "topicHelp": "Worum befasst sich der Kanal derzeit? (Wird im Kanal-Header angezeigt)",
+                    "maxLengthValidationError": "Das Thema kann maximal {{ max }} Zeichen lang sein!"
+                }
+            },
+            "channelOverview": {
+                "title": "Alle Kanäle im Kurs {{ courseTitle }}",
+                "createChannelButton": "Erstelle einen neuen Kanal",
+                "channelItem": {
+                    "joined:": "Beigetreten",
+                    "members": "Mitglieder:innen"
+                },
+                "actions": {
+                    "view": "Ansehen",
+                    "join": "Beitreten",
+                    "leave": "Verlassen"
+                }
+            },
+            "createChannel": {
+                "titlePublicChannel": "Erstelle einen öffentlichen Kanal",
+                "titlePrivateChannel": "Erstelle einen privaten Kanal",
+                "description": "Ein Kanal ist eine Möglichkeit, Menschen für ein Projekt, ein Thema oder nur zum Spaß zusammenzubringen. Du kannst so viele Kanäle erstellen, wie du möchtest.",
+                "channelForm": {
+                    "nameInput": {
+                        "label": "Name",
+                        "placeholder": "z.B. technischer Support",
+                        "requiredValidationError": "Name ist erforderlich!",
+                        "maxLengthValidationError": "Name kann max {{ max }} Zeichen lang sein!",
+                        "regexValidationError": "Namen können nur Kleinbuchstaben, Zahlen und Striche enthalten."
+                    },
+                    "descriptionInput": {
+                        "label": "Beschreibung (optional)",
+                        "descriptionHelp": "Worum geht es in diesem Kanal?",
+                        "maxLengthValidationError": "Beschreibung kann max {{ max }} Zeichen lang sein!"
+                    },
+                    "isPublicInput": {
+                        "label": "Privatkanal / öffentlicher Kanal",
+                        "explanation": "Die Nutzer:innen brauchen eine Einladung um sich einem privaten Kanal anzuschließen. Jeder/Jede Nutzer:in kann einem öffentlichen Kanal beitreten.",
+                        "public": "Öffentlich",
+                        "private": "Privat"
+                    },
+                    "createButton": "Kanal erstellen"
+                }
+            }
+        }
+    }
+}
