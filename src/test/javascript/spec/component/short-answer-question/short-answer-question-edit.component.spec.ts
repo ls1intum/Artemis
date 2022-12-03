@@ -282,6 +282,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         fixture.detectChanges();
 
         component.setupQuestionEditor();
+        component.setQuestionEditorValue('[-spot 1] [-spot 2]');
         expect(component.numberOfSpot).toBe(3);
         expect(component.optionsWithID).toEqual(['[-option 0]', '[-option 1]']);
     });
@@ -498,5 +499,18 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         expect(component.shortAnswerQuestion.similarityValue).toBe(100);
         expect(questionUpdated).toHaveBeenCalledOnce();
+    });
+
+    it('should return highest spot number', () => {
+        expect(component.getHighestSpotNumbers(`[-spot 1]`)).toBe(1);
+        expect(component.getHighestSpotNumbers(`hello [-spot 1] [-spot 3] [-spot 2]`)).toBe(3);
+        expect(
+            component.getHighestSpotNumbers(`hello
+        [-spot 1] [-spot 3]
+        [-spot 2]`),
+        ).toBe(3);
+        expect(component.getHighestSpotNumbers(`hello`)).toBe(0);
+        expect(component.getHighestSpotNumbers(`[-spot ]]`)).toBe(0);
+        expect(component.getHighestSpotNumbers(`[-spot x]]`)).toBe(0);
     });
 });
