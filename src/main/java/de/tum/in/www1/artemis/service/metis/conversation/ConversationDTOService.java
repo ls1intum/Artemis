@@ -57,6 +57,14 @@ public class ConversationDTOService {
         throw new IllegalArgumentException("Conversation type not supported");
     }
 
+    /**
+     * Creates a ConversationDTO from a Conversation
+     * <p>
+     * Does not set transient properties that require extra database queries
+     *
+     * @param conversation the conversation to create the DTO from
+     * @return the created ConversationDTO
+     */
     public ConversationDTO convertToDTOWithoutExtraDBCalls(Conversation conversation) {
         if (conversation instanceof Channel channel) {
             return new ChannelDTO(channel);
