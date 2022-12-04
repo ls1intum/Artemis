@@ -4,6 +4,8 @@ import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { NgbCollapse, NgbDropdown, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -68,6 +70,21 @@ describe('NavbarComponent', () => {
         translate: true,
         uri: '/course-management/1/programming-exercises/',
     } as MockBreadcrumb;
+
+    const profileInfo = {
+        git: {
+            branch: 'clone-repo-button',
+            commit: {
+                id: {
+                    abbrev: '95ef2a',
+                },
+                time: '2022-11-20T20:35:01Z',
+                user: {
+                    name: 'Max Musterman',
+                },
+            },
+        },
+    } as ProfileInfo;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
@@ -228,6 +245,18 @@ describe('NavbarComponent', () => {
 
         expect(component.breadcrumbs[0]).toEqual({ label: 'route-without-translation', translate: false, uri: '/admin/route-without-translation/' } as MockBreadcrumb);
     });
+
+    it('should have correct git info', fakeAsync(() => {
+        const profileService: ProfileService = TestBed.inject(ProfileService);
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo as any));
+
+        fixture.detectChanges();
+
+        expect(component.gitCommitId).toBe('95ef2a');
+        expect(component.gitBranchName).toBe('clone-repo-button');
+        expect(component.gitTimestamp).toBe('Sun, 20 Nov 2022 20:35:01 GMT');
+        expect(component.gitUsername).toBe('Max Musterman');
+    }));
 
     it('should set the exam active state correctly', fakeAsync(() => {
         const now = dayjs();
