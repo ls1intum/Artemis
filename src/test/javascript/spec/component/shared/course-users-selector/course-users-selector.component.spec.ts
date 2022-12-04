@@ -1,12 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
-import { CourseUsersSelectorComponent } from 'app/shared/course-users-selector/course-users-selector.component';
+import { CourseUsersSelectorComponent, SearchRoleGroup } from 'app/shared/course-users-selector/course-users-selector.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
-import { CourseManagementService, RoleGroup } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Component, DebugElement, ViewChild } from '@angular/core';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
@@ -33,7 +33,7 @@ class WrapperComponent {
     disabled = false;
     courseId = 1;
     label = 'TestLabel';
-    rolesToAllowSearchingIn: RoleGroup[] = ['tutors', 'students', 'instructors', 'editors'];
+    rolesToAllowSearchingIn: SearchRoleGroup[] = ['tutors', 'students', 'instructors'];
     multiSelect = true;
     showUserList = true;
 
@@ -108,7 +108,7 @@ describe('CourseUsersSelectorComponent', () => {
             tick(1000);
             fixture.detectChanges();
             expect(searchStub).toHaveBeenCalledOnce();
-            expect(searchStub).toHaveBeenCalledWith(1, 'test', ['students', 'tutors', 'editors', 'instructors']);
+            expect(searchStub).toHaveBeenCalledWith(1, 'test', ['students', 'tutors', 'instructors']);
             expectDropdownItems(fixture.nativeElement, ['Mortimer of Sto Helit (mort)']);
             // selecting the user in the dropdown
             getDropdownButtons(fixture.debugElement)[0].triggerEventHandler('click', {});

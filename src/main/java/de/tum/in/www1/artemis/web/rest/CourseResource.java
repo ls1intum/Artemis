@@ -778,12 +778,11 @@ public class CourseResource {
         }
         if (requestedRoles.contains(Role.TEACHING_ASSISTANT)) {
             groups.add(course.getTeachingAssistantGroupName());
+            // searching for tutors also searches for editors
+            groups.add(course.getEditorGroupName());
         }
         if (requestedRoles.contains(Role.INSTRUCTOR)) {
             groups.add(course.getInstructorGroupName());
-        }
-        if (requestedRoles.contains(Role.EDITOR)) {
-            groups.add(course.getEditorGroupName());
         }
         User searchingUser = userRepository.getUser();
         var originalPage = userRepository.searchAllByLoginOrNameInGroups(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());

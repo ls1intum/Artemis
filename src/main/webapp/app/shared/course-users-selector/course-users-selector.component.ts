@@ -1,13 +1,16 @@
 import { ChangeDetectorRef, Component, ElementRef, HostBinding, Input, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, OperatorFunction, Subject, catchError, map, of } from 'rxjs';
-import { CourseManagementService, RoleGroup } from 'app/course/manage/course-management.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { debounceTime, distinctUntilChanged, filter, switchMap, takeUntil, tap } from 'rxjs/operators';
 import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { NgbTypeahead, NgbTypeaheadSelectItemEvent } from '@ng-bootstrap/ng-bootstrap';
 import { faX } from '@fortawesome/free-solid-svg-icons';
 
 let selectorId = 0;
+
+// Note: Searching for tutors also searches for editors
+export type SearchRoleGroup = 'tutors' | 'students' | 'instructors';
 
 /**
  * Generic Input Component for searching and selecting one or more users from a course.
@@ -46,7 +49,7 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
     @Input()
     label?: string;
     @Input()
-    rolesToAllowSearchingIn: RoleGroup[] = ['tutors', 'students', 'instructors', 'editors'];
+    rolesToAllowSearchingIn: SearchRoleGroup[] = ['tutors', 'students', 'instructors'];
     @Input()
     multiSelect = true;
 
@@ -55,7 +58,6 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
 
     searchStudents = true;
     searchTutors = true;
-    searchEditors = true;
     searchInstructors = true;
 
     // icons
@@ -73,9 +75,6 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
         }
         if (this.rolesToAllowSearchingIn.includes('tutors')) {
             this.searchTutors = true;
-        }
-        if (this.rolesToAllowSearchingIn.includes('editors')) {
-            this.searchEditors = true;
         }
         if (this.rolesToAllowSearchingIn.includes('instructors')) {
             this.searchInstructors = true;
@@ -131,15 +130,12 @@ export class CourseUsersSelectorComponent implements ControlValueAccessor, OnIni
             // the three letter minimum is enforced by the server only for searching for students as they are so many
             filter((term) => term.length >= 3 || !this.searchStudents),
             switchMap((term) => {
-                const rolesToSearchIn: RoleGroup[] = [];
+                const rolesToSearchIn: SearchRoleGroup[] = [];
                 if (this.searchStudents) {
                     rolesToSearchIn.push('students');
                 }
                 if (this.searchTutors) {
                     rolesToSearchIn.push('tutors');
-                }
-                if (this.searchEditors) {
-                    rolesToSearchIn.push('editors');
                 }
                 if (this.searchInstructors) {
                     rolesToSearchIn.push('instructors');

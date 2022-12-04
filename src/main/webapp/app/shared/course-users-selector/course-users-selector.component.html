@@ -36,10 +36,6 @@
             <input type="checkbox" class="form-check-input" id="tutors" [checked]="searchTutors" (change)="searchTutors = !searchTutors; onFilterChange()" />
             <label class="form-check-label" for="tutors">{{ 'artemisApp.course.tutors' | artemisTranslate }}</label>
         </div>
-        <div class="form-check form-check-inline" *ngIf="rolesToAllowSearchingIn.includes('editors')">
-            <input type="checkbox" class="form-check-input" id="editors" [checked]="searchEditors" (change)="searchEditors = !searchEditors; onFilterChange()" />
-            <label class="form-check-label" for="editors">{{ 'artemisApp.course.editors' | artemisTranslate }}</label>
-        </div>
         <div class="form-check form-check-inline" *ngIf="rolesToAllowSearchingIn.includes('instructors')">
             <input type="checkbox" class="form-check-input" id="instructors" [checked]="searchInstructors" (change)="searchInstructors = !searchInstructors; onFilterChange()" />
             <label class="form-check-label" for="instructors">{{ 'artemisApp.course.instructors' | artemisTranslate }}</label>
