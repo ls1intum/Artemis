@@ -34,10 +34,33 @@
 .feedback-item-group {
     margin-bottom: 1rem;
 
+    &[open] > summary:before {
+        transform: rotate(180deg);
+    }
+
     &__summary {
+        display: flex;
         padding: 1rem;
+        align-items: center;
         //TODO: Dynamic background color depending on group
         background-color: green;
+
+        // CSS trick to create a triangle
+        &:before {
+            margin-right: 0.5rem;
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 0.5rem solid transparent;
+            border-right: 0.5rem solid transparent;
+            border-top: 0.5rem solid var(--bs-modal-color);
+        }
+
+        &__content {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+        }
     }
 
     &__members {

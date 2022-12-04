@@ -24,7 +24,14 @@
 
 <details *ngIf="feedbackItemGroup" class="feedback-item-group">
     <summary class="feedback-item-group__summary">
-        {{ feedbackItemGroup.name | titlecase }}
+        <div class="feedback-item-group__summary__content">
+            <h4 class="feedback-item__category">
+                {{ feedbackItemGroup.name | titlecase }}
+            </h4>
+
+            <!--TODO: add point to feedbackGroups-->
+            <span class="feedback-item__points">1P</span>
+        </div>
     </summary>
 
     <div class="feedback-item-group__members">
