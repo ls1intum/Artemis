@@ -13,7 +13,6 @@ import org.springframework.stereotype.Repository;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 
 @Repository
-
 public interface GroupChatRepository extends JpaRepository<GroupChat, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
