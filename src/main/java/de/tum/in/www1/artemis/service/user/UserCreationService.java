@@ -3,9 +3,7 @@ package de.tum.in.www1.artemis.service.user;
 import static de.tum.in.www1.artemis.security.Role.*;
 
 import java.time.Instant;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
@@ -13,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
+import org.springframework.core.env.Environment;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +29,7 @@ import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
+import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.security.RandomUtil;
 
 @Service
@@ -68,9 +68,11 @@ public class UserCreationService {
 
     private final CacheManager cacheManager;
 
+    private final Environment env;
+
     public UserCreationService(UserRepository userRepository, PasswordService passwordService, AuthorityRepository authorityRepository, CourseRepository courseRepository,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService, CacheManager cacheManager,
-            OrganizationRepository organizationRepository) {
+            OrganizationRepository organizationRepository, Environment env) {
         this.userRepository = userRepository;
         this.passwordService = passwordService;
         this.authorityRepository = authorityRepository;
@@ -79,6 +81,7 @@ public class UserCreationService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.cacheManager = cacheManager;
         this.organizationRepository = organizationRepository;
+        this.env = env;
     }
 
     /**
@@ -172,7 +175,7 @@ public class UserCreationService {
         user.setResetKey(RandomUtil.generateResetKey());
         user.setResetDate(Instant.now());
         if (!useExternalUserManagement) {
-            addTutorialGroups(userDTO); // Automatically add interactive tutorial course groups to the new created user if it has been specified
+            addTutorialGroupsToUser(userDTO); // Automatically add interactive tutorial course groups to the new created user if it has been specified
         }
         try {
             Set<Organization> matchingOrganizations = organizationRepository.getAllMatchingOrganizationsByUserEmail(userDTO.getEmail());
@@ -187,8 +190,12 @@ public class UserCreationService {
         user.setRegistrationNumber(userDTO.getVisibleRegistrationNumber());
         saveUser(user);
 
-        optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, password));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
+        // in the context of tests, it does not make sense to create the user in the VC or CI System
+        Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_TEST)) {
+            optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.createVcsUser(user, password));
+            optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.createUser(user, password));
+        }
 
         addUserToGroupsInternal(user, userDTO.getGroups());
 
@@ -339,7 +346,7 @@ public class UserCreationService {
      *
      * @param user the userDTO to add to the groups to
      */
-    private void addTutorialGroups(ManagedUserVM user) {
+    private void addTutorialGroupsToUser(ManagedUserVM user) {
         if (tutorialGroupInstructors.isPresent() || tutorialGroupEditors.isPresent() || tutorialGroupTutors.isPresent() || tutorialGroupStudents.isPresent()) {
             Set<String> groupsToAdd = new HashSet<>();
             if (tutorialGroupStudents.isPresent() && courseRepository.findCourseByStudentGroupName(tutorialGroupStudents.get()) != null) {

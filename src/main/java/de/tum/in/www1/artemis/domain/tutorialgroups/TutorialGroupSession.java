@@ -24,13 +24,13 @@ public class TutorialGroupSession extends DomainObject {
     /**
      * NOTE: Stored in UTC in the database, therefore we use ZonedDateTime. Will be converted to UTC by Hibernate.
      */
-    @Column(name = "start")
+    @Column(name = "start_time")
     private ZonedDateTime start;
 
     /**
      * NOTE: Stored in UTC in the database, therefore we use ZonedDateTime. Will be converted to UTC by Hibernate.
      */
-    @Column(name = "end")
+    @Column(name = "end_time")  // TODO: we need to rename the column with liquibase because "end" is a preserved keyword in H2
     private ZonedDateTime end;
 
     /**

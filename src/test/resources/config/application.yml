@@ -55,12 +55,16 @@ spring:
         name: Artemis
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:h2:mem:Artemis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        url: jdbc:h2:mem:Artemis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=LEGACY
         name:
         username:
         password:
         hikari:
+            poolName: Hikari
             auto-commit: false
+    h2:
+        console:
+            enabled: false
     data:
         jpa:
             repositories:
@@ -71,14 +75,14 @@ spring:
     jmx:
         enabled: false
     jpa:
-        database-platform: org.hibernate.dialect.MySQLDialect
+        database-platform: org.hibernate.dialect.H2Dialect
         open-in-view: false
         show-sql: false
         hibernate:
-#            ddl-auto: none                         # out commented because it would lead to test execution errors
-            naming:
-                physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
-                implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
+            ddl-auto: create-drop
+#            naming:
+#                physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+#                implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
         properties:
             hibernate.jdbc.time_zone: UTC
             hibernate.id.new_generator_mappings: true
@@ -209,7 +213,7 @@ jhipster:
             enabled: false
             host: localhost
             port: 5000
-            queue-size: 512
+            ring-buffer-size: 512
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: Artemis@localhost
         base-url: http://127.0.0.1:8080

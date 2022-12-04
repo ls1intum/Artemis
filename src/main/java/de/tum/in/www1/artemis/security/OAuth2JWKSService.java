@@ -21,6 +21,7 @@ import com.nimbusds.jose.jwk.KeyUse;
 import com.nimbusds.jose.jwk.RSAKey;
 
 import de.tum.in.www1.artemis.service.OnlineCourseConfigurationService;
+import jakarta.annotation.PostConstruct;
 
 /**
  * This Service is responsible to manage JWKs for all OAuth2 ClientRegistrations.
@@ -41,6 +42,10 @@ public class OAuth2JWKSService {
 
     public OAuth2JWKSService(OnlineCourseConfigurationService onlineCourseConfigurationService) {
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
+    }
+
+    @PostConstruct
+    public void init() {
         this.jwkSet = new JWKSet(generateOAuth2ClientKeys());
     }
 
@@ -83,7 +88,7 @@ public class OAuth2JWKSService {
 
     private List<JWK> generateOAuth2ClientKeys() {
         List<JWK> keys = new LinkedList<>();
-        onlineCourseConfigurationService.getAllClientRegistrations().forEach(c -> generateAndAddKey(c, keys));
+        onlineCourseConfigurationService.getAllClientRegistrations().forEach(clientRegistration -> generateAndAddKey(clientRegistration, keys));
         return keys;
     }
 

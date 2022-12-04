@@ -27,6 +27,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.filter.CorsFilter;
 
+import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -106,7 +107,6 @@ public class SecurityConfiguration {
         http
             .csrf()
             .disable()
-//            .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling((exceptions) -> exceptions
                     .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
                     .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
@@ -167,7 +167,7 @@ public class SecurityConfiguration {
             )
         .apply(securityConfigurerAdapter());
 
-//        http.apply(new CustomLti13Configurer());
+        http.apply(new CustomLti13Configurer());
         // @formatter:on
 
         return http.build();
