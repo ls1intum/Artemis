@@ -286,6 +286,14 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         courseGradingScale.setGradeType(GradeType.GRADE);
         gradingScaleRepository.save(courseGradingScale);
 
+        // Add student participation to course to avoid receiving no-participation special grade.
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        Long individualTextExerciseId = textExercise.getId();
+        database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        User student = userRepository.findOneByLogin("student1").get();
+        database.createParticipationSubmissionAndResult(individualTextExerciseId, student, 10.0, 10.0, 50, true);
+
         GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, GradeDTO.class);
 
         assertThat(foundGrade.gradeName()).isEqualTo("Name");
