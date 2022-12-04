@@ -65,7 +65,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         User student = userRepository.findOneByLogin("student1").get();
 
-        var courseResult = courseScoreCalculationService.calculateCourseScoresWithPlagiarismVerdicts(course.getId(), List.of(student.getId()));
+        var courseResult = courseScoreCalculationService.calculateCourseScores(course.getId(), List.of(student.getId()));
         assertThat(courseResult.maxPoints()).isEqualTo(0.0);
         assertThat(courseResult.reachablePoints()).isEqualTo(0.0);
         assertThat(courseResult.studentScores()).hasSize(1);
