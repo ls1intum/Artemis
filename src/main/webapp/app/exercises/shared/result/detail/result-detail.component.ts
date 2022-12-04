@@ -103,11 +103,6 @@ export class ResultDetailComponent implements OnInit {
     commitHash?: string;
     commitUrl?: string;
 
-    testCaseCount: number;
-    passedTestCaseCount: number;
-    scaFeedbackCount: number;
-    manualFeedbackCount: number;
-
     ngxData: NgxChartsMultiSeriesDataEntry[] = [];
     labels: string[];
     ngxColors = {
@@ -120,8 +115,6 @@ export class ResultDetailComponent implements OnInit {
     legendPosition = LegendPosition.Below;
     showOnlyPositiveFeedback = false;
     showOnlyNegativeFeedback = false;
-
-    numberOfAggregatedTestCases = 0;
 
     feedbackItemService: FeedbackItemService;
 
@@ -209,11 +202,8 @@ export class ResultDetailComponent implements OnInit {
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
 
                         this.feedbackList = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
-                        this.numberOfAggregatedTestCases = this.feedbackItemService.getPositiveTestCasesWithoutDetailText(this.feedbackList).length;
 
                         this.feedbackItemNodes = this.feedbackItemService.group(this.feedbackList);
-
-                        this.countFeedbacks();
 
                         if (this.showScoreChart) {
                             this.updateChart(this.feedbackList);
@@ -409,7 +399,6 @@ export class ResultDetailComponent implements OnInit {
     resetChartFilter() {
         this.showOnlyNegativeFeedback = false;
         this.showOnlyPositiveFeedback = false;
-        this.countFeedbacks();
     }
 
     /**
@@ -433,22 +422,5 @@ export class ResultDetailComponent implements OnInit {
         if (this.showOnlyNegativeFeedback || this.showOnlyPositiveFeedback) {
             this.feedbackList = this.feedbackList.filter(filterPredicate);
         }
-
-        this.countFeedbacks();
-    }
-
-    private countFeedbacks() {
-        const testCaseList = this.feedbackList.filter((feedback) => feedback.type === FeedbackItemType.Test);
-        if (this.numberOfAggregatedTestCases && (this.showOnlyPositiveFeedback || !this.showOnlyNegativeFeedback)) {
-            // The positive test feedbacks were aggregated to one, so we have to add the number but subtract one, since the aggregated test case is in the testCaseList
-            this.testCaseCount = testCaseList.length + this.numberOfAggregatedTestCases - 1;
-            this.passedTestCaseCount = testCaseList.filter((feedback) => feedback.positive).length + this.numberOfAggregatedTestCases - 1;
-        } else {
-            this.testCaseCount = testCaseList.length;
-            this.passedTestCaseCount = testCaseList.filter((feedback) => feedback.positive).length;
-        }
-
-        this.scaFeedbackCount = this.feedbackList.filter((feedback) => feedback.type === FeedbackItemType.Issue).length;
-        this.manualFeedbackCount = this.feedbackList.filter((feedback) => feedback.type === FeedbackItemType.Feedback || feedback.type === FeedbackItemType.Subsequent).length;
     }
 }
