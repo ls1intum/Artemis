@@ -2598,7 +2598,7 @@ public class DatabaseUtilService {
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
         assertThat(tests).as("test case is initialized").hasSize(3);
 
-        return courseRepo.findById(course.getId()).get();
+        return courseRepo.findByIdWithEagerExercisesElseThrow(course.getId());
     }
 
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories() {
