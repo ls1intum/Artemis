@@ -14,7 +14,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import de.tum.in.www1.artemis.domain.lti.Claims;
+import de.tum.in.www1.artemis.domain.lti.ArtemisLtiClaims;
 import de.tum.in.www1.artemis.service.connectors.Lti13Service;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -58,7 +58,7 @@ public class Lti13LaunchFilter extends OncePerRequestFilter {
             OidcIdToken ltiIdToken = ((OidcUser) authToken.getPrincipal()).getIdToken();
             lti13Service.performLaunch(ltiIdToken, authToken.getAuthorizedClientRegistrationId());
 
-            writeResponse(ltiIdToken.getClaim(Claims.TARGET_LINK_URI), response);
+            writeResponse(ltiIdToken.getClaim(ArtemisLtiClaims.TARGET_LINK_URI), response);
         }
         catch (HttpClientErrorException | OAuth2AuthenticationException | IllegalStateException ex) {
             log.error("Error during LTI 1.3 launch request: {}", ex.getMessage());

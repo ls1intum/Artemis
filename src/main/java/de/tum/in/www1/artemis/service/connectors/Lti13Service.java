@@ -81,7 +81,7 @@ public class Lti13Service {
      */
     public void performLaunch(OidcIdToken ltiIdToken, String clientRegistrationId) {
 
-        String targetLinkUrl = ltiIdToken.getClaim(Claims.TARGET_LINK_URI);
+        String targetLinkUrl = ltiIdToken.getClaim(ArtemisLtiClaims.TARGET_LINK_URI);
         Optional<Exercise> targetExercise = getExerciseFromTargetLink(targetLinkUrl);
         if (targetExercise.isEmpty()) {
             String message = "No exercise to launch at " + targetLinkUrl;
