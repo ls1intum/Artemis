@@ -110,7 +110,6 @@ examples.forEach((activeConversation) => {
                 selectedUsers: [{ id: 1, name: 'test' } as UserPublicInfoDTO],
                 addAllStudents: false,
                 addAllTutors: false,
-                addAllEditors: false,
                 addAllInstructors: false,
             };
 
@@ -129,7 +128,6 @@ examples.forEach((activeConversation) => {
                 const expectedAddUsersFormData: AddUsersFormData = {
                     addAllStudents: true,
                     addAllTutors: false,
-                    addAllEditors: false,
                     addAllInstructors: false,
                     selectedUsers: [],
                 };

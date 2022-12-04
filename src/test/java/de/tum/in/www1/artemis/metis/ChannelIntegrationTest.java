@@ -360,7 +360,6 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("addAllStudents", String.valueOf(true));
         params.add("addAllTutors", String.valueOf(true));
-        params.add("addAllEditors", String.valueOf(true));
         params.add("addAllInstructors", String.valueOf(true));
 
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", HttpStatus.OK, params);

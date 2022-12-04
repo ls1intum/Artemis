@@ -81,7 +81,6 @@ examples.forEach((activeConversation) => {
                 selectedUsers: [{ id: 1, login: 'loginA' } as UserPublicInfoDTO],
                 addAllStudents: false,
                 addAllTutors: false,
-                addAllEditors: false,
                 addAllInstructors: false,
             };
             const form: ConversationAddUsersFormStubComponent = fixture.debugElement.query(By.directive(ConversationAddUsersFormStubComponent)).componentInstance;
@@ -98,7 +97,6 @@ examples.forEach((activeConversation) => {
                     activeConversation.id,
                     addUsersFormData.addAllStudents,
                     addUsersFormData.addAllTutors,
-                    addUsersFormData.addAllEditors,
                     addUsersFormData.addAllInstructors,
                     addUsersFormData.selectedUsers?.map((user) => user.login),
                 );

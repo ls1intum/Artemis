@@ -241,8 +241,7 @@ public class ChannelResource {
      * @param channelId         the id of the channel
      * @param userLogins        the logins of the course users to be registered for a channel
      * @param addAllStudents    true if all course students should be added
-     * @param addAllTutors      true if all course tutors should be added
-     * @param addAllEditors     true if all course editors should be added
+     * @param addAllTutors      true if all course tutors and editors should be added
      * @param addAllInstructors true if all course instructors should be added
      * @return ResponseEntity with status 200 (Ok)
      */
@@ -250,7 +249,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> registerUsersToChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody(required = false) List<String> userLogins,
             @RequestParam(defaultValue = "false") Boolean addAllStudents, @RequestParam(defaultValue = "false") Boolean addAllTutors,
-            @RequestParam(defaultValue = "false") Boolean addAllEditors, @RequestParam(defaultValue = "false") Boolean addAllInstructors) {
+            @RequestParam(defaultValue = "false") Boolean addAllInstructors) {
         List<String> usersLoginsToRegister = new ArrayList<>();
         if (userLogins != null) {
             usersLoginsToRegister.addAll(userLogins);
@@ -260,9 +259,8 @@ public class ChannelResource {
         if (!usersLoginsToRegister.isEmpty()) {
             log.debug("REST request to register {} users to channel : {}", usersLoginsToRegister.size(), channelId);
         }
-        if (addAllStudents || addAllTutors || addAllEditors || addAllInstructors) {
-            var registerAllString = "addAllStudents: " + addAllStudents + ", addAllTutors: " + addAllTutors + ", addAllEditors: " + addAllEditors + ", addAllInstructors: "
-                    + addAllInstructors;
+        if (addAllStudents || addAllTutors || addAllInstructors) {
+            var registerAllString = "addAllStudents: " + addAllStudents + ", addAllTutors: " + addAllTutors + ", addAllInstructors: " + addAllInstructors;
             log.debug("REST request to register {} to channel : {}", registerAllString, channelId);
         }
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -271,7 +269,7 @@ public class ChannelResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToRegisterUsersToChannel(channelFromDatabase, usersLoginsToRegister, requestingUser);
         Set<User> usersToRegister = new HashSet<>();
-        usersToRegister.addAll(conversationService.findUsersInDatabase(course, addAllStudents, addAllTutors, addAllEditors, addAllInstructors));
+        usersToRegister.addAll(conversationService.findUsersInDatabase(course, addAllStudents, addAllTutors, addAllInstructors));
         usersToRegister.addAll(conversationService.findUsersInDatabase(usersLoginsToRegister.stream().toList()));
         conversationService.registerUsersToConversation(course, usersToRegister, channelFromDatabase, Optional.empty());
         return ResponseEntity.ok().build();

@@ -50,7 +50,6 @@ export class ChannelService {
         channelId: number,
         addAllStudents = false,
         addAllTutors = false,
-        addAllEditors = false,
         addAllInstructors = false,
         logins?: string[],
     ): Observable<HttpResponse<void>> {
@@ -63,9 +62,6 @@ export class ChannelService {
         }
         if (addAllTutors) {
             params = params.set('addAllTutors', 'true');
-        }
-        if (addAllEditors) {
-            params = params.set('addAllEditors', 'true');
         }
         if (addAllInstructors) {
             params = params.set('addAllInstructors', 'true');

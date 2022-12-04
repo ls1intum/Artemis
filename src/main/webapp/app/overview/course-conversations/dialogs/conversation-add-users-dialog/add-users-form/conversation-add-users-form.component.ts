@@ -7,8 +7,8 @@ import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 export interface AddUsersFormData {
     selectedUsers?: UserPublicInfoDTO[];
     addAllStudents: boolean;
+    // all tutors also includes editors
     addAllTutors: boolean;
-    addAllEditors: boolean;
     addAllInstructors: boolean;
 }
 
@@ -38,7 +38,7 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
     get isSubmitPossible() {
         return (
             (this.mode === 'individual' && !this.form.invalid) ||
-            (this.mode === 'group' && (this.form.value?.addAllStudents || this.form.value?.addAllTutors || this.form.value?.addAllEditors || this.form.value?.addAllInstructors))
+            (this.mode === 'group' && (this.form.value?.addAllStudents || this.form.value?.addAllTutors || this.form.value?.addAllInstructors))
         );
     }
 
@@ -60,7 +60,6 @@ export class ConversationAddUsersFormComponent implements OnInit, OnChanges {
             selectedUsers: [[], validators],
             addAllStudents: [false],
             addAllTutors: [false],
-            addAllEditors: [false],
             addAllInstructors: [false],
         });
     }

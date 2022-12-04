@@ -348,19 +348,16 @@ public class ConversationService {
      * @param course             the course
      * @param findAllStudents    if true, result includes all users with the student role in the course
      * @param findAllTutors      if true, result includes all users with the tutor role in the course
-     * @param findAllEditors     if true, result includes all users with the editor role in the course
      * @param findAllInstructors if true, result includes all users with the instructor role in the course
      * @return the list of users found
      */
-    public Set<User> findUsersInDatabase(Course course, boolean findAllStudents, boolean findAllTutors, boolean findAllEditors, boolean findAllInstructors) {
+    public Set<User> findUsersInDatabase(Course course, boolean findAllStudents, boolean findAllTutors, boolean findAllInstructors) {
         Set<User> users = new HashSet<>();
         if (findAllStudents) {
             users.addAll(userRepository.findAllInGroupWithAuthorities(course.getStudentGroupName()));
         }
         if (findAllTutors) {
             users.addAll(userRepository.findAllInGroupWithAuthorities(course.getTeachingAssistantGroupName()));
-        }
-        if (findAllEditors) {
             users.addAll(userRepository.findAllInGroupWithAuthorities(course.getEditorGroupName()));
         }
         if (findAllInstructors) {

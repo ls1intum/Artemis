@@ -59,8 +59,8 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
         this.ngUnsubscribe.complete();
     }
 
-    onFormSubmitted({ selectedUsers, addAllStudents, addAllTutors, addAllEditors, addAllInstructors }: AddUsersFormData) {
-        this.addUsers(selectedUsers ?? [], addAllStudents, addAllTutors, addAllEditors, addAllInstructors);
+    onFormSubmitted({ selectedUsers, addAllStudents, addAllTutors, addAllInstructors }: AddUsersFormData) {
+        this.addUsers(selectedUsers ?? [], addAllStudents, addAllTutors, addAllInstructors);
     }
 
     getAsChannel = getAsChannelDto;
@@ -68,12 +68,12 @@ export class ConversationAddUsersDialogComponent extends AbstractDialogComponent
 
     getConversationName = this.conversationService.getConversationName;
 
-    private addUsers(usersToAdd: UserPublicInfoDTO[], addAllStudents: boolean, addAllTutors: boolean, addAllEditors: boolean, addAllInstructors: boolean) {
+    private addUsers(usersToAdd: UserPublicInfoDTO[], addAllStudents: boolean, addAllTutors: boolean, addAllInstructors: boolean) {
         const userLogins = usersToAdd.map((user) => user.login!);
 
         if (isChannelDto(this.activeConversation)) {
             this.channelService
-                .registerUsersToChannel(this.course.id!, this.activeConversation.id!, addAllStudents, addAllTutors, addAllEditors, addAllInstructors, userLogins)
+                .registerUsersToChannel(this.course.id!, this.activeConversation.id!, addAllStudents, addAllTutors, addAllInstructors, userLogins)
                 .pipe(
                     finalize(() => this.close()),
                     takeUntil(this.ngUnsubscribe),
