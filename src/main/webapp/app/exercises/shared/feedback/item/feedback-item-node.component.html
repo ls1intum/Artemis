@@ -19,4 +19,12 @@
     <p *ngElse jhiTranslate="artemisApp.result.noFeedback">No feedback available</p>
 </div>
 
-<ng-container *ngIf="feedbackItemGroup"> GROUP </ng-container>
+<ng-container *ngIf="feedbackItemGroup">
+    <details>
+        <summary>
+            {{ feedbackItemGroup.name }}
+        </summary>
+
+        <jhi-feedback-item-node *ngFor="let feedbackItem of feedbackItemGroup.members" [feedbackNode]="feedbackItem" [course]="course"></jhi-feedback-item-node>
+    </details>
+</ng-container>
