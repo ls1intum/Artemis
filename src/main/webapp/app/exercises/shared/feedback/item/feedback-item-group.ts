@@ -6,12 +6,20 @@ import { FeedbackItem } from 'app/exercises/shared/result/detail/result-detail.c
  */
 export abstract class FeedbackItemGroup {
     name: string;
+    description: string;
     members: FeedbackItem[] = [];
+    credits: number;
 
     abstract shouldContain(feedbackItem: FeedbackItem): boolean;
 
-    addAllItems(feedbackItems: FeedbackItem[]) {
+    addAllItems(feedbackItems: FeedbackItem[]): FeedbackItemGroup {
         this.members = [...this.members, ...feedbackItems];
+        return this;
+    }
+
+    calculateCredits(): FeedbackItemGroup {
+        // TODO: check what credits are
+        this.credits = this.members.reduce((acc, item) => acc + (item.credits ?? 0), 0);
         return this;
     }
 }

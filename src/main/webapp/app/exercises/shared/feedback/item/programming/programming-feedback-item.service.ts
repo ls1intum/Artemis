@@ -23,7 +23,12 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
     }
 
     group(feedbackItems: FeedbackItem[]): FeedbackItemGroup[] {
-        return getAllFeedbackItemGroups().map((group) => group.addAllItems(feedbackItems.filter(group.shouldContain)));
+        return getAllFeedbackItemGroups() //
+            .map((group) =>
+                group
+                    .addAllItems(feedbackItems.filter(group.shouldContain)) //
+                    .calculateCredits(),
+            );
     }
 
     filterFeedbackItems(feedbackItems: FeedbackItem[], showTestDetails: boolean): FeedbackItem[] {

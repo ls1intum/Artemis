@@ -29,8 +29,7 @@
                 {{ feedbackItemGroup.name | titlecase }}
             </h4>
 
-            <!--TODO: add point to feedbackGroups-->
-            <span class="feedback-item__points">1P</span>
+            <span *ngIf="feedbackItemGroup.credits !== 0" class="feedback-item__points">{{ roundValueSpecifiedByCourseSettings(feedbackItemGroup.credits, course) }}</span>
         </div>
     </summary>
 
