@@ -550,6 +550,20 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.results r
+            LEFT JOIN FETCH r.submission rs
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results sr
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.testRun = false
+                AND p.submissions IS NOT EMPTY
+                AND (s.type <> 'ILLEGAL' or s.type is null)
+                AND (rs.type <> 'ILLEGAL' or rs.type is null)
+            """)
+    List<StudentParticipation> findAllForPlagiarism(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
             WHERE p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
             """)
