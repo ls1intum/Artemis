@@ -94,7 +94,6 @@ export class ResultDetailComponent implements OnInit {
     loadingFailed = false;
     feedbackList: FeedbackItem[];
     filteredFeedbackList: FeedbackItem[];
-    backupFilteredFeedbackList: FeedbackItem[];
     buildLogs: BuildLogEntryArray;
     course?: Course;
 
@@ -210,12 +209,9 @@ export class ResultDetailComponent implements OnInit {
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
 
                         this.feedbackList = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
-                        this.filteredFeedbackList = this.feedbackItemService.filterFeedbackItems(this.feedbackList, this.showTestDetails);
                         this.numberOfAggregatedTestCases = this.feedbackItemService.getPositiveTestCasesWithoutDetailText(this.feedbackList).length;
 
-                        this.feedbackItemNodes = this.feedbackItemService.group(this.filteredFeedbackList);
-
-                        this.backupFilteredFeedbackList = this.filteredFeedbackList;
+                        this.feedbackItemNodes = this.feedbackItemService.group(this.feedbackList);
 
                         this.countFeedbacks();
 
@@ -413,7 +409,6 @@ export class ResultDetailComponent implements OnInit {
     resetChartFilter() {
         this.showOnlyNegativeFeedback = false;
         this.showOnlyPositiveFeedback = false;
-        this.filteredFeedbackList = this.backupFilteredFeedbackList;
         this.countFeedbacks();
     }
 
@@ -435,16 +430,15 @@ export class ResultDetailComponent implements OnInit {
             this.showOnlyPositiveFeedback = false;
         }
         // we reset the item list in order to make sure that maximal one feedback type is filtered at any time by the chart
-        this.filteredFeedbackList = this.backupFilteredFeedbackList;
         if (this.showOnlyNegativeFeedback || this.showOnlyPositiveFeedback) {
-            this.filteredFeedbackList = this.filteredFeedbackList.filter(filterPredicate);
+            this.feedbackList = this.feedbackList.filter(filterPredicate);
         }
 
         this.countFeedbacks();
     }
 
     private countFeedbacks() {
-        const testCaseList = this.filteredFeedbackList.filter((feedback) => feedback.type === FeedbackItemType.Test);
+        const testCaseList = this.feedbackList.filter((feedback) => feedback.type === FeedbackItemType.Test);
         if (this.numberOfAggregatedTestCases && (this.showOnlyPositiveFeedback || !this.showOnlyNegativeFeedback)) {
             // The positive test feedbacks were aggregated to one, so we have to add the number but subtract one, since the aggregated test case is in the testCaseList
             this.testCaseCount = testCaseList.length + this.numberOfAggregatedTestCases - 1;
@@ -454,9 +448,7 @@ export class ResultDetailComponent implements OnInit {
             this.passedTestCaseCount = testCaseList.filter((feedback) => feedback.positive).length;
         }
 
-        this.scaFeedbackCount = this.filteredFeedbackList.filter((feedback) => feedback.type === FeedbackItemType.Issue).length;
-        this.manualFeedbackCount = this.filteredFeedbackList.filter(
-            (feedback) => feedback.type === FeedbackItemType.Feedback || feedback.type === FeedbackItemType.Subsequent,
-        ).length;
+        this.scaFeedbackCount = this.feedbackList.filter((feedback) => feedback.type === FeedbackItemType.Issue).length;
+        this.manualFeedbackCount = this.feedbackList.filter((feedback) => feedback.type === FeedbackItemType.Feedback || feedback.type === FeedbackItemType.Subsequent).length;
     }
 }

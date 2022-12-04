@@ -14,14 +14,6 @@ export interface FeedbackItemService {
     create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[];
 
     /**
-     * @deprecated TODO: remove
-     * Filters / Summarizes positive test cases for a student and programming exercise result
-     * @param feedbackItems The list of feedback items
-     * @param showTestDetails
-     */
-    filterFeedbackItems(feedbackItems: FeedbackItem[], showTestDetails: boolean): FeedbackItem[];
-
-    /**
      * @deprecated TODO: refactor by exposing summary() method
      * Gets positive test cases without detail texts
      * @param feedbackItems
@@ -55,10 +47,5 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     getPositiveTestCasesWithoutDetailText(feedbackItems: FeedbackItem[]): FeedbackItem[] {
         return [];
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    filterFeedbackItems(feedbackItems: FeedbackItem[], showTestDetails: boolean): FeedbackItem[] {
-        return [...feedbackItems];
     }
 }

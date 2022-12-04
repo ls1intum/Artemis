@@ -31,35 +31,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             );
     }
 
-    filterFeedbackItems(feedbackItems: FeedbackItem[], showTestDetails: boolean): FeedbackItem[] {
-        if (showTestDetails) {
-            return [...feedbackItems];
-        }
-
-        const positiveTestCasesWithoutDetailText = this.getPositiveTestCasesWithoutDetailText(feedbackItems);
-
-        if (positiveTestCasesWithoutDetailText.length > 0) {
-            // Add summary of positive test cases
-            return [
-                {
-                    type: FeedbackItemType.Test,
-                    category: showTestDetails
-                        ? this.translateService.instant('artemisApp.result.detail.test.name')
-                        : this.translateService.instant('artemisApp.result.detail.feedback'),
-                    title:
-                        positiveTestCasesWithoutDetailText.length > 1
-                            ? this.translateService.instant('artemisApp.result.detail.test.passedTests', { number: positiveTestCasesWithoutDetailText.length })
-                            : this.translateService.instant('artemisApp.result.detail.test.passedTest'),
-                    positive: true,
-                    credits: positiveTestCasesWithoutDetailText.reduce((sum, feedbackItem) => sum + (feedbackItem.credits ?? 0), 0),
-                },
-                ...feedbackItems.filter((feedbackItem) => !positiveTestCasesWithoutDetailText.includes(feedbackItem)),
-            ];
-        }
-
-        return [...feedbackItems];
-    }
-
     /**
      * Creates a feedback item for feedback received for a programming exercise.
      * @param feedback The feedback from which the feedback item should be created.
