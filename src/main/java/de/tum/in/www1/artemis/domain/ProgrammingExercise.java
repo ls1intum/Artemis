@@ -129,6 +129,9 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "branch", table = "programming_exercise_details")
     private String branch;
 
+    @Column(name = "release_tests_with_example_solution", table = "programming_exercise_details")
+    private boolean releaseTestsWithExampleSolution;
+
     /**
      * This boolean flag determines whether the solution repository should be checked out during the build (additional to the student's submission).
      * This property is only used when creating the exercise (the client sets this value when POSTing the new exercise to the server).
@@ -284,6 +287,14 @@ public class ProgrammingExercise extends Exercise {
 
     public String getBranch() {
         return branch;
+    }
+
+    public void setReleaseTestsWithExampleSolution(boolean releaseTestsWithExampleSolution) {
+        this.releaseTestsWithExampleSolution = releaseTestsWithExampleSolution;
+    }
+
+    public boolean isReleaseTestsWithExampleSolution() {
+        return releaseTestsWithExampleSolution;
     }
 
     /**
