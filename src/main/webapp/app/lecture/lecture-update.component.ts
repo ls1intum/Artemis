@@ -37,6 +37,7 @@ export class LectureUpdateComponent implements OnInit {
     EditorMode = EditorMode;
     lecture: Lecture;
     isSaving: boolean;
+    isProcessing: boolean;
     processUnit: boolean;
     isShowingWizardMode: boolean;
 
@@ -78,6 +79,7 @@ export class LectureUpdateComponent implements OnInit {
     ngOnInit() {
         this.isSaving = false;
         this.processUnit = false;
+        this.isProcessing = false;
         this.isShowingWizardMode = false;
         this.activatedRoute.parent!.data.subscribe((data) => {
             // Create a new lecture to use unless we fetch an existing lecture
@@ -128,7 +130,13 @@ export class LectureUpdateComponent implements OnInit {
     }
     // ---------------------
     proceedToUnitSplit() {
+        this.isProcessing = true;
+        // this.save();
+        setTimeout(() => {
+            this.isProcessing = false;
+        }, 3000);
         console.log('test');
+        this.router.navigate(['process-units'], { relativeTo: this.activatedRoute });
     }
 
     onSelectProcessUnit() {

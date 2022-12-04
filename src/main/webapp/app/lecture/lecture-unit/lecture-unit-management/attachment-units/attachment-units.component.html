@@ -1,0 +1,16 @@
+<jhi-lecture-unit-layout [isLoading]="isLoading">
+    <div *ngFor="let unit of units; let i = index" [attr.data-index]="i">
+        <div class="shadow-lg p-3 mb-5 bg-white rounded">
+            <h1>{{ i + 1 }}. Unit</h1>
+            <jhi-attachment-unit-form #attachmentUnitForm [isEditMode]="false" [isProcessingMode]="true" (formSubmitted)="createAttachmentUnits($event)"></jhi-attachment-unit-form>
+        </div>
+    </div>
+    <div class="">
+        <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
+            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
+        </button>
+        <button type="submit" id="save-entity" [disabled]="isLoading" class="btn btn-primary">
+            <span jhiTranslate="entity.action.submit">Submit</span>
+        </button>
+    </div>
+</jhi-lecture-unit-layout>

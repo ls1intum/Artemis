@@ -13,6 +13,7 @@ import { LectureAttachmentsComponent } from 'app/lecture/lecture-attachments.com
 import { Authority } from 'app/shared/constants/authority.constants';
 import { lectureUnitRoute } from 'app/lecture/lecture-unit/lecture-unit-management/lecture-unit-management.route';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { AttachmentUnitsComponent } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-units/attachment-units.component';
 
 @Injectable({ providedIn: 'root' })
 export class LectureResolve implements Resolve<Lecture> {
@@ -56,6 +57,15 @@ export const lectureRoute: Routes = [
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                     pageTitle: 'global.generic.create',
+                },
+                canActivate: [UserRouteAccessService],
+            },
+            {
+                path: 'new/process-units',
+                component: AttachmentUnitsComponent,
+                data: {
+                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+                    pageTitle: 'global.generic.process-units',
                 },
                 canActivate: [UserRouteAccessService],
             },

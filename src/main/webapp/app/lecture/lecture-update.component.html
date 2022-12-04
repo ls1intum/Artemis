@@ -121,11 +121,12 @@
                         <button
                             type="button"
                             id="process-units-entity"
-                            [disabled]="editForm.form.invalid || isSaving || !processUnit"
+                            [disabled]="editForm.form.invalid || isSaving || !processUnit || isProcessing"
                             class="btn btn-success"
                             (click)="proceedToUnitSplit()"
                         >
                             <fa-icon [icon]="faPuzzleProcess"></fa-icon>&nbsp;<span jhiTranslate="entity.action.processUnits">Process Units</span>
+                            <span *ngIf="isProcessing" class="spinner-border spinner-border-sm"></span>
                         </button>
                     </div>
                 </div>
