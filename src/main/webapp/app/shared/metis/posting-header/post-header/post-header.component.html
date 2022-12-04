@@ -45,5 +45,6 @@
             [confirmTooltip]="'artemisApp.metis.confirmDeletePost' | artemisTranslate"
         >
         </jhi-confirm-icon>
+        <span *ngIf="isUnread && !isAuthorOfPosting" class="badge bg-secondary hideAfter5Seconds">{{ 'global.generic.new' | artemisTranslate }}</span>
     </div>
 </div>

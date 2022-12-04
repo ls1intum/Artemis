@@ -12,6 +12,7 @@ import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./post.component.scss', './../metis.component.scss'],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
+    @Input() isUnread?: boolean;
     @Input() readOnlyMode: boolean;
     @Input() previewMode: boolean;
     // if the post is previewed in the create/edit modal,

@@ -9,11 +9,12 @@ import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 @Component({
     selector: 'jhi-post-header',
     templateUrl: './post-header.component.html',
-    styleUrls: ['../../metis.component.scss'],
+    styleUrls: ['../../metis.component.scss', './post-header.component.scss'],
 })
 export class PostHeaderComponent extends PostingHeaderDirective<Post> implements OnInit, OnDestroy {
     @Input()
     readOnlyMode = false;
+    @Input() isUnread?: boolean;
     @Input() previewMode: boolean;
     @ViewChild(PostCreateEditModalComponent) postCreateEditModal?: PostCreateEditModalComponent;
     isAtLeastInstructorInCourse: boolean;

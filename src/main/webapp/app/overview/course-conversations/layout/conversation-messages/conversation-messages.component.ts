@@ -11,6 +11,7 @@ import { GroupChat, isGroupChatDto } from 'app/entities/metis/conversation/group
 import { ButtonType } from 'app/shared/components/button.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-conversation-messages',
@@ -51,6 +52,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     faSearch = faSearch;
     faEnvelope = faEnvelope;
     faCircleNotch = faCircleNotch;
+    lastReadDate?: dayjs.Dayjs;
 
     constructor(
         protected metisService: MetisService, // instance from course-messages.component
@@ -69,6 +71,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
             this._activeConversation = conversation;
+            this.lastReadDate = this._activeConversation?.lastReadDate;
             this.onActiveConversationChange();
         });
     }

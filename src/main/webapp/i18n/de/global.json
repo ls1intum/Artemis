@@ -12,7 +12,8 @@
             "start": "Start",
             "edit": "Editieren",
             "copy": "Kopieren",
-            "copied": "Kopiert"
+            "copied": "Kopiert",
+            "new": "Neu"
         },
         "menu": {
             "home": "Startseite",

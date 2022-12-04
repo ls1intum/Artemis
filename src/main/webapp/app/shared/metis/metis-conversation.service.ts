@@ -77,6 +77,7 @@ export class MetisConversationService implements OnDestroy {
     }
 
     public setActiveConversation = (conversation: ConversationDto | undefined) => {
+        // update last read date of the conversation that is currently active before switching to another conversation
         if (this._activeConversation) {
             this._activeConversation.lastReadDate = dayjs();
         }
@@ -84,7 +85,6 @@ export class MetisConversationService implements OnDestroy {
         if (!cachedConversation) {
             throw new Error('The conversation is not part of the cache. Therefore, it cannot be set as active conversation.');
         }
-        cachedConversation.lastReadDate = dayjs();
         this._activeConversation = cachedConversation;
         this._activeConversation$.next(this._activeConversation);
     };

@@ -12,7 +12,8 @@
             "start": "Start",
             "edit": "Edit",
             "copy": "Copy",
-            "copied": "Copied"
+            "copied": "Copied",
+            "new": "New"
         },
         "menu": {
             "home": "Home",

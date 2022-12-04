@@ -1,6 +1,13 @@
 <div class="row mb-2 col-12">
     <div class="col-12">
-        <jhi-post [readOnlyMode]="readOnlyMode" [posting]="post" [showAnswers]="showAnswers" [isCourseMessagesPage]="isCourseMessagesPage" (openThread)="openThread.emit(post)">
+        <jhi-post
+            [readOnlyMode]="readOnlyMode"
+            [isUnread]="isUnread"
+            [posting]="post"
+            [showAnswers]="showAnswers"
+            [isCourseMessagesPage]="isCourseMessagesPage"
+            (openThread)="openThread.emit(post)"
+        >
         </jhi-post>
     </div>
 </div>
