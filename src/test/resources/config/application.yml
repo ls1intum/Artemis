@@ -152,9 +152,13 @@ zonky:
             postgres:
                 docker:
                     image: "postgres:14.5-alpine"
+                    tmpfs:
+                        enabled: true
             mysql:
                 docker:
                     image: "mysql:8.0.30"
+                    tmpfs:
+                        enabled: true
 
 server:
     port: 8080

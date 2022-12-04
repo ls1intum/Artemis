@@ -1420,7 +1420,7 @@ public class DatabaseUtilService {
         return examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
     }
 
-    public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(Course course) {
+    public Exam setupExamWithExerciseGroupsExercisesRegisteredStudents(String userPrefix, Course course) {
         var exam = ModelFactory.generateExam(course);
         exam.setNumberOfExercisesInExam(4);
         exam.setRandomizeExerciseOrder(true);
@@ -1482,10 +1482,10 @@ public class DatabaseUtilService {
         exerciseRepo.saveAll(List.of(exercise5a, exercise5b, exercise5c));
 
         // register user
-        var student1 = getUserByLogin("student1");
-        var student2 = getUserByLogin("student2");
-        var student3 = getUserByLogin("student3");
-        var student4 = getUserByLogin("student4");
+        var student1 = getUserByLogin(userPrefix + "student1");
+        var student2 = getUserByLogin(userPrefix + "student2");
+        var student3 = getUserByLogin(userPrefix + "student3");
+        var student4 = getUserByLogin(userPrefix + "student4");
         var registeredUsers = Set.of(student1, student2, student3, student4);
 
         exam.setRegisteredUsers(registeredUsers);
