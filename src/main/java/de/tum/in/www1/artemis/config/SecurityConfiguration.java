@@ -25,7 +25,6 @@ import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthen
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
-import org.springframework.web.filter.CorsFilter;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.Role;
@@ -45,8 +44,6 @@ public class SecurityConfiguration {
 
     private final TokenProvider tokenProvider;
 
-    private final CorsFilter corsFilter;
-
     private final PasswordService passwordService;
 
     private final Optional<AuthenticationProvider> remoteUserAuthenticationProvider;
@@ -55,11 +52,10 @@ public class SecurityConfiguration {
     private Optional<String> monitoringIpAddress;
 
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
-            CorsFilter corsFilter, PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
+            PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
-        this.corsFilter = corsFilter;
         this.passwordService = passwordService;
         this.remoteUserAuthenticationProvider = remoteUserAuthenticationProvider;
     }

@@ -169,6 +169,7 @@ repositories {
 dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
 
+    // Note: gitlab4j-api does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
 //    implementation "org.gitlab4j:gitlab4j-api:5.0.1"
     implementation files("lib/gitlab4j-api-5.0.2.jar")
 
@@ -202,7 +203,10 @@ dependencies {
 
     implementation "org.apache.logging.log4j:log4j-to-slf4j:2.19.0"
 
+    // Note: spring-security-lti13 does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
 //    implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.0"
+    implementation files("lib/spring-security-lti13-0.1.1.jar")
+
 
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
@@ -233,7 +237,7 @@ dependencies {
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${fasterxml_version}"
     implementation "com.fasterxml.jackson.datatype:jackson-datatype-hibernate5-jakarta:${fasterxml_version}"
     implementation "com.fasterxml.jackson.module:jackson-module-jaxb-annotations:${fasterxml_version}"
-//    implementation "com.fasterxml.jackson.core:jackson-databind:${fasterxml_version}"
+
     implementation "com.hazelcast:hazelcast:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:5.0.0"
