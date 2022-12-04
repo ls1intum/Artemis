@@ -144,8 +144,7 @@ public class ChannelResource {
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
-        var course = courseRepository.findByIdElseThrow(courseId);
-        channelAuthorizationService.isAllowedToDeleteChannel(course, null);
+        channelAuthorizationService.isAllowedToDeleteChannel(channel, null);
         channelService.deleteChannel(channel);
         return ResponseEntity.ok().build();
     }

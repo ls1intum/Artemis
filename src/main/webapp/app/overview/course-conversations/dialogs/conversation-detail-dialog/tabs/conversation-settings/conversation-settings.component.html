@@ -16,7 +16,7 @@
                     {{ 'artemisApp.dialogs.conversationSettings.actions.unarchiveChannel' | artemisTranslate }}
                 </button>
             </div>
-            <div class="col-12 settings-section text-center" *ngIf="canDeleteChannel(course)">
+            <div class="col-12 settings-section text-center" *ngIf="canDeleteChannel(course, channel)">
                 <button
                     class="btn btn-danger delete"
                     [id]="'delete-' + channel.id"

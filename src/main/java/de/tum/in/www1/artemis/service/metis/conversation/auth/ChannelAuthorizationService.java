@@ -58,9 +58,19 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param course the course in which the channel is located
      * @param user   the user that wants to delete the channel
      */
-    public void isAllowedToDeleteChannel(@NotNull Course course, @Nullable User user) {
+    public void isAllowedToDeleteChannel(@NotNull Channel channel, @Nullable User user) {
         var userToCheck = getUserIfNecessary(user);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, userToCheck);
+        // either instructor or admin who is also the creator
+        var channelFromDb = channelRepository.findById(channel.getId()).orElseThrow();
+        var isInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channel.getCourse(), userToCheck);
+        var isAdmin = isChannelAdmin(channelFromDb.getId(), userToCheck.getId());
+        var isCreator = false;
+        if (channelFromDb.getCreator() != null) {
+            isCreator = channelFromDb.getCreator().equals(userToCheck);
+        }
+        if (!(isInstructor || (isAdmin && isCreator))) {
+            throw new AccessForbiddenException("You are not allowed to delete this channel");
+        }
     }
 
     /**
@@ -110,15 +120,18 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
     public void isAllowedToRegisterUsersToChannel(@NotNull Channel channel, List<String> userLogins, @Nullable User user) {
         var userToCheck = getUserIfNecessary(user);
         var isJoinRequest = userLogins.size() == 1 && userLogins.get(0).equals(userToCheck.getLogin());
-        var hasChannelAdminRights = hasChannelAdminRights(channel.getId(), userToCheck);
+        var channelFromDb = channelRepository.findById(channel.getId());
+        var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channelFromDb.get().getCourse(), userToCheck);
+        var isChannelAdmin = isChannelAdmin(channel.getId(), userToCheck.getId());
+
         var isPrivateChannel = Boolean.FALSE.equals(channel.getIsPublic());
         if (isJoinRequest) {
-            if (isPrivateChannel && !hasChannelAdminRights) {
+            if (isPrivateChannel && !isAtLeastInstructor) {
                 throw new AccessForbiddenException("You are not allowed to join this channel");
             }
         }
         else {
-            if (!hasChannelAdminRights) {
+            if (!(isAtLeastInstructor || isChannelAdmin)) {
                 throw new AccessForbiddenException("You are not allowed to register users to this channel");
             }
         }

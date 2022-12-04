@@ -74,6 +74,7 @@ export function canJoinChannel(channel: ChannelDTO): boolean {
     if (channel.isMember) {
         return false;
     }
+    // private channels only be self-joined by instructors which are the only non members who have channel admin rights
     if (hasChannelAdminRightsCheck(channel)) {
         return true;
     }
@@ -84,8 +85,12 @@ export function canChangeChannelArchivalState(channel: ChannelDTO): boolean {
     return hasChannelAdminRightsCheck(channel);
 }
 
-export function canDeleteChannel(course: Course): boolean {
-    return course?.isAtLeastInstructor ?? false;
+export function canDeleteChannel(course: Course, channelDTO: ChannelDTO): boolean {
+    const isCreator = channelDTO.isCreator;
+    const isInstructor = course.isAtLeastInstructor;
+    const isChannelAdmin = channelDTO.isAdmin;
+
+    return !!isInstructor || !!(isChannelAdmin && isCreator);
 }
 
 export function canCreateChannel(course: Course): boolean {

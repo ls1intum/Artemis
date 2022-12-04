@@ -119,10 +119,25 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // given
         var channel = createChannel(isPublicChannel);
         // when
+        database.changeUser("instructor2");
         request.delete("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.OK);
         // then
         assertThat(channelRepository.findById(channel.getId())).isEmpty();
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, channel.getId(), "instructor1");
+        verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.DELETE);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void deleteChannel_asCreator_shouldDeleteChannel(boolean isPublicChannel) throws Exception {
+        // given
+        var channel = createChannel(isPublicChannel);
+        // when
+        request.delete("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.OK);
+        // then
+        assertThat(channelRepository.findById(channel.getId())).isEmpty();
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, channel.getId(), "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.DELETE);
     }
 
