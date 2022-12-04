@@ -27,7 +27,7 @@ import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item.service';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
-import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item-groups';
+import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 
 export enum FeedbackItemType {
     Issue,

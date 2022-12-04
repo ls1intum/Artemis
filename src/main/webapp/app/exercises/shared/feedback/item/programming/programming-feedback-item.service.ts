@@ -5,7 +5,8 @@ import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/result/deta
 import { computeFeedbackPreviewText } from 'app/exercises/shared/feedback/feedback.util';
 import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
-import { FeedbackItemGroup, getAllFeedbackItemGroups } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item-groups';
+import { getAllFeedbackItemGroups } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item-groups';
+import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingFeedbackItemService implements FeedbackItemService {
