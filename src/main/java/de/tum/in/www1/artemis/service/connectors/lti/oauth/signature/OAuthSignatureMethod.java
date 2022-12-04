@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors.lti.oauth.signature;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -215,35 +215,21 @@ public abstract class OAuthSignatureMethod {
 
     /**
      *
-     * @param s
+     * @param string
      * @return a byte array for the given base64 string
      */
-    public static byte[] decodeBase64(String s) {
-        byte[] b;
-        try {
-            b = s.getBytes(BASE64_ENCODING);
-        }
-        catch (UnsupportedEncodingException e) {
-            System.err.println(e + "");
-            b = s.getBytes();
-        }
-        return BASE64.decode(b);
+    public static byte[] decodeBase64(String string) {
+        return BASE64.decode(string.getBytes(StandardCharsets.ISO_8859_1)); // default charset used for BASE64
     }
 
     /**
      *
-     * @param b
+     * @param bytes
      * @return a base64 encoded string for the given byte array
      */
-    public static String base64Encode(byte[] b) {
-        byte[] b2 = BASE64.encode(b);
-        try {
-            return new String(b2, BASE64_ENCODING);
-        }
-        catch (UnsupportedEncodingException e) {
-            System.err.println(e + "");
-        }
-        return new String(b2);
+    public static String base64Encode(byte[] bytes) {
+        byte[] encodedBytes = BASE64.encode(bytes);
+        return new String(encodedBytes, StandardCharsets.ISO_8859_1); // default charset used for BASE64
     }
 
     /**

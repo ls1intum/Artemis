@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.lti.oauth.signature.pem;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 
 class Asn1Object {
 
@@ -85,23 +86,19 @@ class Asn1Object {
     }
 
     /**
-     * Get value as string. Most strings are treated
-     * as Latin-1.
+     * Get value as string. Most strings are treated as Latin-1.
      *
      * @return Java string
      */
     public String getString() throws IOException {
-
-        String encoding = switch (type) {
-
+        var charset = switch (type) {
             // Not all are Latin-1 but it's the closest thing
-            case DerParser.NUMERIC_STRING, DerParser.PRINTABLE_STRING, DerParser.VIDEOTEX_STRING, DerParser.IA5_STRING, DerParser.GRAPHIC_STRING, DerParser.ISO646_STRING, DerParser.GENERAL_STRING -> "ISO-8859-1"; //$NON-NLS-1$
-            case DerParser.BMP_STRING -> "UTF-16BE"; //$NON-NLS-1$
-            case DerParser.UTF8_STRING -> "UTF-8"; //$NON-NLS-1$
-            case DerParser.UNIVERSAL_STRING -> throw new IOException("Invalid DER: can't handle UCS-4 string"); //$NON-NLS-1$
-            default -> throw new IOException("Invalid DER: object is not a string"); //$NON-NLS-1$
+            case DerParser.NUMERIC_STRING, DerParser.PRINTABLE_STRING, DerParser.VIDEOTEX_STRING, DerParser.IA5_STRING, DerParser.GRAPHIC_STRING, DerParser.ISO646_STRING, DerParser.GENERAL_STRING -> StandardCharsets.ISO_8859_1;
+            case DerParser.BMP_STRING -> StandardCharsets.UTF_16BE;
+            case DerParser.UTF8_STRING -> StandardCharsets.UTF_8;
+            case DerParser.UNIVERSAL_STRING -> throw new IOException("Invalid DER: can't handle UCS-4 string");
+            default -> throw new IOException("Invalid DER: object is not a string");
         };
-
-        return new String(value, encoding);
+        return new String(value, charset);
     }
 }

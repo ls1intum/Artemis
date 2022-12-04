@@ -29,6 +29,11 @@ public class SecurityJwtConfiguration {
     @Value("${jhipster.security.authentication.jwt.base64-secret}")
     private String jwtKey;
 
+    /**
+     * configures the JWT decoder
+     * @param metersService the service to track in case wrong tokens have been used
+     * @return a JWT decoder using the Nimbus implementation
+     */
     @Bean
     public JwtDecoder jwtDecoder(SecurityMetersService metersService) {
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(getSecretKey()).macAlgorithm(JWT_ALGORITHM).build();
@@ -36,20 +41,20 @@ public class SecurityJwtConfiguration {
             try {
                 return jwtDecoder.decode(token);
             }
-            catch (Exception e) {
-                if (e.getMessage().contains("Invalid signature")) {
+            catch (Exception ex) {
+                if (ex.getMessage().contains("Invalid signature")) {
                     metersService.trackTokenInvalidSignature();
                 }
-                else if (e.getMessage().contains("Jwt expired at")) {
+                else if (ex.getMessage().contains("Jwt expired at")) {
                     metersService.trackTokenExpired();
                 }
-                else if (e.getMessage().contains("Invalid JWT serialization")) {
+                else if (ex.getMessage().contains("Invalid JWT serialization")) {
                     metersService.trackTokenMalformed();
                 }
-                else if (e.getMessage().contains("Invalid unsecured/JWS/JWE")) {
+                else if (ex.getMessage().contains("Invalid unsecured/JWS/JWE")) {
                     metersService.trackTokenMalformed();
                 }
-                throw e;
+                throw ex;
             }
         };
     }
@@ -59,6 +64,10 @@ public class SecurityJwtConfiguration {
         return new NimbusJwtEncoder(new ImmutableSecret<>(getSecretKey()));
     }
 
+    /**
+     * configures an authentication converter based on the provided authorities key
+     * @return the authentication converter
+     */
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
@@ -70,6 +79,10 @@ public class SecurityJwtConfiguration {
         return jwtAuthenticationConverter;
     }
 
+    /**
+     * creates a default bearer token resolver
+     * @return the resolver
+     */
     @Bean
     public BearerTokenResolver bearerTokenResolver() {
         var bearerTokenResolver = new DefaultBearerTokenResolver();

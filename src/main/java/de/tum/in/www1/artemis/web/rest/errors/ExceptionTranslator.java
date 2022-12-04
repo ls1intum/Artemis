@@ -40,6 +40,7 @@ import tech.jhipster.web.util.HeaderUtil;
  * Controller advice to translate the server side exceptions to client-friendly json structures. The error response follows RFC7807 - Problem Details for HTTP APIs
  * (<a href="https://tools.ietf.org/html/rfc7807">RFC7807</a>)
  */
+// TODO: double check if this is still working with the new Spring version or if we can completely remove it
 @ControllerAdvice
 public class ExceptionTranslator {
 
@@ -66,6 +67,9 @@ public class ExceptionTranslator {
 
     /**
      * Post-process the Problem payload to add the message key for the front-end if needed.
+     * @param entity
+     * @param request
+     * @return the response entities with the specified problem
      */
     public ResponseEntity<Problem> process(ResponseEntity<Problem> entity, @NotNull NativeWebRequest request) {
         Problem problem = entity.getBody();
@@ -83,6 +87,12 @@ public class ExceptionTranslator {
         return new ResponseEntity<>(builder.build(), entity.getHeaders(), entity.getStatusCode());
     }
 
+    /**
+     * handles requests for which the method is not available
+     * @param ex
+     * @param request
+     * @return the response entity with information about this case (method not available)
+     */
     public ResponseEntity<Problem> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, @NotNull NativeWebRequest request) {
         BindingResult result = ex.getBindingResult();
         List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream().map(f -> new FieldErrorVM(f.getObjectName().replaceFirst("DTO$", ""), f.getField(), f.getCode()))
@@ -219,16 +229,20 @@ public class ExceptionTranslator {
                  * committed. In order to force Spring to flush/commit one would need to provide a body but that in turn would fail because Spring would then fail to negotiate the
                  * correct content type. Writing the status code, headers and flushing the body manually is a dirty way to bypass both parties, Tomcat and Spring, at the same time.
                  */
-                final ServerHttpResponse response = new ServletServerHttpResponse(request.getNativeResponse(HttpServletResponse.class));
 
-                response.setStatusCode(fallback.getStatusCode());
-                response.getHeaders().putAll(fallback.getHeaders());
-                try {
-                    response.getBody(); // just so we're actually flushing the body...
-                    response.flush();
-                }
-                catch (IOException e) {
-                    throw new RuntimeException(e);
+                var nativeRequest = request.getNativeResponse(HttpServletResponse.class);
+                if (nativeRequest != null) {
+                    try (final ServerHttpResponse response = new ServletServerHttpResponse(nativeRequest)) {
+                        response.setStatusCode(fallback.getStatusCode());
+                        response.getHeaders().putAll(fallback.getHeaders());
+                        try {
+                            response.getBody(); // just so we're actually flushing the body...
+                            response.flush();
+                        }
+                        catch (IOException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
                 }
             }
 
@@ -262,6 +276,11 @@ public class ExceptionTranslator {
                 .contentType(PROBLEM).body(problem);
     }
 
+    /**
+     * get the problem media type
+     * @param mediaTypes
+     * @return the problem media type
+     */
     public static Optional<MediaType> getProblemMediaType(final List<MediaType> mediaTypes) {
         for (final MediaType mediaType : mediaTypes) {
             if (mediaType.includes(APPLICATION_JSON) || mediaType.includes(PROBLEM)) {
