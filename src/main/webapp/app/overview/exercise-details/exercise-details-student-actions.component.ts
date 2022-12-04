@@ -10,6 +10,7 @@ import { isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAva
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
 import { faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
@@ -69,12 +70,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.uninitializedQuiz = this.exercise.type === ExerciseType.QUIZ && !!(this.exercise as QuizExercise)?.quizBatches?.some((batch) => batch.started);
-        this.quizNotStarted =
-            !this.uninitializedQuiz &&
-            (!this.exercise.studentParticipations?.[0]?.initializationState ||
-                ![InitializationState.INITIALIZED, InitializationState.FINISHED].includes(this.exercise.studentParticipations[0].initializationState));
-
+        if (this.exercise.type === ExerciseType.QUIZ) {
+            const quizExercise = this.exercise as QuizExercise;
+            this.uninitializedQuiz = ArtemisQuizService.isNotInitialized(quizExercise);
+            this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
+        }
         const studentParticipations = this.exercise.studentParticipations ?? [];
         this.gradedParticipation = this.studentParticipation ?? this.participationService.getSpecificStudentParticipation(studentParticipations, false);
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);

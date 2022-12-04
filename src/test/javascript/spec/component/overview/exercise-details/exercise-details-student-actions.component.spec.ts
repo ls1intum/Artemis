@@ -292,28 +292,24 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     );
 
     describe('onInit', () => {
-        it('should determine if it is an uninitialized quiz', () => {
-            comp.exercise = { type: ExerciseType.QUIZ, quizBatches: [{ started: false }, { started: true }] } as QuizExercise;
+        it.each([
+            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: false }, { started: true }] } as QuizExercise, false],
+            [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] } as QuizExercise, true],
+            [{ type: ExerciseType.TEXT } as TextExercise, undefined],
+        ])('should determine if it is an uninitialized quiz', (exercise: Exercise, expected: boolean) => {
+            comp.exercise = exercise;
             comp.ngOnInit();
-            expect(comp.uninitializedQuiz).toBeTrue();
-            comp.exercise = { type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] } as QuizExercise;
-            comp.ngOnInit();
-            expect(comp.uninitializedQuiz).toBeFalse();
-            comp.exercise = { type: ExerciseType.TEXT } as TextExercise;
-            comp.ngOnInit();
-            expect(comp.uninitializedQuiz).toBeFalse();
+            expect(comp.uninitializedQuiz).toBe(expected);
         });
 
-        it('should determine if quiz is not started', () => {
-            comp.exercise = { type: ExerciseType.QUIZ, studentParticipations: [] as StudentParticipation[] } as QuizExercise;
+        it.each([
+            [{ type: ExerciseType.QUIZ, studentParticipations: [] as StudentParticipation[] } as QuizExercise, true],
+            [{ type: ExerciseType.QUIZ, studentParticipations: [{ initializationState: InitializationState.UNINITIALIZED }] } as QuizExercise, true],
+            [{ type: ExerciseType.QUIZ, studentParticipations: [{ initializationState: InitializationState.FINISHED }] } as QuizExercise, false],
+        ])('should determine if quiz is not started', (exercise: Exercise, expected: boolean) => {
+            comp.exercise = exercise;
             comp.ngOnInit();
-            expect(comp.quizNotStarted).toBeTrue();
-            comp.exercise = { type: ExerciseType.QUIZ, studentParticipations: [{ initializationState: InitializationState.UNINITIALIZED }] } as QuizExercise;
-            comp.ngOnInit();
-            expect(comp.quizNotStarted).toBeTrue();
-            comp.exercise = { type: ExerciseType.QUIZ, studentParticipations: [{ initializationState: InitializationState.FINISHED }] } as QuizExercise;
-            comp.ngOnInit();
-            expect(comp.quizNotStarted).toBeFalse();
+            expect(comp.quizNotStarted).toBe(expected);
         });
 
         it('should determine participations', () => {

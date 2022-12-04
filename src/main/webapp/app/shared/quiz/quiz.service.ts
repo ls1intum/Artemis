@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { InitializationState } from 'app/entities/participation/participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
@@ -35,5 +36,17 @@ export class ArtemisQuizService {
                 }
             }, this);
         }
+    }
+
+    static isNotInitialized(quizExercise: QuizExercise): boolean {
+        return !quizExercise.quizBatches?.some((batch) => batch.started);
+    }
+
+    static notStarted(quizExercise: QuizExercise): boolean {
+        return (
+            this.isNotInitialized(quizExercise) &&
+            (!quizExercise.studentParticipations?.[0]?.initializationState ||
+                ![InitializationState.INITIALIZED, InitializationState.FINISHED].includes(quizExercise.studentParticipations[0].initializationState))
+        );
     }
 }

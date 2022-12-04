@@ -3,6 +3,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import dayjs from 'dayjs/esm';
 
 @Component({
@@ -38,11 +39,11 @@ export class SubmissionResultStatusComponent implements OnInit {
     notSubmitted: boolean;
 
     ngOnInit() {
-        this.uninitializedQuiz = this.exercise.type === ExerciseType.QUIZ && !!(this.exercise as QuizExercise)?.quizBatches?.some((batch) => batch.started);
-        this.quizNotStarted =
-            !this.uninitializedQuiz &&
-            (!this.exercise.studentParticipations?.[0]?.initializationState ||
-                ![InitializationState.INITIALIZED, InitializationState.FINISHED].includes(this.exercise.studentParticipations[0].initializationState));
+        if (this.exercise.type === ExerciseType.QUIZ) {
+            const quizExercise = this.exercise as QuizExercise;
+            this.uninitializedQuiz = ArtemisQuizService.isNotInitialized(quizExercise);
+            this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
+        }
         this.afterDueDate = !!this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs());
         this.uninitialized = !this.afterDueDate && !this.exercise.studentParticipations?.length;
         this.notSubmitted = !this.afterDueDate && !!this.exercise.studentParticipations?.length;
