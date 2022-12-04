@@ -6,6 +6,15 @@
     &:hover {
         .interaction {
             visibility: visible;
+
+            .btn {
+                color: white;
+                border-color: white;
+
+                &:hover {
+                    background-color: black;
+                }
+            }
         }
     }
 
@@ -14,9 +23,10 @@
         justify-content: space-between;
         cursor: pointer;
         padding: 0.2rem;
+
         &:hover {
-            color: var(--metis-course-discussion-select-bg);
             background-color: var(--metis-blue);
+            color: white;
         }
     }
 
@@ -28,9 +38,11 @@
 
     .hidden-conversation-divider {
         cursor: pointer;
+
         &:hover {
             text-decoration: underline;
             background-color: var(--metis-blue);
+            color: white;
         }
     }
 }

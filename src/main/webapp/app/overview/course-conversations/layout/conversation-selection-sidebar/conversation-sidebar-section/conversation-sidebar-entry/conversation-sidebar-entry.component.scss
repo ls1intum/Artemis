@@ -12,11 +12,20 @@
     }
 
     &:hover {
-        color: var(--metis-course-discussion-select-bg);
+        color: white;
         background-color: var(--metis-blue);
 
         .interaction {
             visibility: visible;
+
+            .btn {
+                color: white;
+                border-color: white;
+
+                &:hover {
+                    background-color: black;
+                }
+            }
         }
     }
 

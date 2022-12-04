@@ -24,11 +24,13 @@
                     <input (input)="onSearchQueryInput($event)" class="form-control" id="searchQuery" type="text" />
                 </div>
                 <div class="text-center my-1">
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="expandAll()">
-                        <fa-icon [icon]="faExpand"></fa-icon> <span>{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.expandAll' | artemisTranslate }}</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="expandAll()">
+                        <fa-icon [icon]="faExpand"></fa-icon>
+                        <span>{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.expandAll' | artemisTranslate }}</span>
                     </button>
-                    <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-toggle="button" (click)="collapseAll()">
-                        <fa-icon [icon]="faCompress"></fa-icon> <span>{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.collapseAll' | artemisTranslate }}</span>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="collapseAll()">
+                        <fa-icon [icon]="faCompress"></fa-icon>
+                        <span>{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.collapseAll' | artemisTranslate }}</span>
                     </button>
                 </div>
                 <div>

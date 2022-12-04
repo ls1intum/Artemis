@@ -1,4 +1,4 @@
-import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef } from '@angular/core';
+import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
@@ -10,6 +10,7 @@ import { LocalStorageService } from 'ngx-webstorage';
     selector: 'jhi-conversation-sidebar-section',
     templateUrl: './conversation-sidebar-section.component.html',
     styleUrls: ['./conversation-sidebar-section.component.scss'],
+    encapsulation: ViewEncapsulation.None,
 })
 export class ConversationSidebarSectionComponent implements OnInit {
     @Output() conversationSelected = new EventEmitter<ConversationDto>();
@@ -46,6 +47,7 @@ export class ConversationSidebarSectionComponent implements OnInit {
 
     isCollapsed: boolean;
     @ContentChild(TemplateRef) sectionButtons: TemplateRef<any>;
+
     toggleCollapsed() {
         this.isCollapsed = !this.isCollapsed;
         this.localStorageService.store(this.storageKey, this.isCollapsed);
