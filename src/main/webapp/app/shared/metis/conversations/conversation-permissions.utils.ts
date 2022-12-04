@@ -89,7 +89,7 @@ export function canDeleteChannel(course: Course): boolean {
 }
 
 export function canCreateChannel(course: Course): boolean {
-    return course?.isAtLeastInstructor ?? false;
+    return course?.isAtLeastTutor ?? false;
 }
 
 export function canChangeChannelProperties(channel: ChannelDTO): boolean {

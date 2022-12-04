@@ -23,6 +23,26 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void createChannel_asInstructor_shouldCreateChannel(boolean isPublicChannel) throws Exception {
+        isAllowedToCreateChannelTest(isPublicChannel, "instructor1");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void createChannel_asTutor_shouldCreateChannel(boolean isPublicChannel) throws Exception {
+        // given
+        isAllowedToCreateChannelTest(isPublicChannel, "tutor1");
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    void createChannel_asEditor_shouldCreateChannel(boolean isPublicChannel) throws Exception {
+        // given
+        isAllowedToCreateChannelTest(isPublicChannel, "editor1");
+    }
+
+    private void isAllowedToCreateChannelTest(boolean isPublicChannel, String loginName) throws Exception {
         // given
         var channelDTO = new ChannelDTO();
         channelDTO.setName("general");
@@ -33,10 +53,10 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         // then
         this.assertChannelProperties(chat.getId(), channelDTO.getName(), null, channelDTO.getDescription(), channelDTO.getIsPublic(), false);
-        var participants = assertParticipants(chat.getId(), 1, "instructor1");
+        var participants = assertParticipants(chat.getId(), 1, loginName);
         // creator is automatically added as channel admin
         assertThat(participants.stream().findFirst().get().getIsAdmin()).isTrue();
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), "instructor1");
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), loginName);
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE);
     }
 
@@ -73,7 +93,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "student1", roles = "USER")
-    void createChannel_asNonCourseInstructor_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
+    void createChannel_asNonCourseInstructorOrTutororEditor_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
         var channelDTO = new ChannelDTO();
         channelDTO.setName("general");
@@ -82,11 +102,11 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         expectCreateForbidden(channelDTO);
-        database.changeUser("tutor1");
-        expectCreateForbidden(channelDTO);
-        database.changeUser("editor1");
-        expectCreateForbidden(channelDTO);
         database.changeUser("instructor42");
+        expectCreateForbidden(channelDTO);
+        database.changeUser("tutor42");
+        expectCreateForbidden(channelDTO);
+        database.changeUser("editor42");
         expectCreateForbidden(channelDTO);
 
         verifyNoParticipantTopicWebsocketSent();

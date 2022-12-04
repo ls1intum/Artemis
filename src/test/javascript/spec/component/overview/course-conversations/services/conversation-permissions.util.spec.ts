@@ -73,14 +73,14 @@ describe('ConversationPermissionUtils', () => {
         });
 
         describe('canCreateChannel', () => {
-            const courseWithCorrectRights = { isAtLeastInstructor: true } as Course;
+            const courseWithCorrectRights = { isAtLeastTutor: true } as Course;
 
-            it('can create channel as instructor', () => {
+            it('can create channel as tutor', () => {
                 expect(canCreateChannel(courseWithCorrectRights)).toBeTrue();
             });
 
-            it('can not create channel as tutor', () => {
-                expect(canCreateChannel({ isAtLeastInstructor: false, isAtLeastTutor: true } as Course)).toBeFalse();
+            it('can not create channel as student', () => {
+                expect(canCreateChannel({ isAtLeastInstructor: false, isAtLeastTutor: false, isAtLeastEditor: false } as Course)).toBeFalse();
             });
         });
         describe('canDeleteChannel', () => {

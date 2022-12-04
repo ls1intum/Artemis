@@ -36,7 +36,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      */
     public void isAllowedToCreateChannel(@NotNull Course course, @Nullable User user) {
         var userToCheck = getUserIfNecessary(user);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, userToCheck);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, userToCheck);
     }
 
     /**
