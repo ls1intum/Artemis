@@ -7,10 +7,10 @@ import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-i
 export const getAllFeedbackItemGroups = (): FeedbackItemGroup[] => {
     return [
         new FeedbackItemGroupAll(),
-        new FeedbackItemGroupMissing(),
         new FeedbackItemGroupWrong(),
         new FeedbackItemGroupWarning(),
         new FeedbackItemGroupInfo(),
+        new FeedbackItemGroupMissing(),
         new FeedbackItemGroupCorrect(),
     ];
 };

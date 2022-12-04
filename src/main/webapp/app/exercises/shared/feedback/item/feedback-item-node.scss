@@ -1,21 +1,25 @@
 .feedback-item {
-    border-radius: 4px;
-    padding: 5px 10px;
-    margin-bottom: 15px;
-    font-weight: normal;
+    padding: 1rem;
+    margin-bottom: 1rem;
 
-    span:first-child {
-        font-size: 0.7em;
+    &__header {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    &__category {
+        margin-bottom: 0;
+        font-size: var(--bs-body-font-size);
         font-weight: bold;
         text-transform: uppercase;
     }
 
-    span.feedback-points {
+    &__points {
         float: right;
         font-weight: bold;
     }
 
-    span.feedback-title {
+    &__title {
         font-size: 0.9em;
 
         &::before {
@@ -25,10 +29,18 @@
             margin: 0 8px 0 4px;
         }
     }
+}
 
-    p {
-        white-space: pre-wrap;
-        margin: 0.2em 0;
-        word-break: break-word;
+.feedback-item-group {
+    margin-bottom: 1rem;
+
+    &__summary {
+        padding: 1rem;
+        //TODO: Dynamic background color depending on group
+        background-color: green;
+    }
+
+    &__members {
+        margin: 1rem;
     }
 }

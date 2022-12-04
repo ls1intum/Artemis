@@ -76,18 +76,9 @@
                 <button type="button" class="ms-2 btn btn-info" (click)="resetChartFilter()" jhiTranslate="artemisApp.result.chart.reset">Reset</button>
             </div>
 
-            <jhi-feedback-list
-                [exercise]="exercise"
-                [course]="course"
-                [result]="result"
-                [loadingFailed]="loadingFailed"
-                [numberOfNotExecutedTests]="numberOfNotExecutedTests"
-                [filteredFeedbackList]="filteredFeedbackList"
-                [testCaseCount]="testCaseCount"
-                [passedTestCaseCount]="passedTestCaseCount"
-                [scaFeedbackCount]="scaFeedbackCount"
-                [manualFeedbackCount]="manualFeedbackCount"
-            ></jhi-feedback-list>
+            <div>
+                <jhi-feedback-item-node *ngFor="let feedbackItemNode of feedbackItemNodes" [feedbackNode]="feedbackItemNode" [course]="course"></jhi-feedback-item-node>
+            </div>
         </div>
     </ng-template>
 
