@@ -69,6 +69,14 @@
 
             <hr *ngIf="buildLogs?.length" />
 
+            <div *ngIf="!loadingFailed && resultIsPreliminary(result)">
+                <div class="d-flex justify-content-end m-1">
+                    <div class="badge bg-warning">{{ 'artemisApp.result.preliminary' | artemisTranslate | uppercase }}</div>
+                </div>
+                <p *ngIf="exercise?.assessmentType !== AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltipSemiAutomatic"></p>
+                <p *ngIf="exercise?.assessmentType === AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
+            </div>
+
             <div>
                 <jhi-feedback-item-node *ngFor="let feedbackItemNode of feedbackItemNodes" [feedbackNode]="feedbackItemNode" [course]="course"></jhi-feedback-item-node>
             </div>

@@ -28,6 +28,7 @@ import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shar
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item.service';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
 import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
+import { resultIsPreliminary } from '../result.utils';
 
 export enum FeedbackItemType {
     Issue,
@@ -59,6 +60,7 @@ export class ResultDetailComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
+    readonly resultIsPreliminary = resultIsPreliminary;
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
 
