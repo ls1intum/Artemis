@@ -220,6 +220,8 @@ public class MetricsBean {
         SecurityUtils.setAuthorizationObject();
         var now = ZonedDateTime.now();
         var endDate = ZonedDateTime.now().plusMinutes(minutes);
+        log.info("getUpcomingStartingExamCountWithStudentMultiplier called "
+                + examRepository.countRegisteredStudentsInExamsWithStartDateGreaterThanEqualButLessOrEqualThan(now, endDate) + " now " + endDate);
         return examRepository.countRegisteredStudentsInExamsWithStartDateGreaterThanEqualButLessOrEqualThan(now, endDate);
     }
 
