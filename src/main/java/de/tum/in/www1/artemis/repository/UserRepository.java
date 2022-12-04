@@ -194,8 +194,21 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
              JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
              WHERE conversation.id = :#{#conversationId}
              AND (:#{#loginOrName} = '' OR (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%))
-             AND  conversationParticipant.isAdmin = true
+             AND (:#{#groupName} member of user.groups OR :#{#groupName2} member of user.groups)
             """)
+    Page<User> searchAllByLoginOrNameInConversationWithEitherCourseGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId,
+            @Param("groupName") String groupName, @Param("groupName2") String groupName2);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+            JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+            JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+            WHERE conversation.id = :#{#conversationId}
+            AND (:#{#loginOrName} = '' OR (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%))
+            AND  conversationParticipant.isAdmin = true
+               """)
     Page<User> searchChannelAdminsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId);
 
     /**

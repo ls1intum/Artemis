@@ -53,7 +53,8 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
 
     ALL = ConversationMemberSearchFilter.ALL;
     INSTRUCTOR_FILTER_OPTION = ConversationMemberSearchFilter.INSTRUCTOR;
-    EDITOR_FILTER_OPTION = ConversationMemberSearchFilter.EDITOR;
+
+    // note: tutors searches for Editors and Tutors
     TUTOR_FILTER_OPTION = ConversationMemberSearchFilter.TUTOR;
     STUDENT_FILTER_OPTION = ConversationMemberSearchFilter.STUDENT;
     CHANNEL_ADMIN_FILTER_OPTION = ConversationMemberSearchFilter.CHANNEL_ADMIN;

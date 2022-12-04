@@ -137,16 +137,11 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
         assertThat(members).hasSize(5);
         assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("student1", "student2", "student3", "student4", "student5");
-        // same request but now we only search for tutors
+        // same request but now we only search for tutors (this will also include editors)
         params.set("filter", "TUTOR");
         members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
-        assertThat(members).hasSize(1);
-        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("tutor1");
-        // same request but now we only search for editors
-        params.set("filter", "EDITOR");
-        members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
-        assertThat(members).hasSize(1);
-        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("editor1");
+        assertThat(members).hasSize(2);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("tutor1", "editor1");
         // same request but now we only search for instructors
         params.set("filter", "INSTRUCTOR");
         members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);

@@ -289,11 +289,10 @@ public class ConversationService {
                 case INSTRUCTOR -> {
                     return userRepository.searchAllByLoginOrNameInConversationWithCourseGroup(pageable, searchTerm, conversation.getId(), course.getInstructorGroupName());
                 }
-                case EDITOR -> {
-                    return userRepository.searchAllByLoginOrNameInConversationWithCourseGroup(pageable, searchTerm, conversation.getId(), course.getEditorGroupName());
-                }
                 case TUTOR -> {
-                    return userRepository.searchAllByLoginOrNameInConversationWithCourseGroup(pageable, searchTerm, conversation.getId(), course.getTeachingAssistantGroupName());
+                    // searches for both tutors and editors
+                    return userRepository.searchAllByLoginOrNameInConversationWithEitherCourseGroup(pageable, searchTerm, conversation.getId(), course.getEditorGroupName(),
+                            course.getTeachingAssistantGroupName());
                 }
                 case STUDENT -> {
                     return userRepository.searchAllByLoginOrNameInConversationWithCourseGroup(pageable, searchTerm, conversation.getId(), course.getStudentGroupName());
