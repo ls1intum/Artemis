@@ -21,6 +21,7 @@ export const getAllFeedbackItemGroups = (): FeedbackItemGroup[] => {
  */
 class FeedbackItemGroupAll extends FeedbackItemGroup {
     name = 'all';
+    color = 'bg-light';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return true;
     }
@@ -31,6 +32,7 @@ class FeedbackItemGroupAll extends FeedbackItemGroup {
  */
 class FeedbackItemGroupMissing extends FeedbackItemGroup {
     name = 'missing';
+    color = 'bg-secondary';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return false;
     }
@@ -41,6 +43,7 @@ class FeedbackItemGroupMissing extends FeedbackItemGroup {
  */
 class FeedbackItemGroupWrong extends FeedbackItemGroup {
     name = 'wrong';
+    color = 'bg-danger';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return false;
     }
@@ -51,6 +54,7 @@ class FeedbackItemGroupWrong extends FeedbackItemGroup {
  */
 class FeedbackItemGroupWarning extends FeedbackItemGroup {
     name = 'warning';
+    color = 'bg-warning';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return false;
     }
@@ -62,6 +66,7 @@ class FeedbackItemGroupWarning extends FeedbackItemGroup {
  */
 class FeedbackItemGroupInfo extends FeedbackItemGroup {
     name = 'info';
+    color = 'bg-info';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return false;
     }
@@ -72,6 +77,7 @@ class FeedbackItemGroupInfo extends FeedbackItemGroup {
  */
 class FeedbackItemGroupCorrect extends FeedbackItemGroup {
     name = 'correct';
+    color = 'bg-success';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return false;
     }

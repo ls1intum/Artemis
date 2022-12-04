@@ -6,8 +6,13 @@ import { FeedbackItem } from 'app/exercises/shared/result/detail/result-detail.c
  */
 export abstract class FeedbackItemGroup {
     name: string;
-    description: string;
     members: FeedbackItem[] = [];
+
+    /**
+     * bootstrap color
+     */
+    color: string;
+    description: string;
     credits: number;
 
     abstract shouldContain(feedbackItem: FeedbackItem): boolean;

@@ -1,4 +1,4 @@
-<div *ngIf="feedbackItem" [ngClass]="['feedback-item', 'alert', getClassNameForFeedbackItem(feedbackItem)]">
+<div *ngIf="feedbackItem" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedbackItem)]">
     <div class="feedback-item__header">
         <h4 class="feedback-item__category">{{ feedbackItem.category }}</h4>
         <span class="feedback-item__points" *ngIf="feedbackItem.credits">
@@ -22,7 +22,7 @@
     <p *ngElse jhiTranslate="artemisApp.result.noFeedback">No feedback available</p>
 </div>
 
-<details *ngIf="feedbackItemGroup" class="feedback-item-group">
+<details *ngIf="feedbackItemGroup" class="feedback-item-group" [ngClass]="feedbackItemGroup.color">
     <summary class="feedback-item-group__summary">
         <div class="feedback-item-group__summary__content">
             <h4 class="feedback-item__category">

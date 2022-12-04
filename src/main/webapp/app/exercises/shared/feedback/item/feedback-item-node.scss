@@ -1,6 +1,6 @@
 .feedback-item {
-    padding: 1rem;
     margin-bottom: 1rem;
+    padding: 1rem;
 
     &__header {
         display: flex;
@@ -42,8 +42,6 @@
         display: flex;
         padding: 1rem;
         align-items: center;
-        //TODO: Dynamic background color depending on group
-        background-color: green;
 
         // CSS trick to create a triangle
         &:before {
@@ -64,6 +62,6 @@
     }
 
     &__members {
-        margin: 1rem;
+        padding: 1rem;
     }
 }
