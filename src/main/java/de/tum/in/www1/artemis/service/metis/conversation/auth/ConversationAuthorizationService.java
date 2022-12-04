@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 @Service
-public abstract class ConversationAuthorizationService {
+public class ConversationAuthorizationService {
 
     protected final ConversationParticipantRepository conversationParticipantRepository;
 
@@ -27,12 +27,13 @@ public abstract class ConversationAuthorizationService {
     }
 
     protected User getUserIfNecessary(@Nullable User user) {
+        var userToCheck = user;
         var persistenceUtil = Persistence.getPersistenceUtil();
-        if (user == null || !persistenceUtil.isLoaded(user, "authorities") || !persistenceUtil.isLoaded(user, "groups") || user.getGroups() == null
-                || user.getAuthorities() == null) {
-            user = userRepository.getUserWithGroupsAndAuthorities();
+        if (userToCheck == null || !persistenceUtil.isLoaded(userToCheck, "authorities") || !persistenceUtil.isLoaded(userToCheck, "groups") || userToCheck.getGroups() == null
+                || userToCheck.getAuthorities() == null) {
+            userToCheck = userRepository.getUserWithGroupsAndAuthorities();
         }
-        return user;
+        return userToCheck;
     }
 
 }

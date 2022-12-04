@@ -148,7 +148,7 @@ public class ConversationService {
             conversationParticipant.setIsFavorite(false);
             newConversationParticipants.add(conversationParticipant);
         }
-        if (newConversationParticipants.size() > 0) {
+        if (!newConversationParticipants.isEmpty()) {
             conversationParticipantRepository.saveAll(newConversationParticipants);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, usersToRegisterWithoutExistingParticipants);
             notifyConversationMembersAboutUpdate(conversation);
@@ -221,9 +221,7 @@ public class ConversationService {
 
     @NotNull
     public static String getConversationParticipantTopicName(Long courseId) {
-        String courseTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId;
-        String conversationParticipantTopicName = courseTopicName + "/conversations/user/";
-        return conversationParticipantTopicName;
+        return METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + courseId + "/conversations/user/";
     }
 
     private void sendToConversationMembershipChannel(MetisCrudAction metisCrudAction, Conversation conversation, User user, String conversationParticipantTopicName) {

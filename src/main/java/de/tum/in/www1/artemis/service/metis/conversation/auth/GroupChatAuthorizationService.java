@@ -46,12 +46,12 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
      * @param user   the user that wants to create the group chat
      */
     public void isAllowedToCreateGroupChat(@NotNull Course course, @Nullable User user) {
-        user = getUserIfNecessary(user);
-        var createdGroupChats = groupChatRepository.countByCreatorIdAndCourseId(user.getId(), course.getId());
+        var userToCheck = getUserIfNecessary(user);
+        var createdGroupChats = groupChatRepository.countByCreatorIdAndCourseId(userToCheck.getId(), course.getId());
         if (createdGroupChats >= MAX_GROUP_CHATS_PER_USER_PER_COURSE) {
             throw new IllegalArgumentException("You can only create " + MAX_GROUP_CHATS_PER_USER_PER_COURSE + "group chats per course");
         }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, userToCheck);
     }
 
     /**
@@ -61,8 +61,8 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
      * @param user      the user that wants to add the other user
      */
     public void isAllowedToAddUsersToGroupChat(@NotNull GroupChat groupChat, @Nullable User user) {
-        user = getUserIfNecessary(user);
-        if (!isMember(groupChat.getId(), user.getId())) {
+        var userToCheck = getUserIfNecessary(user);
+        if (!isMember(groupChat.getId(), userToCheck.getId())) {
             throw new AccessForbiddenException("You are not a member of this group chat");
         }
     }
@@ -74,8 +74,8 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
      * @param user      the user that wants to edit the group chat
      */
     public void isAllowedToUpdateGroupChat(@NotNull GroupChat groupChat, @Nullable User user) {
-        user = getUserIfNecessary(user);
-        if (!isMember(groupChat.getId(), user.getId())) {
+        var userToCheck = getUserIfNecessary(user);
+        if (!isMember(groupChat.getId(), userToCheck.getId())) {
             throw new AccessForbiddenException("You are not a member of this group chat");
         }
     }
@@ -87,8 +87,8 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
      * @param user      the user that wants to remove the other user
      */
     public void isAllowedToRemoveUsersFromGroupChat(@NotNull GroupChat groupChat, @Nullable User user) {
-        user = getUserIfNecessary(user);
-        if (!isMember(groupChat.getId(), user.getId())) {
+        var userToCheck = getUserIfNecessary(user);
+        if (!isMember(groupChat.getId(), userToCheck.getId())) {
             throw new AccessForbiddenException("You are not a member of this group chat");
         }
     }

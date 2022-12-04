@@ -6,6 +6,7 @@
 .conversation-header {
     .conversation-name {
         border-radius: 0.5rem;
+
         &:hover {
             background-color: var(--slightly-darker-body-bg);
             cursor: pointer;

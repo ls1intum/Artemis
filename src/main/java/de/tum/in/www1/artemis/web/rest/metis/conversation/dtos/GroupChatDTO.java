@@ -8,15 +8,6 @@ public class GroupChatDTO extends ConversationDTO {
 
     private String name;
 
-    public GroupChatDTO(GroupChat groupChat) {
-        super(groupChat, "groupChat");
-        this.name = groupChat.getName();
-    }
-
-    public GroupChatDTO() {
-        this.setType("groupChat");
-    }
-
     public Set<ConversationUserDTO> members;
 
     public Set<ConversationUserDTO> getMembers() {
@@ -33,6 +24,15 @@ public class GroupChatDTO extends ConversationDTO {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public GroupChatDTO(GroupChat groupChat) {
+        super(groupChat, "groupChat");
+        this.name = groupChat.getName();
+    }
+
+    public GroupChatDTO() {
+        this.setType("groupChat");
     }
 
     @Override

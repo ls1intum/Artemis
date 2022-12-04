@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationUserDTO;
 
-public class ConversationIntegrationTest extends AbstractConversationTest {
+class ConversationIntegrationTest extends AbstractConversationTest {
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")

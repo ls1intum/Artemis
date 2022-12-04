@@ -109,13 +109,13 @@ public class ChannelService {
     public Channel updateChannel(Long channelId, Long courseId, ChannelDTO channelDTO) {
         var channel = getChannelOrThrow(channelId);
         if (channelDTO.getName() != null && !channelDTO.getName().equals(channel.getName())) {
-            channel.setName(channelDTO.getName().trim().isBlank() ? null : channelDTO.getName().trim());
+            channel.setName(channelDTO.getName().trim().isBlank() ? "" : channelDTO.getName().trim());
         }
         if (channelDTO.getDescription() != null && !channelDTO.getDescription().equals(channel.getDescription())) {
-            channel.setDescription(channelDTO.getDescription().trim().isBlank() ? null : channelDTO.getDescription().trim());
+            channel.setDescription(channelDTO.getDescription().trim().isBlank() ? "" : channelDTO.getDescription().trim());
         }
         if (channelDTO.getTopic() != null && !channelDTO.getTopic().equals(channel.getTopic())) {
-            channel.setTopic(channelDTO.getTopic().trim().isBlank() ? null : channelDTO.getTopic().trim());
+            channel.setTopic(channelDTO.getTopic().trim().isBlank() ? "" : channelDTO.getTopic().trim());
         }
         this.channelIsValidOrThrow(courseId, channel);
 

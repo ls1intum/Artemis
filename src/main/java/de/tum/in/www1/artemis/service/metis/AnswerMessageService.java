@@ -36,6 +36,7 @@ public class AnswerMessageService extends PostingService {
 
     private final ConversationService conversationService;
 
+    @SuppressWarnings("PMD.ExcessiveParameterList")
     public AnswerMessageService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository, ConversationService conversationService,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate,
@@ -67,10 +68,8 @@ public class AnswerMessageService extends PostingService {
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
         Conversation conversation = conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation().getId(), user);
 
-        if (conversation instanceof Channel channel) {
-            if (channel.getIsArchived()) {
-                throw new BadRequestAlertException("A message cannot be created in an archived channel", METIS_ANSWER_POST_ENTITY_NAME, "channelarchived");
-            }
+        if (conversation instanceof Channel channel && channel.getIsArchived()) {
+            throw new BadRequestAlertException("A message cannot be created in an archived channel", METIS_ANSWER_POST_ENTITY_NAME, "channelarchived");
         }
 
         // use post from database rather than user input

@@ -53,6 +53,7 @@ public abstract class Conversation extends DomainObject {
     private ZonedDateTime lastMessageDate;
 
     public Conversation() {
+        // default constructor
     }
 
     public Set<ConversationParticipant> getConversationParticipants() {

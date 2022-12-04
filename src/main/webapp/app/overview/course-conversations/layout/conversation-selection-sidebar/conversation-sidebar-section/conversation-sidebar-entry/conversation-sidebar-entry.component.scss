@@ -7,16 +7,14 @@
         background-color: var(--metis-light-blue);
     }
 
-    &:hover {
-        color: var(--metis-course-discussion-select-bg);
-        background-color: var(--metis-blue);
-    }
-
     .interaction {
         visibility: hidden;
     }
 
     &:hover {
+        color: var(--metis-course-discussion-select-bg);
+        background-color: var(--metis-blue);
+
         .interaction {
             visibility: visible;
         }

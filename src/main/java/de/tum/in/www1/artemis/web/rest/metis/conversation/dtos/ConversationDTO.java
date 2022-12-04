@@ -17,6 +17,7 @@ public abstract class ConversationDTO {
      */
     private String type;
 
+    @SuppressWarnings("PMD.ShortVariable")
     private Long id;
 
     private ZonedDateTime creationDate;
@@ -45,7 +46,7 @@ public abstract class ConversationDTO {
 
     // ToDo: Maybe add property hasUnreadMessages and unreadMessagesCount?? How does slack do it?
 
-    public ConversationDTO(Conversation conversation, String type) {
+    protected ConversationDTO(Conversation conversation, String type) {
         this.id = conversation.getId();
         this.creationDate = conversation.getCreationDate();
         this.lastMessageDate = conversation.getLastMessageDate();
@@ -55,11 +56,11 @@ public abstract class ConversationDTO {
         this.type = type;
     }
 
-    public ConversationDTO(String type) {
+    protected ConversationDTO(String type) {
         this.type = type;
     }
 
-    public ConversationDTO() {
+    protected ConversationDTO() {
         // default constructor
     }
 
@@ -71,10 +72,12 @@ public abstract class ConversationDTO {
         this.type = type;
     }
 
+    @SuppressWarnings("PMD.ShortVariable")
     public Long getId() {
         return id;
     }
 
+    @SuppressWarnings("PMD.ShortVariable")
     public void setId(Long id) {
         this.id = id;
     }

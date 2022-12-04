@@ -59,19 +59,8 @@ export class UserPublicInfoDTO {
     public name?: string;
     public firstName?: string;
     public lastName?: string;
-
     isInstructor?: boolean;
     isEditor?: boolean;
     isTeachingAssistant?: boolean;
     isStudent?: boolean;
-}
-
-export function createUserPublicInfoDTOFromUser(user: User): UserPublicInfoDTO {
-    return {
-        id: user.id,
-        login: user.login,
-        name: user.name,
-        firstName: user.firstName,
-        lastName: user.lastName,
-    };
 }

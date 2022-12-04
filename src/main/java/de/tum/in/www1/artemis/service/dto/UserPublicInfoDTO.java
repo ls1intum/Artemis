@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class UserPublicInfoDTO {
 
+    @SuppressWarnings("PMD.ShortVariable")
     private Long id;
 
     // we need this to differentiate between users with the same name
@@ -42,11 +43,6 @@ public class UserPublicInfoDTO {
         this.name = user.getName();
         this.firstName = user.getFirstName();
         this.lastName = user.getLastName();
-
-        this.isInstructor = null;
-        this.isEditor = null;
-        this.isTeachingAssistant = null;
-        this.isStudent = null;
     }
 
     /**
@@ -71,10 +67,12 @@ public class UserPublicInfoDTO {
         }
     }
 
+    @SuppressWarnings("PMD.ShortVariable")
     public Long getId() {
         return id;
     }
 
+    @SuppressWarnings("PMD.ShortVariable")
     public void setId(Long id) {
         this.id = id;
     }
@@ -145,10 +143,12 @@ public class UserPublicInfoDTO {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (!(o instanceof UserPublicInfoDTO that))
+        }
+        if (!(o instanceof UserPublicInfoDTO that)) {
             return false;
+        }
         return id.equals(that.id);
     }
 

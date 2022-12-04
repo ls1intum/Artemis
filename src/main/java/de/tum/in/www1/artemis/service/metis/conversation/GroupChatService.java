@@ -24,7 +24,7 @@ public class GroupChatService {
 
     public static final String GROUP_CHAT_ENTITY_NAME = "messages.groupchat";
 
-    private static final String GROUP_NAME_REGEX = "^[a-z0-9-]{1}[a-z0-9-]{0,20}$";
+    private static final String GROUP_NAME_REGEX = "^[a-z0-9-]{0,20}$";
 
     private final UserRepository userRepository;
 
@@ -93,7 +93,7 @@ public class GroupChatService {
     public GroupChat updateGroupChat(Long groupChatId, GroupChatDTO groupChatDTO) {
         var groupChat = getGroupChatOrThrow(groupChatId);
         if (groupChatDTO.getName() != null && !groupChatDTO.getName().equals(groupChat.getName())) {
-            groupChat.setName(groupChatDTO.getName().trim().isBlank() ? null : groupChatDTO.getName().trim());
+            groupChat.setName(groupChatDTO.getName().trim().isBlank() ? "" : groupChatDTO.getName().trim());
         }
         this.groupChatIsValidOrThrow(groupChat);
         var updatedGroupChat = groupChatRepository.save(groupChat);
