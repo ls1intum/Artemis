@@ -48,7 +48,7 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
         if (this.isActiveConversation || !this.conversation) {
             return false;
         } else {
-            return !!(this.conversation.lastReadDate && this.conversation.lastMessageDate && this.conversation.lastReadDate.isBefore(this.conversation.lastMessageDate));
+            return !!(this.conversation.lastMessageDate && (!this.conversation.lastReadDate || this.conversation.lastReadDate.isBefore(this.conversation.lastMessageDate)));
         }
     }
 

@@ -77,6 +77,9 @@ export class MetisConversationService implements OnDestroy {
     }
 
     public setActiveConversation = (conversation: ConversationDto | undefined) => {
+        if (this._activeConversation) {
+            this._activeConversation.lastReadDate = dayjs();
+        }
         const cachedConversation = this._conversationsOfUser.find((conversationInCache) => conversationInCache.id === conversation?.id);
         if (!cachedConversation) {
             throw new Error('The conversation is not part of the cache. Therefore, it cannot be set as active conversation.');
