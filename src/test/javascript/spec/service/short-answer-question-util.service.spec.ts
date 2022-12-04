@@ -189,13 +189,23 @@ describe('ShortAnswerQuestionUtil', () => {
     it('should split the question text into text parts and transform to html', () => {
         const textPart1 = 'This is a short answer question';
         const textPart2 = '**with highlighted markdown**';
-        shortAnswerQuestion.text = textPart1 + '\n' + textPart2;
+        const textPart3 = '[-spot 1] test test2';
+        const textPart4 = '[-spot 2] test3';
+        shortAnswerQuestion.text = textPart1 + '\n' + textPart2 + '\n' + textPart3 + '\n' + textPart4;
         const textParts = service.divideQuestionTextIntoTextParts(shortAnswerQuestion.text!);
         expect(textParts[0][0]).toContain(textPart1);
         expect(textParts[1][0]).toContain(textPart2);
+        expect(textParts[2][0]).toBe('[-spot 1]');
+        expect(textParts[2][1]).toBe('test test2');
+        expect(textParts[3][0]).toBe('[-spot 2]');
+        expect(textParts[3][1]).toBe('test3');
 
         const textPartsInHTML = service.transformTextPartsIntoHTML(textParts);
         expect(textPartsInHTML[0][0]).toContain(`<p>${textPart1}</p>`);
         expect(textPartsInHTML[1][0]).toContain(`<p><strong>${textPart2.split('**').join('')}</strong></p>`);
+        expect(textPartsInHTML[2][0]).toContain(`<p>[-spot 1]</p>`);
+        expect(textPartsInHTML[2][1]).toContain(`<p>test test2</p>`);
+        expect(textPartsInHTML[3][0]).toContain(`<p>[-spot 2]</p>`);
+        expect(textPartsInHTML[3][1]).toContain(`<p>test3</p>`);
     });
 });
