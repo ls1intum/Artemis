@@ -55,8 +55,8 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
     /**
      * Checks if a user is allowed to delete a channel or throws an exception if not
      *
-     * @param course the course in which the channel is located
-     * @param user   the user that wants to delete the channel
+     * @param channel the channel that should be deleted
+     * @param user    the user that wants to delete the channel
      */
     public void isAllowedToDeleteChannel(@NotNull Channel channel, @Nullable User user) {
         var userToCheck = getUserIfNecessary(user);
