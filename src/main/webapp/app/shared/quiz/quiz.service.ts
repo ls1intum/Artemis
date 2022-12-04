@@ -39,7 +39,7 @@ export class ArtemisQuizService {
     }
 
     static isNotInitialized(quizExercise: QuizExercise): boolean {
-        return !quizExercise.quizBatches?.some((batch) => batch.started);
+        return !!quizExercise.quizBatches?.some((batch) => batch.started);
     }
 
     static notStarted(quizExercise: QuizExercise): boolean {

@@ -32,8 +32,8 @@ describe('SubmissionResultStatusComponent', () => {
 
     describe('onInit', () => {
         it.each([
-            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: false }, { started: true }] } as QuizExercise, false],
-            [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] } as QuizExercise, true],
+            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: false }, { started: true }] } as QuizExercise, true],
+            [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] } as QuizExercise, false],
             [{ type: ExerciseType.TEXT } as TextExercise, undefined],
         ])('should determine if it is an uninitialized quiz', (exercise: Exercise, expected: boolean) => {
             comp.exercise = exercise;
@@ -42,9 +42,13 @@ describe('SubmissionResultStatusComponent', () => {
         });
 
         it.each([
-            [{ type: ExerciseType.QUIZ, studentParticipations: [] as StudentParticipation[] } as QuizExercise, true],
-            [{ type: ExerciseType.QUIZ, studentParticipations: [{ initializationState: InitializationState.UNINITIALIZED }] } as QuizExercise, true],
-            [{ type: ExerciseType.QUIZ, studentParticipations: [{ initializationState: InitializationState.FINISHED }] } as QuizExercise, false],
+            [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] } as QuizExercise, false],
+            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [] as StudentParticipation[] } as QuizExercise, true],
+            [
+                { type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [{ initializationState: InitializationState.UNINITIALIZED }] } as QuizExercise,
+                true,
+            ],
+            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [{ initializationState: InitializationState.FINISHED }] } as QuizExercise, false],
         ])('should determine if quiz is not started', (exercise: Exercise, expected: boolean) => {
             comp.exercise = exercise;
             comp.ngOnInit();
