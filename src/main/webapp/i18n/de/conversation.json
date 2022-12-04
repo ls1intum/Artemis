@@ -99,14 +99,14 @@
             "conversationDetail": {
                 "tabs": {
                     "members": "Mitglieder:innen",
-                    "info": "Die Info",
+                    "info": "Informationen",
                     "settings": "Einstellungen"
                 },
                 "memberTab": {
                     "findMembers": "Mitglieder:innen finden",
                     "searching": "Suche ...",
                     "addUsers": "Nutzer:innen hinzufügen",
-                    "filter": "Wähle einen Filter aus",
+                    "filter": "Filter",
                     "allFilter": "Alle Mitglieder:innen",
                     "instructorFilter": "Lehrende",
                     "editorFilter": "Editor:innen",
