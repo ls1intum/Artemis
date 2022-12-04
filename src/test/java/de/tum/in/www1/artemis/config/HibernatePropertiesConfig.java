@@ -20,6 +20,6 @@ class HibernatePropertiesConfig implements HibernatePropertiesCustomizer {
 
     @Override
     public void customize(Map<String, Object> hibernateProperties) {
-        hibernateProperties.put("hibernate.session_factory.interceptor", hibernateQueryInterceptor);
+        hibernateProperties.put("hibernate.session_factory.statement_inspector", hibernateQueryInterceptor);
     }
 }
