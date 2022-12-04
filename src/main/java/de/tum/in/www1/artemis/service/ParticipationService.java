@@ -63,15 +63,12 @@ public class ParticipationService {
 
     private final TeamScoreRepository teamScoreRepository;
 
-    private final ExerciseDateService exerciseDateService;
-
     public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService, ResultService resultService,
             CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
-            ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
-            ExerciseDateService exerciseDateService) {
+            ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
@@ -88,7 +85,6 @@ public class ParticipationService {
         this.participantScoreRepository = participantScoreRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
-        this.exerciseDateService = exerciseDateService;
     }
 
     /**
@@ -397,7 +393,7 @@ public class ParticipationService {
         // and must be handled by the calling method in case it would be necessary
 
         // If a graded participation gets reset after the deadline set the state back to finished. Otherwise, the participation is initialized
-        var dueDate = exerciseDateService.getDueDate(participation);
+        var dueDate = ExerciseDateService.getDueDate(participation);
         if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
             participation.setInitializationState(FINISHED);
         }
@@ -440,7 +436,7 @@ public class ParticipationService {
     private ProgrammingExerciseStudentParticipation configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // do not allow the student to access the repository if this is an exam exercise that has not started yet
-            boolean allowAccess = !exercise.isExamExercise() || ZonedDateTime.now().isAfter(exercise.getIndividualReleaseDate());
+            boolean allowAccess = !exercise.isExamExercise() || ZonedDateTime.now().isAfter(exercise.getParticipationStartDate());
             versionControlService.get().configureRepository(exercise, participation, allowAccess);
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);

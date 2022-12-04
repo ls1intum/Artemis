@@ -1047,7 +1047,7 @@ public class ModelFactory {
      * Creates a dummy DTO with custom feedbacks used by Jenkins, which notifies about new programming exercise results.
      * Uses {@link #generateTestResultDTO(String, String, ZonedDateTime, ProgrammingLanguage, boolean, List, List, List, List, TestSuiteDTO)} as basis.
      * Then adds a new {@link TestSuiteDTO} with name "CustomFeedbacks" to it.
-     * This Testsuite has four {@link TestCaseDTO}s:
+     * This Testsuite has four {@link de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO TestCaseDTOs}:
      * <ul>
      *     <li>CustomSuccessMessage: successful test with a message</li>
      *     <li>CustomSuccessNoMessage: successful test without message</li>

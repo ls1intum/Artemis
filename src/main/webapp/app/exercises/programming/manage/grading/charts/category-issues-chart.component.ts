@@ -19,8 +19,7 @@ export class IssueColumn {
                     class="d-flex align-items-end"
                     [style]="{ width: column.w, height: '30px' }"
                     [ngbTooltip]="column.tooltip"
-                    placement="bottom"
-                    container="body"
+                    placement="bottom auto"
                 >
                     <div [style]="{ width: '100%', height: column.h, background: column.color }"></div>
                 </div>

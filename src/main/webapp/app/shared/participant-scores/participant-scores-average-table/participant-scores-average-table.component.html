@@ -38,7 +38,7 @@
             <ngx-datatable-column prop="averageScore" [minWidth]="500">
                 <ng-template ngx-datatable-header-template>
                     <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
-                    <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageScore')">
+                    <span [ngbTooltip]="tipContent" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageScore')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.averageScore">
                             AverageScore
                         </span>
@@ -54,7 +54,7 @@
             <ngx-datatable-column prop="averagePoints" [minWidth]="500">
                 <ng-template ngx-datatable-header-template>
                     <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
-                    <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averagePoints')">
+                    <span [ngbTooltip]="tipContent" class="datatable-header-cell-wrapper" (click)="controls.onSort('averagePoints')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.averagePoints">
                             AveragePoints
                         </span>
@@ -70,7 +70,7 @@
             <ngx-datatable-column prop="averageRatedScore" [minWidth]="500">
                 <ng-template ngx-datatable-header-template>
                     <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
-                    <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageRatedScore')">
+                    <span [ngbTooltip]="tipContent" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageRatedScore')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.averageRatedScore">
                             AverageRatedScore
                         </span>
@@ -86,7 +86,7 @@
             <ngx-datatable-column prop="averageRatedPoints" [minWidth]="500">
                 <ng-template ngx-datatable-header-template>
                     <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
-                    <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageRatedPoints')">
+                    <span [ngbTooltip]="tipContent" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageRatedPoints')">
                         <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participantScores.participantScoreAverageDTO.averageRatedPoints">
                             AverageRatedPoints
                         </span>
@@ -102,7 +102,7 @@
             <ngx-datatable-column prop="averageGrade" [minWidth]="500">
                 <ng-template ngx-datatable-header-template>
                     <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
-                    <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageGrade')">
+                    <span [ngbTooltip]="tipContent" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageGrade')">
                         <span class="datatable-header-cell-label bold sortable">
                             {{ isBonus ? ('artemisApp.participantScores.averageBonus' | artemisTranslate) : ('artemisApp.participantScores.averageGrade' | artemisTranslate) }}
                         </span>
@@ -118,7 +118,7 @@
             <ngx-datatable-column prop="averageRatedGrade" [minWidth]="500">
                 <ng-template ngx-datatable-header-template>
                     <ng-template #tipContent>{{ 'artemisApp.participantScores.notIncluded' | artemisTranslate }}</ng-template>
-                    <span [ngbTooltip]="tipContent" container="body" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageRatedGrade')">
+                    <span [ngbTooltip]="tipContent" class="datatable-header-cell-wrapper" (click)="controls.onSort('averageRatedGrade')">
                         <span class="datatable-header-cell-label bold sortable">
                             {{
                                 isBonus
