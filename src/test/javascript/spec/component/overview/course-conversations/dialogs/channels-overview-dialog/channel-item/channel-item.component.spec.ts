@@ -48,6 +48,13 @@ describe('ChannelItemComponent', () => {
 
         canLeaveConversation.mockReturnValue(false);
         fixture.detectChanges();
+        expect(fixture.nativeElement.querySelector('#view' + channel.id)).toBeTruthy();
+        expect(fixture.nativeElement.querySelector('#register' + channel.id)).toBeFalsy();
+        expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeFalsy();
+
+        // change dto to one where not is member
+        component.channel = generateExampleChannelDTO({ id: 2, isMember: false });
+        fixture.detectChanges();
         expect(fixture.nativeElement.querySelector('#view' + channel.id)).toBeFalsy();
         expect(fixture.nativeElement.querySelector('#register' + channel.id)).toBeFalsy();
         expect(fixture.nativeElement.querySelector('#deregister' + channel.id)).toBeFalsy();

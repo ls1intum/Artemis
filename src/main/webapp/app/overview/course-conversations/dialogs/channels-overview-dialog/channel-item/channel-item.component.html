@@ -19,10 +19,12 @@
             </button>
             <!--ToDo:  Introduce method to view public channel even if no participant maybe hacky around with visitor status or something? -->
         </ng-container>
-        <ng-container *ngIf="canLeaveConversation(channel)">
+        <ng-container *ngIf="!!channel.isMember">
             <button [id]="'view' + channel.id" type="button" class="btn btn-secondary" (click)="emitChannelAction($event, 'view')">
                 {{ 'artemisApp.dialogs.channelOverview.actions.view' | artemisTranslate }}
             </button>
+        </ng-container>
+        <ng-container *ngIf="canLeaveConversation(channel)">
             <button [id]="'deregister' + channel.id" type="button" class="btn btn-danger" (click)="emitChannelAction($event, 'deregister')">
                 {{ 'artemisApp.dialogs.channelOverview.actions.leave' | artemisTranslate }}
             </button>
