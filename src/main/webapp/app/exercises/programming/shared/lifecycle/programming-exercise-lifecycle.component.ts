@@ -3,7 +3,7 @@ import dayjs from 'dayjs/esm';
 import { TranslateService } from '@ngx-translate/core';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { faCogs, faHandshake, faHandshakeSlash, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faCogs, faUserCheck, faUserSlash } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { IncludedInOverallScore } from 'app/entities/exercise.model';
 
@@ -24,8 +24,6 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
     faCogs = faCogs;
     faUserCheck = faUserCheck;
     faUserSlash = faUserSlash;
-    faHandshake = faHandshake;
-    faHandshakeSlash = faHandshakeSlash;
 
     constructor(private translator: TranslateService, private exerciseService: ExerciseService) {}
 
@@ -69,9 +67,11 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
         if (this.exercise.assessmentType === AssessmentType.SEMI_AUTOMATIC) {
             this.exercise.assessmentType = AssessmentType.AUTOMATIC;
             this.exercise.assessmentDueDate = undefined;
+            this.exercise.allowComplaintsForAutomaticAssessments = false;
         } else {
             this.exercise.assessmentType = AssessmentType.SEMI_AUTOMATIC;
             this.exercise.allowComplaintsForAutomaticAssessments = false;
+            this.exercise.allowManualFeedbackRequests = false;
         }
     }
 
@@ -83,7 +83,14 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
     }
 
     /**
-     * Sets the new release date and updates "due date" and "after due date" if the release date is after the due date
+     * Toggles the value for allowing complaints for automatic assessment between true and false
+     */
+    toggleReleaseTests() {
+        this.exercise.releaseTestsWithExampleSolution = !this.exercise.releaseTestsWithExampleSolution;
+    }
+
+    /**
+     * Sets the new release date and updates "start date", "due date" and "after due date" if the release date is after them
      * Does not propagate changes to dates other than release date if readOnly is true.
      *
      * @param newReleaseDate The new release date
@@ -94,10 +101,34 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
             // Changes from parent component are allowed but no cascading changes should be made in read-only mode.
             return;
         }
-        if (this.exerciseService.hasDueDateError(this.exercise)) {
-            this.updateDueDate(newReleaseDate!);
+        if (this.exerciseService.hasStartDateError(this.exercise)) {
+            this.updateStartDate(newReleaseDate);
+            // Will handle due date and example solution
+            return;
         }
-        this.updateExampleSolutionPublicationDate(newReleaseDate);
+        const safeStartOrReleaseDate = this.exercise.startDate ?? newReleaseDate;
+        if (this.exerciseService.hasDueDateError(this.exercise) && safeStartOrReleaseDate) {
+            this.updateDueDate(safeStartOrReleaseDate);
+        }
+        this.updateExampleSolutionPublicationDate(safeStartOrReleaseDate);
+    }
+
+    /**
+     * Sets the new start date and updates "due date" and "after due date" if the start date is after the due date
+     * Does not propagate changes to dates other than start date if readOnly is true.
+     *
+     * @param newStartDate The new start date
+     */
+    updateStartDate(newStartDate?: dayjs.Dayjs) {
+        this.exercise.startDate = newStartDate;
+        if (this.readOnly) {
+            // Changes from parent component are allowed but no cascading changes should be made in read-only mode.
+            return;
+        }
+        if (this.exerciseService.hasDueDateError(this.exercise)) {
+            this.updateDueDate(newStartDate!);
+        }
+        this.updateExampleSolutionPublicationDate(newStartDate);
     }
 
     /**
@@ -110,7 +141,7 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
 
         // If the new due date is after the "After Due Date", then we have to set the "After Due Date" to the new due date
         const afterDue = this.exercise.buildAndTestStudentSubmissionsAfterDueDate;
-        if (afterDue && dayjs(dueDate).isAfter(afterDue)) {
+        if (afterDue && dueDate.isAfter(afterDue)) {
             this.exercise.buildAndTestStudentSubmissionsAfterDueDate = dueDate;
             alert(this.translator.instant('artemisApp.programmingExercise.timeline.alertNewAfterDueDate'));
         }
@@ -125,11 +156,15 @@ export class ProgrammingExerciseLifecycleComponent implements OnInit, OnChanges 
      */
     updateExampleSolutionPublicationDate(newReleaseOrDueDate?: dayjs.Dayjs) {
         if (!this.readOnly && this.exerciseService.hasExampleSolutionPublicationDateError(this.exercise)) {
-            const message = dayjs(newReleaseOrDueDate).isSame(this.exercise.dueDate)
-                ? 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate'
-                : 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate';
+            const message =
+                newReleaseOrDueDate && dayjs(newReleaseOrDueDate).isSame(this.exercise.dueDate)
+                    ? 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate'
+                    : 'artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate';
             alert(this.translator.instant(message));
             this.exercise.exampleSolutionPublicationDate = newReleaseOrDueDate;
+            if (!newReleaseOrDueDate) {
+                this.exercise.releaseTestsWithExampleSolution = false;
+            }
         }
     }
 }

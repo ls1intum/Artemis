@@ -11,6 +11,7 @@
         [ngbPopover]="popContent"
         [autoClose]="'outside'"
         placement="right auto"
+        container="body"
     ></button>
     <ng-template #popContent>
         <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
@@ -35,6 +36,7 @@
              || useSsh -> Remove round edges and edge on the right side (as ssh repo-links can't be open in the browser)-->
             <pre
                 style="flex: 1"
+                class="clone-url"
                 [ngClass]="
                     sshEnabled && !useSsh ? 'url-box-remove-line-left url-box-remove-line-right' : sshEnabled && useSsh ? 'url-box-remove-line-left' : 'url-box-remove-line-right'
                 "

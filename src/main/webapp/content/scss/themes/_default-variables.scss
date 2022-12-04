@@ -33,7 +33,9 @@ $danger: $red;
 $light: $gray-100;
 $dark: $gray-900;
 
-$body-bg: #e4e5e6;
+$body-color: $gray-900;
+$text-muted: $gray-600;
+$body-bg: $gray-100;
 
 $navbar-dark-color: rgba($white, 0.6);
 $navbar-dark-hover-color: $white;
@@ -358,8 +360,6 @@ $exam-students-dropdown-item-already-registered-background-hover-color: #daf2e0;
 $exam-students-datatable-row-newly-registered-background-color: #c4e7cc;
 
 // Data table
-$data-table-icon-right: black;
-$data-table-icon-down: black;
 $data-table-transitioning-container-active-background-color: rgba(255, 255, 255, 0.5);
 $data-table-dropdown-item-selected-background-color: $primary;
 

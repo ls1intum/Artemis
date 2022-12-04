@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -10,7 +10,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { combineLatest, forkJoin, from } from 'rxjs';
 import { ExerciseUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/exerciseUnit.service';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-create-exercise-unit',
@@ -18,12 +18,30 @@ import { faSort } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./create-exercise-unit.component.scss'],
 })
 export class CreateExerciseUnitComponent implements OnInit {
+    @Input()
+    hasCancelButton: boolean;
+    @Input()
+    hasCreateExerciseButton: boolean;
+    @Input()
+    shouldNavigateOnSubmit = true;
+    @Input()
+    lectureId: number | undefined;
+    @Input()
+    courseId: number | undefined;
+    @Input()
+    currentWizardStep: number;
+
+    @Output()
+    onCancel: EventEmitter<any> = new EventEmitter<any>();
+    @Output()
+    onExerciseUnitCreated: EventEmitter<any> = new EventEmitter<any>();
+
+    faTimes = faTimes;
+
     predicate = 'type';
     reverse = false;
     isLoading = false;
 
-    lectureId: number;
-    courseId: number;
     exercisesAvailableForUnitCreation: Exercise[] = [];
     exercisesToCreateUnitFor: Exercise[] = [];
 
@@ -46,8 +64,8 @@ export class CreateExerciseUnitComponent implements OnInit {
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
-                    this.lectureId = Number(params.get('lectureId'));
-                    this.courseId = Number(parentParams.get('courseId'));
+                    this.lectureId ??= Number(params.get('lectureId'));
+                    this.courseId ??= Number(parentParams.get('courseId'));
 
                     const courseObservable = this.courseManagementService.findWithExercises(this.courseId);
                     const exerciseUnitObservable = this.exerciseUnitService.findAllByLectureId(this.lectureId);
@@ -78,9 +96,13 @@ export class CreateExerciseUnitComponent implements OnInit {
 
         from(exerciseUnitsToCreate)
             .pipe(
-                concatMap((unit) => this.exerciseUnitService.create(unit, this.lectureId)),
+                concatMap((unit) => this.exerciseUnitService.create(unit, this.lectureId!)),
                 finalize(() => {
-                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                    if (this.shouldNavigateOnSubmit) {
+                        this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                    } else {
+                        this.onExerciseUnitCreated.emit();
+                    }
                 }),
             )
             .subscribe({
@@ -106,5 +128,16 @@ export class CreateExerciseUnitComponent implements OnInit {
 
     isExerciseSelectedForUnitCreation(exercise: Exercise) {
         return this.exercisesToCreateUnitFor.includes(exercise);
+    }
+
+    cancelForm() {
+        this.onCancel.emit();
+    }
+
+    createNewExercise() {
+        this.router.navigate(['/course-management', this.courseId, 'exercises'], {
+            queryParams: { shouldHaveBackButtonToWizard: 'true', lectureId: this.lectureId, step: this.currentWizardStep },
+            queryParamsHandling: '',
+        });
     }
 }

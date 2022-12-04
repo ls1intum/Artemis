@@ -2,7 +2,7 @@
     <!-- QUIZ EXERCISE ACTIONS START -->
     <ng-container *ngSwitchCase="ExerciseType.QUIZ">
         <!-- ACTIONS START -->
-        <div class="btn-group me-2">
+        <div class="btn-group">
             <button
                 jhi-exercise-action-button
                 [buttonIcon]="faRedo"
@@ -73,16 +73,6 @@
                 [smallButton]="smallButtons"
                 (click)="startExercise()"
             ></button>
-            <button
-                jhi-exercise-action-button
-                *ngIf="!!exercise.isAtLeastTutor"
-                [buttonIcon]="faSignal"
-                [buttonLabel]="'artemisApp.exerciseActions.statistics' | artemisTranslate"
-                [outlined]="true"
-                [buttonLoading]="!!exercise.loading"
-                [smallButton]="smallButtons"
-                routerLink="/course-management/{{ courseId }}/quiz-exercises/{{ exercise.id }}/quiz-point-statistic"
-            ></button>
         </div>
         <!-- INFORMATION END -->
     </ng-container>
@@ -91,7 +81,7 @@
     <!-- MODELING EXERCISE ACTIONS START -->
     <ng-container *ngSwitchCase="ExerciseType.MODELING">
         <!-- ACTIONS START -->
-        <div class="btn-group me-2">
+        <div class="btn-group">
             <button
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
@@ -101,18 +91,22 @@
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
             ></button>
-            <button
-                [id]="'start-exercise-' + exercise.id"
-                jhi-exercise-action-button
-                id="start-modeling-exercise-action"
-                [buttonIcon]="faPlayCircle"
-                [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-                [buttonLoading]="!!exercise.loading"
-                [smallButton]="smallButtons"
-                [hideLabelMobile]="false"
-                *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
-                (click)="startExercise()"
-            ></button>
+            <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeDueDate' | artemisTranslate) : ''">
+                <button
+                    [id]="'start-exercise-' + exercise.id"
+                    class="start-exercise"
+                    jhi-exercise-action-button
+                    id="start-modeling-exercise-action"
+                    [buttonIcon]="faPlayCircle"
+                    [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
+                    [buttonLoading]="!!exercise.loading"
+                    [smallButton]="smallButtons"
+                    [hideLabelMobile]="false"
+                    [overwriteDisabled]="isBeforeStartDateAndStudent"
+                    *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
+                    (click)="startExercise()"
+                ></button>
+            </span>
             <button
                 [id]="'open-exercise-' + exercise.id"
                 jhi-exercise-action-button
@@ -173,7 +167,7 @@
     <!-- PROGRAMMING EXERCISE ACTIONS START -->
     <ng-container *ngSwitchCase="ExerciseType.PROGRAMMING">
         <!-- ACTION START -->
-        <div class="btn-group">
+        <div class="btn-group gap-1">
             <button
                 class="view-team"
                 jhi-exercise-action-button
@@ -184,22 +178,25 @@
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
             ></button>
-            <button
-                [id]="'start-exercise-' + exercise.id"
-                class="start-exercise"
-                jhi-exercise-action-button
-                [buttonIcon]="faPlayCircle"
-                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-                [buttonLoading]="!!exercise.loading"
-                [smallButton]="smallButtons"
-                [hideLabelMobile]="false"
-                *ngIf="participationStatusWrapper(false) === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
-                (click)="startExercise()"
-            ></button>
+            <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeDueDate' | artemisTranslate) : ''">
+                <button
+                    [id]="'start-exercise-' + exercise.id"
+                    class="start-exercise"
+                    jhi-exercise-action-button
+                    [buttonIcon]="faPlayCircle"
+                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                    [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
+                    [buttonLoading]="!!exercise.loading"
+                    [smallButton]="smallButtons"
+                    [hideLabelMobile]="false"
+                    [overwriteDisabled]="isBeforeStartDateAndStudent"
+                    *ngIf="participationStatusWrapper(false) === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
+                    (click)="startExercise()"
+                ></button>
+            </span>
             <jhi-start-practice-mode-button
                 [id]="'start-practice-' + exercise.id"
-                class="start-practice me-1"
+                class="start-practice"
                 [smallButtons]="smallButtons"
                 [exercise]="exercise"
                 *ngIf="participationStatusWrapper(true) === ParticipationStatus.UNINITIALIZED && isStartPracticeAvailable()"
@@ -210,7 +207,6 @@
             <ng-container *ngIf="shouldDisplayIDEButtons()">
                 <ng-container *jhiExtensionPoint="overrideCloneOnlineEditorButton; context: { exercise: exercise }">
                     <jhi-open-code-editor-button
-                        class="me-1"
                         [loading]="!!exercise.loading"
                         [smallButtons]="smallButtons"
                         [participations]="exercise.studentParticipations!"
@@ -221,7 +217,6 @@
                     </jhi-open-code-editor-button>
 
                     <jhi-clone-repo-button
-                        class="me-2"
                         [loading]="!!exercise.loading"
                         [smallButtons]="smallButtons"
                         [participations]="exercise.studentParticipations!"
@@ -229,12 +224,12 @@
                     >
                     </jhi-clone-repo-button>
 
-                    <span tabindex="0" [ngbTooltip]="'artemisApp.exerciseActions.requestFeedbackTooltip' | artemisTranslate">
+                    <span *ngIf="exercise.allowManualFeedbackRequests" tabindex="0" [ngbTooltip]="'artemisApp.exerciseActions.requestFeedbackTooltip' | artemisTranslate">
                         <button
                             class="btn btn-primary"
                             [class.btn-sm]="smallButtons"
-                            *ngIf="isManualFeedbackRequestsAllowed()"
-                            [disabled]="isFeedbackRequestButtonDisabled()"
+                            jhi-exercise-action-button
+                            [overwriteDisabled]="isFeedbackRequestButtonDisabled()"
                             [id]="'request-feedback-' + exercise.id"
                             (click)="requestFeedback()"
                         >
@@ -270,7 +265,7 @@
                 (click)="resumeProgrammingExercise(true)"
             ></button>
             <a
-                class="btn btn-primary me-1"
+                class="btn btn-primary"
                 [class.btn-sm]="smallButtons"
                 style="margin-left: 8px"
                 target="_blank"
@@ -278,7 +273,7 @@
                 href="{{ buildPlanUrl(exercise.studentParticipations![0]) }}"
                 *ngIf="publishBuildPlanUrl() && buildPlanActive()"
             >
-                <fa-icon class="me-1" [icon]="faExternalLinkAlt" [fixedWidth]="true"></fa-icon>
+                <fa-icon [icon]="faExternalLinkAlt" [fixedWidth]="true"></fa-icon>
                 <span class="d-none d-md-inline" jhiTranslate="artemisApp.exerciseActions.goToBuildPlan">Go to build plan</span>
             </a>
         </div>
@@ -289,7 +284,7 @@
     <!-- TEXT EXERCISE ACTIONS START -->
     <ng-container *ngSwitchCase="ExerciseType.TEXT">
         <!-- ACTIONS START -->
-        <div class="btn-group me-2">
+        <div class="btn-group">
             <button
                 jhi-exercise-action-button
                 [buttonIcon]="faUsers"
@@ -299,18 +294,21 @@
                 [hideLabelMobile]="true"
                 [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
             ></button>
-            <button
-                [id]="'start-exercise-' + exercise.id"
-                class="start-exercise"
-                jhi-exercise-action-button
-                [buttonIcon]="faPlayCircle"
-                [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-                [buttonLoading]="!!exercise.loading"
-                [smallButton]="smallButtons"
-                [hideLabelMobile]="false"
-                *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
-                (click)="startExercise()"
-            ></button>
+            <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeDueDate' | artemisTranslate) : ''">
+                <button
+                    [id]="'start-exercise-' + exercise.id"
+                    class="start-exercise"
+                    jhi-exercise-action-button
+                    [buttonIcon]="faPlayCircle"
+                    [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
+                    [buttonLoading]="!!exercise.loading"
+                    [smallButton]="smallButtons"
+                    [hideLabelMobile]="false"
+                    [overwriteDisabled]="isBeforeStartDateAndStudent"
+                    *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
+                    (click)="startExercise()"
+                ></button>
+            </span>
             <button
                 [id]="'open-exercise-' + exercise.id"
                 jhi-exercise-action-button
@@ -379,16 +377,21 @@
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="true"
             ></button>
-            <button
-                jhi-exercise-action-button
-                [buttonIcon]="faPlayCircle"
-                [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
-                [buttonLoading]="!!exercise.loading"
-                *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
-                [smallButton]="smallButtons"
-                [hideLabelMobile]="false"
-                (click)="startExercise()"
-            ></button>
+            <span tabindex="0" [ngbTooltip]="isBeforeStartDateAndStudent ? ('artemisApp.exerciseActions.startExerciseBeforeDueDate' | artemisTranslate) : ''">
+                <button
+                    [id]="'start-exercise-' + exercise.id"
+                    class="start-exercise"
+                    jhi-exercise-action-button
+                    [buttonIcon]="faPlayCircle"
+                    [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
+                    [buttonLoading]="!!exercise.loading"
+                    *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
+                    [smallButton]="smallButtons"
+                    [hideLabelMobile]="false"
+                    [overwriteDisabled]="isBeforeStartDateAndStudent"
+                    (click)="startExercise()"
+                ></button>
+            </span>
             <button
                 jhi-exercise-action-button
                 [buttonIcon]="faFolderOpen"

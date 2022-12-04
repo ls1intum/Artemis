@@ -85,25 +85,7 @@
             "accessGroups": "Access Groups",
             "onlineCourse": {
                 "title": "Online Course",
-                "description": "Activate this checkbox for external online courses (e.g. on edX) so that students can use this Artemis course (via the LTI interface). This also allows automatic account creation if enabled by the Artemis system administrator."
-            },
-            "onlineCourseConfiguration": {
-                "title": "Online Course Configuration",
-                "ltiKey": "LTI Key",
-                "ltiSecret": "LTI Secret",
-                "userPrefix": "User Prefix",
-                "requireExistingUser": "Require existing user",
-                "registrationId": "Registration ID",
-                "clientId": "Client ID",
-                "authorizationUri": "Authorization URI",
-                "tokenUri": "Token URI",
-                "jwkSetUri": "JWKSet URI",
-                "requireExistingUserTooltip": "If selected, launching the exercise requires an existing user on Artemis. If deselected, a user will be created on first launch if it does not yet exist",
-                "form": {
-                    "userPrefix": {
-                        "forbidden": "User prefix cannot contain special characters."
-                    }
-                }
+                "description": "Activate this checkbox for external online courses (e.g. on edX/Moodle) so that students can use this Artemis course (via the LTI interface). This also allows automatic account creation if enabled by the Artemis system administrator. You can further configure this in the LTI Configuration page."
             },
             "registrationEnabled": {
                 "title": "Student Course Registration Enabled",
