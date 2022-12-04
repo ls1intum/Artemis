@@ -55,7 +55,6 @@
                         [legendPosition]="legendPosition"
                         [tooltipDisabled]="true"
                         [scheme]="ngxColors"
-                        (select)="onSelect($event)"
                     >
                     </ngx-charts-bar-horizontal-stacked>
                 </div>
@@ -69,12 +68,6 @@
             <ng-container *ngTemplateOutlet="buildLogs?.length ? buildLogsContainer : null"></ng-container>
 
             <hr *ngIf="buildLogs?.length" />
-
-            <div class="mb-2 d-flex justify-content-center align-items-center" *ngIf="showOnlyNegativeFeedback || showOnlyPositiveFeedback">
-                <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
-                <span class="ms-1" jhiTranslate="artemisApp.result.chart.filterApplied">A filter is applied to your feedback</span>
-                <button type="button" class="ms-2 btn btn-info" (click)="resetChartFilter()" jhiTranslate="artemisApp.result.chart.reset">Reset</button>
-            </div>
 
             <div>
                 <jhi-feedback-item-node *ngFor="let feedbackItemNode of feedbackItemNodes" [feedbackNode]="feedbackItemNode" [course]="course"></jhi-feedback-item-node>
