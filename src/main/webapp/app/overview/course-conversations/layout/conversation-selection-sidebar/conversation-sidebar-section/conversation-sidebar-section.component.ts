@@ -1,5 +1,5 @@
 import { Component, ContentChild, EventEmitter, Input, OnInit, Output, TemplateRef, ViewEncapsulation } from '@angular/core';
-import { faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronRight, faMessage } from '@fortawesome/free-solid-svg-icons';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
@@ -35,6 +35,7 @@ export class ConversationSidebarSectionComponent implements OnInit {
     set conversations(conversations: ConversationDto[]) {
         this.hiddenConversations = [];
         this.visibleConversations = [];
+        this.allConversations = conversations ?? [];
         conversations.forEach((conversation) => {
             if (conversation.isHidden) {
                 this.hiddenConversations.push(conversation);
@@ -42,7 +43,41 @@ export class ConversationSidebarSectionComponent implements OnInit {
                 this.visibleConversations.push(conversation);
             }
         });
-        this.numberOfConversations = this.visibleConversations.length + this.hiddenConversations.length;
+        this.numberOfConversations = this.allConversations.length;
+    }
+
+    get anyConversationUnread(): boolean {
+        // do not show unread badge for open conversation that the user is currently reading
+        let containsUnreadConversation = false;
+        for (const conversation of this.allConversations) {
+            if (
+                conversation.lastMessageDate &&
+                (!conversation.lastReadDate || conversation.lastReadDate.isBefore(conversation.lastMessageDate)) &&
+                !(this.activeConversation && this.activeConversation.id === conversation.id) &&
+                this.isCollapsed
+            ) {
+                containsUnreadConversation = true;
+                break;
+            }
+        }
+        return containsUnreadConversation;
+    }
+
+    get anyHiddenConversationUnread(): boolean {
+        // do not show unread badge for open conversation that the user is currently reading
+        let containsUnreadConversation = false;
+        for (const conversation of this.hiddenConversations) {
+            if (
+                conversation.lastMessageDate &&
+                (!conversation.lastReadDate || conversation.lastReadDate.isBefore(conversation.lastMessageDate)) &&
+                !(this.activeConversation && this.activeConversation.id === conversation.id) &&
+                !this.showHiddenConversations
+            ) {
+                containsUnreadConversation = true;
+                break;
+            }
+        }
+        return containsUnreadConversation;
     }
 
     isCollapsed: boolean;
@@ -55,6 +90,7 @@ export class ConversationSidebarSectionComponent implements OnInit {
 
     hiddenConversations: ConversationDto[] = [];
     visibleConversations: ConversationDto[] = [];
+    allConversations: ConversationDto[] = [];
     numberOfConversations = 0;
 
     getAsChannel = getAsChannelDto;
@@ -62,6 +98,7 @@ export class ConversationSidebarSectionComponent implements OnInit {
 
     // icon imports
     faChevronRight = faChevronRight;
+    faMessage = faMessage;
 
     constructor(public conversationService: ConversationService, public localStorageService: LocalStorageService) {}
 

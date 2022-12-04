@@ -67,6 +67,7 @@ examples.forEach((activeConversation) => {
         it('should separate hidden and visible conversations', () => {
             expect(component.hiddenConversations).toEqual([hiddenConversation]);
             expect(component.visibleConversations).toEqual([visibleConversation]);
+            expect(component.allConversations).toEqual([hiddenConversation, visibleConversation]);
             expect(component.numberOfConversations).toBe(2);
         });
 

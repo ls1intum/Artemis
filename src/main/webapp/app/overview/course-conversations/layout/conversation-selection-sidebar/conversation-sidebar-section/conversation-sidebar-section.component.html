@@ -4,6 +4,9 @@
         <div>
             <fa-icon [icon]="faChevronRight" [rotate]="!isCollapsed ? 90 : undefined"></fa-icon>
             <span>{{ label }}</span>
+            <span [hidden]="!anyConversationUnread">
+                <fa-icon [icon]="faMessage"></fa-icon>
+            </span>
         </div>
         <div *ngIf="sectionButtons" class="interaction" (click)="$event.stopPropagation()">
             <ng-template [ngTemplateOutlet]="sectionButtons" [ngTemplateOutletContext]="{}"></ng-template>
@@ -28,6 +31,9 @@
                             ? ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.shown' | artemisTranslate)
                             : ('artemisApp.conversationsLayout.conversationSelectionSideBar.sideBarSection.hidden' | artemisTranslate)
                     }}
+                    <span [hidden]="!anyHiddenConversationUnread">
+                        <fa-icon [icon]="faMessage"></fa-icon>
+                    </span>
                 </li>
                 <ng-container *ngIf="showHiddenConversations">
                     <li
