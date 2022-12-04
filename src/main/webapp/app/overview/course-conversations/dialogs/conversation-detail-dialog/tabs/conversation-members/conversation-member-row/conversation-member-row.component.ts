@@ -88,14 +88,12 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
                 this.userLabel = getUserLabel(this.conversationMember);
                 this.setUserAuthorityIconAndTooltip();
+                // the creator of a channel can not be removed from the channel
                 this.canBeRemovedFromConversation = !this.isCurrentUser && !this.isCreator && this.canRemoveUsersFromConversation(this.activeConversation);
-
                 if (isChannelDto(this.activeConversation)) {
                     this.canBeGrantedChannelAdminRights = this.canGrantChannelAdminRights(this.activeConversation) && !this.conversationMember.isChannelAdmin;
-                    this.canBeRevokedChannelAdminRights =
-                        this.canRevokeChannelAdminRights(this.activeConversation) &&
-                        this.activeConversation?.creator?.id !== this.conversationMember?.id &&
-                        !!this.conversationMember.isChannelAdmin;
+                    // the creator of a channel cannot be revoked channel admin rights
+                    this.canBeRevokedChannelAdminRights = this.canRevokeChannelAdminRights(this.activeConversation) && !this.isCreator && !!this.conversationMember.isChannelAdmin;
                 }
             });
         }
