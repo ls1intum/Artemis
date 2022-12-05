@@ -1,4 +1,4 @@
-import { FeedbackItem } from 'app/exercises/shared/result/detail/result-detail.component';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 
 /*
  * A group of FeedbackItems as in the composite pattern.

@@ -1,5 +1,5 @@
-import { FeedbackItem } from 'app/exercises/shared/result/detail/result-detail.component';
 import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 
 /**
  * Returns all FeedbackItemGroups for Programming exercises

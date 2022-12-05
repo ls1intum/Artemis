@@ -5,7 +5,7 @@ import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { FeedbackItem, FeedbackItemType, ResultDetailComponent } from 'app/exercises/shared/result/detail/result-detail.component';
+import { ResultDetailComponent } from 'app/exercises/shared/result/detail/result-detail.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
@@ -25,6 +25,7 @@ import { BarChartModule } from '@swimlane/ngx-charts';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { Course } from 'app/entities/course.model';
+import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/feedback/item/feedback-item';
 
 describe('ResultDetailComponent', () => {
     let comp: ResultDetailComponent;

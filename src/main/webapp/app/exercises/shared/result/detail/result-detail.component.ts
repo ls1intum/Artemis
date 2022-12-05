@@ -29,25 +29,7 @@ import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/it
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
 import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 import { resultIsPreliminary } from '../result.utils';
-
-export enum FeedbackItemType {
-    Issue,
-    Test,
-    Feedback,
-    Policy,
-    Subsequent,
-}
-
-export class FeedbackItem {
-    type: FeedbackItemType;
-    category: string;
-    previewText?: string; // used for long texts with line breaks
-    title?: string; // this is typically feedback.text
-    text?: string; // this is typically feedback.detailText
-    positive?: boolean;
-    credits?: number;
-    actualCredits?: number;
-}
+import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/feedback/item/feedback-item';
 
 // Modal -> Result details view
 @Component({
