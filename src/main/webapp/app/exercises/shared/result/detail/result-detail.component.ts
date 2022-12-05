@@ -27,9 +27,7 @@ import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item.service';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
-import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 import { resultIsPreliminary } from '../result.utils';
-import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
 
 interface ChartData {
@@ -83,7 +81,6 @@ export class ResultDetailComponent implements OnInit {
 
     isLoading = false;
     loadingFailed = false;
-    feedbackList: FeedbackItem[];
     buildLogs: BuildLogEntryArray;
     course?: Course;
 
@@ -109,8 +106,7 @@ export class ResultDetailComponent implements OnInit {
     legendPosition = LegendPosition.Below;
 
     feedbackItemService: FeedbackItemService;
-
-    feedbackItemNodes: (FeedbackItem | FeedbackItemGroup)[];
+    feedbackItemNodes: FeedbackItemNode[];
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -193,8 +189,7 @@ export class ResultDetailComponent implements OnInit {
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
 
-                        this.feedbackList = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
-                        this.feedbackItemNodes = this.feedbackItemService.group(this.feedbackList);
+                        this.feedbackItemNodes = this.feedbackItemService.group(this.feedbackItemService.create(filteredFeedback, this.showTestDetails));
 
                         if (this.showScoreChart) {
                             this.updateChart(this.feedbackItemNodes);

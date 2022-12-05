@@ -23,7 +23,7 @@
 
     <!-- Feedbacks container -->
     <ng-template #feedbackContainer>
-        <div *ngIf="!loadingFailed && feedbackList && feedbackList.length; else buildLogsContainer" class="result-detail-container">
+        <div *ngIf="!loadingFailed && feedbackItemNodes && feedbackItemNodes.length; else buildLogsContainer" class="result-detail-container">
             <div *ngIf="showScoreChart && result.participation?.exercise" class="result-score-chart">
                 <h4>
                     <span *ngIf="!exercise?.maxPoints; else scoreWithPoints">

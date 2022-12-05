@@ -30,6 +30,6 @@ export abstract class FeedbackItemGroup implements FeedbackItemNode {
     }
 }
 
-export const isFeedbackItemGroup = (node: FeedbackItem | FeedbackItemGroup): node is FeedbackItemGroup => {
+export const isFeedbackItemGroup = (node: FeedbackItemNode): node is FeedbackItemGroup => {
     return (node as FeedbackItemGroup).members !== undefined;
 };

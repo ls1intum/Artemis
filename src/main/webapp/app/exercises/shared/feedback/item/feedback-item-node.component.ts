@@ -4,6 +4,7 @@ import { Course } from 'app/entities/course.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackItemGroup, isFeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
 
 @Component({
     selector: 'jhi-feedback-item-node',
@@ -13,7 +14,7 @@ import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 export class FeedbackItemNodeComponent implements OnInit {
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
-    @Input() feedbackNode: FeedbackItem | FeedbackItemGroup;
+    @Input() feedbackNode: FeedbackItemNode;
     @Input() course?: Course;
 
     // This is a workaround for type safety in the template
@@ -27,7 +28,7 @@ export class FeedbackItemNodeComponent implements OnInit {
         if (isFeedbackItemGroup(this.feedbackNode)) {
             this.feedbackItemGroup = this.feedbackNode;
         } else {
-            this.feedbackItem = this.feedbackNode;
+            this.feedbackItem = <FeedbackItem>this.feedbackNode;
         }
     }
 }
