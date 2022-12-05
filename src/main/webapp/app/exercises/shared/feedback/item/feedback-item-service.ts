@@ -14,12 +14,9 @@ export interface FeedbackItemService {
     create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[];
 
     /**
-     * @deprecated TODO: refactor by exposing summary() method
-     * Gets positive test cases without detail texts
-     * @param feedbackItems
+     * Uses {@link FeedbackItemGroup} predicate shouldContain and adds all that fulfill this predicate to its group
+     * @param feedbackItems to be added to groups
      */
-    getPositiveTestCasesWithoutDetailText(feedbackItems: FeedbackItem[]): FeedbackItem[];
-
     group(feedbackItems: FeedbackItem[]): (FeedbackItem | FeedbackItemGroup)[];
 }
 
@@ -42,10 +39,5 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
             positive: feedback.positive,
             credits: feedback.credits,
         }));
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    getPositiveTestCasesWithoutDetailText(feedbackItems: FeedbackItem[]): FeedbackItem[] {
-        return [];
     }
 }

@@ -12,12 +12,6 @@ import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/feedback/it
 export class ProgrammingFeedbackItemService implements FeedbackItemService {
     constructor(private translateService: TranslateService) {}
 
-    getPositiveTestCasesWithoutDetailText(feedbackItems: FeedbackItem[]): FeedbackItem[] {
-        return feedbackItems.filter((feedbackItem) => {
-            return feedbackItem.type === FeedbackItemType.Test && feedbackItem.positive && !feedbackItem.text;
-        });
-    }
-
     create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
         return feedbacks.map((feedback) => this.createFeedbackItem(feedback, showTestDetails));
     }
