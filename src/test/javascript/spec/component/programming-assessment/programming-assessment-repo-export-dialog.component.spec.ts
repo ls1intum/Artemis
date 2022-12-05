@@ -80,7 +80,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 // stubs
                 jest.spyOn(exerciseService, 'find').mockReturnValue(of({ body: programmingExercise } as HttpResponse<Exercise>));
 
-                comp.exerciseId = exerciseId;
+                comp.programmingExercises = [programmingExercise];
                 comp.participationIdList = participationIdList;
                 comp.singleParticipantMode = singleParticipantMode;
             });
@@ -92,12 +92,12 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
     it('test initialization', () => {
         fixture.detectChanges();
-        expect(comp.exerciseId).toBe(42);
+        expect(comp.programmingExercises[0].id).toBe(42);
     });
 
     it('Exercise service should find the correct programming exercise', () => {
         fixture.detectChanges();
-        expect(comp.exercise).toEqual(programmingExercise);
+        expect(comp.programmingExercises[0]).toEqual(programmingExercise);
     });
 
     it('Export a repo by participations should download a zipped file', fakeAsync(() => {
@@ -105,7 +105,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
-        comp.exportRepos(exerciseId);
+        comp.exportRepos();
         tick();
         expect(comp.repositoryExportOptions.addParticipantName).toBeFalse();
         expect(comp.repositoryExportOptions.hideStudentNameInZippedFolder).toBeTrue();
@@ -120,7 +120,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
         const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipantIdentifiers').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
-        comp.exportRepos(exerciseId);
+        comp.exportRepos();
         tick();
         expect(comp.repositoryExportOptions.addParticipantName).toBeTrue();
         expect(comp.exportInProgress).toBeFalse();
@@ -130,14 +130,13 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
     it('Export of multiple repos download multiple files', fakeAsync(() => {
         const programmingExercise2 = new ProgrammingExercise(new Course(), undefined);
         programmingExercise2.id = 43;
-        fixture.componentInstance.exercise = programmingExercise2;
-        fixture.componentInstance.exercise.isAtLeastInstructor = true;
-        comp.selectedProgrammingExercises = [programmingExercise, programmingExercise2];
+        programmingExercise2.isAtLeastInstructor = true;
+        comp.programmingExercises = [programmingExercise, programmingExercise2];
         const httpResponse = createBlobHttpResponse();
         const exportReposStub = jest.spyOn(repoExportService, 'exportReposByParticipations').mockReturnValue(of(httpResponse));
         fixture.detectChanges();
 
-        comp.bulkExportRepos();
+        comp.exportRepos();
         tick();
         expect(comp.repositoryExportOptions.exportAllParticipants).toBeTrue();
         expect(comp.exportInProgress).toBeFalse();
