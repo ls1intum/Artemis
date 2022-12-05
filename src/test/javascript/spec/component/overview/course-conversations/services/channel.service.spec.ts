@@ -122,7 +122,7 @@ describe('ChannelService', () => {
 
     it('registersUsersToChannel', fakeAsync(() => {
         service
-            .registerUsersToChannel(1, 1, true, true, true, true, ['login'])
+            .registerUsersToChannel(1, 1, true, true, true, ['login'])
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
 
