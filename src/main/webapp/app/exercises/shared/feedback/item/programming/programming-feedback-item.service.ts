@@ -80,6 +80,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
 
         return {
             type: FeedbackItemType.Issue,
+            tType: 'Static Code Analysis',
             category: this.translateService.instant('artemisApp.result.detail.codeIssue.name'),
             title: this.translateService.instant('artemisApp.result.detail.codeIssue.title', { scaCategory, location: this.getIssueLocation(scaIssue) }),
             text,
