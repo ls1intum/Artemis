@@ -47,18 +47,16 @@
                     <ngx-charts-bar-horizontal-stacked
                         [view]="[containerRef.offsetWidth, 80]"
                         [results]="chartData.results"
+                        [scheme]="chartData.scheme"
+                        [xScaleMax]="chartData.xScaleMax"
                         [xAxis]="true"
                         [xAxisTickFormatting]="xAxisFormatting"
-                        [xScaleMax]="chartData.xScaleMax"
                         [legend]="true"
                         [legendTitle]="''"
                         [legendPosition]="legendPosition"
                         [tooltipDisabled]="true"
                     >
                     </ngx-charts-bar-horizontal-stacked>
-                </div>
-                <div *ngIf="showScoreChartTooltip" class="chart-tooltip-space d-flex justify-content-center position-relative">
-                    <div class="chart-tooltip-space-content" [ngbTooltip]="'artemisApp.result.chart.tooltip' | artemisTranslate" placement="bottom auto"></div>
                 </div>
                 <hr />
             </div>

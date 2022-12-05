@@ -84,8 +84,6 @@ export class ResultDetailComponent implements OnInit {
     buildLogs: BuildLogEntryArray;
     course?: Course;
 
-    showScoreChartTooltip = false;
-
     commitHashURLTemplate?: string;
     commitHash?: string;
     commitUrl?: string;
