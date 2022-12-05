@@ -82,6 +82,8 @@
             "startDateError": "Start Date must be after Release Date. Please check your selection again.",
             "assessmentDueDate": "Assessment Due Date",
             "assessmentDueDateError": "Assessment Due Date must be after Release, Start and Due Date. Please check your selection again.",
+            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students. But they can only participate after the currently defined start date.",
+            "noReleaseAndStartDateWarning": "You have not defined a release and start date for this exercise, this means that it will be immediately published and students can participate in the exercise.",
             "dateNotSet": "No date set",
             "exampleSolutionPublicationDate": "Example Solution Publication Date",
             "points": "Points",
@@ -212,13 +214,13 @@
             "update": {
                 "warning": {
                     "warning": "Warning: These changes will possibly cause problems",
-                    "saveExerciseWithoutReevaluation": "Do not re-evaluate",
+                    "saveExerciseWithoutReevaluation": "Save without re-evaluation",
                     "problems": "To avoid inconsistencies between existing feedback and future feedback that is associated to affected grading instruction, the exercise has to be re-evaluated. This includes the recalculation of the results.",
                     "instructionDeleted": "Grading instruction deleted",
                     "creditChanged": "Grading instruction credit changed",
                     "usageCountChanged": "Grading instruction usage count changed",
-                    "confirmText": "Do you want to perform these changes with or without the re-evaluation of the exercise?",
-                    "reevaluateExercise": "Re-evaluate",
+                    "confirmText": "Do you want to save these changes or change them?",
+                    "reevaluateExercise": "Save with Re-evaluation",
                     "deleteFeedback": "Additionally delete all corresponding feedback that is associated with the deleted Grading Instruction.",
                     "information": "If you do not want to trigger a re-evaluation, we can not guarantee the consistency of feedback associated to this grading instruction."
                 }
