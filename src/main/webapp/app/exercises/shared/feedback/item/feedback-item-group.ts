@@ -11,6 +11,10 @@ export abstract class FeedbackItemGroup implements FeedbackItemNode {
     color: string;
     description: string;
     credits: number;
+    /**
+     * Whether the detail is open by default
+     */
+    open = false;
 
     abstract shouldContain(feedbackItem: FeedbackItem): boolean;
 

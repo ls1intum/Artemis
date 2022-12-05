@@ -22,7 +22,7 @@
     <p *ngElse jhiTranslate="artemisApp.result.noFeedback">No feedback available</p>
 </div>
 
-<details *ngIf="feedbackItemGroup" class="feedback-item-group">
+<details *ngIf="feedbackItemGroup" class="feedback-item-group" [open]="feedbackItemGroup.open">
     <summary class="feedback-item-group__summary" [ngStyle]="{ background: feedbackItemGroup.color }">
         <div class="feedback-item-group__summary__content">
             <h4 class="feedback-item__category">

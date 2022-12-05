@@ -13,6 +13,7 @@ export const getAllFeedbackItemGroups = (): FeedbackItemGroup[] => {
  */
 class FeedbackItemGroupMissing extends FeedbackItemGroup {
     name = 'missing';
+    open = true;
     color = 'var(--secondary)';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return feedbackItem.type === 'Test' && (feedbackItem.credits === 0 || !feedbackItem.credits);
@@ -24,6 +25,7 @@ class FeedbackItemGroupMissing extends FeedbackItemGroup {
  */
 class FeedbackItemGroupWrong extends FeedbackItemGroup {
     name = 'wrong';
+    open = true;
     color = 'var(--danger)';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return feedbackItem.type === 'Test' && feedbackItem.credits !== undefined && feedbackItem.credits < 0;
@@ -35,6 +37,7 @@ class FeedbackItemGroupWrong extends FeedbackItemGroup {
  */
 class FeedbackItemGroupWarning extends FeedbackItemGroup {
     name = 'warning';
+    open = true;
     color = 'var(--warning)';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return feedbackItem.type === 'Static Code Analysis';

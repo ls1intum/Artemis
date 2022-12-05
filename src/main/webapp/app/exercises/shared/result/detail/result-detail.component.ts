@@ -260,7 +260,6 @@ export class ResultDetailComponent implements OnInit {
             group: ScaleType.Ordinal,
             domain: feedbackNodes.map((node) => node.color ?? 'var(--white)'),
             // TODO: undefined color
-            // TODO: Schema does not apply correctly
         };
 
         return {
