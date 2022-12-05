@@ -43,7 +43,7 @@
                                 {{ getNameOfConversationParticipant(conversation) }}
                             </span>
                             <span *ngIf="(conversation | unreadMessages) > 0">
-                                <span class="badge bg-secondary">
+                                <span class="badge bg-danger">
                                     {{ conversation | unreadMessages }}
                                 </span>
                             </span>

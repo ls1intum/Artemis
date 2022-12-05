@@ -217,20 +217,42 @@ public class ConversationService {
     }
 
     /**
-     * Update unreadMessageCount field of ConversationParticipant
+     * Increment unreadMessageCount field of ConversationParticipant
      *
      * @param userId            userId of the sender of the message(Post)
-     * @param courseId          courseId id of the course that the messaging is happening
      * @param conversationId    conversationId id of the conversation with participants
      */
-    public void updateUnreadMessagesCountOfParticipants(Long userId, Long courseId, Long conversationId) {
+    public void incrementUnreadMessagesCountOfParticipants(Long userId, Long conversationId) {
 
         List<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(conversationId);
         conversationParticipants.forEach((conversationParticipant) -> {
             if (conversationParticipant.getUser().getId() != userId) {
-                long unreadMessagesCount = conversationRepository.findUnreadMessages(courseId, conversationParticipant.getUser().getId(), conversationId);
-                conversationParticipant.setUnreadMessagesCount(unreadMessagesCount);
+                if (conversationParticipant.getUnreadMessagesCount() == null) {
+                    conversationParticipant.setUnreadMessagesCount(0L);
+                }
+                long unreadMessagesCount = conversationParticipant.getUnreadMessagesCount();
+                conversationParticipant.setUnreadMessagesCount(++unreadMessagesCount);
                 conversationParticipantRepository.save(conversationParticipant);
+            }
+        });
+    }
+
+    /**
+     * Decrement unreadMessageCount field of ConversationParticipant
+     *
+     * @param userId            userId of the sender of the message(Post)
+     * @param conversationId    conversationId id of the conversation with participants
+     */
+    public void decrementUnreadMessagesCountOfParticipants(Long userId, Long conversationId) {
+
+        List<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(conversationId);
+        conversationParticipants.forEach((conversationParticipant) -> {
+            if (conversationParticipant.getUser().getId() != userId) {
+                long unreadMessagesCount = conversationParticipant.getUnreadMessagesCount();
+                if (unreadMessagesCount > 0L) {
+                    conversationParticipant.setUnreadMessagesCount(--unreadMessagesCount);
+                    conversationParticipantRepository.save(conversationParticipant);
+                }
             }
         });
     }
