@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.web.rest.dto.GradeStepsDTO;
 
 class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "gradestep";
+
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
 
@@ -52,10 +54,10 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      */
     @BeforeEach
     void init() {
-        database.addUsers(1, 0, 0, 1);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
         // Student not belonging to any course
-        database.createAndSaveUser("student2");
+        database.createAndSaveUser(TEST_PREFIX + "student2");
 
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
@@ -79,13 +81,13 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllGradeStepsForCourseNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStepsDTO.class);
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetAllGradeStepsForCourseStudentNotInCourse() throws Exception {
         createGradeScale();
         request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.FORBIDDEN, GradeStepsDTO.class);
@@ -97,7 +99,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllGradeStepsForCourse() throws Exception {
         createGradeScale();
 
@@ -133,7 +135,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllGradeStepsForExamNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.NOT_FOUND, GradeStepsDTO.class);
     }
@@ -145,7 +147,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllGradeStepsForExamForbidden() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
@@ -158,7 +160,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllGradeStepsForExam() throws Exception {
         exam.setPublishResultsDate(ZonedDateTime.now());
         examRepository.save(exam);
@@ -192,7 +194,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetGradeStepByIdForCourseNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
     }
@@ -203,7 +205,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetGradeStepByIdForCourse() throws Exception {
         GradeStep gradeStep = new GradeStep();
         gradeStep.setGradeName("Name");
@@ -212,8 +214,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         gradeStep.setGradingScale(courseGradingScale);
         gradeSteps = Set.of(gradeStep);
         courseGradingScale.setGradeSteps(gradeSteps);
-        gradingScaleRepository.save(courseGradingScale);
-        Long gradeStepId = gradeStepRepository.findAll().get(0).getId();
+        Long gradeStepId = gradingScaleRepository.save(courseGradingScale).getId();
 
         GradeStep foundGradeStep = request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/" + gradeStepId, HttpStatus.OK, GradeStep.class);
 
@@ -226,7 +227,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetGradeStepByIdForExamNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/1", HttpStatus.NOT_FOUND, GradeStep.class);
     }
@@ -237,7 +238,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetGradeStepByIdForExam() throws Exception {
         GradeStep gradeStep = new GradeStep();
         gradeStep.setGradeName("Name");
@@ -246,8 +247,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         gradeStep.setGradingScale(examGradingScale);
         gradeSteps = Set.of(gradeStep);
         examGradingScale.setGradeSteps(gradeSteps);
-        gradingScaleRepository.save(examGradingScale);
-        Long gradeStepId = gradeStepRepository.findAll().get(0).getId();
+        Long gradeStepId = gradingScaleRepository.save(examGradingScale).getId();
 
         GradeStep foundGradeStep = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps/" + gradeStepId, HttpStatus.OK,
                 GradeStep.class);
@@ -261,7 +261,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetGradeStepByPercentageForCourseNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, Void.class);
     }
@@ -272,7 +272,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetGradeStepByPercentageForCourse() throws Exception {
         GradeStep gradeStep = new GradeStep();
         gradeStep.setGradeName("Name");
@@ -298,7 +298,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetGradeStepByPercentageForExamNoGradingScaleExists() throws Exception {
         request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, Void.class);
     }
@@ -310,7 +310,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetGradeStepByPercentageForExamForbidden() throws Exception {
         gradingScaleRepository.save(examGradingScale);
 
@@ -323,7 +323,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetGradeStepByPercentageForExam() throws Exception {
         GradeStep gradeStep = new GradeStep();
         gradeStep.setGradeName("Test grade");

@@ -30,6 +30,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "atheneintegration";
+
     @Value("${artemis.athene.base64-secret}")
     private String atheneApiSecret;
 
@@ -56,7 +58,7 @@ class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Test
     void testProcessingClusterAddedDistances() throws Exception {
         SecurityUtils.setAuthorizationObject();
-        database.addUsers(10, 0, 0, 0);
+        database.addUsers(TEST_PREFIX, 10, 0, 0, 0);
         final var course = database.addCourseWithOneFinishedTextExercise();
         final var exercise = (TextExercise) course.getExercises().iterator().next();
         final var textSubmissions = ModelFactory.generateTextSubmissions(10);
@@ -64,7 +66,7 @@ class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJira
             final var submission = textSubmissions.get(i);
             submission.setId(null);
             submission.submitted(true);
-            database.addSubmission(exercise, submission, String.format("student%d", i + 1));
+            database.addSubmission(exercise, submission, String.format("%sstudent%d", TEST_PREFIX, i + 1));
         }
 
         final var atheneResultBuilder = AtheneResponse.newBuilder();

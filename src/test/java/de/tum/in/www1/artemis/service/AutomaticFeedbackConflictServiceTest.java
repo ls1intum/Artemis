@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "automaticfeedbackconflict";
+
     @Autowired
     private FeedbackConflictRepository feedbackConflictRepository;
 
@@ -47,9 +49,11 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     void init() {
-        database.addUsers(2, 1, 0, 0);
+        database.addUsers(TEST_PREFIX, 2, 1, 0, 0);
         textExercise = (TextExercise) database.addCourseWithOneFinishedTextExercise().getExercises().iterator().next();
         atheneRequestMockProvider.enableMockingOfRequests();
+
+        feedbackConflictRepository.deleteAll(); // TODO: This should be improved by better tests that do not rely on an empty repository
     }
 
     @AfterEach
@@ -64,12 +68,12 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
      * Then checks if the text assessment conflicts are created and stored correctly.
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createFeedbackConflicts() {
         TextSubmission textSubmission1 = ModelFactory.generateTextSubmission("first text submission", Language.ENGLISH, true);
         TextSubmission textSubmission2 = ModelFactory.generateTextSubmission("second text submission", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission1, "student1");
-        database.saveTextSubmission(textExercise, textSubmission2, "student1");
+        database.saveTextSubmission(textExercise, textSubmission1, TEST_PREFIX + "student1");
+        database.saveTextSubmission(textExercise, textSubmission2, TEST_PREFIX + "student1");
 
         final TextCluster cluster = new TextCluster().exercise(textExercise);
         textClusterRepository.save(cluster);
@@ -86,8 +90,10 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
         Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock1.getId());
         Feedback feedback2 = new Feedback().detailText("Good answer").credits(2D).reference(textBlock2.getId());
 
-        textSubmission1 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission1, "student1", "tutor1", List.of(feedback1));
-        textSubmission2 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, "student2", "tutor1", List.of(feedback2));
+        textSubmission1 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission1, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
+                List.of(feedback1));
+        textSubmission2 = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission2, TEST_PREFIX + "student2", TEST_PREFIX + "tutor1",
+                List.of(feedback2));
 
         // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
         feedback1 = textSubmission1.getLatestResult().getFeedbacks().get(0);
@@ -109,10 +115,10 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
      * Checks if the conflict type in the database has changed.
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void changedFeedbackConflictsType() {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, "student1");
+        database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
 
         final TextCluster cluster = new TextCluster().exercise(textExercise);
         textClusterRepository.save(cluster);
@@ -122,7 +128,8 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
 
         Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
         Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
-        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
+        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
+                List.of(feedback1, feedback2));
 
         // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
         feedback1 = textSubmission.getLatestResult().getFeedbacks().get(0);
@@ -149,10 +156,10 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
      * Checks if the conflict set as solved in the database.
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void solveFeedbackConflicts() {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
-        database.saveTextSubmission(textExercise, textSubmission, "student1");
+        database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
 
         final TextCluster cluster = new TextCluster().exercise(textExercise);
         textClusterRepository.save(cluster);
@@ -162,7 +169,8 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
 
         Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D).reference(textBlock.getId());
         Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
-        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
+        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
+                List.of(feedback1, feedback2));
 
         // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
         feedback1 = textSubmission.getLatestResult().getFeedbacks().get(0);
@@ -186,7 +194,7 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
      * Checks if deletion of submission delete the text assessment conflicts from the database.
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSubmissionDelete() {
         TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
         textSubmissionRepository.deleteById(textSubmission.getId());
@@ -197,7 +205,7 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
      * Checks if deletion of a result delete the text assessment conflicts from the database.
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testResultDelete() {
         TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
         resultRepository.deleteById(textSubmission.getLatestResult().getId());
@@ -208,7 +216,7 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
      * Checks if deletion of feedback delete the text assessment conflicts from the database.
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFeedbackDelete() {
         this.createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackRepository.deleteAll();
@@ -219,7 +227,7 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
      * Checks the deletion of text assessment conflicts do not cause deletion of feedback.
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFeedbackConflictDelete() {
         createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackConflictRepository.deleteAll();
@@ -238,7 +246,8 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         final Feedback feedback1 = new Feedback().detailText("Good answer").credits(1D);
         final Feedback feedback2 = new Feedback().detailText("Bad answer").credits(2D);
-        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, "student1", "tutor1", List.of(feedback1, feedback2));
+        textSubmission = database.addTextSubmissionWithResultAndAssessorAndFeedbacks(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1",
+                List.of(feedback1, feedback2));
 
         // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
         FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(textSubmission.getLatestResult().getFeedbacks().get(0),

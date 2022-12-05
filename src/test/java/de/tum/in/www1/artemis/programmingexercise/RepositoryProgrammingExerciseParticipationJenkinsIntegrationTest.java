@@ -30,6 +30,8 @@ import de.tum.in.www1.artemis.util.TestConstants;
 
 class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
+    private static final String TEST_PREFIX = "repoprogexpartjenk";
+
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -41,8 +43,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
 
     @BeforeEach
     void setup() throws Exception {
-        database.addUsers(1, 1, 0, 1);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
+        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
     }
 
     @AfterEach
@@ -51,12 +52,12 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestBuildLogsFails() throws Exception {
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         var programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
@@ -71,7 +72,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry3", submission));
         submission.setBuildLogEntries(buildLogEntries);
 
-        database.addProgrammingSubmission(programmingExercise, submission, "student1");
+        database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         buildLogEntryRepository.deleteAll();
 
         var participation = studentParticipationRepository.findAll().get(0);

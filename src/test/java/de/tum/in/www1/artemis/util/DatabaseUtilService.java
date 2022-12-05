@@ -2802,8 +2802,8 @@ public class DatabaseUtilService {
      * @param numberOfSubmissions - the amount of submissions which should be generated for an exercise
      * @return a course with an exercise with submissions
      */
-    public Course addCourseWithOneExerciseAndSubmissions(String exerciseType, int numberOfSubmissions) {
-        return addCourseWithOneExerciseAndSubmissions(exerciseType, numberOfSubmissions, Optional.empty());
+    public Course addCourseWithOneExerciseAndSubmissions(String userPrefix, String exerciseType, int numberOfSubmissions) {
+        return addCourseWithOneExerciseAndSubmissions(userPrefix, exerciseType, numberOfSubmissions, Optional.empty());
     }
 
     /**
@@ -2814,7 +2814,7 @@ public class DatabaseUtilService {
      * @param modelForModelingExercise - the model string for a modeling exercise
      * @return a course with an exercise with submissions
      */
-    public Course addCourseWithOneExerciseAndSubmissions(String exerciseType, int numberOfSubmissions, Optional<String> modelForModelingExercise) {
+    public Course addCourseWithOneExerciseAndSubmissions(String userPrefix, String exerciseType, int numberOfSubmissions, Optional<String> modelForModelingExercise) {
         Course course;
         Exercise exercise;
         switch (exerciseType) {
@@ -2822,10 +2822,10 @@ public class DatabaseUtilService {
                 course = addCourseWithOneModelingExercise();
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
-                    StudentParticipation participation = createAndSaveParticipationForExercise(exercise, "student" + j);
+                    StudentParticipation participation = createAndSaveParticipationForExercise(exercise, userPrefix + "student" + j);
                     assertThat(modelForModelingExercise).isNotEmpty();
                     ModelingSubmission submission = ModelFactory.generateModelingSubmission(modelForModelingExercise.get(), true);
-                    var user = getUserByLogin("student" + j);
+                    var user = getUserByLogin(userPrefix + "student" + j);
                     modelSubmissionService.handleModelingSubmission(submission, (ModelingExercise) exercise, user);
                     studentParticipationRepo.save(participation);
                 }
@@ -2835,7 +2835,7 @@ public class DatabaseUtilService {
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     ProgrammingSubmission submission = new ProgrammingSubmission();
-                    addProgrammingSubmission((ProgrammingExercise) exercise, submission, "student" + j);
+                    addProgrammingSubmission((ProgrammingExercise) exercise, submission, userPrefix + "student" + j);
                 }
                 return course;
             case "text":
@@ -2843,7 +2843,7 @@ public class DatabaseUtilService {
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     TextSubmission textSubmission = ModelFactory.generateTextSubmission("Text" + j + j, null, true);
-                    saveTextSubmission((TextExercise) exercise, textSubmission, "student" + j);
+                    saveTextSubmission((TextExercise) exercise, textSubmission, userPrefix + "student" + j);
                 }
                 return course;
             case "file-upload":
@@ -2852,7 +2852,7 @@ public class DatabaseUtilService {
 
                 for (int j = 1; j <= numberOfSubmissions; j++) {
                     FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
-                    saveFileUploadSubmission((FileUploadExercise) exercise, submission, "student" + j);
+                    saveFileUploadSubmission((FileUploadExercise) exercise, submission, userPrefix + "student" + j);
                 }
                 return course;
             default:

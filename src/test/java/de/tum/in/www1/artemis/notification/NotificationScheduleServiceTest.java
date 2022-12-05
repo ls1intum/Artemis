@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService;
 
 class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "notificationschedserv";
+
     @Autowired
     private InstanceMessageReceiveService instanceMessageReceiveService;
 
@@ -45,13 +47,14 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
 
     @BeforeEach
     void init() {
-        database.addUsers(1, 1, 1, 1);
-        user = database.getUserByLogin("student1");
+        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        user = database.getUserByLogin(TEST_PREFIX + "student1");
         database.addCourseWithFileUploadExercise();
         exercise = exerciseRepository.findAll().get(0);
         exercise.setReleaseDate(now().plus(500, ChronoUnit.MILLIS));
         exercise.setAssessmentDueDate(now().plus(1000, ChronoUnit.MILLIS));
         exerciseRepository.save(exercise);
+        notificationRepository.deleteAll();
         assertThat(notificationRepository.count()).isZero();
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
@@ -63,7 +66,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @Timeout(5)
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtReleaseDate() {
         notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED));
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
@@ -74,13 +77,13 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @Timeout(10)
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtAssessmentDueDate() {
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.text("Text");
         textSubmission.submitted(true);
-        database.addSubmission(exercise, textSubmission, "student1");
-        database.createParticipationSubmissionAndResult(exercise.getId(), database.getUserByLogin("student1"), 10.0, 10.0, 50, true);
+        database.addSubmission(exercise, textSubmission, TEST_PREFIX + "student1");
+        database.createParticipationSubmissionAndResult(exercise.getId(), database.getUserByLogin(TEST_PREFIX + "student1"), 10.0, 10.0, 50, true);
         notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED));
 
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exercise.getId());
