@@ -10,5 +10,4 @@ export class FeedbackItem implements FeedbackItemNode {
     title?: string; // this is typically feedback.text
     text?: string; // this is typically feedback.detailText
     positive?: boolean;
-    actualCredits?: number;
 }

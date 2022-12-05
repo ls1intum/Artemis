@@ -82,7 +82,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             text,
             positive: false,
             credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
-            actualCredits: feedback.credits,
         };
     }
 
