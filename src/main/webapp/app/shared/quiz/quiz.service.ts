@@ -38,14 +38,14 @@ export class ArtemisQuizService {
         }
     }
 
-    static isNotInitialized(quizExercise: QuizExercise): boolean {
+    static isUninitialized(quizExercise: QuizExercise): boolean {
         return !!quizExercise.quizBatches?.some((batch) => batch.started);
     }
 
     static notStarted(quizExercise: QuizExercise): boolean {
         return (
-            this.isNotInitialized(quizExercise) &&
-            (!quizExercise.studentParticipations?.[0]?.initializationState ||
+            (!quizExercise.quizEnded && !this.isUninitialized(quizExercise) && !quizExercise.studentParticipations?.[0]?.initializationState) ||
+            (!!quizExercise.studentParticipations?.[0]?.initializationState &&
                 ![InitializationState.INITIALIZED, InitializationState.FINISHED].includes(quizExercise.studentParticipations[0].initializationState))
         );
     }

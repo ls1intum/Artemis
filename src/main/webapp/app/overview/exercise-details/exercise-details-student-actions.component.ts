@@ -72,7 +72,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     ngOnInit(): void {
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
-            this.uninitializedQuiz = ArtemisQuizService.isNotInitialized(quizExercise);
+            this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         }
         const studentParticipations = this.exercise.studentParticipations ?? [];

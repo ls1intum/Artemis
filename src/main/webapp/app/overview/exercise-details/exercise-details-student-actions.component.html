@@ -249,7 +249,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="gradedParticipation"
+                *ngIf="gradedParticipation?.initializationState === InitializationState.INACTIVE && isResumeExerciseAvailable()"
                 (click)="resumeProgrammingExercise(false)"
             ></button>
             <button
@@ -261,7 +261,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="practiceParticipation"
+                *ngIf="practiceParticipation?.initializationState === InitializationState.INACTIVE"
                 (click)="resumeProgrammingExercise(true)"
             ></button>
             <a

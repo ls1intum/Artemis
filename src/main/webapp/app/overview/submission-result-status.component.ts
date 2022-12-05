@@ -41,7 +41,7 @@ export class SubmissionResultStatusComponent implements OnInit {
     ngOnInit() {
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
-            this.uninitializedQuiz = ArtemisQuizService.isNotInitialized(quizExercise);
+            this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         }
         this.afterDueDate = !!this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs());
