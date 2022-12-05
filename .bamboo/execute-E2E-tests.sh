@@ -7,6 +7,7 @@ mv *.war build/libs/
 # Start Artemis docker containers with docker-compose
 cd src/main/docker/cypress
 
+# pass current host's hostname to the docker container for server.url (see docker compose config file)
 export HOST_HOSTNAME=$(hostname)
 
 #TODO: recheck docker compose version and do it in one command
