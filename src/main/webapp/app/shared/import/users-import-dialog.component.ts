@@ -10,7 +10,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { parse } from 'papaparse';
-import { faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faBan, faCheck, faCircleNotch, faSpinner, faUpload } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 
@@ -56,6 +56,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     faCheck = faCheck;
     faCircleNotch = faCircleNotch;
     faUpload = faUpload;
+    faArrowRight = faArrowRight;
 
     constructor(
         private activeModal: NgbActiveModal,

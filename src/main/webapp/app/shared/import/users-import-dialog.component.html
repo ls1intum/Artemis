@@ -9,6 +9,37 @@
         <div class="form-group">
             <p class="intro-text" jhiTranslate="artemisApp.importUsers.introText">This dialog can be used to import users.</p>
             <p class="intro-text" jhiTranslate="artemisApp.importUsers.dialogText"></p>
+            <p class="intro-text" jhiTranslate="artemisApp.importUsers.csvExampleText"></p>
+        </div>
+        <div class="d-flex justify-content-center align-items-center">
+            <table class="table table-bordered w-auto">
+                <thead>
+                    <tr>
+                        <th>Login</th>
+                        <th [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
+                        <th [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>user_1</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>user_2@artemis.org</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td>11712345</td>
+                    </tr>
+                </tbody>
+            </table>
+            <fa-icon [icon]="faArrowRight" class="mx-2"></fa-icon>
+            <span>user_1, user_2, user_3</span>
         </div>
         <div class="form-group">
             <div class="d-flex align-items-end">
@@ -83,7 +114,7 @@
             </ng-template>
         </div>
         <div class="flex-grow-1 d-flex justify-content-end">
-            <button *ngIf="!hasImported" type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
+            <button *ngIf="!hasImported" type="button" class="btn btn-default cancel me-2" data-dismiss="modal" (click)="clear()">
                 <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
             <button
