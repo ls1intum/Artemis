@@ -500,7 +500,7 @@ do either do it manually or using the following command:
             use-external: false
             internal-admin:
                 username: artemis_admin
-                password: artemis-admin
+                password: artemis_admin
         version-control:
             url: http://localhost:8081
             user: artemis_admin
