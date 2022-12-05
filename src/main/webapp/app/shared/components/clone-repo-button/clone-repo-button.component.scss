@@ -17,3 +17,10 @@
 .url-box-remove-line-right {
     @include url-box-remove-line(right);
 }
+
+.clone-url {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    max-width: 50vw;
+}

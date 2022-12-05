@@ -989,7 +989,7 @@ public class FileService implements DisposableBean {
      */
     public Path writeObjectToJsonFile(Object object, ObjectMapper objectMapper, Path path) {
         try {
-            objectMapper.writeValue(new File(path.toString()), object);
+            objectMapper.writeValue(path.toFile(), object);
         }
         catch (IOException e) {
             log.warn("Could not write given object in file {}", path);
