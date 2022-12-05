@@ -70,6 +70,8 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
 
     /**
      * Exports the exercise results as a CSV file.
+     * @param withTestCases parameter that includes test cases info in the exported CSV file
+     * @param withFeedback parameter including the feedback's full text in case of failed test case
      */
     exportResults(withTestCases: boolean, withFeedback: boolean) {
         if (this.exercises.length === 0 && this.exercise !== undefined) {
