@@ -32,11 +32,11 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
     @BeforeEach
     void init() {
         database.addUsers(0, 0, 0, 2);
-        database.addCourseWithOneProgrammingExercise();
-        database.addCourseWithOneProgrammingExercise();
+        var course1 = database.addCourseWithOneProgrammingExercise();
+        var course2 = database.addCourseWithOneProgrammingExercise();
 
-        programmingExercise1 = programmingExerciseRepository.findAll().get(0);
-        programmingExercise2 = programmingExerciseRepository.findAll().get(1);
+        programmingExercise1 = database.getFirstExerciseWithType(course1, ProgrammingExercise.class);
+        programmingExercise2 = database.getFirstExerciseWithType(course2, ProgrammingExercise.class);
 
         programmingExercise1.setReleaseDate(null);
         programmingExercise2.setReleaseDate(null);
@@ -59,8 +59,8 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
         List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllWithBuildAndTestAfterDueDateInFuture();
 
-        assertThat(programmingExercises).hasSize(1);
-        assertThat(programmingExercises.get(0)).isEqualTo(programmingExercise1);
+        assertThat(programmingExercises).contains(programmingExercise1);
+        assertThat(programmingExercises).doesNotContain(programmingExercise2);
     }
 
     @Test
