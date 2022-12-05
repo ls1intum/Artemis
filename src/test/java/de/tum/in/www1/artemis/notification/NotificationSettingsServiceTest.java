@@ -49,8 +49,8 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
     void setUp() {
         SecurityUtils.setAuthorizationObject();
 
-        List<User> users = database.addUsers(1, 0, 0, 0);
-        student1 = users.get(0);
+        database.addUsers(1, 0, 0, 0);
+        student1 = database.getUserByLogin("student1");
 
         NotificationSetting unsavedNotificationSettingA = new NotificationSetting(false, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
         NotificationSetting unsavedNotificationSettingB = new NotificationSetting(true, true, NOTIFICATION__LECTURE_NOTIFICATION__ATTACHMENT_CHANGES);
@@ -71,6 +71,7 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
     @AfterEach
     void resetDatabase() {
         database.resetDatabase();
+        notificationSettingRepository.deleteAll();
     }
 
     /**
@@ -142,6 +143,7 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
      */
     @Test
     void testCheckLoadedNotificationSettingsForCorrectness_incomplete() {
+        notificationSettingRepository.deleteAll();
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet.add(completeNotificationSettingA);
         testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet, student1);
