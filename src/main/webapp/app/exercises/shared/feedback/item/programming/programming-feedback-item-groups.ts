@@ -5,27 +5,8 @@ import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
  * Returns all FeedbackItemGroups for Programming exercises
  */
 export const getAllFeedbackItemGroups = (): FeedbackItemGroup[] => {
-    return [
-        new FeedbackItemGroupAll(),
-        new FeedbackItemGroupWrong(),
-        new FeedbackItemGroupWarning(),
-        new FeedbackItemGroupInfo(),
-        new FeedbackItemGroupMissing(),
-        new FeedbackItemGroupCorrect(),
-    ];
+    return [new FeedbackItemGroupWrong(), new FeedbackItemGroupWarning(), new FeedbackItemGroupInfo(), new FeedbackItemGroupMissing(), new FeedbackItemGroupCorrect()];
 };
-
-/**
- * Test class do not use
- * @deprecated remove this
- */
-class FeedbackItemGroupAll extends FeedbackItemGroup {
-    name = 'all';
-    color = 'bg-light';
-    shouldContain(feedbackItem: FeedbackItem): boolean {
-        return true;
-    }
-}
 
 /**
  * Automated feedbacks with no influence on final score
@@ -34,7 +15,7 @@ class FeedbackItemGroupMissing extends FeedbackItemGroup {
     name = 'missing';
     color = 'bg-secondary';
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        return false;
+        return feedbackItem.type === 'Test' && (feedbackItem.credits === 0 || !feedbackItem.credits);
     }
 }
 
@@ -45,7 +26,7 @@ class FeedbackItemGroupWrong extends FeedbackItemGroup {
     name = 'wrong';
     color = 'bg-danger';
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        return false;
+        return feedbackItem.type === 'Test' && feedbackItem.credits !== undefined && feedbackItem.credits < 0;
     }
 }
 
@@ -56,7 +37,7 @@ class FeedbackItemGroupWarning extends FeedbackItemGroup {
     name = 'warning';
     color = 'bg-warning';
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        return false;
+        return feedbackItem.type === 'Static Code Analysis';
     }
 }
 
@@ -68,7 +49,9 @@ class FeedbackItemGroupInfo extends FeedbackItemGroup {
     name = 'info';
     color = 'bg-info';
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        return false;
+        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && (feedbackItem.credits === 0 || !feedbackItem.credits);
+        const isSubsequentFeedback = feedbackItem.type === 'Subsequent';
+        return isReviewerFeedback || isSubsequentFeedback;
     }
 }
 
@@ -79,6 +62,8 @@ class FeedbackItemGroupCorrect extends FeedbackItemGroup {
     name = 'correct';
     color = 'bg-success';
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        return false;
+        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits > 0;
+        const isTestFeedback = feedbackItem.type === 'Test' && feedbackItem.credits !== undefined && feedbackItem.credits > 0;
+        return isReviewerFeedback || isTestFeedback;
     }
 }

@@ -21,7 +21,8 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
                 group
                     .addAllItems(feedbackItems.filter(group.shouldContain)) //
                     .calculateCredits(),
-            );
+            )
+            .filter((group) => !group.isEmpty());
     }
 
     /**

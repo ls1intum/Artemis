@@ -27,4 +27,8 @@ export abstract class FeedbackItemGroup {
         this.credits = this.members.reduce((acc, item) => acc + (item.credits ?? 0), 0);
         return this;
     }
+
+    isEmpty(): boolean {
+        return this.members.length === 0;
+    }
 }

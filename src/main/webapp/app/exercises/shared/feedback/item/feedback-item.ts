@@ -6,6 +6,6 @@ export class FeedbackItem {
     title?: string; // this is typically feedback.text
     text?: string; // this is typically feedback.detailText
     positive?: boolean;
-    credits?: number;
+    credits: number | undefined;
     actualCredits?: number;
 }
