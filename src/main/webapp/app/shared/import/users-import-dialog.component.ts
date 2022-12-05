@@ -43,6 +43,7 @@ export class UsersImportDialogComponent implements OnDestroy {
 
     isParsing = false;
     validationError?: string;
+    noUsersFoundError?: boolean;
     isImporting = false;
     hasImported = false;
 
@@ -100,8 +101,10 @@ export class UsersImportDialogComponent implements OnDestroy {
         }
         if (csvUsers.length > 0) {
             this.performExtraValidations(csvFile, csvUsers);
+        } else if (csvUsers.length === 0) {
+            this.noUsersFoundError = true;
         }
-        if (this.validationError) {
+        if (this.validationError || csvUsers.length === 0) {
             event.target.value = ''; // remove selected file so user can fix the file and select it again
             return [];
         }

@@ -85,7 +85,9 @@ describe('UsersImportButtonComponent', () => {
 
         expect(component.usersToImport).toHaveLength(0);
         expect(component.notFoundUsers).toHaveLength(0);
+        expect(component.noUsersFoundError).toBeTrue();
     });
+
     it('should read students from csv file', async () => {
         const csv = `${studentCsvColumns}\n"1","Max","Mustermann"\n"2","John","Wick"`;
         const event = { target: { files: [csv] } };
@@ -93,6 +95,7 @@ describe('UsersImportButtonComponent', () => {
 
         expect(component.usersToImport).toHaveLength(2);
         expect(component.notFoundUsers).toHaveLength(0);
+        expect(component.noUsersFoundError).toBeFalse();
     });
 
     it('should have validation error for invalid csv', async () => {
