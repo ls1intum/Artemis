@@ -7,9 +7,8 @@ services:
         container_name: artemis-app
         # TODO: add support for armv8
         platform: linux/x86_64
-        # TODO: change this to develop before merging to develop branch
-        # TODO: setup build pipeline for develop-deployment-wg
-        image: ghcr.io/ls1intum/artemis:develop-deployment-wg
+        # TODO: setup build pipeline
+        image: ghcr.io/ls1intum/artemis:develop
         build:
             context: ../../../..
             dockerfile: src/main/docker/artemis/Dockerfile
