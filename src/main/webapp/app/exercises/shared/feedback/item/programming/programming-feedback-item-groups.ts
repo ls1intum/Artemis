@@ -13,7 +13,7 @@ export const getAllFeedbackItemGroups = (): FeedbackItemGroup[] => {
  */
 class FeedbackItemGroupMissing extends FeedbackItemGroup {
     name = 'missing';
-    color = 'bg-secondary';
+    color = 'var(--secondary)';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return feedbackItem.type === 'Test' && (feedbackItem.credits === 0 || !feedbackItem.credits);
     }
@@ -24,7 +24,7 @@ class FeedbackItemGroupMissing extends FeedbackItemGroup {
  */
 class FeedbackItemGroupWrong extends FeedbackItemGroup {
     name = 'wrong';
-    color = 'bg-danger';
+    color = 'var(--danger)';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return feedbackItem.type === 'Test' && feedbackItem.credits !== undefined && feedbackItem.credits < 0;
     }
@@ -35,7 +35,7 @@ class FeedbackItemGroupWrong extends FeedbackItemGroup {
  */
 class FeedbackItemGroupWarning extends FeedbackItemGroup {
     name = 'warning';
-    color = 'bg-warning';
+    color = 'var(--warning)';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return feedbackItem.type === 'Static Code Analysis';
     }
@@ -47,7 +47,7 @@ class FeedbackItemGroupWarning extends FeedbackItemGroup {
  */
 class FeedbackItemGroupInfo extends FeedbackItemGroup {
     name = 'info';
-    color = 'bg-info';
+    color = 'var(--info)';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && (feedbackItem.credits === 0 || !feedbackItem.credits);
         const isSubsequentFeedback = feedbackItem.type === 'Subsequent';
@@ -60,7 +60,7 @@ class FeedbackItemGroupInfo extends FeedbackItemGroup {
  */
 class FeedbackItemGroupCorrect extends FeedbackItemGroup {
     name = 'correct';
-    color = 'bg-success';
+    color = 'var(--success)';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits > 0;
         const isTestFeedback = feedbackItem.type === 'Test' && feedbackItem.credits !== undefined && feedbackItem.credits > 0;
