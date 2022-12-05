@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { faAngleDown, faAngleRight } from '@fortawesome/free-solid-svg-icons';
-import { computeFeedbackPreviewText } from 'app/exercises/shared/feedback/feedback.util';
 
 @Component({
     selector: 'jhi-feedback-collapse',
@@ -13,6 +12,11 @@ import { computeFeedbackPreviewText } from 'app/exercises/shared/feedback/feedba
  * text is any string passed to the component
  */
 export class FeedbackCollapseComponent implements OnInit {
+    /**
+     * amount of chars at which the text will be cut and the collapse functionality is enabled
+     */
+    readonly FEEDBACK_PREVIEW_CHARACTER_LIMIT = 300;
+
     @Input() text: string; // this is typically feedback.detailText
     previewText?: string;
     isCollapsed = true;
@@ -22,6 +26,25 @@ export class FeedbackCollapseComponent implements OnInit {
     faAngleRight = faAngleRight;
 
     ngOnInit(): void {
-        this.previewText = computeFeedbackPreviewText(this.text);
+        this.previewText = this.computeFeedbackPreviewText(this.text);
     }
+
+    /**
+     * Computes the feedback preview for feedback texts with multiple lines or feedback that is longer than {@link FEEDBACK_PREVIEW_CHARACTER_LIMIT} characters.
+     * @param text The feedback detail text.
+     * @return One line of text with at most {@link FEEDBACK_PREVIEW_CHARACTER_LIMIT} characters.
+     */
+    private computeFeedbackPreviewText = (text?: string): string | undefined => {
+        if (!text || text.length < this.FEEDBACK_PREVIEW_CHARACTER_LIMIT) {
+            return undefined;
+        }
+
+        if (text.includes('\n')) {
+            // if there are multiple lines, only use the first one
+            const firstLine = text.slice(0, text.indexOf('\n'));
+            return firstLine.slice(0, this.FEEDBACK_PREVIEW_CHARACTER_LIMIT);
+        }
+
+        return text.slice(0, this.FEEDBACK_PREVIEW_CHARACTER_LIMIT);
+    };
 }
