@@ -96,8 +96,11 @@ public class ProgrammingExerciseResultTestService {
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipationStaticCodeAnalysis;
 
-    public void setup() {
-        database.addUsers(10, 2, 0, 2);
+    private String userPrefix;
+
+    public void setup(String userPrefix) {
+        this.userPrefix = userPrefix;
+        database.addUsers(userPrefix, 10, 2, 0, 2);
         setupForProgrammingLanguage(ProgrammingLanguage.JAVA);
     }
 
@@ -108,8 +111,9 @@ public class ProgrammingExerciseResultTestService {
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
-        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        programmingExerciseStudentParticipationStaticCodeAnalysis = database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, "student2");
+        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
+        programmingExerciseStudentParticipationStaticCodeAnalysis = database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis,
+                userPrefix + "student2");
     }
 
     public void tearDown() {
@@ -124,7 +128,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Add a student submission with two manual results and a semi automatic result
         var submission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false, TestConstants.COMMIT_HASH_STRING);
-        var accessor = database.getUserByLogin("instructor1");
+        var accessor = database.getUserByLogin(userPrefix + "instructor1");
         database.addResultToSubmission(submission, AssessmentType.MANUAL, accessor);
         database.addResultToSubmission(submission, AssessmentType.MANUAL, accessor);
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, accessor);
@@ -147,7 +151,7 @@ public class ProgrammingExerciseResultTestService {
         assertThat(resultsWithFeedback.get(2).getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
 
         // Re-trigger the build. We create a notification with feedback of a successful test
-        database.changeUser("instructor1");
+        database.changeUser(userPrefix + "instructor1");
         postResult(buildResultNotification);
 
         // Retrieve updated results
@@ -278,7 +282,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     public void shouldSaveBuildLogsInBuildLogRepository(Object resultNotification) {
@@ -292,7 +296,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     public void shouldNotSaveBuildLogsInBuildLogRepository(Object resultNotification) {
@@ -312,7 +316,7 @@ public class ProgrammingExerciseResultTestService {
     // Test
     public void shouldGenerateNewManualResultIfManualAssessmentExists(Object resultNotification) {
         var programmingSubmission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
-        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
+        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, userPrefix + "student1", userPrefix + "tutor1",
                 AssessmentType.SEMI_AUTOMATIC, true);
 
         List<Feedback> feedback = ModelFactory.generateManualFeedback();
@@ -332,7 +336,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     // Test
