@@ -35,7 +35,6 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
             category: this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
             text: feedback.detailText,
-            previewText: computeFeedbackPreviewText(feedback.detailText),
             positive: feedback.positive,
             credits: feedback.credits,
         }));

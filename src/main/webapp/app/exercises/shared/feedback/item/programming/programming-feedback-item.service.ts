@@ -1,7 +1,6 @@
 import { FeedbackItemService } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { Injectable } from '@angular/core';
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
-import { computeFeedbackPreviewText } from 'app/exercises/shared/feedback/feedback.util';
 import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { getAllFeedbackItemGroups } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item-groups';
@@ -31,28 +30,25 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      * @param showTestDetails
      */
     private createFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
-        const previewText = computeFeedbackPreviewText(feedback.detailText);
-
         if (Feedback.isSubmissionPolicyFeedback(feedback)) {
-            return this.createSubmissionPolicyFeedbackItem(feedback, previewText);
+            return this.createSubmissionPolicyFeedbackItem(feedback);
         } else if (Feedback.isStaticCodeAnalysisFeedback(feedback)) {
             return this.createScaFeedbackItem(feedback, showTestDetails);
         } else if (feedback.type === FeedbackType.AUTOMATIC) {
-            return this.createAutomaticFeedbackItem(feedback, showTestDetails, previewText);
+            return this.createAutomaticFeedbackItem(feedback, showTestDetails);
         } else if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
-            return this.createGradingInstructionFeedbackItem(feedback, showTestDetails, previewText);
+            return this.createGradingInstructionFeedbackItem(feedback, showTestDetails);
         } else {
-            return this.createTutorFeedbackItem(feedback, showTestDetails, previewText);
+            return this.createTutorFeedbackItem(feedback, showTestDetails);
         }
     }
 
     /**
      * Creates a feedback item from a submission policy feedback.
      * @param feedback The submission policy feedback.
-     * @param previewText The preview text for the feedback item.
      * @private
      */
-    private createSubmissionPolicyFeedbackItem(feedback: Feedback, previewText?: string): FeedbackItem {
+    private createSubmissionPolicyFeedbackItem(feedback: Feedback): FeedbackItem {
         const submissionPolicyTitle = feedback.text!.substring(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER.length);
 
         return {
@@ -60,7 +56,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             category: this.translateService.instant('artemisApp.programmingExercise.submissionPolicy.title'),
             title: submissionPolicyTitle,
             text: feedback.detailText,
-            previewText,
             positive: false,
             credits: feedback.credits,
         };
@@ -76,7 +71,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         const scaCategory = feedback.text!.substring(STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER.length);
         const scaIssue = StaticCodeAnalysisIssue.fromFeedback(feedback);
         const text = showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message;
-        const previewText = computeFeedbackPreviewText(text);
 
         return {
             type: FeedbackItemType.Issue,
@@ -84,7 +78,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             category: this.translateService.instant('artemisApp.result.detail.codeIssue.name'),
             title: this.translateService.instant('artemisApp.result.detail.codeIssue.title', { scaCategory, location: this.getIssueLocation(scaIssue) }),
             text,
-            previewText,
             positive: false,
             credits: scaIssue.penalty ? -scaIssue.penalty : feedback.credits,
             actualCredits: feedback.credits,
@@ -95,10 +88,9 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      * Creates a feedback item from a feedback generated from an automatic test case result.
      * @param feedback A feedback received from an automatic test case.
      * @param showTestDetails
-     * @param previewText The preview text for the feedback item.
      * @private
      */
-    private createAutomaticFeedbackItem(feedback: Feedback, showTestDetails: boolean, previewText?: string): FeedbackItem {
+    private createAutomaticFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         let title = undefined;
         if (showTestDetails) {
             if (feedback.positive === undefined) {
@@ -115,7 +107,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             category: showTestDetails ? this.translateService.instant('artemisApp.result.detail.test.name') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title,
             text: feedback.detailText,
-            previewText,
             positive: feedback.positive,
             credits: feedback.credits,
         };
@@ -125,10 +116,9 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      * Creates a feedback item for a manual feedback where the tutor used a grading instruction.
      * @param feedback The manual feedback where a grading instruction was used.
      * @param showTestDetails
-     * @param previewText The preview text for the feedback item.
      * @private
      */
-    private createGradingInstructionFeedbackItem(feedback: Feedback, showTestDetails: boolean, previewText?: string): FeedbackItem {
+    private createGradingInstructionFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         const gradingInstruction = feedback.gradingInstruction!;
 
         return {
@@ -136,7 +126,6 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
             category: showTestDetails ? this.translateService.instant('artemisApp.course.tutor') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
             text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
-            previewText,
             positive: feedback.positive,
             credits: feedback.credits,
         };
@@ -146,16 +135,14 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      * Creates a feedback item for a regular tutor feedback not using a grading instruction.
      * @param feedback The manual feedback from which the feedback item should be created.
      * @param showTestDetails
-     * @param previewText The preview text for the feedback item.
      * @private
      */
-    private createTutorFeedbackItem(feedback: Feedback, showTestDetails: boolean, previewText?: string): FeedbackItem {
+    private createTutorFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         return {
             type: FeedbackItemType.Feedback,
             category: showTestDetails ? this.translateService.instant('artemisApp.course.tutor') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
             text: feedback.detailText,
-            previewText,
             positive: feedback.positive,
             credits: feedback.credits,
         };
