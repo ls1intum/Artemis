@@ -73,7 +73,7 @@ describe('ResultDetailComponent', () => {
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Issue,
-                category: 'artemisApp.result.detail.codeIssue.name',
+                name: 'artemisApp.result.detail.codeIssue.name',
                 title: 'artemisApp.result.detail.codeIssue.title',
                 text: showDetails ? 'Rule: This is a code issue' : 'This is a code issue',
                 credits: -penalty,
@@ -93,7 +93,7 @@ describe('ResultDetailComponent', () => {
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Test,
-                category: showDetails ? 'artemisApp.result.detail.test.name' : 'artemisApp.result.detail.feedback',
+                name: showDetails ? 'artemisApp.result.detail.test.name' : 'artemisApp.result.detail.feedback',
                 text: message,
                 credits,
                 positive: credits > 0,
@@ -113,7 +113,7 @@ describe('ResultDetailComponent', () => {
             }),
             item: makeFeedbackItem({
                 type: FeedbackItemType.Feedback,
-                category: showDetails ? 'artemisApp.course.tutor' : 'artemisApp.result.detail.feedback',
+                name: showDetails ? 'artemisApp.course.tutor' : 'artemisApp.result.detail.feedback',
                 title,
                 text,
                 credits,
@@ -144,7 +144,7 @@ describe('ResultDetailComponent', () => {
             expectedItems.unshift(
                 makeFeedbackItem({
                     type: FeedbackItemType.Test,
-                    category: 'artemisApp.result.detail.feedback',
+                    name: 'artemisApp.result.detail.feedback',
                     title: 'artemisApp.result.detail.test.passedTest',
                     positive: true,
                     credits: 3,
@@ -382,7 +382,7 @@ describe('ResultDetailComponent', () => {
         };
 
         const expectedFeedbackItem: FeedbackItem = {
-            category: 'artemisApp.result.detail.test.name',
+            name: 'artemisApp.result.detail.test.name',
             credits: 0.3,
             title: 'artemisApp.result.detail.test.noInfo',
             type: FeedbackItemType.Test,
@@ -407,7 +407,7 @@ describe('ResultDetailComponent', () => {
 
         const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
-            category: 'artemisApp.course.tutor',
+            name: 'artemisApp.course.tutor',
             title: feedback.text,
             text: 'Grading Instruction Feedback\nManual tutor feedback',
             credits: 0,
@@ -445,7 +445,7 @@ describe('ResultDetailComponent', () => {
 
         const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
-            category: 'artemisApp.result.detail.feedback',
+            name: 'artemisApp.result.detail.feedback',
             title: feedback.text,
             text: 'Grading Instruction Feedback\nManual tutor feedback',
             credits: 0,
@@ -467,7 +467,7 @@ describe('ResultDetailComponent', () => {
 
         const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Policy,
-            category: 'artemisApp.programmingExercise.submissionPolicy.title',
+            name: 'artemisApp.programmingExercise.submissionPolicy.title',
             title: 'Submission Penalty Policy',
             text: feedback.detailText,
             previewText: undefined,
@@ -487,7 +487,7 @@ describe('ResultDetailComponent', () => {
 
         const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
-            category: 'artemisApp.result.detail.feedback',
+            name: 'artemisApp.result.detail.feedback',
             title: feedback.text,
             text: feedback.detailText,
             previewText: 'Multi',
@@ -507,7 +507,7 @@ describe('ResultDetailComponent', () => {
 
         const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
-            category: 'artemisApp.result.detail.feedback',
+            name: 'artemisApp.result.detail.feedback',
             title: feedback.text,
             text: feedback.detailText,
             previewText: '0'.repeat(300),
@@ -538,7 +538,7 @@ describe('ResultDetailComponent', () => {
                 rule: 'Checkstyle',
             };
             baseExpectedFeedbackItem = {
-                category: 'artemisApp.result.detail.codeIssue.name',
+                name: 'artemisApp.result.detail.codeIssue.name',
                 type: FeedbackItemType.Issue,
                 actualCredits: 0,
                 credits: 0,

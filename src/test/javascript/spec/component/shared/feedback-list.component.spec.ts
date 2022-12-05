@@ -9,16 +9,16 @@ describe('FeedbackListComponent', () => {
             {
                 type: FeedbackItemType.Test,
                 positive: true,
-                category: '',
+                name: '',
             },
             {
                 type: FeedbackItemType.Feedback,
-                category: '',
+                name: '',
                 positive: true,
             },
             {
                 type: FeedbackItemType.Feedback,
-                category: '',
+                name: '',
                 credits: 1,
             },
         ];
@@ -30,11 +30,11 @@ describe('FeedbackListComponent', () => {
         const items: FeedbackItem[] = [
             {
                 type: FeedbackItemType.Issue,
-                category: '',
+                name: '',
             },
             {
                 type: FeedbackItemType.Feedback,
-                category: '',
+                name: '',
                 credits: 0,
             },
         ];
@@ -46,17 +46,17 @@ describe('FeedbackListComponent', () => {
         const items: FeedbackItem[] = [
             {
                 type: FeedbackItemType.Test,
-                category: '',
+                name: '',
                 positive: false,
             },
             {
                 type: FeedbackItemType.Feedback,
-                category: '',
+                name: '',
                 positive: false,
             },
             {
                 type: FeedbackItemType.Feedback,
-                category: '',
+                name: '',
                 credits: -1,
             },
         ];

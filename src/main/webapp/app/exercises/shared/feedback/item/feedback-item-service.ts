@@ -6,7 +6,7 @@ import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 
 export interface FeedbackItemService {
     /**
-     * Creates a feedback item with a category, title and text for each feedback object.
+     * Creates a feedback item with a name, title and text for each feedback object.
      * @param feedbacks The list of feedback objects.
      * @param showTestDetails
      */
@@ -30,9 +30,8 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
         return feedbacks.map((feedback) => ({
-            name: 'Feedback',
             type: 'Feedback',
-            category: this.translateService.instant('artemisApp.result.detail.feedback'),
+            name: this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
             text: feedback.detailText,
             positive: feedback.positive,
