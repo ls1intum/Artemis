@@ -45,6 +45,8 @@ import net.sourceforge.plantuml.Log;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "progexbitbucketbamboo";
+
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
 
@@ -100,7 +102,7 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     @BeforeEach
     @SuppressWarnings("resource")
     void setup() throws Exception {
-        programmingExerciseTestService.setupTestUsers(1, 1, 0, 1);
+        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 1, 1, 0, 1);
         Course course = database.addEmptyCourse();
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         bambooRequestMockProvider.enableMockingOfRequests();
@@ -151,14 +153,14 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
     void test_template_exercise(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         runTests(language, projectType, exerciseRepo, TestResult.FAILED);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
     void test_template_solution(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL);
