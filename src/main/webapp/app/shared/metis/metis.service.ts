@@ -301,9 +301,12 @@ export class MetisService implements OnDestroy {
      * @return {boolean} author flag
      */
     metisUserIsAuthorOfPosting(posting: Posting): boolean {
-        return this.getUser() ? posting?.author!.id === this.getUser().id : false;
+        if (posting?.author?.id && this.getUser()?.id) {
+            return posting.author.id === this.getUser().id;
+        } else {
+            return false;
+        }
     }
-
     /**
      * creates empty default post that is needed on initialization of a newly opened modal to edit or create a post
      * @param {CourseWideContext | undefined} courseWideContext optional course-wide context as default context
