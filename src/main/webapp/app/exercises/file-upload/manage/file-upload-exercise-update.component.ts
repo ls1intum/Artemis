@@ -108,7 +108,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
 
-        this.saveCommand.save(this.fileUploadExercise, this.notificationText).subscribe({
+        this.saveCommand.save(this.fileUploadExercise, this.isExamMode, this.notificationText).subscribe({
             next: (exercise: Exercise) => this.onSaveSuccess(exercise),
             error: (res: HttpErrorResponse) => this.onSaveError(res),
             complete: () => {
