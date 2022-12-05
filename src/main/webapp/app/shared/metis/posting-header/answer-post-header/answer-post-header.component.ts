@@ -4,6 +4,7 @@ import { PostingHeaderDirective } from 'app/shared/metis/posting-header/posting-
 import { MetisService } from 'app/shared/metis/metis.service';
 import { CourseWideContext } from '../../metis.util';
 import { faCheck, faPencilAlt } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-answer-post-header',
@@ -14,6 +15,8 @@ export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost
     @Input()
     isReadOnlyMode = false;
     @Input() isCourseMessagesPage: boolean;
+
+    @Input() lastReadDate?: dayjs.Dayjs;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
 
     isAuthorOfOriginalPost: boolean;

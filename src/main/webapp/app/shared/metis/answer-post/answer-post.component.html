@@ -4,6 +4,7 @@
         [isReadOnlyMode]="isReadOnlyMode"
         (openPostingCreateEditModal)="createAnswerPostModal.open()"
         [isCourseMessagesPage]="isCourseMessagesPage"
+        [lastReadDate]="lastReadDate"
     >
     </jhi-answer-post-header>
     <jhi-posting-content *ngIf="!createAnswerPostModal.isInputOpen" [content]="posting.content"> </jhi-posting-content>

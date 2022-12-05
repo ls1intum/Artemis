@@ -3,6 +3,7 @@ import interact from 'interactjs';
 import { Post } from 'app/entities/metis/post.model';
 import { faArrowLeft, faChevronLeft, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 
 @Component({
     selector: 'jhi-conversation-thread-sidebar',
@@ -12,6 +13,9 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 export class ConversationThreadSidebarComponent implements AfterViewInit {
     @Input()
     readOnlyMode = false;
+    @Input()
+    activeConversation: ConversationDto;
+
     @Output() closePostThread = new EventEmitter<void>();
 
     post?: Post;

@@ -41,7 +41,7 @@
                 <jhi-posting-thread
                     #postingThread
                     *ngFor="let post of posts; trackBy: postsTrackByFn"
-                    [isUnread]="!!(!lastReadDate || (lastReadDate && post.creationDate && post.creationDate.isAfter(lastReadDate)))"
+                    [lastReadDate]="_activeConversation?.lastReadDate"
                     [post]="post"
                     [showAnswers]="false"
                     [readOnlyMode]="!!getAsChannel(_activeConversation)?.isArchived"

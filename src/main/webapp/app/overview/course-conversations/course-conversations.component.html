@@ -13,6 +13,7 @@
             <div *ngIf="activeConversation" class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
                 <jhi-conversation-thread-sidebar
                     *ngIf="showPostThread"
+                    [activeConversation]="activeConversation"
                     [readOnlyMode]="!!getAsChannel(activeConversation)?.isArchived"
                     [activePost]="postInThread"
                     (closePostThread)="showPostThread = false"

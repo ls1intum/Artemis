@@ -4,7 +4,7 @@
     [posting]="posting"
     [isCourseMessagesPage]="isCourseMessagesPage"
     (isModalOpen)="displayInlineInput = true"
-    [isUnread]="isUnread"
+    [lastReadDate]="lastReadDate"
 ></jhi-post-header>
 <div class="row align-items-center">
     <div class="col">
@@ -68,4 +68,5 @@
     [isCourseMessagesPage]="isCourseMessagesPage"
     [isThreadSidebar]="isThreadSidebar"
     (openThread)="openThread.emit()"
+    [lastReadDate]="lastReadDate"
 ></jhi-post-footer>

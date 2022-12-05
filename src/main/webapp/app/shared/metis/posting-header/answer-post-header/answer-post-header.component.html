@@ -28,6 +28,11 @@
             [initialTooltip]="'artemisApp.metis.deleteAnswer' | artemisTranslate"
             [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
         ></jhi-confirm-icon>
+        <span
+            *ngIf="!!(!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting"
+            class="badge bg-secondary hideAfter5Seconds"
+            >{{ 'global.generic.new' | artemisTranslate }}</span
+        >
     </div>
     <ng-template #notResolved>
         <div *ngIf="isAtLeastTutorInCourse || isAuthorOfOriginalPost">
