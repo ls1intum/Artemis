@@ -95,7 +95,7 @@ describe('UsersImportButtonComponent', () => {
 
         expect(component.usersToImport).toHaveLength(2);
         expect(component.notFoundUsers).toHaveLength(0);
-        expect(component.noUsersFoundError).toBeFalse();
+        expect(component.noUsersFoundError).toBeUndefined();
     });
 
     it('should have validation error for invalid csv', async () => {
