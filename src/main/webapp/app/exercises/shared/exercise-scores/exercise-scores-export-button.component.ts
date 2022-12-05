@@ -65,7 +65,7 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
     constructor(private resultService: ResultService, private alertService: AlertService) {}
 
     ngOnInit(): void {
-        this.isProgrammingExerciseResults = this.exercises.concat(this.exercise).every((exercise) => exercise.type === ExerciseType.PROGRAMMING);
+        this.isProgrammingExerciseResults = this.exercises.concat(this.exercise).every((exercise) => exercise && exercise.type && exercise.type === ExerciseType.PROGRAMMING);
     }
 
     /**
@@ -115,7 +115,12 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
                 });
             }
             const fileNamePrefix = exercise.shortName ?? exercise.title?.split(/\s+/).join('_');
-            ExerciseScoresExportButtonComponent.exportAsCsv(`${fileNamePrefix}-results-scores`, keys, rows, withFeedback ? ',' : undefined);
+
+            if (withFeedback) {
+                ExerciseScoresExportButtonComponent.exportAsCsv(`${fileNamePrefix}-results-scores`, keys, rows, ',');
+            } else {
+                ExerciseScoresExportButtonComponent.exportAsCsv(`${fileNamePrefix}-results-scores`, keys, rows);
+            }
         });
     }
 
