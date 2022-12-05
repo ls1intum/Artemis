@@ -29,7 +29,7 @@ import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/it
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
 import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 import { resultIsPreliminary } from '../result.utils';
-import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 
 // Modal -> Result details view
 @Component({
@@ -247,43 +247,10 @@ export class ResultDetailComponent implements OnInit {
             return;
         }
 
-        const sumCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.credits || 0);
-        const sumActualCredits = (sum: number, feedbackItem: FeedbackItem) => sum + (feedbackItem.actualCredits || 0);
+        // TODO: note that there are max penalty credits equal to
+        // const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
 
-        let testCaseCredits = feedbackList.filter((item) => item.type === FeedbackItemType.Test).reduce(sumCredits, 0);
-        const positiveCredits = feedbackList.filter((item) => item.type !== FeedbackItemType.Test && item.credits && item.credits > 0).reduce(sumCredits, 0);
-
-        let codeIssueCredits = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumActualCredits, 0);
-        const codeIssuePenalties = -feedbackList.filter((item) => item.type === FeedbackItemType.Issue).reduce(sumCredits, 0);
-        const negativeCredits = -feedbackList.filter((item) => item.type !== FeedbackItemType.Issue && item.credits && item.credits < 0).reduce(sumCredits, 0);
-
-        // cap test points
-        const maxPoints = this.exercise.maxPoints!;
-        const maxPointsWithBonus = maxPoints + (this.exercise.bonusPoints || 0);
-
-        if (testCaseCredits > maxPointsWithBonus) {
-            testCaseCredits = maxPointsWithBonus;
-        }
-
-        // cap sca penalty points
-        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            const programmingExercise = this.exercise as ProgrammingExercise;
-            if (programmingExercise.staticCodeAnalysisEnabled && programmingExercise.maxStaticCodeAnalysisPenalty != undefined) {
-                const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
-                codeIssueCredits = Math.min(codeIssueCredits, maxPenaltyCredits);
-            }
-        }
-
-        const course = getCourseFromExercise(this.exercise);
-
-        const appliedNegativePoints = roundValueSpecifiedByCourseSettings(codeIssueCredits + negativeCredits, course);
-        const receivedNegativePoints = roundValueSpecifiedByCourseSettings(codeIssuePenalties + negativeCredits, course);
-        const positivePoints = roundValueSpecifiedByCourseSettings(testCaseCredits + positiveCredits, course);
-
-        if (appliedNegativePoints !== receivedNegativePoints) {
-            this.showScoreChartTooltip = true;
-        }
-        this.setValues(positivePoints, appliedNegativePoints, receivedNegativePoints, maxPoints, maxPointsWithBonus);
+        this.setValues(5, 4, 2, 15, 15);
     }
 
     getCommitHash(): string {

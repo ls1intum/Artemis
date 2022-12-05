@@ -1,15 +1,15 @@
-<div *ngIf="feedbackItem" [ngClass]="['feedback-item', getClassNameForFeedbackItem(feedbackItem)]">
+<div *ngIf="feedbackItem" class="feedback-item">
     <div class="feedback-item__header">
         <h4 class="feedback-item__category">{{ feedbackItem.category }}</h4>
         <span class="feedback-item__points" *ngIf="feedbackItem.credits">
             {{ roundValueSpecifiedByCourseSettings(feedbackItem.actualCredits ?? feedbackItem.credits, course) }}P
             <fa-icon
-                *ngIf="feedbackItem.type === FeedbackItemType.Subsequent"
+                *ngIf="feedbackItem.type === 'Subsequent'"
                 [icon]="faExclamationTriangle"
                 [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"
             ></fa-icon>
             <fa-icon
-                *ngIf="feedbackItem.type === FeedbackItemType.Issue && feedbackItem.actualCredits !== feedbackItem.credits"
+                *ngIf="feedbackItem.type === 'Static Code Analysis' && feedbackItem.actualCredits !== feedbackItem.credits"
                 [icon]="faExclamationTriangle"
                 [ngbTooltip]="'artemisApp.programmingAssessment.codeIssueNotApplied' | artemisTranslate : { points: feedbackItem.credits }"
             >

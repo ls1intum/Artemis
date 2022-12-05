@@ -1,19 +1,7 @@
-/**
- * @deprecated use {@see TFeedbackItemType} and rename after this is deleted
- */
-export enum FeedbackItemType {
-    Issue,
-    Test,
-    Feedback,
-    Policy,
-    Subsequent,
-}
-
-export type TFeedbackItemType = 'Test' | 'Static Code Analysis' | 'Reviewer' | 'Subsequent';
+export type FeedbackItemType = 'Test' | 'Static Code Analysis' | 'Reviewer' | 'Subsequent' | 'Feedback' | 'Submission Policy';
 
 export class FeedbackItem {
-    type?: FeedbackItemType;
-    tType?: TFeedbackItemType; // TODO: shouldn't be optional
+    type: FeedbackItemType; // TODO: shouldn't be optional
     category: string;
     title?: string; // this is typically feedback.text
     text?: string; // this is typically feedback.detailText

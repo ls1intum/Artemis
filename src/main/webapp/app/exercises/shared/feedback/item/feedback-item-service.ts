@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
-import { computeFeedbackPreviewText } from 'app/exercises/shared/feedback/feedback.util';
 import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
-import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 
 export interface FeedbackItemService {
     /**
@@ -31,7 +30,7 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
         return feedbacks.map((feedback) => ({
-            type: FeedbackItemType.Feedback,
+            type: 'Feedback',
             category: this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
             text: feedback.detailText,
