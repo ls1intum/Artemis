@@ -58,7 +58,6 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationBuildPlanException;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService.RepositoryCheckoutPath;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import tech.jhipster.config.JHipsterConstants;
 
 @Service
 @Profile("bamboo")
@@ -500,8 +499,21 @@ public class BambooBuildPlanService {
         }
     }
 
-    private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType) {
-        var dockerImage = programmingLanguageConfiguration.getImage(programmingLanguage, projectType);
-        return new DockerConfiguration().image(dockerImage);
+    private DockerConfiguration dockerConfigurationFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType) {
+        var dockerConfiguration = new DockerConfiguration();
+
+        dockerConfiguration.dockerRunArguments(getDockerConfigurationRunArgumentsFor(programmingLanguage));
+        dockerConfiguration.image(programmingLanguageConfiguration.getImage(programmingLanguage, projectType));
+
+        return dockerConfiguration;
+    }
+
+    /**
+     * Returns the (default) docker run arguments for a given ProgrammingLanguage. Bamboo requires the arguments to be in separate lines!
+     * @param programmingLanguage
+     * @return the docker run arguments for a given ProgrammingLanguage
+     */
+    private String getDockerConfigurationRunArgumentsFor(ProgrammingLanguage programmingLanguage) {
+        return "--cpus\n4\n--memory\n4g\n--pids-limit\n 100";
     }
 }
