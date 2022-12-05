@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 
 class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "exercisescoreschart";
+
     Long idOfCourse;
 
     Long idOfTeam1;
@@ -73,7 +75,7 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
     void setupTestScenario() {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
-        this.database.addUsers(5, 10, 0, 10);
+        this.database.addUsers(TEST_PREFIX, 5, 10, 0, 10);
         Course course = this.database.createCourse();
         idOfCourse = course.getId();
         TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
@@ -83,16 +85,16 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
 
         Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         idOfTeamTextExercise = teamExercise.getId();
-        User student1 = userRepository.findOneByLogin("student1").get();
+        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         idOfStudent1 = student1.getId();
-        User tutor1 = userRepository.findOneByLogin("tutor1").get();
-        idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise, "team1").getId();
-        User student2 = userRepository.findOneByLogin("student2").get();
+        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
+        idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
+        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
         idOfStudent2 = student2.getId();
-        User student3 = userRepository.findOneByLogin("student3").get();
+        User student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").get();
         idOfStudent3 = student3.getId();
-        User tutor2 = userRepository.findOneByLogin("tutor2").get();
-        idOfTeam2 = database.createTeam(Set.of(student2, student3), tutor2, teamExercise, "team2").getId();
+        User tutor2 = userRepository.findOneByLogin(TEST_PREFIX + "tutor2").get();
+        idOfTeam2 = database.createTeam(Set.of(student2, student3), tutor2, teamExercise, TEST_PREFIX + "team2").getId();
 
         // Creating result for student1
         database.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);
@@ -107,19 +109,20 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
         Team team2 = teamRepository.findById(idOfTeam2).get();
         database.createParticipationSubmissionAndResult(idOfTeamTextExercise, team2, 10.0, 10.0, 90, true);
 
-        await().until(() -> participantScoreRepository.findAll().size() == 5);
+        await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 3);
+        await().until(() -> participantScoreRepository.findAllByExercise(teamExercise).size() == 2);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCourseExerciseScores_asStudent_shouldReturnCorrectIndividualAverageAndMaxScores() throws Exception {
         List<ExerciseScoresDTO> exerciseScores = request.getList(getEndpointUrl(idOfCourse), HttpStatus.OK, ExerciseScoresDTO.class);
         assertThat(exerciseScores).hasSize(3);
         ExerciseScoresDTO individualTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExercise)).findFirst()
-            .get();
+                .get();
         ExerciseScoresDTO teamTextExercise = exerciseScores.stream().filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfTeamTextExercise)).findFirst().get();
         ExerciseScoresDTO individualTextExerciseWithoutParticipants = exerciseScores.stream()
-            .filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExerciseWithoutParticipants)).findFirst().get();
+                .filter(exerciseScoresDTO -> exerciseScoresDTO.exerciseId.equals(idOfIndividualTextExerciseWithoutParticipants)).findFirst().get();
 
         assertThat(individualTextExercise.scoreOfStudent).isEqualTo(50.0);
         assertThat(individualTextExercise.averageScoreAchieved).isEqualTo(40.0);

@@ -37,6 +37,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "modelingassessment";
+
     public static final String API_MODELING_SUBMISSIONS = "/api/modeling-submissions/";
 
     @Autowired
@@ -113,7 +115,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(6, 2, 0, 1);
+        database.addUsers(TEST_PREFIX, 6, 2, 0, 1);
         this.course = database.addCourseWithDifferentModelingExercises();
         classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         activityExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ActivityDiagram");
@@ -135,7 +137,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testGetAssessmentBySubmissionId() throws Exception {
         saveModelingSubmissionAndAssessment(true);
         List<Feedback> feedback = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.v2.json");
@@ -148,14 +150,14 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testGetAssessmentBySubmissionId_notFound() throws Exception {
         saveModelingSubmission();
         request.get(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result", HttpStatus.NOT_FOUND, Result.class);
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testGetAssessmentBySubmissionId_assessmentNotFinished_forbidden() throws Exception {
         saveModelingSubmissionAndAssessment(false);
         database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -164,7 +166,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testGetAssessmentBySubmissionId_assessmentDueDateNotOver_forbidden() throws Exception {
         saveModelingSubmissionAndAssessment(true);
 
@@ -172,7 +174,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void testGetAssessmentBySubmissionId_studentNotOwnerOfSubmission_forbidden() throws Exception {
         saveModelingSubmissionAndAssessment(true);
         database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -181,16 +183,16 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test()
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExampleAssessmentAsTutor() throws Exception {
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, classExercise, true, true));
         List<Feedback> feedbackList = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
-            HttpStatus.OK);
+                HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
         var result = request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment",
-            HttpStatus.OK, Result.class);
+                HttpStatus.OK, Result.class);
         for (Feedback feedback : result.getFeedbacks()) {
             assertThat(feedback.getCredits()).isNull();
             assertThat(feedback.getDetailText()).isNull();
@@ -199,35 +201,35 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test()
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExampleAssessmentAsTutorNoTutorial() throws Exception {
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, classExercise, true, false));
         List<Feedback> feedbackList = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
-            HttpStatus.OK);
+                HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
         request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
-            Result.class);
+                Result.class);
     }
 
     @Test()
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExampleAssessmentAsInstructor() throws Exception {
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, classExercise, true, true));
         List<Feedback> feedbackList = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
-            HttpStatus.OK);
+                HttpStatus.OK);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
         assertThat(exampleSubmissionRepository.findById(storedExampleSubmission.getId())).isPresent();
         request.get("/api/exercise/" + classExercise.getId() + "/modeling-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-assessment", HttpStatus.OK,
-            Result.class);
+                Result.class);
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testManualAssessmentSubmitAsStudent() throws Exception {
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.FORBIDDEN);
         Optional<Result> storedResult = resultRepo.findDistinctBySubmissionId(submission.getId());
@@ -235,10 +237,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSave() throws Exception {
-        User assessor = database.getUserByLogin("tutor1");
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
+        User assessor = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
@@ -252,21 +254,21 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSave_noCourse() throws Exception {
         classExercise.setCourse(null);
         exerciseRepo.save(classExercise);
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         createAssessment(submission, feedbacks, "/assessment", HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSubmit_classDiagram() throws Exception {
-        User assessor = database.getUserByLogin("tutor1");
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
+        User assessor = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
@@ -284,10 +286,11 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSubmit_activityDiagram() throws Exception {
-        User assessor = database.getUserByLogin("tutor1");
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/example-activity-diagram.json", "student1");
+        User assessor = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/example-activity-diagram.json",
+                TEST_PREFIX + "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-activity-assessment.json");
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
@@ -300,10 +303,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSubmit_objectDiagram() throws Exception {
-        User assessor = database.getUserByLogin("tutor1");
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/object-model.json", "student1");
+        User assessor = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/object-model.json", TEST_PREFIX + "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/object-assessment.json");
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
@@ -315,10 +318,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSubmit_useCaseDiagram() throws Exception {
-        User assessor = database.getUserByLogin("tutor1");
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
+        User assessor = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", TEST_PREFIX + "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/use-case-assessment.json");
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
@@ -331,10 +334,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSaveAndSubmit() throws Exception {
-        User assessor = database.getUserByLogin("tutor1");
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
+        User assessor = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
 
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         createAssessment(submission, feedbacks, "/assessment", HttpStatus.OK);
@@ -355,7 +358,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSubmit_IncludedCompletelyWithBonusPointsExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -364,7 +367,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         exerciseRepo.save(useCaseExercise);
 
         // setting up student submission
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", TEST_PREFIX + "student1");
         List<Feedback> feedbacks = new ArrayList<>();
 
         addAssessmentFeedbackAndCheckScore(submission, feedbacks, 0.0, 0D);
@@ -378,7 +381,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSubmit_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
@@ -387,14 +390,14 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         exerciseRepo.save(useCaseExercise);
 
         // setting up student submission
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", TEST_PREFIX + "student1");
         List<Feedback> feedbacks = new ArrayList<>();
 
         setupStudentSubmissions(submission, feedbacks);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSubmit_IncludedAsBonusExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
@@ -403,14 +406,14 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         exerciseRepo.save(useCaseExercise);
 
         // setting up student submission
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", TEST_PREFIX + "student1");
         List<Feedback> feedbacks = new ArrayList<>();
 
         setupStudentSubmissions(submission, feedbacks);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSubmit_NotIncludedExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
@@ -419,7 +422,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         exerciseRepo.save(useCaseExercise);
 
         // setting up student submission
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", TEST_PREFIX + "student1");
         List<Feedback> feedbacks = new ArrayList<>();
 
         setupStudentSubmissions(submission, feedbacks);
@@ -443,10 +446,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testManualAssessmentSubmit_withResultOver100Percent() throws Exception {
         useCaseExercise = (ModelingExercise) database.addMaxScoreAndBonusPointsToExercise(useCaseExercise);
-        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
+        ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", TEST_PREFIX + "student1");
 
         List<Feedback> feedbacks = new ArrayList<>();
         // Check that result is over 100% -> 105
@@ -473,14 +476,14 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
 
     // region Automatic Assessment Tests
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void testAutomaticAssessmentUponModelSubmission_identicalModel() throws Exception {
         saveModelingSubmissionAndAssessment(true);
-        database.createAndSaveParticipationForExercise(classExercise, "student2");
+        database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-            ModelingSubmission.class, HttpStatus.OK);
+                ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
         assertThat(automaticResult).as("automatic result is not created").isNull();
@@ -492,133 +495,134 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
      * @throws Exception any exception in the test
      */
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void testAutomaticAssessmentUponModelSubmission_emptyModel() throws Exception {
-        database.createAndSaveParticipationForExercise(classExercise, "student2");
+        database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(null, true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-            ModelingSubmission.class, HttpStatus.OK);
+                ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
         assertThat(automaticResult).as("automatic result is not created").isNull();
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void testAutomaticAssessmentUponModelSubmission_activityDiagram_identicalModel() throws Exception {
         saveModelingSubmissionAndAssessment_activityDiagram(true);
-        database.createAndSaveParticipationForExercise(activityExercise, "student2");
+        database.createAndSaveParticipationForExercise(activityExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + activityExercise.getId() + "/modeling-submissions", submission,
-            ModelingSubmission.class, HttpStatus.OK);
+                ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, activityExercise);
         assertThat(automaticResult).as("automatic result is not created").isNull();
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void testAutomaticAssessmentUponModelSubmission_objectDiagram_identicalModel() throws Exception {
         saveModelingSubmissionAndAssessment_activityDiagram(true);
-        database.createAndSaveParticipationForExercise(activityExercise, "student2");
+        database.createAndSaveParticipationForExercise(activityExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + activityExercise.getId() + "/modeling-submissions", submission,
-            ModelingSubmission.class, HttpStatus.OK);
+                ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, activityExercise);
         assertThat(automaticResult).as("automatic result is not created").isNull();
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void testAutomaticAssessmentUponModelSubmission_partialModel() throws Exception {
         saveModelingSubmissionAndAssessment(true);
-        database.createAndSaveParticipationForExercise(classExercise, "student2");
+        database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.partial.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-            ModelingSubmission.class, HttpStatus.OK);
+                ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
         assertThat(automaticResult).as("automatic result is not created").isNull();
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void testAutomaticAssessmentUponModelSubmission_partialModelExists() throws Exception {
-        modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json", "student1");
-        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.partial.json", "tutor1",
-            true);
-        database.createAndSaveParticipationForExercise(classExercise, "student2");
+        modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json", TEST_PREFIX + "student1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.partial.json",
+                TEST_PREFIX + "tutor1", true);
+        database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-            ModelingSubmission.class, HttpStatus.OK);
+                ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
         assertThat(automaticResult).as("automatic result is not created").isNull();
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void testAutomaticAssessmentUponModelSubmission_noSimilarity() throws Exception {
-        modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54745.json", "student1");
-        database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54745.json", "tutor1", true);
-        database.createAndSaveParticipationForExercise(classExercise, "student2");
+        modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54745.json", TEST_PREFIX + "student1");
+        database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54745.json", TEST_PREFIX + "tutor1", true);
+        database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-            ModelingSubmission.class, HttpStatus.OK);
+                ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
         assertThat(automaticResult).as("automatic result is not created").isNull();
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void testAutomaticAssessmentUponModelSubmission_similarElementsWithinModel() throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.inheritance.json"), true);
-        modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, "student1");
-        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.inheritance.json", "tutor1",
-            true);
-        database.createAndSaveParticipationForExercise(classExercise, "student2");
+        modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, TEST_PREFIX + "student1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.inheritance.json",
+                TEST_PREFIX + "tutor1", true);
+        database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.inheritance.cpy.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-            ModelingSubmission.class, HttpStatus.OK);
+                ModelingSubmission.class, HttpStatus.OK);
 
         Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
         assertThat(automaticResult).as("automatic result is not created").isNull();
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void testAutomaticAssessmentUponModelSubmission_noResultInDatabase() throws Exception {
         saveModelingSubmissionAndAssessment(true);
-        database.createAndSaveParticipationForExercise(classExercise, "student2");
+        database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-            ModelingSubmission.class, HttpStatus.OK);
+                ModelingSubmission.class, HttpStatus.OK);
 
         Optional<Result> automaticResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedSubmission.getId());
         assertThat(automaticResult).as("automatic result not stored in database").isNotPresent();
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testConfidenceThreshold() throws Exception {
         Feedback feedbackOnePoint = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         Feedback feedbackTwentyPoints = new Feedback().credits(20.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
-        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
-        ModelingSubmission submission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student3");
-        ModelingSubmission submission4 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student4");
-        ModelingSubmission submission5 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student5");
-        ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student6");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", TEST_PREFIX + "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", TEST_PREFIX + "student2");
+        ModelingSubmission submission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", TEST_PREFIX + "student3");
+        ModelingSubmission submission4 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", TEST_PREFIX + "student4");
+        ModelingSubmission submission5 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", TEST_PREFIX + "student5");
+        ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
+                TEST_PREFIX + "student6");
 
         compassService.build(classExercise);
 
@@ -655,13 +659,14 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLongestFeedbackTextSelection() throws Exception {
         Feedback feedbackOnePoint = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
-        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
-        ModelingSubmission submission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student3");
-        ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student4");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", TEST_PREFIX + "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", TEST_PREFIX + "student2");
+        ModelingSubmission submission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", TEST_PREFIX + "student3");
+        ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
+                TEST_PREFIX + "student4");
 
         compassService.build(classExercise);
 
@@ -688,10 +693,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAutomaticAssessmentUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
-        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", TEST_PREFIX + "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
         compassService.build(classExercise);
@@ -705,10 +710,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAutomaticAssessmentActivityDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/example-activity-diagram.json", "student1");
-        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/example-activity-diagram-cpy.json", "student2");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/example-activity-diagram.json",
+                TEST_PREFIX + "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/example-activity-diagram-cpy.json",
+                TEST_PREFIX + "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-activity-assessment.json");
 
         compassService.build(activityExercise);
@@ -722,10 +729,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAutomaticAssessmentObjectDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/example-object-diagram.json", "student1");
-        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/example-object-diagram.json", "student2");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/example-object-diagram.json",
+                TEST_PREFIX + "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/example-object-diagram.json",
+                TEST_PREFIX + "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-object-assessment.json");
 
         compassService.build(objectExercise);
@@ -739,10 +748,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAutomaticAssessmentUseCaseDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
-        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student2");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", TEST_PREFIX + "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", TEST_PREFIX + "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/use-case-assessment.json");
 
         compassService.build(useCaseExercise);
@@ -756,12 +765,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAutomaticAssessmentCommunicationDiagramUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(communicationExercise, "test-data/model-submission/example-communication-diagram.json",
-            "student1");
+                TEST_PREFIX + "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(communicationExercise, "test-data/model-submission/example-communication-diagram-cpy.json",
-            "student2");
+                TEST_PREFIX + "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-communication-assessment.json");
 
         compassService.build(communicationExercise);
@@ -775,11 +784,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAutomaticAssessmentComponentDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(componentExercise, "test-data/model-submission/example-component-diagram.json", "student1");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(componentExercise, "test-data/model-submission/example-component-diagram.json",
+                TEST_PREFIX + "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(componentExercise, "test-data/model-submission/example-component-diagram-cpy.json",
-            "student2");
+                TEST_PREFIX + "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-component-assessment.json");
 
         compassService.build(componentExercise);
@@ -793,11 +803,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAutomaticAssessmentDeploymentDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(deploymentExercise, "test-data/model-submission/example-deployment-diagram.json", "student1");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(deploymentExercise, "test-data/model-submission/example-deployment-diagram.json",
+                TEST_PREFIX + "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(deploymentExercise, "test-data/model-submission/example-deployment-diagram-cpy.json",
-            "student2");
+                TEST_PREFIX + "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-deployment-assessment.json");
 
         compassService.build(deploymentExercise);
@@ -811,10 +822,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAutomaticAssessmentPetriNetDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(petriNetExercise, "test-data/model-submission/example-petri-net-diagram.json", "student1");
-        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(petriNetExercise, "test-data/model-submission/example-petri-net-diagram-cpy.json", "student2");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(petriNetExercise, "test-data/model-submission/example-petri-net-diagram.json",
+                TEST_PREFIX + "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(petriNetExercise, "test-data/model-submission/example-petri-net-diagram-cpy.json",
+                TEST_PREFIX + "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-petri-net-assessment.json");
 
         compassService.build(petriNetExercise);
@@ -828,11 +841,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAutomaticAssessmentSyntaxTreeDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(syntaxTreeExercise, "test-data/model-submission/example-syntax-tree-diagram.json", "student1");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(syntaxTreeExercise, "test-data/model-submission/example-syntax-tree-diagram.json",
+                TEST_PREFIX + "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(syntaxTreeExercise, "test-data/model-submission/example-syntax-tree-diagram-cpy.json",
-            "student2");
+                TEST_PREFIX + "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-syntax-tree-assessment.json");
 
         compassService.build(syntaxTreeExercise);
@@ -846,11 +860,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAutomaticAssessmentFlowchartDiagramUponAssessmentSubmission() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(flowchartExercise, "test-data/model-submission/example-flowchart-diagram.json", "student1");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(flowchartExercise, "test-data/model-submission/example-flowchart-diagram.json",
+                TEST_PREFIX + "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(flowchartExercise, "test-data/model-submission/example-flowchart-diagram-cpy.json",
-            "student2");
+                TEST_PREFIX + "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-flowchart-assessment.json");
 
         compassService.build(flowchartExercise);
@@ -864,10 +879,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAutomaticAssessmentUponAssessmentSubmission_noResultInDatabase() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
-        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", TEST_PREFIX + "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
         compassService.build(classExercise);
@@ -879,10 +894,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testNoAutomaticAssessmentWhenNotBuild() throws Exception {
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
-        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", TEST_PREFIX + "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
 
         createAssessment(submission1, feedbacks, "/assessment", HttpStatus.OK);
@@ -892,13 +907,16 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAutomaticAssessment_elementsWithDifferentContextInSameSimilaritySet() throws Exception {
         List<Feedback> assessment1 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.different-context.json");
         List<Feedback> assessment2 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.different-context.automatic.json");
-        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json", "student1");
-        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json", "student2");
-        ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json", "student3");
+        ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json",
+                TEST_PREFIX + "student1");
+        ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json",
+                TEST_PREFIX + "student2");
+        ModelingSubmission submissionToCheck = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json",
+                TEST_PREFIX + "student3");
 
         compassService.build(classExercise);
 
@@ -916,18 +934,18 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testOverrideAutomaticAssessment() throws Exception {
         classExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseRepo.save(classExercise);
-        modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json", "student1");
-        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.partial.json", "tutor1",
-            true);
-        database.createAndSaveParticipationForExercise(classExercise, "tutor1");
+        modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json", TEST_PREFIX + "student1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.partial.json",
+                TEST_PREFIX + "tutor1", true);
+        database.createAndSaveParticipationForExercise(classExercise, TEST_PREFIX + "tutor1");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
-            ModelingSubmission.class, HttpStatus.OK);
+                ModelingSubmission.class, HttpStatus.OK);
 
         compassService.build(classExercise);
 
@@ -935,7 +953,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         params.add("lock", "true");
         params.add("correction-round", "0");
         ModelingSubmission submissionWithAutomaticAssessment = request.get("/api/exercises/" + classExercise.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
-            ModelingSubmission.class, params);
+                ModelingSubmission.class, params);
 
         assertThat(submissionWithAutomaticAssessment.getId()).isEqualTo(storedSubmission.getId());
 
@@ -950,7 +968,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         overrideFeedback.addAll(newFeedback);
 
         Result storedResult = request.putWithResponseBody(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + modelingAssessment.getId() + "/assessment",
-            overrideFeedback, Result.class, HttpStatus.OK);
+                overrideFeedback, Result.class, HttpStatus.OK);
 
         List<Feedback> manualFeedback = new ArrayList<>();
         List<Feedback> automaticFeedback = new ArrayList<>();
@@ -973,12 +991,13 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testOverrideAutomaticAssessment_existingManualAssessmentDoesNotChange() throws Exception {
         Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         Feedback changedFeedback = new Feedback().credits(2.0).text("another text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
-        modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
-        ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
+        modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", TEST_PREFIX + "student1");
+        ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
+                TEST_PREFIX + "student2");
         createAssessment(modelingSubmission, Collections.singletonList(originalFeedback), "/assessment?submit=true", HttpStatus.OK);
 
         createAssessment(modelingSubmission2, Collections.singletonList(changedFeedback), "/assessment?submit=true", HttpStatus.OK);
@@ -992,11 +1011,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testOverrideSubmittedManualAssessment_noConflict() throws Exception {
         Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
-        modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
-        ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
+        modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", TEST_PREFIX + "student1");
+        ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
+                TEST_PREFIX + "student2");
 
         compassService.build(classExercise);
 
@@ -1005,7 +1025,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         Result originalResult = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         Feedback changedFeedback = originalResult.getFeedbacks().get(0).credits(2.0).text("another text");
         request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + originalResult.getId() + "/assessment?submit=true",
-            Collections.singletonList(changedFeedback), HttpStatus.OK);
+                Collections.singletonList(changedFeedback), HttpStatus.OK);
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         assertThat(modelingAssessment.getFeedbacks()).as("overridden assessment has correct amount of feedback").hasSize(1);
@@ -1013,17 +1033,19 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         modelingAssessment = compassService.getSuggestionResult(modelingSubmission2, classExercise);
         assertThat(modelingAssessment.getFeedbacks()).as("automatic assessment still exists").hasSize(1);
         assertThat(modelingAssessment.getFeedbacks().get(0)).as("automatic assessment is overridden properly").isEqualToComparingOnlyGivenFields(changedFeedback, "credits",
-            "text");
+                "text");
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testOverrideSubmittedManualAssessment_conflict() throws Exception {
         Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         Feedback originalFeedbackWithoutReference = new Feedback().credits(1.5).text("some feedback text again").reference(null).type(FeedbackType.MANUAL_UNREFERENCED);
-        modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
-        ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
-        ModelingSubmission modelingSubmission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student3");
+        modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", TEST_PREFIX + "student1");
+        ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
+                TEST_PREFIX + "student2");
+        ModelingSubmission modelingSubmission3 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json",
+                TEST_PREFIX + "student3");
 
         compassService.build(classExercise);
 
@@ -1034,7 +1056,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         Feedback changedFeedback = originalResult.getFeedbacks().get(0).credits(2.0).text("another text");
         Feedback feedbackWithoutReference = new Feedback().credits(1.0).text("another feedback text again").reference(null).type(FeedbackType.MANUAL_UNREFERENCED);
         request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result/" + originalResult.getId() + "/assessment?submit=true",
-            Arrays.asList(changedFeedback, feedbackWithoutReference), HttpStatus.OK);
+                Arrays.asList(changedFeedback, feedbackWithoutReference), HttpStatus.OK);
 
         modelingAssessment = resultRepo.findDistinctWithFeedbackBySubmissionId(modelingSubmission.getId()).get();
         assertThat(modelingAssessment.getFeedbacks()).as("overridden assessment has correct amount of feedback").hasSize(2);
@@ -1072,150 +1094,150 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private void saveModelingSubmission() throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
-        modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, "student1");
+        modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, TEST_PREFIX + "student1");
     }
 
     private void saveModelingSubmissionAndAssessment(boolean submitAssessment) throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
-        modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, "student1");
-        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json", "tutor1",
-            submitAssessment);
+        modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, TEST_PREFIX + "student1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json",
+                TEST_PREFIX + "tutor1", submitAssessment);
     }
 
     private void saveModelingSubmissionAndAssessment_activityDiagram(boolean submitAssessment) throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
-        modelingSubmission = database.addModelingSubmission(activityExercise, modelingSubmission, "student1");
+        modelingSubmission = database.addModelingSubmission(activityExercise, modelingSubmission, TEST_PREFIX + "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(activityExercise, modelingSubmission, "test-data/model-assessment/example-activity-assessment.json",
-            "tutor1", submitAssessment);
+                TEST_PREFIX + "tutor1", submitAssessment);
     }
 
     private void cancelAssessment(HttpStatus expectedStatus) throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/example-activity-diagram.json"), true);
-        modelingSubmission = database.addModelingSubmission(activityExercise, modelingSubmission, "student1");
-        modelingAssessment = database.addModelingAssessmentForSubmission(activityExercise, modelingSubmission, "tutor1", false);
+        modelingSubmission = database.addModelingSubmission(activityExercise, modelingSubmission, TEST_PREFIX + "student1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(activityExercise, modelingSubmission, TEST_PREFIX + "tutor1", false);
         request.put(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/cancel-assessment", null, expectedStatus);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void cancelOwnAssessmentAsStudent() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void cancelOwnAssessmentAsTutor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testOverrideAssessment_saveOtherTutorForbidden() throws Exception {
-        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testOverrideAssessment_saveInstructorPossible() throws Exception {
-        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testOverrideAssessment_saveSameTutorPossible() throws Exception {
-        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
-        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testOverrideAssessment_submitInstructorPossible() throws Exception {
-        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testOverrideAssessment_submitSameTutorPossible() throws Exception {
-        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testOverrideAssessment_saveOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
-        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testOverrideAssessment_saveInstructorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
-        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testOverrideAssessment_saveSameTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
-        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testOverrideAssessment_saveSameTutorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         // should be possible because the original result was not yet submitted
-        overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", false);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "false", false);
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
-        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
-        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
-        overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testOverrideAssessment_submitSameTutorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         // should be possible because the original result was not yet submitted
-        overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", false);
+        overrideAssessment(TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", HttpStatus.OK, "true", false);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void multipleCorrectionRoundsForExam() throws Exception {
         // Setup exam with 2 correction rounds and a programming exercise
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
@@ -1234,7 +1256,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         exerciseGroup1.addExercise(exercise);
 
         // add student submission
-        final var submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.partial.json", "student1");
+        final var submission = database.addModelingSubmissionFromResources(exercise, "test-data/model-submission/model.54727.partial.json", TEST_PREFIX + "student1");
 
         // verify setup
         assertThat(exam.getNumberOfCorrectionRoundsInExam()).isEqualTo(2);
@@ -1249,12 +1271,12 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         params.add("lock", "true");
         params.add("correction-round", "0");
         ModelingSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submission-without-assessment",
-            HttpStatus.OK, ModelingSubmission.class, params);
+                HttpStatus.OK, ModelingSubmission.class, params);
         // verify that no new submission was created
         assertThat(submissionWithoutFirstAssessment).isEqualTo(submission);
         // verify that the lock has been set
         assertThat(submissionWithoutFirstAssessment.getLatestResult()).isNotNull();
-        assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor1");
+        assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
         assertThat(submissionWithoutFirstAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
 
         // make sure that new result correctly appears inside the continue box
@@ -1262,7 +1284,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         paramsGetAssessedCR1Tutor1.add("assessedByTutor", "true");
         paramsGetAssessedCR1Tutor1.add("correction-round", "0");
         var assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
-            paramsGetAssessedCR1Tutor1);
+                paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
@@ -1273,17 +1295,17 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         final var firstSubmittedManualResult = request.putWithResponseBodyAndParams(
-            API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/result/" + submissionWithoutFirstAssessment.getFirstResult().getId() + "/assessment",
-            feedbacks, Result.class, HttpStatus.OK, params);
+                API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/result/" + submissionWithoutFirstAssessment.getFirstResult().getId() + "/assessment",
+                feedbacks, Result.class, HttpStatus.OK, params);
 
         // make sure that new result correctly appears after the assessment for first correction round
         assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
-            paramsGetAssessedCR1Tutor1);
+                paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutFirstAssessment.getId());
         assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isNotNull();
-        assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo("tutor1");
+        assertThat(firstSubmittedManualResult.getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
 
         // verify that the result contains the relationship
         assertThat(firstSubmittedManualResult).isNotNull();
@@ -1299,7 +1321,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(fetchedParticipation.findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
 
         var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
-            .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
+                .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
         assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
         fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
         assertThat(fetchedParticipation.getSubmissions()).hasSize(1);
@@ -1310,19 +1332,19 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // SECOND ROUND OF CORRECTION
 
-        database.changeUser("tutor2");
+        database.changeUser(TEST_PREFIX + "tutor2");
         LinkedMultiValueMap<String, String> paramsSecondCorrection = new LinkedMultiValueMap<>();
         paramsSecondCorrection.add("lock", "true");
         paramsSecondCorrection.add("correction-round", "1");
 
         final var submissionWithoutSecondAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submission-without-assessment", HttpStatus.OK,
-            ModelingSubmission.class, paramsSecondCorrection);
+                ModelingSubmission.class, paramsSecondCorrection);
 
         // verify that the submission is not new
         assertThat(submissionWithoutSecondAssessment).isEqualTo(submission);
         // verify that the lock has been set
         assertThat(submissionWithoutSecondAssessment.getLatestResult()).isNotNull();
-        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo("tutor2");
+        assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor2");
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.MANUAL);
 
         // verify that the relationship between student participation,
@@ -1347,8 +1369,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(
-            API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/result/" + submissionWithoutSecondAssessment.getResults().get(1).getId() + "/assessment",
-            feedbacks, Result.class, HttpStatus.OK, params);
+                API_MODELING_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/result/" + submissionWithoutSecondAssessment.getResults().get(1).getId() + "/assessment",
+                feedbacks, Result.class, HttpStatus.OK, params);
         assertThat(secondSubmittedManualResult).isNotNull();
 
         // make sure that new result correctly appears after the assessment for second correction round
@@ -1356,7 +1378,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         paramsGetAssessedCR2.add("assessedByTutor", "true");
         paramsGetAssessedCR2.add("correction-round", "1");
         assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
-            paramsGetAssessedCR2);
+                paramsGetAssessedCR2);
 
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
@@ -1367,7 +1389,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         paramsGetAssessedCR1.add("assessedByTutor", "true");
         paramsGetAssessedCR1.add("correction-round", "0");
         assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/modeling-submissions", HttpStatus.OK, ModelingSubmission.class,
-            paramsGetAssessedCR1);
+                paramsGetAssessedCR1);
 
         assertThat(assessedSubmissionList).isEmpty();
 
@@ -1388,28 +1410,28 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         params.add("submit", submit);
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + submission.getLatestResult().getId() + "/assessment", feedbacks,
-            Result.class, httpStatus, params);
+                Result.class, httpStatus, params);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "ADMIN")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "ADMIN")
     void overrideAssessment_inFirstCorrectionRoundByInstructor() throws Exception {
-        String student = "student1";
-        String originalAssessor = "tutor1";
+        String student = TEST_PREFIX + "student1";
+        String originalAssessor = TEST_PREFIX + "tutor1";
         HttpStatus httpStatus = HttpStatus.OK;
         String submit = "true";
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         submission = database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, student, originalAssessor);
 
-        Result newResult = database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin("tutor2"), null, true, null).getLatestResult();
+        Result newResult = database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "tutor2"), null, true, null).getLatestResult();
 
         resultRepo.save(submission.getLatestResult());
         var params = new LinkedMultiValueMap<String, String>();
         params.add("submit", submit);
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         request.putWithResponseBodyAndParams(API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + newResult.getId() + "/assessment", feedbacks, Result.class, httpStatus,
-            params);
+                params);
     }
 
     private void createAssessment(ModelingSubmission submission, List<Feedback> feedbacks, String urlEnding, HttpStatus expectedStatus) throws Exception {
@@ -1418,16 +1440,16 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void overrideAssessmentAfterComplaint() throws Exception {
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5),
-            ZonedDateTime.now().plusDays(8), DiagramType.ClassDiagram, course);
+                ZonedDateTime.now().plusDays(8), DiagramType.ClassDiagram, course);
         modelingExercise.setMaxPoints(10.0);
         modelingExercise.setBonusPoints(0.0);
         modelingExercise = exerciseRepo.saveAndFlush(modelingExercise);
 
         // creating participation of student1 by starting the exercise
-        User student1 = userRepo.findOneByLogin("student1").orElse(null);
+        User student1 = userRepo.findOneByLogin(TEST_PREFIX + "student1").orElse(null);
         StudentParticipation studentParticipation = participationService.startExercise(modelingExercise, student1, false);
 
         // creating submission of student1
@@ -1476,8 +1498,8 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         Result overwrittenResult = request.putWithResponseBodyAndParams(
-            API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + submission.getLatestResult().getId() + "/assessment", overrideFeedback, Result.class, HttpStatus.OK,
-            params);
+                API_MODELING_SUBMISSIONS + submission.getId() + "/result/" + submission.getLatestResult().getId() + "/assessment", overrideFeedback, Result.class, HttpStatus.OK,
+                params);
 
         assertThat(firstResult.getScore()).isEqualTo(50L); // first result was instantiated with a score of 50%
         assertThat(resultAfterComplaint.getScore()).isEqualTo(15L); // score after complaint evaluation got changed to 15%
@@ -1494,10 +1516,10 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismIdenticalLongModels() throws Exception {
-        database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
-        database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student2");
+        database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
+        database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student2");
         var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";
         var result = request.get(path, HttpStatus.OK, ModelingPlagiarismResult.class, database.getDefaultPlagiarismOptions());
         assertThat(result.getComparisons()).hasSize(1);
@@ -1512,10 +1534,11 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testdeleteResult() throws Exception {
-        Course course = database.addCourseWithOneExerciseAndSubmissions("modeling", 1, Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
+        Course course = database.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "modeling", 1,
+                Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
-        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
-        database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor2"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin(TEST_PREFIX + "tutor1"));
+        database.addAssessmentToExercise(exercise, database.getUserByLogin(TEST_PREFIX + "tutor2"));
 
         var submissions = database.getAllSubmissionsOfExercise(exercise);
         Submission submission = submissions.get(0);
@@ -1523,7 +1546,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         Result firstResult = submission.getResults().get(0);
         Result lastResult = submission.getLatestResult();
         request.delete("/api/participations/" + submission.getParticipation().getId() + "/modeling-submissions/" + submission.getId() + "/results/" + firstResult.getId(),
-            HttpStatus.OK);
+                HttpStatus.OK);
         submission = submissionRepository.findOneWithEagerResultAndFeedback(submission.getId());
         assertThat(submission.getResults()).hasSize(1);
         assertThat(submission.getResults().get(0)).isEqualTo(lastResult);

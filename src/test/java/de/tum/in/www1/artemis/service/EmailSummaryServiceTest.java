@@ -30,6 +30,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "emailsummaryservice";
+
     @Autowired
     private EmailSummaryService weeklyEmailSummaryService;
 
@@ -50,16 +52,16 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     private Exercise exerciseReleasedYesterdayAndNotYetDue;
 
-    private final static String USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN = "student1";
+    private final static String USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN = TEST_PREFIX + "student1";
 
-    private final static String USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN = "student2";
+    private final static String USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN = TEST_PREFIX + "student2";
 
     /**
      * Prepares the needed values and objects for testing
      */
     @BeforeEach
     void setUp() {
-        database.addUsers(2, 0, 0, 0);
+        database.addUsers(TEST_PREFIX, 2, 0, 0, 0);
 
         // preparation of the test data where a user deactivated weekly summaries
         User userWithDeactivatedWeeklySummaries = database.getUserByLogin(USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN);

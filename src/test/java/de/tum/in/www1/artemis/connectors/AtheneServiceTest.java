@@ -23,6 +23,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "atheneservice";
+
     @Autowired
     private AtheneRequestMockProvider atheneRequestMockProvider;
 
@@ -49,7 +51,7 @@ class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     @BeforeEach
     void init() {
         // Create example exercise
-        database.addUsers(10, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 10, 1, 0, 1);
         var course = database.addCourseWithOneReleasedTextExercise();
         exercise1 = (TextExercise) course.getExercises().iterator().next();
         atheneRequestMockProvider.enableMockingOfRequests();
@@ -76,7 +78,7 @@ class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         for (var i = 0; i < size; i++) {
             var textSubmission = textSubmissions.get(i);
             textSubmission.setId((long) (i + 1));
-            var student = database.getUserByLogin("student" + (i + 1));
+            var student = database.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
             var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise1, student);
             participation = participationRepository.save(participation);
             textSubmission.setParticipation(participation);
