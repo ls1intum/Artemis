@@ -38,7 +38,7 @@ export class LectureUpdateComponent implements OnInit {
     lecture: Lecture;
     isSaving: boolean;
     isProcessing: boolean;
-    processUnit: boolean;
+    processUnitMode: boolean;
     isShowingWizardMode: boolean;
 
     courses: Course[];
@@ -78,7 +78,7 @@ export class LectureUpdateComponent implements OnInit {
      */
     ngOnInit() {
         this.isSaving = false;
-        this.processUnit = false;
+        this.processUnitMode = false;
         this.isProcessing = false;
         this.isShowingWizardMode = false;
         this.activatedRoute.parent!.data.subscribe((data) => {
@@ -114,6 +114,7 @@ export class LectureUpdateComponent implements OnInit {
      */
     save() {
         this.isSaving = true;
+        this.isProcessing = true;
         if (this.lecture.id !== undefined) {
             this.subscribeToSaveResponse(this.lectureService.update(this.lecture));
         } else {
@@ -128,19 +129,13 @@ export class LectureUpdateComponent implements OnInit {
     toggleWizardMode() {
         this.isShowingWizardMode = !this.isShowingWizardMode;
     }
-    // ---------------------
+
     proceedToUnitSplit() {
-        this.isProcessing = true;
-        // this.save();
-        setTimeout(() => {
-            this.isProcessing = false;
-        }, 3000);
-        console.log('test');
-        this.router.navigate(['process-units'], { relativeTo: this.activatedRoute });
+        this.save();
     }
 
     onSelectProcessUnit() {
-        this.processUnit = !this.processUnit;
+        this.processUnitMode = !this.processUnitMode;
     }
 
     onFileChange(event: any): void {
@@ -149,10 +144,8 @@ export class LectureUpdateComponent implements OnInit {
             this.file = fileList[0];
             this.fileName = this.file.name;
         }
-        console.log(this.file);
-        console.log(this.fileName);
     }
-    // ---------------------
+
     /**
      * @callback Callback function after saving a lecture, handles appropriate action in case of error
      * @param result The Http response from the server
@@ -177,6 +170,11 @@ export class LectureUpdateComponent implements OnInit {
                     this.wizardComponent.onLectureCreationSucceeded();
                 },
             });
+        } else if (this.processUnitMode) {
+            console.log('test Unit mode');
+            this.isSaving = false;
+            this.isProcessing = false;
+            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process']);
         } else {
             this.isSaving = false;
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);

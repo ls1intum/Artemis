@@ -25,6 +25,8 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
+import org.apache.pdfbox.multipdf.Splitter;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -995,6 +997,48 @@ public class FileService implements DisposableBean {
             log.warn("Could not write given object in file {}", path);
         }
         return path;
+    }
+
+    public Optional<byte[]> splitPdfFile(MultipartFile file) {
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        // check for file type
+        String filename = file.getOriginalFilename();
+        if (filename == null) {
+            throw new IllegalArgumentException("Filename cannot be null");
+        }
+
+        try {
+            Splitter pdfSplitter = new Splitter();
+            PDDocument document = PDDocument.load(file.getBytes());
+
+            pdfSplitter.setStartPage(1);
+            pdfSplitter.setEndPage(3);
+
+            List<PDDocument> Pages = pdfSplitter.split(document);
+            Pages.get(0).save(outputStream);
+            // TODO: write a helper function to split the file based on the heuristics
+            // TODO: find a solution how to return multiple files as array
+            // Creating an iterator
+            // Iterator<PDDocument> iterator = Pages.listIterator();
+            //
+            // //Saving each page as an individual document
+            // int i = 1;
+            // while(iterator.hasNext()) {
+            // PDDocument pd = iterator.next();
+            //
+            // pd.save("C:/PdfBox_Examples/sample"+ i++ +".pdf");
+            // }
+            document.close();
+
+        }
+        catch (IOException e) {
+            log.warn("Could not split the file");
+            return Optional.empty();
+        }
+
+        return Optional.of(outputStream.toByteArray());
     }
 
     /**

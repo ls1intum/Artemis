@@ -61,15 +61,6 @@ export const lectureRoute: Routes = [
                 canActivate: [UserRouteAccessService],
             },
             {
-                path: 'new/process-units',
-                component: AttachmentUnitsComponent,
-                data: {
-                    authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'global.generic.process-units',
-                },
-                canActivate: [UserRouteAccessService],
-            },
-            {
                 path: ':lectureId',
                 component: LectureDetailComponent,
                 resolve: {

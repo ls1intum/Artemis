@@ -328,6 +328,23 @@ public class FileResource {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file.get());
     }
 
+    @PostMapping("fileUpload/lecture/{lectureId}/process-units")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<byte[]> splitLectureIntoUnits(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName,
+            @PathVariable String lectureId) {
+        log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
+
+        // TODO: split file into multiple files and return multiple files
+        Optional<byte[]> fileSplited = fileService.splitPdfFile(file);
+        if (fileSplited.isEmpty()) {
+            log.error("Failed to split PDF lecture units for lecture with id {}", lectureId);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(fileSplited.get());
+
+    }
+
     /**
      * GET files/attachments/attachment-unit/:attachmentUnitId/:filename : Get the lecture unit attachment
      *

@@ -80,7 +80,7 @@
                 <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.lecture.lectureFileToolTip' | artemisTranslate"></fa-icon>
             </div>
 
-            <div *ngIf="processUnit" class="form-group">
+            <div *ngIf="processUnitMode" class="form-group">
                 <label>{{ 'artemisApp.attachmentUnit.createAttachmentUnit.file' | artemisTranslate }}*</label>
                 <small id="fileHelp" class="form-text text-muted">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
                 <fa-icon
@@ -112,16 +112,16 @@
                     <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                         <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                     </button>
-                    <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnit" class="btn btn-primary">
+                    <button type="submit" id="save-entity" [disabled]="editForm.form.invalid || isSaving || processUnitMode" class="btn btn-primary">
                         <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                     </button>
                 </div>
-                <div *ngIf="processUnit" class="flex-grow-1 ms-3">
+                <div *ngIf="processUnitMode" class="flex-grow-1 ms-3">
                     <div class="process-units-button">
                         <button
                             type="button"
                             id="process-units-entity"
-                            [disabled]="editForm.form.invalid || isSaving || !processUnit || isProcessing"
+                            [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing"
                             class="btn btn-success"
                             (click)="proceedToUnitSplit()"
                         >
