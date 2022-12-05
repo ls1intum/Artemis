@@ -10,7 +10,7 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
 import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
-import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ActivatedRoute } from '@angular/router';
@@ -29,6 +29,7 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/e
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import dayjs from 'dayjs/esm';
+import { checkSubsequentFeedbackInAssessment } from 'app/exercises/shared/feedback/feedback.util';
 
 @Component({
     selector: 'jhi-code-editor-student',

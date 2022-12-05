@@ -4,7 +4,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { catchError, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
-import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
+import { Feedback } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
@@ -29,6 +29,7 @@ import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/it
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
 import { resultIsPreliminary } from '../result.utils';
 import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
+import { checkSubsequentFeedbackInAssessment } from 'app/exercises/shared/feedback/feedback.util';
 
 interface ChartData {
     xScaleMax: number;

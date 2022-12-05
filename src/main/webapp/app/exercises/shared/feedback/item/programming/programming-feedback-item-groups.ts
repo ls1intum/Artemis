@@ -50,6 +50,7 @@ class FeedbackItemGroupWarning extends FeedbackItemGroup {
  */
 class FeedbackItemGroupInfo extends FeedbackItemGroup {
     name = 'info';
+    open = false;
     color = 'var(--info)';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && (feedbackItem.credits === 0 || !feedbackItem.credits);
@@ -63,6 +64,7 @@ class FeedbackItemGroupInfo extends FeedbackItemGroup {
  */
 class FeedbackItemGroupCorrect extends FeedbackItemGroup {
     name = 'correct';
+    open = false;
     color = 'var(--success)';
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits > 0;
