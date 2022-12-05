@@ -1,16 +1,13 @@
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
 
 /*
  * A group of FeedbackItems as in the composite pattern.
  * NOTE: The following definition does not enforce that each group is disjunctive from each other
  */
-export abstract class FeedbackItemGroup {
+export abstract class FeedbackItemGroup implements FeedbackItemNode {
     name: string;
     members: FeedbackItem[] = [];
-
-    /**
-     * bootstrap color
-     */
     color: string;
     description: string;
     credits: number;
@@ -32,3 +29,7 @@ export abstract class FeedbackItemGroup {
         return this.members.length === 0;
     }
 }
+
+export const isFeedbackItemGroup = (node: FeedbackItem | FeedbackItemGroup): node is FeedbackItemGroup => {
+    return (node as FeedbackItemGroup).members !== undefined;
+};

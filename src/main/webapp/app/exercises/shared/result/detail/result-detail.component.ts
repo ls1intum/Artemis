@@ -30,6 +30,13 @@ import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service'
 import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 import { resultIsPreliminary } from '../result.utils';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
+
+interface ChartData {
+    xScaleMax: number;
+    scheme: Color;
+    results: NgxChartsMultiSeriesDataEntry[];
+}
 
 // Modal -> Result details view
 @Component({
@@ -86,15 +93,19 @@ export class ResultDetailComponent implements OnInit {
     commitHash?: string;
     commitUrl?: string;
 
-    ngxData: NgxChartsMultiSeriesDataEntry[] = [];
+    chartData: ChartData = {
+        xScaleMax: 100,
+        scheme: {
+            name: 'Feedback Detail',
+            selectable: true,
+            group: ScaleType.Ordinal,
+            domain: [GraphColors.GREEN, GraphColors.RED],
+        },
+        results: [],
+    };
+
+    // Static chart settings
     labels: string[];
-    ngxColors = {
-        name: 'Feedback Detail',
-        selectable: true,
-        group: ScaleType.Ordinal,
-        domain: [GraphColors.GREEN, GraphColors.RED],
-    } as Color;
-    xScaleMax = 100;
     legendPosition = LegendPosition.Below;
 
     feedbackItemService: FeedbackItemService;
@@ -186,7 +197,7 @@ export class ResultDetailComponent implements OnInit {
                         this.feedbackItemNodes = this.feedbackItemService.group(this.feedbackList);
 
                         if (this.showScoreChart) {
-                            this.updateChart(this.feedbackList);
+                            this.updateChart(this.feedbackItemNodes);
                         }
                     }
 
@@ -235,22 +246,54 @@ export class ResultDetailComponent implements OnInit {
         );
     };
 
+    private transformIntoChartData(feedbackNodes: FeedbackItemNode[]): ChartData {
+        // TODO: note that there are max penalty credits equal to
+        // const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
+        const maxPoints = (this.exercise?.maxPoints ?? 0) + (this.exercise?.bonusPoints ?? 0);
+        const score = feedbackNodes.reduce((acc, node) => acc + (node.credits ?? 0), 0);
+        const xScaleMax = Math.max(100, score);
+        const results: NgxChartsMultiSeriesDataEntry[] = [
+            {
+                name: 'scores',
+                series: feedbackNodes.map((node: FeedbackItemNode) => ({
+                    name: node.name,
+                    value: this.roundToDecimals((node.credits ?? 0) * maxPoints, 2),
+                })),
+            },
+        ];
+        const scheme: Color = {
+            name: 'Feedback Detail',
+            selectable: true,
+            group: ScaleType.Ordinal,
+            domain: feedbackNodes.map((node) => node.color ?? 'var(--white)'),
+            // TODO: undefined color
+            // TODO: Schema does not apply correctly
+        };
+
+        return {
+            xScaleMax,
+            results,
+            scheme,
+        };
+    }
+
+    private roundToDecimals(i: number, n: number) {
+        const f = 10 ** n;
+        return round(i, f);
+    }
+
     /**
-     * TODO: Update chart bases on this.feedbackNodes.credits
      * Calculates and updates the values of the score chart
-     * @param feedbackList The list of feedback items.
      * @private
+     * @param feedbackItemNodes
      */
-    private updateChart(feedbackList: FeedbackItem[]) {
-        if (!this.exercise || feedbackList.length === 0) {
+    private updateChart(feedbackItemNodes: FeedbackItemNode[]) {
+        if (!this.exercise || feedbackItemNodes.length === 0) {
             this.showScoreChart = false;
             return;
         }
 
-        // TODO: note that there are max penalty credits equal to
-        // const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
-
-        this.setValues(5, 4, 2, 15, 15);
+        this.chartData = this.transformIntoChartData(feedbackItemNodes);
     }
 
     getCommitHash(): string {
@@ -261,51 +304,5 @@ export class ResultDetailComponent implements OnInit {
         const projectKey = (this.exercise as ProgrammingExercise)?.projectKey;
         const programmingSubmission = this.result.submission as ProgrammingSubmission;
         return createCommitUrl(this.commitHashURLTemplate, projectKey, this.result.participation, programmingSubmission);
-    }
-
-    /**
-     * Updates the datasets of the charts with the correct values and colors.
-     * @param receivedPositive Sum of positive credits of the score
-     * @param appliedNegative Sum of applied negative credits
-     * @param receivedNegative Sum of received negative credits
-     * @param maxScore The relevant maximal points of the exercise
-     * @param maxScoreWithBonus The actual received points + optional bonus points
-     */
-    setValues(receivedPositive: number, appliedNegative: number, receivedNegative: number, maxScore: number, maxScoreWithBonus: number): void {
-        this.ngxData = [
-            {
-                name: this.translateService.instant('artemisApp.exercise.score'),
-                series: [
-                    { name: this.labels[0], value: 0, isPositive: true },
-                    { name: this.labels[1], value: 0, isPositive: false },
-                ],
-            },
-        ];
-        let appliedPositive = receivedPositive;
-
-        // cap to min and max values while maintaining correct negative points
-        if (appliedPositive - appliedNegative > maxScoreWithBonus) {
-            appliedPositive = maxScoreWithBonus;
-            appliedNegative = 0;
-        } else if (appliedPositive > maxScoreWithBonus) {
-            appliedNegative -= appliedPositive - maxScoreWithBonus;
-            appliedPositive = maxScoreWithBonus;
-        } else if (appliedPositive - appliedNegative < 0) {
-            appliedNegative = appliedPositive;
-        }
-        const score = this.roundToDecimals(((appliedPositive - appliedNegative) / maxScore) * 100, 2);
-        this.xScaleMax = Math.max(this.xScaleMax, score);
-        this.ngxData[0].series[0].value = score;
-        this.ngxData[0].series[0].name +=
-            ': ' + this.roundToDecimals(appliedPositive, 1) + (appliedPositive !== receivedPositive ? ` of ${this.roundToDecimals(receivedPositive, 1)}` : '');
-        this.ngxData[0].series[1].value = this.roundToDecimals((appliedNegative / maxScore) * 100, 2);
-        this.ngxData[0].series[1].name +=
-            ': ' + this.roundToDecimals(appliedNegative, 1) + (appliedNegative !== receivedNegative ? ` of ${this.roundToDecimals(receivedNegative, 1)}` : '');
-        this.ngxData = [...this.ngxData];
-    }
-
-    private roundToDecimals(i: number, n: number) {
-        const f = 10 ** n;
-        return round(i, f);
     }
 }

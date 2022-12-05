@@ -53,6 +53,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         const submissionPolicyTitle = feedback.text!.substring(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER.length);
 
         return {
+            name: 'Submission Policy',
             type: 'Submission Policy',
             category: this.translateService.instant('artemisApp.programmingExercise.submissionPolicy.title'),
             title: submissionPolicyTitle,
@@ -74,6 +75,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         const text = showTestDetails ? `${scaIssue.rule}: ${scaIssue.message}` : scaIssue.message;
 
         return {
+            name: 'Static Code Analysis',
             type: 'Static Code Analysis',
             category: this.translateService.instant('artemisApp.result.detail.codeIssue.name'),
             title: this.translateService.instant('artemisApp.result.detail.codeIssue.title', { scaCategory, location: this.getIssueLocation(scaIssue) }),
@@ -103,6 +105,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         }
 
         return {
+            name: 'Test',
             type: 'Test',
             category: showTestDetails ? this.translateService.instant('artemisApp.result.detail.test.name') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title,
@@ -122,6 +125,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         const gradingInstruction = feedback.gradingInstruction!;
 
         return {
+            name: feedback.isSubsequent ? 'Subsequent' : 'Feedback',
             type: feedback.isSubsequent ? 'Subsequent' : 'Feedback',
             category: showTestDetails ? this.translateService.instant('artemisApp.course.tutor') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
@@ -139,6 +143,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      */
     private createTutorFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         return {
+            name: 'Feedback', // TODO: should be reviewer
             type: 'Feedback', // TODO: should be reviewer
             category: showTestDetails ? this.translateService.instant('artemisApp.course.tutor') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,

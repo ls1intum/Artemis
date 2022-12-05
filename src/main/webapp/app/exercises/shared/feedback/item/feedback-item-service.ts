@@ -30,6 +30,7 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
         return feedbacks.map((feedback) => ({
+            name: 'Feedback',
             type: 'Feedback',
             category: this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,

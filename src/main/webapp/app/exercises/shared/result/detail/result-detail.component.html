@@ -46,15 +46,14 @@
                 <div id="feedback-chart" #containerRef class="chart-space">
                     <ngx-charts-bar-horizontal-stacked
                         [view]="[containerRef.offsetWidth, 80]"
-                        [results]="ngxData"
+                        [results]="chartData.results"
                         [xAxis]="true"
                         [xAxisTickFormatting]="xAxisFormatting"
-                        [xScaleMax]="xScaleMax"
+                        [xScaleMax]="chartData.xScaleMax"
                         [legend]="true"
                         [legendTitle]="''"
                         [legendPosition]="legendPosition"
                         [tooltipDisabled]="true"
-                        [scheme]="ngxColors"
                     >
                     </ngx-charts-bar-horizontal-stacked>
                 </div>

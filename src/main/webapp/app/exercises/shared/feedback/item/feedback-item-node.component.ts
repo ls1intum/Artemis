@@ -2,7 +2,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Component, Input, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
-import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
+import { FeedbackItemGroup, isFeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 
 @Component({
@@ -10,7 +10,7 @@ import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
     templateUrl: './feedback-item-node.component.html',
     styleUrls: ['./feedback-item-node.scss'],
 })
-export class FeedbackItemNode implements OnInit {
+export class FeedbackItemNodeComponent implements OnInit {
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     @Input() feedbackNode: FeedbackItem | FeedbackItemGroup;
@@ -24,14 +24,10 @@ export class FeedbackItemNode implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
 
     ngOnInit(): void {
-        if (!this.isFeedbackItemGroup(this.feedbackNode)) {
-            this.feedbackItem = this.feedbackNode;
-        } else {
+        if (isFeedbackItemGroup(this.feedbackNode)) {
             this.feedbackItemGroup = this.feedbackNode;
+        } else {
+            this.feedbackItem = this.feedbackNode;
         }
-    }
-
-    private isFeedbackItemGroup(node: FeedbackItem | FeedbackItemGroup): node is FeedbackItemGroup {
-        return (node as FeedbackItemGroup).members !== undefined;
     }
 }
