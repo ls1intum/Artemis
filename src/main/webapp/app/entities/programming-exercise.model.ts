@@ -55,6 +55,7 @@ export class ProgrammingExercise extends Exercise {
     public exerciseHints?: ExerciseHint[];
     public gitDiffReport?: ProgrammingExerciseGitDiffReport;
     public buildLogStatistics?: BuildLogStatisticsDTO;
+    public releaseTestsWithExampleSolution?: boolean;
 
     public buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
     public testCasesChanged?: boolean;

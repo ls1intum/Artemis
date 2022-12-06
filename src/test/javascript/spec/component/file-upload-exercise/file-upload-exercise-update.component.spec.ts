@@ -15,6 +15,8 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { Course } from 'app/entities/course.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockProvider } from 'ng-mocks';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('FileUploadExercise Management Update Component', () => {
     let comp: FileUploadExerciseUpdateComponent;
@@ -30,6 +32,7 @@ describe('FileUploadExercise Management Update Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: FileUploadExerciseService, useClass: MockFileUploadExerciseService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(TranslateService),
             ],
         })
