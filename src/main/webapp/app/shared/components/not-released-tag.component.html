@@ -2,6 +2,7 @@
     class="not-released-tag badge bg-warning"
     [class.ms-1]="!noMargin"
     *ngIf="exercise.releaseDate && dayjs(exercise.releaseDate).isAfter(dayjs())"
+    container="body"
     ngbTooltip="{{ 'artemisApp.courseOverview.exerciseList.notReleasedTooltip' | artemisTranslate }}{{ exercise.releaseDate | artemisDate }}"
 >
     {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
