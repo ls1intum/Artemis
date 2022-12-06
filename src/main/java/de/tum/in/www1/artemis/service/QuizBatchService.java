@@ -179,7 +179,7 @@ public class QuizBatchService {
                 return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
             }
             else if (quizExercise.getQuizMode() == QuizMode.BATCHED) {
-                return quizBatchRepository.findAllByExerciseIdAndStudentLogin(quizExercise, login).stream().findFirst();
+                return quizBatchRepository.findAllByQuizExerciseAndStudentLogin(quizExercise, login).stream().findFirst();
             }
         }
         if (quizExercise.getQuizBatches() != null && batchIdOptional.isPresent()) {
