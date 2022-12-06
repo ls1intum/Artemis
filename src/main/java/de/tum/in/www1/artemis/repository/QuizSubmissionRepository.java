@@ -34,6 +34,12 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
     @EntityGraph(type = LOAD, attributePaths = { "submittedAnswers" })
     QuizSubmission findWithEagerSubmittedAnswersById(@Param("submissionId") long submissionId);
 
+    /**
+     * Retrieve QuizSubmission for given quiz batch and studentLogin
+     * @param quizBatch the quiz batch for which QuizSubmission is to be retrieved
+     * @param studentLogin the login of the student for which QuizSubmission is to be retrieved
+     * @return QuizSubmission for given quiz batch and studentLogin
+     */
     @Query("""
             SELECT submission
             FROM QuizSubmission submission

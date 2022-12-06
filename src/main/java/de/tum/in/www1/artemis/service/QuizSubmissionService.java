@@ -234,6 +234,13 @@ public class QuizSubmissionService {
         return quizSubmission;
     }
 
+    /**
+     * Returns true if student has submitted at least once for the given quiz batch
+     *
+     * @param quizBatch the quiz batch of interest to check if submission exists
+     * @param login the student of interest to check if submission exists
+     * @return boolean the submission status of student for the given quiz batch
+     */
     public boolean isSubmitted(QuizBatch quizBatch, String login) {
         Set<QuizSubmission> submissions = quizSubmissionRepository.findAllByQuizBatchAndStudentLogin(quizBatch, login);
         if (submissions.stream().findFirst().isPresent()) {

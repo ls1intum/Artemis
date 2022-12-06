@@ -32,8 +32,8 @@ public interface QuizBatchRepository extends JpaRepository<QuizBatch, Long> {
     /**
      * Retrieve QuizBatch for given quiz exercise and studentLogin
      * @param quizExercise the quiz exercise for which QuizBatch is to be retrieved
-     * @param studentLogin the login of the student which QuizBatch is to be retrieved
-     * @return QuizBatch for given exerciseId and studentLogin
+     * @param studentLogin the login of the student for which QuizBatch is to be retrieved
+     * @return QuizBatch for given quiz exercise and studentLogin
      */
     @Query("""
             SELECT quizBatch
