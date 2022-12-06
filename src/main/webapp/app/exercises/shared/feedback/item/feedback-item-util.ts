@@ -10,22 +10,21 @@ export interface ChartData {
     results: NgxChartsMultiSeriesDataEntry[];
 }
 
+export const capCredits = (credits: number, maxCredits?: number): number => {
+    // no maxCredits or credits and maxCredits do not have the same sign;
+    if (!maxCredits || credits * maxCredits < 0) {
+        return credits;
+    }
+
+    const absCredits = Math.abs(credits);
+    const absMaxCredits = Math.abs(credits);
+    return Math.sign(credits) * Math.max(absCredits, absMaxCredits);
+};
+
 export const nodesToChartData = (feedbackNodes: FeedbackItemNode[], exercise: Exercise): ChartData => {
     const maxPoints = (exercise.maxPoints ?? 0) + (exercise.bonusPoints ?? 0);
     const score = feedbackNodes.reduce((acc, node) => acc + (node.credits ?? 0), 0);
     const xScaleMax = Math.max(100, score);
-
-    const capCredits = (credits: number, maxCredits?: number): number => {
-        // no maxCredits or credits and maxCredits do not have the same sign;
-        if (!maxCredits || credits * maxCredits < 0) {
-            return credits;
-        }
-
-        const absCredits = Math.abs(credits);
-        const absMaxCredits = Math.abs(credits);
-        return Math.sign(credits) * Math.max(absCredits, absMaxCredits);
-    };
-
     const results: NgxChartsMultiSeriesDataEntry[] = [
         {
             name: 'scores',
