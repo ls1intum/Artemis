@@ -45,6 +45,7 @@ import com.ibm.icu.text.CharsetDetector;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
+import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -1001,7 +1002,7 @@ public class FileService implements DisposableBean {
         return path;
     }
 
-    public Optional<List<LectureUnitSplitDTO>> splitPdfFile(MultipartFile file, String lectureId) {
+    public Optional<List<LectureUnitSplitDTO>> splitPdfFile(MultipartFile file, String lectureId) throws IOException {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         List<LectureUnitSplitDTO> units = new ArrayList<>();
@@ -1010,41 +1011,22 @@ public class FileService implements DisposableBean {
         if (filename == null) {
             throw new IllegalArgumentException("Filename cannot be null");
         }
+        PDDocument document = PDDocument.load(file.getBytes());
+        List<PDDocument> unitsDocument = separateIntoUnits(document);
 
-        try {
-
-            // Splitter pdfSplitter = new Splitter();
-            PDDocument document = PDDocument.load(file.getBytes());
-            PDFTextStripper pdfStripper = new PDFTextStripper();
-            // pdfSplitter.setStartPage(1);
-            // pdfSplitter.setEndPage(3);
-            // List<PDDocument> Pages = pdfSplitter.split(document);
-            // Pages.get(0).save(outputStream);
-            // TODO: call the healper function
-            List<PDDocument> unitsDocument = separateIntoUnits(document);
-
-            // Creating an iterator
-            Iterator<PDDocument> iterator = unitsDocument.listIterator();
-
-            int i = 1;
-            while (iterator.hasNext()) {
-
-                PDDocument pd = iterator.next();
-                System.out.println(pdfStripper.getText(pd));
-                pd.save(outputStream);
-                LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO();
-                newLectureUnit.setFile(outputStream.toByteArray());
-                newLectureUnit.setAttachmentName("test");
-                newLectureUnit.setDescription("test description");
-                units.add(newLectureUnit);
-                outputStream.reset();
-            }
-            document.close();
+        for (PDDocument doc : unitsDocument) {
+            doc.save(outputStream);
+            LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO();
+            newLectureUnit.setFile(outputStream.toByteArray());
+            newLectureUnit.setAttachmentName(doc.getDocumentInformation().getTitle());
+            newLectureUnit.setDescription(doc.getDocumentInformation().getSubject());
+            units.add(newLectureUnit);
+            outputStream.reset();
+            doc.close();
         }
-        catch (IOException e) {
-            log.warn("Could not split the file");
-            return Optional.empty();
-        }
+
+        document.close();
+
         return Optional.of(units);
     }
 
@@ -1053,31 +1035,81 @@ public class FileService implements DisposableBean {
         return "";
     }
 
+    private PDDocument removeBreakSlidesFromFile(PDDocument document) throws IOException {
+        Splitter pdfSplitter = new Splitter();
+        PDFTextStripper pdfStripper = new PDFTextStripper();
+        List<PDDocument> Pages = pdfSplitter.split(document);
+
+        PDDocument newDocument = new PDDocument();
+
+        for (PDDocument pd : Pages) {
+            String slideText = pdfStripper.getText(pd);
+            if (slideText.contains("Break")) {
+                continue;
+            }
+            newDocument.addPage(pdfStripper.getCurrentPage());
+        }
+        document.close();
+        return newDocument;
+    }
+
     private List<PDDocument> separateIntoUnits(PDDocument document) throws IOException {
+        // Store unit information like -> (outline: 1, startPage: 4, endPage: 22) for all units
+        Map<Integer, Tuple<Integer, Integer>> outlineMap = new HashMap<>();
+
         Splitter pdfSplitter = new Splitter();
         PDFTextStripper pdfStripper = new PDFTextStripper();
         List<PDDocument> Pages = pdfSplitter.split(document);
 
         List<PDDocument> units = new ArrayList<>();
-        PDDocument unit = new PDDocument();
-
-        // Creating an iterator
         Iterator<PDDocument> iterator = Pages.listIterator();
+
         int outlineCount = 0;
-        int outlineCountPrevious = 0;
+        int index = 1;
         while (iterator.hasNext()) {
-            // TODO: split logic
             PDDocument pd = iterator.next();
             String slideText = pdfStripper.getText(pd);
 
             if (slideText.contains("Outline")) {
                 outlineCount++;
+
+                outlineMap.put(outlineCount, new Tuple<>(index, document.getNumberOfPages()));
+                if (outlineCount > 1) {
+                    int previousOutlineCount = outlineCount - 1;
+                    int previousStart = outlineMap.get(previousOutlineCount).x();
+                    outlineMap.remove(previousOutlineCount);
+                    outlineMap.put(previousOutlineCount, new Tuple<>(previousStart, index - 1));
+                }
             }
-
-            unit.addPage(pdfStripper.getCurrentPage());
-
+            index++;
         }
-        document.close();
+
+        outlineMap.forEach((k, v) -> System.out.println((k + ":" + v)));
+        outlineMap.forEach((k, v) -> {
+            PDDocument unit = new PDDocument();
+            PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
+            try {
+
+                pdfSplitter.setStartPage(v.x());
+                pdfSplitter.setEndPage(v.y());
+
+                List<PDDocument> documentUnits = pdfSplitter.split(document);
+                documentUnits.forEach(doc -> unit.addPage(doc.getPage(0)));
+
+                pdDocumentInformation.setTitle("unitFileName:" + k);
+                pdDocumentInformation.setSubject("Description test:" + k);
+                pdDocumentInformation.setKeywords((v.x() + ":" + v.y()));
+                unit.setDocumentInformation(pdDocumentInformation);
+                unit.addPage(pdfStripper.getCurrentPage());
+                units.add(unit);
+
+            }
+            catch (IOException e) {
+                log.warn("Could not generate " + k + ". unit");
+                throw new RuntimeException(e);
+            }
+        });
+
         return units;
     }
 

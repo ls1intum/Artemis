@@ -332,7 +332,7 @@ public class FileResource {
     @PostMapping("fileUpload/lecture/{lectureId}/process-units")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Optional<List<LectureUnitSplitDTO>>> splitLectureIntoUnits(@RequestParam(value = "file") MultipartFile file,
-            @RequestParam(defaultValue = "false") boolean keepFileName, @PathVariable String lectureId) {
+            @RequestParam(defaultValue = "false") boolean keepFileName, @PathVariable String lectureId) throws IOException {
         log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
 
         // TODO: split file into multiple files and return multiple files
