@@ -147,8 +147,8 @@ public class ExerciseResource {
      * if the user is allowed to access the example solution and if the example solution is published.
      *
      * @param exerciseId the exerciseId of the exercise with the example solution
-     * @return the ResponseEntity with status 200 (OK) and with body the exercise with its example solution after filtering sensitive data, or with
-     * status 404 (Not Found) is the exercise is not found, or with status 403 (Forbidden) if the current user does not have access to the example solution.
+     * @return the ResponseEntity with status 200 (OK) and with the body of the exercise with its example solution after filtering sensitive data, or with
+     * status 404 (Not Found) if the exercise is not found, or with status 403 (Forbidden) if the current user does not have access to the example solution.
      */
     @GetMapping("/exercises/{exerciseId}/example-solution")
     @PreAuthorize("hasRole('USER')")

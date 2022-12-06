@@ -355,7 +355,7 @@
             "courseName": "Kursname",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
-            "exampleSolutionPublicationDateTooltip": "Studierenden können die Beispiellösungen für alle Aufgaben in der Klausur ab diesem Zeitpunkt einsehen, wenn sie an der Klausur teilgenommen haben. Zum Deaktivieren leer lassen.",
+            "exampleSolutionPublicationDateTooltip": "Studierende können die Beispiellösungen für alle Aufgaben in der Klausur ab diesem Zeitpunkt einsehen, wenn sie an der Klausur teilgenommen haben. Zum Deaktivieren leer lassen.",
             "studentReviewEnabled": "Klausureinsicht ist möglich",
             "maxPoints": {
                 "title": "Erreichbare Punktzahl",
