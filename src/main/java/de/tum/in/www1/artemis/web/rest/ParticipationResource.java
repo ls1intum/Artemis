@@ -109,6 +109,8 @@ public class ParticipationResource {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final QuizSubmissionService quizSubmissionService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
@@ -116,7 +118,8 @@ public class ParticipationResource {
             AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
-            QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService) {
+            QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService,
+            QuizSubmissionService quizSubmissionService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -140,6 +143,7 @@ public class ParticipationResource {
         this.quizScheduleService = quizScheduleService;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.groupNotificationService = groupNotificationService;
+        this.quizSubmissionService = quizSubmissionService;
     }
 
     /**
@@ -668,7 +672,8 @@ public class ParticipationResource {
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             quizExercise.filterForStudentsDuringQuiz();
-            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), quizBatch.get().isSubmitted());
+            boolean isSubmitted = quizSubmissionService.isSubmitted(quizBatch.get(), user.getLogin());
+            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), isSubmitted);
             // set view
             var view = quizExercise.viewForStudentsInQuizExercise(quizBatch.get());
             MappingJacksonValue value = new MappingJacksonValue(participation);

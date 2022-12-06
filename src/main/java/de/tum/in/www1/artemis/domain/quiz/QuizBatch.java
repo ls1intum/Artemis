@@ -44,7 +44,7 @@ public class QuizBatch extends DomainObject {
     @JsonIgnore
     private QuizExercise quizExercise;
 
-    @OneToMany(mappedBy = "quizBatch", fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "quizBatch")
     @JsonIgnore
     private Set<QuizSubmission> quizSubmissions;
 
@@ -80,17 +80,6 @@ public class QuizBatch extends DomainObject {
 
     public void setQuizExercise(QuizExercise quizExercise) {
         this.quizExercise = quizExercise;
-    }
-
-    public boolean isSubmitted() {
-        if (getQuizSubmissions() != null && getQuizSubmissions().stream().findFirst().isPresent()) {
-            return getQuizSubmissions().stream().findFirst().get().isSubmitted();
-        }
-        return false;
-    }
-
-    public Set<QuizSubmission> getQuizSubmissions() {
-        return quizSubmissions;
     }
 
     /**
