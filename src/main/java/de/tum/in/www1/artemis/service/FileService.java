@@ -1012,17 +1012,19 @@ public class FileService implements DisposableBean {
         }
 
         try {
-            Splitter pdfSplitter = new Splitter();
+
+            // Splitter pdfSplitter = new Splitter();
             PDDocument document = PDDocument.load(file.getBytes());
             PDFTextStripper pdfStripper = new PDFTextStripper();
-            pdfSplitter.setStartPage(1);
-            pdfSplitter.setEndPage(3);
-            List<PDDocument> Pages = pdfSplitter.split(document);
-            Pages.get(0).save(outputStream);
+            // pdfSplitter.setStartPage(1);
+            // pdfSplitter.setEndPage(3);
+            // List<PDDocument> Pages = pdfSplitter.split(document);
+            // Pages.get(0).save(outputStream);
             // TODO: call the healper function
+            List<PDDocument> unitsDocument = separateIntoUnits(document);
 
             // Creating an iterator
-            Iterator<PDDocument> iterator = Pages.listIterator();
+            Iterator<PDDocument> iterator = unitsDocument.listIterator();
 
             int i = 1;
             while (iterator.hasNext()) {
@@ -1034,9 +1036,7 @@ public class FileService implements DisposableBean {
                 newLectureUnit.setFile(outputStream.toByteArray());
                 newLectureUnit.setAttachmentName("test");
                 newLectureUnit.setDescription("test description");
-
                 units.add(newLectureUnit);
-
                 outputStream.reset();
             }
             document.close();
@@ -1048,7 +1048,7 @@ public class FileService implements DisposableBean {
         return Optional.of(units);
     }
 
-    private String extractInformationFromUnit(List<PDDocument> slides) {
+    private String extractInformationFromUnit(PDDocument slides) {
         // TODO: impl to extract information of one unit and return the object
         return "";
     }
