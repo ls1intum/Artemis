@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -301,26 +300,5 @@ public class LectureResource {
         log.debug("REST request to delete Lecture : {}", id);
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
-    }
-
-    /**
-     * POST /lectures : Split Lecture into Units.////
-     *
-     * @param lecture the lecture to split
-     * @param file the pdf to split
-     * @return the ResponseEntity with status 201 (Created) and with body the new lecture, or with status 400 (Bad Request) if the lecture has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping("/lectures/split")
-    @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Lecture> processLectureUnits(@RequestBody Lecture lecture, @RequestParam File file) throws URISyntaxException {
-        log.debug("REST request to process Lecture Units : {}", lecture);
-        // if (lecture.getId() != null) {
-        // throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
-        // }
-        // authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
-        //
-        Lecture result = lectureRepository.save(lecture);
-        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
     }
 }
