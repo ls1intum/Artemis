@@ -44,7 +44,9 @@ class FeedbackItemGroupWrong extends FeedbackItemGroup {
     }
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        return feedbackItem.type === 'Test' && feedbackItem.credits !== undefined && feedbackItem.credits < 0;
+        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits && feedbackItem.credits < 0;
+        const isTestFeedback = feedbackItem.type === 'Test' && feedbackItem.credits !== undefined && feedbackItem.credits < 0;
+        return isReviewerFeedback || isTestFeedback;
     }
 }
 

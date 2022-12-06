@@ -118,7 +118,6 @@ export class ResultDetailComponent implements OnInit {
     /**
      * Load the result feedbacks if necessary and assign them to the component.
      * When a result has feedbacks assigned to it, no server call will be executed.
-     *
      */
     ngOnInit(): void {
         this.isLoading = true;
@@ -173,10 +172,6 @@ export class ResultDetailComponent implements OnInit {
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
-                    /*
-                     * If we have feedback, filter it if needed, distinguish between test case and static code analysis
-                     * feedback and assign the lists to the component
-                     */
                     if (feedbacks && feedbacks.length) {
                         this.result.feedbacks = feedbacks!;
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
