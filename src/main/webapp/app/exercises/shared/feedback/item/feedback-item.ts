@@ -5,6 +5,7 @@ export type FeedbackItemType = 'Test' | 'Static Code Analysis' | 'Reviewer' | 'S
 export class FeedbackItem implements FeedbackItemNode {
     name: string;
     credits: number | undefined;
+    maxCredits?: number;
     type: FeedbackItemType;
     title?: string; // this is typically feedback.text
     text?: string; // this is typically feedback.detailText

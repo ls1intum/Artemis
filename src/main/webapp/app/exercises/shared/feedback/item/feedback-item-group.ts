@@ -9,8 +9,9 @@ export abstract class FeedbackItemGroup implements FeedbackItemNode {
     name: string;
     members: FeedbackItem[] = [];
     color: string;
-    description: string;
     credits: number;
+    maxCredits?: number;
+    description: string;
     /**
      * Whether the detail is open by default
      */
@@ -18,19 +19,23 @@ export abstract class FeedbackItemGroup implements FeedbackItemNode {
 
     abstract shouldContain(feedbackItem: FeedbackItem): boolean;
 
+    /**
+     * Adds all feedback items to members and recalculates the credits of this group
+     * @param feedbackItems
+     */
     addAllItems(feedbackItems: FeedbackItem[]): FeedbackItemGroup {
         this.members = [...this.members, ...feedbackItems];
-        return this;
-    }
-
-    calculateCredits(): FeedbackItemGroup {
-        // TODO: check what credits are
-        this.credits = this.members.reduce((acc, item) => acc + (item.credits ?? 0), 0);
+        this.calculateCredits();
         return this;
     }
 
     isEmpty(): boolean {
         return this.members.length === 0;
+    }
+
+    private calculateCredits(): FeedbackItemGroup {
+        this.credits = this.members.reduce((acc, item) => acc + (item.credits ?? 0), 0);
+        return this;
     }
 }
 

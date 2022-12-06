@@ -6,6 +6,7 @@ import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue
 import { getAllFeedbackItemGroups } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item-groups';
 import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { Exercise } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingFeedbackItemService implements FeedbackItemService {
@@ -15,13 +16,9 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         return feedbacks.map((feedback) => this.createFeedbackItem(feedback, showTestDetails));
     }
 
-    group(feedbackItems: FeedbackItem[]): FeedbackItemGroup[] {
-        return getAllFeedbackItemGroups() //
-            .map((group) =>
-                group
-                    .addAllItems(feedbackItems.filter(group.shouldContain)) //
-                    .calculateCredits(),
-            )
+    group(feedbackItems: FeedbackItem[], exercise: Exercise): FeedbackItemGroup[] {
+        return getAllFeedbackItemGroups(exercise) //
+            .map((group) => group.addAllItems(feedbackItems.filter(group.shouldContain)))
             .filter((group) => !group.isEmpty());
     }
 
@@ -138,7 +135,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
      */
     private createTutorFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         return {
-            type: 'Feedback', // TODO: should be reviewer
+            type: 'Reviewer',
             name: showTestDetails ? this.translateService.instant('artemisApp.course.tutor') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
             text: feedback.detailText,

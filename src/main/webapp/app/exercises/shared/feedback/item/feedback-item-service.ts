@@ -3,6 +3,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { Exercise } from 'app/entities/exercise.model';
 
 export interface FeedbackItemService {
     /**
@@ -15,8 +16,9 @@ export interface FeedbackItemService {
     /**
      * Uses {@link FeedbackItemGroup} predicate shouldContain and adds all that fulfill this predicate to its group
      * @param feedbackItems to be added to groups
+     * @param exercise containing information needed to configure the {@link FeedbackItemGroup}
      */
-    group(feedbackItems: FeedbackItem[]): (FeedbackItem | FeedbackItemGroup)[];
+    group(feedbackItems: FeedbackItem[], exercise: Exercise): (FeedbackItem | FeedbackItemGroup)[];
 }
 
 @Injectable({ providedIn: 'root' })

@@ -1,20 +1,32 @@
 import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { Exercise } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 /**
  * Returns all FeedbackItemGroups for Programming exercises
  */
-export const getAllFeedbackItemGroups = (): FeedbackItemGroup[] => {
-    return [new FeedbackItemGroupWrong(), new FeedbackItemGroupWarning(), new FeedbackItemGroupInfo(), new FeedbackItemGroupMissing(), new FeedbackItemGroupCorrect()];
+export const getAllFeedbackItemGroups = (exercise: Exercise): FeedbackItemGroup[] => {
+    return [
+        new FeedbackItemGroupWrong(),
+        new FeedbackItemGroupWarning(exercise),
+        new FeedbackItemGroupInfo(),
+        new FeedbackItemGroupMissing(),
+        new FeedbackItemGroupCorrect(exercise),
+    ];
 };
 
 /**
  * Automated feedbacks with no influence on final score
  */
 class FeedbackItemGroupMissing extends FeedbackItemGroup {
-    name = 'missing';
-    open = true;
-    color = 'var(--secondary)';
+    constructor() {
+        super();
+        this.name = 'missing';
+        this.color = 'var(--secondary)';
+        this.open = true;
+    }
+
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return feedbackItem.type === 'Test' && (feedbackItem.credits === 0 || !feedbackItem.credits);
     }
@@ -24,9 +36,13 @@ class FeedbackItemGroupMissing extends FeedbackItemGroup {
  * Negative feedbacks that are not SCA
  */
 class FeedbackItemGroupWrong extends FeedbackItemGroup {
-    name = 'wrong';
-    open = true;
-    color = 'var(--danger)';
+    constructor() {
+        super();
+        this.name = 'wrong';
+        this.color = 'var(--danger)';
+        this.open = true;
+    }
+
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return feedbackItem.type === 'Test' && feedbackItem.credits !== undefined && feedbackItem.credits < 0;
     }
@@ -36,9 +52,16 @@ class FeedbackItemGroupWrong extends FeedbackItemGroup {
  * Negative feedbacks that are SCA
  */
 class FeedbackItemGroupWarning extends FeedbackItemGroup {
-    name = 'warning';
-    open = true;
-    color = 'var(--warning)';
+    constructor(exercise: Exercise) {
+        super();
+        this.name = 'warning';
+        this.color = 'var(--warning)';
+
+        const programmingExercise = exercise as ProgrammingExercise;
+        this.maxCredits = programmingExercise.maxStaticCodeAnalysisPenalty && programmingExercise.maxStaticCodeAnalysisPenalty * programmingExercise.maxPoints!;
+        this.open = true;
+    }
+
     shouldContain(feedbackItem: FeedbackItem): boolean {
         return feedbackItem.type === 'Static Code Analysis';
     }
@@ -49,9 +72,13 @@ class FeedbackItemGroupWarning extends FeedbackItemGroup {
  * - Subsequent feedback
  */
 class FeedbackItemGroupInfo extends FeedbackItemGroup {
-    name = 'info';
-    open = false;
-    color = 'var(--info)';
+    constructor() {
+        super();
+        this.name = 'info';
+        this.color = 'var(--info)';
+        this.open = false;
+    }
+
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && (feedbackItem.credits === 0 || !feedbackItem.credits);
         const isSubsequentFeedback = feedbackItem.type === 'Subsequent';
@@ -60,12 +87,18 @@ class FeedbackItemGroupInfo extends FeedbackItemGroup {
 }
 
 /**
- * Positive impact on grade
+ * - Positive credits from Reviewer
+ * - Positive credits from Test cases
  */
 class FeedbackItemGroupCorrect extends FeedbackItemGroup {
-    name = 'correct';
-    open = false;
-    color = 'var(--success)';
+    constructor(exercise: Exercise) {
+        super();
+        this.name = 'correct';
+        this.color = 'var(--success)';
+        this.maxCredits = exercise.maxPoints! + (exercise.bonusPoints ?? 0);
+        this.open = false;
+    }
+
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits > 0;
         const isTestFeedback = feedbackItem.type === 'Test' && feedbackItem.credits !== undefined && feedbackItem.credits > 0;

@@ -14,13 +14,12 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { createCommitUrl, isProgrammingExerciseParticipation } from 'app/exercises/programming/shared/utils/programming-exercise.utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { round, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { Color, LegendPosition, ScaleType } from '@swimlane/ngx-charts';
+import { LegendPosition, ScaleType } from '@swimlane/ngx-charts';
 import { faCircleNotch, faExclamationTriangle, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { GraphColors } from 'app/entities/statistics.model';
-import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
@@ -30,12 +29,7 @@ import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service'
 import { resultIsPreliminary } from '../result.utils';
 import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
 import { checkSubsequentFeedbackInAssessment } from 'app/exercises/shared/feedback/feedback.util';
-
-interface ChartData {
-    xScaleMax: number;
-    scheme: Color;
-    results: NgxChartsMultiSeriesDataEntry[];
-}
+import { ChartData, nodesToChartData } from 'app/exercises/shared/feedback/item/feedback-item-util';
 
 // Modal -> Result details view
 @Component({
@@ -188,7 +182,8 @@ export class ResultDetailComponent implements OnInit {
                         const filteredFeedback = this.feedbackService.filterFeedback(feedbacks, this.feedbackFilter);
                         checkSubsequentFeedbackInAssessment(filteredFeedback);
 
-                        this.feedbackItemNodes = this.feedbackItemService.group(this.feedbackItemService.create(filteredFeedback, this.showTestDetails));
+                        const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
+                        this.feedbackItemNodes = this.feedbackItemService.group(feedbackItems, this.exercise!);
 
                         if (this.showScoreChart) {
                             this.updateChart(this.feedbackItemNodes);
@@ -240,53 +235,13 @@ export class ResultDetailComponent implements OnInit {
         );
     };
 
-    private transformIntoChartData(feedbackNodes: FeedbackItemNode[]): ChartData {
-        // TODO: note that there are max penalty credits equal to
-        // const maxPenaltyCredits = (maxPoints * programmingExercise.maxStaticCodeAnalysisPenalty) / 100;
-        const maxPoints = (this.exercise?.maxPoints ?? 0) + (this.exercise?.bonusPoints ?? 0);
-        const score = feedbackNodes.reduce((acc, node) => acc + (node.credits ?? 0), 0);
-        const xScaleMax = Math.max(100, score);
-        const results: NgxChartsMultiSeriesDataEntry[] = [
-            {
-                name: 'scores',
-                series: feedbackNodes.map((node: FeedbackItemNode) => ({
-                    name: node.name,
-                    value: this.roundToDecimals((node.credits ?? 0) * maxPoints, 2),
-                })),
-            },
-        ];
-        const scheme: Color = {
-            name: 'Feedback Detail',
-            selectable: true,
-            group: ScaleType.Ordinal,
-            domain: feedbackNodes.map((node) => node.color ?? 'var(--white)'),
-            // TODO: undefined color
-        };
-
-        return {
-            xScaleMax,
-            results,
-            scheme,
-        };
-    }
-
-    private roundToDecimals(i: number, n: number) {
-        const f = 10 ** n;
-        return round(i, f);
-    }
-
-    /**
-     * Calculates and updates the values of the score chart
-     * @private
-     * @param feedbackItemNodes
-     */
     private updateChart(feedbackItemNodes: FeedbackItemNode[]) {
         if (!this.exercise || feedbackItemNodes.length === 0) {
             this.showScoreChart = false;
             return;
         }
 
-        this.chartData = this.transformIntoChartData(feedbackItemNodes);
+        this.chartData = nodesToChartData(feedbackItemNodes, this.exercise!);
     }
 
     getCommitHash(): string {
