@@ -88,9 +88,9 @@
         </div>
     </div>
     <div class="answer-border" cdkDropList (cdkDropListDropped)="onReorderAnswerOptionDrop($event)">
-        <div class="answer-border" *ngFor="let answer of question.answerOptions" cdkDrag>
+        <div class="answer-border" *ngFor="let answer of question.answerOptions">
             <div class="question-options">
-                <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%">
+                <span class="answer-handle re-evaluate-order-button text-center" style="width: 5%" cdkDrag>
                     <fa-icon [icon]="faArrowsAltV" size="2x"></fa-icon>
                 </span>
                 <jhi-markdown-editor
