@@ -277,8 +277,6 @@ describe('QuizExercise Re-evaluate Component', () => {
     });
 
     it('should be valid when mc option is marked as invalid', () => {
-        const course = new Course();
-        const quizExercise = new QuizExercise(course, undefined);
         quizExercise.title = 'Test';
         quizExercise.duration = 100;
         const question = new MultipleChoiceQuestion();
