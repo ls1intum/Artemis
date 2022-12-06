@@ -699,7 +699,7 @@ public class QuizExercise extends Exercise {
         if (isQuizEnded()) {
             return QuizView.After.class;
         }
-        else if (batch != null && batch.isStarted()) {
+        else if (batch != null && batch.isSubmissionAllowed()) {
             return QuizView.During.class;
         }
         else {

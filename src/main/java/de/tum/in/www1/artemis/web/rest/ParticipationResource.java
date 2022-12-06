@@ -662,7 +662,7 @@ public class ParticipationResource {
         quizExercise.setQuizBatches(null); // not available here
         var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
 
-        if (quizBatch.isPresent() && quizBatch.get().isStarted()) {
+        if (quizBatch.isPresent() && quizBatch.get().isSubmissionAllowed()) {
             // Quiz is active => construct Participation from
             // filtered quizExercise and submission from HashMap
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
