@@ -94,7 +94,7 @@ public class ModelingSubmissionService extends SubmissionService {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
         final var participation = optionalParticipation.get();
-        final var dueDate = exerciseDateService.getDueDate(participation);
+        final var dueDate = ExerciseDateService.getDueDate(participation);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
         if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
             throw new AccessForbiddenException();

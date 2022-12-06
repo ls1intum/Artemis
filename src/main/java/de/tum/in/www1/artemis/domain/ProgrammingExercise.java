@@ -137,8 +137,7 @@ public class ProgrammingExercise extends Exercise {
      * This is currently only supported for HASKELL and OCAML on BAMBOO, thus the default value is false.
      */
     @Transient
-    @JsonProperty
-    private boolean checkoutSolutionRepository = false;
+    private boolean checkoutSolutionRepositoryTransient = false;
 
     /**
      * Convenience getter. The actual URL is stored in the {@link TemplateProgrammingExerciseParticipation}
@@ -688,11 +687,11 @@ public class ProgrammingExercise extends Exercise {
     }
 
     public boolean getCheckoutSolutionRepository() {
-        return this.checkoutSolutionRepository;
+        return this.checkoutSolutionRepositoryTransient;
     }
 
     public void setCheckoutSolutionRepository(boolean checkoutSolutionRepository) {
-        this.checkoutSolutionRepository = checkoutSolutionRepository;
+        this.checkoutSolutionRepositoryTransient = checkoutSolutionRepository;
     }
 
     /**

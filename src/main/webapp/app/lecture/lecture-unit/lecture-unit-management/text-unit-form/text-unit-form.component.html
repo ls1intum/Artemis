@@ -14,7 +14,11 @@
                 </div>
             </div>
             <div class="form-group">
-                <jhi-date-time-picker id="release-date" [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate" formControlName="releaseDate"></jhi-date-time-picker>
+                <jhi-date-time-picker
+                    id="pick-releaseDate"
+                    [labelName]="'artemisApp.lectureUnit.releaseDate' | artemisTranslate"
+                    formControlName="releaseDate"
+                ></jhi-date-time-picker>
             </div>
             <div class="form-group">
                 <label class="d-block" for="content">{{ 'artemisApp.textUnit.createTextUnit.content' | artemisTranslate }}</label>

@@ -84,7 +84,8 @@ which is a platform for cluster management with an easy to use user interface.
 
    You should also write the cluster configuration into the KUBECONFIG_FILE.
    This configuration will be later needed when you are creating deployments.
-   You can either set the path to the file as an environment variable or replace it with "<path-to-kubeconfig-file>" when needed.
+   You can either set the path to the file as an environment variable or replace it with "<path-to-kubeconfig-file>"
+   when needed.
 
    **For macOS/Linux**:
 
@@ -221,7 +222,8 @@ Create DockerHub Repository
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The Artemis image will be stored and managed in DockerHub. Kubernetes will pull it from there and deploy it afterwards.
 
-After you log in to your `DockerHub <https://hub.docker.com/>`__ account you can create as many public repositories as you want.
+After you log in to your `DockerHub <https://hub.docker.com/>`__ account you can create as many public repositories
+as you want.
 To create a repository you need to select the ``Create repository`` button.
 
 
@@ -238,7 +240,8 @@ Then fill in the repository name with ``artemis``. Then use the ``Create`` butto
 Configure Docker ID (username)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The username in DockerHub is called Docker ID.
-You need to set your Docker ID in the ``artemis-deployment.yml`` resource so that Kubernetes knows where to pull the image from.
+You need to set your Docker ID in the ``artemis-deployment.yml`` resource so that Kubernetes knows
+where to pull the image from.
 Open the ``src/main/kubernetes/artemis/deployment/artemis-deployment.yml`` file and edit
 
    ::
@@ -268,18 +271,22 @@ You can either run it with Jira, Bitbucket, Bamboo or Jenkins, GitLab.
 Make sure to configure the ``src/main/resources/config/application-artemis.yml`` file with the proper configuration
 for User Management, Version Control and Continuous Integration.
 
-You should skip setting the passwords and token since the Docker image that we are going to build is going to include those secrets.
+You should skip setting the passwords and token since the Docker image that we are going to build is going to include
+those secrets.
 You can refer to chapter ``Add/Edit Secrets`` for setting those values.
 
-If you want to configure Artemis with ``Bitbucket, Jira, Bamboo`` you can set a connection to existing staging or production deployments.
-If you want to configure Artemis with local user management and no programming exercises continue with ``Configure Local User Management``.
+If you want to configure Artemis with ``Bitbucket, Jira, Bamboo`` you can set a connection to existing staging or
+production deployments.
+If you want to configure Artemis with local user management and no programming exercises continue with
+``Configure Local User Management``.
 
 Configure Local User Management
 """""""""""""""""""""""""""""""
 
 If you want to run with local user management and no programming exercises setup follow the steps:
 
-1. Go to the ``src/main/resources/config/application-artemis.yml`` file, and set use-external in the user-management section to false.
+1. Go to the ``src/main/resources/config/application-artemis.yml`` file, and set use-external in
+the user-management section to false.
 If you have created an additional ``application-local.yml`` file as it is described in the
 `Setup documentation <https://docs.artemis.ase.in.tum.de/dev/setup/#server-setup>`__, make sure to edit this one.
 
@@ -411,12 +418,14 @@ As said before this is because a self-signed certificate is used and it is safe 
 
 It takes several minutes for the application to start.
 If you get a "Bad Gateway" error it may happen that the application has not been started yet.
-Wait several minutes and if you still have this issue or another one you can check out the pod logs (described in the next chapter).
+Wait several minutes and if you still have this issue or another one you can check out the pod logs
+(described in the next chapter).
 
 Check out the Logs
 ^^^^^^^^^^^^^^^^^^
 Open the workload which logs you need to check.
-There is a list of pods. Open the menu for one of the pods and select ``View Logs``. A pop-up with the logs will be opened.
+There is a list of pods. Open the menu for one of the pods and select ``View Logs``.
+A pop-up with the logs will be opened.
 
 .. figure:: setup/kubernetes/rancher_logs.png
    :align: center

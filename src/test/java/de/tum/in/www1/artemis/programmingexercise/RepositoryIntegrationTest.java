@@ -126,6 +126,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
 
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
+
         studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");
 
         // add file to the repository folder
@@ -804,7 +807,6 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCommitChangesAllowedForPracticeModeAfterDueDate() throws Exception {
-        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         programmingExercise.setAssessmentType(AssessmentType.MANUAL);

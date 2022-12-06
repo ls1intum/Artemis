@@ -76,6 +76,7 @@ describe('QuizExercise Management Detail Component', () => {
         quizExercise.quizQuestions = [mcQuestion];
         quizExercise.quizBatches = [];
         quizExercise.releaseDate = undefined;
+        quizExercise.dueDate = undefined;
         quizExercise.quizMode = QuizMode.SYNCHRONIZED;
     };
 
@@ -338,19 +339,19 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.quizExercise.releaseDate = now;
 
                 comp.validateDate();
-                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.hasErrorInQuizBatches()).toBeFalse();
 
                 comp.quizExercise!.quizBatches![0].startTime = now.add(1, 'days');
 
                 comp.validateDate();
-                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.hasErrorInQuizBatches()).toBeFalse();
 
                 comp.quizExercise.dueDate = now.add(2, 'days');
 
                 comp.validateDate();
-                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.hasErrorInQuizBatches()).toBeFalse();
             });
 
@@ -368,7 +369,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.quizExercise!.quizBatches![0].startTime = now.add(-1, 'days');
 
                 comp.validateDate();
-                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
                 expect(comp.hasErrorInQuizBatches()).toBeTrue();
 
                 comp.quizExercise.dueDate = now.add(-2, 'days');
@@ -381,7 +382,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.quizExercise.dueDate = now.add(1, 'days');
 
                 comp.validateDate();
-                expect(comp.quizExercise.dueDateError).toBeFalse();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
                 if (quizMode !== QuizMode.SYNCHRONIZED) {
                     // dueDate for SYNCHRONIZED quizzes are calculated so no need to validate.
                     expect(comp.hasErrorInQuizBatches()).toBeTrue();
@@ -1210,6 +1211,19 @@ describe('QuizExercise Management Detail Component', () => {
             it('should not be valid if SA question has no correct mapping', () => {
                 const { question } = createValidSAQuestion();
                 removeCorrectMappingsAndExpectInvalidQuiz(question);
+            });
+
+            it('should be valid for synchronized mode when dueDate is less than releaseDate', () => {
+                const now = dayjs();
+                comp.quizExercise.quizMode = QuizMode.SYNCHRONIZED;
+                comp.scheduleQuizStart = true;
+                comp.quizExercise.quizBatches = [new QuizBatch()];
+                comp.quizExercise.releaseDate = now;
+                comp.quizExercise.startDate = now.add(1, 'day');
+                comp.quizExercise.dueDate = now.add(-1, 'day');
+                comp.cacheValidation();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
+                expect(comp.quizExercise.dueDate).toBeUndefined();
             });
         });
 

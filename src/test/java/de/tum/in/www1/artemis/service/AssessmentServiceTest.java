@@ -47,9 +47,6 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Autowired
     private AssessmentService assessmentService;
 
-    @Autowired
-    private ExerciseDateService exerciseDateService;
-
     private final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
 
     private final ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
@@ -163,7 +160,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
+        resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
         assertThat(result.getScore()).isEqualTo(85.7); // 85.7 = 6/7 * 100
@@ -185,7 +182,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
+        resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
         assertThat(result.getScore()).isEqualTo(85.7); // 85.7 = 6/7 * 100
@@ -207,7 +204,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
+        resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
         assertThat(result.getScore()).isEqualTo(85.7); // 85.7 = 6/7 * 100
@@ -246,7 +243,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         }
         exercise = exerciseRepository.save(exercise);
 
-        resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
+        resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
         assertThat(result.isRated()).isTrue();
@@ -268,7 +265,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
+        resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
         assertThat(result.isRated()).isFalse();
@@ -290,7 +287,7 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         result.setParticipation(submissionWithoutResult.getParticipation());
         submissionWithoutResult.addResult(result);
 
-        resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
+        resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
         assertThat(result.isRated()).isTrue();

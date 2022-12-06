@@ -81,7 +81,6 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         Result result = ModelFactory.generateResult(true, 50D);
         result.setAssessor(tutor1);
         result.setHasComplaint(true);
-        result.setHasFeedback(false);
         result.setParticipation(studentParticipation);
         result = resultRepository.saveAndFlush(result);
 

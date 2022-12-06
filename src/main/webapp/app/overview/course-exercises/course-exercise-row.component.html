@@ -2,7 +2,7 @@
     <a class="stretched-link" [routerLink]="['/courses', course.id!, 'exercises', exercise.id!]"></a>
     <div class="col-auto d-none d-sm-block">
         <a class="exercise-row-icon" [routerLink]="['/courses', course.id!, 'exercises', exercise.id!]">
-            <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" size="2x" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate" container="body"></fa-icon>
+            <fa-icon *ngIf="exercise.type" [icon]="getIcon(exercise.type)" size="2x" [ngbTooltip]="getIconTooltip(exercise.type) | artemisTranslate"></fa-icon>
         </a>
     </div>
     <div class="col">

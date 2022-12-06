@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -35,8 +34,6 @@ public class AssessmentService {
 
     private final ExamDateService examDateService;
 
-    private final ExerciseDateService exerciseDateService;
-
     protected final SubmissionRepository submissionRepository;
 
     protected final GradingCriterionRepository gradingCriterionRepository;
@@ -60,7 +57,6 @@ public class AssessmentService {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.examDateService = examDateService;
-        this.exerciseDateService = exerciseDateService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.userRepository = userRepository;
         this.ltiService = ltiService;
@@ -93,7 +89,6 @@ public class AssessmentService {
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             newResult.calculateScoreForProgrammingExercise(programmingExercise);
             newResult.setCompletionDate(ZonedDateTime.now());
-            newResult.setHasFeedback(true);
             newResult.setRated(true);
             newResult.copyProgrammingExerciseCounters(originalResult);
 
@@ -101,7 +96,7 @@ public class AssessmentService {
             return resultRepository.findByIdWithEagerAssessor(savedResult.getId()).orElseThrow(); // to eagerly load assessor
         }
         else {
-            return resultRepository.submitResult(newResult, exercise, exerciseDateService.getDueDate(newResult.getParticipation()));
+            return resultRepository.submitResult(newResult, exercise, ExerciseDateService.getDueDate(newResult.getParticipation()));
         }
     }
 
@@ -162,7 +157,6 @@ public class AssessmentService {
      *
      * @param submission the submission for which the current assessment should be canceled
      */
-    @Transactional // NOTE: As we use delete methods with underscores, we need a transactional context here!
     public void cancelAssessmentOfSubmission(Submission submission) {
         StudentParticipation participation = studentParticipationRepository.findWithEagerResultsById(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
@@ -172,7 +166,6 @@ public class AssessmentService {
         // We only want to be able to cancel a result if it is not of the AUTOMATIC AssessmentType
         if (result != null && result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC) {
             participation.removeResult(result);
-            feedbackRepository.deleteByResult_Id(result.getId());
             resultService.deleteResult(result, true);
         }
     }
@@ -214,7 +207,7 @@ public class AssessmentService {
     /**
      * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date, sets the assessment type
      * to MANUAL and sets the assessor attribute. Afterwards, it saves the update result in the database again.
-     *
+     * <p>
      * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment(long)})}
      *
      * @param resultId the id of the result that should be submitted
@@ -225,9 +218,9 @@ public class AssessmentService {
     public Result submitManualAssessment(long resultId, Exercise exercise, ZonedDateTime submissionDate) {
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(resultId)
                 .orElseThrow(() -> new EntityNotFoundException("No result for the given resultId could be found"));
-        result.setRatedIfNotExceeded(exerciseDateService.getDueDate(result.getParticipation()).orElse(null), submissionDate);
+        result.setRatedIfNotExceeded(ExerciseDateService.getDueDate(result.getParticipation()).orElse(null), submissionDate);
         result.setCompletionDate(ZonedDateTime.now());
-        result = resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
+        result = resultRepository.submitResult(result, exercise, ExerciseDateService.getDueDate(result.getParticipation()));
         // Note: we always need to report the result (independent of the assessment due date) over LTI, otherwise it might never become visible in the external system
         ltiService.onNewResult((StudentParticipation) result.getParticipation());
         return result;
@@ -236,7 +229,7 @@ public class AssessmentService {
     /**
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
      * database. If a result with the given id exists, it will be overridden. if not, a new result will be created.
-     *
+     * <p>
      * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result)}
      *
      * @param submission the file upload submission to which the feedback belongs to
@@ -262,8 +255,6 @@ public class AssessmentService {
         result.setAssessor(user);
 
         result.updateAllFeedbackItems(feedbackList, false);
-        // Note: this boolean flag is only used for programming exercises
-        result.setHasFeedback(false);
         result.determineAssessmentType();
 
         if (result.getSubmission() == null) {
@@ -284,16 +275,14 @@ public class AssessmentService {
      * @param submission - the submission which the result belongs to
      * @param result     - the result that should get deleted
      */
-    @Transactional // NOTE: As we use delete methods with underscores, we need a transactional context here!
     public void deleteAssessment(Submission submission, Result result) {
 
         if (complaintRepository.findByResultId(result.getId()).isPresent()) {
             throw new BadRequestAlertException("Result has a complaint", "result", "hasComplaint");
         }
         submission.getResults().remove(result);
-        feedbackRepository.deleteByResult_Id(result.getId());
-        resultService.deleteResult(result, true);
-        // this keeps the result order intact
+        resultService.deleteResultReferences(result.getId(), true);
+        // this keeps the result order intact and automatically deletes the result
         submissionRepository.save(submission);
     }
 }

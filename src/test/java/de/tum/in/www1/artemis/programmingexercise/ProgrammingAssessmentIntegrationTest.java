@@ -671,7 +671,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 .collect(Collectors.toCollection(ArrayList::new));
         manualResultLockedFirstRound.setFeedbacks(feedbacks);
         manualResultLockedFirstRound.setRated(true);
-        manualResultLockedFirstRound.setHasFeedback(true);
         manualResultLockedFirstRound.setScore(80D);
 
         params = new LinkedMultiValueMap<>();
@@ -757,7 +756,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         final var manualResultLockedSecondRound = submissionWithoutSecondAssessment.getLatestResult();
         assertThat(manualResultLockedFirstRound).isNotEqualTo(manualResultLockedSecondRound);
         manualResultLockedSecondRound.setFeedbacks(feedbacks);
-        manualResultLockedSecondRound.setHasFeedback(true);
         manualResultLockedSecondRound.setRated(true);
         manualResultLockedSecondRound.setScore(90D);
 
@@ -813,7 +811,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         Result initialResult = ModelFactory.generateResult(true, 50);
         initialResult.setAssessor(tutor1);
         initialResult.setHasComplaint(true);
-        initialResult.setHasFeedback(false);
         initialResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         initialResult.setParticipation(participation);
         initialResult = resultRepository.save(initialResult);
@@ -848,7 +845,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(resultAfterComplaint).isNotNull();
         resultAfterComplaint.setFeedbacks(overrideFeedback);
         resultAfterComplaint.setRated(true);
-        resultAfterComplaint.setHasFeedback(true);
         resultAfterComplaint.setScore(10D);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();

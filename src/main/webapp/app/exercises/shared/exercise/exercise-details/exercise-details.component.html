@@ -59,6 +59,11 @@
         <span *ngIf="exercise.releaseDate">{{ exercise.releaseDate | artemisDate }}</span>
         <span *ngIf="!exercise.releaseDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
     </dd>
+    <dt><span jhiTranslate="artemisApp.exercise.startDate">Start Date</span></dt>
+    <dd>
+        <span *ngIf="exercise.startDate">{{ exercise.startDate | artemisDate }}</span>
+        <span *ngIf="!exercise.startDate" jhiTranslate="artemisApp.exercise.dateNotSet"></span>
+    </dd>
     <dt><span jhiTranslate="artemisApp.exercise.dueDate">Due Date</span></dt>
     <dd>
         <span *ngIf="exercise.dueDate">{{ exercise.dueDate | artemisDate }}</span>

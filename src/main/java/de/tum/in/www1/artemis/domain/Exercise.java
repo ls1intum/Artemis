@@ -13,7 +13,9 @@ import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -677,13 +679,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      */
     public boolean isReleased() {
         // Exam
-        ZonedDateTime releaseDate;
-        if (this.isExamExercise()) {
-            releaseDate = getExerciseGroup().getExam().getStartDate();
-        }
-        else {
-            releaseDate = getReleaseDate();
-        }
+        ZonedDateTime releaseDate = getParticipationStartDate();
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
 
@@ -785,19 +781,19 @@ public abstract class Exercise extends BaseExercise implements Completable {
     }
 
     /**
-     * Return the individual release date for the exercise of the participation's user
+     * Return the date from when students can participate in the exercise
      * <p>
      * Currently, exercise start dates are the same for all users
      *
-     * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date.
+     * @return the time from which on access to the participation is allowed, for exercises that are not part of an exam, this is just the release date or start date.
      */
     @JsonIgnore
-    public ZonedDateTime getIndividualReleaseDate() {
+    public ZonedDateTime getParticipationStartDate() {
         if (isExamExercise()) {
             return getExerciseGroup().getExam().getStartDate();
         }
         else {
-            return getReleaseDate();
+            return getStartDate() != null ? getStartDate() : getReleaseDate();
         }
     }
 
@@ -867,7 +863,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      */
     public void validateDates() {
         // All fields are optional, so there is no error if none of them is set
-        if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
+        if (getReleaseDate() == null && getStartDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
             return;
         }
         if (isExamExercise()) {
@@ -875,8 +871,15 @@ public abstract class Exercise extends BaseExercise implements Completable {
         }
 
         // at least one is set, so we have to check the three possible errors
-        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+        //@formatter:off
+        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate())
+                && isNotAfterAndNotNull(getReleaseDate(), getStartDate())
+                && isNotAfterAndNotNull(getStartDate(), getDueDate())
+                && isValidAssessmentDueDate(getStartDate(), getDueDate(), getAssessmentDueDate())
+                && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+                && isValidExampleSolutionPublicationDate(getStartDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore())
                 && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
+        //@formatter:on
 
         if (!areDatesValid) {
             throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");

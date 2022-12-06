@@ -5,13 +5,13 @@
                 <a class="stretched-link" [routerLink]="['/course-management', course.id, details.type + '-exercises', details.id]"></a>
                 <div class="row-flex exercise-details-container">
                     <div class="ms-2 me-1 exercise-details-item" *ngIf="hasLeftoverAssessments">
-                        <fa-icon [icon]="faExclamationTriangle" class="text-warning" placement="right" [ngbTooltip]="iconTooltip | artemisTranslate" container="body"></fa-icon>
+                        <fa-icon [icon]="faExclamationTriangle" class="text-warning" placement="right auto" [ngbTooltip]="iconTooltip | artemisTranslate"></fa-icon>
                     </div>
                     <div class="ms-2 exercise-details-item" *ngIf="details.teamMode">
-                        <fa-icon [icon]="faUsers" placement="right" [ngbTooltip]="'artemisApp.exercise.isTeamExercise' | artemisTranslate" container="body"></fa-icon>
+                        <fa-icon [icon]="faUsers" placement="right auto" [ngbTooltip]="'artemisApp.exercise.isTeamExercise' | artemisTranslate"></fa-icon>
                     </div>
                     <div class="ms-2 exercise-details-item">
-                        <fa-icon [icon]="icon" placement="right" [ngbTooltip]="iconTooltip | artemisTranslate" container="body"></fa-icon>
+                        <fa-icon [icon]="icon" placement="right auto" [ngbTooltip]="iconTooltip | artemisTranslate"></fa-icon>
                     </div>
                     <div class="item-title-container">
                         <span class="item-title">{{ details.title }}</span>
