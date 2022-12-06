@@ -60,6 +60,18 @@ describe('JhiCloneRepoButtonComponent', () => {
         testServer: false,
         versionControlUrl: 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git',
         versionControlAccessToken: true,
+        git: {
+            branch: 'clone-repo-button',
+            commit: {
+                id: {
+                    abbrev: '95ef2a',
+                },
+                time: '2022-11-20T20:35:01Z',
+                user: {
+                    name: 'Max Musterman',
+                },
+            },
+        },
     };
 
     let participation: ProgrammingExerciseStudentParticipation = {};
