@@ -1,5 +1,5 @@
-<div class="row footer fixed d-none d-md-flex" id="footer">
-    <div class="guided-tour col-sm-6">
+<footer class="d-none d-md-flex row" id="footer">
+    <div class="guided-tour-footer-about col-sm-6">
         <a [routerLink]="['/about']" id="about" jhiTranslate="aboutUs" class="footer-text"></a>
     </div>
 
@@ -9,7 +9,14 @@
         <a [routerLink]="['/privacy']" id="privacy" jhiTranslate="legal.privacy.title" class="footer-text ms-3"></a>
         <a [routerLink]="['/imprint']" id="imprint" jhiTranslate="legal.imprint.title" class="footer-text ms-3"></a>
     </div>
-</div>
+
+    <div class="col-sm-12 footer-git-wrapper" *ngIf="!inProduction || testServer">
+        <div class="footer-git">{{ 'artemisApp.git.branch' | artemisTranslate }}: {{ gitBranch }} •</div>
+        <div class="footer-git">{{ 'artemisApp.git.commit' | artemisTranslate }}: {{ gitCommitId }} •</div>
+        <div class="footer-git">{{ 'artemisApp.git.timestamp' | artemisTranslate }}: {{ gitTimestamp }} •</div>
+        <div class="footer-git">{{ 'artemisApp.git.username' | artemisTranslate }}: {{ gitCommitUser }}</div>
+    </div>
+</footer>
 
 <div class="row footer d-md-none justify-content-between mw-100">
     <div class="col-auto px-0">
