@@ -28,6 +28,7 @@ import org.apache.pdfbox.multipdf.PDFMergerUtility;
 import org.apache.pdfbox.multipdf.Splitter;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.apache.pdfbox.text.PDFTextStripper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -44,6 +45,7 @@ import com.ibm.icu.text.CharsetDetector;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -999,11 +1001,11 @@ public class FileService implements DisposableBean {
         return path;
     }
 
-    public Optional<byte[]> splitPdfFile(MultipartFile file) {
+    public Optional<List<LectureUnitSplitDTO>> splitPdfFile(MultipartFile file, String lectureId) {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        List<LectureUnitSplitDTO> units = new ArrayList<>();
 
-        // check for file type
         String filename = file.getOriginalFilename();
         if (filename == null) {
             throw new IllegalArgumentException("Filename cannot be null");
@@ -1012,33 +1014,71 @@ public class FileService implements DisposableBean {
         try {
             Splitter pdfSplitter = new Splitter();
             PDDocument document = PDDocument.load(file.getBytes());
-
+            PDFTextStripper pdfStripper = new PDFTextStripper();
             pdfSplitter.setStartPage(1);
             pdfSplitter.setEndPage(3);
-
             List<PDDocument> Pages = pdfSplitter.split(document);
             Pages.get(0).save(outputStream);
-            // TODO: write a helper function to split the file based on the heuristics
-            // TODO: find a solution how to return multiple files as array
-            // Creating an iterator
-            // Iterator<PDDocument> iterator = Pages.listIterator();
-            //
-            // //Saving each page as an individual document
-            // int i = 1;
-            // while(iterator.hasNext()) {
-            // PDDocument pd = iterator.next();
-            //
-            // pd.save("C:/PdfBox_Examples/sample"+ i++ +".pdf");
-            // }
-            document.close();
+            // TODO: call the healper function
 
+            // Creating an iterator
+            Iterator<PDDocument> iterator = Pages.listIterator();
+
+            int i = 1;
+            while (iterator.hasNext()) {
+
+                PDDocument pd = iterator.next();
+                System.out.println(pdfStripper.getText(pd));
+                pd.save(outputStream);
+                LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO();
+                newLectureUnit.setFile(outputStream.toByteArray());
+                newLectureUnit.setAttachmentName("test");
+                newLectureUnit.setDescription("test description");
+
+                units.add(newLectureUnit);
+
+                outputStream.reset();
+            }
+            document.close();
         }
         catch (IOException e) {
             log.warn("Could not split the file");
             return Optional.empty();
         }
+        return Optional.of(units);
+    }
 
-        return Optional.of(outputStream.toByteArray());
+    private String extractInformationFromUnit(List<PDDocument> slides) {
+        // TODO: impl to extract information of one unit and return the object
+        return "";
+    }
+
+    private List<PDDocument> separateIntoUnits(PDDocument document) throws IOException {
+        Splitter pdfSplitter = new Splitter();
+        PDFTextStripper pdfStripper = new PDFTextStripper();
+        List<PDDocument> Pages = pdfSplitter.split(document);
+
+        List<PDDocument> units = new ArrayList<>();
+        PDDocument unit = new PDDocument();
+
+        // Creating an iterator
+        Iterator<PDDocument> iterator = Pages.listIterator();
+        int outlineCount = 0;
+        int outlineCountPrevious = 0;
+        while (iterator.hasNext()) {
+            // TODO: split logic
+            PDDocument pd = iterator.next();
+            String slideText = pdfStripper.getText(pd);
+
+            if (slideText.contains("Outline")) {
+                outlineCount++;
+            }
+
+            unit.addPage(pdfStripper.getCurrentPage());
+
+        }
+        document.close();
+        return units;
     }
 
     /**

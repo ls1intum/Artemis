@@ -121,7 +121,7 @@
                         <button
                             type="button"
                             id="process-units-entity"
-                            [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing"
+                            [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing || !file"
                             class="btn btn-success"
                             (click)="proceedToUnitSplit()"
                         >

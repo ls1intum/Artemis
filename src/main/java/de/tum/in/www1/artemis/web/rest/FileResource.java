@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.lecture.AttachmentUnitResource;
@@ -330,18 +331,18 @@ public class FileResource {
 
     @PostMapping("fileUpload/lecture/{lectureId}/process-units")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<byte[]> splitLectureIntoUnits(@RequestParam(value = "file") MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFileName,
-            @PathVariable String lectureId) {
+    public ResponseEntity<Optional<List<LectureUnitSplitDTO>>> splitLectureIntoUnits(@RequestParam(value = "file") MultipartFile file,
+            @RequestParam(defaultValue = "false") boolean keepFileName, @PathVariable String lectureId) {
         log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
 
         // TODO: split file into multiple files and return multiple files
-        Optional<byte[]> fileSplited = fileService.splitPdfFile(file);
-        if (fileSplited.isEmpty()) {
+        Optional<List<LectureUnitSplitDTO>> filesSplited = fileService.splitPdfFile(file, lectureId);
+        if (filesSplited.isEmpty()) {
             log.error("Failed to split PDF lecture units for lecture with id {}", lectureId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(fileSplited.get());
+        return ResponseEntity.ok().body(filesSplited);
 
     }
 
