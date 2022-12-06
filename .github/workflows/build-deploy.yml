@@ -118,8 +118,9 @@ jobs:
       uses: docker/build-push-action@v3
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
       with:
-        # arm64 for Mac M1 and new DevBoards, arm/v7 for older DevBoards
-        platforms: linux/amd64,linux/arm64,linux/arm/v7
+        # TODO: maybe even add arm/v7 for older DevBoards but first add it also in docker-jdk-node-yarn
+        # arm64 for Mac M1 and new DevBoards
+        platforms: linux/amd64,linux/arm64
         file: ./src/main/docker/artemis/Dockerfile
         context: .
         tags: ghcr.io/ls1intum/artemis:${{ steps.compute-tag.outputs.result }}
