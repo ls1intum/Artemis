@@ -10,7 +10,12 @@ export interface ChartData {
     results: NgxChartsMultiSeriesDataEntry[];
 }
 
-export const capCredits = (credits: number, maxCredits?: number): number => {
+const roundToDecimals = (i: number, n: number) => {
+    const f = 10 ** n;
+    return round(i, f);
+};
+
+const capCredits = (credits: number, maxCredits?: number): number => {
     // no maxCredits or credits and maxCredits do not have the same sign;
     if (!maxCredits || credits * maxCredits < 0) {
         return credits;
@@ -19,6 +24,10 @@ export const capCredits = (credits: number, maxCredits?: number): number => {
     const absCredits = Math.abs(credits);
     const absMaxCredits = Math.abs(credits);
     return Math.sign(credits) * Math.max(absCredits, absMaxCredits);
+};
+
+export const calculateAppliedCredits = (node: FeedbackItemNode) => {
+    return roundToDecimals(capCredits(node.credits ?? 0, node.maxCredits), 2);
 };
 
 export const nodesToChartData = (feedbackNodes: FeedbackItemNode[], exercise: Exercise): ChartData => {
@@ -46,9 +55,4 @@ export const nodesToChartData = (feedbackNodes: FeedbackItemNode[], exercise: Ex
         results,
         scheme,
     };
-};
-
-const roundToDecimals = (i: number, n: number) => {
-    const f = 10 ** n;
-    return round(i, f);
 };

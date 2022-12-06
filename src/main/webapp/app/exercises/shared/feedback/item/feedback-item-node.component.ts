@@ -5,7 +5,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackItemGroup, isFeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
-import { capCredits } from 'app/exercises/shared/feedback/item/feedback-item-util';
+import { calculateAppliedCredits } from 'app/exercises/shared/feedback/item/feedback-item-util';
 
 @Component({
     selector: 'jhi-feedback-item-node',
@@ -15,7 +15,7 @@ import { capCredits } from 'app/exercises/shared/feedback/item/feedback-item-uti
 export class FeedbackItemNodeComponent implements OnInit {
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
-    @Input() feedbackNode: FeedbackItemNode;
+    @Input() feedbackItemNode: FeedbackItemNode;
     @Input() course?: Course;
 
     // This is a workaround for type safety in the template
@@ -29,12 +29,12 @@ export class FeedbackItemNodeComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
 
     ngOnInit(): void {
-        if (isFeedbackItemGroup(this.feedbackNode)) {
-            this.feedbackItemGroup = this.feedbackNode;
+        if (isFeedbackItemGroup(this.feedbackItemNode)) {
+            this.feedbackItemGroup = this.feedbackItemNode;
         } else {
-            this.feedbackItem = <FeedbackItem>this.feedbackNode;
+            this.feedbackItem = <FeedbackItem>this.feedbackItemNode;
         }
 
-        this.appliedCredits = roundValueSpecifiedByCourseSettings(capCredits(this.feedbackNode.credits ?? 0, this.feedbackNode.maxCredits), this.course);
+        this.appliedCredits = calculateAppliedCredits(this.feedbackItemNode);
     }
 }
