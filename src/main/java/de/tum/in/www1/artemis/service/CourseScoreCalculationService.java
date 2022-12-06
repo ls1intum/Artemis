@@ -48,147 +48,20 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * Calculates max and reachable max points for the given course and the student scores of the current user in that course.
-     * In addition to the total scores, scores per exercise type are calculated.
+     * Prepares all entities required for calculateCourseScores and calls it to retrieve the total scores for each specified student in the specified course.
+     * If there is a single student id in studentIds, the student id will be filtered in the database as an optimization wherever possible.
      *
-     * @param courseId the id of the course to calculate
-     * @param userId   the id of the user whose scores will be calculated
-     * @return a map of the scores for the different exercise types (total, for programming exercises etc.). For each type, the map contains the max and reachable max points and the student scores of the current user.
-     */
-    public Map<String, CourseScoresDTO> calculateCourseScoresPerExerciseType(long courseId, long userId) {
-
-        Map<String, CourseScoresDTO> scores = new HashMap<>();
-
-        // Get scores for all exercises in course.
-        CourseScoresDTO totalScores = calculateCourseScoresNew(courseId, Collections.singletonList(userId), null);
-        scores.put("total", totalScores);
-
-        // Get scores per exercise type.
-        for (ExerciseType exerciseType : ExerciseType.values()) {
-            scores.put(exerciseType.toString(), calculateCourseScoresNew(courseId, Collections.singletonList(userId), exerciseType));
-        }
-
-        return scores;
-    }
-
-    // public CourseScoresDTO calculateCourseScoresForExam(long courseId, Collection<Long> studentIds, ExerciseType exerciseType) -> kann von ExamService aufgerufen werden, hier werden alle benötigten Sachen gefetcht und dann die private richtige Methode aufgerufen
-
-    /**
-     * Calculates max and reachable max points for the given course and the student scores for the given student ids
-     * and takes the effects of related plagiarism verdicts on the grade into account. Implementation is adapted from course-score-calculation.service.ts.
-     * <p>
-     * If there is a single student id in studentIds, the student id will be filtered in the database as an optimization
-     * wherever possible.
-     *
-     * @param courseId   the id of the course to calculate
+     * @param courseId   the id of the course to calculate the total scores for
      * @param studentIds the id of the students whose scores in the course will be calculated.
      * @return the max and reachable max points for the given course and the student scores with related plagiarism verdicts for the given student ids
      */
-    public CourseScoresDTO calculateCourseScoresNew(long courseId, Collection<Long> studentIds, ExerciseType exerciseType) {
-        // Only get those exercises that correspond to the exerciseType. In the case of exerciseType == null, get all exercises.
+    public CourseScoresDTO calculateCourseScoresTotal(long courseId, Collection<Long> studentIds) {
         Set<Exercise> courseExercises = exerciseRepository.findAllExercisesByCourseId(courseId);
-
-        if (exerciseType != null) {
-            // Ich muss für total später sowieso alle exercises fetchen, dann lasse ich darauf direkt die filter laufen.
-            courseExercises = courseExercises.stream().filter(exercise -> exercise.getExerciseType() == exerciseType).collect(Collectors.toSet());
-        }
-
-        if (courseExercises.isEmpty()) {
-            return null;
-        }
-
-        double maxPointsInCourse = 0.0; // the sum of all included exercises, whose due date is over or unset or who are automatically assessed and assessment is done
-        double reachableMaxPointsInCourse = 0.0; // the sum of all included and already assessed exercises
-
-        for (var exercise : courseExercises) {
-            if (!includeIntoScoreCalculation(exercise)) {
-                continue;
-            }
-            var maxPointsReachableInExercise = exercise.getMaxPoints();
-            if (exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                maxPointsInCourse += maxPointsReachableInExercise;
-                if (isAssessmentDone(exercise)) {
-                    reachableMaxPointsInCourse += maxPointsReachableInExercise;
-                }
-            }
-        }
 
         List<PlagiarismCase> plagiarismCases;
 
         MultiValueMap<Long, StudentParticipation> studentIdToParticipations = new LinkedMultiValueMap<>();
-        if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
-            Long studentId = studentIds.iterator().next();
-            // Only get those participations that correspond to the exerciseType.
-            var participations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(courseId, studentId);
-            participations = participations.stream().filter(participation -> participation.getExercise().getExerciseType() == exerciseType).toList();
-            if (!participations.isEmpty()) {
-                studentIdToParticipations.addAll(studentId, participations);
-            }
-            // Only get those plagiarism cases that correspond to the exerciseType.
-            plagiarismCases = plagiarismCaseRepository.findByCourseIdAndStudentId(courseId, studentId);
-            plagiarismCases = plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getExercise().getExerciseType() == exerciseType).toList();
-        } else {
-            // Not needed for when split by exercise type, langfristig ist das kein Problem, weil dieser Methode nur noch die richtigen Participations übergeben werden
-            var participations = studentParticipationRepository.findByCourseIdWithRelevantResult(courseId);
-            participations = participations.stream().filter(participation -> participation.getExercise().getExerciseType() == exerciseType).toList();
-            var studentIdSet = new HashSet<>(studentIds);
-            for (StudentParticipation participation : participations) {
-                for (User student : participation.getStudents()) {
-                    if (studentIdSet.contains(student.getId())) {
-                        studentIdToParticipations.add(student.getId(), participation);
-                    }
-                }
-            }
-            plagiarismCases = plagiarismCaseRepository.findByCourseId(courseId);
-            plagiarismCases = plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getExercise().getExerciseType() == exerciseType).toList();
-        }
-        var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
-        double finalMaxPointsInCourse = maxPointsInCourse; // needed to make the variable effectively final for lambda below
-        double finalReachableMaxPointsInCourse = reachableMaxPointsInCourse; // needed to make the variable effectively final for lambda below
-        var studentScores = studentIdToParticipations.entrySet().parallelStream()
-            .map(entry -> calculateCourseScoreForStudent(entry.getKey(), entry.getValue(), finalMaxPointsInCourse, finalReachableMaxPointsInCourse, plagiarismMapping))
-            .toList();
-        var course = courseExercises.iterator().next().getCourseViaExerciseGroupOrCourseMember();
 
-        return new CourseScoresDTO(maxPointsInCourse, reachableMaxPointsInCourse, course.getPresentationScore(), studentScores);
-    }
-
-    /**
-     * Calculates max and reachable max points for the given course and the student scores for the given student ids
-     * and takes the effects of related plagiarism verdicts on the grade into account. Implementation is adapted from course-score-calculation.service.ts.
-     * <p>
-     * If there is a single student id in studentIds, the student id will be filtered in the database as an optimization
-     * wherever possible.
-     *
-     * @param courseId   the id of the course to calculate
-     * @param studentIds the id of the students whose scores in the course will be calculated.
-     * @return the max and reachable max points for the given course and the student scores with related plagiarism verdicts for the given student ids
-     */
-    public CourseScoresDTO calculateCourseScores(long courseId, Collection<Long> studentIds) {
-        Set<Exercise> courseExercises = exerciseRepository.findAllExercisesByCourseId(courseId);
-        if (courseExercises.isEmpty()) {
-            return null;
-        }
-
-        double maxPointsInCourse = 0.0; // the sum of all included exercises, whose due date is over or unset or who are automatically assessed and assessment is done
-        double reachableMaxPointsInCourse = 0.0; // the sum of all included and already assessed exercises
-
-        for (var exercise : courseExercises) {
-            if (!includeIntoScoreCalculation(exercise)) {
-                continue;
-            }
-            var maxPointsReachableInExercise = exercise.getMaxPoints();
-            if (exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                maxPointsInCourse += maxPointsReachableInExercise;
-                if (isAssessmentDone(exercise)) {
-                    reachableMaxPointsInCourse += maxPointsReachableInExercise;
-                }
-            }
-        }
-
-        List<PlagiarismCase> plagiarismCases;
-
-        MultiValueMap<Long, StudentParticipation> studentIdToParticipations = new LinkedMultiValueMap<>();
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
             Long studentId = studentIds.iterator().next();
             var participations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(courseId, studentId);
@@ -209,15 +82,107 @@ public class CourseScoreCalculationService {
             plagiarismCases = plagiarismCaseRepository.findByCourseId(courseId);
         }
         var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
+
+        return calculateCourseScores(courseExercises, studentIdToParticipations, plagiarismMapping);
+    }
+
+    /**
+     * Prepares all entities required for calculateCourseScores and calls it multiple times to retrieve the scores per exercise type
+     * for the specified student in each specified course.
+     * In addition to the scores per exercise type, the total scores per course are calculated.
+     *
+     * @param courses the courses to calculate the scores for
+     * @param userId  the id of the user whose scores will be calculated
+     * @return a map of the scores for the different exercise types (total, for programming exercises etc.) for each course. For each type, the map contains the max and reachable max points and the student scores of the current user.
+     */
+    public List<CourseForDashboardDTO> calculateCourseScoresPerExerciseType(List<Course> courses, long userId) {
+        List<CourseForDashboardDTO> coursesWithScores = new ArrayList<>();
+
+        for (Course course : courses) {
+            CourseForDashboardDTO courseWithScores = new CourseForDashboardDTO();
+            courseWithScores.setCourse(course);
+            Map<String, CourseScoresDTO> scoresPerExerciseType = new HashMap<>();
+
+            long courseId = course.getId();
+
+            // Retrieve required entities
+            Set<Exercise> courseExercises = exerciseRepository.findAllExercisesByCourseId(courseId);
+
+            List<PlagiarismCase> plagiarismCases = plagiarismCaseRepository.findByCourseIdAndStudentId(courseId, userId);
+            PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
+
+            List<StudentParticipation> studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(courseId, userId);
+            MultiValueMap<Long, StudentParticipation> studentIdToParticipations = new LinkedMultiValueMap<>();
+            if (!studentParticipations.isEmpty()) {
+                studentIdToParticipations.addAll(userId, studentParticipations);
+            }
+
+            // Get scores for all exercises in course.
+            CourseScoresDTO totalScores = calculateCourseScores(courseExercises, studentIdToParticipations, plagiarismMapping);
+            scoresPerExerciseType.put("total", totalScores != null ? totalScores : new CourseScoresDTO());
+
+            // Get scores per exercise type.
+            for (ExerciseType exerciseType : ExerciseType.values()) {
+                // Filter out the entities per exercise type.
+                Set<Exercise> exercisesOfExerciseType = courseExercises.stream().filter(exercise -> exercise.getExerciseType() == exerciseType).collect(Collectors.toSet());
+                List<StudentParticipation> studentParticipationsOfExerciseType = studentParticipations.stream().filter(participation -> participation.getExercise().getExerciseType() == exerciseType).toList();
+                MultiValueMap<Long, StudentParticipation> studentIdToParticipationsOfExerciseType = new LinkedMultiValueMap<>();
+                if (!studentParticipationsOfExerciseType.isEmpty()) {
+                    studentIdToParticipationsOfExerciseType.addAll(userId, studentParticipationsOfExerciseType);
+                }
+                List<PlagiarismCase> plagiarismCasesOfExerciseType = plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getExercise().getExerciseType() == exerciseType).toList();
+                PlagiarismMapping plagiarismMappingOfExerciseType = PlagiarismMapping.createFromPlagiarismCases(plagiarismCasesOfExerciseType);
+
+                CourseScoresDTO scoresOfExerciseType = calculateCourseScores(exercisesOfExerciseType, studentIdToParticipationsOfExerciseType, plagiarismMappingOfExerciseType);
+                scoresPerExerciseType.put(exerciseType.getExerciseTypeAsString(), scoresOfExerciseType != null ? scoresOfExerciseType : new CourseScoresDTO());
+            }
+
+            courseWithScores.setScoresPerExerciseType(scoresPerExerciseType);
+            coursesWithScores.add(courseWithScores);
+        }
+        return coursesWithScores;
+    }
+
+    /**
+     * Calculates max and reachable max points for the given exercises and the student scores for the given student ids
+     * and takes the effects of related plagiarism verdicts on the grade into account. Implementation is adapted from course-score-calculation.service.ts.
+     *
+     * @param exercises                 the exercises which are included into the score calculation
+     * @param studentIdToParticipations the ids of the students whose scores in the course will be calculated with their participations.
+     * @return the max and reachable max points for the given exercises and the student scores with related plagiarism verdicts for the given student ids
+     */
+    private CourseScoresDTO calculateCourseScores(Set<Exercise> exercises, MultiValueMap<Long, StudentParticipation> studentIdToParticipations, PlagiarismMapping plagiarismMapping) {
+
+        if (exercises.isEmpty()) {
+            return null;
+        }
+
+        double maxPointsInCourse = 0.0; // the sum of all included exercises, whose due date is over or unset or who are automatically assessed and assessment is done
+        double reachableMaxPointsInCourse = 0.0; // the sum of all included and already assessed exercises
+
+        for (var exercise : exercises) {
+            if (!includeIntoScoreCalculation(exercise)) {
+                continue;
+            }
+            var maxPointsReachableInExercise = exercise.getMaxPoints();
+            if (exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                maxPointsInCourse += maxPointsReachableInExercise;
+                if (isAssessmentDone(exercise)) {
+                    reachableMaxPointsInCourse += maxPointsReachableInExercise;
+                }
+            }
+        }
+
         double finalMaxPointsInCourse = maxPointsInCourse; // needed to make the variable effectively final for lambda below
         double finalReachableMaxPointsInCourse = reachableMaxPointsInCourse; // needed to make the variable effectively final for lambda below
-        var studentScores = studentIdToParticipations.entrySet().parallelStream()
+        List<CourseScoresDTO.StudentScore> studentScores = studentIdToParticipations.entrySet().parallelStream()
             .map(entry -> calculateCourseScoreForStudent(entry.getKey(), entry.getValue(), finalMaxPointsInCourse, finalReachableMaxPointsInCourse, plagiarismMapping))
             .toList();
-        var course = courseExercises.iterator().next().getCourseViaExerciseGroupOrCourseMember();
+        var course = exercises.iterator().next().getCourseViaExerciseGroupOrCourseMember();
 
         return new CourseScoresDTO(maxPointsInCourse, reachableMaxPointsInCourse, course.getPresentationScore(), studentScores);
     }
+
 
     /**
      * Calculates the presentation score, relative and absolute points for the given studentId and corresponding participationsOfStudent

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -9,11 +10,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseScoresDTO(double maxPoints, double reachablePoints, Integer presentationScoreThreshold, List<StudentScore> studentScores) {
+public record CourseScoresDTO(double maxPoints, double reachablePoints, Integer presentationScoreThreshold,
+                              List<StudentScore> studentScores) {
+
+    public CourseScoresDTO() {
+        this(0, 0, 0, Collections.emptyList());
+    }
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record StudentScore(Long studentId, double absolutePoints, double relativeScore, double currentRelativeScore, int achievedPresentationScore,
-            boolean presentationScorePassed, PlagiarismVerdict mostSeverePlagiarismVerdict) {
+    public record StudentScore(Long studentId, double absolutePoints, double relativeScore, double currentRelativeScore,
+                               int achievedPresentationScore,
+                               boolean presentationScorePassed, PlagiarismVerdict mostSeverePlagiarismVerdict) {
 
         public double getAbsolutePointsEligibleForBonus() {
             return presentationScorePassed ? absolutePoints : 0.0;
@@ -22,6 +29,6 @@ public record CourseScoresDTO(double maxPoints, double reachablePoints, Integer 
 
     public Map<Long, BonusSourceResultDTO> toBonusSourceResultMap() {
         return studentScores.stream().collect(Collectors.toMap(StudentScore::studentId, studentScore -> new BonusSourceResultDTO(studentScore.getAbsolutePointsEligibleForBonus(),
-                studentScore.mostSeverePlagiarismVerdict(), studentScore.achievedPresentationScore(), presentationScoreThreshold)));
+            studentScore.mostSeverePlagiarismVerdict(), studentScore.achievedPresentationScore(), presentationScoreThreshold)));
     }
 }

@@ -404,13 +404,16 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
-    public Course getCourseForDashboard(@PathVariable long courseId) {
+    public CourseForDashboardDTO getCourseForDashboard(@PathVariable long courseId) {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
-        return course;
+
+        List<CourseForDashboardDTO> coursesWithScores = courseScoreCalculationService.calculateCourseScoresPerExerciseType(Collections.singletonList(course), user.getId());
+
+        return coursesWithScores.get(0);
     }
 
     /**
@@ -421,7 +424,7 @@ public class CourseResource {
      */
     @GetMapping("courses/for-dashboard")
     @PreAuthorize("hasRole('USER')")
-    public Map<String, Object> getAllCoursesForDashboard() {
+    public List<CourseForDashboardDTO> getAllCoursesForDashboard() {
         long start = System.currentTimeMillis();
         log.debug("REST request to get all Courses the user has access to with exercises, participations and results + the calculated scores the user achieved in each of those courses");
         User user = userRepository.getUserWithGroupsAndAuthorities();
@@ -430,12 +433,10 @@ public class CourseResource {
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
 
-        Map<Long, Map<String, CourseScoresDTO>> scores = new HashMap<>();
-        courses.forEach(course -> {
-            scores.put(course.getId(), courseScoreCalculationService.calculateCourseScoresPerExerciseType(course.getId(), user.getId()));
-        });
+        List<CourseForDashboardDTO> coursesWithScores = courseScoreCalculationService.calculateCourseScoresPerExerciseType(courses, user.getId());
+
         log.info("get all courses for dashboard took {}ms", System.currentTimeMillis() - start);
-        return Map.of("courses", courses, "scores", scores);
+        return coursesWithScores;
     }
 
     /**
