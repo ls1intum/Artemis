@@ -8,8 +8,6 @@ import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, forkJoin } from 'rxjs';
 import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
-import { captureException } from '@sentry/browser';
-import { isEqual } from 'lodash-es';
 import { faPencilAlt, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
@@ -27,9 +25,6 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     learningGoals: LearningGoal[] = [];
     prerequisites: LearningGoal[] = [];
     learningGoalIdToLearningGoalCourseProgress = new Map<number, CourseLearningGoalProgress>();
-    // this is calculated using the participant scores table on the server instead of going participation -> submission -> result
-    // we calculate it here to find out if the participant scores table is robust enough to replace the classic way of finding the last result
-    learningGoalIdToLearningGoalCourseProgressUsingParticipantScoresTables = new Map<number, CourseLearningGoalProgress>();
 
     showRelations = false;
     tailLearningGoal?: number;
@@ -94,8 +89,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    getLearningGoalCourseProgress(learningGoal: LearningGoal) {
-        return this.learningGoalIdToLearningGoalCourseProgress.get(learningGoal.id!);
+    getLearningGoalCourseProgress(learningGoal: LearningGoal): number {
+        return this.learningGoalIdToLearningGoalCourseProgress.get(learningGoal.id!)?.averageScoreAchievedInLearningGoal || 0;
     }
 
     loadData() {
@@ -127,14 +122,10 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                     });
 
                     const progressObservable = this.learningGoals.map((lg) => {
-                        return this.learningGoalService.getCourseProgress(lg.id!, this.courseId, false);
+                        return this.learningGoalService.getCourseProgress(lg.id!, this.courseId);
                     });
 
-                    const progressObservableUsingParticipantScore = this.learningGoals.map((lg) => {
-                        return this.learningGoalService.getCourseProgress(lg.id!, this.courseId, true);
-                    });
-
-                    return forkJoin([forkJoin(relationsObservable), forkJoin(progressObservable), forkJoin(progressObservableUsingParticipantScore)]);
+                    return forkJoin([forkJoin(relationsObservable), forkJoin(progressObservable)]);
                 }),
             )
             .pipe(
@@ -143,7 +134,7 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 }),
             )
             .subscribe({
-                next: ([learningGoalRelations, learningGoalProgressResponses, learningGoalProgressResponsesUsingParticipantScores]) => {
+                next: ([learningGoalRelations, learningGoalProgressResponses]) => {
                     const relations = [
                         ...learningGoalRelations
                             .flatMap((response) => response.body!)
@@ -181,11 +172,6 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                         const learningGoalProgress = learningGoalProgressResponse.body!;
                         this.learningGoalIdToLearningGoalCourseProgress.set(learningGoalProgress.learningGoalId, learningGoalProgress);
                     }
-                    for (const learningGoalProgressResponse of learningGoalProgressResponsesUsingParticipantScores) {
-                        const learningGoalProgress = learningGoalProgressResponse.body!;
-                        this.learningGoalIdToLearningGoalCourseProgressUsingParticipantScoresTables.set(learningGoalProgress.learningGoalId, learningGoalProgress);
-                    }
-                    this.testIfScoreUsingParticipantScoresTableDiffers();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
@@ -234,27 +220,6 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                 this.loadData();
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
-        });
-    }
-
-    /**
-     * Using this test we want to find out if the progress calculation using the participant scores table leads to the same
-     * result as going through participation -> submission -> result
-     */
-    private testIfScoreUsingParticipantScoresTableDiffers() {
-        this.learningGoalIdToLearningGoalCourseProgress.forEach((learningGoalProgress, learningGoalId) => {
-            const learningGoalProgressParticipantScoresTable = this.learningGoalIdToLearningGoalCourseProgressUsingParticipantScoresTables.get(learningGoalId);
-            if (
-                !isEqual(
-                    learningGoalProgress.averagePointsAchievedByStudentInLearningGoal,
-                    learningGoalProgressParticipantScoresTable!.averagePointsAchievedByStudentInLearningGoal,
-                )
-            ) {
-                const message = `Warning: Learning Goal(id=${learningGoalProgress.learningGoalId}) Course Progress different using participant scores for course ${
-                    this.courseId
-                }! Original: ${JSON.stringify(learningGoalProgress)} | Using ParticipantScores: ${JSON.stringify(learningGoalProgressParticipantScoresTable)}!`;
-                captureException(new Error(message));
-            }
         });
     }
 }

@@ -40,9 +40,7 @@ export class LearningGoalCourseDetailModalComponent implements OnInit {
                 this.lectureUnitIdToLectureUnitCourseProgress = new Map(this.learningGoalCourseProgress.progressInLectureUnits.map((i) => [i.lectureUnitId, i]));
             }
 
-            const progress =
-                (this.learningGoalCourseProgress.averagePointsAchievedByStudentInLearningGoal / this.learningGoalCourseProgress.totalPointsAchievableByStudentsInLearningGoal) *
-                    100 || 0;
+            const progress = this.learningGoalCourseProgress.averageScoreAchievedInLearningGoal || 0;
             this.progressInPercent = round(progress, 1);
         }
     }

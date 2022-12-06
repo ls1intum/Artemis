@@ -1849,7 +1849,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 new HttpHeaders());
 
         // Wait for the scheduler to execute its tasks
-        await().until(() -> participantScoreSchedulerService.isIdle());
+        await().until(() -> participantScoreScheduleService.isIdle());
 
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();

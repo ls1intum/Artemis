@@ -26,21 +26,15 @@ export class LearningGoalService {
         return this.httpClient.get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' });
     }
 
-    getProgress(learningGoalId: number, courseId: number, useParticipantScoreTable = false) {
-        let params = new HttpParams();
-        params = params.set('useParticipantScoreTable', String(useParticipantScoreTable));
+    getProgress(learningGoalId: number, courseId: number) {
         return this.httpClient.get<IndividualLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/individual-progress`, {
             observe: 'response',
-            params,
         });
     }
 
-    getCourseProgress(learningGoalId: number, courseId: number, useParticipantScoreTable = false) {
-        let params = new HttpParams();
-        params = params.set('useParticipantScoreTable', String(useParticipantScoreTable));
+    getCourseProgress(learningGoalId: number, courseId: number) {
         return this.httpClient.get<CourseLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/course-progress`, {
             observe: 'response',
-            params,
         });
     }
 

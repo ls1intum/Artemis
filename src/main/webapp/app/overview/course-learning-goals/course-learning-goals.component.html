@@ -25,7 +25,7 @@
             <jhi-learning-goal-card
                 *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
                 [learningGoal]="learningGoal"
-                [learningGoalProgress]="getLearningGoalProgress(learningGoal)"
+                [progress]="getProgressOfLearningGoal(learningGoal)"
                 [displayOnly]="true"
             ></jhi-learning-goal-card>
         </div>

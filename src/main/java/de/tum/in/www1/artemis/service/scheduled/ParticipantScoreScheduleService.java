@@ -30,6 +30,7 @@ import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 
 /**
@@ -44,15 +45,17 @@ import de.tum.in.www1.artemis.service.util.RoundingUtil;
  */
 @Service
 @Profile("scheduling")
-public class ParticipantScoreSchedulerService {
+public class ParticipantScoreScheduleService {
 
-    private final Logger logger = LoggerFactory.getLogger(ParticipantScoreSchedulerService.class);
+    private final Logger logger = LoggerFactory.getLogger(ParticipantScoreScheduleService.class);
 
     private final TaskScheduler scheduler;
 
     private final Map<Integer, ScheduledFuture<?>> scheduledTasks = new ConcurrentHashMap<>();
 
     private Optional<Instant> lastScheduledRun = Optional.empty();
+
+    private final LearningGoalProgressService learningGoalProgressService;
 
     private final ParticipantScoreRepository participantScoreRepository;
 
@@ -68,10 +71,11 @@ public class ParticipantScoreSchedulerService {
 
     private final TeamRepository teamRepository;
 
-    public ParticipantScoreSchedulerService(@Qualifier("taskScheduler") TaskScheduler scheduler, ParticipantScoreRepository participantScoreRepository,
-            StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
-            UserRepository userRepository, TeamRepository teamRepository) {
+    public ParticipantScoreScheduleService(@Qualifier("taskScheduler") TaskScheduler scheduler, LearningGoalProgressService learningGoalProgressService,
+            ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository,
+            ExerciseRepository exerciseRepository, ResultRepository resultRepository, UserRepository userRepository, TeamRepository teamRepository) {
         this.scheduler = scheduler;
+        this.learningGoalProgressService = learningGoalProgressService;
         this.participantScoreRepository = participantScoreRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
@@ -305,6 +309,11 @@ public class ParticipantScoreSchedulerService {
         else {
             participantScoreRepository.save(participantScore);
             logger.debug("Updated participant score {}.", participantScore.getId());
+        }
+
+        if (participantScore instanceof StudentScore studentScore) {
+            // Update the progress for learning goals linked to this exercise
+            learningGoalProgressService.updateProgressByLearningObject(studentScore.getExercise(), studentScore.getUser());
         }
     }
 

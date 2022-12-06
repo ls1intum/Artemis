@@ -58,6 +58,14 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
     List<Object[]> getAchievedPointsOfStudents(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
+            SELECT studentScore
+            FROM StudentScore studentScore
+            WHERE studentScore.user = :user
+            AND studentScore.exercise IN :exercises
+            """)
+    List<StudentScore> findAllByExercisesAndUser(@Param("exercises") List<Exercise> exercises, @Param("user") User user);
+
+    @Query("""
             SELECT s
             FROM StudentScore s LEFT JOIN FETCH s.exercise
             WHERE s.exercise IN :exercises AND s.user = :user

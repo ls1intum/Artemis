@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 @Table(name = "lecture")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Lecture extends DomainObject implements Completable {
+public class Lecture extends DomainObject {
 
     @Column(name = "title")
     private String title;
@@ -55,19 +55,6 @@ public class Lecture extends DomainObject implements Completable {
     @ManyToOne
     @JsonIgnoreProperties(value = { "lectures", "exercises", "posts" }, allowSetters = true)
     private Course course;
-
-    @Override
-    public boolean isCompletedFor(User user) {
-        return getLectureUnits().stream().allMatch((lectureUnit) -> lectureUnit.isCompletedFor(user));
-    }
-
-    @Override
-    public Optional<ZonedDateTime> getCompletionDate(User user) {
-        if (!isCompletedFor(user)) {
-            return Optional.empty();
-        }
-        return getLectureUnits().stream().map((lectureUnit) -> lectureUnit.getCompletionDate(user).get()).sorted().findFirst();
-    }
 
     public String getTitle() {
         return title;

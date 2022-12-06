@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.web.rest.UserJWTController;
 
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "saml2" })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
-public abstract class AbstractSpringIntegrationSaml2Test {
+public abstract class AbstractSpringIntegrationSaml2NoSchedulingTest {
 
     @Autowired
     protected DatabaseUtilService database;

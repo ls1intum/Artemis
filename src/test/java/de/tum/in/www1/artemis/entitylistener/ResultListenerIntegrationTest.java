@@ -284,7 +284,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         resultService.deleteResult(persistedResult, true);
 
         // Wait for the scheduler to execute its task
-        await().until(() -> participantScoreSchedulerService.isIdle());
+        await().until(() -> participantScoreScheduleService.isIdle());
 
         List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
         List<Result> savedResults = resultRepository.findAll();
@@ -302,7 +302,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         resultService.deleteResult(persistedResult, true);
 
         // Wait for the scheduler to execute its task
-        await().until(() -> participantScoreSchedulerService.isIdle());
+        await().until(() -> participantScoreScheduleService.isIdle());
 
         List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
         List<Result> savedResults = resultRepository.findAll();
@@ -402,7 +402,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result persistedResult = database.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
 
         // Wait for the scheduler to execute its task
-        await().until(() -> participantScoreSchedulerService.isIdle());
+        await().until(() -> participantScoreScheduleService.isIdle());
 
         savedParticipantScores = participantScoreRepository.findAllEagerly();
         assertThat(savedParticipantScores).isNotEmpty();
@@ -434,7 +434,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         }
 
         // Wait for the scheduler to execute its task
-        await().pollDelay(Durations.ONE_SECOND).until(() -> participantScoreSchedulerService.isIdle());
+        await().pollDelay(Durations.ONE_SECOND).until(() -> participantScoreScheduleService.isIdle());
 
         List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllEagerly();
         assertThat(savedParticipantScore).isNotEmpty();

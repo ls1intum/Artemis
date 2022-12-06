@@ -152,7 +152,12 @@ public class User extends AbstractAuditingEntity implements Participant {
     public Set<TutorialGroupRegistration> tutorialGroupRegistrations = new HashSet<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
     private Set<LectureUnitCompletion> completedLectureUnits = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    private Set<LearningGoalProgress> learningGoalProgress = new HashSet<>();
 
     public String getLogin() {
         return login;
@@ -325,6 +330,14 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setCompletedLectureUnits(Set<LectureUnitCompletion> completedLectureUnits) {
         this.completedLectureUnits = completedLectureUnits;
+    }
+
+    public Set<LearningGoalProgress> getLearningGoalProgress() {
+        return learningGoalProgress;
+    }
+
+    public void setLearningGoalProgress(Set<LearningGoalProgress> learningGoalProgress) {
+        this.learningGoalProgress = learningGoalProgress;
     }
 
     public Set<GuidedTourSetting> getGuidedTourSettings() {

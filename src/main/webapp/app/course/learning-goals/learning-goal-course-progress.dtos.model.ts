@@ -2,8 +2,7 @@ export class CourseLearningGoalProgress {
     public courseId: number;
     public learningGoalId: number;
     public learningGoalTitle: string;
-    public averagePointsAchievedByStudentInLearningGoal: number;
-    public totalPointsAchievableByStudentsInLearningGoal: number;
+    public averageScoreAchievedInLearningGoal: number;
 
     public progressInLectureUnits: CourseLectureUnitProgress[];
 }

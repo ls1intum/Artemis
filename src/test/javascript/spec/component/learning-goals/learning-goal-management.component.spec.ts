@@ -15,8 +15,6 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { CourseLearningGoalProgress, CourseLectureUnitProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
-import { cloneDeep } from 'lodash-es';
-import * as Sentry from '@sentry/browser';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../test.module';
 
@@ -83,8 +81,7 @@ describe('LearningGoalManagementComponent', () => {
         courseLearningGoalProgress.courseId = 1;
         courseLearningGoalProgress.learningGoalId = 1;
         courseLearningGoalProgress.learningGoalTitle = 'test';
-        courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal = 5;
-        courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = 10;
+        courseLearningGoalProgress.averageScoreAchievedInLearningGoal = 30;
         courseLearningGoalProgress.progressInLectureUnits = [courseLectureUnitProgress];
 
         const learningGoalsOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
@@ -95,12 +92,6 @@ describe('LearningGoalManagementComponent', () => {
             body: courseLearningGoalProgress,
             status: 200,
         });
-        const courseProgressParticipantScores = cloneDeep(courseLearningGoalProgress);
-        courseProgressParticipantScores.averagePointsAchievedByStudentInLearningGoal = 1;
-        const learningGoalProgressParticipantScoreResponse: HttpResponse<CourseLearningGoalProgress> = new HttpResponse({
-            body: courseProgressParticipantScores,
-            status: 200,
-        });
         const prerequisitesOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
             body: [],
             status: 200,
@@ -108,25 +99,17 @@ describe('LearningGoalManagementComponent', () => {
 
         jest.spyOn(learningGoalService, 'getLearningGoalRelations').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsOfCourseResponse));
-        const getProgressSpy = jest.spyOn(learningGoalService, 'getCourseProgress');
+        const getProgressSpy = jest.spyOn(learningGoalService, 'getCourseProgress').mockReturnValue(of(learningGoalProgressResponse));
         jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
-        getProgressSpy.mockReturnValueOnce(of(learningGoalProgressResponse)); // when useParticipantScoreTable = false
-        getProgressSpy.mockReturnValueOnce(of(learningGoalProgressResponse)); // when useParticipantScoreTable = false
-        getProgressSpy.mockReturnValueOnce(of(learningGoalProgressParticipantScoreResponse)); // when useParticipantScoreTable = true
-        getProgressSpy.mockReturnValueOnce(of(learningGoalProgressParticipantScoreResponse)); // when useParticipantScoreTable = true
-
-        const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
 
         learningGoalManagementComponentFixture.detectChanges();
 
         const learningGoalCards = learningGoalManagementComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
         expect(learningGoalCards).toHaveLength(2);
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
-        expect(getProgressSpy).toHaveBeenCalledTimes(4);
+        expect(getProgressSpy).toHaveBeenCalledTimes(2);
         expect(learningGoalManagementComponent.learningGoals).toHaveLength(2);
         expect(learningGoalManagementComponent.learningGoalIdToLearningGoalCourseProgress.has(1)).toBeTrue();
-        expect(learningGoalManagementComponent.learningGoalIdToLearningGoalCourseProgressUsingParticipantScoresTables.has(1)).toBeTrue();
-        expect(captureExceptionSpy).toHaveBeenCalledOnce();
     });
 
     it('should load prerequisites and display a card for each of them', () => {

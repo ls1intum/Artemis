@@ -18,9 +18,7 @@ public class CourseLearningGoalProgress {
 
     public String learningGoalTitle;
 
-    public Double averagePointsAchievedByStudentInLearningGoal;
-
-    public Double totalPointsAchievableByStudentsInLearningGoal;
+    public Double averageScoreAchievedInLearningGoal;
 
     /**
      * the progress in the connected lecture units that were used for the progress calculation

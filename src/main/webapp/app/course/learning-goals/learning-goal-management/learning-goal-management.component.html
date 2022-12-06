@@ -110,7 +110,7 @@
         <jhi-learning-goal-card
             *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
             [learningGoal]="learningGoal"
-            [learningGoalProgress]="getLearningGoalCourseProgress(learningGoal)"
+            [progress]="getLearningGoalCourseProgress(learningGoal)"
         >
             <button
                 *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"

@@ -23,6 +23,14 @@ export class LearningGoal implements BaseEntity {
     public course?: Course;
     public exercises?: Exercise[];
     public lectureUnits?: LectureUnit[];
+    public userProgress?: LearningGoalProgress[];
+
+    constructor() {}
+}
+
+export class LearningGoalProgress {
+    public progress?: number;
+    public confidence?: number;
 
     constructor() {}
 }

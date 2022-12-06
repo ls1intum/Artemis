@@ -1,4 +1,4 @@
-<div class="card course-goal-card grow" (click)="openLearningGoalDetailsModal()">
+<div class="card course-goal-card grow">
     <div class="card-header text-center course-goal-card-header container">
         <h6 class="m-0">{{ learningGoal?.title }}</h6>
     </div>
@@ -8,7 +8,7 @@
         </div>
         <ng-template #learningGoalBlock>
             <div *ngIf="isProgressAvailable; else noProgressBlock">
-                <jhi-circular-progress-bar [progressInPercent]="progressInPercent" [progressText]="progressText"></jhi-circular-progress-bar>
+                <jhi-circular-progress-bar [progressInPercent]="progress!"></jhi-circular-progress-bar>
             </div>
             <ng-template #noProgressBlock>{{ 'artemisApp.learningGoal.learningGoalCard.progressUnavailable' | artemisTranslate }}</ng-template>
         </ng-template>

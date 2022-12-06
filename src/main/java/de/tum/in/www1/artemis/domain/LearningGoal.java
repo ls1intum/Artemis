@@ -59,6 +59,9 @@ public class LearningGoal extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Course> consecutiveCourses = new HashSet<>();
 
+    @OneToMany(mappedBy = "learningGoal", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private Set<LearningGoalProgress> userProgress = new HashSet<>();
+
     public String getTitle() {
         return title;
     }
@@ -151,6 +154,14 @@ public class LearningGoal extends DomainObject {
 
     public void setConsecutiveCourses(Set<Course> consecutiveCourses) {
         this.consecutiveCourses = consecutiveCourses;
+    }
+
+    public Set<LearningGoalProgress> getUserProgress() {
+        return userProgress;
+    }
+
+    public void setUserProgress(Set<LearningGoalProgress> userProgress) {
+        this.userProgress = userProgress;
     }
 
     /**

@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-public interface Completable {
+public interface ILearningObject {
 
     /**
      * Whether the participant has completed the object
