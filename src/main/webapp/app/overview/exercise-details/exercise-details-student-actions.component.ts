@@ -35,7 +35,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     @Input() @HostBinding('class.col-auto') smallColumns = false;
 
     @Input() exercise: Exercise;
-    @Input() studentParticipation?: StudentParticipation;
     @Input() courseId: number;
     @Input() actionsOnly: boolean;
     @Input() smallButtons: boolean;
@@ -76,7 +75,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         }
         const studentParticipations = this.exercise.studentParticipations ?? [];
-        this.gradedParticipation = this.studentParticipation ?? this.participationService.getSpecificStudentParticipation(studentParticipations, false);
+        this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
     }
 
@@ -91,7 +90,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
      * Resuming an exercise is not possible in the exam, otherwise see exercise.utils -> isResumeExerciseAvailable
      */
     isResumeExerciseAvailable(): boolean {
-        return !this.examMode && isResumeExerciseAvailable(this.exercise, this.studentParticipation);
+        return !this.examMode && isResumeExerciseAvailable(this.exercise, this.gradedParticipation);
     }
 
     /**
@@ -173,13 +172,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
     private feedbackSent = false;
 
     isFeedbackRequestButtonDisabled(): boolean {
-        const participation = this.studentParticipation ?? (this.exercise.studentParticipations && this.exercise.studentParticipations.first());
-
         const showUngradedResults = true;
-        const latestResult = participation?.results && participation.results.find(({ rated }) => showUngradedResults || rated === true);
+        const latestResult = this.gradedParticipation?.results && this.gradedParticipation.results.find(({ rated }) => showUngradedResults || rated === true);
         const allHiddenTestsPassed = latestResult?.score !== undefined && latestResult.score >= 100;
 
-        const requestAlreadySent = (participation?.individualDueDate && participation.individualDueDate.isBefore(Date.now())) ?? false;
+        const requestAlreadySent = (this.gradedParticipation?.individualDueDate && this.gradedParticipation.individualDueDate.isBefore(Date.now())) ?? false;
 
         return !allHiddenTestsPassed || requestAlreadySent || this.feedbackSent;
     }

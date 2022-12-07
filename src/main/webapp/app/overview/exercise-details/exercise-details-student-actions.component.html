@@ -41,7 +41,7 @@
                 jhi-exercise-action-button
                 [buttonIcon]="faPlayCircle"
                 [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
-                *ngIf="exercise.studentParticipations?.[0]?.initializationState === InitializationState.INITIALIZED"
+                *ngIf="gradedParticipation?.initializationState === InitializationState.INITIALIZED"
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
@@ -59,7 +59,7 @@
                 [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
                 [outlined]="true"
                 [buttonLoading]="!!exercise.loading"
-                *ngIf="exercise.studentParticipations?.[0]?.initializationState === InitializationState.FINISHED"
+                *ngIf="gradedParticipation?.initializationState === InitializationState.FINISHED"
                 [smallButton]="smallButtons"
                 (click)="startExercise()"
             ></button>
@@ -69,7 +69,7 @@
                 [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
                 [outlined]="true"
                 [buttonLoading]="!!exercise.loading"
-                *ngIf="exercise.dueDate && dayjs(exercise.dueDate).isBefore(dayjs()) && studentParticipation?.results?.length && showResult"
+                *ngIf="exercise.dueDate && dayjs(exercise.dueDate).isBefore(dayjs()) && gradedParticipation?.results?.length && showResult"
                 [smallButton]="smallButtons"
                 (click)="startExercise()"
             ></button>
@@ -116,8 +116,8 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-                [routerLink]="['/courses', courseId, 'modeling-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+                *ngIf="gradedParticipation?.initializationState === InitializationState.INITIALIZED"
+                [routerLink]="['/courses', courseId, 'modeling-exercises', exercise.id, 'participate', gradedParticipation!.id]"
             ></button>
         </div>
         <!-- ACTIONS END -->
@@ -132,13 +132,8 @@
                     [outlined]="true"
                     [buttonLoading]="!!exercise.loading"
                     [smallButton]="smallButtons"
-                    *ngIf="
-                        exercise.studentParticipations &&
-                        exercise.studentParticipations.length > 0 &&
-                        exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                        (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
-                    "
-                    [routerLink]="['/courses', courseId, 'modeling-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+                    *ngIf="gradedParticipation?.initializationState === InitializationState.FINISHED && (!gradedParticipation?.results?.length || !showResult)"
+                    [routerLink]="['/courses', courseId, 'modeling-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                 ></button>
                 <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
                 <button
@@ -148,15 +143,8 @@
                     [outlined]="true"
                     [buttonLoading]="!!exercise.loading"
                     [smallButton]="smallButtons"
-                    *ngIf="
-                        exercise.studentParticipations &&
-                        exercise.studentParticipations.length > 0 &&
-                        exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                        exercise.studentParticipations[0].results &&
-                        exercise.studentParticipations[0].results.length > 0 &&
-                        showResult
-                    "
-                    [routerLink]="['/courses', courseId, 'modeling-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+                    *ngIf="gradedParticipation?.initializationState === InitializationState.FINISHED && gradedParticipation?.results?.length && showResult"
+                    [routerLink]="['/courses', courseId, 'modeling-exercises', exercise.id, 'participate', gradedParticipation!.id]"
                 ></button>
             </div>
         </div>
@@ -270,7 +258,7 @@
                 style="margin-left: 8px"
                 target="_blank"
                 rel="noreferrer"
-                href="{{ buildPlanUrl(exercise.studentParticipations![0]) }}"
+                href="{{ buildPlanUrl(gradedParticipation!) }}"
                 *ngIf="publishBuildPlanUrl() && buildPlanActive()"
             >
                 <fa-icon [icon]="faExternalLinkAlt" [fixedWidth]="true"></fa-icon>
@@ -317,8 +305,8 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-                [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+                *ngIf="gradedParticipation?.initializationState === InitializationState.INITIALIZED"
+                [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', gradedParticipation!.id]"
             ></button>
         </div>
         <!-- ACTIONS END -->
@@ -333,13 +321,8 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="
-                    exercise.studentParticipations &&
-                    exercise.studentParticipations.length > 0 &&
-                    exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                    (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
-                "
-                [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+                *ngIf="gradedParticipation?.initializationState === InitializationState.FINISHED && (!gradedParticipation?.results?.length || !showResult)"
+                [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', gradedParticipation!.id]"
             ></button>
             <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
             <button
@@ -350,15 +333,8 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="
-                    exercise.studentParticipations &&
-                    exercise.studentParticipations.length > 0 &&
-                    exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                    exercise.studentParticipations[0].results &&
-                    exercise.studentParticipations[0].results.length > 0 &&
-                    showResult
-                "
-                [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+                *ngIf="gradedParticipation?.initializationState === InitializationState.FINISHED && gradedParticipation?.results?.length && showResult"
+                [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', gradedParticipation!.id]"
             ></button>
         </div>
         <!-- INFORMATION END -->
@@ -399,8 +375,8 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-                [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+                *ngIf="gradedParticipation?.initializationState === InitializationState.INITIALIZED"
+                [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', gradedParticipation!.id]"
             ></button>
         </div>
         <!-- ACTIONS END-->
@@ -415,13 +391,8 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="
-                    exercise.studentParticipations &&
-                    exercise.studentParticipations.length > 0 &&
-                    exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                    (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
-                "
-                [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+                *ngIf="gradedParticipation?.initializationState === InitializationState.FINISHED && (!gradedParticipation?.results?.length || !showResult)"
+                [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', gradedParticipation!.id]"
             ></button>
             <button
                 jhi-exercise-action-button
@@ -431,15 +402,8 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="
-                    exercise.studentParticipations &&
-                    exercise.studentParticipations.length > 0 &&
-                    exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                    exercise.studentParticipations[0].results &&
-                    exercise.studentParticipations[0].results.length > 0 &&
-                    showResult
-                "
-                [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+                *ngIf="gradedParticipation?.initializationState === InitializationState.FINISHED && gradedParticipation?.results?.length && showResult"
+                [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', gradedParticipation!.id]"
             ></button>
         </div>
         <!-- INFORMATION END -->
