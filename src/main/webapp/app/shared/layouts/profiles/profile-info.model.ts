@@ -36,4 +36,16 @@ export class ProfileInfo {
     public useExternal: boolean;
     public externalCredentialProvider: string;
     public externalPasswordResetLinkMap: Map<string, string>;
+    public git: {
+        branch: string;
+        commit: {
+            id: {
+                abbrev: string;
+            };
+            time: string;
+            user: {
+                name: string;
+            };
+        };
+    };
 }
