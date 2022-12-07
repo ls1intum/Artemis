@@ -12,8 +12,16 @@ public class CourseForDashboardDTO {
 
     private Map<String, CourseScoresDTO> scoresPerExerciseType;
 
+    public Course getCourse() {
+        return course;
+    }
+
     public void setCourse(Course course) {
         this.course = course;
+    }
+
+    public Map<String, CourseScoresDTO> getScoresPerExerciseType() {
+        return scoresPerExerciseType;
     }
 
     public void setScoresPerExerciseType(Map<String, CourseScoresDTO> scoresPerExerciseType) {
