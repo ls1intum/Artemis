@@ -55,6 +55,8 @@ services:
         build:
             context: .
             dockerfile: Cypress-Dockerfile
+            args:
+                - CYPRESS_BROWSER=node18.6.0-chrome105-ff104
         depends_on:
             - artemis-app
             - artemis-mysql
