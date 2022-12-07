@@ -40,6 +40,10 @@ artemis:
         # This `default` option will be overridden by more specific project type
         # definitions.
         build:
+            default-docker-flags:
+                cpus: 2
+                memory: 2g
+                pid-limit: 1000
             images:
                 java:
                     # possible overrides: maven, gradle
