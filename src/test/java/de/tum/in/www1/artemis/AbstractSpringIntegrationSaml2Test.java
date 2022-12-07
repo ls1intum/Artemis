@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
 /**
- * Test base for {@link UserJWTController#authorizeSAML2(String, HttpServletResponse)}} and {@link SAML2Service}.
+ * Test base for {@link UserJWTController#authorizeSAML2(String, HttpServletResponse)} and {@link SAML2Service}.
  *
  * @author Dominik Fuchss
  */
