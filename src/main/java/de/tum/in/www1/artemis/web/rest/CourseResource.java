@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static java.time.ZonedDateTime.now;
+import static java.util.stream.Collectors.toSet;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -20,6 +21,7 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -102,11 +104,13 @@ public class CourseResource {
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
+    private final ParticipantScoreService participantScoreService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
                           OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
                           TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
                           AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-                          FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService) {
+                          FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService, ParticipantScoreService participantScoreService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -123,6 +127,7 @@ public class CourseResource {
         this.fileService = fileService;
         this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
         this.courseScoreCalculationService = courseScoreCalculationService;
+        this.participantScoreService = participantScoreService;
     }
 
     /**
@@ -401,6 +406,7 @@ public class CourseResource {
      *
      * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
      * @return a course with all exercises, lectures, exams and learning goals visible to the student
+     * In addition, scores per exercise type and the participant scores for each exercise are sent back as an optimization.
      */
     @GetMapping("courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
@@ -411,16 +417,21 @@ public class CourseResource {
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
 
-        List<CourseForDashboardDTO> coursesWithScores = courseScoreCalculationService.calculateCourseScoresPerExerciseType(Collections.singletonList(course), user.getId());
+        // Get scores per exercise type for the course (used in course-statistics.component i.a.).
+        Map<String, CourseScoresForStudentStatisticsDTO> scoresPerExerciseType = courseScoreCalculationService.calculateCourseScoresPerExerciseType(course, user.getId());
 
-        return coursesWithScores.get(0);
+        // Get participant scores (latest result for each exercise) for the course.
+        Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise).collect(toSet());
+        List<ParticipantScoreDTO> participantScores = participantScoreService.getParticipantScoreDTOs(Pageable.unpaged(), exercisesOfCourse);
+
+        return new CourseForDashboardDTO(course, scoresPerExerciseType, participantScores);
     }
 
     /**
      * GET /courses/for-dashboard
      *
-     * @return the list of courses (the user has access to) including all exercises with participation and result for the user +
-     * the calculated scores the user achieved in each of those courses (including reachablePoints, and absolutePoints i.a.)
+     * @return the list of courses (the user has access to) including all exercises with participation and result for the user
+     * In addition, scores per exercise type and the participant scores for each exercise are sent back as an optimization.
      */
     @GetMapping("courses/for-dashboard")
     @PreAuthorize("hasRole('USER')")
@@ -433,10 +444,21 @@ public class CourseResource {
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
 
-        List<CourseForDashboardDTO> coursesWithScores = courseScoreCalculationService.calculateCourseScoresPerExerciseType(courses, user.getId());
+        List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
+
+        for (Course course : courses) {
+            // Get scores per exercise type for each course (used in course-statistics.component i.a.).
+            Map<String, CourseScoresForStudentStatisticsDTO> scoresPerExerciseType = courseScoreCalculationService.calculateCourseScoresPerExerciseType(course, user.getId());
+
+            // Get participant scores (latest result for each exercise) for each course.
+            Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise).collect(toSet());
+            List<ParticipantScoreDTO> participantScores = participantScoreService.getParticipantScoreDTOs(Pageable.unpaged(), exercisesOfCourse);
+
+            coursesForDashboard.add(new CourseForDashboardDTO(course, scoresPerExerciseType, participantScores));
+        }
 
         log.info("get all courses for dashboard took {}ms", System.currentTimeMillis() - start);
-        return coursesWithScores;
+        return coursesForDashboard;
     }
 
     /**
