@@ -1818,6 +1818,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         final String noParticipationGrade = "NoParticipation";
 
         studentExam1.setSubmitted(false);
+        studentExam1.setUser(finalStudentExam.getUser());
         studentExamRepository.save(studentExam1);
 
         StudentExam bonusStudentExam = studentExam1;

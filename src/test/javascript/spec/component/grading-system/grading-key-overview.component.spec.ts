@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
-import { GradeType } from 'app/entities/grading-scale.model';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
@@ -50,6 +50,8 @@ describe('GradeKeyOverviewComponent', () => {
         gradeType: GradeType.BONUS,
         gradeSteps: [gradeStep1, gradeStep2],
         maxPoints: 100,
+        plagiarismGrade: GradingScale.DEFAULT_PLAGIARISM_GRADE,
+        noParticipationGrade: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
     };
 
     const studentGrade = '2.0';
