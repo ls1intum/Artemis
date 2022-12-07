@@ -21,6 +21,7 @@
     "scripts": {
         "cypress:open": "cypress open",
         "cypress:run": "cypress run --browser=chrome",
+        "detect:flakies": "coverage-git-compare compare -l 1",
         "update": "npm-upgrade"
     }
 }

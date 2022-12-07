@@ -51,7 +51,10 @@ services:
 
     artemis-cypress:
         # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
-        image: cypress/browsers:node18.6.0-chrome105-ff104
+#        image: cypress/browsers:node18.6.0-chrome105-ff104
+        build:
+            context: .
+            dockerfile: Cypress-Dockerfile
         depends_on:
             - artemis-app
             - artemis-mysql
@@ -68,7 +71,7 @@ services:
             - CYPRESS_instructorGroupName
             - GH_REGISTRY_TOKEN
         # Wait up to 5 minutes until Artemis has booted
-        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm exec -- wait-on -i 1000 -t 300000 http://artemis-app:${SERVER_PORT} && npm run cypress:run"
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm exec -- wait-on -i 1000 -t 300000 http://artemis-app:${SERVER_PORT} && npm run cypress:run && npm run detect:flakies"
         volumes:
             - ../../../../:/app/artemis
         networks:

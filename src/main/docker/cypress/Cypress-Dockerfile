@@ -1,0 +1,4 @@
+FROM cypress/browsers:node18.6.0-chrome105-ff104
+RUN export DEBIAN_FRONTEND=noninteractive && \
+    apt update && \
+        apt -y install openjdk-17-jdk
