@@ -44,7 +44,6 @@ services:
         volumes:
             - artemis-bamboo-build-agent:/var/atlassian/application-data/bamboo
             - /var/run/docker.sock:/var/run/docker.sock
-        hostname: bamboo-build-agent
         environment:
             - BAMBOO_SERVER=http://artemis-bamboo:8085
         networks:
