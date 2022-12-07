@@ -5,7 +5,6 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackItemGroup, isFeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
-import { calculateAppliedCredits } from 'app/exercises/shared/feedback/item/feedback-item-util';
 
 @Component({
     selector: 'jhi-feedback-item-node',
@@ -22,9 +21,6 @@ export class FeedbackItemNodeComponent implements OnInit {
     feedbackItem: FeedbackItem;
     feedbackItemGroup: FeedbackItemGroup;
 
-    // The applied credits due to credit caps
-    appliedCredits: number;
-
     // Icons
     faExclamationTriangle = faExclamationTriangle;
 
@@ -34,7 +30,5 @@ export class FeedbackItemNodeComponent implements OnInit {
         } else {
             this.feedbackItem = <FeedbackItem>this.feedbackItemNode;
         }
-
-        this.appliedCredits = calculateAppliedCredits(this.feedbackItemNode);
     }
 }

@@ -22,24 +22,24 @@ const capCredits = (credits: number, maxCredits?: number): number => {
     }
 
     const absCredits = Math.abs(credits);
-    const absMaxCredits = Math.abs(credits);
-    return Math.sign(credits) * Math.max(absCredits, absMaxCredits);
+    const absMaxCredits = Math.abs(maxCredits);
+    return Math.sign(credits) * Math.min(absCredits, absMaxCredits);
 };
 
-export const calculateAppliedCredits = (node: FeedbackItemNode) => {
-    return roundToDecimals(capCredits(node.credits ?? 0, node.maxCredits), 2);
+const calculatePercentage = (node: FeedbackItemNode, maxPoints: number) => {
+    const appliedCredits = capCredits(node.credits ?? 0, node.maxCredits);
+    return roundToDecimals((appliedCredits / maxPoints) * 100, 2);
 };
 
 export const nodesToChartData = (feedbackNodes: FeedbackItemNode[], exercise: Exercise): ChartData => {
-    const maxPoints = (exercise.maxPoints ?? 0) + (exercise.bonusPoints ?? 0);
-    const score = feedbackNodes.reduce((acc, node) => acc + (node.credits ?? 0), 0);
-    const xScaleMax = Math.max(100, score);
+    const maxPoints = exercise.maxPoints! + (exercise.bonusPoints ?? 0);
+    const xScaleMax = Math.max(100, maxPoints);
     const results: NgxChartsMultiSeriesDataEntry[] = [
         {
             name: 'scores',
             series: feedbackNodes.map((node: FeedbackItemNode) => ({
                 name: node.name,
-                value: roundToDecimals(capCredits((node.credits ?? 0) * maxPoints, node.maxCredits), 2),
+                value: calculatePercentage(node, exercise.maxPoints!),
             })),
         },
     ];
