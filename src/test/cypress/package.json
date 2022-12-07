@@ -8,8 +8,8 @@
     ],
     "devDependencies": {
         "@4tw/cypress-drag-drop": "2.1.0",
-        "@heddendorp/coverage-git-compare": "^1.1.1",
-        "@heddendorp/cypress-plugin-multilanguage-coverage": "^1.1.1",
+        "@heddendorp/coverage-git-compare": "^1.1.2",
+        "@heddendorp/cypress-plugin-multilanguage-coverage": "^1.1.2",
         "@types/node": "18.7.16",
         "cypress": "9.5.4",
         "cypress-file-upload": "5.0.8",
