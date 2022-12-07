@@ -7,6 +7,7 @@ services:
         container_name: artemis-app
         # TODO: add support for armv8
         platform: linux/x86_64
+        # TODO: add hint in documentation or here: build vs pre-built image from registry
         image: ghcr.io/ls1intum/artemis:develop
         build:
             context: ../../../..
