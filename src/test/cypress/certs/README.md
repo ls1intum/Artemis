@@ -9,7 +9,7 @@ instead of openssl for instance, as it's easy to use.
 ## Generate new certificates
 The following steps show how to generate new client certificates and the CA files:
 
-```
+```bash
 cd ./src/test/cypress/certs
 docker run --rm -v ${PWD}:/certs $(docker build -q . ) /certs/generate-certs.sh artemis-nginx artemis.example localhost 127.0.0.1 ::1
 ```
