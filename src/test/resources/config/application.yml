@@ -29,7 +29,7 @@ artemis:
             default-docker-flags:
                 cpus: 2
                 memory: 2g
-                pid-limit: 1000
+                pids-limit: 1000
             images:
                 # java intentionally uppercase to make sure both variants are
                 # accepted
