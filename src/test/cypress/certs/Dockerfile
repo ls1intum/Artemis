@@ -5,7 +5,7 @@ RUN apk add git
 WORKDIR /go/mkcert
 RUN git clone https://github.com/FiloSottile/mkcert . && go build -ldflags "-X main.Version=$(git describe --tags)"
 
-FROM alpine:latest
+FROM alpine:3
 COPY --from=builder /go/mkcert/mkcert /usr/local/bin/mkcert
 RUN apk add nss && mkdir /certs
 WORKDIR /certs
