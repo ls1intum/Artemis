@@ -6,7 +6,7 @@ services:
     saml-test:
         container_name: artemis-saml-test
         image: jamedjo/test-saml-idp
-        pull: always
+        pull_policy: always
         ports:
             - 9980:8080
         volumes:

@@ -4,7 +4,7 @@ services:
   prometheus:
     container_name: artemis-prometheus
     image: prom/prometheus:v2.34.0
-    pull: always
+    pull_policy: always
     # If you want to run this in production, you should persist the /etc/prometheus-directory
     #volumes:
       # - ./monitoring/prometheus/:/etc/prometheus/
@@ -18,7 +18,7 @@ services:
   grafana:
     container_name: artemis-grafana
     image: grafana/grafana:9.0.2
-    pull: always
+    pull_policy: always
     # TODO: docker named volume maybe instead of this? otherwise .gitignore the used bind src mount
     volumes:
       - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/

@@ -21,7 +21,7 @@ services:
     depends_on:
       - mysql
     image: ghcr.io/ls1intum/docker-jdk-node-yarn
-    pull: always
+    pull_policy: always
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
       SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling
@@ -40,7 +40,7 @@ services:
     depends_on:
       - artemis-server
     image: ghcr.io/ls1intum/docker-jdk-node-yarn
-    pull: always
+    pull_policy: always
     networks:
       - artemis
     ports:

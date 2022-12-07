@@ -13,8 +13,7 @@ services:
             context: ../../../..
             dockerfile: src/main/docker/artemis/Dockerfile
             pull: true
-        # TODO: add pull always also for other images
-        pull: always
+        pull_policy: always
         # maps application-local.yml to the container as this is the override file for all other configs
         # (the default configs are packaged in the war file and don't need to be mapped here)
         # TODO: check how the non-existent application-local.yml problem can be solved

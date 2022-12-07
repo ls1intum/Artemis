@@ -6,7 +6,7 @@ services:
     mailhog:
         container_name: artemis-mailhog
         image: mailhog/mailhog
-        pull: always
+        pull_policy: always
         ports:
             - 1025:1025
             - 8025:8025

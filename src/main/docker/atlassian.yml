@@ -6,7 +6,7 @@ services:
     jira:
         container_name: artemis-jira
         image: ghcr.io/ls1intum/artemis-jira:8.20.11
-        pull: always
+        pull_policy: always
         volumes:
           - artemis-jira-data:/var/atlassian/application-data/jira
         ports:
@@ -16,7 +16,7 @@ services:
     bitbucket:
         container_name: artemis-bitbucket
         image: ghcr.io/ls1intum/artemis-bitbucket:7.21.4
-        pull: always
+        pull_policy: always
         volumes:
             - artemis-bitbucket-data:/var/atlassian/application-data/bitbucket
         environment:
@@ -29,7 +29,7 @@ services:
     bamboo:
         container_name: artemis-bamboo
         image: ghcr.io/ls1intum/artemis-bamboo:8.2.5
-        pull: always
+        pull_policy: always
         volumes:
             - artemis-bamboo-data:/var/atlassian/application-data/bamboo
         ports:
