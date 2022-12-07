@@ -1,14 +1,11 @@
 package de.tum.in.www1.artemis.versioning;
 
-import static de.tum.in.www1.artemis.config.VersioningConfiguration.API_VERSIONS;
-
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.core.annotation.AnnotationUtils;
-import org.springframework.web.servlet.mvc.condition.*;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
@@ -23,7 +20,9 @@ public class VersionRequestMappingHandlerMapping extends RequestMappingHandlerMa
 
     private final String versionPrefix;
 
-    private static final int LATEST_VERSION = API_VERSIONS.get(API_VERSIONS.size() - 1);
+    private final List<Integer> apiVersions;
+
+    private final int latestVersion;
 
     /**
      * Creates a new VersionRequestMappingHandlerMapping.
@@ -31,7 +30,9 @@ public class VersionRequestMappingHandlerMapping extends RequestMappingHandlerMa
      * @param pathPrefixSegment The full path segment on the beginning of endpoint path
      * @param versionPrefix     The prefix for the version segment
      */
-    public VersionRequestMappingHandlerMapping(String pathPrefixSegment, String versionPrefix) {
+    public VersionRequestMappingHandlerMapping(List<Integer> apiVersions, String pathPrefixSegment, String versionPrefix) {
+        this.apiVersions = apiVersions;
+        this.latestVersion = this.apiVersions.get(this.apiVersions.size() - 1);
         this.pathPrefixSegment = pathPrefixSegment;
         this.versionPrefix = versionPrefix;
     }
@@ -54,7 +55,8 @@ public class VersionRequestMappingHandlerMapping extends RequestMappingHandlerMa
             return info;
         }
         // We don't handle endpoints that are explicitly ignored
-        if (method.getAnnotation(IgnoreGlobalMapping.class) != null) {
+        var ignoreGlobalMappingAnnotation = method.getAnnotation(IgnoreGlobalMapping.class);
+        if (ignoreGlobalMappingAnnotation != null && ignoreGlobalMappingAnnotation.ignorePaths()) {
             return info;
         }
         VersionRanges versionRangesAnnotation = AnnotationUtils.findAnnotation(method, VersionRanges.class);
@@ -63,14 +65,14 @@ public class VersionRequestMappingHandlerMapping extends RequestMappingHandlerMa
             throw new ApiVersionAnnotationMismatchException();
         }
         if (versionRangesAnnotation != null) {
-            return createApiVersionInfo(new VersionRangesRequestCondition(versionRangesAnnotation.value())).combine(info);
+            return createApiVersionInfo(new VersionRangesRequestCondition(apiVersions, versionRangesAnnotation.value())).combine(info);
         }
         if (versionRangeAnnotation != null) {
-            return createApiVersionInfo(new VersionRangesRequestCondition(versionRangeAnnotation)).combine(info);
+            return createApiVersionInfo(new VersionRangesRequestCondition(apiVersions, versionRangeAnnotation)).combine(info);
         }
 
         // No version is defined. We assume the endpoint is available in all versions.
-        return createApiVersionInfo(new VersionRangesRequestCondition()).combine(info);
+        return createApiVersionInfo(new VersionRangesRequestCondition(apiVersions)).combine(info);
     }
 
     /**
@@ -83,7 +85,7 @@ public class VersionRequestMappingHandlerMapping extends RequestMappingHandlerMa
         List<String> patterns = customCondition.getApplicableVersions().stream().map(e -> "/" + pathPrefixSegment + "/" + versionPrefix + e).collect(Collectors.toList());
 
         // Add an endpoint without version as a fallback to the latest version
-        if (customCondition.getApplicableVersions().contains(LATEST_VERSION)) {
+        if (customCondition.getApplicableVersions().contains(latestVersion)) {
             patterns.add("/" + pathPrefixSegment);
         }
         return RequestMappingInfo.paths(patterns.toArray(new String[] {})).customCondition(customCondition).build();

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import java.util.List;
+
 import org.springframework.boot.autoconfigure.web.servlet.WebMvcRegistrations;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,6 +15,12 @@ import de.tum.in.www1.artemis.versioning.VersionRequestMappingHandlerMapping;
 @Configuration
 public class RequestMappingConfiguration {
 
+    private final List<Integer> apiVersions;
+
+    public RequestMappingConfiguration(List<Integer> apiVersions) {
+        this.apiVersions = apiVersions;
+    }
+
     /**
      * Registers the versioned request mapping handler mapping {@link VersionRequestMappingHandlerMapping}
      *
@@ -24,7 +32,7 @@ public class RequestMappingConfiguration {
 
             @Override
             public RequestMappingHandlerMapping getRequestMappingHandlerMapping() {
-                return new VersionRequestMappingHandlerMapping("api", "v");
+                return new VersionRequestMappingHandlerMapping(apiVersions, "api", "v");
             }
         };
     }

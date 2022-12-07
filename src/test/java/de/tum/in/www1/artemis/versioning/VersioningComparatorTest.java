@@ -1,15 +1,12 @@
 package de.tum.in.www1.artemis.versioning;
 
 import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.*;
-import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.FIRST_A_NO_INTERSECT;
 import static de.tum.in.www1.artemis.versioning.VersionRangeFactory.getInstanceOfVersionRange;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-
-class VersioningComparatorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class VersioningComparatorTest {
 
     private final VersionRange range1_5 = getInstanceOfVersionRange(1, 5);
 
