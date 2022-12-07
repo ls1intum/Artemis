@@ -25,10 +25,14 @@ public class ProgrammingLanguageConfiguration {
 
     private Map<ProgrammingLanguage, Map<ProjectType, String>> images = new EnumMap<>(ProgrammingLanguage.class);
 
+    /**
+     * Contains all the docker run arguments optained from the spring properties
+     */
     private Map<String, String> defaultDockerFlags;
 
     /**
      * Set the map of languages to build images.
+     * (Implicitly called by spring with the yaml configs as parameter)
      *
      * @param buildImages the map of languages to build images
      */
@@ -39,10 +43,18 @@ public class ProgrammingLanguageConfiguration {
         log.info("Load docker image configuration: " + images);
     }
 
+    /**
+     * @return The list of configured docker run arguments.
+     */
     public Map<String, String> getDefaultDockerFlags() {
         return defaultDockerFlags;
     }
 
+    /**
+     * Sets the default docker run arguments based on the spring configuration
+     * (Implicitly called by spring with the yaml configs as parameter)
+     * @param dockerFlags key value paris of run run arguments
+     */
     public void setDefaultDockerFlags(final Map<String, String> dockerFlags) {
         log.info("Set Docker flags to " + dockerFlags);
         this.defaultDockerFlags = dockerFlags;

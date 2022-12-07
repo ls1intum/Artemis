@@ -510,7 +510,11 @@ public class BambooBuildPlanService {
         return dockerConfiguration;
     }
 
+    /** Get the docker run arguments for a Bamboo DockerConfiguration. The configuration is optained from the programmingLanguageConfiguration.
+     * @return A string containing all the configured docker run arguments with newlines in between
+     */
     private String getDefaultDockerRunArguments() {
+        // Bamboo needs all docker run arguments in separate lines
         return programmingLanguageConfiguration.getDefaultDockerFlags().entrySet().stream().map(entry -> "--" + entry.getKey() + "\n" + entry.getValue())
                 .collect(Collectors.joining("\n"));
     }
