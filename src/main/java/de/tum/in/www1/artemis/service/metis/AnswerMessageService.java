@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
+import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
@@ -36,15 +37,18 @@ public class AnswerMessageService extends PostingService {
 
     private final ConversationService conversationService;
 
+    private final ChannelAuthorizationService channelAuthorizationService;
+
     @SuppressWarnings("PMD.ExcessiveParameterList")
     public AnswerMessageService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository, ConversationService conversationService,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate,
-            ConversationParticipantRepository conversationParticipantRepository) {
+            ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
         this.answerPostRepository = answerPostRepository;
         this.conversationMessageRepository = conversationMessageRepository;
         this.conversationService = conversationService;
+        this.channelAuthorizationService = channelAuthorizationService;
     }
 
     /**
@@ -68,8 +72,8 @@ public class AnswerMessageService extends PostingService {
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
         Conversation conversation = conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation().getId(), user);
 
-        if (conversation instanceof Channel channel && channel.getIsArchived()) {
-            throw new BadRequestAlertException("A message cannot be created in an archived channel", METIS_ANSWER_POST_ENTITY_NAME, "channelarchived");
+        if (conversation instanceof Channel channel) {
+            channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, user);
         }
 
         // use post from database rather than user input

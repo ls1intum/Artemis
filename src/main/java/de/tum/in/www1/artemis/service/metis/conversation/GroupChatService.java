@@ -97,7 +97,7 @@ public class GroupChatService {
         }
         this.groupChatIsValidOrThrow(groupChat);
         var updatedGroupChat = groupChatRepository.save(groupChat);
-        conversationService.notifyConversationMembersAboutUpdate(updatedGroupChat);
+        conversationService.notifyAllConversationMembersAboutUpdate(updatedGroupChat);
         return updatedGroupChat;
     }
 

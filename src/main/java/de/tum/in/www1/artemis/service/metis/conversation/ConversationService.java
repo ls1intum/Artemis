@@ -151,7 +151,8 @@ public class ConversationService {
         if (!newConversationParticipants.isEmpty()) {
             conversationParticipantRepository.saveAll(newConversationParticipants);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, usersToRegisterWithoutExistingParticipants);
-            notifyConversationMembersAboutUpdate(conversation);
+            broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation,
+                    existingParticipants.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet()));
         }
     }
 
@@ -160,13 +161,18 @@ public class ConversationService {
      *
      * @param conversation conversation which members to notify
      */
-    public void notifyConversationMembersAboutUpdate(Conversation conversation) {
+    public void notifyAllConversationMembersAboutUpdate(Conversation conversation) {
         var usersToContact = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.UPDATE, conversation, usersToContact);
     }
 
-    public void notifyConversationMembersAboutNewMessage(Conversation conversation) {
+    /**
+     * Notify all members of a conversation about a new message in the conversation
+     *
+     * @param conversation conversation which members to notify
+     */
+    public void notifyAllConversationMembersAboutNewMessage(Conversation conversation) {
         var usersToContact = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
                 .collect(Collectors.toSet());
         broadcastOnConversationMembershipChannel(conversation.getCourse(), MetisCrudAction.NEW_MESSAGE, conversation, usersToContact);
@@ -187,7 +193,10 @@ public class ConversationService {
         if (participantsToRemove.size() > 0) {
             conversationParticipantRepository.deleteAll(participantsToRemove);
             broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversation, usersWithExistingParticipants);
-            notifyConversationMembersAboutUpdate(conversation);
+            var remainingParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream()
+                    .map(ConversationParticipant::getUser).collect(Collectors.toSet());
+            broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, remainingParticipants);
+
         }
     }
 

@@ -12,6 +12,8 @@ public class ChannelDTO extends ConversationDTO {
 
     private Boolean isPublic;
 
+    private Boolean isAnnouncementChannel;
+
     private Boolean isArchived;
 
     // property not taken from entity
@@ -33,6 +35,7 @@ public class ChannelDTO extends ConversationDTO {
         this.isPublic = channel.getIsPublic();
         this.topic = channel.getTopic();
         this.isArchived = channel.getIsArchived();
+        this.isAnnouncementChannel = channel.getIsAnnouncementChannel();
     }
 
     public ChannelDTO() {
@@ -71,6 +74,14 @@ public class ChannelDTO extends ConversationDTO {
         this.isPublic = isPublic;
     }
 
+    public Boolean getIsAnnouncementChannel() {
+        return isAnnouncementChannel;
+    }
+
+    public void setIsAnnouncementChannel(Boolean announcementChannel) {
+        isAnnouncementChannel = announcementChannel;
+    }
+
     public Boolean getIsArchived() {
         return isArchived;
     }
@@ -95,23 +106,10 @@ public class ChannelDTO extends ConversationDTO {
         this.isChannelAdmin = isChannelAdmin;
     }
 
-    /**
-     * Converts the DTO back to the entity
-     *
-     * @return the converted channel entity
-     */
-    public Channel toChannel() {
-        Channel channel = new Channel();
-        channel.setName(name);
-        channel.setDescription(description);
-        channel.setIsPublic(isPublic);
-        channel.setIsArchived(isArchived);
-        return channel;
-    }
-
     @Override
     public String toString() {
-        return "ChannelDTO{" + "name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic=" + isPublic + ", isArchived="
-                + isArchived + ", isChannelAdmin=" + isChannelAdmin + ", hasChannelAdminRights=" + hasChannelAdminRights + "}" + super.toString();
+        return "ChannelDTO{" + "name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic=" + isPublic + ", isAnnouncementChannel="
+                + isAnnouncementChannel + ", isArchived=" + isArchived + ", isChannelAdmin=" + isChannelAdmin + ", hasChannelAdminRights=" + hasChannelAdminRights + "}"
+                + super.toString();
     }
 }

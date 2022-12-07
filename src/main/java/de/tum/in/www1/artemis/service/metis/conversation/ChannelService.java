@@ -69,7 +69,7 @@ public class ChannelService {
             conversationParticipant.setIsAdmin(true);
         }
         conversationParticipantRepository.saveAll(matchingParticipants);
-        conversationService.notifyConversationMembersAboutUpdate(channel);
+        conversationService.notifyAllConversationMembersAboutUpdate(channel);
     }
 
     /**
@@ -85,7 +85,7 @@ public class ChannelService {
             conversationParticipant.setIsAdmin(false);
         }
         conversationParticipantRepository.saveAll(matchingParticipants);
-        conversationService.notifyConversationMembersAboutUpdate(channel);
+        conversationService.notifyAllConversationMembersAboutUpdate(channel);
     }
 
     /**
@@ -120,7 +120,7 @@ public class ChannelService {
         this.channelIsValidOrThrow(courseId, channel);
 
         var updatedChannel = channelRepository.save(channel);
-        conversationService.notifyConversationMembersAboutUpdate(updatedChannel);
+        conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
         return updatedChannel;
     }
 
@@ -194,7 +194,7 @@ public class ChannelService {
         }
         channel.setIsArchived(true);
         var updatedChannel = channelRepository.save(channel);
-        conversationService.notifyConversationMembersAboutUpdate(updatedChannel);
+        conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
     }
 
     /**
@@ -209,7 +209,7 @@ public class ChannelService {
         }
         channel.setIsArchived(false);
         var updatedChannel = channelRepository.save(channel);
-        conversationService.notifyConversationMembersAboutUpdate(updatedChannel);
+        conversationService.notifyAllConversationMembersAboutUpdate(updatedChannel);
     }
 
     /**

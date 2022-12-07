@@ -22,6 +22,7 @@ export const generateExampleChannelDTO = ({
     isFavorite = false,
     isHidden = false,
     isMember = true,
+    isAnnouncementChannel = false,
 }: ChannelDTO) => {
     const exampleChannelDto = new ChannelDTO();
     exampleChannelDto.id = id;
@@ -41,6 +42,7 @@ export const generateExampleChannelDTO = ({
     exampleChannelDto.isFavorite = isFavorite;
     exampleChannelDto.isHidden = isHidden;
     exampleChannelDto.isMember = isMember;
+    exampleChannelDto.isAnnouncementChannel = isAnnouncementChannel;
 
     return exampleChannelDto;
 };

@@ -5,6 +5,7 @@ import {
     canChangeChannelProperties,
     canChangeGroupChatProperties,
     canCreateChannel,
+    canCreateNewMessageInConversation,
     canDeleteChannel,
     canGrantChannelAdminRights,
     canJoinChannel,
@@ -17,6 +18,36 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 
 describe('ConversationPermissionUtils', () => {
     describe('channels', () => {
+        describe('canCreateNewMessageInConversation', () => {
+            const channelsWhereNewMessageCanBeCreated = generateExampleChannelDTO({ isMember: true });
+
+            it('can create new message in channel where user is member', () => {
+                expect(canCreateNewMessageInConversation(channelsWhereNewMessageCanBeCreated)).toBeTrue();
+            });
+
+            it('can not create new message in channel where user is not member', () => {
+                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: false }))).toBeFalse();
+            });
+
+            it('can not create new message in an archived channel', () => {
+                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isArchived: true }))).toBeFalse();
+            });
+
+            it('can not create new message in a an announcement channel where user is not admin', () => {
+                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: false, isAnnouncementChannel: true }))).toBeFalse();
+            });
+
+            it('can create new message in a an announcement channel where user is admin', () => {
+                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: true, isAnnouncementChannel: true, isAdmin: true }))).toBeTrue();
+            });
+
+            it('can create a new message in an announcement channel where user is not admin but has admin rights', () => {
+                expect(
+                    canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: true, isAnnouncementChannel: true, isAdmin: false, hasChannelAdminRights: true })),
+                ).toBeTrue();
+            });
+        });
+
         describe('canLeaveConversation', () => {
             const channelsThatCanBeLeft = generateExampleChannelDTO({ isMember: true, isCreator: false });
             it('can leave channel', () => {
@@ -179,6 +210,18 @@ describe('ConversationPermissionUtils', () => {
     });
 
     describe('one-on-one chats', () => {
+        describe('canCreateNewMessageInConversation', () => {
+            const chatThatCanBePostedIn = generateOneToOneChatDTO({ isMember: true });
+
+            it('can create new message in channel where user is member', () => {
+                expect(canCreateNewMessageInConversation(chatThatCanBePostedIn)).toBeTrue();
+            });
+
+            it('can not create new message in channel where user is not member', () => {
+                expect(canCreateNewMessageInConversation(generateOneToOneChatDTO({ isMember: false }))).toBeFalse();
+            });
+        });
+
         describe('canLeaveConversation', () => {
             it('is not possible to leave a one to one chat', () => {
                 expect(canLeaveConversation(generateOneToOneChatDTO({}))).toBeFalse();
@@ -199,6 +242,18 @@ describe('ConversationPermissionUtils', () => {
     });
 
     describe('groupChats', () => {
+        describe('canCreateNewMessageInConversation', () => {
+            const chatThatCanBePostedIn = generateOneToOneChatDTO({ isMember: true });
+
+            it('can create new message in channel where user is member', () => {
+                expect(canCreateNewMessageInConversation(chatThatCanBePostedIn)).toBeTrue();
+            });
+
+            it('can not create new message in channel where user is not member', () => {
+                expect(canCreateNewMessageInConversation(generateOneToOneChatDTO({ isMember: false }))).toBeFalse();
+            });
+        });
+
         describe('canLeaveConversation', () => {
             const groupChatThatCanBeLeft = generateExampleGroupChatDTO({ isMember: true });
             it('can leave channel', () => {

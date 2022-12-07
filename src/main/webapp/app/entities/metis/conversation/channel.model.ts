@@ -8,6 +8,7 @@ export class Channel extends Conversation {
     public description?: string; // max 250 characters
     public topic?: string; // max 250 characters;
     public isPublic?: boolean;
+    public isAnnouncementChannel?: boolean;
     public isArchived?: boolean;
 
     constructor() {
@@ -23,6 +24,7 @@ export class ChannelDTO extends ConversationDto {
     public description?: string;
     public topic?: string;
     public isPublic?: boolean;
+    public isAnnouncementChannel?: boolean;
     public isArchived?: boolean;
     public isAdmin?: boolean;
     public hasChannelAdminRights?: boolean;

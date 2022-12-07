@@ -99,6 +99,7 @@ public class ChannelResource {
         var channelToCreate = new Channel();
         channelToCreate.setName(channelDTO.getName());
         channelToCreate.setIsPublic(channelDTO.getIsPublic());
+        channelToCreate.setIsAnnouncementChannel(channelDTO.getIsAnnouncementChannel());
         channelToCreate.setIsArchived(false);
         channelToCreate.setDescription(channelDTO.getDescription());
 

@@ -17,6 +17,7 @@ import { initializeDialog } from '../dialog-test-helpers';
 class ChannelFormStubComponent {
     @Output() formSubmitted: EventEmitter<ChannelFormData> = new EventEmitter<ChannelFormData>();
     @Output() channelTypeChanged: EventEmitter<ChannelType> = new EventEmitter<ChannelType>();
+    @Output() isAnnouncementChannelChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
 }
 
 describe('ChannelsCreateDialogComponent', () => {
@@ -60,6 +61,14 @@ describe('ChannelsCreateDialogComponent', () => {
         form.channelTypeChanged.emit(channelTypeChangedEvent);
         expect(component.isPublicChannel).toBeFalse();
     });
+
+    it('should change channel announcement type when channel announcement type is changed in channel form', () => {
+        expect(component.isAnnouncementChannel).toBeFalse();
+        const form: ChannelFormStubComponent = fixture.debugElement.query(By.directive(ChannelFormStubComponent)).componentInstance;
+        form.isAnnouncementChannelChanged.emit(true);
+        expect(component.isAnnouncementChannel).toBeTrue();
+    });
+
     it('should close modal with the channel to create when form is submitted', () => {
         const activeModal = TestBed.inject(NgbActiveModal);
         const closeSpy = jest.spyOn(activeModal, 'close');

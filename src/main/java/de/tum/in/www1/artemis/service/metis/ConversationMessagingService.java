@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
+import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -40,12 +41,16 @@ public class ConversationMessagingService extends PostingService {
 
     private final ConversationMessageRepository conversationMessageRepository;
 
+    private final ChannelAuthorizationService channelAuthorizationService;
+
     protected ConversationMessagingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             ConversationMessageRepository conversationMessageRepository, AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate,
-            UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository) {
+            UserRepository userRepository, ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository,
+            ChannelAuthorizationService channelAuthorizationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
         this.conversationService = conversationService;
         this.conversationMessageRepository = conversationMessageRepository;
+        this.channelAuthorizationService = channelAuthorizationService;
     }
 
     /**
@@ -67,12 +72,12 @@ public class ConversationMessagingService extends PostingService {
         var course = preCheckUserAndCourse(author, courseId);
         messagePost.setAuthor(author);
         messagePost.setDisplayPriority(DisplayPriority.NONE);
+
         var conversation = conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), author);
 
+        // extra checks for channels
         if (conversation instanceof Channel channel) {
-            if (channel.getIsArchived()) {
-                throw new BadRequestAlertException("A message cannot be created in an archived channel", METIS_POST_ENTITY_NAME, "channelarchived");
-            }
+            channelAuthorizationService.isAllowedToCreateNewPostInChannel(channel, author);
         }
 
         // update last message date and conversation read time of user at the same time
@@ -92,7 +97,7 @@ public class ConversationMessagingService extends PostingService {
         }
         // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
-        conversationService.notifyConversationMembersAboutNewMessage(conversation);
+        conversationService.notifyAllConversationMembersAboutNewMessage(conversation);
         return savedMessage;
     }
 

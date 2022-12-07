@@ -12,6 +12,7 @@ describe('ChannelFormComponent', () => {
     const validName = 'group-1';
     const validDescription = 'This is a general channel';
     const validIsPublic = true;
+    const validIsAnnouncementChannel = false;
 
     beforeEach(waitForAsync(() => {
         TestBed.configureTestingModule({
@@ -71,6 +72,7 @@ describe('ChannelFormComponent', () => {
             name: validName,
             description: undefined,
             isPublic: validIsPublic,
+            isAnnouncementChannel: validIsAnnouncementChannel,
         };
 
         clickSubmitButton(true, expectChannelData);
@@ -92,6 +94,7 @@ describe('ChannelFormComponent', () => {
             name: validName,
             description: validDescription,
             isPublic: validIsPublic,
+            isAnnouncementChannel: validIsAnnouncementChannel,
         };
 
         clickSubmitButton(true, expectChannelData);

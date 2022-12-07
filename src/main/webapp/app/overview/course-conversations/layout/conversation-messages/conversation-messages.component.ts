@@ -11,6 +11,7 @@ import { GroupChat, isGroupChatDto } from 'app/entities/metis/conversation/group
 import { ButtonType } from 'app/shared/components/button.component';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { OneToOneChat, isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
+import { canCreateNewMessageInConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 
 @Component({
     selector: 'jhi-conversation-messages',
@@ -31,6 +32,8 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
     course?: Course;
 
     getAsChannel = getAsChannelDto;
+
+    canCreateNewMessageInConversation = canCreateNewMessageInConversation;
 
     previousScrollDistanceFromTop: number;
     // as set for the css class '.posting-infinite-scroll-container'

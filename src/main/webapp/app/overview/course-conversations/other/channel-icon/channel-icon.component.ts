@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { faBoxArchive, faLock } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faBoxArchive, faLock } from '@fortawesome/free-solid-svg-icons';
 import { faHashtag } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -13,8 +13,11 @@ export class ChannelIconComponent {
     @Input()
     isArchived = false;
 
+    @Input()
+    isAnnouncementChannel = false;
     // icons
     faHashtag = faHashtag;
     faLock = faLock;
     faBoxArchive = faBoxArchive;
+    faBell = faBell;
 }

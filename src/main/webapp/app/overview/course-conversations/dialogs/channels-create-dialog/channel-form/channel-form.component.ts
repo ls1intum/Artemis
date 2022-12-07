@@ -6,6 +6,7 @@ export interface ChannelFormData {
     name?: string;
     description?: string;
     isPublic?: boolean;
+    isAnnouncementChannel?: boolean;
 }
 
 export type ChannelType = 'PUBLIC' | 'PRIVATE';
@@ -23,9 +24,11 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
         name: undefined,
         description: undefined,
         isPublic: undefined,
+        isAnnouncementChannel: undefined,
     };
     @Output() formSubmitted: EventEmitter<ChannelFormData> = new EventEmitter<ChannelFormData>();
     @Output() channelTypeChanged: EventEmitter<ChannelType> = new EventEmitter<ChannelType>();
+    @Output() isAnnouncementChannelChanged: EventEmitter<boolean> = new EventEmitter<boolean>();
 
     form: FormGroup;
 
@@ -41,6 +44,10 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
 
     get isPublicControl() {
         return this.form.get('isPublic');
+    }
+
+    get isisAnnouncementChannelControl() {
+        return this.form.get('isAnnouncementChannel');
     }
 
     get isSubmitPossible() {
@@ -72,11 +79,18 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
             name: [undefined, [Validators.required, Validators.maxLength(20), Validators.pattern(channelRegex)]],
             description: [undefined, [Validators.maxLength(250)]],
             isPublic: [true, [Validators.required]],
+            isAnnouncementChannel: [false, [Validators.required]],
         });
 
         if (this.isPublicControl) {
             this.isPublicControl.valueChanges.pipe(takeUntil(this.ngUnsubscribe)).subscribe((value) => {
                 this.channelTypeChanged.emit(value ? 'PUBLIC' : 'PRIVATE');
+            });
+        }
+
+        if (this.isisAnnouncementChannelControl) {
+            this.isisAnnouncementChannelControl.valueChanges.pipe(takeUntil(this.ngUnsubscribe)).subscribe((value) => {
+                this.isAnnouncementChannelChanged.emit(value);
             });
         }
     }

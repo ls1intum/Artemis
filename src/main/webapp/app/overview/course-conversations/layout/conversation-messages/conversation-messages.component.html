@@ -51,7 +51,7 @@
                 </jhi-posting-thread>
             </div>
             <jhi-message-inline-input
-                *ngIf="_activeConversation && newPost && !getAsChannel(_activeConversation)?.isArchived"
+                *ngIf="_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation)"
                 [posting]="newPost"
                 (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"
             >

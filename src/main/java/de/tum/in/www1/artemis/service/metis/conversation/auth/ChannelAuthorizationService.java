@@ -42,6 +42,52 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
     }
 
     /**
+     * Checks if a user is allowed to create a new message in a channel or throws an exception if not
+     *
+     * @param channel the channel the message should be created
+     * @param user    the user that wants to create the message
+     */
+    public void isAllowedToCreateNewAnswerPostInChannel(@NotNull Channel channel, @NotNull User user) {
+        var isArchivedChannel = !Objects.isNull(channel.getIsArchived()) && channel.getIsArchived();
+        var userToCheck = getUserIfNecessary(user);
+        var isChannelMember = isMember(channel.getId(), userToCheck.getId());
+        if (isArchivedChannel) {
+            throw new AccessForbiddenException("You are not allowed to create a new answer post in an archived channel.");
+        }
+        if (!isChannelMember) {
+            throw new AccessForbiddenException("User is not a member of the channel");
+        }
+    }
+
+    /**
+     * Checks if a user is allowed to create a new answer message in a channel or throws an exception if not
+     *
+     * @param channel the channel the answer message should be created
+     * @param user    the user that wants to create answer the message
+     */
+    public void isAllowedToCreateNewPostInChannel(@NotNull Channel channel, @NotNull User user) {
+        var isAnnouncementChannel = !Objects.isNull(channel.getIsAnnouncementChannel()) && channel.getIsAnnouncementChannel();
+        var isArchivedChannel = !Objects.isNull(channel.getIsArchived()) && channel.getIsArchived();
+        var userToCheck = getUserIfNecessary(user);
+
+        if (isArchivedChannel) {
+            throw new AccessForbiddenException("You are not allowed to create a new post in an archived channel.");
+        }
+
+        if (isAnnouncementChannel) {
+            if (!hasChannelAdminRights(channel.getId(), userToCheck)) {
+                throw new AccessForbiddenException("You are not allowed to post in this channel");
+            }
+        }
+        else {
+            var isChannelMember = isMember(channel.getId(), userToCheck.getId());
+            if (!isChannelMember) {
+                throw new AccessForbiddenException("User is not a member of the channel");
+            }
+        }
+    }
+
+    /**
      * Checks if a user is allowed to edit a channel or throws an exception if not
      *
      * @param channel the channel that should be edited

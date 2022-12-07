@@ -22,6 +22,28 @@ export function canAddUsersToConversation(conversation: ConversationDto): boolea
     }
 }
 
+export function canCreateNewMessageInConversation(conversation: ConversationDto): boolean {
+    if (!conversation) {
+        return false;
+    }
+    const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
+    const oneToOneChatCheck = (oneToOneChat: ConversationDto): boolean => {
+        return !!oneToOneChat.isMember;
+    };
+    const channelCheck = (channel: ChannelDTO): boolean =>
+        !!channel.isMember && !channel.isArchived && (!channel.isAnnouncementChannel || (channel.isAnnouncementChannel && !!channel.hasChannelAdminRights));
+
+    if (isChannelDto(conversation)) {
+        return channelCheck(conversation);
+    } else if (isGroupChatDto(conversation)) {
+        return groupChatCheck(conversation);
+    } else if (isOneToOneChatDto(conversation)) {
+        return oneToOneChatCheck(conversation);
+    } else {
+        throw new Error('Conversation type not supported');
+    }
+}
+
 export function canGrantChannelAdminRights(channel: ChannelDTO): boolean {
     return hasChannelAdminRightsCheck(channel);
 }

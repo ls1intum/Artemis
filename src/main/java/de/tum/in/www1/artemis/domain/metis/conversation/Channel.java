@@ -46,6 +46,14 @@ public class Channel extends Conversation {
     private Boolean isPublic;
 
     /**
+     * An announcement channel is a special type of channel where only channel admins and instructors can start new posts.
+     * Answer posts are still possible so that students can ask questions concerning the announcement.
+     */
+    @Column(name = "is_announcement")
+    @NotNull
+    private Boolean isAnnouncementChannel;
+
+    /**
      * A channel that is no longer needed can be archived or deleted.
      * Archived channels are closed to new activity, but the message history is retained and searchable.
      * The channel can be unarchived at any time.
@@ -96,5 +104,13 @@ public class Channel extends Conversation {
 
     public void setIsArchived(Boolean archived) {
         isArchived = archived;
+    }
+
+    public Boolean getIsAnnouncementChannel() {
+        return isAnnouncementChannel;
+    }
+
+    public void setIsAnnouncementChannel(Boolean announcementChannel) {
+        isAnnouncementChannel = announcementChannel;
     }
 }

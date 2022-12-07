@@ -184,8 +184,10 @@
                 }
             },
             "createChannel": {
-                "titlePublicChannel": "Erstelle einen öffentlichen Kanal",
-                "titlePrivateChannel": "Erstelle einen privaten Kanal",
+                "titlePublicChannel": "Erstelle einen öffentlichen",
+                "titlePrivateChannel": "Erstelle einen privaten",
+                "titleAnnouncementChannel": "Ankündigungskanal",
+                "titleRegularChannel": "Kanal",
                 "description": "Ein Kanal ist eine Möglichkeit, Menschen für ein Projekt, ein Thema oder nur zum Spaß zusammenzubringen. Du kannst so viele Kanäle erstellen, wie du möchtest.",
                 "channelForm": {
                     "nameInput": {
@@ -205,6 +207,12 @@
                         "explanation": "Die Nutzer:innen brauchen eine Einladung um sich einem privaten Kanal anzuschließen. Jeder/Jede Nutzer:in kann einem öffentlichen Kanal beitreten.",
                         "public": "Öffentlich",
                         "private": "Privat"
+                    },
+                    "isAnnouncementChannelInput": {
+                        "label": "Ankündigungskanal",
+                        "explanation": "Nur Lehrende und Kanaladministrator:innen können neue Nachrichten in einem Ankündigungskanal erstellen. Studierende können die Nachrichten nur lesen und darauf antworten.",
+                        "true": "Ankündigungskanal",
+                        "false": "Uneingeschränkter Kanal"
                     },
                     "createButton": "Kanal erstellen"
                 }
