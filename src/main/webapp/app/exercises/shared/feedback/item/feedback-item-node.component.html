@@ -1,5 +1,5 @@
-<div *ngIf="feedbackItem" class="feedback-item">
-    <div class="feedback-item__header">
+<div *ngIf="feedbackItem" class="card feedback-item">
+    <div class="card-header feedback-item__header">
         <h4 class="feedback-item__category">{{ feedbackItem.name }}</h4>
         <span class="feedback-item__points" *ngIf="feedbackItem.credits">
             {{ roundValueSpecifiedByCourseSettings(feedbackItem.credits, course) }}P
@@ -11,12 +11,16 @@
         </span>
     </div>
 
-    <jhi-feedback-collapse *ngIf="feedbackItem.text" [text]="feedbackItem.text!"></jhi-feedback-collapse>
+    <ng-container *ngIf="feedbackItem.text">
+        <div class="card-body">
+            <jhi-feedback-collapse [text]="feedbackItem.text!"></jhi-feedback-collapse>
+        </div>
+    </ng-container>
     <p *ngElse jhiTranslate="artemisApp.result.noFeedback">No feedback available</p>
 </div>
 
-<details *ngIf="feedbackItemGroup" class="feedback-item-group" [open]="feedbackItemGroup.open" [ngStyle]="{ '--feedback-node-background': feedbackItemGroup.color }">
-    <summary class="feedback-item-group__summary">
+<details *ngIf="feedbackItemGroup" class="card feedback-item-group" [open]="feedbackItemGroup.open" [ngStyle]="{ '--feedback-node-background': feedbackItemGroup.color }">
+    <summary class="card-header feedback-item-group__summary">
         <div class="feedback-item-group__summary__content">
             <h4 class="feedback-item__category">
                 {{ feedbackItemGroup.name | titlecase }}
@@ -26,7 +30,12 @@
         </div>
     </summary>
 
-    <div class="feedback-item-group__members">
-        <jhi-feedback-item-node *ngFor="let feedbackItem of feedbackItemGroup.members" [feedbackItemNode]="feedbackItem" [course]="course"></jhi-feedback-item-node>
+    <div class="card-body feedback-item-group__members">
+        <jhi-feedback-item-node
+            class="feedback-item-group__members__member"
+            *ngFor="let feedbackItem of feedbackItemGroup.members"
+            [feedbackItemNode]="feedbackItem"
+            [course]="course"
+        ></jhi-feedback-item-node>
     </div>
 </details>

@@ -1,11 +1,8 @@
 .feedback-item {
-    margin-bottom: 1rem;
-    padding: 1rem;
-    background: var(--feedback-node-background);
-
     &__header {
         display: flex;
         justify-content: space-between;
+        background: var(--feedback-node-background);
     }
 
     &__category {
@@ -65,5 +62,14 @@
 
     &__members {
         padding: 1rem;
+
+        .feedback-item-group__members__member {
+            display: block;
+            margin-bottom: 1rem;
+
+            &:last-of-type {
+                margin-bottom: 0;
+            }
+        }
     }
 }
