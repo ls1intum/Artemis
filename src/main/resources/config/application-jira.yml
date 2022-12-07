@@ -1,0 +1,11 @@
+artemis:
+    user-management:
+        use-external: true
+        external:
+            url: https://jira.ase.in.tum.de
+            admin-group-name: tumuser
+        password-reset:
+            credential-provider: TUMonline
+            links:
+                en: "https://campus.tum.de/tumonline/ee/ui/ca2/app/desktop/#/pl/ui/$ctx/co_loc_password_reset.main?$ctx=design=ca2;header=max;lang=en"
+                de: "https://campus.tum.de/tumonline/ee/ui/ca2/app/desktop/#/pl/ui/$ctx/co_loc_password_reset.main?$ctx=design=ca2;header=max;lang=de"

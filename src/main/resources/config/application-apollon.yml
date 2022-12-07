@@ -1,0 +1,3 @@
+artemis:
+    apollon:
+        conversion-service-url: http://localhost:8080

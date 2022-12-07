@@ -25,10 +25,12 @@ processResources {
     inputs.property('springProfiles', profiles)
     filesMatching('**/application.yml') {
         filter {
-            it.replace('#project.version#', version)
-        }
-        filter {
             it.replace('#spring.profiles.active#', profiles)
+        }
+    }
+    filesMatching('**/application-artemis.yml') {
+        filter {
+            it.replace('#project.version#', version)
         }
     }
 }

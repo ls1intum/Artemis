@@ -4,6 +4,18 @@
 # This configuration overrides the application.yml file.
 # ===================================================================
 
+artemis:
+    continuous-integration:
+        url: http://localhost:8082
+        # Key of the saved credentials for the VCS service
+        # You have to specify the key from the credentials page in Jenkins under which the user and
+        # password for the VCS are stored
+        vcs-credentials: artemis_gitlab_admin_credentials
+        # Key of the credentials for the Artemis notification token
+        # You have to specify the key from the credentials page in Jenkins under which the authentication-token is stored
+        artemis-authentication-token-key: artemis_notification_plugin_token
+        empty-commit-necessary: false # Do we need an empty commit for new exercises/repositories in order for the CI to register the repo
+
 jenkins:
     # The following (optional) parameter allows to customize if Jenkins CSRF protection should be used (activated) within Artemis:
     # see https://wiki.jenkins.io/display/JENKINS/Remote+access+API --> CSRF Protection

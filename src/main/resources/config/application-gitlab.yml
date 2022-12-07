@@ -3,6 +3,14 @@
 #
 # This configuration overrides the application.yml file.
 # ===================================================================
+artemis:
+    version-control:
+        url: http://localhost:8081
+        ssh-template-clone-url:
+        ssh-keys-url-path: /-/profile/keys
+        ssh-private-key-folder-path: /opt/keys
+        default-branch: main # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
+        versionControlAccessToken: true
 
 gitlab:
     # The following (optional) parameter allows to enable the use of pseudonyms.

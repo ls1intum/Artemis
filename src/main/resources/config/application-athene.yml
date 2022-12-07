@@ -1,0 +1,4 @@
+artemis:
+    athene:
+        url: http://localhost
+        token-validity-in-seconds: 10800
