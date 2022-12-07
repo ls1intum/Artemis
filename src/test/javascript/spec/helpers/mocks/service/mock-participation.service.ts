@@ -5,4 +5,6 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 export class MockParticipationService {
     findWithLatestResult = (participationId: number) => of({} as Participation);
     mergeStudentParticipations = (participations: StudentParticipation[]) => participations;
+    getSpecificStudentParticipation = (studentParticipations: StudentParticipation[], testRun: boolean) =>
+        studentParticipations.filter((participation) => !!participation.testRun === testRun).first();
 }
