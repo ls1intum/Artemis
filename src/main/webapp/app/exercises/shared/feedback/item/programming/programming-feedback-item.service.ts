@@ -4,9 +4,9 @@ import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMI
 import { TranslateService } from '@ngx-translate/core';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { getAllFeedbackItemGroups } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item-groups';
-import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { Exercise } from 'app/entities/exercise.model';
+import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingFeedbackItemService implements FeedbackItemService {
@@ -16,7 +16,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         return feedbacks.map((feedback) => this.createFeedbackItem(feedback, showTestDetails));
     }
 
-    group(feedbackItems: FeedbackItem[], exercise: Exercise): FeedbackItemGroup[] {
+    group(feedbackItems: FeedbackItem[], exercise: Exercise): FeedbackItemNode[] {
         return getAllFeedbackItemGroups(exercise) //
             .map((group) => group.addAllItems(feedbackItems.filter(group.shouldContain)))
             .filter((group) => !group.isEmpty());

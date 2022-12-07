@@ -11,7 +11,6 @@ export abstract class FeedbackItemGroup implements FeedbackItemNode {
     color: string;
     credits: number;
     maxCredits?: number;
-    description: string;
     /**
      * Whether the detail is open by default
      */

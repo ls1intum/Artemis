@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
-import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { Exercise } from 'app/entities/exercise.model';
+import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
 
 export interface FeedbackItemService {
     /**
@@ -18,14 +18,14 @@ export interface FeedbackItemService {
      * @param feedbackItems to be added to groups
      * @param exercise containing information needed to configure the {@link FeedbackItemGroup}
      */
-    group(feedbackItems: FeedbackItem[], exercise: Exercise): (FeedbackItem | FeedbackItemGroup)[];
+    group(feedbackItems: FeedbackItem[], exercise: Exercise): FeedbackItemNode[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackItemServiceImpl implements FeedbackItemService {
     constructor(private translateService: TranslateService) {}
 
-    group(feedbackItems: FeedbackItem[]): (FeedbackItem | FeedbackItemGroup)[] {
+    group(feedbackItems: FeedbackItem[]): FeedbackItemNode[] {
         return feedbackItems;
     }
 
