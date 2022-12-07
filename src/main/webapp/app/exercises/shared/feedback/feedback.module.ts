@@ -9,6 +9,6 @@ import { FeedbackItemNodeComponent } from 'app/exercises/shared/feedback/item/fe
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule, BarChartModule],
     declarations: [FeedbackCollapseComponent, FeedbackItemNodeComponent],
-    exports: [FeedbackCollapseComponent, FeedbackItemNodeComponent],
+    exports: [FeedbackItemNodeComponent],
 })
 export class ArtemisFeedbackModule {}
