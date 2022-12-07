@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 import { SortService } from 'app/shared/service/sort.service';
@@ -32,8 +31,6 @@ describe('QuizExerciseImportComponent', () => {
                 QuizExerciseImportComponent,
                 MockPipe(ExerciseCourseTitlePipe),
                 MockComponent(ButtonComponent),
-                MockComponent(NgbHighlight),
-                MockComponent(NgbPagination),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
             ],

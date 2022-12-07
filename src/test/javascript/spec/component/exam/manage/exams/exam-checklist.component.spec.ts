@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { Exam } from 'app/entities/exam.model';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
@@ -45,14 +44,7 @@ describe('ExamChecklistComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                ExamChecklistComponent,
-                MockPipe(ArtemisDatePipe),
-                MockDirective(TranslateDirective),
-                ExamChecklistExerciseGroupTableComponent,
-                ProgressBarComponent,
-                MockDirective(NgbTooltip),
-            ],
+            declarations: [ExamChecklistComponent, MockPipe(ArtemisDatePipe), MockDirective(TranslateDirective), ExamChecklistExerciseGroupTableComponent, ProgressBarComponent],
             providers: [
                 { provide: ExamChecklistService, useClass: MockExamChecklistService },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },

@@ -1,7 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
-import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -74,9 +73,7 @@ describe('NavbarComponent', () => {
             imports: [ArtemisTestModule],
             declarations: [
                 NavbarComponent,
-                MockDirective(NgbCollapse),
                 MockDirective(HasAnyAuthorityDirective),
-                MockDirective(NgbDropdown),
                 MockDirective(ActiveMenuDirective),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,

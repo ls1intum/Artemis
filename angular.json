@@ -48,7 +48,8 @@
               "interactjs",
               "mobile-drag-drop",
               "dagre",
-              "webcola"
+              "webcola",
+              "rfdc"
             ],
             "outputPath": "build/resources/main/static/",
             "index": "src/main/webapp/index.html",

@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
@@ -20,7 +19,7 @@ describe('ParticipantScoresTable', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot()],
-            declarations: [ParticipantScoresTableComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), DataTableComponent, MockDirective(NgbTypeahead)],
+            declarations: [ParticipantScoresTableComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), DataTableComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 {

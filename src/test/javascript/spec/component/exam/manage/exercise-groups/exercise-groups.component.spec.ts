@@ -1,7 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { Exam } from 'app/entities/exam.model';
@@ -66,7 +66,6 @@ describe('Exercise Groups Component', () => {
                 MockComponent(ProgrammingExerciseInstructorStatusComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
-                MockDirective(NgbTooltip),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FileUploadExerciseGroupCellComponent),
                 MockComponent(ModelingExerciseGroupCellComponent),
