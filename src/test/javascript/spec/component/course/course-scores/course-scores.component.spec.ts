@@ -35,12 +35,15 @@ import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrin
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
 import { CommonSpreadsheetCellObject } from 'app/shared/export/excel-export-row-builder';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
     let component: CourseScoresComponent;
     let courseService: CourseManagementService;
     let gradingSystemService: GradingSystemService;
+    let plagiarismCasesService: PlagiarismCasesService;
 
     const exerciseWithFutureReleaseDate = {
         title: 'exercise with future release date',
@@ -272,6 +275,7 @@ describe('CourseScoresComponent', () => {
                 component = fixture.componentInstance;
                 courseService = fixture.debugElement.injector.get(CourseManagementService);
                 gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
+                plagiarismCasesService = fixture.debugElement.injector.get(PlagiarismCasesService);
                 const participationScoreService = fixture.debugElement.injector.get(ParticipantScoresService);
                 findCourseScoresSpy = jest
                     .spyOn(participationScoreService, 'findCourseScores')
@@ -302,6 +306,7 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         findCourseScoresSpy.mockReturnValue(of(new HttpResponse({ body: [] })));
         const errorSpy = jest.spyOn(component, 'logErrorOnSentry');
         fixture.detectChanges();
@@ -312,6 +317,7 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         const cs1 = new ScoresDTO();
         cs1.studentId = user1.id;
         cs1.pointsAchieved = 99;
@@ -332,6 +338,7 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ status: 404 })));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         const cs1 = new ScoresDTO();
         cs1.studentId = user1.id;
         cs1.pointsAchieved = 40;
@@ -370,6 +377,7 @@ describe('CourseScoresComponent', () => {
     it('should group exercises and calculate exercise max score', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
 
         expect(component.allParticipationsOfCourse).toEqual(participations);
@@ -380,6 +388,7 @@ describe('CourseScoresComponent', () => {
     it('should calculate per student score', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
 
         expect(component.students[0].pointsPerExerciseType).toEqual(pointsOfStudent1);
@@ -398,6 +407,7 @@ describe('CourseScoresComponent', () => {
     it('should generate excel row correctly', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
         const exportAsExcelStub = jest.spyOn(component, 'exportAsExcel').mockImplementation();
         component.exportResults();
@@ -445,6 +455,7 @@ describe('CourseScoresComponent', () => {
     it('should generate csv correctly', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
         fixture.detectChanges();
         const exportAsCsvStub = jest.spyOn(component, 'exportAsCsv').mockImplementation();
         const testOptions: CsvExportOptions = {
