@@ -120,7 +120,8 @@ jobs:
       with:
         # TODO: maybe even add arm/v7 for older DevBoards but first add it also in docker-jdk-node-yarn
         # arm64 for Mac M1 and new DevBoards
-        platforms: linux/amd64,linux/arm64
+        # TODO: add arm64 support by first building the .war file in a amd64 step then creating the runtime env
+        platforms: linux/amd64
         file: ./src/main/docker/artemis/Dockerfile
         context: .
         tags: ghcr.io/ls1intum/artemis:${{ steps.compute-tag.outputs.result }}
