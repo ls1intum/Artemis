@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -54,11 +55,20 @@ public class LearningGoalProgressService {
     /**
      * Asynchronously update the progress for all learning goals linked to the given learning object
      * @param learningObject The learning object for which to fetch the learning goals
-     * @param user The user for which to update the progress
+     * @param participant The participant (user or team) for which to update the progress
      */
     @Async
-    public void updateProgressByLearningObject(ILearningObject learningObject, @NotNull User user) {
-        logger.debug("Updating learning goal progress for user {}.", user.getLogin());
+    public void updateProgressByLearningObjectAsync(ILearningObject learningObject, @NotNull Participant participant) {
+        updateProgressByLearningObject(learningObject, participant);
+    }
+
+    /**
+     * Update the progress for all learning goals linked to the given learning object
+     * @param learningObject The learning object for which to fetch the learning goals
+     * @param participant The participant (user or team) for which to update the progress
+     */
+    public void updateProgressByLearningObject(ILearningObject learningObject, @NotNull Participant participant) {
+        logger.debug("Updating learning goal progress for participant {}.", participant.getName());
         try {
             SecurityUtils.setAuthorizationObject();
 
@@ -78,8 +88,11 @@ public class LearningGoalProgressService {
                 return;
             }
 
-            learningGoals.forEach(learningGoal -> {
-                updateProgress(learningGoal.getId(), user);
+            // The participant is normally a single user, but we need to support teams as well
+            participant.getParticipants().forEach(user -> {
+                learningGoals.forEach(learningGoal -> {
+                    updateProgress(learningGoal.getId(), user);
+                });
             });
         }
         catch (Exception e) {
@@ -140,7 +153,6 @@ public class LearningGoalProgressService {
      */
     private double calculateProgress(@NotNull List<ILearningObject> learningObjects, @NotNull User user) {
         var completions = learningObjects.stream().map(learningObject -> hasUserCompleted(user, learningObject)).toList();
-        completions.forEach(completed -> logger.debug("{} completed {}", user.getLogin(), completed));
         return completions.stream().mapToInt(completed -> completed ? 100 : 0).summaryStatistics().getAverage();
     }
 

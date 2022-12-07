@@ -139,12 +139,7 @@ public class ParticipantScoreScheduleService {
         // Find all outdated participant scores where the last result is null (because it was deleted)
         var participantScoresToProcess = participantScoreRepository.findAllOutdated();
         participantScoresToProcess.forEach(participantScore -> {
-            if (participantScore instanceof TeamScore teamScore) {
-                scheduleTask(teamScore.getExercise().getId(), teamScore.getTeam().getId(), Instant.now(), null);
-            }
-            else if (participantScore instanceof StudentScore studentScore) {
-                scheduleTask(studentScore.getExercise().getId(), studentScore.getUser().getId(), Instant.now(), null);
-            }
+            scheduleTask(participantScore.getExercise().getId(), participantScore.getParticipant().getId(), Instant.now(), null);
         });
 
         logger.info("Scheduled processing of {} results and {} participant scores.", resultsToProcess.size(), participantScoresToProcess.size());
@@ -274,6 +269,9 @@ public class ParticipantScoreScheduleService {
             else {
                 updateParticipantScore(score);
             }
+
+            // Update the progress for learning goals linked to this exercise
+            learningGoalProgressService.updateProgressByLearningObject(score.getExercise(), score.getParticipant());
         }
         catch (Exception e) {
             logger.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);
@@ -309,11 +307,6 @@ public class ParticipantScoreScheduleService {
         else {
             participantScoreRepository.save(participantScore);
             logger.debug("Updated participant score {}.", participantScore.getId());
-        }
-
-        if (participantScore instanceof StudentScore studentScore) {
-            // Update the progress for learning goals linked to this exercise
-            learningGoalProgressService.updateProgressByLearningObject(studentScore.getExercise(), studentScore.getUser());
         }
     }
 

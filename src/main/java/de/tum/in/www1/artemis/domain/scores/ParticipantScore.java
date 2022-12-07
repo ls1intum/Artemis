@@ -18,6 +18,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 
 /**
@@ -76,6 +77,8 @@ public abstract class ParticipantScore extends DomainObject {
     @Column(name = "last_modified_date")
     @JsonIgnore
     private Instant lastModifiedDate;
+
+    public abstract Participant getParticipant();
 
     public Exercise getExercise() {
         return exercise;

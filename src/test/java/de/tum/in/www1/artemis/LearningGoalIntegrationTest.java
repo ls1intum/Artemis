@@ -529,11 +529,12 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(3), 10.0, 0.0, 50, true);
 
         await().until(() -> participantScoreRepository.findAll().size() == 4);
+        await().until(() -> participantScoreScheduleService.isIdle());
 
         CourseLearningGoalProgress courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.OK,
                 CourseLearningGoalProgress.class);
 
-        assertThat(courseLearningGoalProgress.averageScoreAchievedInLearningGoal).isEqualTo(27.7);
+        assertThat(courseLearningGoalProgress.averageScoreAchievedInLearningGoal).isEqualTo(30.0);
     }
 
     @Test
@@ -558,11 +559,12 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         createParticipationSubmissionAndResult(idOfTextExercise, instructor1, 10.0, 0.0, 100, true); // will be ignored as not a student
 
         await().until(() -> participantScoreRepository.findAll().size() == 5);
+        await().until(() -> participantScoreScheduleService.isIdle());
 
         CourseLearningGoalProgress courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.OK,
                 CourseLearningGoalProgress.class);
 
-        assertThat(courseLearningGoalProgress.averageScoreAchievedInLearningGoal).isEqualTo(27.5);
+        assertThat(courseLearningGoalProgress.averageScoreAchievedInLearningGoal).isEqualTo(44.0);
     }
 
     private void cleanUpInitialParticipations() {

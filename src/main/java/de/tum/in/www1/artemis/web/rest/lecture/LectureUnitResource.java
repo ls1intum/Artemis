@@ -125,7 +125,7 @@ public class LectureUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lectureUnit.getLecture().getCourse(), user);
 
         lectureUnitService.setLectureUnitCompletion(lectureUnit, user, completed);
-        learningGoalProgressService.updateProgressByLearningObject(lectureUnit, user);
+        learningGoalProgressService.updateProgressByLearningObjectAsync(lectureUnit, user);
 
         return ResponseEntity.ok().build();
     }
