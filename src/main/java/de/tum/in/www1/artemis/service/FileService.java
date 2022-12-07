@@ -1030,8 +1030,42 @@ public class FileService implements DisposableBean {
         return Optional.of(units);
     }
 
-    private String extractInformationFromUnit(PDDocument slides) {
+    private String learningGoalsOfUnit(PDDocument unit) {
+        // TODO: impl to extract learning goals
+        // go through slides of unit
+        // read each file and find slide with Learning goals text
+        // extract the next lines after the Learning goals text
+        // return a list of strings
+
+        return "";
+    }
+
+    private String constructUnitName(PDDocument unit) {
         // TODO: impl to extract information of one unit and return the object
+        // Read from slide
+        // Store in variable line by line
+        // align with unit number and line number
+        // then get the line which is the same number with unit number
+        // and return filename
+
+        // File file = new File("File.pdf");
+        // PDDocument document = PDDocument.load(file);
+        // PDFTextStripper pdfStripper = new PDFTextStripper();
+        // pdfStripper.setStartPage(1);
+        // pdfStripper.setEndPage(1);
+        //
+        // //load all lines into a string
+        // String pages = pdfStripper.getText(document);
+        //
+        // //split by detecting newline
+        // String[] lines = pages.split("\r\n|\r|\n");
+        //
+        // int count=1; //Just to indicate line number
+        // for(String temp:lines)
+        // {
+        // System.out.println(count+" "+temp);
+        // count++;
+        // }
         return "";
     }
 
