@@ -14,7 +14,7 @@ services:
         build:
             # This is required to copy the Artemis war file properly into the container
             context: ../../../..
-            dockerfile: src/main/docker/Dockerfile
+            dockerfile: src/main/docker/cypress/Dockerfile
         volumes:
             - ../../resources/config/application-prod.yml:/opt/artemis/config/application-prod.yml:ro
             - ./application.yml:/opt/artemis/config/application.yml:ro
@@ -42,6 +42,7 @@ services:
             server.port: "${SERVER_PORT}"
         ports:
             - ${SERVER_PORT}:${SERVER_PORT}
+            - "6300:6300" # JaCoCo agent port
         networks:
             - artemis
         depends_on:
@@ -65,6 +66,7 @@ services:
             - CYPRESS_tutorGroupName
             - CYPRESS_editorGroupName
             - CYPRESS_instructorGroupName
+            - GH_REGISTRY_TOKEN
         # Wait up to 5 minutes until Artemis has booted
         command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm exec -- wait-on -i 1000 -t 300000 http://artemis-app:${SERVER_PORT} && npm run cypress:run"
         volumes:

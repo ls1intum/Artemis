@@ -11,6 +11,8 @@
 
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
+import { registerMultilanguageCoveragePlugin } from '@heddendorp/cypress-plugin-multilanguage-coverage';
+import path from 'path';
 
 /**
  * @type {Cypress.PluginConfig}
@@ -19,6 +21,7 @@
 module.exports = (on: (arg0: string, arg1: {}) => void, config: any) => {
     // `on` is used to hook into various events Cypress emits
     // `config` is the resolved Cypress config
+    registerMultilanguageCoveragePlugin({ workingDirectory: path.join(__dirname, '..'), saveRawCoverage: true })(on, config);
     on('task', {
         error(message: string) {
             console.error('\x1b[31m', 'ERROR: ', message, '\x1b[0m');
