@@ -228,7 +228,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         };
 
         comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
-        comp.studentParticipation = participation;
+        comp.gradedParticipation = participation;
 
         expect(comp.isFeedbackRequestButtonDisabled()).toBeTrue();
     });
@@ -241,7 +241,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         };
 
         comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
-        comp.studentParticipation = participation;
+        comp.gradedParticipation = participation;
 
         expect(comp.isFeedbackRequestButtonDisabled()).toBeFalse();
     });
@@ -315,20 +315,15 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             comp.ngOnInit();
             expect(comp.quizNotStarted).toBe(expected);
         });
+    });
 
-        it('should determine participations', () => {
-            const gradedParticipation = { id: 42 };
-            const practiceParticipation = { id: 43, testRun: true };
+    it('ngOnChanges should determine participations', () => {
+        const gradedParticipation = { id: 42 };
+        const practiceParticipation = { id: 43, testRun: true };
 
-            comp.studentParticipation = gradedParticipation;
-            comp.exercise = {} as Exercise;
-            comp.ngOnInit();
-            expect(comp.gradedParticipation).toEqual(gradedParticipation);
-            comp.studentParticipation = undefined;
-            comp.exercise = { studentParticipations: [gradedParticipation, practiceParticipation] } as Exercise;
-            comp.ngOnInit();
-            expect(comp.gradedParticipation).toEqual(gradedParticipation);
-            expect(comp.practiceParticipation).toEqual(practiceParticipation);
-        });
+        comp.exercise = { studentParticipations: [gradedParticipation, practiceParticipation] } as Exercise;
+        comp.ngOnChanges();
+        expect(comp.gradedParticipation).toEqual(gradedParticipation);
+        expect(comp.practiceParticipation).toEqual(practiceParticipation);
     });
 });

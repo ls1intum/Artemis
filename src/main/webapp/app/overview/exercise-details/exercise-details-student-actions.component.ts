@@ -1,4 +1,4 @@
-import { Component, ContentChild, HostBinding, Input, OnInit, TemplateRef } from '@angular/core';
+import { Component, ContentChild, HostBinding, Input, OnChanges, OnInit, TemplateRef } from '@angular/core';
 import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpClient } from '@angular/common/http';
@@ -25,7 +25,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
     styleUrls: ['../course-overview.scss'],
     providers: [SourceTreeService],
 })
-export class ExerciseDetailsStudentActionsComponent implements OnInit {
+export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
     readonly ExerciseType = ExerciseType;
     readonly InitializationState = InitializationState;
@@ -74,6 +74,9 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
             this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         }
+    }
+
+    ngOnChanges() {
         const studentParticipations = this.exercise.studentParticipations ?? [];
         this.gradedParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, false);
         this.practiceParticipation = this.participationService.getSpecificStudentParticipation(studentParticipations, true);
@@ -129,6 +132,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit {
                 next: (participation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
+                        this.gradedParticipation = participation;
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
