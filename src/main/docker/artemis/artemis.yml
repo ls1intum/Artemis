@@ -7,7 +7,6 @@ services:
         container_name: artemis-app
         # TODO: add support for armv8
         platform: linux/x86_64
-        # TODO: setup build pipeline
         image: ghcr.io/ls1intum/artemis:develop
         build:
             context: ../../../..
