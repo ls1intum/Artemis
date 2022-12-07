@@ -703,8 +703,14 @@ To get started with one of the mentioned Docker-Compose Setups do the following:
 2. ( Depending on the chosen setup it's necessary to configure the Artemis configs like ``application-local.yml``
    in the folder ``src/main/resources/config`` as described in the section `Dockerfile <#dockerfile>`__.
    The default setup ``docker-compose.yml`` should run without the default configurations, so no changes are required.)
-3. Run ``docker compose up`` or ``docker compose -f src/main/docker/<setup to be launched>.yml up``
+3. Run ``docker compose pull && docker compose up`` or
+   ``docker compose -f src/main/docker/<setup to be launched>.yml pull &&
+   docker compose -f src/main/docker/<setup to be launched>.yml up``
 4. For Artemis instances go to http://localhost:8080 (http://localhost:9000 for the seperated server and client setup)
+
+.. tip::
+  The first ``docker compose pull`` command is just necessary the first time as extra step, as otherwise Artemis will be
+  built from source as you don't already have an Artemis Image locally.
 
 Debugging with Docker
 ^^^^^^^^^^^^^^^^^^^^^

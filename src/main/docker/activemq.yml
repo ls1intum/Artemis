@@ -2,6 +2,7 @@ services:
   activemq-broker:
     container_name: artemis-activemq-broker
     image: vromero/activemq-artemis:latest
+    pull: always
     environment:
         ARTEMIS_USERNAME: guest
         ARTEMIS_PASSWORD: guest

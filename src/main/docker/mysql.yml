@@ -6,6 +6,7 @@ services:
     mysql:
         container_name: artemis-mysql
         image: mysql:8.0.31
+        pull: always
         volumes:
             - artemis-mysql-data:/var/lib/mysql
         environment:
