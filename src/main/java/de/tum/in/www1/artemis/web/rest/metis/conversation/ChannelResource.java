@@ -94,7 +94,7 @@ public class ChannelResource {
         log.debug("REST request to create channel in course {} with properties : {}", courseId, channelDTO);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        channelAuthorizationService.isAllowedToCreateChannel(course, null);
+        channelAuthorizationService.isAllowedToCreateChannel(course, requestingUser);
 
         var channelToCreate = new Channel();
         channelToCreate.setName(channelDTO.getName());
@@ -144,7 +144,8 @@ public class ChannelResource {
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
-        channelAuthorizationService.isAllowedToDeleteChannel(channel, null);
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        channelAuthorizationService.isAllowedToDeleteChannel(channel, requestingUser);
         channelService.deleteChannel(channel);
         return ResponseEntity.ok().build();
     }

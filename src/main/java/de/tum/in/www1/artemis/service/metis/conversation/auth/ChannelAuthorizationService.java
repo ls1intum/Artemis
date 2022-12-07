@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
@@ -34,7 +36,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param course the course the channel should be created in
      * @param user   the user that wants to create the channel
      */
-    public void isAllowedToCreateChannel(@NotNull Course course, @Nullable User user) {
+    public void isAllowedToCreateChannel(@NotNull Course course, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, userToCheck);
     }
@@ -45,7 +47,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel that should be edited
      * @param user    the user that wants to edit the channel
      */
-    public void isAllowedToUpdateChannel(@NotNull Channel channel, @Nullable User user) {
+    public void isAllowedToUpdateChannel(@NotNull Channel channel, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         if (!hasChannelAdminRights(channel.getId(), userToCheck)) {
             throw new AccessForbiddenException("You are not allowed to update this channel");
@@ -58,7 +60,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel that should be deleted
      * @param user    the user that wants to delete the channel
      */
-    public void isAllowedToDeleteChannel(@NotNull Channel channel, @Nullable User user) {
+    public void isAllowedToDeleteChannel(@NotNull Channel channel, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         // either instructor or admin who is also the creator
         var channelFromDb = channelRepository.findById(channel.getId()).orElseThrow();
@@ -104,7 +106,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param user      the user to check
      * @return true if the user has admin rights, false otherwise
      */
-    public boolean hasChannelAdminRights(Long channelId, @Nullable User user) {
+    public boolean hasChannelAdminRights(@NotNull Long channelId, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         var channel = channelRepository.findById(channelId);
         return isChannelAdmin(channelId, userToCheck.getId()) || authorizationCheckService.isAtLeastInstructorInCourse(channel.get().getCourse(), userToCheck);
@@ -117,9 +119,10 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param userLogins the logins of the users that should be registered
      * @param user       the user that wants to register the users
      */
-    public void isAllowedToRegisterUsersToChannel(@NotNull Channel channel, List<String> userLogins, @Nullable User user) {
+    public void isAllowedToRegisterUsersToChannel(@NotNull Channel channel, @Nullable List<String> userLogins, @NotNull User user) {
+        var userLoginsToCheck = Objects.requireNonNullElse(userLogins, new ArrayList<>());
         var userToCheck = getUserIfNecessary(user);
-        var isJoinRequest = userLogins.size() == 1 && userLogins.get(0).equals(userToCheck.getLogin());
+        var isJoinRequest = userLoginsToCheck.size() == 1 && userLoginsToCheck.get(0).equals(userToCheck.getLogin());
         var channelFromDb = channelRepository.findById(channel.getId());
         var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(channelFromDb.get().getCourse(), userToCheck);
         var isChannelAdmin = isChannelAdmin(channel.getId(), userToCheck.getId());
@@ -143,7 +146,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel the rights should be granted to
      * @param user    the user that wants to grant the channel admin rights
      */
-    public void isAllowedToGrantChannelAdmin(@NotNull Channel channel, @Nullable User user) {
+    public void isAllowedToGrantChannelAdmin(@NotNull Channel channel, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         if (!hasChannelAdminRights(channel.getId(), userToCheck)) {
             throw new AccessForbiddenException("You are not allowed to grant channel admin rights");
@@ -156,7 +159,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel the rights should be revoked from
      * @param user    the user that wants to revoke the channel admin rights
      */
-    public void isAllowedToRevokeChannelAdmin(@NotNull Channel channel, @Nullable User user) {
+    public void isAllowedToRevokeChannelAdmin(@NotNull Channel channel, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         if (!hasChannelAdminRights(channel.getId(), userToCheck)) {
             throw new AccessForbiddenException("You are not allowed to revoke channel admin rights");
@@ -170,7 +173,8 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param userLogins the logins of the users that should be removed
      * @param user       the user that wants to remove the users
      */
-    public void isAllowedToDeregisterUsersFromChannel(@NotNull Channel channel, List<String> userLogins, @Nullable User user) {
+    public void isAllowedToDeregisterUsersFromChannel(@NotNull Channel channel, @Nullable List<String> userLogins, @NotNull User user) {
+        var userLoginsToCheck = Objects.requireNonNullElse(userLogins, new ArrayList<>());
         var userToCheck = getUserIfNecessary(user);
         if (hasChannelAdminRights(channel.getId(), userToCheck)) {
             return;
@@ -179,7 +183,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
         if (!isChannelMember) {
             throw new AccessForbiddenException("User is not a member of the channel");
         }
-        var isSelfDeRegistration = userLogins.size() == 1 && userLogins.get(0).equals(userToCheck.getLogin());
+        var isSelfDeRegistration = userLoginsToCheck.size() == 1 && userLoginsToCheck.get(0).equals(userToCheck.getLogin());
         if (!isSelfDeRegistration) {
             throw new AccessForbiddenException("You are not allowed to deregister other users from this channel");
         }
@@ -191,7 +195,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel that should be archived
      * @param user    the user that wants to archive the channel
      */
-    public void isAllowedToArchiveChannel(@NotNull Channel channel, @Nullable User user) {
+    public void isAllowedToArchiveChannel(@NotNull Channel channel, @NotNull User user) {
         isAllowedToChangeArchivalStatus(channel, user);
     }
 
@@ -201,11 +205,11 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param channel the channel that should be unarchived
      * @param user    the user that wants to unarchive the channel
      */
-    public void isAllowedToUnArchiveChannel(@NotNull Channel channel, @Nullable User user) {
+    public void isAllowedToUnArchiveChannel(@NotNull Channel channel, @NotNull User user) {
         isAllowedToChangeArchivalStatus(channel, user);
     }
 
-    private void isAllowedToChangeArchivalStatus(Channel channel, @Nullable User user) {
+    private void isAllowedToChangeArchivalStatus(@NotNull Channel channel, @NotNull User user) {
         var userToCheck = getUserIfNecessary(user);
         if (!hasChannelAdminRights(channel.getId(), userToCheck)) {
             throw new AccessForbiddenException("You are not allowed to archive/unarchive this channel");

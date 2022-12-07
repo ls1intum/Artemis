@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
-import javax.annotation.Nullable;
+import java.util.Objects;
+
 import javax.persistence.Persistence;
 
 import org.springframework.stereotype.Service;
@@ -26,12 +27,15 @@ public class ConversationAuthorizationService {
         this.authorizationCheckService = authorizationCheckService;
     }
 
-    protected User getUserIfNecessary(@Nullable User user) {
+    protected User getUserIfNecessary(User user) {
+        if (Objects.isNull(user)) {
+            throw new IllegalArgumentException("User must not be null");
+        }
         var userToCheck = user;
         var persistenceUtil = Persistence.getPersistenceUtil();
-        if (userToCheck == null || !persistenceUtil.isLoaded(userToCheck, "authorities") || !persistenceUtil.isLoaded(userToCheck, "groups") || userToCheck.getGroups() == null
+        if (!persistenceUtil.isLoaded(userToCheck, "authorities") || !persistenceUtil.isLoaded(userToCheck, "groups") || userToCheck.getGroups() == null
                 || userToCheck.getAuthorities() == null) {
-            userToCheck = userRepository.getUserWithGroupsAndAuthorities();
+            userToCheck = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
         }
         return userToCheck;
     }
