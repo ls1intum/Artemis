@@ -30,5 +30,5 @@ exec gosu artemis java \
   --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
   --add-opens java.management/sun.management=ALL-UNNAMED \
   --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
-  -javaagent:.\jars\jacocoagent.jar=output=tcpserver \
+  -javaagent:./jars/jacocoagent.jar=output=tcpserver \
   -jar Artemis.war
