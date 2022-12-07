@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -173,8 +174,8 @@ public class BambooBuildPlanService {
 
         // Do not run the builds in extra docker containers if the dev-profile is active
         // Xcode has no dockerfile, it only runs on agents (e.g. sb2-agent-0050562fddde)
-        if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && !ProjectType.XCODE.equals(projectType)) {
-            defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage, Optional.ofNullable(projectType)));
+        if (!ProjectType.XCODE.equals(projectType)) {
+            defaultJob.dockerConfiguration(dockerConfigurationFor(programmingLanguage, Optional.ofNullable(projectType)));
         }
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
@@ -502,18 +503,14 @@ public class BambooBuildPlanService {
     private DockerConfiguration dockerConfigurationFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType) {
         var dockerConfiguration = new DockerConfiguration();
 
-        dockerConfiguration.dockerRunArguments(getDockerConfigurationRunArgumentsFor(programmingLanguage));
+        dockerConfiguration.dockerRunArguments(getDefaultDockerRunArguments());
         dockerConfiguration.image(programmingLanguageConfiguration.getImage(programmingLanguage, projectType));
 
         return dockerConfiguration;
     }
 
-    /**
-     * Returns the (default) docker run arguments for a given ProgrammingLanguage. Bamboo requires the arguments to be in separate lines!
-     * @param programmingLanguage
-     * @return the docker run arguments for a given ProgrammingLanguage
-     */
-    private String getDockerConfigurationRunArgumentsFor(ProgrammingLanguage programmingLanguage) {
-        return "--cpus\n4\n--memory\n4g\n--pids-limit\n 100";
+    private String getDefaultDockerRunArguments() {
+        return programmingLanguageConfiguration.getDefaultDockerFlags().entrySet().stream().map(entry -> "--" + entry.getKey() + "\n" + entry.getValue())
+                .collect(Collectors.joining("\n"));
     }
 }
