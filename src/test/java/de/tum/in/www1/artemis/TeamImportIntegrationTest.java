@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.*;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -52,6 +51,8 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private static final String TEST_PREFIX = "tiintegrationtest";
 
+    private static final String REGISTRATION_NUMBER_PREFIX = "tii";
+
     private String fromExerciseEndpointUrl() {
         return "/api/exercises/" + destinationExercise.getId() + "/teams/import-from-exercise/";
     }
@@ -96,7 +97,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         destinationExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
         destinationExercise.setMode(ExerciseMode.TEAM);
         destinationExercise = exerciseRepo.save(destinationExercise);
-        Pair<List<Team>, List<Team>> importedTeamsWithBody = getImportedTeamsAndBody(TEST_PREFIX + "import", TEST_PREFIX + "student", TEST_PREFIX + "R");
+        Pair<List<Team>, List<Team>> importedTeamsWithBody = getImportedTeamsAndBody("import", TEST_PREFIX + "student", REGISTRATION_NUMBER_PREFIX + "R");
         importedTeams = importedTeamsWithBody.getFirst();
         importedTeamsBody = importedTeamsWithBody.getSecond();
         // Select a tutor for the teams
@@ -140,7 +141,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportTeamsFromExerciseIntoExerciseWithNoConflictsUsingPurgeExistingStrategy() throws Exception {
-        List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, TEST_PREFIX + "sourceTeam", 2, tutor);
+        List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, TEST_PREFIX + "sT", 2, tutor);
         testImportTeamsIntoExerciseWithNoConflictsUsingPurgeExistingStrategy(ImportType.FROM_EXERCISE, null, sourceTeams);
     }
 
@@ -174,7 +175,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private void testImportTeamsIntoExerciseWithConflictsUsingPurgeExistingStrategy(ImportType type, List<Team> body, List<Team> addedTeams) throws Exception {
         TeamImportStrategyType strategyType = TeamImportStrategyType.PURGE_EXISTING;
-        database.addTeamsForExercise(destinationExercise, TEST_PREFIX + "sameShortName", 2, tutor);
+        database.addTeamsForExercise(destinationExercise, TEST_PREFIX + "ssn", 2, tutor);
         // imported source teams = destination teams after
         testImportTeamsIntoExercise(type, strategyType, body, addedTeams);
     }
@@ -182,14 +183,14 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportTeamsFromExerciseIntoExerciseWithConflictsUsingPurgeExistingStrategy() throws Exception {
-        List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, TEST_PREFIX + "sameShortName", TEST_PREFIX + "other", 3, tutor);
+        List<Team> sourceTeams = database.addTeamsForExercise(sourceExercise, TEST_PREFIX + "ssn", TEST_PREFIX + "o", 3, tutor);
         testImportTeamsIntoExerciseWithConflictsUsingPurgeExistingStrategy(ImportType.FROM_EXERCISE, null, sourceTeams);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportFromListIntoExerciseWithConflictsUsingPurgeExistingStrategy() throws Exception {
-        Pair<List<Team>, List<Team>> importedTeamsWithBody = getImportedTeamsAndBody(TEST_PREFIX + "sameShortName", TEST_PREFIX + "other", TEST_PREFIX + "O");
+        Pair<List<Team>, List<Team>> importedTeamsWithBody = getImportedTeamsAndBody(TEST_PREFIX + "ssn", TEST_PREFIX + "o", REGISTRATION_NUMBER_PREFIX + "O");
         importedTeams = importedTeamsWithBody.getFirst();
         importedTeamsBody = importedTeamsWithBody.getSecond();
         testImportTeamsIntoExerciseWithConflictsUsingPurgeExistingStrategy(ImportType.FROM_LIST, importedTeamsBody, importedTeams);
@@ -197,7 +198,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private void testImportTeamsIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy(ImportType type, List<Team> body, List<Team> teamsWithoutConflict) throws Exception {
         TeamImportStrategyType strategyType = TeamImportStrategyType.CREATE_ONLY;
-        List<Team> destinationTeamsBefore = database.addTeamsForExercise(destinationExercise, TEST_PREFIX + "sameShortName", 3, tutor);
+        List<Team> destinationTeamsBefore = database.addTeamsForExercise(destinationExercise, TEST_PREFIX + "ssn", 3, tutor);
         // destination teams before + conflict-free source teams = destination teams after
         testImportTeamsIntoExercise(type, strategyType, body, addLists(destinationTeamsBefore, teamsWithoutConflict));
     }
@@ -205,25 +206,25 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportTeamsFromExerciseIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
-        List<Team> sourceTeamsWithoutConflict = database.addTeamsForExercise(sourceExercise, TEST_PREFIX + "sourceTeam", 1, tutor);
-        database.addTeamsForExercise(sourceExercise, TEST_PREFIX + "sameShortName", TEST_PREFIX + "other", 2, tutor);
+        List<Team> sourceTeamsWithoutConflict = database.addTeamsForExercise(sourceExercise, TEST_PREFIX + "st", 1, tutor);
+        database.addTeamsForExercise(sourceExercise, TEST_PREFIX + "ssn", TEST_PREFIX + "o", 2, tutor);
         testImportTeamsIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy(ImportType.FROM_EXERCISE, null, sourceTeamsWithoutConflict);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportFromListIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy() throws Exception {
-        Pair<List<Team>, List<Team>> importedTeamsWithConflictAndBody = getImportedTeamsAndBody(TEST_PREFIX + "sameShortName", TEST_PREFIX + "other", TEST_PREFIX + "O");
+        Pair<List<Team>, List<Team>> importedTeamsWithConflictAndBody = getImportedTeamsAndBody(TEST_PREFIX + "ssn", TEST_PREFIX + "o", "O");
         List<Team> importedTeamsWithConflictBody = importedTeamsWithConflictAndBody.getSecond();
         testImportTeamsIntoExerciseWithTeamShortNameConflictsUsingCreateOnlyStrategy(ImportType.FROM_LIST, addLists(importedTeamsWithConflictBody, importedTeamsBody),
-            importedTeams);
+                importedTeams);
     }
 
     private void testImportTeamsIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy(ImportType type, List<Team> body, List<Team> teamsWithoutConflict,
-                                                                                        List<Team> teamsWithConflicts) throws Exception {
+            List<Team> teamsWithConflicts) throws Exception {
         TeamImportStrategyType strategyType = TeamImportStrategyType.CREATE_ONLY;
         List<Team> destinationTeamsBefore = teamRepo
-            .saveAll(teamsWithConflicts.stream().map(team -> team.exercise(destinationExercise).shortName(TEST_PREFIX + "other" + team.getShortName())).toList());
+                .saveAll(teamsWithConflicts.stream().map(team -> team.exercise(destinationExercise).shortName(TEST_PREFIX + "other" + team.getShortName())).toList());
         // destination teams before + conflict-free source teams = destination teams after
         testImportTeamsIntoExercise(type, strategyType, body, addLists(destinationTeamsBefore, teamsWithoutConflict));
     }
@@ -231,8 +232,8 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportTeamsFromExerciseIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy() throws Exception {
-        List<Team> sourceTeamsWithoutConflict = database.addTeamsForExercise(sourceExercise, TEST_PREFIX + "sourceTeamOther", 1, tutor);
-        List<Team> sourceTeamsWithStudentConflict = database.addTeamsForExercise(sourceExercise, TEST_PREFIX + "sourceTeam", 3, tutor);
+        List<Team> sourceTeamsWithoutConflict = database.addTeamsForExercise(sourceExercise, TEST_PREFIX + "sto", 1, tutor);
+        List<Team> sourceTeamsWithStudentConflict = database.addTeamsForExercise(sourceExercise, TEST_PREFIX + "st", 3, tutor);
         // destination teams before + conflict-free source teams = destination teams after
         testImportTeamsIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy(ImportType.FROM_EXERCISE, null, sourceTeamsWithoutConflict, sourceTeamsWithStudentConflict);
     }
@@ -240,12 +241,12 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportTeamsFromListIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy() throws Exception {
-        Pair<List<Team>, List<Team>> importedTeamsWithStudentConflictAndBody = getImportedTeamsAndBody(TEST_PREFIX + "withConflict", TEST_PREFIX + "import", TEST_PREFIX + "R");
+        Pair<List<Team>, List<Team>> importedTeamsWithStudentConflictAndBody = getImportedTeamsAndBody(TEST_PREFIX + "wc", TEST_PREFIX + "im", REGISTRATION_NUMBER_PREFIX + "R");
         List<Team> importedTeamsWithStudentConflict = importedTeamsWithStudentConflictAndBody.getFirst();
         List<Team> importedTeamsWithStudentConflictBody = importedTeamsWithStudentConflictAndBody.getSecond();
         // destination teams before + conflict-free imported teams = destination teams after
         testImportTeamsIntoExerciseWithStudentConflictsUsingCreateOnlyStrategy(ImportType.FROM_LIST, addLists(importedTeamsWithStudentConflictBody, importedTeamsBody),
-            importedTeams, importedTeamsWithStudentConflict);
+                importedTeams, importedTeamsWithStudentConflict);
     }
 
     @Test
@@ -338,7 +339,7 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(actualTeamsAfterImport).as("Imported teams were persisted into destination exercise.").isEqualTo(destinationTeamsInDatabase);
 
         assertThat(actualTeamsAfterImport).as("Teams were correctly imported.").usingRecursiveComparison().ignoringFields("id", "exercise", "createdDate", "lastModifiedDate")
-            .usingOverriddenEquals().ignoringOverriddenEqualsForTypes(Team.class).ignoringCollectionOrder().isEqualTo(expectedTeamsAfterImport);
+                .usingOverriddenEquals().ignoringOverriddenEqualsForTypes(Team.class).ignoringCollectionOrder().isEqualTo(expectedTeamsAfterImport);
     }
 
     static <T> List<T> addLists(List<T> a, List<T> b) {
@@ -347,7 +348,9 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private Pair<List<Team>, List<Team>> getImportedTeamsAndBody(String shortNamePrefix, String loginPrefix, String registrationPrefix) {
         List<Team> generatedTeams = database.generateTeamsForExercise(destinationExercise, shortNamePrefix, loginPrefix, 3, null, TEST_PREFIX + "instructor1", registrationPrefix);
-        userRepo.saveAll(generatedTeams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
+        var users = generatedTeams.stream().map(Team::getStudents).flatMap(Collection::stream).toList();
+        users.forEach(u -> database.cleanUpRegistrationNumberForUser(u));
+        userRepo.saveAll(users);
         List<Team> teamsWithLogins = getTeamsIntoLoginOnlyTeams(generatedTeams.subList(0, 2));
         List<Team> teamsWithRegistrationNumbers = getTeamsIntoRegistrationNumberOnlyTeams(generatedTeams.subList(2, 3));
         List<Team> body = Stream.concat(teamsWithLogins.stream(), teamsWithRegistrationNumbers.stream()).toList();
@@ -374,7 +377,8 @@ class TeamImportIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
                 newStudent.setLastName(student.getLastName());
                 if ((TEST_PREFIX + "login").equals(identifier)) {
                     newStudent.setLogin(student.getLogin());
-                } else if ((TEST_PREFIX + "registrationNumber").equals(identifier)) {
+                }
+                else if ((TEST_PREFIX + "registrationNumber").equals(identifier)) {
                     newStudent.setVisibleRegistrationNumber(student.getRegistrationNumber());
                 }
                 return newStudent;

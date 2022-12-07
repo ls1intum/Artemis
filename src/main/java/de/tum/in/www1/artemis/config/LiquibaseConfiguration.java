@@ -23,6 +23,8 @@ import org.springframework.core.env.Profiles;
 
 import com.vdurmont.semver4j.Semver;
 
+import liquibase.Scope;
+import liquibase.ThreadLocalScopeManager;
 import liquibase.integration.spring.SpringLiquibase;
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
@@ -68,6 +70,7 @@ public class LiquibaseConfiguration {
         }
 
         SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource, dataSourceProperties);
+        Scope.setScopeManager(new ThreadLocalScopeManager());
         liquibase.setChangeLog("classpath:config/liquibase/master.xml");
         liquibase.setContexts(liquibaseProperties.getContexts());
         liquibase.setDefaultSchema(liquibaseProperties.getDefaultSchema());

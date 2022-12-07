@@ -214,7 +214,8 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         gradeStep.setGradingScale(courseGradingScale);
         gradeSteps = Set.of(gradeStep);
         courseGradingScale.setGradeSteps(gradeSteps);
-        Long gradeStepId = gradingScaleRepository.save(courseGradingScale).getId();
+        courseGradingScale = gradingScaleRepository.save(courseGradingScale);
+        Long gradeStepId = courseGradingScale.getGradeSteps().stream().iterator().next().getId();
 
         GradeStep foundGradeStep = request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps/" + gradeStepId, HttpStatus.OK, GradeStep.class);
 
@@ -247,7 +248,8 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         gradeStep.setGradingScale(examGradingScale);
         gradeSteps = Set.of(gradeStep);
         examGradingScale.setGradeSteps(gradeSteps);
-        Long gradeStepId = gradingScaleRepository.save(examGradingScale).getId();
+        examGradingScale = gradingScaleRepository.save(examGradingScale);
+        Long gradeStepId = examGradingScale.getGradeSteps().stream().iterator().next().getId();
 
         GradeStep foundGradeStep = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps/" + gradeStepId, HttpStatus.OK,
                 GradeStep.class);

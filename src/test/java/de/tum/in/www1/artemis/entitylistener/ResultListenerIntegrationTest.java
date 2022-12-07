@@ -104,9 +104,9 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         }
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(100.0);
-        database.changeUser("instructor1");
+        database.changeUser(TEST_PREFIX + "instructor1");
         request.put("/api/text-exercises", exercise, HttpStatus.OK);
-        List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllEagerly();
+        List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty().hasSize(1);
         ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
         assertThat(savedParticipantScore.getLastPoints()).isEqualTo(200.0);
@@ -178,8 +178,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result newResult = createNewResult(isTeamTest, false);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), null, null);
         resultService.deleteResult(newResult, true);
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).hasSize(1);
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), null, null);
     }
 
@@ -193,8 +193,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result newResult = createNewResult(isTeamTest, true);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), newResult.getId(), newResult.getScore());
         resultService.deleteResult(newResult, true);
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).hasSize(1);
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), null, null);
     }
 
@@ -208,8 +208,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result newResult = createNewResult(isTeamTest, false);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
         resultService.deleteResult(newResult, true);
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).hasSize(1);
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
     }
 
@@ -223,8 +223,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result newResult = createNewResult(isTeamTest, true);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), newResult.getId(), newResult.getScore());
         resultService.deleteResult(newResult, true);
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).hasSize(1);
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
     }
 
@@ -288,10 +288,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // Wait for the scheduler to execute its task
         await().until(() -> participantScoreSchedulerService.isIdle());
 
-        List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedStudentScores).isEmpty();
-        assertThat(savedResults).isEmpty();
+        assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
+        assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -306,10 +304,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // Wait for the scheduler to execute its task
         await().until(() -> participantScoreSchedulerService.isIdle());
 
-        List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedStudentScores).isEmpty();
-        assertThat(savedResults).isEmpty();
+        assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
+        assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -322,8 +318,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result newResult = createNewResult(isTeamTest, false);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
         resultService.deleteResult(originalResult, true);
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).hasSize(1);
+        assertThat(resultRepository.findById(originalResult.getId())).isEmpty();
+        assertThat(resultRepository.findById(newResult.getId())).isPresent();
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), null, null);
     }
 
@@ -337,8 +333,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result newResult = createNewResult(isTeamTest, false);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
         resultService.deleteResult(newResult, true);
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).hasSize(1);
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
     }
 
@@ -387,9 +383,6 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     private ParticipantScore setupTestScenarioWithOneResultSaved(boolean isRatedResult, boolean isTeam) {
-        List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllEagerly();
-        assertThat(savedParticipantScores).isEmpty();
-
         Long idOfExercise;
         Participant participant;
         if (isTeam) {
@@ -401,12 +394,14 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             idOfExercise = idOfIndividualTextExercise;
         }
 
+        var exercise = exerciseRepository.findById(idOfExercise).get();
+
         Result persistedResult = database.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
 
         // Wait for the scheduler to execute its task
         await().until(() -> participantScoreSchedulerService.isIdle());
 
-        savedParticipantScores = participantScoreRepository.findAllEagerly();
+        var savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty();
         assertThat(savedParticipantScores).hasSize(1);
         ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
@@ -435,10 +430,12 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             idOfExercise = idOfIndividualTextExercise;
         }
 
+        var exercise = exerciseRepository.findById(idOfExercise).get();
+
         // Wait for the scheduler to execute its task
         await().pollDelay(Durations.ONE_SECOND).until(() -> participantScoreSchedulerService.isIdle());
 
-        List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllEagerly();
+        List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScore).isNotEmpty();
         assertThat(savedParticipantScore).hasSize(1);
         ParticipantScore updatedParticipantScore = savedParticipantScore.get(0);

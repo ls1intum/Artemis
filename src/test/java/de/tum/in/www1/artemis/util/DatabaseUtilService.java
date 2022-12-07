@@ -406,7 +406,7 @@ public class DatabaseUtilService {
     public Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String creatorLogin,
             String registrationPrefix) {
         List<User> students = generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, new String[] { "tumuser", "testgroup" },
-                Set.of(new Authority(Role.STUDENT.getAuthority())), numberOfStudents, shortName + registrationPrefix);
+                Set.of(new Authority(Role.STUDENT.getAuthority())), numberOfStudents, registrationPrefix);
 
         Team team = new Team();
         team.setName(name);
@@ -469,7 +469,7 @@ public class DatabaseUtilService {
         List<Team> teams = new ArrayList<>();
         for (int i = 1; i <= numberOfTeams; i++) {
             int numberOfStudents = new Random().nextInt(4) + 1; // range: 1-4 students
-            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner, creatorLogin, registrationPrefix));
+            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner, creatorLogin, registrationPrefix + i));
         }
         return teams;
     }
@@ -491,7 +491,7 @@ public class DatabaseUtilService {
             String registrationPrefix, int teamSize) {
         List<Team> teams = new ArrayList<>();
         for (int i = 1; i <= numberOfTeams; i++) {
-            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, teamSize, owner, creatorLogin, registrationPrefix));
+            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, teamSize, owner, creatorLogin, registrationPrefix + i));
         }
         return teams;
     }
@@ -568,7 +568,9 @@ public class DatabaseUtilService {
 
     public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
         List<Team> teams = generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner, null);
-        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
+        var users = teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList();
+        users.forEach(this::cleanUpRegistrationNumberForUser);
+        userRepo.saveAll(users);
         return teamRepo.saveAll(teams);
     }
 
@@ -580,10 +582,24 @@ public class DatabaseUtilService {
         return addTeamsForExercise(exercise, "team", numberOfTeams, owner);
     }
 
-    public List<Team> addTeamsForExerciseFixedTeamSize(Exercise exercise, int numberOfTeams, User owner, int noOfStudentsPerTeam) {
-        List<Team> teams = generateTeamsForExerciseFixedTeamSize(exercise, "team", "student", numberOfTeams, owner, null, "R", noOfStudentsPerTeam);
-        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
+    public List<Team> addTeamsForExerciseFixedTeamSize(String userPrefix, String regNumberPrefix, Exercise exercise, int numberOfTeams, User owner, int noOfStudentsPerTeam) {
+        List<Team> teams = generateTeamsForExerciseFixedTeamSize(exercise, userPrefix + "team", "student", numberOfTeams, owner, null, regNumberPrefix, noOfStudentsPerTeam);
+        var users = teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList();
+        users.forEach(this::cleanUpRegistrationNumberForUser);
+        userRepo.saveAll(users);
         return teamRepo.saveAll(teams);
+    }
+
+    public void cleanUpRegistrationNumberForUser(User user) {
+        if (user.getRegistrationNumber() == null) {
+            return;
+        }
+
+        var existingUserWithRegistrationNumber = userRepo.findOneWithGroupsAndAuthoritiesByRegistrationNumber(user.getRegistrationNumber());
+        if (existingUserWithRegistrationNumber.isPresent()) {
+            existingUserWithRegistrationNumber.get().setRegistrationNumber(null);
+            userRepo.save(existingUserWithRegistrationNumber.get());
+        }
     }
 
     public Team addTeamForExercise(Exercise exercise, User owner) {

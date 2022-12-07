@@ -644,12 +644,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         // Quiz submissions are not yet in database
-        assertThat(quizSubmissionRepository.findAll()).isEmpty();
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
 
         quizScheduleService.processCachedQuizSubmissions();
 
         // Quiz submissions are now in database
-        assertThat(quizSubmissionRepository.findAll()).hasSize(1);
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(1);
 
         request.delete("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK);
         assertThat(quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId())).as("Exercise is deleted correctly").isNull();
@@ -963,10 +963,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, true, ZonedDateTime.now().minusHours(1));
                 database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
                 database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+                assertThat(submittedAnswerRepository.findBySubmission(quizSubmission)).hasSize(3);
             }
         }
-
-        assertThat(submittedAnswerRepository.findAll()).hasSize((numberOfParticipants - 2) * 3);
 
         // submission with everything selected
         QuizSubmission quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), true);
@@ -978,10 +977,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student5");
         database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
-        assertThat(studentParticipationRepository.findAll()).hasSize(numberOfParticipants);
-        assertThat(resultRepository.findAll()).hasSize(numberOfParticipants);
-        assertThat(quizSubmissionRepository.findAll()).hasSize(numberOfParticipants);
-        assertThat(submittedAnswerRepository.findAll()).hasSize(numberOfParticipants * 3);
+        assertThat(studentParticipationRepository.findByExerciseId(quizExercise.getId())).hasSize(numberOfParticipants);
+        assertThat(resultRepository.findAllByExerciseId(quizExercise.getId())).hasSize(numberOfParticipants);
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(numberOfParticipants);
+        assertThat(submittedAnswerRepository.findBySubmission(quizSubmission)).hasSize(3);
 
         // calculate statistics
         quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
@@ -1088,8 +1087,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         database.addSubmission(quizExercise, quizSubmissionPractice, TEST_PREFIX + "student5");
         database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmissionPractice), false);
 
-        assertThat(studentParticipationRepository.findAll()).hasSize(10);
-        assertThat(resultRepository.findAll()).hasSize(10);
+        assertThat(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(quizExercise.getId(), false)).isEqualTo(10);
+        assertThat(resultRepository.findAllByExerciseId(quizExercise.getId())).hasSize(10);
 
         // calculate statistics
         quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);

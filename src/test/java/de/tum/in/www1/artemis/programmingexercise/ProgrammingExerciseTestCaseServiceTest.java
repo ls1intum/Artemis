@@ -99,7 +99,8 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     void shouldGenerateNewTestCases() {
-        testCaseRepository.deleteAll();
+        // We do not want to use the test cases generated in the setup
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1"));
@@ -114,7 +115,8 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     void shouldNotGenerateNewTestCasesForStaticCodeAnalysisFeedback() {
-        testCaseRepository.deleteAll();
+        // We do not want to use the test cases generated in the setup
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         List<Feedback> feedbackList = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
         testCaseService.generateTestCasesFromFeedbacks(feedbackList, programmingExercise);
@@ -125,7 +127,8 @@ class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     void shouldFilterOutDuplicateTestCases() {
-        testCaseRepository.deleteAll();
+        // We do not want to use the test cases generated in the setup
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1"));

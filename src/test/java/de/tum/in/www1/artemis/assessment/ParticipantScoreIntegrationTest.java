@@ -83,8 +83,18 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
         this.database.addUsers(TEST_PREFIX, 5, 10, 0, 10);
+        // Instructors should only be part of "participantscoreinstructor"
+        for (int i = 1; i <= 10; i++) {
+            var tutor = database.getUserByLogin(TEST_PREFIX + "instructor" + i);
+            tutor.setGroups(Set.of("participantscoreinstructor"));
+            userRepository.save(tutor);
+        }
+
         // creating course
         Course course = this.database.createCourse();
+        course.setInstructorGroupName("participantscoreinstructor");
+        courseRepository.save(course);
+
         Lecture lecture = new Lecture();
         lecture.setTitle("ExampleLecture");
         lecture.setCourse(course);
@@ -107,7 +117,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         idOfStudent1 = student1.getId();
         User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
-        idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise, "team1").getId();
+        idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise, TEST_PREFIX + "team1").getId();
 
         // Creating result for student1
         database.createParticipationSubmissionAndResult(idOfIndividualTextExercise, student1, 10.0, 10.0, 50, true);
@@ -121,10 +131,12 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         exam.addRegisteredUser(student1);
         exam = examRepository.save(exam);
         idOfExam = exam.getId();
-        createIndividualTextExerciseForExam();
+        var examTextExercise = createIndividualTextExerciseForExam();
         database.createParticipationSubmissionAndResult(getIdOfIndividualTextExerciseOfExam, student1, 10.0, 10.0, 50, true);
 
-        await().until(() -> participantScoreRepository.findAll().size() == 3);
+        await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
+        await().until(() -> participantScoreRepository.findAllByExercise(teamExercise).size() == 1);
+        await().until(() -> participantScoreRepository.findAllByExercise(examTextExercise).size() == 1);
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -224,8 +236,8 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(scoreAverageDTOS).hasSize(2);
         var student1Result = scoreAverageDTOS.get(0);
         var team1Result = scoreAverageDTOS.get(1);
-        assertAverageParticipantScoreDTOStructure(student1Result, "student1", 50.0, 50.0, 5.0, 5.0);
-        assertAverageParticipantScoreDTOStructure(team1Result, "team1", 50.0, 50.0, 5.0, 5.0);
+        assertAverageParticipantScoreDTOStructure(student1Result, TEST_PREFIX + "student1", 50.0, 50.0, 5.0, 5.0);
+        assertAverageParticipantScoreDTOStructure(team1Result, TEST_PREFIX + "team1", 50.0, 50.0, 5.0, 5.0);
     }
 
     @Test
@@ -250,11 +262,11 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAverageScoreOfParticipantInExam_asInstructorOfCourse_shouldReturnAverageParticipantScores() throws Exception {
         List<ParticipantScoreAverageDTO> participantScoreAverageDTOS = request.getList("/api/exams/" + idOfExam + "/participant-scores/average-participant", HttpStatus.OK,
-            ParticipantScoreAverageDTO.class);
+                ParticipantScoreAverageDTO.class);
         assertThat(participantScoreAverageDTOS).hasSize(1);
         ParticipantScoreAverageDTO student1Result = participantScoreAverageDTOS.stream().filter(participantScoreAverageDTO -> participantScoreAverageDTO.name() != null).findFirst()
-            .get();
-        assertAverageParticipantScoreDTOStructure(student1Result, "student1", 50.0, 50.0, 5.0, 5.0);
+                .get();
+        assertAverageParticipantScoreDTOStructure(student1Result, TEST_PREFIX + "student1", 50.0, 50.0, 5.0, 5.0);
     }
 
     @Test
@@ -266,7 +278,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         assertThat(average).isEqualTo(50D);
     }
 
-    private void createIndividualTextExerciseForExam() {
+    private TextExercise createIndividualTextExerciseForExam() {
         Exam exam;
         exam = examRepository.findWithExerciseGroupsAndExercisesById(idOfExam).get();
         var exerciseGroup0 = exam.getExerciseGroups().get(0);
@@ -276,10 +288,11 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         textExercise = exerciseRepository.save(textExercise);
         getIdOfIndividualTextExerciseOfExam = textExercise.getId();
+        return textExercise;
     }
 
     private void assertParticipantScoreDTOStructure(ParticipantScoreDTO participantScoreDTO, Long expectedUserId, Long expectedTeamId, Long expectedExerciseId,
-                                                    Double expectedLastResultScore, Double expectedLastRatedResultScore, Double expectedLastPoints, Double expectedLastRatedPoints) {
+            Double expectedLastResultScore, Double expectedLastRatedResultScore, Double expectedLastPoints, Double expectedLastRatedPoints) {
         assertThat(participantScoreDTO.userId()).isEqualTo(expectedUserId);
         assertThat(participantScoreDTO.teamId()).isEqualTo(expectedTeamId);
         assertThat(participantScoreDTO.exerciseId()).isEqualTo(expectedExerciseId);
@@ -290,7 +303,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     private void assertAverageParticipantScoreDTOStructure(ParticipantScoreAverageDTO participantScoreAverageDTO, String expectedName, Double expectedAverageScore,
-                                                           Double expectedAverageRatedScore, Double expectedAveragePoints, Double expectedAverageRatedPoints) {
+            Double expectedAverageRatedScore, Double expectedAveragePoints, Double expectedAverageRatedPoints) {
         assertThat(participantScoreAverageDTO.name()).isEqualTo(expectedName);
         assertThat(participantScoreAverageDTO.averageScore()).isEqualTo(expectedAverageScore);
         assertThat(participantScoreAverageDTO.averageRatedScore()).isEqualTo(expectedAverageRatedScore);

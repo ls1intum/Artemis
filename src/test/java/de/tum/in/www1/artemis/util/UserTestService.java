@@ -12,6 +12,7 @@ import java.util.stream.Stream;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
@@ -99,7 +100,7 @@ public class UserTestService {
     }
 
     public void tearDown() throws IOException {
-        userRepository.deleteAll();
+        userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
         database.resetDatabase();
     }
 
@@ -151,8 +152,11 @@ public class UserTestService {
 
     // Test
     public void deleteUsers() throws Exception {
-        userRepository.deleteAll();
-        var users = database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+
+        var users = Set.of(database.getUserByLogin(TEST_PREFIX + "student1"), database.getUserByLogin(TEST_PREFIX + "tutor1"), database.getUserByLogin(TEST_PREFIX + "editor1"),
+                database.getUserByLogin(TEST_PREFIX + "instructor1"));
 
         for (var user : users) {
             user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
@@ -177,8 +181,11 @@ public class UserTestService {
 
     // Test
     public void deleteUsersException() throws Exception {
-        userRepository.deleteAll();
-        var users = database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
+        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+
+        var users = Set.of(database.getUserByLogin(TEST_PREFIX + "student1"), database.getUserByLogin(TEST_PREFIX + "tutor1"), database.getUserByLogin(TEST_PREFIX + "editor1"),
+                database.getUserByLogin(TEST_PREFIX + "instructor1"));
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         users.stream().map(User::getLogin).forEach(login -> params.add("login", login));
@@ -840,7 +847,7 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 }, };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll();
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
@@ -849,7 +856,7 @@ public class UserTestService {
             user2.setGroups(Set.of("tumuser"));
             userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1).contains(user1);
+            assertThat(result).contains(user1).doesNotContain(user2);
         }
     }
 
@@ -885,7 +892,7 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll();
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
@@ -895,7 +902,7 @@ public class UserTestService {
             user2.setActivated(false);
             userRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(2).contains(user1, admin);
+            assertThat(result).contains(user1, admin).doesNotContain(user2);
         }
     }
 
@@ -909,7 +916,7 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll();
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
@@ -932,7 +939,7 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll();
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
@@ -942,7 +949,7 @@ public class UserTestService {
             user2.setInternal(false);
             userRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(2).contains(user1, admin);
+            assertThat(result).contains(user1, admin).doesNotContain(user2);
         }
     }
 
@@ -956,7 +963,7 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll();
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
@@ -979,7 +986,7 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll();
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
@@ -1006,7 +1013,7 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll();
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
@@ -1033,7 +1040,7 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll();
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);

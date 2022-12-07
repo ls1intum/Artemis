@@ -44,6 +44,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     List<ParticipantScore> findAll();
 
+    @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     List<ParticipantScore> findAllByExercise(Exercise exercise);
 
     @Query("""

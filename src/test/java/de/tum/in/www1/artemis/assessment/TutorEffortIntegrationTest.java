@@ -21,12 +21,18 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.statistics.tutor.effort.TutorEffort;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "tutoreffort"; // only lower case is supported
+
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
@@ -47,12 +53,11 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
      */
     @BeforeEach
     void initTestCase() {
-        course = database.createCourseWithTutor("tutor1");
+        course = database.createCourseWithTutor(TEST_PREFIX + "tutor1");
         exercise = course.getExercises().iterator().next();
-        studentParticipation = null; // TODO: The repository method is missing
-        // studentParticipation = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exercise.getId()).get(0);
-        textSubmission = (TextSubmission) studentParticipation.findLatestSubmission().get();
-        var instructor = database.createAndSaveUser("instructor");
+        studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().iterator().next();
+        textSubmission = textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).get(0);
+        var instructor = database.createAndSaveUser(TEST_PREFIX + "instructor");
         instructor.setGroups(Set.of(course.getInstructorGroupName()));
         userRepository.save(instructor);
     }
@@ -67,7 +72,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
      * timestamps of 1 minute but
      */
     @Test
-    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testCalculateTutorEfforts0MinutesOneTimestamp() throws Exception {
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(1, 1);
 
@@ -87,7 +92,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testCalculateTutorEffortsDistance5Minutes() throws Exception {
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(6, 5);
 
@@ -108,7 +113,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
      * @throws Exception
      */
     @Test
-    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
     void testCalculateTutorEffortsDistance10Minutes() throws Exception {
         List<TextAssessmentEvent> events = createTextAssessmentEventsInIntervals(11, 10);
         textAssessmentEventRepository.saveAll(events);

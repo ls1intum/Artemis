@@ -19,6 +19,8 @@ import de.tum.in.www1.artemis.repository.*;
 
 class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "notificationsettingsresourrce";
+
     @Autowired
     private UserRepository userRepository;
 
@@ -36,11 +38,8 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
      */
     @BeforeEach
     void initTestCase() {
-        List<User> users = database.addUsers(2, 1, 1, 1);
-
-        student1 = users.get(0);
-        users.set(0, student1);
-        userRepository.save(student1);
+        database.addUsers(TEST_PREFIX, 2, 1, 1, 1);
+        student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
         settingA = new NotificationSetting(student1, true, false, "notification.lecture-notification.attachment-changes");
         settingsB = new NotificationSetting(student1, false, false, "notification.exercise-notification.exercise-open-for-practice");
@@ -59,7 +58,7 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
      * Tests the getNotificationSettingsForCurrentUser method if the user already has saved settings in the DB
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetNotificationSettingsForCurrentUserWith_DB_NOT_EMPTY() throws Exception {
         notificationSettingRepository.save(settingA);
         notificationSettingRepository.save(settingsB);
@@ -76,7 +75,7 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
      * The default settings should be returned
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetNotificationSettingsForCurrentUserWith_DB_EMTPY() throws Exception {
         List<NotificationSetting> notificationSettings = request.getList("/api/notification-settings", HttpStatus.OK, NotificationSetting.class);
         assertThat(notificationSettings).hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS);
@@ -86,7 +85,7 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
      * Tests the saveNotificationSettingsForCurrentUser method under normal (successful) conditions
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveNotificationSettingsForCurrentUser_OK() throws Exception {
         NotificationSetting[] newlyChangedSettingsToSave = { settingA, settingsB };
 
@@ -111,7 +110,7 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
      * Tests the saveNotificationSettingsForCurrentUser method if a bad request occurs
      */
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveNotificationSettingsForCurrentUser_BAD_REQUEST() throws Exception {
         request.putWithResponseBody("/api/notification-settings", null, NotificationSetting[].class, HttpStatus.BAD_REQUEST);
     }

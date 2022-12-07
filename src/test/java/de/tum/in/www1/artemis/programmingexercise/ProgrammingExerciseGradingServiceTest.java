@@ -191,7 +191,8 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldNotUpdateResultIfNoTestCasesExist() {
-        testCaseRepository.deleteAll();
+        // We do not want to use the test cases generated in the setup
+        testCaseRepository.deleteAll(testCaseRepository.findByExerciseId(programmingExercise.getId()));
 
         Double scoreBeforeUpdate = result.getScore();
         gradingService.calculateScoreForResult(result, programmingExercise, true);

@@ -35,6 +35,8 @@ import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 
 class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "assessmentcomplaintintegration";
+
     @Autowired
     private SubmissionRepository submissionRepo;
 
@@ -70,7 +72,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(2, 2, 0, 1);
+        database.addUsers(TEST_PREFIX, 2, 2, 0, 1);
 
         // Initialize with 3 max complaints and 7 days max complaint deadline
         course = database.addCourseWithModelingAndTextAndFileUploadExercise();
@@ -86,7 +88,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessmentResultBeforeDueDate() throws Exception {
         database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
@@ -97,7 +99,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessmentResultBeforeAssessmentDueDate() throws Exception {
         database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(3));
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
@@ -108,7 +110,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessmentResultAfterAssessmentDueDate() throws Exception {
         database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(3));
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
@@ -133,27 +135,27 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintWithId() throws Exception {
         complaint.setId(1L);
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintResultIsNull() throws Exception {
         complaint.setResult(null);
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModellingAssessment_complaintLimitNotReached() throws Exception {
         database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
 
         // 2 complaints are allowed, the course is created with 3 max complaints
-        database.addComplaints("student1", modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
+        database.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 2, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
@@ -163,9 +165,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
-        database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
+        database.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
 
         request.post("/api/complaints", complaint, HttpStatus.BAD_REQUEST);
 
@@ -175,12 +177,12 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void requestMoreFeedbackAboutModelingAssessment_noLimit() throws Exception {
         database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
 
-        database.addComplaints("student1", modelingAssessment.getParticipation(), 3, ComplaintType.MORE_FEEDBACK);
+        database.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 3, ComplaintType.MORE_FEEDBACK);
 
         request.post("/api/complaints", complaint, HttpStatus.CREATED);
 
@@ -191,11 +193,11 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         // Only one complaint is possible for exercise regardless of its type
         request.post("/api/complaints", moreFeedbackRequest, HttpStatus.BAD_REQUEST);
         assertThat(complaintRepo.findByResultId(modelingAssessment.getId()).get().getComplaintType()).as("more feedback request is not saved")
-            .isNotEqualTo(ComplaintType.MORE_FEEDBACK);
+                .isNotEqualTo(ComplaintType.MORE_FEEDBACK);
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessment_validDeadline() throws Exception {
         // Set deadline for mock course to 2 weeks. Complaint created one week after result date is fine.
         course.setMaxComplaintTimeDays(14);
@@ -212,7 +214,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
         // 3 weeks is already past the deadline
         database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(4));
@@ -227,11 +229,11 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void submitComplaintResponse_rejectComplaint() throws Exception {
         complaint = complaintRepo.save(complaint);
         // creating the initial complaintResponse
-        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("Rejected");
 
@@ -246,11 +248,11 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void submitComplaintResponse_updateAssessment() throws Exception {
         complaint = complaintRepo.save(complaint);
         // creating the initial complaintResponse
-        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         complaintResponse.setResponseText("Accepted");
 
@@ -258,7 +260,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
         Result receivedResult = request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate,
-            Result.class, HttpStatus.OK);
+                Result.class, HttpStatus.OK);
 
         assertThat(((StudentParticipation) receivedResult.getParticipation()).getStudent()).as("student is hidden in response").isEmpty();
         Complaint storedComplaint = complaintRepo.findByResultId(modelingAssessment.getId()).get();
@@ -274,12 +276,12 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void submitComplaintResponseComplaintResponseTextLimitExceeded() throws Exception {
         complaint = complaintRepo.save(complaint);
         course = database.updateCourseComplaintResponseTextLimit(course, 25);
         // creating the initial complaintResponse
-        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         // 26 characters
         complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
@@ -288,16 +290,16 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         feedbacks.forEach((feedback -> feedback.setType(FeedbackType.MANUAL)));
         AssessmentUpdate assessmentUpdate = new AssessmentUpdate().feedbacks(feedbacks).complaintResponse(complaintResponse);
         request.putWithResponseBody("/api/modeling-submissions/" + modelingSubmission.getId() + "/assessment-after-complaint", assessmentUpdate, Result.class,
-            HttpStatus.BAD_REQUEST);
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void submitComplaintResponseComplaintResponseTextLimitNotExceeded() throws Exception {
         complaint = complaintRepo.save(complaint);
         course = database.updateCourseComplaintResponseTextLimit(course, 26);
         // creating the initial complaintResponse
-        ComplaintResponse complaintResponse = database.createInitialEmptyResponse("tutor2", complaint);
+        ComplaintResponse complaintResponse = database.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
         complaintResponse.getComplaint().setAccepted(true);
         // 26 characters
         complaintResponse.setResponseText("abcdefghijklmnopqrstuvwxyz");
@@ -310,13 +312,13 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void getComplaintByResultIdNoComplaintExists() throws Exception {
         request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.OK, Void.class);
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void getComplaintByResultId_assessorHiddenForStudent() throws Exception {
         submissionRepo.save(modelingSubmission);
         complaintRepo.save(complaint);
@@ -327,16 +329,16 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void getComplaintByResultId_studentAndNotOwner_forbidden() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
 
         request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.FORBIDDEN, Complaint.class);
     }
 
     @Test
-    @WithMockUser(username = "instructor1")
+    @WithMockUser(username = TEST_PREFIX + "instructor1")
     void getComplaintByResultid_instructor_sensitiveDataHidden() throws Exception {
         complaintRepo.save(complaint);
 
@@ -346,9 +348,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor1")
+    @WithMockUser(username = TEST_PREFIX + "tutor1")
     void getComplaintByResultid_tutor_sensitiveDataHidden() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
 
         final var received = request.get("/api/complaints/submissions/" + modelingSubmission.getId(), HttpStatus.OK, Complaint.class);
@@ -357,9 +359,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsForTutor_tutor_sensitiveDataHidden() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
 
         final var params = new LinkedMultiValueMap<String, String>();
@@ -370,9 +372,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsByCourseIdTutorIsNotTutorForCourse() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
         course.setInstructorGroupName("test");
         course.setTeachingAssistantGroupName("test");
@@ -384,34 +386,34 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsByCourseId_tutor_sensitiveDataHidden() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         final var complaints = request.getList("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints", HttpStatus.OK, Complaint.class,
-            params);
+                params);
 
         complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsByCourseId_tutor_allComplaintsForTutor() throws Exception {
-        complaint.getResult().setAssessor(database.getUserByLogin("instructor1"));
+        complaint.getResult().setAssessor(database.getUserByLogin(TEST_PREFIX + "instructor1"));
         resultRepo.save(complaint.getResult());
         complaintRepo.save(complaint);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
 
         final var tutorComplaints = request.getList("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints", HttpStatus.OK,
-            Complaint.class, params);
+                Complaint.class, params);
         assertThat(tutorComplaints).isEmpty();
 
         params.add("allComplaintsForTutor", "true");
         final var allComplaints = request.getList("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints", HttpStatus.OK,
-            Complaint.class, params);
+                Complaint.class, params);
 
         assertThat(allComplaints).hasSize(1);
         allComplaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
@@ -421,9 +423,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsForAssessmentDashboardTutorIsNotTutorForCourse() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
         course.setInstructorGroupName("test");
         course.setTeachingAssistantGroupName("test");
@@ -434,9 +436,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsForAssessmentDashboard_sameTutorAsAssessor_studentInfoHidden() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
         complaint.getResult().setHasComplaint(true);
         resultRepo.save(complaint.getResult());
@@ -444,7 +446,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         final var submissionWithComplaintDTOs = request.getList("/api/exercises/" + modelingExercise.getId() + "/submissions-with-complaints", HttpStatus.OK,
-            SubmissionWithComplaintDTO.class, params);
+                SubmissionWithComplaintDTO.class, params);
 
         submissionWithComplaintDTOs.forEach(dto -> {
             final var participation = (StudentParticipation) dto.complaint().getResult().getParticipation();
@@ -458,9 +460,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getComplaintsForAssessmentDashboardTestRunTutorIsNotTutorForCourse() throws Exception {
-        User instructor = database.getUserByLogin("instructor1");
+        User instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
         complaint.setParticipant(instructor);
         complaint.getResult().setAssessor(instructor);
         resultRepo.save(complaint.getResult());
@@ -475,9 +477,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getComplaintsForAssessmentDashboard_testRun() throws Exception {
-        User instructor = database.getUserByLogin("instructor1");
+        User instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
         complaint.setParticipant(instructor);
         complaint.getResult().setAssessor(instructor);
         resultRepo.save(complaint.getResult());
@@ -494,7 +496,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getComplaintsForAssessmentDashboard_testRun_emptyComplaints() throws Exception {
 
         final var params = new LinkedMultiValueMap<String, String>();
@@ -504,12 +506,13 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void getComplaintResponseByComplaintId_reviewerHiddenForStudent() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
 
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
+        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected")
+                .reviewer(database.getUserByLogin(TEST_PREFIX + "tutor1"));
         complaintResponseRepo.save(complaintResponse);
 
         ComplaintResponse receivedComplaintResponse = request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.OK, ComplaintResponse.class);
@@ -519,9 +522,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor1")
+    @WithMockUser(username = TEST_PREFIX + "tutor1")
     void getComplaintResponseByComplaintId_sensitiveDataHiddenForTutor() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
 
         complaint = complaintRepo.save(complaint);
         ComplaintResponse complaintResponse = new ComplaintResponse();
@@ -529,7 +532,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
         complaintResponse = complaintResponseRepo.save(complaintResponse);
-        complaintResponse.setReviewer(database.getUserByLogin("tutor1"));
+        complaintResponse.setReviewer(database.getUserByLogin(TEST_PREFIX + "tutor1"));
 
         complaintResponseRepo.save(complaintResponse);
 
@@ -542,16 +545,16 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "instructor1")
+    @WithMockUser(username = TEST_PREFIX + "instructor1")
     void getComplaintResponseByComplaintId_sensitiveDataHiddenForInstructor() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaint = complaintRepo.save(complaint);
         ComplaintResponse complaintResponse = new ComplaintResponse();
         complaintResponse.setComplaint(complaint);
         complaintResponse.getComplaint().setAccepted(false);
         complaintResponse.setResponseText("rejected");
         complaintResponse = complaintResponseRepo.save(complaintResponse);
-        complaintResponse.setReviewer(database.getUserByLogin("instructor1"));
+        complaintResponse.setReviewer(database.getUserByLogin(TEST_PREFIX + "instructor1"));
 
         complaintResponseRepo.save(complaintResponse);
 
@@ -564,22 +567,23 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student2")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void getComplaintResponseByComplaintId_studentNotOriginalAuthor_forbidden() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
 
-        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected").reviewer(database.getUserByLogin("tutor1"));
+        ComplaintResponse complaintResponse = new ComplaintResponse().complaint(complaint.accepted(false)).responseText("rejected")
+                .reviewer(database.getUserByLogin(TEST_PREFIX + "tutor1"));
         complaintResponseRepo.save(complaintResponse);
 
         request.get("/api/complaint-responses/complaint/" + complaint.getId(), HttpStatus.FORBIDDEN, ComplaintResponse.class);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getSubmittedComplaints_byComplaintType() throws Exception {
-        database.addComplaints("student1", modelingAssessment.getParticipation(), 1, ComplaintType.COMPLAINT);
-        database.addComplaints("student1", modelingAssessment.getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
+        database.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 1, ComplaintType.COMPLAINT);
+        database.addComplaints(TEST_PREFIX + "student1", modelingAssessment.getParticipation(), 2, ComplaintType.MORE_FEEDBACK);
 
         String exercisesUrl = "/api/exercises/" + modelingExercise.getId() + "/complaints";
         String coursesUrl = "/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints";
@@ -596,14 +600,15 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getSubmittedComplaintsForProgrammingExercise() throws Exception {
         var programmingExercise = database.addProgrammingExerciseToCourse(course, false);
         var programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
 
-        database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1", AssessmentType.MANUAL, false);
+        database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1", AssessmentType.MANUAL,
+                false);
         courseRepository.save(course);
-        database.addComplaintToSubmission(programmingSubmission, "student1", ComplaintType.COMPLAINT);
+        database.addComplaintToSubmission(programmingSubmission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
         var programmingComplaint = complaintRepo.findByResultId(programmingSubmission.getResultWithComplaint().getId()).orElseThrow();
         programmingComplaint.setComplaintText("Programming exercise complaint");
         complaintRepo.save(programmingComplaint);
@@ -620,14 +625,14 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getSubmittedComplaintsForFileUploadExercise() throws Exception {
         var fileUploadExercise = database.getFirstExerciseWithType(course, FileUploadExercise.class);
         var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
 
-        fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, "student1", "tutor1");
+        fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         courseRepository.save(course);
-        database.addComplaintToSubmission(fileUploadSubmission, "student1", ComplaintType.COMPLAINT);
+        database.addComplaintToSubmission(fileUploadSubmission, TEST_PREFIX + "student1", ComplaintType.COMPLAINT);
         var fileUploadComplaint = complaintRepo.findByResultId(fileUploadSubmission.getResultWithComplaint().getId()).orElseThrow();
         fileUploadComplaint.setComplaintText("File upload complaint");
         complaintRepo.save(fileUploadComplaint);
@@ -643,7 +648,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void getSubmittedComplaints_asStudent_forbidden() throws Exception {
         complaintRepo.save(complaint);
 
@@ -656,9 +661,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     private void saveModelingSubmissionAndAssessment() throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
-        modelingSubmission = database.addModelingSubmission(modelingExercise, modelingSubmission, "student1");
-        modelingAssessment = database.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json", "tutor1",
-            true);
+        modelingSubmission = database.addModelingSubmission(modelingExercise, modelingSubmission, TEST_PREFIX + "student1");
+        modelingAssessment = database.addModelingAssessmentForSubmission(modelingExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.v2.json",
+                TEST_PREFIX + "tutor1", true);
     }
 
     private void checkComplaintContainsNoSensitiveData(Complaint receivedComplaint, boolean shouldStudentBeFilteredOut) {
@@ -713,14 +718,14 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
         if (complaint.getResult() != null && complaint.getResult().getParticipation() != null) {
             assertThat(((StudentParticipation) receivedComplaint.getResult().getParticipation()).getStudent()).as("Result in complaint shouldn't contain student participation")
-                .isEmpty();
+                    .isEmpty();
         }
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsByExerciseIdTutorIsNotTutorForCourse() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
         course.setInstructorGroupName("test");
         course.setTeachingAssistantGroupName("test");
@@ -731,20 +736,20 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getComplaintsByExerciseId_tutor_sensitiveDataHidden() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
         final var complaints = request.getList("/api/exercises/" + complaint.getResult().getParticipation().getExercise().getId() + "/complaints", HttpStatus.OK, Complaint.class,
-            params);
+                params);
 
         complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getNumberOfAllowedComplaintsInCourseComplaintsDisabled() throws Exception {
         // complaints enabled will return zero
         course.setMaxComplaintTimeDays(-1);
@@ -753,28 +758,28 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getNumberOfAllowedComplaintsInCourse() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
         Long nrOfAllowedComplaints = request.get("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/allowed-complaints", HttpStatus.OK,
-            Long.class);
+                Long.class);
         assertThat(nrOfAllowedComplaints.intValue()).isEqualTo(course.getMaxComplaints());
         // TODO: there should be a second test case where the student already has 2 complaints and the number is reduced
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getNumberOfAllowedComplaintsInCourseTeamMode() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
         request.get("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/allowed-complaints?teamMode=true", HttpStatus.BAD_REQUEST, Long.class);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getMoreFeedbackRequestsForAssessmentDashboardTutorIsNotTutorForCourse() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         moreFeedbackRequest.setAccepted(true);
         complaintRepo.save(moreFeedbackRequest);
         course.setInstructorGroupName("test");
@@ -787,9 +792,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getMoreFeedbackRequestsForAssessmentDashboard() throws Exception {
-        complaint.setParticipant(database.getUserByLogin("student1"));
+        complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         moreFeedbackRequest.setAccepted(true);
         complaintRepo.save(moreFeedbackRequest);
 
@@ -806,12 +811,12 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForExamExerciseComplaintAlreadyHasId() throws Exception {
         final TextExercise examExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         examExerciseComplaint.setId(1L);
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
@@ -819,24 +824,24 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForExamExerciseResultIsNull() throws Exception {
         final TextExercise examExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         final var examExerciseComplaint = new Complaint().result(null).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForExamExerciseWithinStudentReviewTime() throws Exception {
         final TextExercise examExercise = database.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         final var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
 
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
@@ -853,7 +858,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForCourseExerciseUsingTheExamExerciseCall_badRequest() throws Exception {
         // "Mock Exam" which id is used to call the wrong REST-Call
         final Exam exam = ModelFactory.generateExam(course);
@@ -863,31 +868,31 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForExamExerciseUsingTheCourseExerciseCall_badRequest() throws Exception {
         // Set up Exam, Exercise, Participation and Complaint
         final TextExercise examExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         final var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         // The complaint is about an exam exercise, but the REST-Call for course exercises is used
         request.post("/api/complaints", examExerciseComplaint, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForExamExerciseOutsideOfStudentReviewTime_badRequest() throws Exception {
         final TextExercise examExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         final var examExerciseComplaint = new Complaint().result(null).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
         request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetComplaintsByCourseIdAndExamIdTutorIsNotTutorForCourse() throws Exception {
         final TextExercise examExercise = database.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
@@ -901,29 +906,29 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetComplaintsByCourseIdAndExamId() throws Exception {
         final TextExercise examExercise = database.addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise();
         final long examId = examExercise.getExerciseGroup().getExam().getId();
         final long courseId = examExercise.getExerciseGroup().getExam().getCourse().getId();
         final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         final var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
         request.post(url, examExerciseComplaint, HttpStatus.CREATED);
 
         Optional<Complaint> storedComplaint = complaintRepo.findByResultId(textSubmission.getLatestResult().getId());
         request.get("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
-        database.changeUser("tutor1");
+        database.changeUser(TEST_PREFIX + "tutor1");
         request.get("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.FORBIDDEN, List.class);
-        database.changeUser("instructor1");
+        database.changeUser(TEST_PREFIX + "instructor1");
         var fetchedComplaints = request.getList("/api/courses/" + courseId + "/exams/" + examId + "/complaints", HttpStatus.OK, Complaint.class);
         assertThat(fetchedComplaints.get(0).getId()).isEqualTo(storedComplaint.get().getId().intValue());
         assertThat(fetchedComplaints.get(0).getComplaintText()).isEqualTo(storedComplaint.get().getComplaintText());
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForExerciseComplaintExceededTextLimit() throws Exception {
         course = database.updateCourseComplaintTextLimit(course, 25);
         // 26 characters
@@ -932,7 +937,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void submitComplaintForExerciseComplaintNotExceededTextLimit() throws Exception {
         database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));

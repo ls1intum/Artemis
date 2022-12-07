@@ -28,6 +28,8 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 
 class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "behavioraltestcastservice";
+
     private final LocalRepository solutionRepo = new LocalRepository("main");
 
     @Autowired
@@ -61,7 +63,7 @@ class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(0, 0, 0, 1);
+        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         final Course course = database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.setTestwiseCoverageEnabled(true);
@@ -138,7 +140,7 @@ class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     @Timeout(1000)
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerationForSimpleExample() throws Exception {
         exercise = hestiaUtilTestService.setupSolution("Test.java", "A\nB\nC\nD\nE\nF\nG\nH", exercise, solutionRepo);
         var testCase = addTestCaseToExercise("testCase");

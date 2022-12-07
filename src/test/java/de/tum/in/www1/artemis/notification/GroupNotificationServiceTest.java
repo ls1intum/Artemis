@@ -9,6 +9,7 @@ import static org.mockito.Mockito.*;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -24,14 +25,13 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.NotificationRepository;
-import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "groupnotificationservice";
 
     @Autowired
     private NotificationRepository notificationRepository;
@@ -47,6 +47,12 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private GroupNotificationScheduleService groupNotificationScheduleService;
+
+    @Autowired
+    private CourseRepository courseRepository;
+
+    @Autowired
+    private UserRepository userRepository;
 
     private Exercise exercise;
 
@@ -104,12 +110,20 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @BeforeEach
     void setUp() {
         course = database.createCourse();
+        course.setInstructorGroupName(TEST_PREFIX + "instructors");
+        course.setTeachingAssistantGroupName(TEST_PREFIX + "tutors");
+        course.setEditorGroupName(TEST_PREFIX + "editors");
+        course.setStudentGroupName(TEST_PREFIX + "students");
 
-        database.addUsers(1, 0, 0, 1);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
 
-        student = database.getUserByLogin("student1");
+        student = database.getUserByLogin(TEST_PREFIX + "student1");
+        student.setGroups(Set.of(TEST_PREFIX + "students"));
+        userRepository.save(student);
 
-        instructor = database.getUserByLogin("instructor1");
+        instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        instructor.setGroups(Set.of(TEST_PREFIX + "instructors"));
+        userRepository.save(instructor);
 
         archiveErrors = new ArrayList<>();
 
@@ -148,7 +162,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         answerPost.setPost(post);
 
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
-        database.changeUser("instructor1");
+        database.changeUser(TEST_PREFIX + "instructor1");
     }
 
     @AfterEach

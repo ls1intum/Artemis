@@ -580,7 +580,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private void callAndCheckMergeResult(Lecture lecture, int expectedPages) throws Exception {
-        // get access token and then send request using the access token
+        // get access token and then send request using the access tokendeleteParticipation_notFound
         String accessToken = request.get("/api/files/attachments/course/" + lecture.getCourse().getId() + "/access-token", HttpStatus.OK, String.class);
         byte[] receivedFile = request.get("/api/files/attachments/lecture/" + lecture.getId() + "/merge-pdf" + "?access_token=" + accessToken, HttpStatus.OK, byte[].class);
 

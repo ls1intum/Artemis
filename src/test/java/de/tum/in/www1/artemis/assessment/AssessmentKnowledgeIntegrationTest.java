@@ -37,6 +37,8 @@ import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 
 class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "assessmentknowledge";
+
     @Autowired
     private TextExerciseRepository textExerciseRepository;
 
@@ -66,7 +68,7 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(10, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 10, 1, 0, 1);
         database.addInstructor("other-instructors", "instructorother");
     }
 
@@ -81,7 +83,7 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
      * @throws Exception might be thrown from Network Call to Artemis API
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateTextAssessmentKnowledgeIfExerciseIsCreatedFromScratch() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -97,7 +99,7 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
      * @throws Exception might be thrown from Network Call to Artemis API
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReuseTextAssessmentKnowledgeIfExerciseIsImported() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -115,7 +117,7 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
      * @throws Exception might be thrown from Network Call to Artemis API
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testKeepKnowledgeWhenExerciseIsDeletedIfOtherExercisesUseIt() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -134,7 +136,7 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
      * @throws Exception might be thrown from Network Call to Artemis API
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteKnowledgeWhenExerciseIsDeletedIfNoOtherExercisesUseIt() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -157,7 +159,7 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
      * @throws Exception might be thrown from Network Call to Artemis API
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateModelAssessmentKnowledgeIfExerciseIsCreatedFromScratch() throws Exception {
         Course course = database.addEmptyCourse();
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(course.getId());
@@ -172,7 +174,7 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
      * @throws Exception might be thrown from Network Call to Artemis API
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReuseModelAssessmentKnowledgeIfExerciseIsImported() throws Exception {
         final Course course = database.addCourseWithOneReleasedModelExerciseWithKnowledge();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -190,7 +192,7 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
      * @throws Exception might be thrown from Network Call to Artemis API
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testKeepModelAssessmentKnowledgeWhenExerciseIsDeletedIfOtherExercisesUseIt() throws Exception {
         final Course course = database.addCourseWithOneReleasedModelExerciseWithKnowledge();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -209,7 +211,7 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
      * @throws Exception might be thrown from Network Call to Artemis API
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteModelAssessmentKnowledgeWhenExerciseIsDeletedIfNoOtherExercisesUseIt() throws Exception {
         final Course course = database.addCourseWithOneReleasedModelExerciseWithKnowledge();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -232,7 +234,7 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
      * based on the TextAssessmentKnowledge of the respective exercise
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSetTextAssessmentKnowledgeToTextBlocks() {
         final Course course1 = database.addCourseWithOneReleasedTextExercise();
         final Course course2 = database.addCourseWithOneReleasedTextExercise();
@@ -246,7 +248,7 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
             var textSubmission2 = textSubmissions2.get(i);
             textSubmission1.setId(database.generateTempId());
             textSubmission2.setId(database.generateTempId());
-            var student = database.getUserByLogin("student" + (i + 1));
+            var student = database.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
             var participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise1, student);
             var participation2 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise2, student);
             participation1 = participationRepository.save(participation1);
@@ -286,7 +288,7 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
      * @throws Exception might be thrown from Network Call to Artemis API
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSetModelAssessmentKnowledgeToModelElements() throws Exception {
         ModelingSubmission submission1 = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         submission1.setId(1L);

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,8 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.TutorLeaderboardService;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 
@@ -26,6 +29,12 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBa
 
     @Autowired
     private TutorLeaderboardService tutorLeaderboardService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     final private static int TUTOR_COUNT = 1;
 
@@ -41,10 +50,19 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBa
     @BeforeEach
     void initTestCase() {
         database.addUsers(TEST_PREFIX, 10, TUTOR_COUNT, 0, 2);
+        // Tutors should only be part of "leaderboardgroup"
+        for (int i = 1; i <= TUTOR_COUNT; i++) {
+            var tutor = database.getUserByLogin(TEST_PREFIX + "tutor" + i);
+            tutor.setGroups(Set.of("leaderboardgroup"));
+            userRepository.save(tutor);
+        }
         var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         var tutor1 = database.getUserByLogin(TEST_PREFIX + "tutor1");
 
         course = database.addCourseWithOneModelingExercise();
+        course.setTeachingAssistantGroupName("leaderboardgroup");
+        courseRepository.save(course);
+
         exercise = course.getExercises().iterator().next();
 
         var modelingSubmission = database.addModelingSubmissionWithEmptyResult((ModelingExercise) exercise, "", student1.getLogin());

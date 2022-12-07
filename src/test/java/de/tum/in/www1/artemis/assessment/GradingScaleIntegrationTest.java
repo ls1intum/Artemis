@@ -19,8 +19,10 @@ import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradeType;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -32,6 +34,12 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
 
     private GradingScale courseGradingScale;
 
@@ -49,7 +57,14 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @BeforeEach
     void init() {
         database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        instructor.setGroups(Set.of("gradingscaleintegrationinstructors"));
+        userRepository.save(instructor);
+
         course = database.addEmptyCourse();
+        course.setInstructorGroupName("gradingscaleintegrationinstructors");
+        courseRepository.save(course);
+
         exam = database.addExamWithExerciseGroup(course, true);
         courseGradingScale = new GradingScale();
         courseGradingScale.setCourse(course);
@@ -419,8 +434,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetAllGradingScalesInInstructorGroupOnPageWithAdmin() throws Exception {
-        gradingScaleRepository.deleteAll();
-
         String url = "/api/grading-scales?pageSize=100&page=1&sortingOrder=DESCENDING&searchTerm=&sortedColumn=ID";
         var result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
         assertThat(result.getResultsOnPage()).isEmpty();

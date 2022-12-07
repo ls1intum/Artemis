@@ -359,7 +359,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void deleteParticipation_notFound() throws Exception {
-        request.delete("/api/participations/" + 100, HttpStatus.NOT_FOUND);
+        request.delete("/api/participations/" + -1, HttpStatus.NOT_FOUND);
     }
 
     @Test

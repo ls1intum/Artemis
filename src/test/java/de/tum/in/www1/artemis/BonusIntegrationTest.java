@@ -24,6 +24,8 @@ import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 
 class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "bonusintegration";
+
     @Autowired
     private BonusRepository bonusRepository;
 
@@ -57,7 +59,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
      */
     @BeforeEach
     void init() {
-        database.addUsers(0, 0, 0, 1);
+        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         course = database.addEmptyCourse();
         course.setMaxPoints(200);
         courseRepository.save(course);
@@ -99,7 +101,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBonusSourcesForTargetExamNotFound() throws Exception {
         bonusRepository.delete(courseBonus);
 
@@ -113,7 +115,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetBonusForTargetExam() throws Exception {
 
         Bonus foundBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
@@ -123,7 +125,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveBonusForTargetExam() throws Exception {
         bonusRepository.delete(courseBonus);
 
@@ -142,7 +144,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveBonusForTargetExamDuplicateError() throws Exception {
 
         request.postWithResponseBody("/api/courses/" + courseId + "/exams/" + examId + "/bonus", examBonus, Bonus.class, HttpStatus.BAD_REQUEST);
@@ -150,31 +152,31 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
         request.postWithResponseBody("/api/courses/" + courseId + "/exams/" + examId + "/bonus", examBonus, Bonus.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
         request.delete("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + courseBonus.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
         request.put("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + courseBonus.getId(), courseBonus, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateBonusWithMismatchingIdsInPathAndBodyConflict() throws Exception {
         request.put("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + courseBonus.getId() + 1, courseBonus, HttpStatus.CONFLICT);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateBonusWithoutChangingSourceGradingScale() throws Exception {
 
         Bonus foundBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
@@ -191,7 +193,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateBonusWithChangingSourceGradingScale() throws Exception {
 
         Bonus foundBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
@@ -211,7 +213,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteBonus() throws Exception {
 
         Bonus foundBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);

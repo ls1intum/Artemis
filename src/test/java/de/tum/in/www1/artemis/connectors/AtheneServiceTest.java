@@ -77,7 +77,7 @@ class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         var textSubmissions = ModelFactory.generateTextSubmissions(size);
         for (var i = 0; i < size; i++) {
             var textSubmission = textSubmissions.get(i);
-            textSubmission.setId((long) (i + 1));
+            textSubmission.setId(null);
             var student = database.getUserByLogin(TEST_PREFIX + "student" + (i + 1));
             var participation = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise1, student);
             participation = participationRepository.save(participation);

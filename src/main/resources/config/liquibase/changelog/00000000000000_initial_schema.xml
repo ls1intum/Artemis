@@ -82,11 +82,11 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="programming_submission_id" type="BIGINT"/>
-            <column name="agent_setup_duration" type="SMALLINT UNSIGNED"/>
-            <column name="test_duration" type="SMALLINT UNSIGNED"/>
-            <column name="sca_duration" type="SMALLINT UNSIGNED"/>
-            <column name="total_job_duration" type="SMALLINT UNSIGNED"/>
-            <column name="dependencies_downloaded_count" type="SMALLINT UNSIGNED"/>
+            <column name="agent_setup_duration" type="SMALLINT"/>
+            <column name="test_duration" type="SMALLINT"/>
+            <column name="sca_duration" type="SMALLINT"/>
+            <column name="total_job_duration" type="SMALLINT"/>
+            <column name="dependencies_downloaded_count" type="SMALLINT"/>
         </createTable>
         <createTable tableName="complaint">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -160,7 +160,7 @@
             <column name="color" type="VARCHAR(255)"/>
             <column name="course_icon" type="VARCHAR(255)"/>
             <column name="registration_enabled" type="boolean"/>
-            <column name="presentation_score" type="TINYINT(3)"/>
+            <column name="presentation_score" type="TINYINT"/>
             <column defaultValueNumeric="7" name="max_complaint_time_days" type="INT">
                 <constraints nullable="false"/>
             </column>
@@ -413,7 +413,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="description" type="VARCHAR(1000)"/>
-            <column defaultValueNumeric="3" name="display_threshold" type="TINYINT(3)">
+            <column defaultValueNumeric="3" name="display_threshold" type="TINYINT">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -430,7 +430,7 @@
             <column name="activation_date" type="datetime">
                 <constraints nullable="false"/>
             </column>
-            <column name="rating" type="TINYINT(3)"/>
+            <column name="rating" type="TINYINT"/>
         </createTable>
         <createTable tableName="feedback">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -1193,16 +1193,16 @@
             <column name="example_result" type="boolean"/>
             <column name="has_complaint" type="boolean"/>
             <column defaultValueNumeric="0" name="results_order" type="INT"/>
-            <column defaultValueNumeric="0" name="test_case_count" type="TINYINT(3) UNSIGNED"/>
-            <column defaultValueNumeric="0" name="passed_test_case_count" type="TINYINT(3) UNSIGNED"/>
-            <column defaultValueNumeric="0" name="code_issue_count" type="TINYINT(3) UNSIGNED"/>
+            <column defaultValueNumeric="0" name="test_case_count" type="TINYINT"/>
+            <column defaultValueNumeric="0" name="passed_test_case_count" type="TINYINT"/>
+            <column defaultValueNumeric="0" name="code_issue_count" type="TINYINT"/>
             <column name="last_modified_date" type="timestamp"/>
         </createTable>
         <createTable tableName="result_rating">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="rating" type="TINYINT(3)"/>
+            <column name="rating" type="TINYINT"/>
             <column name="result_id" type="BIGINT">
                 <constraints nullable="false" unique="true"/>
             </column>
