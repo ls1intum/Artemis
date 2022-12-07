@@ -22,8 +22,6 @@ import { FeedbackCollapseComponent } from 'app/exercises/shared/feedback/collaps
 import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { BarChartModule } from '@swimlane/ngx-charts';
-import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
-import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { Course } from 'app/entities/course.model';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
@@ -358,120 +356,6 @@ describe('ResultDetailComponent', () => {
         expect(comp.isLoading).toBeFalse();
     });
 
-    it('should show test names if showTestDetails is set to true', () => {
-        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems(true);
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.result.feedbacks = feedbacks;
-        comp.showTestDetails = true;
-
-        comp.ngOnInit();
-
-        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
-        expect(comp.feedbackItemNodes).toEqual(expectedItems);
-        expect(comp.isLoading).toBeFalse();
-    });
-
-    it('should show a replacement title if automatic feedback is neither positive nor negative', () => {
-        const feedback: Feedback = {
-            type: FeedbackType.AUTOMATIC,
-            text: 'automaticTestCase1',
-            positive: undefined,
-            credits: 0.3,
-        };
-
-        const expectedFeedbackItem: FeedbackItem = {
-            name: 'artemisApp.result.detail.test.name',
-            credits: 0.3,
-            title: 'artemisApp.result.detail.test.noInfo',
-            type: 'Test',
-            text: undefined,
-        };
-
-        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
-    });
-
-    it('should show both the grading instruction feedback and the tutor feedback', () => {
-        const gradingInstruction = new GradingInstruction();
-        gradingInstruction.feedback = 'Grading Instruction Feedback';
-
-        const feedback: Feedback = {
-            type: FeedbackType.MANUAL,
-            gradingInstruction,
-            text: 'Feedback Title',
-            detailText: 'Manual tutor feedback',
-            credits: 0,
-        };
-
-        const expectedFeedbackItem: FeedbackItem = {
-            type: 'Feedback',
-            name: 'artemisApp.course.tutor',
-            title: feedback.text,
-            text: 'Grading Instruction Feedback\nManual tutor feedback',
-            credits: 0,
-            positive: undefined,
-        };
-
-        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
-
-        feedback.type = FeedbackType.MANUAL_UNREFERENCED;
-        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
-
-        // subsequent feedback is shown differently
-        feedback.isSubsequent = true;
-        expectedFeedbackItem.type = 'Subsequent';
-        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
-
-        // only grading instruction feedback should be shown if no detail text is available
-        feedback.detailText = undefined;
-        expectedFeedbackItem.text = 'Grading Instruction Feedback';
-        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
-    });
-
-    it('should hide grading instruction information if no details are shown', () => {
-        const gradingInstruction = new GradingInstruction();
-        gradingInstruction.feedback = 'Grading Instruction Feedback';
-
-        const feedback: Feedback = {
-            type: FeedbackType.MANUAL,
-            gradingInstruction,
-            text: 'Feedback Title',
-            detailText: 'Manual tutor feedback',
-            credits: 0,
-        };
-
-        const expectedFeedbackItem: FeedbackItem = {
-            type: 'Feedback',
-            name: 'artemisApp.result.detail.feedback',
-            title: feedback.text,
-            text: 'Grading Instruction Feedback\nManual tutor feedback',
-            credits: 0,
-            positive: undefined,
-        };
-
-        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.PROGRAMMING, false);
-    });
-
-    it('should show feedback generated from submission policies', () => {
-        const feedback: Feedback = {
-            type: FeedbackType.AUTOMATIC,
-            text: `${SUBMISSION_POLICY_FEEDBACK_IDENTIFIER}Submission Penalty Policy`,
-            detailText: 'You have submitted 2 more times than the submission limit of 10. This results in a deduction of 0.1 points!',
-            positive: false,
-            credits: -0.1,
-        };
-
-        const expectedFeedbackItem: FeedbackItem = {
-            type: 'Submission Policy',
-            name: 'artemisApp.programmingExercise.submissionPolicy.title',
-            title: 'Submission Penalty Policy',
-            text: feedback.detailText,
-            positive: false,
-            credits: feedback.credits,
-        };
-
-        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
-    });
-
     it('should only show the first line of feedback as preview', () => {
         const feedback: Feedback = {
             text: 'Summary',
@@ -515,74 +399,6 @@ describe('ResultDetailComponent', () => {
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.MODELING);
     });
 
-    describe('static code analysis feedback formatting', () => {
-        let baseScaIssue: StaticCodeAnalysisIssue;
-        let baseExpectedFeedbackItem: FeedbackItem;
-
-        beforeEach(() => {
-            baseScaIssue = {
-                filePath: 'src/Main.java',
-                startLine: 1,
-                endLine: 1,
-                category: 'Formatting',
-                message: 'SCA Message',
-                priority: 'low',
-                rule: 'Checkstyle',
-            };
-            baseExpectedFeedbackItem = {
-                name: 'artemisApp.result.detail.codeIssue.name',
-                type: 'Static Code Analysis',
-                credits: 0,
-                positive: false,
-                text: 'Checkstyle: SCA Message',
-            };
-        });
-
-        it('should show start and end lines', () => {
-            baseScaIssue.endLine = 4;
-            const feedback = createScaFeedback('SCA Rule', baseScaIssue);
-            baseExpectedFeedbackItem.title = 'artemisApp.result.detail.codeIssue.title';
-
-            shouldGenerateFeedbackItem(feedback, baseExpectedFeedbackItem);
-        });
-
-        it('should only show start line if end line is identical', () => {
-            baseScaIssue.endLine = baseScaIssue.startLine;
-            const feedback = createScaFeedback('SCA Rule', baseScaIssue);
-            baseExpectedFeedbackItem.title = 'artemisApp.result.detail.codeIssue.title';
-
-            shouldGenerateFeedbackItem(feedback, baseExpectedFeedbackItem);
-        });
-
-        it('should show start and end columns if available', () => {
-            baseScaIssue.endLine = 4;
-            baseScaIssue.startColumn = 3;
-            baseScaIssue.endColumn = 40;
-            const feedback = createScaFeedback('SCA Rule', baseScaIssue);
-            baseExpectedFeedbackItem.title = 'artemisApp.result.detail.codeIssue.title';
-
-            shouldGenerateFeedbackItem(feedback, baseExpectedFeedbackItem);
-        });
-
-        it('should only show start column if end column is identical', () => {
-            baseScaIssue.endLine = baseScaIssue.startLine;
-            baseScaIssue.startColumn = 45;
-            baseScaIssue.endColumn = 45;
-            const feedback = createScaFeedback('SCA Rule', baseScaIssue);
-            baseExpectedFeedbackItem.title = 'artemisApp.result.detail.codeIssue.title';
-
-            shouldGenerateFeedbackItem(feedback, baseExpectedFeedbackItem);
-        });
-
-        const createScaFeedback = (text: string, scaIssue: StaticCodeAnalysisIssue): Feedback => {
-            const feedback = new Feedback();
-            feedback.type = FeedbackType.AUTOMATIC;
-            feedback.text = `${STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER}${text}`;
-            feedback.detailText = JSON.stringify(scaIssue);
-            return feedback;
-        };
-    });
-
     const shouldGenerateFeedbackItem = (feedback: Feedback, expectedFeedbackItem: FeedbackItem, exerciseType: ExerciseType = ExerciseType.PROGRAMMING, showTestDetails = true) => {
         comp.exerciseType = exerciseType;
         comp.result.feedbacks = [feedback];
@@ -594,17 +410,4 @@ describe('ResultDetailComponent', () => {
         expect(comp.feedbackItemNodes).toEqual([expectedFeedbackItem]);
         expect(comp.isLoading).toBeFalse();
     };
-
-    it('should filter the correct feedbacks when a filter is set', () => {
-        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems();
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.result.feedbacks = feedbacks;
-        comp.feedbackFilter = ['TestCase1', 'TestCase2', 'TestCase3'];
-
-        comp.ngOnInit();
-
-        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
-        expect(comp.feedbackItemNodes).toEqual(expectedItems.filter((item) => e.Test));
-        expect(comp.isLoading).toBeFalse();
-    });
 });

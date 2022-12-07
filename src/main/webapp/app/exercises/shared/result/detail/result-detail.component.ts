@@ -36,7 +36,6 @@ import { ChartData, nodesToChartData } from 'app/exercises/shared/feedback/item/
     selector: 'jhi-result-detail',
     templateUrl: './result-detail.component.html',
     styleUrls: ['./result-detail.scss'],
-    providers: [ProgrammingFeedbackItemService, FeedbackItemServiceImpl],
 })
 export class ResultDetailComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
