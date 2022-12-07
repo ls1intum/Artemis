@@ -38,6 +38,18 @@ services:
         networks:
             - artemis
 
+    bamboo-build-agent:
+        container_name: artemis-bamboo-build-agent
+        image: ghcr.io/ls1intum/artemis-bamboo-build-agent:8.2.5
+        volumes:
+            - artemis-bamboo-build-agent:/var/atlassian/application-data/bamboo
+            - /var/run/docker.sock:/var/run/docker.sock
+        hostname: bamboo-build-agent
+        environment:
+            - BAMBOO_SERVER=http://artemis-bamboo:8085
+        networks:
+            - artemis
+
 networks:
     artemis:
         driver: "bridge"
@@ -49,3 +61,5 @@ volumes:
         name: artemis-bitbucket-data
     artemis-bamboo-data:
         name: artemis-bamboo-data
+    artemis-bamboo-build-agent:
+        name: artemis-bamboo-build-agent
