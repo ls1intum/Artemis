@@ -25,7 +25,8 @@ import { BarChartModule } from '@swimlane/ngx-charts';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
 import { Course } from 'app/entities/course.model';
-import { FeedbackItem, FeedbackItemType } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
+import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
 
 describe('ResultDetailComponent', () => {
     let comp: ResultDetailComponent;
@@ -47,7 +48,7 @@ describe('ResultDetailComponent', () => {
     };
 
     const makeFeedbackItem = (item: FeedbackItem) => {
-        return Object.assign({ type: FeedbackItemType.Feedback, credits: 0, title: undefined, positive: undefined } as FeedbackItem, item);
+        return Object.assign({ type: 'Feedback', credits: 0, title: undefined, positive: undefined } as FeedbackItem, item);
     };
 
     const generateSCAFeedbackPair = (
@@ -72,12 +73,11 @@ describe('ResultDetailComponent', () => {
                 positive: false,
             }),
             item: makeFeedbackItem({
-                type: FeedbackItemType.Issue,
+                type: 'Static Code Analysis',
                 name: 'artemisApp.result.detail.codeIssue.name',
                 title: 'artemisApp.result.detail.codeIssue.title',
                 text: showDetails ? 'Rule: This is a code issue' : 'This is a code issue',
-                credits: -penalty,
-                actualCredits: credits,
+                credits,
                 positive: false,
             }),
         };
@@ -92,7 +92,7 @@ describe('ResultDetailComponent', () => {
                 positive: credits > 0,
             }),
             item: makeFeedbackItem({
-                type: FeedbackItemType.Test,
+                type: 'Test',
                 name: showDetails ? 'artemisApp.result.detail.test.name' : 'artemisApp.result.detail.feedback',
                 text: message,
                 credits,
@@ -112,7 +112,7 @@ describe('ResultDetailComponent', () => {
                 positive: credits > 0,
             }),
             item: makeFeedbackItem({
-                type: FeedbackItemType.Feedback,
+                type: 'Feedback',
                 name: showDetails ? 'artemisApp.course.tutor' : 'artemisApp.result.detail.feedback',
                 title,
                 text,
@@ -124,7 +124,7 @@ describe('ResultDetailComponent', () => {
 
     const generateFeedbacksAndExpectedItems = (showTestDetails = false) => {
         const feedbacks: Feedback[] = [];
-        const expectedItems: FeedbackItem[] = [];
+        const expectedItems: FeedbackItemNode[] = [];
         const addPair = (pair: { fb: Feedback; item: FeedbackItem }) => {
             feedbacks.push(pair.fb);
             expectedItems.push(pair.item);
@@ -143,7 +143,7 @@ describe('ResultDetailComponent', () => {
             expectedItems.pop();
             expectedItems.unshift(
                 makeFeedbackItem({
-                    type: FeedbackItemType.Test,
+                    type: 'Test',
                     name: 'artemisApp.result.detail.feedback',
                     title: 'artemisApp.result.detail.test.passedTest',
                     positive: true,
@@ -272,7 +272,6 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
-        expect(comp.filteredFeedbackList).toEqual(expectedItems);
         expect(comp.isLoading).toBeFalse();
     });
 
@@ -285,7 +284,6 @@ describe('ResultDetailComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.participation!.id!, comp.result.id);
-        expect(comp.filteredFeedbackList).toIncludeSameMembers(expectedItems);
         expect(comp.isLoading).toBeFalse();
     });
 
@@ -319,7 +317,7 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(buildlogsStub).not.toHaveBeenCalled();
-        expect(comp.feedbackList).toBeUndefined();
+        expect(comp.feedbackItemNodes).toBeUndefined();
         expect(comp.isLoading).toBeFalse();
     });
 
@@ -369,7 +367,7 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
-        expect(comp.filteredFeedbackList).toEqual(expectedItems);
+        expect(comp.feedbackItemNodes).toEqual(expectedItems);
         expect(comp.isLoading).toBeFalse();
     });
 
@@ -385,9 +383,8 @@ describe('ResultDetailComponent', () => {
             name: 'artemisApp.result.detail.test.name',
             credits: 0.3,
             title: 'artemisApp.result.detail.test.noInfo',
-            type: FeedbackItemType.Test,
+            type: 'Test',
             text: undefined,
-            previewText: undefined,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
@@ -406,13 +403,12 @@ describe('ResultDetailComponent', () => {
         };
 
         const expectedFeedbackItem: FeedbackItem = {
-            type: FeedbackItemType.Feedback,
+            type: 'Feedback',
             name: 'artemisApp.course.tutor',
             title: feedback.text,
             text: 'Grading Instruction Feedback\nManual tutor feedback',
             credits: 0,
             positive: undefined,
-            previewText: undefined,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
@@ -422,7 +418,7 @@ describe('ResultDetailComponent', () => {
 
         // subsequent feedback is shown differently
         feedback.isSubsequent = true;
-        expectedFeedbackItem.type = FeedbackItemType.Subsequent;
+        expectedFeedbackItem.type = 'Subsequent';
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
 
         // only grading instruction feedback should be shown if no detail text is available
@@ -444,13 +440,12 @@ describe('ResultDetailComponent', () => {
         };
 
         const expectedFeedbackItem: FeedbackItem = {
-            type: FeedbackItemType.Feedback,
+            type: 'Feedback',
             name: 'artemisApp.result.detail.feedback',
             title: feedback.text,
             text: 'Grading Instruction Feedback\nManual tutor feedback',
             credits: 0,
             positive: undefined,
-            previewText: undefined,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.PROGRAMMING, false);
@@ -466,11 +461,10 @@ describe('ResultDetailComponent', () => {
         };
 
         const expectedFeedbackItem: FeedbackItem = {
-            type: FeedbackItemType.Policy,
+            type: 'Submission Policy',
             name: 'artemisApp.programmingExercise.submissionPolicy.title',
             title: 'Submission Penalty Policy',
             text: feedback.detailText,
-            previewText: undefined,
             positive: false,
             credits: feedback.credits,
         };
@@ -486,11 +480,10 @@ describe('ResultDetailComponent', () => {
         };
 
         const expectedFeedbackItem: FeedbackItem = {
-            type: FeedbackItemType.Feedback,
+            type: 'Feedback',
             name: 'artemisApp.result.detail.feedback',
             title: feedback.text,
             text: feedback.detailText,
-            previewText: 'Multi',
             positive: undefined,
             credits: 0,
         };
@@ -506,11 +499,10 @@ describe('ResultDetailComponent', () => {
         };
 
         const expectedFeedbackItem: FeedbackItem = {
-            type: FeedbackItemType.Feedback,
+            type: 'Feedback',
             name: 'artemisApp.result.detail.feedback',
             title: feedback.text,
             text: feedback.detailText,
-            previewText: '0'.repeat(300),
             positive: undefined,
             credits: 0,
         };
@@ -539,11 +531,9 @@ describe('ResultDetailComponent', () => {
             };
             baseExpectedFeedbackItem = {
                 name: 'artemisApp.result.detail.codeIssue.name',
-                type: FeedbackItemType.Issue,
-                actualCredits: 0,
+                type: 'Static Code Analysis',
                 credits: 0,
                 positive: false,
-                previewText: undefined,
                 text: 'Checkstyle: SCA Message',
             };
         });
@@ -601,7 +591,7 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
-        expect(comp.filteredFeedbackList).toEqual([expectedFeedbackItem]);
+        expect(comp.feedbackItemNodes).toEqual([expectedFeedbackItem]);
         expect(comp.isLoading).toBeFalse();
     };
 
@@ -614,88 +604,7 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
-        expect(comp.filteredFeedbackList).toEqual(expectedItems.filter((item) => item.type === FeedbackItemType.Test));
+        expect(comp.feedbackItemNodes).toEqual(expectedItems.filter((item) => e.Test));
         expect(comp.isLoading).toBeFalse();
     });
-
-    it('should calculate the correct chart values and update the score chart', () => {
-        const { feedbacks, expectedItems } = setupComponent();
-
-        expect(comp.filteredFeedbackList).toEqual(expectedItems);
-        expect(comp.backupFilteredFeedbackList).toEqual(expectedItems);
-        expect(comp.showScoreChartTooltip).toBeTrue();
-
-        checkChartPreset(5, 5, '10', '5 of 6');
-        expect(comp.isLoading).toBeFalse();
-
-        // test score exceeding exercise maxpoints
-
-        const feedbackPair1 = generateTestCaseFeedbackPair(true, '', '', 120);
-        feedbacks.push(feedbackPair1.fb);
-        expectedItems.push(feedbackPair1.item);
-
-        comp.ngOnInit();
-
-        expect(comp.filteredFeedbackList).toEqual(expectedItems);
-        checkChartPreset(99, 1, '100 of 104', '1 of 6');
-
-        // test negative > positive, limit at 0
-
-        feedbacks.pop();
-        expectedItems.pop();
-        const feedbackPair2 = generateSCAFeedbackPair(true, 'Tohuwabohu', -200, 200);
-        feedbacks.push(feedbackPair2.fb);
-        expectedItems.push(feedbackPair2.item);
-
-        comp.ngOnInit();
-
-        expect(comp.filteredFeedbackList).toEqual(expectedItems);
-
-        checkChartPreset(0, 10, '10', '10 of 206');
-    });
-
-    it('should filter feedback items correctly', () => {
-        const { expectedItems } = setupComponent();
-        const event = { isPositive: true, series: {} };
-        let currentlyVisibleItems = expectedItems.filter((item) => !!item.positive);
-
-        comp.onSelect(event);
-
-        expect(comp.showOnlyPositiveFeedback).toBeTrue();
-        expect(comp.showOnlyNegativeFeedback).toBeFalse();
-        expect(comp.filteredFeedbackList).toEqual(currentlyVisibleItems);
-
-        event.isPositive = false;
-        currentlyVisibleItems = expectedItems.filter((item) => item.positive === false && item.actualCredits! < 0);
-
-        comp.onSelect(event);
-
-        expect(comp.showOnlyNegativeFeedback).toBeTrue();
-        expect(comp.showOnlyPositiveFeedback).toBeFalse();
-        expect(comp.filteredFeedbackList).toEqual(currentlyVisibleItems);
-
-        comp.resetChartFilter();
-
-        expect(comp.showOnlyNegativeFeedback).toBeFalse();
-        expect(comp.filteredFeedbackList).toEqual(expectedItems);
-    });
-
-    const checkChartPreset = (d1: number, d2: number, l1: string, l2: string) => {
-        expect(comp.ngxData[0].series).toHaveLength(2);
-        expect(comp.ngxData[0].series[0].name).toBe('artemisApp.result.chart.points: ' + l1);
-        expect(comp.ngxData[0].series[0].value).toBe(d1);
-        expect(comp.ngxData[0].series[1].name).toBe('artemisApp.result.chart.deductions: ' + l2);
-        expect(comp.ngxData[0].series[1].value).toBe(d2);
-    };
-
-    const setupComponent = () => {
-        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems(true);
-        comp.exerciseType = ExerciseType.PROGRAMMING;
-        comp.showScoreChart = true;
-        comp.showTestDetails = true;
-        comp.result.feedbacks = feedbacks;
-
-        comp.ngOnInit();
-        return { feedbacks, expectedItems };
-    };
 });
