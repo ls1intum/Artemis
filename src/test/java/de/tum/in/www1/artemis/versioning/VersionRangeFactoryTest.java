@@ -8,10 +8,9 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.exception.ApiVersionRangeNotValidException;
 
-class VersionRangeFactoryTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class VersionRangeFactoryTest {
 
     private final VersionRange range1_5 = getInstanceOfVersionRange(1, 5);
 

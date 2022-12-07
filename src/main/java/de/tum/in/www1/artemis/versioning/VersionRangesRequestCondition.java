@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.versioning;
 
-import static de.tum.in.www1.artemis.config.VersioningConfiguration.API_VERSIONS;
 import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.*;
 import static de.tum.in.www1.artemis.versioning.VersionRangeFactory.getInstanceOfVersionRange;
 import static de.tum.in.www1.artemis.versioning.VersionRangeService.versionRangeToIntegerList;
@@ -26,11 +25,13 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
 
     private final Set<VersionRange> ranges;
 
+    private final List<Integer> apiVersions;
+
     // Comparison codes that specify whether two ranges collide or not
     private final Set<VersionRangeComparisonType> inRangeCodes = Set.of(A_INCLUDES_B, B_INCLUDES_A, EQUALS);
 
-    public VersionRangesRequestCondition(VersionRange... ranges) {
-        this(Arrays.asList(ranges));
+    public VersionRangesRequestCondition(List<Integer> apiVersions, VersionRange... ranges) {
+        this(apiVersions, Arrays.asList(ranges));
     }
 
     /**
@@ -38,7 +39,8 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
      *
      * @param ranges the version ranges to use
      */
-    public VersionRangesRequestCondition(@NotNull Collection<VersionRange> ranges) {
+    public VersionRangesRequestCondition(List<Integer> apiVersions, @NotNull Collection<VersionRange> ranges) {
+        this.apiVersions = apiVersions;
         var distinct = ranges.stream().distinct().toList();
         if (distinct.size() != 1 || distinct.get(0) != null) {
             checkRangesValidity(distinct);
@@ -69,9 +71,9 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
      */
     public List<Integer> getApplicableVersions() {
         if (ranges.isEmpty()) {
-            return API_VERSIONS;
+            return apiVersions;
         }
-        return API_VERSIONS.stream().filter(e -> ranges.stream().anyMatch(range -> inRangeCodes.contains(VersionRangeComparator.compare(range, getInstanceOfVersionRange(e, e)))))
+        return apiVersions.stream().filter(e -> ranges.stream().anyMatch(range -> inRangeCodes.contains(VersionRangeComparator.compare(range, getInstanceOfVersionRange(e, e)))))
                 .collect(Collectors.toList());
     }
 
@@ -85,7 +87,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
     @Override
     public @NotNull VersionRangesRequestCondition combine(@NotNull VersionRangesRequestCondition other) {
         if (ranges.isEmpty() || other.ranges.isEmpty()) {
-            return new VersionRangesRequestCondition();
+            return new VersionRangesRequestCondition(apiVersions);
         }
 
         // Separate ranges from start limits
@@ -112,7 +114,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
 
         // Return new condition of limit if no ranges exist
         if (resultLimit != null && ranges.isEmpty()) {
-            return new VersionRangesRequestCondition(getInstanceOfVersionRange(resultLimit.value()[0]));
+            return new VersionRangesRequestCondition(apiVersions, getInstanceOfVersionRange(resultLimit.value()[0]));
         }
 
         // Combine limit with ranges
@@ -161,7 +163,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
         if (limitStart != null) {
             annotationList.add(getInstanceOfVersionRange(limitStart));
         }
-        return new VersionRangesRequestCondition(annotationList);
+        return new VersionRangesRequestCondition(apiVersions, annotationList);
     }
 
     /**
@@ -288,7 +290,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
         }
         else {
             // no version found, assume the latest version
-            int latestVersion = API_VERSIONS.get(API_VERSIONS.size() - 1);
+            int latestVersion = apiVersions.get(apiVersions.size() - 1);
             return checkVersion(range, latestVersion);
         }
 
@@ -300,10 +302,10 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
      * @param requestedVersion the requested version
      * @return true if the requested version is part of the version range
      */
-    private static boolean checkVersion(VersionRange range, int requestedVersion) {
+    private boolean checkVersion(VersionRange range, int requestedVersion) {
         List<Integer> versions = versionRangeToIntegerList(range);
         // only allowed versions here
-        if (API_VERSIONS.contains(requestedVersion)) {
+        if (apiVersions.contains(requestedVersion)) {
             int startVersion = versions.get(0);
 
             return requestedVersion >= startVersion && (versions.size() == 1 || requestedVersion <= versions.get(1));

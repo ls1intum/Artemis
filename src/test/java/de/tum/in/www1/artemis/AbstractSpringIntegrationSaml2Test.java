@@ -31,7 +31,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Test base for {@link UserJWTController#authorizeSAML2(String, HttpServletResponse)}} and {@link SAML2Service}.
+ * Test base for {@link UserJWTController#authorizeSAML2(String, HttpServletResponse)} and {@link SAML2Service}.
  *
  * @author Dominik Fuchss
  */

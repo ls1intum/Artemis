@@ -12,4 +12,19 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface IgnoreGlobalMapping {
 
+    /**
+     * @return true if the path should not be modified to fit the global standard
+     */
+    boolean ignorePaths() default true;
+
+    /**
+     * @return true if the method should serve all (no annotations) or multiple HTTP methods
+     */
+    boolean ignoreUniqueMethods() default false;
+
+    /**
+     * Use with caution! Typically only the fallback-endpoint mapping the client need this.
+     * @return true if any collision should be ignored.
+     */
+    boolean ignoreCollision() default false;
 }

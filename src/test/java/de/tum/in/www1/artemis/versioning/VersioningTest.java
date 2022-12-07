@@ -4,18 +4,16 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
@@ -23,6 +21,9 @@ import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandl
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 
 class VersioningTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Autowired
+    private List<Integer> apiVersions;
 
     @Autowired
     private ApplicationContext applicationContext;
@@ -55,19 +56,38 @@ class VersioningTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private void checkCollisionForEndpoint(Map.Entry<String, List<Method>> endpoint) {
         var methods = endpoint.getValue();
-        var httpMethodSplit = methods.stream().collect(Collectors.groupingBy(this::getMappingAnnotation));
+        checkVersionSyntax(methods);
+
+        var ignoredMethods = methods.stream().filter(method -> {
+            var annotation = method.getAnnotation(IgnoreGlobalMapping.class);
+            return annotation != null && annotation.ignoreCollision();
+        }).toList();
+        methods.removeAll(ignoredMethods);
+
+        var httpMethodsByMappingAnnotations = methods.stream().collect(Collectors.toMap(Function.identity(), this::getUniqueMappingAnnotation));
+        var httpMethodsWithMultipleMappingAnnotations = httpMethodsByMappingAnnotations.entrySet().stream().filter(entry -> entry.getValue().size() > 1)
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        var httpMethodsWithNoMappingAnnotations = httpMethodsByMappingAnnotations.entrySet().stream().filter(entry -> entry.getValue().isEmpty()).map(Map.Entry::getKey).toList();
+        var httpMethodSplit = httpMethodsByMappingAnnotations.entrySet().stream()
+                .filter(entry -> !httpMethodsWithMultipleMappingAnnotations.containsKey(entry.getKey()) && !httpMethodsWithNoMappingAnnotations.contains(entry.getKey()))
+                .collect(Collectors.groupingBy(entry -> entry.getValue().get(0), Collectors.mapping(Map.Entry::getKey, Collectors.toList())));
+
+        // Make sure that the exceptions were manually specified
+        httpMethodsWithMultipleMappingAnnotations.forEach((method, list) -> checkGlobalMappingForMethod(method));
+        httpMethodsWithNoMappingAnnotations.forEach(this::checkGlobalMappingForMethod);
+
         // Check collisions for each HTTP method
         for (var httpMethod : httpMethodSplit.entrySet()) {
-            var key = httpMethod.getKey();
-            if (key.isEmpty()) {
-                fail("Invalid mapping annotation for " + endpoint.getKey() + ". Expected one of: GetMapping, PostMapping, PutMapping, DeleteMapping");
-            }
             var methodList = httpMethod.getValue();
-            checkVersionSyntax(methodList);
+            // If there is no mapping it counts for all methods
+            methodList.addAll(httpMethodsWithNoMappingAnnotations);
+            // If there are multiple mappings, we want to calculate only the relevant collisions
+            methodList.addAll(
+                    httpMethodsWithMultipleMappingAnnotations.entrySet().stream().filter(entry -> entry.getValue().contains(httpMethod.getKey())).map(Map.Entry::getKey).toList());
 
             // If there is no more than one method, there can be no collision
             if (methodList.size() < 2) {
-                new VersionRangesRequestCondition((VersionRange) getClass().getMethods()[0].getAnnotation(VersionRanges.class));
+                new VersionRangesRequestCondition(apiVersions, (VersionRange) getClass().getMethods()[0].getAnnotation(VersionRanges.class));
                 break;
             }
 
@@ -80,19 +100,32 @@ class VersioningTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         while (!methodList.isEmpty()) {
             var method = methodList.remove(0);
 
-            VersionRangesRequestCondition condition = new VersionRangesRequestCondition(getVersionRangeFromMethod(method));
+            VersionRangesRequestCondition condition = new VersionRangesRequestCondition(apiVersions, getVersionRangeFromMethod(method));
 
             for (var collision : methodList) {
-                if (condition.collide(new VersionRangesRequestCondition(getVersionRangeFromMethod(collision)))) {
-                    fail("Version ranges of class " + collision.getDeclaringClass().getName() + " of method " + method.getName() + "() collide with version ranges of method "
-                            + collision.getName() + "() of same " + "class.");
+                if (condition.collide(new VersionRangesRequestCondition(apiVersions, getVersionRangeFromMethod(collision)))) {
+                    fail("Version ranges of class " + collision.getDeclaringClass().getName() + " of method " + getPrintableMethodName(method)
+                            + " collide with version ranges of method " + collision.getName() + "() of same " + "class.");
                 }
             }
         }
     }
 
+    private String getPrintableMethodName(Method method) {
+        return method.getDeclaringClass().getSimpleName() + "." + method.getName() + "()";
+    }
+
+    private void checkGlobalMappingForMethod(Method method) {
+        var ignoreGlobalMappingAnnotation = method.getAnnotation(IgnoreGlobalMapping.class);
+        if (ignoreGlobalMappingAnnotation == null || !ignoreGlobalMappingAnnotation.ignoreUniqueMethods()) {
+            fail("Invalid mapping annotation for " + getPrintableMethodName(method)
+                    + ". Expected exactly one of: GetMapping, PatchMapping, PostMapping, PutMapping, DeleteMapping");
+        }
+    }
+
     /**
      * Returns all {@link VersionRange} annotations of a method. If the method is annotated with {@link VersionRanges}, the contained annotations are returned.
+     *
      * @param method The method to get the annotations from
      * @return An array of {@link VersionRange} annotations
      */
@@ -100,7 +133,7 @@ class VersioningTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         var versionRanges = method.getAnnotation(VersionRanges.class);
         var versionRange = method.getAnnotation(VersionRange.class);
         if (versionRanges != null && versionRange != null) {
-            fail("Method " + method.getName() + " has both VersionRanges and VersionRange annotation.");
+            fail("Method " + getPrintableMethodName(method) + " has both VersionRanges and VersionRange annotation.");
         }
         if (versionRanges != null) {
             return versionRanges.value();
@@ -113,6 +146,7 @@ class VersioningTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     /**
      * Check that not both, {@link VersionRanges} and {@link VersionRange}, are present
+     *
      * @param methods List of methods to check
      */
     private void checkVersionSyntax(List<Method> methods) {
@@ -120,29 +154,34 @@ class VersioningTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
             var versionRanges = method.getAnnotation(VersionRanges.class);
             var versionRange = method.getAnnotation(VersionRange.class);
             if (versionRanges != null && versionRange != null) {
-                fail("Method " + method.getName() + " has both VersionRanges and VersionRange annotation.");
+                fail("Method " + getPrintableMethodName(method) + " has both VersionRanges and VersionRange annotation.");
             }
         }
     }
 
     /**
-     * Returns the mapping annotation of a method if exists as an {@link Optional}.
-     * @param method The method to get the annotation from
-     * @return The mapping annotation of the method wrapped in an {@link Optional}.
+     * Returns all mapping annotations of a method.
+     *
+     * @param method The method to get the annotations from
+     * @return The mapping annotations of the method.
      */
-    private Optional<Annotation> getMappingAnnotation(Method method) {
+    private List<Annotation> getUniqueMappingAnnotation(Method method) {
+        List<Annotation> result = new ArrayList<>();
         if (method.getAnnotation(GetMapping.class) != null) {
-            return Optional.of(method.getAnnotation(GetMapping.class));
+            result.add(method.getAnnotation(GetMapping.class));
+        }
+        if (method.getAnnotation(PatchMapping.class) != null) {
+            result.add(method.getAnnotation(PatchMapping.class));
         }
         if (method.getAnnotation(PostMapping.class) != null) {
-            return Optional.of(method.getAnnotation(PostMapping.class));
+            result.add(method.getAnnotation(PostMapping.class));
         }
         if (method.getAnnotation(PutMapping.class) != null) {
-            return Optional.of(method.getAnnotation(PutMapping.class));
+            result.add(method.getAnnotation(PutMapping.class));
         }
         if (method.getAnnotation(DeleteMapping.class) != null) {
-            return Optional.of(method.getAnnotation(DeleteMapping.class));
+            result.add(method.getAnnotation(DeleteMapping.class));
         }
-        return Optional.empty();
+        return result;
     }
 }
