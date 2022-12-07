@@ -58,13 +58,13 @@ the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
         user: root
         password: artemis_admin # created in Gitlab Server Quickstart step 2
         token: artemis-gitlab-token # generated in Gitlab Server Quickstart steps 4 and 5
-        ci-token: jenkins-secret-token # generated in Jenkins Server Quickstart step 8
+        ci-token: jenkins-secret-token # pre-generated or replaced in Automated Jenkins Server step 3
     continuous-integration:
         user: artemis_admin
         password: artemis_admin
         url: http://localhost:8082
         empty-commit-necessary: true
-        secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # generated in Automated Jenkins Server step 3
+        secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # pre-generated or replaced in Automated Jenkins Server step 3
         vcs-credentials: artemis_gitlab_admin_credentials
         artemis-authentication-token-key: artemis_notification_plugin_token
         artemis-authentication-token-value: artemis_admin
@@ -474,12 +474,12 @@ do either do it manually or using the following command:
 
 
 
-2. You can now deploy Jenkins. A ``src/main/docker/gitlab-jenkins-mysql.yml`` file is provided which deploys the
-   Jenkins, GitLab, and Mysql containers bound to static ip addresses. You can deploy them by running:
+2. You can now first build and deploy Jenkins, then you can also start the other services which weren't started yet:
 
     ::
 
-       JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker compose -f src/main/docker/<Jenkins setup to be launched>.yml up --build -d
+       JAVA_OPTS=-Djenkins.install.runSetupWizard=false docker compose -f src/main/docker/<Jenkins setup to be launched>.yml up --build -d jenkins
+       docker compose -f src/main/docker/<Jenkins setup to be launched>.yml up -d
 
    Jenkins is then reachable under ``http://localhost:8082/`` and you can login using the credentials specified
    in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
@@ -505,15 +505,15 @@ do either do it manually or using the following command:
             url: http://localhost:8081
             user: artemis_admin
             password: artemis_admin
-            ci-token: # generated in step 9
+            ci-token: # pre-generated or replaced in Automated Jenkins Server step 3
         continuous-integration:
-            url: http://localhost:8082
             user: artemis_admin
             password: artemis_admin
+            url: http://localhost:8082
+            secret-push-token: # pre-generated or replaced in Automated Jenkins Server step 3
             vcs-credentials: artemis_gitlab_admin_credentials
             artemis-authentication-token-key: artemis_notification_plugin_token
             artemis-authentication-token-value: artemis_admin
-            secret-push-token: # generated in step 3
 
 5. Open the ``src/main/resources/config/application-jenkins.yml`` and change the following:
    Again, if you are using a development setup, the template in the beginning of this page already contains the
