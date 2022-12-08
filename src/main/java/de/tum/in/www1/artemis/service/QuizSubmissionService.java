@@ -243,7 +243,7 @@ public class QuizSubmissionService {
      */
     public boolean isSubmitted(QuizBatch quizBatch, String login) {
         Set<QuizSubmission> submissions = quizSubmissionRepository.findAllByQuizBatchAndStudentLogin(quizBatch, login);
-       Optional<Submission> submission = submissions.stream().findFirst();
-       return submission.map(Submission::isSubmitted).orElse(false);
+        Optional<QuizSubmission> submission = submissions.stream().findFirst();
+        return submission.map(QuizSubmission::isSubmitted).orElse(false);
     }
 }
