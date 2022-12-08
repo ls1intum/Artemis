@@ -5,6 +5,7 @@
 services:
     jira:
         container_name: artemis-jira
+        hostname: jira
         image: ghcr.io/ls1intum/artemis-jira:8.20.11
         pull_policy: always
         volumes:
@@ -15,6 +16,7 @@ services:
             - artemis
     bitbucket:
         container_name: artemis-bitbucket
+        hostname: bitbucket
         image: ghcr.io/ls1intum/artemis-bitbucket:7.21.4
         pull_policy: always
         volumes:
@@ -28,6 +30,7 @@ services:
             - artemis
     bamboo:
         container_name: artemis-bamboo
+        hostname: bamboo
         image: ghcr.io/ls1intum/artemis-bamboo:8.2.5
         pull_policy: always
         volumes:
@@ -38,14 +41,16 @@ services:
         networks:
             - artemis
 
+# TODO: either add ip addresses or use wildcard for agent to survive restarts and write this in docs
     bamboo-build-agent:
         container_name: artemis-bamboo-build-agent
+        hostname: bamboo-build-agent
         image: ghcr.io/ls1intum/artemis-bamboo-build-agent:8.2.5
         volumes:
-            - artemis-bamboo-build-agent:/var/atlassian/application-data/bamboo
+            - artemis-bamboo-build-agent:/var/atlassian/application-data/bamboo-agent
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
-            - BAMBOO_SERVER=http://artemis-bamboo:8085
+            - BAMBOO_SERVER=http://bamboo:8085
         networks:
             - artemis
 
