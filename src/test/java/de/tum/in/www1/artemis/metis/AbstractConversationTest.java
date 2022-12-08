@@ -174,6 +174,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
         var channelDTO = new ChannelDTO();
         channelDTO.setName(name);
         channelDTO.setIsPublic(isPublicChannel);
+        channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
 
         var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);

@@ -47,6 +47,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var channelDTO = new ChannelDTO();
         channelDTO.setName("general");
         channelDTO.setIsPublic(isPublicChannel);
+        channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
 
         // when
@@ -69,6 +70,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         var channelDTO = new ChannelDTO();
         channelDTO.setIsPublic(isPublicChannel);
+        channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setName("newname");
         channelDTO.setDescription("general channel");
 
@@ -98,6 +100,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var channelDTO = new ChannelDTO();
         channelDTO.setName("general");
         channelDTO.setIsPublic(isPublicChannel);
+        channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
 
         // then

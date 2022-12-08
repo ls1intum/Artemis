@@ -121,25 +121,24 @@ public class ConversationService {
     /**
      * Registers users as a participant of a conversation
      *
-     * @param course          the course in which the conversation is located
-     * @param usersToRegister the users to be registered
-     * @param conversation    the conversation in which the users are registered
-     * @param memberLimit     the maximum number of members in the conversation
+     * @param course       the course in which the conversation is located
+     * @param users        the users to be registered
+     * @param conversation the conversation in which the users are registered
+     * @param memberLimit  the maximum number of members in the conversation
      */
-    public void registerUsersToConversation(Course course, Set<User> usersToRegister, Conversation conversation, Optional<Integer> memberLimit) {
-        var existingParticipants = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(conversation.getId(),
-                usersToRegister.stream().map(User::getId).collect(Collectors.toSet()));
-        var usersToRegisterWithoutExistingParticipants = usersToRegister.stream()
-                .filter(user -> existingParticipants.stream().noneMatch(participant -> participant.getUser().getId().equals(user.getId()))).collect(Collectors.toSet());
+    public void registerUsersToConversation(Course course, Set<User> users, Conversation conversation, Optional<Integer> memberLimit) {
+        var existingUsers = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+                .collect(Collectors.toSet());
+        var usersToBeRegistered = users.stream().filter(user -> !existingUsers.contains(user)).collect(Collectors.toSet());
 
         if (memberLimit.isPresent()) {
             var currentMemberCount = conversationParticipantRepository.countByConversationId(conversation.getId());
-            if (currentMemberCount + usersToRegisterWithoutExistingParticipants.size() > memberLimit.get()) {
+            if (currentMemberCount + usersToBeRegistered.size() > memberLimit.get()) {
                 throw new BadRequestAlertException("The maximum number of members has been reached", "conversation", "memberLimitReached");
             }
         }
         Set<ConversationParticipant> newConversationParticipants = new HashSet<>();
-        for (User user : usersToRegisterWithoutExistingParticipants) {
+        for (User user : usersToBeRegistered) {
             ConversationParticipant conversationParticipant = new ConversationParticipant();
             conversationParticipant.setUser(user);
             conversationParticipant.setConversation(conversation);
@@ -150,9 +149,8 @@ public class ConversationService {
         }
         if (!newConversationParticipants.isEmpty()) {
             conversationParticipantRepository.saveAll(newConversationParticipants);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, usersToRegisterWithoutExistingParticipants);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation,
-                    existingParticipants.stream().map(ConversationParticipant::getUser).collect(Collectors.toSet()));
+            broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, usersToBeRegistered);
+            broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, existingUsers);
         }
     }
 
@@ -181,22 +179,21 @@ public class ConversationService {
     /**
      * Removes users from a conversation
      *
-     * @param course            the course in which the conversation is located
-     * @param usersToDeregister the users to be removed
-     * @param conversation      the conversation from which the users are removed
+     * @param course       the course in which the conversation is located
+     * @param users        the users to be removed
+     * @param conversation the conversation from which the users are removed
      */
-    public void deregisterUsersFromAConversation(Course course, Set<User> usersToDeregister, Conversation conversation) {
+    public void deregisterUsersFromAConversation(Course course, Set<User> users, Conversation conversation) {
+        var existingUsers = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream().map(ConversationParticipant::getUser)
+                .collect(Collectors.toSet());
+        var usersToBeDeregistered = users.stream().filter(existingUsers::contains).collect(Collectors.toSet());
+        var remainingUsers = existingUsers.stream().filter(user -> !usersToBeDeregistered.contains(user)).collect(Collectors.toSet());
         var participantsToRemove = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(conversation.getId(),
-                usersToDeregister.stream().map(User::getId).collect(Collectors.toSet()));
-        var usersWithExistingParticipants = usersToDeregister.stream()
-                .filter(user -> participantsToRemove.stream().anyMatch(participant -> participant.getUser().getId().equals(user.getId()))).collect(Collectors.toSet());
+                usersToBeDeregistered.stream().map(User::getId).collect(Collectors.toSet()));
         if (participantsToRemove.size() > 0) {
             conversationParticipantRepository.deleteAll(participantsToRemove);
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversation, usersWithExistingParticipants);
-            var remainingParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(conversation.getId()).stream()
-                    .map(ConversationParticipant::getUser).collect(Collectors.toSet());
-            broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, remainingParticipants);
-
+            broadcastOnConversationMembershipChannel(course, MetisCrudAction.DELETE, conversation, usersToBeDeregistered);
+            broadcastOnConversationMembershipChannel(course, MetisCrudAction.UPDATE, conversation, remainingUsers);
         }
     }
 
