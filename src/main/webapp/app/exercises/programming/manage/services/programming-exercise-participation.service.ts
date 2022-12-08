@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Result } from 'app/entities/result.model';
@@ -36,7 +36,15 @@ export class ProgrammingExerciseParticipationService implements IProgrammingExer
         return this.http.get<boolean>(this.resourceUrl + participationId + '/has-result');
     }
 
-    private sendTitlesToEntityTitleService(participation: Participation | undefined) {
+    resetRepository(participationId: number, gradedParticipationId?: number) {
+        let params = new HttpParams();
+        if (gradedParticipationId) {
+            params = params.set('gradedParticipationId', gradedParticipationId.toString());
+        }
+        return this.http.put<void>(`${this.resourceUrl}${participationId}/reset-repository`, null, { observe: 'response', params });
+    }
+
+    sendTitlesToEntityTitleService(participation: Participation | undefined) {
         if (participation?.exercise) {
             const exercise = participation.exercise;
             this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise.id], exercise.title);
