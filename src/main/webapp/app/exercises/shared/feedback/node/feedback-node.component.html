@@ -1,6 +1,6 @@
 <div *ngIf="feedbackItem" class="card feedback-item">
     <div class="card-header feedback-item__header">
-        <h4 class="feedback-item__category">{{ feedbackItem.name }}</h4>
+        <h4 class="feedback-item__category">{{ feedbackItem.name }} {{ feedbackItem.title && '- ' + feedbackItem.title }}</h4>
         <span class="feedback-item__points" *ngIf="feedbackItem.credits">
             {{ roundValueSpecifiedByCourseSettings(feedbackItem.credits, course) }}P
             <fa-icon
