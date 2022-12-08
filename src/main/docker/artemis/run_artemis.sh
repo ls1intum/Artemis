@@ -9,6 +9,10 @@ else
     RemoteDebuggingOption=""
 fi
 
+# Fix for mapped volumes with different UID/GID which might block the process
+# Ensure at least the directories are owned by artemis. "-R" takes too long
+chown artemis:artemis config data
+
 echo "Starting application..."
 exec java \
   ${RemoteDebuggingOption} \
