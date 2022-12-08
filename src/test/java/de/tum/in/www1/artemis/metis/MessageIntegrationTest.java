@@ -170,6 +170,44 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testDecreaseUnreadMessageCountWhenDeletingMessage() throws Exception {
+        Post postToSave1 = createPostWithConversation();
+        Post postToSave2 = createPostWithConversation();
+
+        ResultActions resultActions = request.getMvc()
+                .perform(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postToSave1)).with(user("student1").roles("USER")).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated());
+
+        MvcResult result = resultActions.andReturn();
+        String contentAsString = result.getResponse().getContentAsString();
+        Post createdPost1 = objectMapper.readValue(contentAsString, Post.class);
+
+        ResultActions resultActions2 = request.getMvc()
+                .perform(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postToSave2)).with(user("student1").roles("USER")).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated());
+
+        MvcResult result2 = resultActions2.andReturn();
+        String contentAsString2 = result2.getResponse().getContentAsString();
+        Post createdPost2 = objectMapper.readValue(contentAsString2, Post.class);
+
+        request.getMvc().perform(MockMvcRequestBuilders.delete("/api/courses/" + courseId + "/messages/" + createdPost2.getId()).with(user("student1").roles("USER"))
+                .accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+        long unreadMessages = conversationRepository.findConversationByIdWithConversationParticipants(createdPost1.getConversation().getId()).getConversationParticipants().stream()
+                .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
+                .getUnreadMessagesCount();
+
+        assertThat(unreadMessages).isEqualTo(1);
+
+        // both conversation participants should be notified when conversation created and when message delete
+        verify(messagingTemplate, times(6)).convertAndSendToUser(anyString(), anyString(), any(ConversationDTO.class));
+    }
+
+    @Test
     @WithMockUser(username = "student3", roles = "USER")
     void testCreateConversationPost_forbidden() throws Exception {
         // only participants of a conversation can create posts for it
