@@ -38,7 +38,7 @@ public interface QuizBatchRepository extends JpaRepository<QuizBatch, Long> {
     @Query("""
             SELECT quizBatch
             FROM QuizBatch quizBatch
-                JOIN quizBatch.quizSubmissions submission
+                JOIN QuizSubmission submission ON quizBatch.id = submission.quizBatch
                 JOIN TREAT(submission.participation AS StudentParticipation) participation
             WHERE participation.exercise.id = :#{#quizExercise.id}
                 AND participation.student.login = :#{#studentLogin}

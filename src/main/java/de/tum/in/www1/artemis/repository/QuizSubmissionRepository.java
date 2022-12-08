@@ -43,7 +43,7 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
     @Query("""
             SELECT submission
             FROM QuizSubmission submission
-                JOIN submission.quizBatch quizBatch
+                JOIN QuizBatch quizBatch ON submission.quizBatch = quizBatch.id
                 JOIN TREAT(submission.participation AS StudentParticipation) participation
             WHERE quizBatch.id = :#{#quizBatch.id}
                 AND participation.student.login = :#{#studentLogin}

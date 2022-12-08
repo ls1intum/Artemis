@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.quiz;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -43,10 +42,6 @@ public class QuizBatch extends DomainObject {
     @JoinColumn(name = "quiz_id")
     @JsonIgnore
     private QuizExercise quizExercise;
-
-    @OneToMany(mappedBy = "quizBatch")
-    @JsonIgnore
-    private Set<QuizSubmission> quizSubmissions;
 
     @Nullable
     public ZonedDateTime getStartTime() {
