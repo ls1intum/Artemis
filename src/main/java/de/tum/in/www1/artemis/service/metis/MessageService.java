@@ -123,7 +123,7 @@ public class MessageService extends PostingService {
             conversationService.auditConversationReadTimeOfUser(conversation, user);
 
             ConversationParticipant readingParticipant = conversation.getConversationParticipants().stream()
-                    .filter(conversationParticipant -> conversationParticipant.getUser().getId() == user.getId()).findAny().get();
+                    .filter(conversationParticipant -> Objects.equals(conversationParticipant.getUser().getId(), user.getId())).findAny().orElseThrow();
             readingParticipant.setUnreadMessagesCount(0L);
             conversationParticipantRepository.save(readingParticipant);
 

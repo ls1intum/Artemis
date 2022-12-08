@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.metis;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -226,7 +227,8 @@ public class ConversationService {
 
         List<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(conversationId);
         conversationParticipants.forEach((conversationParticipant) -> {
-            if (conversationParticipant.getUser().getId() != userId) {
+            if (!Objects.equals(conversationParticipant.getUser().getId(), userId)) {
+
                 if (conversationParticipant.getUnreadMessagesCount() == null) {
                     conversationParticipant.setUnreadMessagesCount(0L);
                 }
@@ -247,11 +249,13 @@ public class ConversationService {
 
         List<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(conversationId);
         conversationParticipants.forEach((conversationParticipant) -> {
-            if (conversationParticipant.getUser().getId() != userId) {
-                long unreadMessagesCount = conversationParticipant.getUnreadMessagesCount();
-                if (unreadMessagesCount > 0L) {
-                    conversationParticipant.setUnreadMessagesCount(--unreadMessagesCount);
-                    conversationParticipantRepository.save(conversationParticipant);
+            if (!Objects.equals(conversationParticipant.getUser().getId(), userId)) {
+                if (conversationParticipant.getUnreadMessagesCount() != null) {
+                    long unreadMessagesCount = conversationParticipant.getUnreadMessagesCount();
+                    if (unreadMessagesCount > 0L) {
+                        conversationParticipant.setUnreadMessagesCount(--unreadMessagesCount);
+                        conversationParticipantRepository.save(conversationParticipant);
+                    }
                 }
             }
         });

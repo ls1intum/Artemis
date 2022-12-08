@@ -9,6 +9,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -132,7 +133,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
 
         long unreadMessages = conversationRepository.findConversationByIdWithConversationParticipants(createdPost.getConversation().getId()).getConversationParticipants().stream()
-                .filter(conversationParticipant -> conversationParticipant.getUser().getId() != postToSave.getAuthor().getId()).findAny().get().getUnreadMessagesCount();
+                .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave.getAuthor().getId())).findAny().orElseThrow()
+                .getUnreadMessagesCount();
 
         assertThat(unreadMessages).isEqualTo(1L);
     }
@@ -158,7 +160,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
         long unreadMessages = conversationRepository.findConversationByIdWithConversationParticipants(createdPost1.getConversation().getId()).getConversationParticipants().stream()
-                .filter(conversationParticipant -> conversationParticipant.getUser().getId() != postToSave1.getAuthor().getId()).findAny().get().getUnreadMessagesCount();
+                .filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
+                .getUnreadMessagesCount();
 
         assertThat(unreadMessages).isEqualTo(0);
 
