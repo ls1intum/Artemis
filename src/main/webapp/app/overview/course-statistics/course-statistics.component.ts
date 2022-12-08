@@ -5,7 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { sortBy } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
-import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, ExerciseTypeTOTAL, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
@@ -21,6 +21,7 @@ import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/ov
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -186,6 +187,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     constructor(
         private courseStorageService: CourseStorageService,
+        private scoresStorageService: ScoresStorageService,
         private courseCalculationService: CourseScoreCalculationService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
@@ -409,7 +411,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         const modelingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ScoreType.ABSOLUTE_SCORE);
         const textExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.TEXT, ScoreType.ABSOLUTE_SCORE);
         const fileUploadExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.FILE_UPLOAD, ScoreType.ABSOLUTE_SCORE);
-        this.overallPoints = this.calculateTotalScoreForTheCourse(ScoreType.ABSOLUTE_SCORE);
+        this.overallPoints = this.calculateScoreTypeForExerciseType(ExerciseTypeTOTAL.TOTAL, ScoreType.ABSOLUTE_SCORE);
         let totalMissedPoints = this.reachablePoints - this.overallPoints;
         if (totalMissedPoints < 0) {
             totalMissedPoints = 0;
@@ -455,7 +457,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         overallMaxPoints[ExerciseType.TEXT] = textExerciseTotalMaxPoints;
         overallMaxPoints[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalMaxPoints;
         this.overallMaxPointsPerExercise = overallMaxPoints;
-        this.overallMaxPoints = this.calculateTotalScoreForTheCourse(ScoreType.MAX_POINTS);
+        this.overallMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseTypeTOTAL.TOTAL, ScoreType.MAX_POINTS);
     }
 
     /**
@@ -475,7 +477,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         relativeScores[ExerciseType.TEXT] = textExerciseRelativeScore;
         relativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseRelativeScore;
         this.relativeScoresPerExercise = relativeScores;
-        this.totalRelativeScore = this.calculateTotalScoreForTheCourse(ScoreType.RELATIVE_SCORE);
+        this.totalRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseTypeTOTAL.TOTAL, ScoreType.RELATIVE_SCORE);
     }
 
     /**
@@ -495,7 +497,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         reachablePoints[ExerciseType.TEXT] = textExercisesReachablePoints;
         reachablePoints[ExerciseType.FILE_UPLOAD] = fileUploadExercisesReachablePoints;
         this.reachablePointsPerExercise = reachablePoints;
-        this.reachablePoints = this.calculateTotalScoreForTheCourse(ScoreType.REACHABLE_POINTS);
+        this.reachablePoints = this.calculateScoreTypeForExerciseType(ExerciseTypeTOTAL.TOTAL, ScoreType.REACHABLE_POINTS);
     }
 
     /**
@@ -515,7 +517,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         currentRelativeScores[ExerciseType.TEXT] = textExerciseCurrentRelativeScore;
         currentRelativeScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseCurrentRelativeScore;
         this.currentRelativeScoresPerExercise = currentRelativeScores;
-        this.currentRelativeScore = this.calculateTotalScoreForTheCourse(ScoreType.CURRENT_RELATIVE_SCORE);
+        this.currentRelativeScore = this.calculateScoreTypeForExerciseType(ExerciseTypeTOTAL.TOTAL, ScoreType.CURRENT_RELATIVE_SCORE);
     }
 
     /**
@@ -535,7 +537,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         presentationScores[ExerciseType.TEXT] = textExercisePresentationScore;
         presentationScores[ExerciseType.FILE_UPLOAD] = fileUploadExercisePresentationScore;
         this.presentationScoresPerExercise = presentationScores;
-        this.overallPresentationScore = this.calculateTotalScoreForTheCourse(ScoreType.PRESENTATION_SCORE);
+        this.overallPresentationScore = this.calculateScoreTypeForExerciseType(ExerciseTypeTOTAL.TOTAL, ScoreType.PRESENTATION_SCORE);
     }
 
     /**
@@ -544,31 +546,29 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @returns map containing score for every score type
      * @private
      */
-    // Kann denke ich komplett raus
-    private calculateScores(filterFunction: (courseExercise: Exercise) => boolean): Map<string, number> {
-        let courseExercises = this.courseExercises;
-        if (filterFunction) {
-            courseExercises = courseExercises.filter(filterFunction);
-        }
-        return this.courseCalculationService.calculateTotalScores(courseExercises, this.course!);
-    }
+    // private calculateScores(filterFunction: (courseExercise: Exercise) => boolean): Map<string, number> {
+    //     let courseExercises = this.courseExercises;
+    //     if (filterFunction) {
+    //         courseExercises = courseExercises.filter(filterFunction);
+    //     }
+    //     return this.courseCalculationService.calculateTotalScores(courseExercises, this.course!);
+    // }
 
     /**
      * Calculates an arbitrary score type for an arbitrary exercise type
-     * @param exerciseType the exercise type for which the score should be calculated. Must be an element of {Programming, Modeling, Quiz, Text, File upload}
-     * @param scoreType the score type that should be calculated. Element of {Absolute score, Max points,Current relative score,Presentation score,Reachable points,Relative score}
+     * @param exerciseType the exercise type for which the score should be calculated. Must be an element of {Programming, Modeling, Quiz, Text, File upload} or the total score for all exervcises.
+     * @param scoreType the score type that should be calculated. Element of {'absoluteScore', 'maxPoints', 'currentRelativeScore', 'presentationScore', 'reachablePoints', 'relativeScore'}
      * @returns requested score value
      * @private
      */
-    // Wird auch raus müssen, dann muss ich aber für verschiedene exerciseTypes den jeweiligen Score mit übertragen
-    private calculateScoreTypeForExerciseType(exerciseType: ExerciseType, scoreType: ScoreType): number {
+    private calculateScoreTypeForExerciseType(exerciseType: ExerciseType | ExerciseTypeTOTAL, scoreType: ScoreType): number {
         if (exerciseType != undefined && scoreType != undefined) {
-            const filterFunction = (courseExercise: Exercise) => courseExercise.type === exerciseType;
-            const scores = this.calculateScores(filterFunction);
-            return scores.get(scoreType)!;
-        } else {
-            return NaN;
+            const scoresPerExerciseTypeForCourse = this.scoresStorageService.getStoredScoresPerExerciseType(this.courseId);
+            if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse.get(exerciseType)) {
+                return scoresPerExerciseTypeForCourse.get(exerciseType)![scoreType];
+            }
         }
+        return NaN;
     }
 
     /**
@@ -577,10 +577,10 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @returns requested score type value
      * @private
      */
-    private calculateTotalScoreForTheCourse(scoreType: ScoreType): number {
-        const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises, this.course!);
-        return scores.get(scoreType)!;
-    }
+    // private calculateTotalScoreForTheCourse(scoreType: ScoreType): number {
+    //     const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises, this.course!);
+    //     return scores.get(scoreType)!;
+    // }
 
     calculateAndFilterNotIncludedInScore() {
         this.currentlyHidingNotIncludedInScoreExercises = true;
@@ -657,7 +657,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                     type: types[index],
                     absoluteScore: this.overallPointsPerExercise[types[index]],
                     relativeScore: this.relativeScoresPerExercise[types[index]],
-                    reachableScore: this.reachablePointsPerExercise[types[index]],
+                    reachablePoints: this.reachablePointsPerExercise[types[index]],
                     currentRelativeScore: this.currentRelativeScoresPerExercise[types[index]],
                     overallMaxPoints: this.overallMaxPointsPerExercise[types[index]],
                     presentationScore: this.presentationScoresPerExercise[types[index]],

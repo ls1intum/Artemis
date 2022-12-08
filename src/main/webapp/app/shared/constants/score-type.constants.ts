@@ -3,6 +3,6 @@ export enum ScoreType {
     RELATIVE_SCORE = 'relativeScore',
     MAX_POINTS = 'maxPoints',
     PRESENTATION_SCORE = 'presentationScore',
-    REACHABLE_POINTS = 'reachableScore',
+    REACHABLE_POINTS = 'reachablePoints',
     CURRENT_RELATIVE_SCORE = 'currentRelativeScore',
 }

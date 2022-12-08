@@ -13,7 +13,8 @@ import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { map } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ScoreType } from 'app/shared/constants/score-type.constants';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { ExerciseTypeTOTAL } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-grade-key-overview',
@@ -34,6 +35,7 @@ export class GradingKeyOverviewComponent implements OnInit {
         private bonusService: BonusService,
         private courseCalculationService: CourseScoreCalculationService,
         private courseStorageService: CourseStorageService,
+        private scoresStorageService: ScoresStorageService,
         private navigationUtilService: ArtemisNavigationUtilService,
         private themeService: ThemeService,
     ) {}
@@ -66,10 +68,14 @@ export class GradingKeyOverviewComponent implements OnInit {
                 this.gradeSteps = this.gradingSystemService.sortGradeSteps(gradeSteps.gradeSteps);
                 if (gradeSteps.maxPoints !== undefined) {
                     if (!this.isExam) {
-                        // calculate course max points based on exercises
                         const course = this.courseStorageService.getCourse(this.courseId!);
-                        const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(ScoreType.REACHABLE_POINTS);
-                        this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints!);
+                        let maxPoints: number = 0;
+                        const scoresPerExerciseTypeForCourse = this.scoresStorageService.getStoredScoresPerExerciseType(this.courseId!);
+                        if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse.get(ExerciseTypeTOTAL.TOTAL)) {
+                            maxPoints = scoresPerExerciseTypeForCourse.get(ExerciseTypeTOTAL.TOTAL)!.reachablePoints;
+                        }
+                        // const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(ScoreType.REACHABLE_POINTS);
+                        this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints);
                     } else {
                         // for exams the max points filed should equal the total max points (otherwise exams can't be started)
                         this.gradingSystemService.setGradePoints(this.gradeSteps, gradeSteps.maxPoints!);

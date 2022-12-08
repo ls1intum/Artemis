@@ -38,6 +38,10 @@ export enum ExerciseType {
     FILE_UPLOAD = 'file-upload',
 }
 
+export enum ExerciseTypeTOTAL {
+    TOTAL = 'total',
+}
+
 export interface ValidationReason {
     translateKey: string;
     translateValues: any;

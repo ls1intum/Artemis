@@ -11,14 +11,14 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseScoresForExamBonusSourceDTO(double maxPoints, double reachablePoints,
                                                 Integer presentationScoreThreshold,
-                                                List<StudentScoreForExamBonusSource> studentScores) {
+                                                List<StudentScoresForExamBonusSource> studentScores) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record StudentScoreForExamBonusSource(Long studentId, double absolutePoints, double relativeScore,
-                                                 double currentRelativeScore,
-                                                 int achievedPresentationScore,
-                                                 boolean presentationScorePassed,
-                                                 PlagiarismVerdict mostSeverePlagiarismVerdict) {
+    public record StudentScoresForExamBonusSource(Long studentId, double absolutePoints, double relativeScore,
+                                                  double currentRelativeScore,
+                                                  int achievedPresentationScore,
+                                                  boolean presentationScorePassed,
+                                                  PlagiarismVerdict mostSeverePlagiarismVerdict) {
 
         public double getAbsolutePointsEligibleForBonus() {
             return presentationScorePassed ? absolutePoints : 0.0;
@@ -26,7 +26,7 @@ public record CourseScoresForExamBonusSourceDTO(double maxPoints, double reachab
     }
 
     public Map<Long, BonusSourceResultDTO> toBonusSourceResultMap() {
-        return studentScores.stream().collect(Collectors.toMap(StudentScoreForExamBonusSource::studentId, studentScore -> new BonusSourceResultDTO(studentScore.getAbsolutePointsEligibleForBonus(),
+        return studentScores.stream().collect(Collectors.toMap(StudentScoresForExamBonusSource::studentId, studentScore -> new BonusSourceResultDTO(studentScore.getAbsolutePointsEligibleForBonus(),
             studentScore.mostSeverePlagiarismVerdict(), studentScore.achievedPresentationScore(), presentationScoreThreshold)));
     }
 }

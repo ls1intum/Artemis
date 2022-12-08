@@ -8,13 +8,13 @@ import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.J
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseScoresForStudentStatisticsDTO(double maxPoints, double reachablePoints,
-                                                  StudentScoreForStudentStatistics studentScoreForStudentStatistics) {
+                                                  StudentScoresForStudentStatistics studentScoreForStudentStatistics) {
 
-    public record StudentScoreForStudentStatistics(double absoluteScore, double relativeScore,
-                                                   double currentRelativeScore, int presentationScore) {
+    public record StudentScoresForStudentStatistics(double absoluteScore, double relativeScore,
+                                                    double currentRelativeScore, int presentationScore) {
     }
 
     public CourseScoresForStudentStatisticsDTO() {
-        this(0.0, 0.0, new StudentScoreForStudentStatistics(0.0, 0.0, 0.0, 0));
+        this(0.0, 0.0, new StudentScoresForStudentStatistics(0.0, 0.0, 0.0, 0));
     }
 }

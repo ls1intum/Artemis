@@ -23,6 +23,8 @@ import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/s
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
+import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dto';
+import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -43,6 +45,7 @@ export class CourseManagementService {
         private entityTitleService: EntityTitleService,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
         private tutorialGroupsService: TutorialGroupsService,
+        private scoresStorageService: ScoresStorageService,
     ) {}
 
     /**
@@ -135,7 +138,21 @@ export class CourseManagementService {
      */
     findAllForDashboard(): Observable<EntityArrayResponseType> {
         this.fetchingCoursesForNotifications = true;
-        return this.http.get<Course[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' }).pipe(
+        return this.http.get<CourseForDashboardDTO[]>(`${this.resourceUrl}/for-dashboard`, { observe: 'response' }).pipe(
+            map((res: HttpResponse<CourseForDashboardDTO[]>) => {
+                if (res.body) {
+                    const courses: Course[] = [];
+                    res.body.forEach((courseForDashboardDTO) => {
+                        // Save the scoresPerExerciseType and the participantScore in the scores-storage.service.
+                        this.scoresStorageService.setStoredScoresPerExerciseType(courseForDashboardDTO.course.id!, courseForDashboardDTO.scoresPerExerciseType);
+                        this.scoresStorageService.setParticipantScores(courseForDashboardDTO.course.id!, courseForDashboardDTO.participantScores);
+                        courses.push(courseForDashboardDTO.course);
+                    });
+                    // Replace the CourseForDashboardDTOs in the response body with the normal Courses.
+                    return res.clone({ body: courses });
+                }
+                return res;
+            }),
             map((res: EntityArrayResponseType) => this.processCourseEntityArrayResponseType(res)),
             map((res: EntityArrayResponseType) => this.setParticipationStatusForExercisesInCourses(res)),
             map((res: EntityArrayResponseType) => this.setCoursesForNotifications(res)),
@@ -143,7 +160,19 @@ export class CourseManagementService {
     }
 
     findOneForDashboard(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/for-dashboard`, { observe: 'response' }).pipe(
+        return this.http.get<CourseForDashboardDTO>(`${this.resourceUrl}/${courseId}/for-dashboard`, { observe: 'response' }).pipe(
+            map((res: HttpResponse<CourseForDashboardDTO>) => {
+                if (res.body) {
+                    const courseForDashboardDTO = res.body;
+                    // Save the scoresPerExerciseType and the participantScore in the scores-storage.service.
+                    this.scoresStorageService.setStoredScoresPerExerciseType(courseForDashboardDTO.course.id!, courseForDashboardDTO.scoresPerExerciseType);
+                    this.scoresStorageService.setParticipantScores(courseForDashboardDTO.course.id!, courseForDashboardDTO.participantScores);
+
+                    // Replace the CourseForDashboardDTO in the response body with the normal Course.
+                    return res.clone({ body: courseForDashboardDTO.course });
+                }
+                return res;
+            }),
             map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
             map((res: EntityResponseType) => this.setParticipationStatusForExercisesInCourse(res)),
             tap((res: EntityResponseType) => this.courseStorageService.notifyCourseUpdatesSubscribers(res.body)),
