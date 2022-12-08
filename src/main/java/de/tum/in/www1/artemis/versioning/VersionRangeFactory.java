@@ -35,14 +35,14 @@ public class VersionRangeFactory {
 
     /**
      * Combines two combinable ranges into one range.
-     * @param a The first range
-     * @param b The second range
+     * @param range1 The first range
+     * @param range2 The second range
      * @return The combined range
      * @throws ApiVersionRangeNotValidException if the ranges are not valid or the two ranges can't be combined
      */
-    public static VersionRange combine(VersionRange a, VersionRange b) {
-        List<Integer> versions1 = versionRangeToIntegerList(a);
-        List<Integer> versions2 = versionRangeToIntegerList(b);
+    public static VersionRange combine(VersionRange range1, VersionRange range2) {
+        List<Integer> versions1 = versionRangeToIntegerList(range1);
+        List<Integer> versions2 = versionRangeToIntegerList(range2);
         if (versions1.size() == 2 && versions2.size() == 2) {
             // Both are finite. If they don't overlap, we can't combine them, otherwise we return the combined range
             if ((versions1.get(1) < versions2.get(0) && versions1.get(1) + 1 < versions2.get(0))
