@@ -4,7 +4,7 @@
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
 # TODO: just use eclipse-temurin as gradle installs node, used image below to match bamboo build pipeline for prod
-FROM ghcr.io/ls1intum/docker-jdk-node-yarn as builder
+FROM ghcr.io/ls1intum/docker-jdk-node-yarn:java17node16-3 as builder
 
 WORKDIR /opt/artemis
 # TODO: make this more secure/performant and don't copy everything? or let this be handled just by the .dockerignore?
@@ -30,8 +30,10 @@ ENV spring.profiles.active ""
 
 # Docker Compose: wget and netcat (service checks)
 # Artemis: wget(?), graphviz, locales
+# versions just pinned for reproducibility
 RUN echo "Installing needed dependencies" \
-  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget netcat-openbsd\
+  && apt-get update && apt-get install -y --no-install-recommends locales=2.35-0ubuntu3.1 \
+  && graphviz=2.42.2-6 wget=1.21.2-2ubuntu1 netcat-openbsd=1.218-4ubuntu1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
