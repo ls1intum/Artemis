@@ -4,7 +4,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 /**
- * Returns all FeedbackItemGroups for Programming exercises
+ * Returns all FeedbackItemGroups for Programming exercises in the order, in which they will be displayed
  */
 export const getAllFeedbackGroups = (exercise: Exercise): FeedbackGroup[] => {
     return [new FeedbackGroupWrong(), new FeedbackGroupWarning(exercise), new FeedbackGroupInfo(), new FeedbackGroupMissing(), new FeedbackGroupCorrect(exercise)];
@@ -17,7 +17,7 @@ class FeedbackGroupMissing extends FeedbackGroup {
     constructor() {
         super();
         this.name = 'missing';
-        this.color = 'var(--secondary)';
+        this.color = 'secondary';
         this.open = true;
     }
 
@@ -33,7 +33,7 @@ class FeedbackGroupWrong extends FeedbackGroup {
     constructor() {
         super();
         this.name = 'wrong';
-        this.color = 'var(--danger)';
+        this.color = 'danger';
         this.open = true;
     }
 
@@ -52,7 +52,7 @@ class FeedbackGroupWarning extends FeedbackGroup {
     constructor(exercise: Exercise) {
         super();
         this.name = 'warning';
-        this.color = 'var(--warning)';
+        this.color = 'warning';
 
         const programmingExercise = exercise as ProgrammingExercise;
         this.maxCredits = programmingExercise.maxStaticCodeAnalysisPenalty && programmingExercise.maxStaticCodeAnalysisPenalty * programmingExercise.maxPoints!;
@@ -72,7 +72,7 @@ class FeedbackGroupInfo extends FeedbackGroup {
     constructor() {
         super();
         this.name = 'info';
-        this.color = 'var(--info)';
+        this.color = 'info';
         this.open = false;
     }
 
@@ -91,7 +91,7 @@ class FeedbackGroupCorrect extends FeedbackGroup {
     constructor(exercise: Exercise) {
         super();
         this.name = 'correct';
-        this.color = 'var(--success)';
+        this.color = 'success';
         this.maxCredits = exercise.maxPoints! + (exercise.bonusPoints ?? 0);
         this.open = false;
     }

@@ -1,5 +1,5 @@
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
-import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
+import { FeedbackColor, FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 
 /*
  * A group of FeedbackItems as in the composite pattern.
@@ -8,9 +8,9 @@ import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 export abstract class FeedbackGroup implements FeedbackNode {
     name: string;
     members: FeedbackItem[] = [];
-    color: string;
     credits: number;
     maxCredits?: number;
+    color?: FeedbackColor;
     /**
      * Whether the detail is open by default
      */
@@ -23,6 +23,7 @@ export abstract class FeedbackGroup implements FeedbackNode {
      * @param feedbackItems
      */
     addAllItems(feedbackItems: FeedbackItem[]): FeedbackGroup {
+        feedbackItems.forEach((item) => (item.color = this.color));
         this.members = [...this.members, ...feedbackItems];
         this.calculateCredits();
         return this;

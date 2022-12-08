@@ -50,6 +50,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         const submissionPolicyTitle = feedback.text!.substring(SUBMISSION_POLICY_FEEDBACK_IDENTIFIER.length);
 
         return {
+            color: 'primary',
             type: 'Submission Policy',
             name: this.translateService.instant('artemisApp.programmingExercise.submissionPolicy.title'),
             title: submissionPolicyTitle,

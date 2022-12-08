@@ -1,8 +1,10 @@
+export type FeedbackColor = 'primary' | 'secondary' | 'success' | 'danger' | 'warning' | 'info' | 'light' | 'dark';
+
 export interface FeedbackNode {
     /**
-     * CSS variable specifying the color
+     * One of the possible colors for bootstrap alerts
      */
-    color?: string;
+    color?: FeedbackColor;
     name: string;
     credits: number | undefined;
     /**

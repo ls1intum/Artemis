@@ -1,4 +1,4 @@
-import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
+import { FeedbackColor, FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 
 export type FeedbackItemType = 'Test' | 'Static Code Analysis' | 'Reviewer' | 'Subsequent' | 'Feedback' | 'Submission Policy';
 
@@ -10,4 +10,5 @@ export class FeedbackItem implements FeedbackNode {
     title?: string; // this is typically feedback.text
     text?: string; // this is typically feedback.detailText
     positive?: boolean;
+    color?: FeedbackColor;
 }

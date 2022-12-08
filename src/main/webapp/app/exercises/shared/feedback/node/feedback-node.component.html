@@ -1,7 +1,7 @@
-<div *ngIf="feedbackItem" class="card feedback-item">
-    <div class="card-header feedback-item__header">
-        <h4 class="feedback-item__category">{{ feedbackItem.name }} {{ feedbackItem.title && '- ' + feedbackItem.title }}</h4>
-        <span class="feedback-item__points" *ngIf="feedbackItem.credits">
+<div *ngIf="feedbackItem" class="alert feedback-item" [ngClass]="'alert-' + feedbackItem.color">
+    <div class="feedback-item__header">
+        <h4 class="feedback-item__category">{{ feedbackItem.name }} {{ feedbackItem.title && '· ' + feedbackItem.title }}</h4>
+        <span class="fw-bold" *ngIf="feedbackItem.credits">
             {{ roundValueSpecifiedByCourseSettings(feedbackItem.credits, course) }}P
             <fa-icon
                 *ngIf="feedbackItem.type === 'Subsequent'"
@@ -11,31 +11,22 @@
         </span>
     </div>
 
-    <ng-container *ngIf="feedbackItem.text">
-        <div class="card-body">
-            <jhi-feedback-collapse [text]="feedbackItem.text!"></jhi-feedback-collapse>
-        </div>
-    </ng-container>
+    <jhi-feedback-collapse *ngIf="feedbackItem.text" class="d-block mt-3" [text]="feedbackItem.text!"></jhi-feedback-collapse>
     <p *ngElse jhiTranslate="artemisApp.result.noFeedback">No feedback available</p>
 </div>
 
-<details *ngIf="feedbackItemGroup" class="card feedback-item-group" [open]="feedbackItemGroup.open" [ngStyle]="{ '--feedback-node-background': feedbackItemGroup.color }">
-    <summary class="card-header feedback-item-group__summary">
+<details *ngIf="feedbackItemGroup" class="feedback-item-group" [open]="feedbackItemGroup.open">
+    <summary class="feedback-item-group__summary" [ngClass]="'bg-' + feedbackItemGroup.color">
         <div class="feedback-item-group__summary__content">
             <h4 class="feedback-item__category">
                 {{ feedbackItemGroup.name | titlecase }}
             </h4>
 
-            <span *ngIf="feedbackItemGroup.credits !== 0" class="feedback-item__points">{{ roundValueSpecifiedByCourseSettings(feedbackItemGroup.credits, course) }}P </span>
+            <span *ngIf="feedbackItemGroup.credits !== 0" class="fw-bold">{{ roundValueSpecifiedByCourseSettings(feedbackItemGroup.credits, course) }}P </span>
         </div>
     </summary>
 
-    <div class="card-body feedback-item-group__members">
-        <jhi-feedback-node
-            class="feedback-item-group__members__member"
-            *ngFor="let feedbackItem of feedbackItemGroup.members"
-            [feedbackItemNode]="feedbackItem"
-            [course]="course"
-        ></jhi-feedback-node>
+    <div class="mx-3">
+        <jhi-feedback-node *ngFor="let feedbackItem of feedbackItemGroup.members" [feedbackItemNode]="feedbackItem" [course]="course"></jhi-feedback-node>
     </div>
 </details>

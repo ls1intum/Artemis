@@ -24,7 +24,7 @@ export class FeedbackChartService {
             name: 'Feedback Detail',
             selectable: true,
             group: ScaleType.Ordinal,
-            domain: feedbackNodes.map((node) => node.color ?? 'var(--white)'),
+            domain: feedbackNodes.map((node) => `var(--bs-${node.color})` ?? 'var(--white)'),
         };
 
         return {
