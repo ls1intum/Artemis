@@ -45,7 +45,8 @@ class FeedbackGroupWrong extends FeedbackGroup {
 }
 
 /**
- * Negative feedbacks that are SCA
+ * - Negative feedbacks that are SCA
+ * - Submission policy
  */
 class FeedbackGroupWarning extends FeedbackGroup {
     constructor(exercise: Exercise) {
@@ -59,7 +60,7 @@ class FeedbackGroupWarning extends FeedbackGroup {
     }
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        return feedbackItem.type === 'Static Code Analysis';
+        return feedbackItem.type === 'Static Code Analysis' || feedbackItem.type === 'Submission Policy';
     }
 }
 
