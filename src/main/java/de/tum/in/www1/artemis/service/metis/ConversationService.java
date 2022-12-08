@@ -249,13 +249,11 @@ public class ConversationService {
 
         List<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(conversationId);
         conversationParticipants.forEach((conversationParticipant) -> {
-            if (!Objects.equals(conversationParticipant.getUser().getId(), userId)) {
-                if (conversationParticipant.getUnreadMessagesCount() != null) {
-                    long unreadMessagesCount = conversationParticipant.getUnreadMessagesCount();
-                    if (unreadMessagesCount > 0L) {
-                        conversationParticipant.setUnreadMessagesCount(--unreadMessagesCount);
-                        conversationParticipantRepository.save(conversationParticipant);
-                    }
+            if (!Objects.equals(conversationParticipant.getUser().getId(), userId) && conversationParticipant.getUnreadMessagesCount() != null) {
+                long unreadMessagesCount = conversationParticipant.getUnreadMessagesCount();
+                if (unreadMessagesCount > 0L) {
+                    conversationParticipant.setUnreadMessagesCount(--unreadMessagesCount);
+                    conversationParticipantRepository.save(conversationParticipant);
                 }
             }
         });
