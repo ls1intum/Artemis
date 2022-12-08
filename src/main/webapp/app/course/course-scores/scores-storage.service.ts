@@ -5,9 +5,9 @@ import { ExerciseType, ExerciseTypeTOTAL } from 'app/entities/exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ScoresStorageService {
-    private storedScoresPerExerciseType: Map<number, Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresForStudentStatisticsDTO>>;
+    private storedScoresPerExerciseType: Map<number, Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresForStudentStatisticsDTO>> = new Map();
 
-    private participantScores: Map<number, ParticipantScoreDTO[]>;
+    private participantScores: Map<number, ParticipantScoreDTO[]> = new Map();
 
     getStoredScoresPerExerciseType(courseId: number) {
         return this.storedScoresPerExerciseType.get(courseId);

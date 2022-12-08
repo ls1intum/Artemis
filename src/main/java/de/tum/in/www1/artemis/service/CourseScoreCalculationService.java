@@ -5,11 +5,9 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifi
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.EnumUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -93,9 +91,9 @@ public class CourseScoreCalculationService {
             plagiarismCases = plagiarismCaseRepository.findByCourseId(courseId);
         }
 
-        List<CourseScoresForExamBonusSourceDTO.StudentScoresForExamBonusSource> studentScores = studentIdToParticipations.entrySet().parallelStream().map(entry -> calculateCourseScoreForStudent(entry.getKey(), entry.getValue(), maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, plagiarismCases)).toList();
-
         Course course = courseExercises.iterator().next().getCourseViaExerciseGroupOrCourseMember();
+
+        List<CourseScoresForExamBonusSourceDTO.StudentScoresForExamBonusSource> studentScores = studentIdToParticipations.entrySet().parallelStream().map(entry -> calculateCourseScoreForStudent(course, entry.getKey(), entry.getValue(), maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, plagiarismCases)).toList();
 
         return new CourseScoresForExamBonusSourceDTO(maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, course.getPresentationScore(), studentScores);
     }
@@ -126,7 +124,7 @@ public class CourseScoreCalculationService {
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(courseId, userId);
 
         // Get scores for all exercises in course.
-        var studentScoresWithPlagiarismVerdict = calculateCourseScoreForStudent(userId, studentParticipations, maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, plagiarismCases);
+        var studentScoresWithPlagiarismVerdict = calculateCourseScoreForStudent(course, userId, studentParticipations, maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, plagiarismCases);
         var totalScores = new CourseScoresForStudentStatisticsDTO(maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, new CourseScoresForStudentStatisticsDTO.StudentScoresForStudentStatistics(studentScoresWithPlagiarismVerdict.absolutePoints(), studentScoresWithPlagiarismVerdict.relativeScore(), studentScoresWithPlagiarismVerdict.currentRelativeScore(), studentScoresWithPlagiarismVerdict.achievedPresentationScore()));
         scoresPerExerciseType.put(TOTAL, totalScores);
 
@@ -137,15 +135,11 @@ public class CourseScoreCalculationService {
             MaxAndReachablePoints maxAndReachablePointsOfExerciseType = calculateMaxAndReachablePoints(exercisesOfExerciseType);
             List<StudentParticipation> studentParticipationsOfExerciseType = studentParticipations.stream().filter(participation -> participation.getExercise().getExerciseType() == exerciseType).toList();
 
-            MultiValueMap<Long, StudentParticipation> studentIdToParticipationsOfExerciseType = new LinkedMultiValueMap<>();
-            if (!studentParticipationsOfExerciseType.isEmpty()) {
-                studentIdToParticipationsOfExerciseType.addAll(userId, studentParticipationsOfExerciseType);
-            }
             List<PlagiarismCase> plagiarismCasesOfExerciseType = plagiarismCases.stream().filter(plagiarismCase -> plagiarismCase.getExercise().getExerciseType() == exerciseType).toList();
 
-            var studentScoresWithPlagiarismVerdictOfExerciseType = calculateCourseScoreForStudent(userId, studentParticipationsOfExerciseType, maxAndReachablePointsOfExerciseType.maxPoints, maxAndReachablePoints.reachablePoints, plagiarismCasesOfExerciseType);
+            var studentScoresWithPlagiarismVerdictOfExerciseType = calculateCourseScoreForStudent(course, userId, studentParticipationsOfExerciseType, maxAndReachablePointsOfExerciseType.maxPoints, maxAndReachablePoints.reachablePoints, plagiarismCasesOfExerciseType);
             var scoresOfExerciseType = new CourseScoresForStudentStatisticsDTO(maxAndReachablePointsOfExerciseType.maxPoints, maxAndReachablePointsOfExerciseType.reachablePoints, new CourseScoresForStudentStatisticsDTO.StudentScoresForStudentStatistics(studentScoresWithPlagiarismVerdictOfExerciseType.absolutePoints(), studentScoresWithPlagiarismVerdictOfExerciseType.relativeScore(), studentScoresWithPlagiarismVerdictOfExerciseType.currentRelativeScore(), studentScoresWithPlagiarismVerdictOfExerciseType.achievedPresentationScore()));
-            scoresPerExerciseType.put(exerciseType.getExerciseTypeAsString(), scoresOfExerciseType != null ? scoresOfExerciseType : new CourseScoresForStudentStatisticsDTO());
+            scoresPerExerciseType.put(exerciseType.getExerciseTypeAsString(), scoresOfExerciseType);
         }
 
         return scoresPerExerciseType;
@@ -196,7 +190,7 @@ public class CourseScoreCalculationService {
      * @param plagiarismCases            the plagiarism verdicts for the student for the participated exercises
      * @return a StudentScore instance with the presentation score, relative and absolute points achieved by the given student and the most severe plagiarism verdict
      */
-    public CourseScoresForExamBonusSourceDTO.StudentScoresForExamBonusSource calculateCourseScoreForStudent(Long studentId, List<StudentParticipation> participationsOfStudent, double maxPointsInCourse,
+    public CourseScoresForExamBonusSourceDTO.StudentScoresForExamBonusSource calculateCourseScoreForStudent(Course course, Long studentId, List<StudentParticipation> participationsOfStudent, double maxPointsInCourse,
                                                                                                             double reachableMaxPointsInCourse, List<PlagiarismCase> plagiarismCases) {
 
         PlagiarismMapping plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
@@ -223,8 +217,6 @@ public class CourseScoreCalculationService {
             }
             presentationScore += participation.getPresentationScore() != null ? participation.getPresentationScore() : 0;
         }
-
-        Course course = participationsOfStudent.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
 
         double absolutePoints = roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse, course);
         double relativeScore = maxPointsInCourse > 0 ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / maxPointsInCourse * 100.0, course) : 0.0;

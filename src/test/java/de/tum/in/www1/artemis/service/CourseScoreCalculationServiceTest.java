@@ -65,7 +65,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         User student = userRepository.findOneByLogin("student1").get();
 
-        var courseResult = courseScoreCalculationService.calculateCourseScoresTotal(course.getId(), List.of(student.getId()));
+        var courseResult = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course.getId(), List.of(student.getId()));
         assertThat(courseResult.maxPoints()).isEqualTo(0.0);
         assertThat(courseResult.reachablePoints()).isEqualTo(0.0);
         assertThat(courseResult.studentScores()).hasSize(1);
@@ -106,8 +106,8 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         // Test with empty result set.
         studentParticipations.get(2).setResults(Collections.emptySet());
 
-        var studentScoreResult = courseScoreCalculationService.calculateCourseScoreForStudent(student.getId(), studentParticipations, 25.0, 5.0,
-            new PlagiarismCaseService.PlagiarismMapping(Collections.emptyMap()));
+        var studentScoreResult = courseScoreCalculationService.calculateCourseScoreForStudent(course, student.getId(), studentParticipations, 25.0, 5.0,
+            new ArrayList<>());
         assertThat(studentScoreResult.studentId()).isEqualTo(student.getId());
         assertThat(studentScoreResult.relativeScore()).isEqualTo(16.0);
         assertThat(studentScoreResult.absolutePoints()).isEqualTo(4.0);

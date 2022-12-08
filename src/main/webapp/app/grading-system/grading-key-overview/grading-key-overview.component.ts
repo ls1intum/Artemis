@@ -15,6 +15,7 @@ import { Observable } from 'rxjs';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ExerciseTypeTOTAL } from 'app/entities/exercise.model';
+import { ScoreType } from 'app/shared/constants/score-type.constants';
 
 @Component({
     selector: 'jhi-grade-key-overview',
@@ -68,11 +69,10 @@ export class GradingKeyOverviewComponent implements OnInit {
                 this.gradeSteps = this.gradingSystemService.sortGradeSteps(gradeSteps.gradeSteps);
                 if (gradeSteps.maxPoints !== undefined) {
                     if (!this.isExam) {
-                        const course = this.courseStorageService.getCourse(this.courseId!);
-                        let maxPoints: number = 0;
+                        let maxPoints = 0;
                         const scoresPerExerciseTypeForCourse = this.scoresStorageService.getStoredScoresPerExerciseType(this.courseId!);
-                        if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse.get(ExerciseTypeTOTAL.TOTAL)) {
-                            maxPoints = scoresPerExerciseTypeForCourse.get(ExerciseTypeTOTAL.TOTAL)!.reachablePoints;
+                        if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL]) {
+                            maxPoints = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL][ScoreType.REACHABLE_POINTS];
                         }
                         // const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(ScoreType.REACHABLE_POINTS);
                         this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints);

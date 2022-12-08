@@ -444,7 +444,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @private
      */
     private calculateMaxPoints(): void {
-        // const quizzesTotalMaxPoints = this.courses.scores.quiz.max
         const quizzesTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ScoreType.MAX_POINTS);
         const programmingExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ScoreType.MAX_POINTS);
         const modelingExerciseTotalMaxPoints = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ScoreType.MAX_POINTS);
@@ -556,16 +555,21 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Calculates an arbitrary score type for an arbitrary exercise type
-     * @param exerciseType the exercise type for which the score should be calculated. Must be an element of {Programming, Modeling, Quiz, Text, File upload} or the total score for all exervcises.
-     * @param scoreType the score type that should be calculated. Element of {'absoluteScore', 'maxPoints', 'currentRelativeScore', 'presentationScore', 'reachablePoints', 'relativeScore'}
+     * @param exerciseType the exercise type for which the score should be calculated.
+     * Must be an element of {Programming, Modeling, Quiz, Text, File upload} or the total score for all exervcises.
+     * @param scoreType the score type that should be calculated.
+     * Element of {'absoluteScore', 'maxPoints', 'currentRelativeScore', 'presentationScore', 'reachablePoints', 'relativeScore'}
      * @returns requested score value
      * @private
      */
     private calculateScoreTypeForExerciseType(exerciseType: ExerciseType | ExerciseTypeTOTAL, scoreType: ScoreType): number {
         if (exerciseType != undefined && scoreType != undefined) {
             const scoresPerExerciseTypeForCourse = this.scoresStorageService.getStoredScoresPerExerciseType(this.courseId);
-            if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse.get(exerciseType)) {
-                return scoresPerExerciseTypeForCourse.get(exerciseType)![scoreType];
+            if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse[exerciseType]) {
+                if ([ScoreType.ABSOLUTE_SCORE, ScoreType.RELATIVE_SCORE, ScoreType.PRESENTATION_SCORE, ScoreType.CURRENT_RELATIVE_SCORE].includes(scoreType)) {
+                    return scoresPerExerciseTypeForCourse[exerciseType].studentScoreForStudentStatistics[scoreType];
+                }
+                return scoresPerExerciseTypeForCourse[exerciseType][scoreType];
             }
         }
         return NaN;
