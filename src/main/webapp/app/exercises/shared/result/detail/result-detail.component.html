@@ -4,7 +4,7 @@
         <ng-template #noTaskDescription>{{ 'artemisApp.result.detail.feedback' | artemisTranslate }}</ng-template>
     </h3>
 
-    <button type="button" class="feedback-header-close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
+    <button type="button" class="feedback-header__close" data-dismiss="modal" aria-hidden="true" (click)="activeModal.close()">
         <fa-icon [icon]="faXmark" size="xl"></fa-icon>
     </button>
 </div>
@@ -74,7 +74,7 @@
                 <p *ngIf="exercise?.assessmentType === AssessmentType.AUTOMATIC" jhiTranslate="artemisApp.result.preliminaryTooltip"></p>
             </div>
 
-            <div>
+            <div class="feedback-list">
                 <jhi-feedback-node *ngFor="let feedbackItemNode of feedbackItemNodes" [feedbackItemNode]="feedbackItemNode" [course]="course"></jhi-feedback-node>
             </div>
         </div>
@@ -107,10 +107,11 @@
     </ng-template>
 
     <!-- Show and link to the commit hash in case of programming exercise results -->
-    <p *ngIf="exerciseType === ExerciseType.PROGRAMMING && result.submission">
+    <p class="pt-3" *ngIf="exerciseType === ExerciseType.PROGRAMMING && result.submission">
         <span>{{ 'artemisApp.result.linkedCommit' | artemisTranslate }}</span>
         <a *ngIf="commitUrl; else commitWithoutLink" href="{{ commitUrl }}" target="_blank" rel="noopener noreferrer">{{ commitHash }}</a>
         <ng-template #commitWithoutLink>{{ commitHash }}</ng-template>
+        <span [ngbTooltip]="result.completionDate | artemisDate"> ({{ result.completionDate | artemisTimeAgo }}) </span>
     </p>
 </div>
 <div class="modal-footer">

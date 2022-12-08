@@ -6,11 +6,17 @@
             color: $feedback-header-fg;
             background-color: var(--artemis-dark);
 
-            &-close {
+            &__close {
                 background: none;
                 border: none;
                 color: $feedback-header-fg;
             }
+        }
+
+        &-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
     }
 
