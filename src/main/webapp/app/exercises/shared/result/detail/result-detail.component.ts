@@ -24,10 +24,10 @@ import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-grap
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
-import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming/programming-feedback-item.service';
+import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
 import { resultIsPreliminary } from '../result.utils';
-import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
+import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { checkSubsequentFeedbackInAssessment } from 'app/exercises/shared/feedback/feedback.util';
 import { ChartData, nodesToChartData } from 'app/exercises/shared/feedback/item/feedback-item-util';
 
@@ -98,7 +98,7 @@ export class ResultDetailComponent implements OnInit {
     legendPosition = LegendPosition.Below;
 
     feedbackItemService: FeedbackItemService;
-    feedbackItemNodes: FeedbackItemNode[];
+    feedbackItemNodes: FeedbackNode[];
 
     constructor(
         public activeModal: NgbActiveModal,
@@ -229,7 +229,7 @@ export class ResultDetailComponent implements OnInit {
         );
     };
 
-    private updateChart(feedbackItemNodes: FeedbackItemNode[]) {
+    private updateChart(feedbackItemNodes: FeedbackNode[]) {
         if (!this.exercise || feedbackItemNodes.length === 0) {
             this.showScoreChart = false;
             return;

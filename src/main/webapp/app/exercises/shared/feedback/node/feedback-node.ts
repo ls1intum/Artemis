@@ -1,4 +1,4 @@
-export interface FeedbackItemNode {
+export interface FeedbackNode {
     /**
      * CSS variable specifying the color
      */
@@ -7,7 +7,7 @@ export interface FeedbackItemNode {
     credits: number | undefined;
     /**
      * Cap e.g. SCA deductions or achievable points from test cases
-     * mostly used for {@link FeedbackItemGroup}
+     * mostly used for {@link FeedbackGroup}
      */
     maxCredits?: number;
 }

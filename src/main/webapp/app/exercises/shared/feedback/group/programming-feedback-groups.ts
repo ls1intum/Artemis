@@ -1,4 +1,4 @@
-import { FeedbackItemGroup } from 'app/exercises/shared/feedback/item/feedback-item-group';
+import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -6,20 +6,14 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 /**
  * Returns all FeedbackItemGroups for Programming exercises
  */
-export const getAllFeedbackItemGroups = (exercise: Exercise): FeedbackItemGroup[] => {
-    return [
-        new FeedbackItemGroupWrong(),
-        new FeedbackItemGroupWarning(exercise),
-        new FeedbackItemGroupInfo(),
-        new FeedbackItemGroupMissing(),
-        new FeedbackItemGroupCorrect(exercise),
-    ];
+export const getAllFeedbackGroups = (exercise: Exercise): FeedbackGroup[] => {
+    return [new FeedbackGroupWrong(), new FeedbackGroupWarning(exercise), new FeedbackGroupInfo(), new FeedbackGroupMissing(), new FeedbackGroupCorrect(exercise)];
 };
 
 /**
  * Automated feedbacks with no influence on final score
  */
-class FeedbackItemGroupMissing extends FeedbackItemGroup {
+class FeedbackGroupMissing extends FeedbackGroup {
     constructor() {
         super();
         this.name = 'missing';
@@ -35,7 +29,7 @@ class FeedbackItemGroupMissing extends FeedbackItemGroup {
 /**
  * Negative feedbacks that are not SCA
  */
-class FeedbackItemGroupWrong extends FeedbackItemGroup {
+class FeedbackGroupWrong extends FeedbackGroup {
     constructor() {
         super();
         this.name = 'wrong';
@@ -53,7 +47,7 @@ class FeedbackItemGroupWrong extends FeedbackItemGroup {
 /**
  * Negative feedbacks that are SCA
  */
-class FeedbackItemGroupWarning extends FeedbackItemGroup {
+class FeedbackGroupWarning extends FeedbackGroup {
     constructor(exercise: Exercise) {
         super();
         this.name = 'warning';
@@ -73,7 +67,7 @@ class FeedbackItemGroupWarning extends FeedbackItemGroup {
  * - Reviewer feedback with no influence on grade
  * - Subsequent feedback
  */
-class FeedbackItemGroupInfo extends FeedbackItemGroup {
+class FeedbackGroupInfo extends FeedbackGroup {
     constructor() {
         super();
         this.name = 'info';
@@ -92,7 +86,7 @@ class FeedbackItemGroupInfo extends FeedbackItemGroup {
  * - Positive credits from Reviewer
  * - Positive credits from Test cases
  */
-class FeedbackItemGroupCorrect extends FeedbackItemGroup {
+class FeedbackGroupCorrect extends FeedbackGroup {
     constructor(exercise: Exercise) {
         super();
         this.name = 'correct';

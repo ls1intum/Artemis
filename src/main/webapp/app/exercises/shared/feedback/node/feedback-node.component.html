@@ -31,11 +31,11 @@
     </summary>
 
     <div class="card-body feedback-item-group__members">
-        <jhi-feedback-item-node
+        <jhi-feedback-node
             class="feedback-item-group__members__member"
             *ngFor="let feedbackItem of feedbackItemGroup.members"
             [feedbackItemNode]="feedbackItem"
             [course]="course"
-        ></jhi-feedback-item-node>
+        ></jhi-feedback-node>
     </div>
 </details>

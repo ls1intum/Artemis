@@ -24,7 +24,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { Course } from 'app/entities/course.model';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
-import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
+import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 
 describe('ResultDetailComponent', () => {
     let comp: ResultDetailComponent;
@@ -122,7 +122,7 @@ describe('ResultDetailComponent', () => {
 
     const generateFeedbacksAndExpectedItems = (showTestDetails = false) => {
         const feedbacks: Feedback[] = [];
-        const expectedItems: FeedbackItemNode[] = [];
+        const expectedItems: FeedbackNode[] = [];
         const addPair = (pair: { fb: Feedback; item: FeedbackItem }) => {
             feedbacks.push(pair.fb);
             expectedItems.push(pair.item);

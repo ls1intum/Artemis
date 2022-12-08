@@ -1,8 +1,8 @@
-import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
+import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 
 export type FeedbackItemType = 'Test' | 'Static Code Analysis' | 'Reviewer' | 'Subsequent' | 'Feedback' | 'Submission Policy';
 
-export class FeedbackItem implements FeedbackItemNode {
+export class FeedbackItem implements FeedbackNode {
     name: string;
     credits: number | undefined;
     maxCredits?: number;

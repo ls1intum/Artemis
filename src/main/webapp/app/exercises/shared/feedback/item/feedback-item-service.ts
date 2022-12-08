@@ -3,7 +3,7 @@ import { Feedback } from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { Exercise } from 'app/entities/exercise.model';
-import { FeedbackItemNode } from 'app/exercises/shared/feedback/item/feedback-item-node';
+import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 
 export interface FeedbackItemService {
     /**
@@ -14,18 +14,18 @@ export interface FeedbackItemService {
     create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[];
 
     /**
-     * Uses {@link FeedbackItemGroup} predicate shouldContain and adds all that fulfill this predicate to its group
+     * Uses {@link FeedbackGroup} predicate shouldContain and adds all that fulfill this predicate to its group
      * @param feedbackItems to be added to groups
-     * @param exercise containing information needed to configure the {@link FeedbackItemGroup}
+     * @param exercise containing information needed to configure the {@link FeedbackGroup}
      */
-    group(feedbackItems: FeedbackItem[], exercise: Exercise): FeedbackItemNode[];
+    group(feedbackItems: FeedbackItem[], exercise: Exercise): FeedbackNode[];
 }
 
 @Injectable({ providedIn: 'root' })
 export class FeedbackItemServiceImpl implements FeedbackItemService {
     constructor(private translateService: TranslateService) {}
 
-    group(feedbackItems: FeedbackItem[]): FeedbackItemNode[] {
+    group(feedbackItems: FeedbackItem[]): FeedbackNode[] {
         return feedbackItems;
     }
 
