@@ -871,7 +871,7 @@ public class UserTestService {
 
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
-            userRepository.deleteAll();
+            userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
             database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
@@ -880,7 +880,7 @@ public class UserTestService {
             user2.setGroups(Set.of("tumuser"));
             userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1).contains(user2);
+            assertThat(result).contains(user2).doesNotContain(user1);
         }
     }
 
@@ -925,7 +925,7 @@ public class UserTestService {
             user2.setActivated(false);
             userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1).contains(user2);
+            assertThat(result).contains(user2).doesNotContain(user1);
         }
     }
 
@@ -972,7 +972,7 @@ public class UserTestService {
             user2.setInternal(false);
             userRepository.saveAll(List.of(user1, user2));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1).contains(user2);
+            assertThat(result).contains(user2).doesNotContain(user1);
         }
     }
 
@@ -1050,7 +1050,7 @@ public class UserTestService {
             User admin = userRepository.getUserByLoginElseThrow("admin");
             userRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1).contains(admin);
+            assertThat(result).contains(admin).doesNotContain(user1, user2);
         }
     }
 }

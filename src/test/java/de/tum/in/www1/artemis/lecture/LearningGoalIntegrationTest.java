@@ -640,7 +640,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         createParticipationSubmissionAndResult(idOfTextExercise, instructor1, 10.0, 0.0, 100, true); // will be ignored as not a student
 
-        await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 2);
+        await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 5);
 
         CourseLearningGoalProgress courseLearningGoalProgress = request.get(
                 "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress?useParticipantScoreTable=true", HttpStatus.OK, CourseLearningGoalProgress.class);
