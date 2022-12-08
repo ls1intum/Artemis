@@ -29,7 +29,8 @@ import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service'
 import { resultIsPreliminary } from '../result.utils';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { checkSubsequentFeedbackInAssessment } from 'app/exercises/shared/feedback/feedback.util';
-import { ChartData, nodesToChartData } from 'app/exercises/shared/feedback/item/feedback-item-util';
+import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-data';
+import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedback-chart.service';
 
 // Modal -> Result details view
 @Component({
@@ -107,6 +108,7 @@ export class ResultDetailComponent implements OnInit {
         private translateService: TranslateService,
         private profileService: ProfileService,
         private feedbackService: FeedbackService,
+        private feedbackChartService: FeedbackChartService,
         private injector: Injector,
     ) {
         const pointsLabel = translateService.instant('artemisApp.result.chart.points');
@@ -235,7 +237,7 @@ export class ResultDetailComponent implements OnInit {
             return;
         }
 
-        this.chartData = nodesToChartData(feedbackItemNodes, this.exercise!);
+        this.chartData = this.feedbackChartService.create(feedbackItemNodes, this.exercise!);
     }
 
     getCommitHash(): string {
