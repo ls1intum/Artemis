@@ -47,7 +47,6 @@ import tech.jhipster.web.util.ResponseUtil;
  * Another option would be to have a specific JPA entity graph to handle this case.
  */
 @RestController
-@PreAuthorize("hasRole('ADMIN')")
 public class UserResource {
 
     private final Logger log = LoggerFactory.getLogger(UserResource.class);
