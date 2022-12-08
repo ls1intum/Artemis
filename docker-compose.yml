@@ -2,17 +2,17 @@
 # Artemis-Dev-MySQL Setup
 # ----------------------------------------------------------------------------------------------------------------------
 
-# this links to /src/main/docker/artemis-dev-mysql.yml which is the default artemis development docker compose setup
+# this links to /src/main/docker/artemis-prod-mysql.yml which is the default artemis development docker compose setup
 # just using a symlink doesn't work because of the relative paths ;)
 
 services:
     artemis-app:
         extends:
-            file: ./src/main/docker/artemis-dev-mysql.yml
+            file: ./src/main/docker/artemis-prod-mysql.yml
             service: artemis-app
     mysql:
         extends:
-            file: ./src/main/docker/artemis-dev-mysql.yml
+            file: ./src/main/docker/artemis-prod-mysql.yml
             service: mysql
 
 networks:
