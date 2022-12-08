@@ -39,14 +39,22 @@ export class ArtemisQuizService {
     }
 
     static isUninitialized(quizExercise: QuizExercise): boolean {
-        return !!quizExercise.quizBatches?.some((batch) => batch.started);
+        return ArtemisQuizService.notEndedSubmittedOrFinished(quizExercise) && ArtemisQuizService.startedQuizBatch(quizExercise);
     }
 
     static notStarted(quizExercise: QuizExercise): boolean {
+        return ArtemisQuizService.notEndedSubmittedOrFinished(quizExercise) && !ArtemisQuizService.startedQuizBatch(quizExercise);
+    }
+
+    private static notEndedSubmittedOrFinished(quizExercise: QuizExercise): boolean {
         return (
-            (!quizExercise.quizEnded && !this.isUninitialized(quizExercise) && !quizExercise.studentParticipations?.[0]?.initializationState) ||
-            (!!quizExercise.studentParticipations?.[0]?.initializationState &&
+            !quizExercise.quizEnded &&
+            (!quizExercise.studentParticipations?.[0]?.initializationState ||
                 ![InitializationState.INITIALIZED, InitializationState.FINISHED].includes(quizExercise.studentParticipations[0].initializationState))
         );
+    }
+
+    private static startedQuizBatch(quizExercise: QuizExercise): boolean {
+        return !!quizExercise.quizBatches?.some((batch) => batch.started);
     }
 }
