@@ -71,9 +71,10 @@ under ``localhost:7990``.
 
 #. Provide the just created license key during the setup and create an admin user with the same credentials
    in all 3 applications.
-   For the Bamboo database you can choose H2.
-   Also, you can select the evaluation/internal/test/dev setups if you are asked.
-   Follow the additional steps for Jira and Bitbucket.
+   - Bamboo:
+
+    - Choose the H2 database
+    - Select the evaluation/internal/test/dev setups if you are asked
 
    - Jira:
 
@@ -129,32 +130,32 @@ under ``localhost:7990``.
              - **Jira:**
            * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
                   :align: center
-                  :target: ../_images/bamboo_bitbucket_applicationLink.png
+                  :target: ../../_images/bamboo_bitbucket_applicationLink.png
 
                   Bamboo → Bitbucket
              - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
                   :align: center
-                  :target: ../_images/bitbucket_bamboo_applicationLink.png
+                  :target: ../../_images/bitbucket_bamboo_applicationLink.png
 
                   Bitbucket → Bamboo
              - .. figure:: setup/bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
                   :align: center
-                  :target: ../_images/jira_bamboo_applicationLink.png
+                  :target: ../../_images/jira_bamboo_applicationLink.png
 
                   Jira → Bamboo
            * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
                   :align: center
-                  :target: ../_images/bamboo_jira_applicationLink.png
+                  :target: ../../_images/bamboo_jira_applicationLink.png
 
                   Bamboo → Jira
              - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
                   :align: center
-                  :target: ../_images/bitbucket_jira_applicationLink.png
+                  :target: ../../_images/bitbucket_jira_applicationLink.png
 
                   Bitbucket → Jira
              - .. figure:: setup/bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
                   :align: center
-                  :target: ../_images/jira_bitbucket_applicationLink.png
+                  :target: ../../_images/jira_bitbucket_applicationLink.png
 
                   Jira → Bitbucket
 
