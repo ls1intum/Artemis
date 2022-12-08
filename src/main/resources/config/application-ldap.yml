@@ -4,4 +4,5 @@ artemis:
             url: "ldaps://iauth.tum.de:636"
             user-dn: "cn=TUINI01-Artemis,ou=bindDNs,ou=iauth,dc=tum,dc=de"
             base: "ou=users,ou=data,ou=prod,ou=iauth,dc=tum,dc=de"
+            # password: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
             allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'    # example for a TUM identifier, e.g. ab12cde

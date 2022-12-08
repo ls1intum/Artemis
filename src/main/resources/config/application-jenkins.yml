@@ -7,6 +7,19 @@
 artemis:
     continuous-integration:
         url: http://localhost:8082
+        # user: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
+        # password: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
+        empty-commit-necessary: false # Do we need an empty commit for new exercises/repositories in order for the CI to register the repo
+        # Hash/key of the ci-token, equivalent e.g. to the ci-token in version-control
+        # Some CI systems, like Jenkins, offer a specific token that gets checked against any incoming notifications
+        # from a VCS trying to trigger a build plan. Only if the notification request contains the correct token, the plan
+        # is triggered. This can be seen as an alternative to sending an authenticated request to a REST API and then
+        # triggering the plan.
+        # In the case of Artemis, this is only really needed for the Jenkins + GitLab setup, since the GitLab plugin in
+        # Jenkins only allows triggering the Jenkins jobs using such a token. Furthermore, in this case, the value of the
+        # hudson.util.Secret is stored in the build plan, so you also have to specify this encrypted string here and NOT the actual token value itself!
+        # You can get this by GETting any job.xml for a job with an activated GitLab step and your token value of choice.
+        # secret-push-token: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
         # Key of the saved credentials for the VCS service
         # You have to specify the key from the credentials page in Jenkins under which the user and
         # password for the VCS are stored
@@ -14,7 +27,10 @@ artemis:
         # Key of the credentials for the Artemis notification token
         # You have to specify the key from the credentials page in Jenkins under which the authentication-token is stored
         artemis-authentication-token-key: artemis_notification_plugin_token
-        empty-commit-necessary: false # Do we need an empty commit for new exercises/repositories in order for the CI to register the repo
+        # The actual value of the notification token to check against in Artemis. This is the token that gets send with
+        # every request the CI system makes to Artemis containing a new result after a build.
+        # The token value you use for the Server Notification Plugin and is stored under the notification-token credential above
+        # artemis-authentication-token-value: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
 
 jenkins:
     # The following (optional) parameter allows to customize if Jenkins CSRF protection should be used (activated) within Artemis:

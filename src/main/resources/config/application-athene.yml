@@ -1,4 +1,5 @@
 artemis:
     athene:
         url: http://localhost
+        # base64-secret: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
         token-validity-in-seconds: 10800

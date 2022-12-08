@@ -9,6 +9,8 @@ artemis:
     repo-download-clone-path: ./repos-download      # a temporary folder, in which git repos are downloaded that are immediately deleted afterwards (e.g. exports, plagiarism checks), should NOT be in a shared file system area
     file-upload-path: uploads
     submission-export-path: exports
+    # LEGACY: arbitrary password for encrypting database values
+    # encryption-password: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
     bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
                             # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
     external-system-request:
@@ -16,6 +18,9 @@ artemis:
         batch-waiting-time: 30000   # in ms = 30s
     user-management:
         use-external: false
+        internal-admin:
+            # username: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
+            # password: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
         registration:               # the whole section is optional: whether user can register in Artemis
             enabled: false
             allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(tum\.de|in\.tum\.de|mytum\.de)'
