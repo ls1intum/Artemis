@@ -15,7 +15,7 @@ chown artemis:artemis config data
 
 echo "Starting application..."
 exec java \
-  ${RemoteDebuggingOption} \
+  "${RemoteDebuggingOption}" \
   -Djdk.tls.ephemeralDHKeySize=2048 \
   -DLC_CTYPE=UTF-8 \
   -Dfile.encoding=UTF-8 \
