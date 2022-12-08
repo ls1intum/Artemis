@@ -6,7 +6,6 @@ import { sortBy } from 'lodash-es';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, ExerciseTypeTOTAL, IncludedInOverallScore } from 'app/entities/exercise.model';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { GradeType } from 'app/entities/grading-scale.model';
@@ -22,6 +21,8 @@ import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result.model';
 
 const QUIZ_EXERCISE_COLOR = '#17a2b8';
 const PROGRAMMING_EXERCISE_COLOR = '#fd7e14';
@@ -188,7 +189,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
     constructor(
         private courseStorageService: CourseStorageService,
         private scoresStorageService: ScoresStorageService,
-        private courseCalculationService: CourseScoreCalculationService,
         private translateService: TranslateService,
         private route: ActivatedRoute,
         private gradingSystemService: GradingSystemService,
@@ -318,11 +318,12 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                     series[5].exerciseId = exercise.id;
                     this.pushToData(exercise, series);
                 } else {
-                    exercise.studentParticipations.forEach((participation) => {
+                    exercise.studentParticipations.forEach((participation: StudentParticipation) => {
                         if (participation.results?.length) {
                             // const participationResult = participation.result;
                             // -> kommt aus dem course in courseStorageService und damit auch von findAllForDashboard() oder findOneForDashboard()
-                            const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
+                            // const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
+                            const participationResult: Result | undefined = participation.participationResult;
                             if (participationResult?.rated) {
                                 const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score!, this.course);
                                 const cappedParticipationScore = Math.min(roundedParticipationScore, 100);
@@ -538,20 +539,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         this.presentationScoresPerExercise = presentationScores;
         this.overallPresentationScore = this.calculateScoreTypeForExerciseType(ExerciseTypeTOTAL.TOTAL, ScoreType.PRESENTATION_SCORE);
     }
-
-    /**
-     * Calculates the total score for every exercise in the course satisfying the filter function
-     * @param filterFunction the filter the exercises have to satisfy
-     * @returns map containing score for every score type
-     * @private
-     */
-    // private calculateScores(filterFunction: (courseExercise: Exercise) => boolean): Map<string, number> {
-    //     let courseExercises = this.courseExercises;
-    //     if (filterFunction) {
-    //         courseExercises = courseExercises.filter(filterFunction);
-    //     }
-    //     return this.courseCalculationService.calculateTotalScores(courseExercises, this.course!);
-    // }
 
     /**
      * Calculates an arbitrary score type for an arbitrary exercise type

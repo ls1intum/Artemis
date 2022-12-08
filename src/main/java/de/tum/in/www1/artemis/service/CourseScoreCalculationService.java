@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -8,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -42,11 +44,14 @@ public class CourseScoreCalculationService {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
+    private final ParticipantScoreService participantScoreService;
+
     public CourseScoreCalculationService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
-                                         PlagiarismCaseRepository plagiarismCaseRepository) {
+                                         PlagiarismCaseRepository plagiarismCaseRepository, ParticipantScoreService participantScoreService) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
+        this.participantScoreService = participantScoreService;
     }
 
     /**
@@ -99,6 +104,32 @@ public class CourseScoreCalculationService {
     }
 
     /**
+     * Get all the items needed for the CourseForDashboardDTO.
+     * This includes scoresPerExerciseType, participantScores, and participationResults.
+     *
+     * @param course the course to calculate the items for.
+     * @param userId the id of the students whose scores in the course will be calculated.
+     * @return the CourseForDashboardDTO containing all the mentioned items.
+     */
+    public CourseForDashboardDTO getScoresAndParticipationResults(Course course, long userId) {
+        // Get scores per exercise type for the course (used in course-statistics.component i.a.).
+        Map<String, CourseScoresForStudentStatisticsDTO> scoresPerExerciseType = calculateCourseScoresPerExerciseType(course, userId);
+
+        // Get participant scores (latest result for each exercise) for the course.
+        Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise).collect(toSet());
+        List<ParticipantScoreDTO> participantScores = participantScoreService.getParticipantScoreDTOs(Pageable.unpaged(), exercisesOfCourse);
+
+        // Set the participation result for each participation (used in course-statistics.component)
+        for (Exercise exercise : exercisesOfCourse) {
+            for (StudentParticipation participation : exercise.getStudentParticipations()) {
+                participation.setParticipationResult(getResultForParticipation(participation, participation.getExercise().getDueDate()));
+            }
+        }
+
+        return new CourseForDashboardDTO(course, scoresPerExerciseType, participantScores);
+    }
+
+    /**
      * Prepares all entities required for calculateCourseScores and calls it multiple times to retrieve the scores per exercise type
      * for the specified student in the specified course.
      * In addition to the scores per exercise type, the total scores per course are calculated.
@@ -115,13 +146,13 @@ public class CourseScoreCalculationService {
 
         // Retrieve required entities
 
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(courseId, userId);
+
         Set<Exercise> courseExercises = course.getExercises();
 
         MaxAndReachablePoints maxAndReachablePoints = calculateMaxAndReachablePoints(courseExercises);
 
         List<PlagiarismCase> plagiarismCases = plagiarismCaseRepository.findByCourseIdAndStudentId(courseId, userId);
-
-        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(courseId, userId);
 
         // Get scores for all exercises in course.
         var studentScoresWithPlagiarismVerdict = calculateCourseScoreForStudent(course, userId, studentParticipations, maxAndReachablePoints.maxPoints, maxAndReachablePoints.reachablePoints, plagiarismCases);
@@ -248,7 +279,7 @@ public class CourseScoreCalculationService {
         return pointsAchievedFromExercise;
     }
 
-    private Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
+    public Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
         if (participation == null) {
             return null;
         }

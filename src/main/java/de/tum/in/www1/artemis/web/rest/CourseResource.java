@@ -14,6 +14,8 @@ import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -104,13 +106,15 @@ public class CourseResource {
 
     private final CourseScoreCalculationService courseScoreCalculationService;
 
+    private final StudentParticipationRepository studentParticipationRepository;
+
     private final ParticipantScoreService participantScoreService;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
                           OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
                           TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
                           AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-                          FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService, ParticipantScoreService participantScoreService) {
+                          FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService, StudentParticipationRepository studentParticipationRepository, ParticipantScoreService participantScoreService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -127,6 +131,7 @@ public class CourseResource {
         this.fileService = fileService;
         this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
         this.courseScoreCalculationService = courseScoreCalculationService;
+        this.studentParticipationRepository = studentParticipationRepository;
         this.participantScoreService = participantScoreService;
     }
 
@@ -417,14 +422,7 @@ public class CourseResource {
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
 
-        // Get scores per exercise type for the course (used in course-statistics.component i.a.).
-        Map<String, CourseScoresForStudentStatisticsDTO> scoresPerExerciseType = courseScoreCalculationService.calculateCourseScoresPerExerciseType(course, user.getId());
-
-        // Get participant scores (latest result for each exercise) for the course.
-        Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise).collect(toSet());
-        List<ParticipantScoreDTO> participantScores = participantScoreService.getParticipantScoreDTOs(Pageable.unpaged(), exercisesOfCourse);
-
-        return new CourseForDashboardDTO(course, scoresPerExerciseType, participantScores);
+        return courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
     }
 
     /**
@@ -447,14 +445,8 @@ public class CourseResource {
         List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
 
         for (Course course : courses) {
-            // Get scores per exercise type for each course (used in course-statistics.component i.a.).
-            Map<String, CourseScoresForStudentStatisticsDTO> scoresPerExerciseType = courseScoreCalculationService.calculateCourseScoresPerExerciseType(course, user.getId());
-
-            // Get participant scores (latest result for each exercise) for each course.
-            Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise).collect(toSet());
-            List<ParticipantScoreDTO> participantScores = participantScoreService.getParticipantScoreDTOs(Pageable.unpaged(), exercisesOfCourse);
-
-            coursesForDashboard.add(new CourseForDashboardDTO(course, scoresPerExerciseType, participantScores));
+            CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
+            coursesForDashboard.add(courseForDashboard);
         }
 
         log.info("get all courses for dashboard took {}ms", System.currentTimeMillis() - start);
