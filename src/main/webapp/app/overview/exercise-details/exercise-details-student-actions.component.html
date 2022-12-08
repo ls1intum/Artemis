@@ -59,7 +59,7 @@
                 [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
                 [outlined]="true"
                 [buttonLoading]="!!exercise.loading"
-                *ngIf="gradedParticipation?.initializationState === InitializationState.FINISHED"
+                *ngIf="gradedParticipation?.initializationState === InitializationState.FINISHED && !gradedParticipation?.results?.length"
                 [smallButton]="smallButtons"
                 (click)="startExercise()"
             ></button>
@@ -69,7 +69,7 @@
                 [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
                 [outlined]="true"
                 [buttonLoading]="!!exercise.loading"
-                *ngIf="exercise.dueDate && dayjs(exercise.dueDate).isBefore(dayjs()) && gradedParticipation?.results?.length && showResult"
+                *ngIf="gradedParticipation?.results?.length"
                 [smallButton]="smallButtons"
                 (click)="startExercise()"
             ></button>
@@ -200,7 +200,7 @@
                         [participations]="exercise.studentParticipations!"
                         [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor']"
                         [exerciseId]="exercise.id!"
-                        *ngIf="!examMode && isOnlineEditorAllowed()"
+                        *ngIf="!examMode && programmingExercise?.allowOnlineEditor"
                     >
                     </jhi-open-code-editor-button>
 
@@ -208,7 +208,7 @@
                         [loading]="!!exercise.loading"
                         [smallButtons]="smallButtons"
                         [participations]="exercise.studentParticipations!"
-                        *ngIf="isOfflineIdeAllowed()"
+                        *ngIf="programmingExercise?.allowOfflineIde"
                     >
                     </jhi-clone-repo-button>
 

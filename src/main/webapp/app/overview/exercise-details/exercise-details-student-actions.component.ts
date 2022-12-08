@@ -48,6 +48,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     quizNotStarted: boolean;
     gradedParticipation?: StudentParticipation;
     practiceParticipation?: StudentParticipation;
+    programmingExercise?: ProgrammingExercise;
 
     // Icons
     faComment = faComment;
@@ -73,6 +74,8 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             const quizExercise = this.exercise as QuizExercise;
             this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
+        } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            this.programmingExercise = this.exercise;
         }
     }
 
@@ -103,22 +106,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         return !this.examMode && isStartPracticeAvailable(this.exercise);
     }
 
-    /**
-     * check if onlineEditor is allowed
-     * @return {boolean}
-     */
-    isOnlineEditorAllowed() {
-        return (this.exercise as ProgrammingExercise).allowOnlineEditor;
-    }
-
-    /**
-     * check if offline IDE is allowed
-     * @return {boolean}
-     */
-    isOfflineIdeAllowed() {
-        return (this.exercise as ProgrammingExercise).allowOfflineIde;
-    }
-
     startExercise() {
         if (this.exercise.type === ExerciseType.QUIZ) {
             // Start the quiz
@@ -131,11 +118,11 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             .subscribe({
                 next: (participation) => {
                     if (participation) {
-                        this.exercise.studentParticipations = [participation];
+                        this.exercise.studentParticipations = [...(this.exercise.studentParticipations ?? []), participation];
                         this.gradedParticipation = participation;
                     }
-                    if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                        if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
+                    if (this.programmingExercise) {
+                        if (this.programmingExercise.allowOfflineIde) {
                             this.alertService.success('artemisApp.exercise.personalRepositoryClone');
                         } else {
                             this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
@@ -240,7 +227,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     }
 
     publishBuildPlanUrl() {
-        return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
+        return this.programmingExercise?.publishBuildPlanUrl;
     }
 
     buildPlanUrl(participation: StudentParticipation) {

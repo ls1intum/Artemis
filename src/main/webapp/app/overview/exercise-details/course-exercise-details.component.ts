@@ -325,6 +325,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             }
         }
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
+            console.log('Update websocket');
             if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
                 // Notify student about late submission result
                 if (

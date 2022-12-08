@@ -46,7 +46,7 @@ describe('SubmissionResultStatusComponent', () => {
             [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [] as StudentParticipation[] } as QuizExercise, false],
             [
                 { type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [{ initializationState: InitializationState.UNINITIALIZED }] } as QuizExercise,
-                true,
+                false,
             ],
             [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [{ initializationState: InitializationState.FINISHED }] } as QuizExercise, false],
         ])('should determine if quiz is not started', (exercise: Exercise, expected: boolean) => {
