@@ -4,12 +4,7 @@ import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.*;
 import static de.tum.in.www1.artemis.versioning.VersionRangeFactory.getInstanceOfVersionRange;
 import static de.tum.in.www1.artemis.versioning.VersionRangeService.versionRangeToIntegerList;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
@@ -316,9 +311,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
 
     @Override
     public int hashCode() {
-        int result = getRanges() != null ? getRanges().hashCode() : 0;
-        result = 31 * result + inRangeCodes.hashCode();
-        return result;
+        return Objects.hash(getRanges(), inRangeCodes);
     }
 
     @Override

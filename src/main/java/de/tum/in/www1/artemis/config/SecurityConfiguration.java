@@ -122,13 +122,13 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/test/**")
             .antMatchers(CustomLti13Configurer.JWKS_PATH);
         web.ignoring()
-            .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
+            .antMatchers(HttpMethod.POST, "/api/programming-exercises/new-result");
         web.ignoring()
-            .antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
+            .antMatchers(HttpMethod.POST, "/api/programming-submissions/*");
         web.ignoring()
-            .antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*");
+            .antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*");
         web.ignoring()
-            .antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH);
+            .antMatchers(HttpMethod.GET, "/api/system-notifications/active");
         web.ignoring()
             .antMatchers(HttpMethod.POST, "/api/athene-result/*");
         // @formatter:on
