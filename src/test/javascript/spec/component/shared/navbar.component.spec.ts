@@ -1,9 +1,11 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
-import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
+import { NgbCollapse, NgbDropdown, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -14,7 +16,7 @@ import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -69,9 +71,24 @@ describe('NavbarComponent', () => {
         uri: '/course-management/1/programming-exercises/',
     } as MockBreadcrumb;
 
+    const profileInfo = {
+        git: {
+            branch: 'clone-repo-button',
+            commit: {
+                id: {
+                    abbrev: '95ef2a',
+                },
+                time: '2022-11-20T20:35:01Z',
+                user: {
+                    name: 'Max Musterman',
+                },
+            },
+        },
+    } as ProfileInfo;
+
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockModule(NgbModule)],
             declarations: [
                 NavbarComponent,
                 MockDirective(NgbCollapse),
@@ -228,6 +245,18 @@ describe('NavbarComponent', () => {
 
         expect(component.breadcrumbs[0]).toEqual({ label: 'route-without-translation', translate: false, uri: '/admin/route-without-translation/' } as MockBreadcrumb);
     });
+
+    it('should have correct git info', fakeAsync(() => {
+        const profileService: ProfileService = TestBed.inject(ProfileService);
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo as any));
+
+        fixture.detectChanges();
+
+        expect(component.gitCommitId).toBe('95ef2a');
+        expect(component.gitBranchName).toBe('clone-repo-button');
+        expect(component.gitTimestamp).toBe('Sun, 20 Nov 2022 20:35:01 GMT');
+        expect(component.gitUsername).toBe('Max Musterman');
+    }));
 
     it('should set the exam active state correctly', fakeAsync(() => {
         const now = dayjs();
