@@ -33,7 +33,7 @@ ENV spring.profiles.active ""
 # versions just pinned for reproducibility
 RUN echo "Installing needed dependencies" \
   && apt-get update && apt-get install -y --no-install-recommends locales=2.35-0ubuntu3.1 \
-  && graphviz=2.42.2-6 wget=1.21.2-2ubuntu1 netcat-openbsd=1.218-4ubuntu1 \
+  graphviz=2.42.2-6 wget=1.21.2-2ubuntu1 netcat-openbsd=1.218-4ubuntu1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
