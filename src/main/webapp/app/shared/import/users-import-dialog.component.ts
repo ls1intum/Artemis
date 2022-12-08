@@ -233,7 +233,8 @@ export class UsersImportDialogComponent implements OnDestroy {
         for (const notFound of this.notFoundUsers) {
             if (
                 (notFound.registrationNumber?.length > 0 && notFound.registrationNumber === user.registrationNumber) ||
-                (notFound.login?.length > 0 && notFound.login === user.login)
+                (notFound.login?.length > 0 && notFound.login === user.login) ||
+                (notFound.email?.length > 0 && notFound.email === user.email)
             ) {
                 return true;
             }
