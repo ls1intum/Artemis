@@ -42,6 +42,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     dueDate?: dayjs.Dayjs;
     gradedStudentParticipation?: StudentParticipation;
 
+    routerLink: any[];
+
     participationUpdateListener: Subscription;
 
     constructor(
@@ -77,6 +79,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
                 this.dueDate = getExerciseDueDate(this.exercise, this.gradedStudentParticipation);
             }
         });
+
+        this.routerLink = ['/courses', this.course.id!, 'exercises', this.exercise.id!];
     }
 
     ngOnChanges(): void {
