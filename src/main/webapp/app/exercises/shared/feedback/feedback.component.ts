@@ -26,7 +26,7 @@ import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
-import { resultIsPreliminary } from '../result.utils';
+import { resultIsPreliminary } from '../result/result.utils';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { checkSubsequentFeedbackInAssessment } from 'app/exercises/shared/feedback/feedback.util';
 import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-data';
@@ -35,10 +35,10 @@ import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedba
 // Modal -> Result details view
 @Component({
     selector: 'jhi-result-detail',
-    templateUrl: './result-detail.component.html',
-    styleUrls: ['./result-detail.scss'],
+    templateUrl: './feedback.component.html',
+    styleUrls: ['./feedback.scss'],
 })
-export class ResultDetailComponent implements OnInit {
+export class FeedbackComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
