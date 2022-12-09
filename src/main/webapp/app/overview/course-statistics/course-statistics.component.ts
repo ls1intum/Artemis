@@ -320,9 +320,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 } else {
                     exercise.studentParticipations.forEach((participation: StudentParticipation) => {
                         if (participation.results?.length) {
-                            // const participationResult = participation.result;
-                            // -> kommt aus dem course in courseStorageService und damit auch von findAllForDashboard() oder findOneForDashboard()
-                            // const participationResult = this.courseCalculationService.getResultForParticipation(participation, exercise.dueDate!);
                             const participationResult: Result | undefined = participation.participationResult;
                             if (participationResult?.rated) {
                                 const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score!, this.course);
@@ -406,7 +403,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
      * @private
      */
     private calculateAbsoluteScores(): void {
-        // const quizzesTotalScore = this.course.scores.quiz.total
         const quizzesTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.QUIZ, ScoreType.ABSOLUTE_SCORE);
         const programmingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.PROGRAMMING, ScoreType.ABSOLUTE_SCORE);
         const modelingExerciseTotalScore = this.calculateScoreTypeForExerciseType(ExerciseType.MODELING, ScoreType.ABSOLUTE_SCORE);
@@ -561,17 +557,6 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         }
         return NaN;
     }
-
-    /**
-     * Calculates a score type for the whole course
-     * @param scoreType the score type that should be calculated. Element of {Absolute score, Max points,Current relative score,Presentation score,Reachable points,Relative score}
-     * @returns requested score type value
-     * @private
-     */
-    // private calculateTotalScoreForTheCourse(scoreType: ScoreType): number {
-    //     const scores = this.courseCalculationService.calculateTotalScores(this.courseExercises, this.course!);
-    //     return scores.get(scoreType)!;
-    // }
 
     calculateAndFilterNotIncludedInScore() {
         this.currentlyHidingNotIncludedInScoreExercises = true;
