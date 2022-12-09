@@ -44,7 +44,6 @@ import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/p
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbAlert, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
@@ -225,12 +224,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockComponent(TestCaseDistributionChartComponent),
                 MockComponent(CategoryIssuesChartComponent),
                 MockComponent(ScaCategoryDistributionChartComponent),
-                MockComponent(NgbAlert),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgModel),
-                MockDirective(NgbPopover),
-                MockDirective(NgbTooltip),
                 MockDirective(TranslateDirective),
             ],
             providers: [

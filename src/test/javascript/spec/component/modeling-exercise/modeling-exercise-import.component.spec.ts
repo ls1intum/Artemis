@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseImportComponent, TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
@@ -31,8 +30,6 @@ describe('ModelingExerciseImportComponent', () => {
                 ModelingExerciseImportComponent,
                 MockPipe(ExerciseCourseTitlePipe),
                 MockComponent(ButtonComponent),
-                MockComponent(NgbHighlight),
-                MockComponent(NgbPagination),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
             ],
