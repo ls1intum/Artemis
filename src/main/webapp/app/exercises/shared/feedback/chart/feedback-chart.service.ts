@@ -42,30 +42,35 @@ export class FeedbackChartService {
      * @return An array with feedback items in the following order: [...positive, ...neutral, ...negative]
      */
     private summarizePoints = (feedbackNodes: FeedbackNode[]): FeedbackNode[] => {
-        const [positive, neutral, negative] = this.separateByCredits(feedbackNodes);
+        const [positive, neutral, negative] = this.separateByCredits(feedbackNodes.slice());
         const sumPositive = this.sumCredits(positive);
-        let sumNegative = this.sumCredits(negative);
+        const sumNegative = this.sumCredits(negative);
 
         if (sumPositive + sumNegative < 0) {
             return this.clearCredits(feedbackNodes);
         }
 
-        let i = 0;
-        while (sumNegative < 0) {
-            const current = positive[i].credits ?? 0;
-            if (current + sumNegative >= 0) {
-                positive[i].credits = (positive[i].credits ?? 0) + sumNegative;
-            } else {
-                positive[i].credits = 0;
-            }
+        const positiveSubtracted = this.subtractCredits(positive, sumNegative);
 
-            sumNegative += current;
-            i++;
-        }
-
-        return [...positive, ...neutral, ...this.absCredits(negative)];
+        return [...positiveSubtracted, ...neutral, ...this.absCredits(negative)];
     };
 
+    private subtractCredits = (feedbackNodes: FeedbackNode[], subtrahend: number): FeedbackNode[] => {
+        return feedbackNodes.map((node) => {
+            let credits = 0;
+            const current = node.credits ?? 0;
+            if (current + subtrahend >= 0) {
+                credits = current + subtrahend;
+            }
+
+            subtrahend = Math.min(subtrahend + current, 0);
+
+            return {
+                ...node,
+                credits,
+            };
+        });
+    };
     /*
      * Separates a list of feedback nodes by node credits. Has runtime of O(3n)
      * @param feedbackNodes
