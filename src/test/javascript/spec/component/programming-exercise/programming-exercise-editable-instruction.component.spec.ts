@@ -1,9 +1,8 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { Subject } from 'rxjs';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -56,7 +55,6 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
                 MockComponent(MarkdownEditorComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
             ],
             providers: [
                 { provide: ResultService, useClass: MockResultService },

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { SortService } from 'app/shared/service/sort.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
@@ -26,14 +25,7 @@ describe('LectureImportComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
-            declarations: [
-                LectureImportComponent,
-                MockComponent(ButtonComponent),
-                MockComponent(NgbHighlight),
-                MockComponent(NgbPagination),
-                MockDirective(SortByDirective),
-                MockDirective(SortDirective),
-            ],
+            declarations: [LectureImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
         })
             .compileComponents()
             .then(() => {
