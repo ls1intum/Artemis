@@ -184,6 +184,10 @@ describe('Course Management Service', () => {
         tick();
     }));
 
+    it('should set the scoresPerExerciseType and participantScores in the scoresStorageServcie', function() {
+        // todo
+    });
+
     it('should find participations for the course', fakeAsync(() => {
         returnedFromService = [...participations];
         courseManagementService
