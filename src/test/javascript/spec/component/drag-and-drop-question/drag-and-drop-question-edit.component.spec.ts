@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { NgModel } from '@angular/forms';
-import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { DragItem } from 'app/entities/quiz/drag-item.model';
@@ -51,7 +51,6 @@ describe('DragAndDropQuestionEditComponent', () => {
                 MockComponent(MarkdownEditorComponent),
                 MockComponent(SecuredImageComponent),
                 MockComponent(DragAndDropQuestionComponent),
-                MockDirective(NgbCollapse),
                 MockDirective(NgModel),
             ],
             providers: [

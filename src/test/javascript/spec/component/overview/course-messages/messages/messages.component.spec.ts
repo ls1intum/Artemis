@@ -6,8 +6,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -60,7 +59,6 @@ describe('MessagesComponent', () => {
                 MockComponent(MessageInlineInputComponent),
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
                 MockComponent(ButtonComponent),
                 MockComponent(ItemCountComponent),
             ],

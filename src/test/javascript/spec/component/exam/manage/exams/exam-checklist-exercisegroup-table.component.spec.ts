@@ -9,7 +9,6 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ProgressBarComponent } from 'app/shared/dashboards/tutor-participation-graph/progress-bar/progress-bar.component';
 import { ExamChecklistExerciseGroupTableComponent } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist-exercisegroup-table/exam-checklist-exercisegroup-table.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseGroupVariantColumn } from 'app/entities/exercise-group-variant-column.model';
@@ -79,7 +78,6 @@ describe('ExamChecklistExerciseGroupTableComponent', () => {
                 ExamChecklistCheckComponent,
                 ExamChecklistExerciseGroupTableComponent,
                 ProgressBarComponent,
-                MockDirective(NgbTooltip),
                 MockComponent(FaIconComponent),
             ],
             providers: [],

@@ -3,7 +3,7 @@ import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -12,7 +12,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
@@ -42,13 +41,7 @@ describe('ConversationSidebarComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, NgxDatatableModule],
-            declarations: [
-                ConversationSidebarComponent,
-                MockComponent(FaIconComponent),
-                MockComponent(DataTableComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
-            ],
+            declarations: [ConversationSidebarComponent, MockComponent(FaIconComponent), MockComponent(DataTableComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 FormBuilder,
                 MockProvider(SessionStorageService),

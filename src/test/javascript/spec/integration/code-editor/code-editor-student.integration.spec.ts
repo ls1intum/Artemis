@@ -36,7 +36,7 @@ import { MockResultService } from '../../helpers/mocks/service/mock-result.servi
 import { MockCodeEditorRepositoryService } from '../../helpers/mocks/service/mock-code-editor-repository.service';
 import { MockCodeEditorRepositoryFileService } from '../../helpers/mocks/service/mock-code-editor-repository-file.service';
 import { MockCodeEditorBuildLogService } from '../../helpers/mocks/service/mock-code-editor-build-log.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -45,7 +45,6 @@ import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-re
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { CodeEditorGridComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-grid.component';
 import { CodeEditorInstructionsComponent } from 'app/exercises/programming/shared/code-editor/instructions/code-editor-instructions.component';
 import { KeysPipe } from 'app/shared/pipes/keys.pipe';
@@ -97,7 +96,6 @@ describe('CodeEditorStudentIntegration', () => {
                 MockComponent(ProgrammingExerciseInstructionComponent),
                 MockComponent(AdditionalFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
                 MockComponent(CodeEditorGridComponent),
                 MockComponent(CodeEditorActionsComponent),
                 MockComponent(CodeEditorBuildOutputComponent),

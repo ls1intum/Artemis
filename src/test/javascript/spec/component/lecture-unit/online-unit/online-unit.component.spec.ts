@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 import { OnlineUnitComponent } from 'app/overview/course-lectures/online-unit/online-unit.component';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
@@ -25,15 +24,7 @@ describe('OnlineUnitComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [BrowserModule],
-            declarations: [
-                OnlineUnitComponent,
-                SafeResourceUrlPipe,
-                MockComponent(FaIconComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(NgbCollapse),
-                MockDirective(NgbTooltip),
-            ],
+            declarations: [OnlineUnitComponent, SafeResourceUrlPipe, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             providers: [{ provide: SafeResourceUrlPipe, useClass: SafeResourceUrlPipe }],
             schemas: [],
         })
