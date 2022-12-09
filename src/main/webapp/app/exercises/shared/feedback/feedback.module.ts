@@ -5,10 +5,11 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { FeedbackCollapseComponent } from 'app/exercises/shared/feedback/collapse/feedback-collapse.component';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { FeedbackNodeComponent } from 'app/exercises/shared/feedback/node/feedback-node.component';
+import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisProgrammingExerciseActionsModule, ArtemisSharedComponentModule, BarChartModule],
-    declarations: [FeedbackCollapseComponent, FeedbackNodeComponent],
-    exports: [FeedbackNodeComponent],
+    declarations: [FeedbackCollapseComponent, FeedbackNodeComponent, FeedbackComponent],
+    exports: [FeedbackComponent],
 })
 export class ArtemisFeedbackModule {}
