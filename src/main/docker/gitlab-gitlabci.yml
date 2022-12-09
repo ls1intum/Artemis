@@ -4,7 +4,7 @@
 
 services:
     gitlab:
-        # TODO: check if the other settings can also be integrated into gitlab.yml
+        # TODO: check if more settings can also be integrated into gitlab.yml
         extends:
             file: ./gitlab/gitlab.yml
                 service: gitlab
@@ -36,6 +36,8 @@ services:
             - /usr/local/bin/docker:/usr/bin/docker
             - artemis-gitlabci-runner-config:/etc/gitlab-runner
         hostname: 'gitlab-runner'
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         networks:
             - artemis
 

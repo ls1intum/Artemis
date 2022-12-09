@@ -6,6 +6,8 @@ services:
     jira:
         container_name: artemis-jira
         hostname: jira
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         image: ghcr.io/ls1intum/artemis-jira:8.20.11
         pull_policy: always
         volumes:
@@ -17,6 +19,8 @@ services:
     bitbucket:
         container_name: artemis-bitbucket
         hostname: bitbucket
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         image: ghcr.io/ls1intum/artemis-bitbucket:7.21.4
         pull_policy: always
         volumes:
@@ -31,6 +35,8 @@ services:
     bamboo:
         container_name: artemis-bamboo
         hostname: bamboo
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         image: ghcr.io/ls1intum/artemis-bamboo:8.2.5
         pull_policy: always
         volumes:
@@ -45,6 +51,8 @@ services:
     bamboo-build-agent:
         container_name: artemis-bamboo-build-agent
         hostname: bamboo-build-agent
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         image: ghcr.io/ls1intum/artemis-bamboo-build-agent:8.2.5
         volumes:
             - artemis-bamboo-build-agent:/var/atlassian/application-data/bamboo-agent

@@ -5,6 +5,8 @@
 services:
     jenkins:
         container_name: artemis-jenkins
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         build: .
         user: root
         volumes:

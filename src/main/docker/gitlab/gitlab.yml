@@ -5,6 +5,8 @@
 services:
     gitlab:
         container_name: artemis-gitlab
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         build: .
         volumes:
             - artemis-gitlab-data:/var/opt/gitlab
