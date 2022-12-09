@@ -18,7 +18,10 @@
             "text": "Text",
             "detailText": "Detail Text",
             "type": "Type",
-            "result": "Result"
+            "result": "Result",
+            "modal": {
+                "submissionInformation": "Submitted {{ timeAgo }}, linked to commit: "
+            }
         }
     }
 }
