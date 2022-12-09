@@ -6,8 +6,7 @@ import { JvmThreadsComponent } from 'app/admin/metrics/blocks/jvm-threads/jvm-th
 import { MetricsModalThreadsComponent } from 'app/admin/metrics/blocks/metrics-modal-threads/metrics-modal-threads.component';
 import { By } from '@angular/platform-browser';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal, NgbModalRef, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent } from 'ng-mocks';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 
 describe('JvmThreadsComponent', () => {
     let comp: JvmThreadsComponent;
@@ -17,7 +16,7 @@ describe('JvmThreadsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [JvmThreadsComponent, MockComponent(NgbProgressbar)],
+            declarations: [JvmThreadsComponent],
             providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
         })
             .compileComponents()
