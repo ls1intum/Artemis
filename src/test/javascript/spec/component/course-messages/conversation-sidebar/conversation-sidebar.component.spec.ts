@@ -12,7 +12,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
@@ -54,7 +53,6 @@ describe('ConversationSidebarComponent', () => {
                 MockComponent(DataTableComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(UnreadMessagesPipe),
-                MockDirective(NgbTooltip),
             ],
             providers: [
                 FormBuilder,
