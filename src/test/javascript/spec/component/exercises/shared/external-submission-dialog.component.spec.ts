@@ -10,8 +10,8 @@ import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { User } from 'app/core/user/user.model';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { MockDirective } from 'ng-mocks';
 import { NgForm, NgModel } from '@angular/forms';
+import { MockDirective } from 'ng-mocks';
 
 describe('External Submission Dialog', () => {
     let fixture: ComponentFixture<ExternalSubmissionDialogComponent>;

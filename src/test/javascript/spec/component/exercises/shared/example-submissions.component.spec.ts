@@ -12,7 +12,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { HttpResponse } from '@angular/common/http';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -41,13 +41,7 @@ describe('Example Submission Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(RouterModule)],
-            declarations: [
-                ExampleSubmissionsComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(TranslateDirective),
-                MockComponent(ResultComponent),
-                MockDirective(NgbTooltip),
-            ],
+            declarations: [ExampleSubmissionsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockComponent(ResultComponent)],
             providers: [{ provide: ActivatedRoute, useValue: route }, { provide: TranslateService, useClass: MockTranslateService }, MockProvider(NgbModal)],
         })
             .compileComponents()

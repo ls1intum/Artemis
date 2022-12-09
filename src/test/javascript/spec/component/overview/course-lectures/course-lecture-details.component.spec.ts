@@ -5,7 +5,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbAlert, NgbCollapse, NgbDropdownModule, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
@@ -64,7 +63,7 @@ describe('CourseLectureDetails', () => {
         lecture = new Lecture();
         lecture.id = 1;
         lecture.startDate = releaseDate;
-        lecture.description = 'Test desciption';
+        lecture.description = 'Test description';
         lecture.title = 'Test lecture';
         lecture.course = course;
 
@@ -85,7 +84,7 @@ describe('CourseLectureDetails', () => {
         const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
 
         TestBed.configureTestingModule({
-            imports: [NgbDropdownModule, RouterTestingModule],
+            imports: [RouterTestingModule],
             declarations: [
                 CourseLectureDetailsComponent,
                 AttachmentUnitComponent,
@@ -97,10 +96,6 @@ describe('CourseLectureDetails', () => {
                 NotReleasedTagComponent,
                 DifficultyBadgeComponent,
                 IncludedInScoreBadgeComponent,
-                NgbTooltip,
-                NgbCollapse,
-                NgbPopover,
-                NgbAlert,
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockPipe(ArtemisTranslatePipe),

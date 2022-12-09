@@ -8,8 +8,7 @@ import { TutorParticipation, TutorParticipationStatus } from 'app/entities/parti
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { MockComponent, MockDirective } from 'ng-mocks';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockComponent } from 'ng-mocks';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('TutorParticipationGraphComponent', () => {
@@ -23,7 +22,7 @@ describe('TutorParticipationGraphComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [TutorParticipationGraphComponent, MockComponent(ProgressBarComponent), TranslatePipeMock, MockDirective(NgbTooltip)],
+            declarations: [TutorParticipationGraphComponent, MockComponent(ProgressBarComponent), TranslatePipeMock],
             providers: [{ provide: Router, useValue: router }],
         })
             .compileComponents()

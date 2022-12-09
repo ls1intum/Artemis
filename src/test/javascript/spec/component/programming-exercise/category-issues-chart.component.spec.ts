@@ -1,8 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { CategoryIssuesChartComponent } from 'app/exercises/programming/manage/grading/charts/category-issues-chart.component';
 import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockDirective } from 'ng-mocks';
 
 describe('CategoryIssuesChartComponent', () => {
     let fixture: ComponentFixture<CategoryIssuesChartComponent>;
@@ -12,7 +10,7 @@ describe('CategoryIssuesChartComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [CategoryIssuesChartComponent, MockDirective(NgbTooltip)],
+            declarations: [CategoryIssuesChartComponent],
             providers: [],
         })
             .compileComponents()

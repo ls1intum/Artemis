@@ -6,7 +6,6 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Data } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AccountService } from 'app/core/auth/account.service';
 import { Course } from 'app/entities/course.model';
 import { Exam } from 'app/entities/exam.model';
@@ -72,7 +71,6 @@ describe('ExamDetailComponent', () => {
                 ExamChecklistCheckComponent,
                 ExamChecklistExerciseGroupTableComponent,
                 ProgressBarComponent,
-                MockDirective(NgbTooltip),
                 MockComponent(CourseExamArchiveButtonComponent),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisDurationFromSecondsPipe),
