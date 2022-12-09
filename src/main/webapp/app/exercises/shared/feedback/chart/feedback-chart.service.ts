@@ -11,10 +11,12 @@ export class FeedbackChartService {
     create = (feedbackNodes: FeedbackNode[], exercise: Exercise): ChartData => {
         const maxPoints = exercise.maxPoints! + (exercise.bonusPoints ?? 0);
         const xScaleMax = Math.max(100, maxPoints);
+
+        const summarizedNodes = this.summarizePoints(feedbackNodes);
         const results: NgxChartsMultiSeriesDataEntry[] = [
             {
                 name: 'scores',
-                series: feedbackNodes.map((node: FeedbackNode) => ({
+                series: summarizedNodes.map((node: FeedbackNode) => ({
                     name: node.name,
                     value: this.calculatePercentage(node, exercise.maxPoints!),
                 })),
@@ -24,7 +26,7 @@ export class FeedbackChartService {
             name: 'Feedback Detail',
             selectable: true,
             group: ScaleType.Ordinal,
-            domain: feedbackNodes.map((node) => `var(--bs-${node.color})` ?? 'var(--white)'),
+            domain: summarizedNodes.map((node) => `var(--bs-${node.color})` ?? 'var(--white)'),
         };
 
         return {
@@ -32,6 +34,73 @@ export class FeedbackChartService {
             results,
             scheme,
         };
+    };
+
+    /**
+     * Subtracts negative credits from positive ones. This is to make space for the visualization of point deductions
+     * @param feedbackNodes
+     * @return An array with feedback items in the following order: [...positive, ...neutral, ...negative]
+     */
+    private summarizePoints = (feedbackNodes: FeedbackNode[]): FeedbackNode[] => {
+        const [positive, neutral, negative] = this.separateByCredits(feedbackNodes);
+        const sumPositive = this.sumCredits(positive);
+        let sumNegative = this.sumCredits(negative);
+
+        if (sumPositive + sumNegative < 0) {
+            return this.clearCredits(feedbackNodes);
+        }
+
+        let i = 0;
+        while (sumNegative < 0) {
+            const current = positive[i].credits ?? 0;
+            if (current + sumNegative >= 0) {
+                positive[i].credits = (positive[i].credits ?? 0) + sumNegative;
+            } else {
+                positive[i].credits = 0;
+            }
+
+            sumNegative += current;
+            i++;
+        }
+
+        return [...positive, ...neutral, ...this.absCredits(negative)];
+    };
+
+    /*
+     * Separates a list of feedback nodes by node credits. Has runtime of O(3n)
+     * @param feedbackNodes
+     * @return Tuple with values [Positive, Neutral, Negative]
+     */
+    private separateByCredits = (feedbackNodes: FeedbackNode[]): [FeedbackNode[], FeedbackNode[], FeedbackNode[]] => {
+        return [
+            feedbackNodes.filter((node) => (node.credits ?? 0) > 0),
+            feedbackNodes.filter((node) => (node.credits ?? 0) === 0),
+            feedbackNodes.filter((node) => (node.credits ?? 0) < 0),
+        ];
+    };
+
+    private sumCredits = (feedbackNodes: FeedbackNode[]) => {
+        return feedbackNodes.reduce((acc, node) => (node.credits ?? 0) + acc, 0);
+    };
+
+    /*
+     * Sets credits in nodes to absolute value
+     */
+    private absCredits = (feedbackNodes: FeedbackNode[]) => {
+        return feedbackNodes.map((node) => {
+            node.credits = Math.abs(node.credits ?? 0);
+            return node;
+        });
+    };
+
+    /*
+     * Sets credits to 0 for all feedback nodes
+     */
+    private clearCredits = (feedbackNodes: FeedbackNode[]) => {
+        return feedbackNodes.map((node) => ({
+            ...node,
+            credits: 0,
+        }));
     };
 
     private roundToDecimals = (i: number, n: number) => {

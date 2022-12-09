@@ -76,7 +76,6 @@ class FeedbackGroupCorrect extends FeedbackGroup {
         super();
         this.name = 'correct';
         this.color = 'success';
-        this.maxCredits = exercise.maxPoints! + (exercise.bonusPoints ?? 0);
         this.open = false;
     }
 
