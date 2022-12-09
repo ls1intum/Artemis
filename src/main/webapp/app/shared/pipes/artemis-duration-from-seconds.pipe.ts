@@ -83,12 +83,21 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
      * @private
      */
     private static handleLongFormat(duration: Duration): string {
+        const result = [];
+
         if (duration.days > 0) {
-            return `${duration.days}d ${duration.hours}h ${duration.minutes}min ${duration.seconds}s`;
-        } else if (duration.hours > 0) {
-            return `${duration.hours}h ${duration.minutes}min ${duration.seconds}s`;
-        } else {
-            return `${duration.minutes}min ${duration.seconds}s`;
+            result.push(`${duration.days}d`);
         }
+        if (duration.hours > 0) {
+            result.push(`${duration.hours}h`);
+        }
+        if (duration.minutes > 0) {
+            result.push(`${duration.minutes}min`);
+        }
+        if (duration.seconds > 0 || result.length === 0) {
+            result.push(`${duration.seconds}s`);
+        }
+
+        return result.join(' ');
     }
 }

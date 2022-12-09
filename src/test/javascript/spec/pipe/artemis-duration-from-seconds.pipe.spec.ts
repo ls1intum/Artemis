@@ -16,7 +16,7 @@ describe('ArtemisDurationFromSecondsPipe', () => {
     describe('long format', () => {
         it('should return correct format for only seconds', () => {
             const localizedDuration = pipe.transform(7);
-            expect(localizedDuration).toBe('0min 7s');
+            expect(localizedDuration).toBe('7s');
         });
 
         it('should return correct format for minutes', () => {
@@ -29,19 +29,24 @@ describe('ArtemisDurationFromSecondsPipe', () => {
             expect(localizedDuration).toBe('6h 5min 22s');
         });
 
+        it('should skip zero-value elements', () => {
+            const localizedDuration = pipe.transform(24 * 3600 * 2);
+            expect(localizedDuration).toBe('2d');
+        });
+
         it('should return correct format for days', () => {
             const localizedDuration = pipe.transform(1357800);
-            expect(localizedDuration).toBe('15d 17h 10min 0s');
+            expect(localizedDuration).toBe('15d 17h 10min');
         });
 
         it('should be chosen when parameter is false', () => {
             const localizedDuration = pipe.transform(1357800, false);
-            expect(localizedDuration).toBe('15d 17h 10min 0s');
+            expect(localizedDuration).toBe('15d 17h 10min');
         });
 
         it('should be chosen when parameter is undefined', () => {
             const localizedDuration = pipe.transform(1357800, undefined);
-            expect(localizedDuration).toBe('15d 17h 10min 0s');
+            expect(localizedDuration).toBe('15d 17h 10min');
         });
     });
 
