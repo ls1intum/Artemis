@@ -7,7 +7,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
  * Returns all FeedbackItemGroups for Programming exercises in the order, in which they will be displayed
  */
 export const getAllFeedbackGroups = (exercise: Exercise): FeedbackGroup[] => {
-    return [new FeedbackGroupWrong(), new FeedbackGroupWarning(exercise), new FeedbackGroupInfo(), new FeedbackGroupCorrect(exercise)];
+    return [new FeedbackGroupWrong(), new FeedbackGroupWarning(exercise), new FeedbackGroupInfo(), new FeedbackGroupCorrect()];
 };
 
 /**
@@ -72,7 +72,7 @@ class FeedbackGroupInfo extends FeedbackGroup {
  * - Positive credits from Test cases
  */
 class FeedbackGroupCorrect extends FeedbackGroup {
-    constructor(exercise: Exercise) {
+    constructor() {
         super();
         this.name = 'correct';
         this.color = 'success';
