@@ -3,7 +3,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ArtemisNavigationUtilService, findParamInRouteHierarchy } from 'app/utils/navigation.utils';
 import { faChevronLeft, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
@@ -34,7 +33,6 @@ export class GradingKeyOverviewComponent implements OnInit {
         private router: Router,
         private gradingSystemService: GradingSystemService,
         private bonusService: BonusService,
-        private courseCalculationService: CourseScoreCalculationService,
         private courseStorageService: CourseStorageService,
         private scoresStorageService: ScoresStorageService,
         private navigationUtilService: ArtemisNavigationUtilService,

@@ -38,6 +38,8 @@ export enum ExerciseType {
     FILE_UPLOAD = 'file-upload',
 }
 
+// Used when calculating the scores per exercise type.
+// Scores can be calculated over the exercises of each of the ExerciseTypes, e.g. "programming", "modeling" etc. and also over all exercises of a course ("total").
 export enum ExerciseTypeTOTAL {
     TOTAL = 'total',
 }

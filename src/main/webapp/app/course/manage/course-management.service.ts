@@ -143,9 +143,9 @@ export class CourseManagementService {
                 if (res.body) {
                     const courses: Course[] = [];
                     res.body.forEach((courseForDashboardDTO) => {
-                        // Save the scoresPerExerciseType and the participantScore in the scores-storage.service.
+                        // Save the scoresPerExerciseType and the participationResults in the scores-storage.service.
                         this.scoresStorageService.setStoredScoresPerExerciseType(courseForDashboardDTO.course.id!, courseForDashboardDTO.scoresPerExerciseType);
-                        this.scoresStorageService.setParticipantScores(courseForDashboardDTO.course.id!, courseForDashboardDTO.participantScores);
+                        this.scoresStorageService.setStoredParticipationResults(courseForDashboardDTO.participationResults);
                         courses.push(courseForDashboardDTO.course);
                     });
                     // Replace the CourseForDashboardDTOs in the response body with the normal Courses.
@@ -164,9 +164,9 @@ export class CourseManagementService {
             map((res: HttpResponse<CourseForDashboardDTO>) => {
                 if (res.body) {
                     const courseForDashboardDTO = res.body;
-                    // Save the scoresPerExerciseType and the participantScore in the scores-storage.service.
+                    // Save the scoresPerExerciseType and the participationResults in the scores-storage.service.
                     this.scoresStorageService.setStoredScoresPerExerciseType(courseForDashboardDTO.course.id!, courseForDashboardDTO.scoresPerExerciseType);
-                    this.scoresStorageService.setParticipantScores(courseForDashboardDTO.course.id!, courseForDashboardDTO.participantScores);
+                    this.scoresStorageService.setStoredParticipationResults(courseForDashboardDTO.participationResults);
 
                     // Replace the CourseForDashboardDTO in the response body with the normal Course.
                     return res.clone({ body: courseForDashboardDTO.course });

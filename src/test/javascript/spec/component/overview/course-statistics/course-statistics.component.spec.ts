@@ -525,6 +525,14 @@ describe('CourseStatisticsComponent', () => {
         expect(debugElement.nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.totalPoints ');
     });
 
+    it('should handle missing scores correctly', function () {
+        // todo
+    });
+
+    it('should handle a missing participationResult correctly', function () {
+        // todo
+    });
+
     it('should delegate the user correctly', () => {
         const clickEvent = { exerciseId: 42 };
         jest.spyOn(courseScoreCalculationService, 'getCourse').mockReturnValue(course);

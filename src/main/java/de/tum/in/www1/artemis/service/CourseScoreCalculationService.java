@@ -139,7 +139,7 @@ public class CourseScoreCalculationService {
 
     /**
      * Get all the items needed for the CourseForDashboardDTO.
-     * This includes scoresPerExerciseType, participantScores, and participationResults.
+     * This includes scoresPerExerciseType and participationResults.
      *
      * @param course the course to calculate the items for.
      * @param userId the id of the students whose scores in the course will be calculated.
@@ -149,18 +149,14 @@ public class CourseScoreCalculationService {
         // Get scores per exercise type for the course (used in course-statistics.component i.a.).
         Map<String, CourseScoresForStudentStatisticsDTO> scoresPerExerciseType = calculateCourseScoresPerExerciseType(course, userId);
 
-        // Get participant scores (latest result for each exercise) for the course.
-        Set<Exercise> exercisesOfCourse = course.getExercises().stream().filter(Exercise::isCourseExercise).collect(toSet());
-        List<ParticipantScoreDTO> participantScores = participantScoreService.getParticipantScoreDTOs(Pageable.unpaged(), exercisesOfCourse);
-
-        // Set the participation result for each participation (used in course-statistics.component)
-        for (Exercise exercise : exercisesOfCourse) {
-            for (StudentParticipation participation : exercise.getStudentParticipations()) {
-                participation.setParticipationResult(getResultForParticipation(participation, participation.getExercise().getDueDate()));
-            }
+        // Get participation results (used in course-statistics.component).
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), userId);
+        List<Result> participationResults = new ArrayList<>();
+        for (StudentParticipation studentParticipation : studentParticipations) {
+            participationResults.add(getResultForParticipation(studentParticipation, studentParticipation.getIndividualDueDate()));
         }
 
-        return new CourseForDashboardDTO(course, scoresPerExerciseType, participantScores);
+        return new CourseForDashboardDTO(course, scoresPerExerciseType, participationResults);
     }
 
     /**

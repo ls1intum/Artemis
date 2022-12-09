@@ -181,4 +181,8 @@ describe('GradeKeyOverviewComponent', () => {
         expect(comp.round(5)).toBe(5);
         expect(comp.round(3.33333333333333333)).toBe(3.33);
     });
+
+    it('should handle missing total scores correctly', function() {
+        // todo
+    });
 });

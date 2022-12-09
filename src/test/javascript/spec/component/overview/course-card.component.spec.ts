@@ -58,4 +58,8 @@ describe('CourseCardComponent', () => {
         component.ngOnChanges();
         expect(component.nextRelevantExercise).toEqual(secondNextExercise);
     });
+
+    it('should handle missing scores correctly', function() {
+        // todo
+    });
 });

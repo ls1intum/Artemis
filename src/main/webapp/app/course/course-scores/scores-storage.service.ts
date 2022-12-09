@@ -1,13 +1,13 @@
 import { Injectable } from '@angular/core';
 import { CourseScoresForStudentStatisticsDTO } from 'app/course/course-scores-for-student-statistics-dto';
-import { ParticipantScoreDTO } from 'app/shared/participant-scores/participant-scores.service';
 import { ExerciseType, ExerciseTypeTOTAL } from 'app/entities/exercise.model';
+import { Result } from 'app/entities/result.model';
 
 @Injectable({ providedIn: 'root' })
 export class ScoresStorageService {
     private storedScoresPerExerciseType: Map<number, Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresForStudentStatisticsDTO>> = new Map();
 
-    private participantScores: Map<number, ParticipantScoreDTO[]> = new Map();
+    private participationResults: Result[] = [];
 
     getStoredScoresPerExerciseType(courseId: number) {
         return this.storedScoresPerExerciseType.get(courseId);
@@ -17,11 +17,14 @@ export class ScoresStorageService {
         this.storedScoresPerExerciseType.set(courseId, scoresPerExerciseType);
     }
 
-    getParticipantScores(courseId: number) {
-        return this.participantScores.get(courseId);
+    getStoredParticipationResult(participationId: number | undefined) {
+        if (participationId === undefined) {
+            return undefined;
+        }
+        return this.participationResults.filter((result) => result.participation?.id === participationId)[0];
     }
 
-    setParticipantScores(courseId: number, participantScores: ParticipantScoreDTO[]) {
-        this.participantScores.set(courseId, participantScores);
+    setStoredParticipationResults(participationResults: Result[]) {
+        this.participationResults.push(...participationResults);
     }
 }

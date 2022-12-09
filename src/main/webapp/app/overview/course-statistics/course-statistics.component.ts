@@ -320,7 +320,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
                 } else {
                     exercise.studentParticipations.forEach((participation: StudentParticipation) => {
                         if (participation.results?.length) {
-                            const participationResult: Result | undefined = participation.participationResult;
+                            const participationResult: Result | undefined = this.scoresStorageService.getStoredParticipationResult(participation.id);
                             if (participationResult?.rated) {
                                 const roundedParticipationScore = roundValueSpecifiedByCourseSettings(participationResult.score!, this.course);
                                 const cappedParticipationScore = Math.min(roundedParticipationScore, 100);

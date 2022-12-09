@@ -30,19 +30,7 @@ public class StudentParticipation extends Participation {
     @ManyToOne
     @JsonView(QuizView.Before.class)
     private Team team;
-
-    /**
-     * This property stores the participation result returned by CourseScoreCalculationService.getResultForParticipation().
-     * It is used by the course-statistics.component.
-     * Not stored in the database, computed when the courses are fetched via findAllForDashboard() and findOneForDashboard() in CourseResource.java.
-     */
-    @Transient
-    private Result participationResultTransient;
-
-    public void setParticipationResult(Result participationResult) {
-        this.participationResultTransient = participationResult;
-    }
-
+    
     public Integer getPresentationScore() {
         return presentationScore;
     }
