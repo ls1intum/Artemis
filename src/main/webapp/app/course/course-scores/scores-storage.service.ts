@@ -9,22 +9,24 @@ export class ScoresStorageService {
 
     private participationResults: Result[] = [];
 
-    getStoredScoresPerExerciseType(courseId: number) {
+    getStoredScoresPerExerciseType(courseId: number): Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresForStudentStatisticsDTO> | undefined {
         return this.storedScoresPerExerciseType.get(courseId);
     }
 
-    setStoredScoresPerExerciseType(courseId: number, scoresPerExerciseType: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresForStudentStatisticsDTO>) {
+    setStoredScoresPerExerciseType(courseId: number, scoresPerExerciseType: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresForStudentStatisticsDTO>): void {
         this.storedScoresPerExerciseType.set(courseId, scoresPerExerciseType);
     }
 
-    getStoredParticipationResult(participationId: number | undefined) {
+    getStoredParticipationResult(participationId: number | undefined): Result | undefined {
         if (participationId === undefined) {
             return undefined;
         }
         return this.participationResults.filter((result) => result.participation?.id === participationId)[0];
     }
 
-    setStoredParticipationResults(participationResults: Result[]) {
-        this.participationResults.push(...participationResults);
+    setStoredParticipationResults(participationResults: Result[] | undefined): void {
+        if (participationResults !== undefined) {
+            this.participationResults.push(...participationResults);
+        }
     }
 }
