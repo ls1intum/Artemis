@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
+import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601DateString;
+import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601TimeString;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -207,6 +210,10 @@ public class TutorialGroupResource {
 
         // persist first without schedule
         TutorialGroupSchedule tutorialGroupSchedule = tutorialGroup.getTutorialGroupSchedule();
+        if (tutorialGroupSchedule != null) {
+            checkScheduleDateAndTimeFormatAreValid(tutorialGroupSchedule);
+        }
+
         tutorialGroup.setTutorialGroupSchedule(null);
         TutorialGroup persistedTutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
@@ -281,6 +288,11 @@ public class TutorialGroupResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, oldTutorialGroup.getCourse(), responsibleUser);
 
         trimStringFields(updatedTutorialGroup);
+
+        if (updatedTutorialGroup.getTutorialGroupSchedule() != null) {
+            checkScheduleDateAndTimeFormatAreValid(updatedTutorialGroup.getTutorialGroupSchedule());
+        }
+
         if (!oldTutorialGroup.getTitle().equals(updatedTutorialGroup.getTitle())) {
             checkTitleIsValid(updatedTutorialGroup);
         }
@@ -425,6 +437,15 @@ public class TutorialGroupResource {
         }
         if (tutorialGroup.getCampus() != null) {
             tutorialGroup.setCampus(tutorialGroup.getCampus().trim());
+        }
+    }
+
+    private void checkScheduleDateAndTimeFormatAreValid(TutorialGroupSchedule schedule) {
+        if (!isIso8601DateString(schedule.getValidToInclusive()) || !isIso8601DateString(schedule.getValidFromInclusive())) {
+            throw new BadRequestException("Schedule valid to and from must be valid ISO 8601 date strings");
+        }
+        if (!isIso8601TimeString(schedule.getStartTime()) || !isIso8601TimeString(schedule.getEndTime())) {
+            throw new BadRequestException("Schedule start and end time must be valid ISO 8601 time strings");
         }
     }
 
