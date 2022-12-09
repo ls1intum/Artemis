@@ -145,13 +145,15 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         fixture.detectChanges();
         tick();
 
+        expect(comp.gradedParticipation?.initializationState).toEqual(InitializationState.UNINITIALIZED);
+
         expect(startExerciseStub).toHaveBeenCalledOnce();
         participationSubject.next(initPart);
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.exercise?.studentParticipations?.[0].initializationState).toEqual(InitializationState.INITIALIZED);
+        expect(comp.gradedParticipation?.initializationState).toEqual(InitializationState.INITIALIZED);
 
         // Check that button "Start exercise" is no longer shown
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
