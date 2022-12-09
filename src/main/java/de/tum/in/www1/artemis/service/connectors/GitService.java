@@ -425,7 +425,7 @@ public class GitService {
                     // cleanup the folder to avoid problems in the future.
                     // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
                     if (!FileUtils.deleteQuietly(localPath.toFile())) {
-                        log.error("Could not delete directory during pull: {}", localPath.toAbsolutePath());
+                        log.error("Could not delete directory after failed pull: {}", localPath.toAbsolutePath());
                     }
                     throw new GitException(e);
                 }
