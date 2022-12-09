@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ResultHistoryComponent } from 'app/overview/result-history/result-history.component';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTestModule } from '../../../test.module';
 
 describe('ResultHistoryComponent', () => {
@@ -12,7 +11,7 @@ describe('ResultHistoryComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ResultHistoryComponent, MockPipe(ArtemisDatePipe), MockDirective(NgbTooltip)],
+            declarations: [ResultHistoryComponent, MockPipe(ArtemisDatePipe)],
         })
             .compileComponents()
             .then(() => {

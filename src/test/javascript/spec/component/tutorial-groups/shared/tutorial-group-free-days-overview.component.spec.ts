@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { TutorialGroupFreeDaysOverviewComponent } from 'app/course/tutorial-groups/shared/tutorial-group-free-days-overview/tutorial-group-free-days-overview.component';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent, FaStackComponent } from '@fortawesome/angular-fontawesome';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
@@ -10,7 +10,6 @@ import dayjs from 'dayjs/esm';
 import { SortService } from 'app/shared/service/sort.service';
 import { Component, Input, IterableDiffers } from '@angular/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({ selector: 'jhi-side-panel', template: '' })
 class MockSidePanel {
@@ -33,7 +32,6 @@ describe('TutorialGroupFreeDaysOverviewComponent', () => {
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockDirective(NgbPopover),
                 MockSidePanel,
             ],
             providers: [SortService, IterableDiffers],

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, RouterModule } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
 import { Exam } from 'app/entities/exam.model';
@@ -116,7 +115,6 @@ describe('Exam Exercise Row Buttons Component', () => {
                 ExamExerciseRowButtonsComponent,
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
-                MockDirective(NgbTooltip),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(ProgrammingExerciseGroupCellComponent),
                 MockComponent(QuizExerciseGroupCellComponent),
