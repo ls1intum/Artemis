@@ -3,20 +3,6 @@
 #
 # This configuration overrides the application.yml file.
 # ===================================================================
-artemis:
-    version-control:
-        url: http://localhost:8081
-        # user: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-        # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-        # token: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-        # ci-token: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-        # health-api-token: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-        ssh-template-clone-url:
-        ssh-keys-url-path: /-/profile/keys
-        ssh-private-key-folder-path:
-        # ssh-private-key-password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-        default-branch: main # The branch that should be used as default branch for all newly created repositories. This does NOT have to be equal to the default branch of the VCS
-        versionControlAccessToken: true # only for Gitlab setups: a Gitlab-API token can be generated for each user and used as part of the Git clone URL shown to students to allow for password-less Git operations via HTTP
 
 gitlab:
     # The following (optional) parameter allows to enable the use of pseudonyms.

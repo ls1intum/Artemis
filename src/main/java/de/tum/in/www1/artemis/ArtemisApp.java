@@ -72,7 +72,6 @@ public class ArtemisApp {
         if (env.getProperty("server.ssl.key-store") != null) {
             protocol = "https";
         }
-        // TODO: recheck if the line can be deleted (port config value is never used anywhere else)
         String serverPort = env.getProperty("server.port");
         String version = buildProperties.getVersion();
         String gitCommitId = gitProperties.getShortCommitId();
