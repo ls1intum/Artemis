@@ -14,8 +14,6 @@
 # http://docs.spring.io/spring-boot/docs/current/reference/html/common-application-properties.html
 # ===================================================================
 
-# TODO: recheck application-prod deletions vs ansible prod as this could lead to problems on production!!!
-
 logging:
     level:
         ROOT: INFO
@@ -89,9 +87,8 @@ spring:
           enabled: false # we use Webpack dev server + BrowserSync for livereload
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        # username: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
-        # password: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
-        # TODO: maximumPoolSize: 100 just in ansible?
+        # username: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+        # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
         hikari:
             poolName: Hikari
             auto-commit: false
@@ -157,11 +154,10 @@ spring:
             thread-name-prefix: artemis-scheduling-
             pool:
                 size: 2
-    # TODO: different from ansible
     mail:
         host: localhost
-        # username: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
-        # password: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
+        # username: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+        # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
         port: 25
     thymeleaf:
         mode: HTML
@@ -176,8 +172,8 @@ spring:
         timeout-per-shutdown-phase: 10
     websocket:
         broker:
-            # username: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
-            # password: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
+            # username: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+            # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
             addresses: "" # Comma separated list of hosts and ports of the brokers (e.g. "localhost:61613,localhost:61614")
     hazelcast:
         interface: "127.0.0.1" # The interface to bind to, if non is set, all interfaces will be bound
@@ -208,7 +204,6 @@ springdoc:
         path: /api.html
         operationsSorter: method
 
-# TODO: different values in ansible not sure if needed here
 server:
     port: 8080
     servlet:
@@ -230,7 +225,7 @@ sentry:
 info:
     guided-tour:
         courseShortName: 'artemistutorial'
-        # TODO: missing on purpose for ansible?
+        # TODO: following value missing on purpose in ansible? saw this when I moved the value here
         # Names of the tutorial groups that will be automatically added to newly created users
         course-group-students: 'artemis-artemistutorial-students'
         tours:
@@ -238,18 +233,16 @@ info:
             -   course_overview_tour: ''
             -   modeling_tour: 'UML Class Diagram'
             -   programming_exercise_success_tour: 'tutorial'
-            # TODO: missing on purpose for ansible?
+            # TODO: following value missing on purpose in ansible? saw this when I moved the value here
             -   tutor_assessment_tour: 'Patterns in Software Engineering'
     contact: artemis.in@tum.de  #default value, can be overridden if needed
     # Comma separated list of profiles that will trigger the ribbon to show
     display-ribbon-on-profiles: "dev"
-    # TODO: do we really want sentry here?
     sentry:
         dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029 # Leave empty to disable Sentry, must be a valid URI
     # Allowed Orion version range. Should only be changed on major version releases
     allowed-minimum-orion-version: 1.0.0
     student-exam-store-session-data: true
-    # TODO: imprint only in ansible?
 
 # ===================================================================
 # JHipster specific properties
@@ -268,7 +261,7 @@ jhipster:
                 # - In the JHipster Registry (which includes a Spring Cloud Config server)
                 # - In a separate `application-prod.yml` file, in the same folder as your executable WAR file
                 # - In the `JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET` environment variable
-                # base64-secret: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
+                # base64-secret: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
                 token-validity-in-seconds: 86400 # Token is valid 24 hours
                 token-validity-in-seconds-for-remember-me: 2592000 # Token is valid 30 days
     # By default CORS is disabled. Uncomment to enable.
@@ -280,7 +273,7 @@ jhipster:
         #allow-credentials: true
         #max-age: 1800
     registry:
-        # password: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
+        # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
     logging:
         logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
             enabled: false

@@ -2,11 +2,11 @@ artemis:
     user-management:
         use-external: true
         external:
-            url: https://jira.ase.in.tum.de
+            url: http://localhost:8085
             # e.g. ga12abc
-            # user: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
-            # password: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
-            admin-group-name: tumuser
+            # user: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+            # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+            admin-group-name: instructors
         password-reset:
             credential-provider: TUMonline
             links:

@@ -39,7 +39,12 @@ spring:
         localInstances: true
 
 server:
-    url: https://artemislocal.ase.in.tum.de
+    # this address is passed to the CI systems for sending back notifications to Artemis
+    # therefore depending on where these systems are hosted you have to change the url here
+    # other possible values:
+    # Artemis locally and CI inside Docker Containers: host.docker.internal:8080
+    # Artemis locally and CI hosted on a Server on your network: LAN_IP_ADDRESS:8080
+    url: http://localhost:8080 # Artemis and CI are running locally
 
 # ===================================================================
 # JHipster specific properties
@@ -69,7 +74,6 @@ info:
         course-group-students: 'artemis-artemistutorial-students'
         courseShortName: 'artemistutorial'
         tours:
-            # TODO: should these be named test or also tutorial like in prod?
             - code_editor_tour: 'test'
             - course_exercise_overview_tour: 'test'
             - programming_exercise_fail_tour: 'test'

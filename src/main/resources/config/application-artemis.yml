@@ -10,7 +10,7 @@ artemis:
     file-upload-path: uploads
     submission-export-path: exports
     # LEGACY: arbitrary password for encrypting database values
-    # encryption-password: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
+    # encryption-password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
     bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
                             # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
     external-system-request:
@@ -19,8 +19,8 @@ artemis:
     user-management:
         use-external: false
         internal-admin:
-            # username: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
-            # password: PLEASE CHANGE THIS SECRET IN YOUR ENV OR application-local-secrets.yml
+            # username: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+            # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
         registration:               # the whole section is optional: whether user can register in Artemis
             enabled: false
             allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(tum\.de|in\.tum\.de|mytum\.de)'
@@ -31,12 +31,7 @@ artemis:
             allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'    # example for a TUM identifier, e.g. ab12cde
         login:
             account-name: TUM                   # optional: customization for the welcome page "please sign in with your <account-name> account"
-    version-control:
-        # TODO: can this be deleted here or should this be moved to application-bitbucket.yml?
-        version-control-access-token: false # only for Gitlab setups: a Gitlab-API token can be generated for each user and used as part of the Git clone URL shown to students to allow for password-less Git operations via HTTP
     continuous-integration:
-        # TODO: build-timeout just needed for jenkins?
-        build-timeout: 30 # Does cancel jenkins builds after 30 minutes to remove build that get stuck
         # Defines the used docker images for certain programming languages.
         # For each language at least the `default` image has to be defined.
         # This `default` option will be overridden by more specific project type
@@ -72,4 +67,4 @@ artemis:
         name: Artemis
         email: artemis.in@tum.de
 
-    # TODO: lti missing on purpose?
+    # TODO: lti settings missing here on purpose compared to the ansible prod template?

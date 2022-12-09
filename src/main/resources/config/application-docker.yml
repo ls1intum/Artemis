@@ -12,4 +12,7 @@ spring:
         url: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
 
 server:
-    url: http://artemis-app
+    # this address is passed to the CI/VCS systems for sending back notifications to Artemis
+    # therefore depending on where these systems are hosted you have to change the url here
+    # localhost:8080 for Artemis in container and CI/VCS outside of containers
+    url: http://artemis-app:8080 # Artemis and CI/VCS are running in docker containers in the same docker network
