@@ -44,6 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - run: git rev-parse HEAD && git rev-parse --abbrev-ref HEAD
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
