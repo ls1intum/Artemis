@@ -26,11 +26,14 @@ import { MessagingService } from 'app/shared/metis/messaging.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { UnreadMessagesPipe } from 'app/shared/pipes/unread-messages.pipe';
+import { User } from 'app/core/user/user.model';
 
 describe('ConversationSidebarComponent', () => {
     let component: ConversationSidebarComponent;
     let fixture: ComponentFixture<ConversationSidebarComponent>;
     let courseManagementService: CourseManagementService;
+    let accountService: AccountService;
+    let messagingService: MessagingService;
     let emitActiveConversationSpy: jest.SpyInstance;
 
     const id = metisCourse.id;
@@ -70,6 +73,13 @@ describe('ConversationSidebarComponent', () => {
             .then(() => {
                 courseManagementService = TestBed.inject(CourseManagementService);
                 jest.spyOn(courseManagementService, 'findOneForDashboard').mockReturnValue(of({ body: metisCourse }) as Observable<HttpResponse<Course>>);
+
+                accountService = TestBed.inject(AccountService);
+                const user = { id: 1 } as User;
+                jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(user));
+                messagingService = TestBed.inject(MessagingService);
+
+                jest.spyOn(messagingService, 'getConversationsOfUser');
 
                 fixture = TestBed.createComponent(ConversationSidebarComponent);
                 component = fixture.componentInstance;
@@ -204,5 +214,13 @@ describe('ConversationSidebarComponent', () => {
         const newConversationWithUser = component.createNewConversationWithUser(metisUser2);
         expect(newConversationWithUser.course).toBe(metisCourse);
         expect(newConversationWithUser.conversationParticipants!.first()?.user).toBe(metisUser2);
+    }));
+
+    it('should create the unread message pipe and should have unreadMessageCount one', fakeAsync(() => {
+        // it should have conversation with user1 and user should have id 1
+        component.activeConversation = conversationBetweenUser1User2;
+        const pipe = new UnreadMessagesPipe(messagingService);
+        expect(pipe.transform(component.activeConversation)).toBe(1);
+        expect(pipe).toBeTruthy();
     }));
 });
