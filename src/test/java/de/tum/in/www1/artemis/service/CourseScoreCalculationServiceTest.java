@@ -48,8 +48,20 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
+    @WithMockUser()
+    void calculateMaxAndReachablePoints() {
+        // Normal mit einigen exercises
+    }
+
+    @Test
+    @WithMockUser()
+    void calculateMaxAndReachablePointsEC1() {
+        // Für einen Edge Case (z.B. irgendwelche Points undefined?)
+    }
+
+    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void calculateCourseScoreWithNotIncludedExercises() {
+    void calculateCourseScoresForExamBonusSourceWithNotIncludedExercises() {
         var exerciseList = new ArrayList<>(course.getExercises());
         exerciseList.sort(Comparator.comparing(Exercise::getId));
 
@@ -74,6 +86,18 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         assertThat(courseResult.studentScores().get(0).currentRelativeScore()).isEqualTo(0.0);
         assertThat(courseResult.studentScores().get(0).getAbsolutePointsEligibleForBonus()).isEqualTo(0.0);
 
+    }
+
+    @Test
+    @WithMockUser()
+    void getScoresAndParticipationResults() {
+        // Normal
+    }
+
+    @Test
+    @WithMockUser()
+    void calculateCourseScoresPerExerciseType() {
+        // Normal
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -117,6 +141,18 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         assertThat(studentScoreResult.mostSeverePlagiarismVerdict()).isNull();
         assertThat(studentScoreResult.getAbsolutePointsEligibleForBonus()).isEqualTo(0.0);
 
+    }
+
+    @Test
+    @WithMockUser()
+    void calculatePointsAchievedFromExercise() {
+        // Normal
+    }
+
+    @Test
+    @WithMockUser()
+    void getResultForParticipation() {
+        // Normal
     }
 
 }

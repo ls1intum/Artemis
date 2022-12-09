@@ -54,8 +54,42 @@ public class CourseScoreCalculationService {
         this.participantScoreService = participantScoreService;
     }
 
+    private record MaxAndReachablePoints(double maxPoints, double reachablePoints) {
+    }
+
     /**
-     * Prepares all entities required for calculateCourseScores and calls it to retrieve the total scores for each specified student in the specified course.
+     * Calculates max and reachable max points for the given exercises.
+     * Implementation is adapted from course-score-calculation.service.ts.
+     *
+     * @param exercises the exercises which are included into max points calculation
+     * @return the max and reachable max points for the given exercises
+     */
+    private MaxAndReachablePoints calculateMaxAndReachablePoints(Set<Exercise> exercises) {
+        if (exercises.isEmpty()) {
+            return new MaxAndReachablePoints(0, 0);
+        }
+
+        double maxPointsInCourse = 0.0; // the sum of all included exercises, whose due date is over or unset or who are automatically assessed and assessment is done
+        double reachableMaxPointsInCourse = 0.0; // the sum of all included and already assessed exercises
+
+        for (var exercise : exercises) {
+            if (!includeIntoScoreCalculation(exercise)) {
+                continue;
+            }
+            var maxPointsReachableInExercise = exercise.getMaxPoints();
+            if (exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
+                maxPointsInCourse += maxPointsReachableInExercise;
+                if (isAssessmentDone(exercise)) {
+                    reachableMaxPointsInCourse += maxPointsReachableInExercise;
+                }
+            }
+        }
+
+        return new MaxAndReachablePoints(maxPointsInCourse, reachableMaxPointsInCourse);
+    }
+
+    /**
+     * Prepares all entities required for calculateCourseScoresForStudent and calls it to retrieve the total scores for each specified student in the specified course.
      * If there is a single student id in studentIds, the student id will be filtered in the database as an optimization wherever possible.
      *
      * @param courseId   the id of the course to calculate the total scores for
@@ -130,8 +164,7 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * Prepares all entities required for calculateCourseScores and calls it multiple times to retrieve the scores per exercise type
-     * for the specified student in the specified course.
+     * Prepares all entities required for calculateCourseScoresForStudent and calls it multiple times to retrieve the scores per exercise type for the specified student in the specified course.
      * In addition to the scores per exercise type, the total scores per course are calculated.
      *
      * @param course the course to calculate the scores for
@@ -176,50 +209,17 @@ public class CourseScoreCalculationService {
         return scoresPerExerciseType;
     }
 
-    private record MaxAndReachablePoints(double maxPoints, double reachablePoints) {
-    }
-
-    /**
-     * Calculates max and reachable max points for the given exercises.
-     * Implementation is adapted from course-score-calculation.service.ts.
-     *
-     * @param exercises the exercises which are included into max points calculation
-     * @return the max and reachable max points for the given exercises
-     */
-    private MaxAndReachablePoints calculateMaxAndReachablePoints(Set<Exercise> exercises) {
-        if (exercises.isEmpty()) {
-            return new MaxAndReachablePoints(0, 0);
-        }
-
-        double maxPointsInCourse = 0.0; // the sum of all included exercises, whose due date is over or unset or who are automatically assessed and assessment is done
-        double reachableMaxPointsInCourse = 0.0; // the sum of all included and already assessed exercises
-
-        for (var exercise : exercises) {
-            if (!includeIntoScoreCalculation(exercise)) {
-                continue;
-            }
-            var maxPointsReachableInExercise = exercise.getMaxPoints();
-            if (exercise.getIncludedInOverallScore() == IncludedInOverallScore.INCLUDED_COMPLETELY) {
-                maxPointsInCourse += maxPointsReachableInExercise;
-                if (isAssessmentDone(exercise)) {
-                    reachableMaxPointsInCourse += maxPointsReachableInExercise;
-                }
-            }
-        }
-
-        return new MaxAndReachablePoints(maxPointsInCourse, reachableMaxPointsInCourse);
-    }
-
     /**
      * Calculates the presentation score, relative and absolute points for the given studentId and corresponding participationsOfStudent
      * and takes the effects of related plagiarism verdicts on the grade into account.
      *
-     * @param studentId                  the id of the student who has participated in the course exercises
-     * @param participationsOfStudent    should be non-empty. The exercise participations of the given student
-     * @param maxPointsInCourse          max points in the given course
-     * @param reachableMaxPointsInCourse max points achievable in the given course depending on the due dates of the exercises
-     * @param plagiarismCases            the plagiarism verdicts for the student for the participated exercises
-     * @return a StudentScore instance with the presentation score, relative and absolute points achieved by the given student and the most severe plagiarism verdict
+     * @param course                     the course the scores are calculated for.
+     * @param studentId                  the id of the student who has participated in the course exercises.
+     * @param participationsOfStudent    should be non-empty. The exercise participations of the given student.
+     * @param maxPointsInCourse          max points in the given course.
+     * @param reachableMaxPointsInCourse max points achievable in the given course depending on the due dates of the exercises.
+     * @param plagiarismCases            the plagiarism verdicts for the student for the participated exercises.
+     * @return a StudentScore instance with the presentation score, relative and absolute points achieved by the given student and the most severe plagiarism verdict.
      */
     public CourseScoresForExamBonusSourceDTO.StudentScoresForExamBonusSource calculateCourseScoreForStudent(Course course, Long studentId, List<StudentParticipation> participationsOfStudent, double maxPointsInCourse,
                                                                                                             double reachableMaxPointsInCourse, List<PlagiarismCase> plagiarismCases) {
@@ -279,7 +279,7 @@ public class CourseScoreCalculationService {
         return pointsAchievedFromExercise;
     }
 
-    public Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
+    private Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
         if (participation == null) {
             return null;
         }
