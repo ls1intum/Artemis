@@ -5,7 +5,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { SplitPaneHeaderComponent } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbDropdown, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { PlagiarismDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-details/plagiarism-details.component';
 import { PlagiarismRunDetailsComponent } from 'app/exercises/shared/plagiarism/plagiarism-run-details/plagiarism-run-details.component';
@@ -28,8 +27,6 @@ describe('Plagiarism Split Pane Header Component', () => {
             declarations: [
                 SplitPaneHeaderComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbDropdown),
-                MockDirective(NgbTooltip),
                 MockDirective(NgModel),
                 MockComponent(PlagiarismDetailsComponent),
                 MockComponent(PlagiarismRunDetailsComponent),

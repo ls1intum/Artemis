@@ -2,7 +2,6 @@ import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -114,7 +113,6 @@ const testBedDeclarations = [
     MockComponent(DragAndDropQuestionComponent),
     MockComponent(ShortAnswerQuestionComponent),
     MockComponent(JhiConnectionStatusComponent),
-    MockDirective(NgbTooltip),
     MockDirective(FeatureToggleDirective),
 ];
 

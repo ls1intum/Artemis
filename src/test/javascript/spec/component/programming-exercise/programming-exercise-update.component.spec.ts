@@ -30,7 +30,6 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/p
 import { GradingInstructionsDetailsComponent } from 'app/exercises/shared/structured-grading-criterion/grading-instructions-details/grading-instructions-details.component';
 import { CustomMaxDirective } from 'app/shared/validators/custom-max-validator.directive';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
-import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PresentationScoreComponent } from 'app/exercises/shared/presentation-score/presentation-score.component';
 import { ProgrammingExerciseLifecycleComponent } from 'app/exercises/programming/shared/lifecycle/programming-exercise-lifecycle.component';
 import { TeamConfigFormGroupComponent } from 'app/exercises/shared/team-config-form-group/team-config-form-group.component';
@@ -51,6 +50,8 @@ import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { By } from '@angular/platform-browser';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -93,13 +94,11 @@ describe('ProgrammingExercise Management Update Component', () => {
                 MockComponent(ProgrammingExerciseEditableInstructionComponent),
                 MockComponent(GradingInstructionsDetailsComponent),
                 MockComponent(ButtonComponent),
-                MockComponent(NgbAlert),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(CustomMinDirective),
                 MockDirective(CustomMaxDirective),
                 MockDirective(TranslateDirective),
-                MockDirective(NgbTooltip),
                 MockComponent(ModePickerComponent),
             ],
             providers: [
@@ -107,6 +106,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: new MockActivatedRoute({}) },
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
             .compileComponents()
@@ -129,6 +129,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             jest.spyOn(programmingExerciseService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
             // WHEN
             comp.save();
@@ -145,6 +146,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 2 } })));
             comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
             // WHEN
             comp.save();
@@ -162,6 +164,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             entity.title = 'My Exercise   ';
             jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 1 } })));
             comp.programmingExercise = entity;
+            comp.backupExercise = {} as ProgrammingExercise;
             comp.programmingExercise.course = course;
 
             // WHEN
