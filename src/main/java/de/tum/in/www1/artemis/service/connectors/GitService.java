@@ -501,8 +501,9 @@ public class GitService {
      */
     public boolean isRepositoryCached(VcsRepositoryUrl repositoryUrl) {
         Path localPath = getLocalPathOfRepo(repoClonePath, repositoryUrl);
-        if (localPath == null)
+        if (localPath == null) {
             return false;
+        }
         // Check if the repository is already cached in the server's session.
         return cachedRepositories.containsKey(localPath);
     }
