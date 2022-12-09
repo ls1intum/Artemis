@@ -26,47 +26,6 @@ logging:
             max-history: 90
             total-size-cap: "10GB"
 
-artemis:
-    version: #project.version#
-    file-upload-path: uploads
-    submission-export-path: exports
-    bcrypt-salt-rounds: 11 #default value, see application-artemis.yml for more information how to override and customize this value
-    external-system-request:
-        batch-size: 50  # wait the time below after 50 requests
-        batch-waiting-time: 30000   # in ms = 30s
-    continuous-integration:
-        # Defines the used docker images for certain programming languages.
-        # For each language at least the `default` image has to be defined.
-        # This `default` option will be overridden by more specific project type
-        # definitions.
-        build:
-            images:
-                java:
-                    # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-11"
-                kotlin:
-                    # possible overrides: maven, gradle
-                    default: "ls1tum/artemis-maven-template:java17-11"
-                empty:
-                    default: "ls1tum/artemis-maven-template:java17-11"
-                python:
-                    default: "ls1tum/artemis-python-docker:latest"
-                c:
-                    # possible overrides: gcc, fact
-                    default: "ls1tum/artemis-c-docker:latest"
-                    fact: "sharingcodeability/fact:latest"
-                haskell:
-                    default: "ghcr.io/b-fein/artemis-haskell:v19.30.0"
-                vhdl:
-                    default: "tizianleonhardt/era-artemis-vhdl:latest"
-                assembler:
-                    default: "tizianleonhardt/era-artemis-assembler:latest"
-                swift:
-                    # possible overrides: xcode
-                    default: "norionomura/swiftlint:latest"
-                ocaml:
-                    default: "ls1tum/artemis-ocaml-docker:v1"
-
 management:
     endpoints:
         web:
@@ -123,6 +82,21 @@ management:
 spring:
     application:
         name: Artemis
+    devtools:
+        livereload:
+          enabled: false # we use Webpack dev server + BrowserSync for livereload
+    datasource:
+        type: com.zaxxer.hikari.HikariDataSource
+        # username: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+        # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+        hikari:
+            poolName: Hikari
+            auto-commit: false
+            data-source-properties:
+                cachePrepStmts: true
+                prepStmtCacheSize: 250
+                prepStmtCacheSqlLimit: 2048
+                useServerPrepStmts: true
     jmx:
         enabled: false
     cloud:
@@ -134,6 +108,8 @@ spring:
             repositories:
                 bootstrap-mode: deferred
     jpa:
+        database-platform: org.hibernate.dialect.MySQL8Dialect
+        database: MYSQL
         open-in-view: false
         show-sql: false
         hibernate:
@@ -178,6 +154,11 @@ spring:
             thread-name-prefix: artemis-scheduling-
             pool:
                 size: 2
+    mail:
+        host: localhost
+        # username: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+        # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+        port: 25
     thymeleaf:
         mode: HTML
     output:
@@ -191,8 +172,8 @@ spring:
         timeout-per-shutdown-phase: 10
     websocket:
         broker:
-            username: guest
-            password: guest
+            # username: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+            # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
             addresses: "" # Comma separated list of hosts and ports of the brokers (e.g. "localhost:61613,localhost:61614")
     hazelcast:
         interface: "127.0.0.1" # The interface to bind to, if non is set, all interfaces will be bound
@@ -224,6 +205,7 @@ springdoc:
         operationsSorter: method
 
 server:
+    port: 8080
     servlet:
         session:
             cookie:
@@ -241,15 +223,25 @@ sentry:
 
 # Properties to be exposed on the /info management endpoint
 info:
+    guided-tour:
+        courseShortName: 'artemistutorial'
+        # TODO: following value missing on purpose in ansible? saw this when I moved the value here
+        # Names of the tutorial groups that will be automatically added to newly created users
+        course-group-students: 'artemis-artemistutorial-students'
+        tours:
+            -   cancel_tour: ''
+            -   course_overview_tour: ''
+            -   modeling_tour: 'UML Class Diagram'
+            -   programming_exercise_success_tour: 'tutorial'
+            # TODO: following value missing on purpose in ansible? saw this when I moved the value here
+            -   tutor_assessment_tour: 'Patterns in Software Engineering'
+    contact: artemis.in@tum.de  #default value, can be overridden if needed
     # Comma separated list of profiles that will trigger the ribbon to show
     display-ribbon-on-profiles: "dev"
     sentry:
         dsn: https://8c6b41ec2d4245e8bd3ec9541d53f625@sentry.io/1440029 # Leave empty to disable Sentry, must be a valid URI
     # Allowed Orion version range. Should only be changed on major version releases
     allowed-minimum-orion-version: 1.0.0
-    # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
-    # default value set to false
-    text-assessment-analytics-enabled: false
     student-exam-store-session-data: true
 
 # ===================================================================
@@ -261,6 +253,17 @@ info:
 jhipster:
     clientApp:
         name: 'artemisApp'
+    security:
+        authentication:
+            jwt:
+                # This token must be encoded using Base64 (you can type `echo 'secret-key'|base64` on your command line)
+                # As this is the PRODUCTION configuration, you MUST change the default key, and store it securely:
+                # - In the JHipster Registry (which includes a Spring Cloud Config server)
+                # - In a separate `application-prod.yml` file, in the same folder as your executable WAR file
+                # - In the `JHIPSTER_SECURITY_AUTHENTICATION_JWT_BASE64_SECRET` environment variable
+                # base64-secret: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+                token-validity-in-seconds: 86400 # Token is valid 24 hours
+                token-validity-in-seconds-for-remember-me: 2592000 # Token is valid 30 days
     # By default CORS is disabled. Uncomment to enable.
     #cors:
         #allowed-origin-patterns: "*"
@@ -269,10 +272,16 @@ jhipster:
         #exposed-headers: "Authorization,Link,X-Total-Count"
         #allow-credentials: true
         #max-age: 1800
-    mail:
-        from: artemis@localhost
     registry:
-        password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
+        # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+    logging:
+        logstash: # Forward logs to logstash over a socket, used by LoggingConfiguration
+            enabled: false
+            host: localhost
+            port: 5000
+            queue-size: 512
+    audit-events:
+        retention-period: 120 # Number of days before audit events are deleted.
     http:
         cache: # Used by the CachingHttpHeadersFilter
             timeToLiveInDays: 1461
