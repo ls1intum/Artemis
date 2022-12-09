@@ -7,24 +7,8 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
  * Returns all FeedbackItemGroups for Programming exercises in the order, in which they will be displayed
  */
 export const getAllFeedbackGroups = (exercise: Exercise): FeedbackGroup[] => {
-    return [new FeedbackGroupWrong(), new FeedbackGroupWarning(exercise), new FeedbackGroupInfo(), new FeedbackGroupMissing(), new FeedbackGroupCorrect(exercise)];
+    return [new FeedbackGroupWrong(), new FeedbackGroupWarning(exercise), new FeedbackGroupInfo(), new FeedbackGroupCorrect(exercise)];
 };
-
-/**
- * Automated feedbacks with no influence on final score
- */
-class FeedbackGroupMissing extends FeedbackGroup {
-    constructor() {
-        super();
-        this.name = 'missing';
-        this.color = 'secondary';
-        this.open = true;
-    }
-
-    shouldContain(feedbackItem: FeedbackItem): boolean {
-        return feedbackItem.type === 'Test' && (feedbackItem.credits === 0 || !feedbackItem.credits);
-    }
-}
 
 /**
  * Negative feedbacks that are not SCA
@@ -39,7 +23,7 @@ class FeedbackGroupWrong extends FeedbackGroup {
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
         const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits && feedbackItem.credits < 0;
-        const isTestFeedback = feedbackItem.type === 'Test' && feedbackItem.credits !== undefined && feedbackItem.credits < 0;
+        const isTestFeedback = feedbackItem.type === 'Test' && feedbackItem.credits !== undefined && feedbackItem.credits <= 0;
         return isReviewerFeedback || isTestFeedback;
     }
 }
