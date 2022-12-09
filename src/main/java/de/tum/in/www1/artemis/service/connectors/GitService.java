@@ -424,7 +424,9 @@ public class GitService {
                     // E.g., LockFailedException
                     // cleanup the folder to avoid problems in the future.
                     // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
-                    FileUtils.deleteQuietly(localPath.toFile());
+                    if (!FileUtils.deleteQuietly(localPath.toFile())) {
+                        log.error("Could not delete directory during pull: {}", localPath.toAbsolutePath());
+                    }
                     throw new GitException(e);
                 }
             }
@@ -448,7 +450,7 @@ public class GitService {
                 // cleanup the folder to avoid problems in the future.
                 // 'deleteQuietly' is the same as 'deleteDirectory' but is not throwing an exception, thus we avoid another try-catch block.
                 if (!FileUtils.deleteQuietly(localPath.toFile())) {
-                    log.error("Could not delete directory: {}", localPath.toAbsolutePath());
+                    log.error("Could not delete directory during clone: {}", localPath.toAbsolutePath());
                 }
                 throw new GitException(e);
             }
