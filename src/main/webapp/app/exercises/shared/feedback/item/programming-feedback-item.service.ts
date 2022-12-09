@@ -101,7 +101,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
 
         return {
             type: 'Test',
-            name: showTestDetails ? this.translateService.instant('artemisApp.result.detail.test.name') : this.translateService.instant('artemisApp.result.detail.feedback'),
+            name: this.translateService.instant('artemisApp.result.detail.test.name'),
             title,
             text: feedback.detailText,
             positive: feedback.positive,
