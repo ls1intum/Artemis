@@ -6,8 +6,8 @@
 @import 'node_modules/bootstrap/scss/bootstrap';
 @import 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
 // Needed for mathematical formulas in markdown editor
-@import '~katex/dist/katex.css';
-@import '~@flaviosantoro92/ngx-datatable/themes/bootstrap.css';
+@import 'node_modules/katex/dist/katex.min.css';
+@import 'node_modules/@flaviosantoro92/ngx-datatable/themes/bootstrap';
 // Needed for emojis in metis reactions
 @import 'node_modules/@ctrl/ngx-emoji-mart/picker';
 

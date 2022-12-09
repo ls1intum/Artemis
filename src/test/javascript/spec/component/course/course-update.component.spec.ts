@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTooltip, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -79,7 +79,7 @@ describe('Course Management Update Component', () => {
         } as any as ActivatedRoute;
         const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), ImageCropperModule],
+            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), ImageCropperModule, MockDirective(NgbTypeahead)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -93,14 +93,12 @@ describe('Course Management Update Component', () => {
                 CourseUpdateComponent,
                 MarkdownEditorStubComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
                 MockComponent(SecuredImageComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(ColorSelectorComponent),
                 MockDirective(HasAnyAuthorityDirective),
                 MockDirective(TranslateDirective),
                 MockPipe(RemoveKeysPipe),
-                MockDirective(NgbTypeahead),
             ],
         })
             .compileComponents()

@@ -46,7 +46,10 @@
               "js-video-url-parser",
               "dompurify",
               "interactjs",
-              "mobile-drag-drop"
+              "mobile-drag-drop",
+              "dagre",
+              "webcola",
+              "rfdc"
             ],
             "outputPath": "build/resources/main/static/",
             "index": "src/main/webapp/index.html",
@@ -113,8 +116,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "2.33mb"
+                  "maximumWarning": "2.3mb",
+                  "maximumError": "2.4mb"
                 },
                 {
                   "type": "anyComponentStyle",
