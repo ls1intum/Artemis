@@ -49,7 +49,6 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -233,7 +232,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockDirective(ExtensionPointDirective),
         MockHasAnyAuthorityDirective,
         MockTranslateValuesDirective,
-        MockDirective(NgbTooltip),
         MockComponent(AssessmentWarningComponent),
         MockPipe(ArtemisDatePipe),
         MockPipe(ArtemisTranslatePipe),
