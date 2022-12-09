@@ -5,7 +5,20 @@ package de.tum.in.www1.artemis.versioning;
  */
 public enum VersionRangeComparisonType {
 
-    FIRST_A_NO_INTERSECT, A_THEN_B, A_INCLUDES_B, EQUALS, B_INCLUDES_A, B_THEN_A, FIRST_B_NO_INTERSECT;
+    // e.g. [1,2] and [4,5]
+    FIRST_A_NO_INTERSECT,
+    // e.g. [1,4] and [2,5]
+    A_THEN_B,
+    // e.g. [1,4] and [1,3]
+    A_INCLUDES_B,
+    // e.g. [1,2] and [1,2]
+    EQUALS,
+    // e.g. [1,3] and [1,4]
+    B_INCLUDES_A,
+    // e.g. [2,5] and [1,4]
+    B_THEN_A,
+    // e.g. [4,5] and [1,2]
+    FIRST_B_NO_INTERSECT;
 
     /**
      * @return The inverted comparison type

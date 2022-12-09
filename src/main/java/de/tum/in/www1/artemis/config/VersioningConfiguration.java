@@ -2,7 +2,8 @@ package de.tum.in.www1.artemis.config;
 
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.springdoc.core.GroupedOpenApi;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;

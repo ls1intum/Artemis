@@ -8,8 +8,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.mvc.condition.RequestCondition;
 
 import de.tum.in.www1.artemis.exception.ApiVersionRangeNotValidException;
