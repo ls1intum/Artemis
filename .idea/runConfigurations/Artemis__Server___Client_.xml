@@ -1,12 +1,21 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Artemis (Server &amp; Client)" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot">
+    <option name="ACTIVE_PROFILES" value="artemis,scheduling,bamboo,bitbucket,jira,dev,local" />
     <module name="Artemis.main" />
-    <option name="SPRING_BOOT_MAIN_CLASS" value="de.tum.in.www1.artemis.ArtemisApp" />
-    <option name="ACTIVE_PROFILES" value="dev,bamboo,bitbucket,jira,artemis,scheduling,local" />
-    <option name="VM_PARAMETERS" value="--illegal-access=warn -Duser.country=US -Duser.language=en" />
     <option name="PROGRAM_PARAMETERS" value=" " />
-    <option name="ALTERNATIVE_JRE_PATH" />
     <option name="SHORTEN_COMMAND_LINE" value="MANIFEST" />
+    <option name="SPRING_BOOT_MAIN_CLASS" value="de.tum.in.www1.artemis.ArtemisApp" />
+    <option name="VM_PARAMETERS" value="--illegal-access=warn -Duser.country=US -Duser.language=en" />
+    <extension name="net.ashald.envfile">
+      <option name="IS_ENABLED" value="false" />
+      <option name="IS_SUBST" value="false" />
+      <option name="IS_PATH_MACRO_SUPPORTED" value="false" />
+      <option name="IS_IGNORE_MISSING_FILES" value="false" />
+      <option name="IS_ENABLE_EXPERIMENTAL_INTEGRATIONS" value="false" />
+      <ENTRIES>
+        <ENTRY IS_ENABLED="true" PARSER="runconfig" />
+      </ENTRIES>
+    </extension>
     <method v="2">
       <option name="Gradle.BeforeRunTask" enabled="false" tasks="build" externalProjectPath="$PROJECT_DIR$" vmOptions="" scriptParameters="-x test -x jacocoTestCoverageVerification -x spotlessCheck -x checkstyleMain -x checkstyleTest" />
     </method>

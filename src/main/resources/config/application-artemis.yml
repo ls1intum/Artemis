@@ -11,26 +11,34 @@ artemis:
     submission-export-path: exports
     # LEGACY: arbitrary password for encrypting database values
     # encryption-password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-    bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
-                            # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
+
+    # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
+    # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
+    bcrypt-salt-rounds: 11
     external-system-request:
-        batch-size: 50  # wait the time below after 50 requests
-        batch-waiting-time: 30000   # in ms = 30s
+        batch-size: 50 # wait the time below after 50 requests
+        batch-waiting-time: 30000 # in ms = 30s
     user-management:
         use-external: false
-        internal-admin:
+        # internal-admin:
             # username: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
             # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-        registration:               # the whole section is optional: whether user can register in Artemis
+
+        # the whole section is optional: whether user can register in Artemis
+        registration:
             enabled: false
-            allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(tum\.de|in\.tum\.de|mytum\.de)'
-            allowed-email-pattern-readable: '@tum.de, @in.tum.de, @mytum.de'
-            cleanup-time-minutes: 60 # The amount of time until non-activated accounts are deleted automatically
-        accept-terms: false     # whether users have to accept terms before they can log in, from a privacy point of view this is not needed during education, therefore the default value is false
-        course-registration:                    # the whole section is optional: whether there is a restriction for the self-registration of students in courses
-            allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'    # example for a TUM identifier, e.g. ab12cde
+            allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(artemis\.local|artemis\.example)'
+            allowed-email-pattern-readable: '@artemis.local, @artemis.example'
+            # The amount of time until non-activated accounts are deleted automatically
+            cleanup-time-minutes: 60
+        # whether users have to accept terms before they can log in, from a privacy point of view this is not needed during education, therefore the default value is false
+        accept-terms: false
+        # the whole section is optional: whether there is a restriction for the self-registration of students in courses
+        course-registration:
+            allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$' # example for a TUM identifier, e.g. ab12cde
         login:
-            account-name: TUM                   # optional: customization for the welcome page "please sign in with your <account-name> account"
+            # optional: customization for the welcome page "please sign in with your <account-name> account" e.g. TUM
+            account-name: ARTEMIS
     continuous-integration:
         # Defines the used docker images for certain programming languages.
         # For each language at least the `default` image has to be defined.

@@ -5,4 +5,6 @@ artemis:
             user-dn: "cn=TUINI01-Artemis,ou=bindDNs,ou=iauth,dc=tum,dc=de"
             base: "ou=users,ou=data,ou=prod,ou=iauth,dc=tum,dc=de"
             # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-            allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'    # example for a TUM identifier, e.g. ab12cde
+
+            # example for a TUM identifier, e.g. ab12cde
+            allowed-username-pattern: '^([a-z]{2}\d{2}[a-z]{3})$'

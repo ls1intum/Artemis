@@ -22,8 +22,7 @@ spring:
         url: jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
 
 server:
-    # this address is passed to the CI systems for sending back notifications to Artemis
-    # therefore depending on where these systems are hosted you have to change the url here
+    # see application.yml for further comments
     url: http://localhost
     compression:
         enabled: true
@@ -39,7 +38,8 @@ server:
 jhipster:
     mail: # specific JHipster mail property, for standard properties see MailProperties
         from: artemis@localhost
-        base-url: http://my-server-url-to-change # Modify according to your server's URL
+        # Modify according to your server's URL
+        base-url: http://my-server-url-to-change
 
 # Properties to be exposed on the /info management endpoint
 info:
@@ -49,7 +49,7 @@ info:
             - course_exercise_overview_tour: 'tutorial'
             - programming_exercise_fail_tour: 'tutorial'
             - programming_exercise_success_tour: 'tutorial'
-    test-server: false  # false --> production, true --> test server, --> empty == local
+    test-server: false # false --> production, true --> test server, --> empty == local
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false in production
     text-assessment-analytics-enabled: false

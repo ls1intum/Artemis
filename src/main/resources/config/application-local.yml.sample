@@ -11,6 +11,7 @@
 # Usage:
 # - copy this file to application-local.yml
 # - uncomment the "Atlassian Stack" or "Gitlab / Jenkins Stack" IF you use these as CI/VCS
+# - uncomment the "Server Config" if you use a VCS inside Docker containers
 #
 # ===================================================================
 
@@ -32,14 +33,10 @@ artemis:
 #        user: # e.g. ga12abc
 #        password:
 #        token:
-#        ssh-private-key-password:
 #    continuous-integration:
 #        user: # e.g. ga12abc
 #        password:
-#        token: # Enter a valid token generated in Bamboo giving Artemis full Admin access
-#        # The actual value of the notification token to check against in Artemis. This is the token that gets send with
-#        # every request the CI system makes to Artemis containing a new result after a build.
-#        # The token value you use for the Server Notification Plugin
+#        token:
 #        artemis-authentication-token-value:
 # ===================================================================
 # Atlassian Stack END
@@ -54,12 +51,17 @@ artemis:
 #        token: artemis-gitlab-token # generated in Gitlab Server Quickstart steps 4 and 5
 #        ci-token: jenkins-secret-token # pre-generated or replaced in Automated Jenkins Server step 3
 #        health-api-token:
-#        ssh-private-key-password:
 #    continuous-integration:
 #        user: artemis_admin
 #        password: artemis_admin
 #        secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # pre-generated or replaced in Automated Jenkins Server step 3
 #        artemis-authentication-token-value: artemis_admin
+#jenkins:
+#    internal-urls:
+#        ci-url: http://jenkins:8080
+#        vcs-url: http://gitlab:80
+# TODO: is this necessary for local setups? seems so from what can be extracted from the docs
+#    use-crumb: false
 # ===================================================================
 # Gitlab / Jenkins Stack END
 # ===================================================================
@@ -84,9 +86,12 @@ jhipster:
     registry:
         password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
 
-server:
-    # this address is passed to the CI systems for sending back notifications to Artemis
-    # therefore depending on where these systems are hosted you have to change the url here
-    # other possible values:
-    # Artemis locally and CI inside Docker Containers: host.docker.internal:8080
-    # Artemis locally and CI hosted on a Server on your network: LAN_IP_ADDRESS:8080
+# ===================================================================
+# Server Config START
+# ===================================================================
+#server:
+#    # see application.yml for further comments
+#    url: http://host.docker.internal:8080
+# ===================================================================
+# Server Config END
+# ===================================================================

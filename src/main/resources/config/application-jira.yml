@@ -2,7 +2,7 @@ artemis:
     user-management:
         use-external: true
         external:
-            url: http://localhost:8085
+            url: http://localhost:8081
             # e.g. ga12abc
             # user: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
             # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV

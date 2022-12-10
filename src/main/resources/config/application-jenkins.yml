@@ -9,7 +9,9 @@ artemis:
         url: http://localhost:8082
         # user: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
         # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-        empty-commit-necessary: false # Do we need an empty commit for new exercises/repositories in order for the CI to register the repo
+
+        # Do we need an empty commit for new exercises/repositories in order for the CI to register the repo
+        empty-commit-necessary: false
         # Hash/key of the ci-token, equivalent e.g. to the ci-token in version-control
         # Some CI systems, like Jenkins, offer a specific token that gets checked against any incoming notifications
         # from a VCS trying to trigger a build plan. Only if the notification request contains the correct token, the plan
@@ -20,6 +22,7 @@ artemis:
         # hudson.util.Secret is stored in the build plan, so you also have to specify this encrypted string here and NOT the actual token value itself!
         # You can get this by GETting any job.xml for a job with an activated GitLab step and your token value of choice.
         # secret-push-token: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
+
         # Key of the saved credentials for the VCS service
         # You have to specify the key from the credentials page in Jenkins under which the user and
         # password for the VCS are stored
@@ -31,7 +34,9 @@ artemis:
         # every request the CI system makes to Artemis containing a new result after a build.
         # The token value you use for the Server Notification Plugin and is stored under the notification-token credential above
         # artemis-authentication-token-value: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-        build-timeout: 30 # Does cancel jenkins builds after 30 minutes to remove build that get stuck
+
+        # Does cancel jenkins builds after 30 minutes to remove build that get stuck
+        build-timeout: 30
 
 jenkins:
     # The following (optional) parameter allows to customize if Jenkins CSRF protection should be used (activated) within Artemis:
@@ -50,8 +55,11 @@ jenkins:
     # different to how clients should access those services.
     # The client-facing URLs (e.g. for the repository clone URL, link to the build plans)
     # will still be constructed from the ones defined in application-artemis.yml.
-    internal-urls:
+    # internal-urls:
         # Override the ci url used e.g. in Gitlab as the webhook url.
-        ci-url: # http://jenkins:8080
+        # http://jenkins:8080
+        # ci-url: IF NECESSARY CHANGE THIS VALUE IN YOUR application-local.yml or ENV
+
         # Overrides the vcs url used e.g. as the Gitlab checkout url in Jenkins build plans
-        vcs-url: # http://gitlab:80
+        # http://gitlab:80
+        # vcs-url: IF NECESSARY CHANGE THIS VALUE IN YOUR application-local.yml or ENV

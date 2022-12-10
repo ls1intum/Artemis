@@ -32,19 +32,16 @@ spring:
     liquibase:
         contexts: dev
     messages:
-        cache-duration: PT1S # 1 second, see the ISO 8601 standard
+        # 1 second, see the ISO 8601 standard
+        cache-duration: PT1S
     thymeleaf:
         cache: false
     hazelcast:
         localInstances: true
 
 server:
-    # this address is passed to the CI systems for sending back notifications to Artemis
-    # therefore depending on where these systems are hosted you have to change the url here
-    # other possible values:
-    # Artemis locally and CI inside Docker Containers: host.docker.internal:8080
-    # Artemis locally and CI hosted on a Server on your network: LAN_IP_ADDRESS:8080
-    url: http://localhost:8080 # Artemis and CI are running locally
+    # see application.yml for further comments
+    url: http://localhost:8080
 
 # ===================================================================
 # JHipster specific properties
@@ -65,7 +62,8 @@ jhipster:
         from: artemis@localhost
         base-url: http://127.0.0.1:8080
     logging:
-        use-json-format: false # By default, logs are not in Json format
+        # By default, logs are not in Json format
+        use-json-format: false
 
 # Properties to be exposed on the /info management endpoint
 info:
