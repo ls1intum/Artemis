@@ -6,8 +6,6 @@ import { By } from '@angular/platform-browser';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MockDirective } from 'ng-mocks';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CodeEditorStatusComponent', () => {
     let comp: CodeEditorStatusComponent;
@@ -16,7 +14,7 @@ describe('CodeEditorStatusComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, AceEditorModule],
-            declarations: [CodeEditorStatusComponent, TranslatePipeMock, MockDirective(NgbTooltip)],
+            declarations: [CodeEditorStatusComponent, TranslatePipeMock],
         })
             .compileComponents()
             .then(() => {

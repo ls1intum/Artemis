@@ -3,7 +3,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTestModule } from '../../test.module';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -31,7 +30,7 @@ describe('JhiStartPracticeModeButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbPopoverModule],
+            imports: [ArtemisTestModule],
             declarations: [StartPracticeModeButtonComponent, MockComponent(ExerciseActionButtonComponent), MockPipe(ArtemisTranslatePipe), MockDirective(FeatureToggleDirective)],
             providers: [
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },
