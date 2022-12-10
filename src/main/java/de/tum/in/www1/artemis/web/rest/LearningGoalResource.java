@@ -227,6 +227,8 @@ public class LearningGoalResource {
 
         existingLearningGoal.setTitle(learningGoal.getTitle());
         existingLearningGoal.setDescription(learningGoal.getDescription());
+        existingLearningGoal.setTaxonomy(learningGoal.getTaxonomy());
+        existingLearningGoal.setMasteryThreshold(learningGoal.getMasteryThreshold());
 
         // TODO: Move the managing of relations to its own endpoint (likely using a modal in the client)
         var lectureUnitIds = learningGoal.getLectureUnits().stream().map(LectureUnit::getId).toList();
@@ -268,6 +270,8 @@ public class LearningGoalResource {
         LearningGoal learningGoalToCreate = new LearningGoal();
         learningGoalToCreate.setTitle(learningGoalFromClient.getTitle());
         learningGoalToCreate.setDescription(learningGoalFromClient.getDescription());
+        learningGoalToCreate.setTaxonomy(learningGoalFromClient.getTaxonomy());
+        learningGoalToCreate.setMasteryThreshold(learningGoalFromClient.getMasteryThreshold());
         learningGoalToCreate.setCourse(course);
 
         // TODO: Move the managing of relations to its own endpoint (likely using a modal in the client)

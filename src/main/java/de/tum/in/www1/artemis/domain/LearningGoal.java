@@ -9,6 +9,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -25,12 +26,16 @@ public class LearningGoal extends DomainObject {
     @Lob
     private String description;
 
+    @Column(name = "mastery_threshold")
+    private Integer masteryThreshold;
+
     /**
      * The type of learning goal according to Bloom's revised taxonomy.
      * @see <a href="https://en.wikipedia.org/wiki/Bloom%27s_taxonomy">Wikipedia</a>
      */
     @Column(name = "taxonomy")
     @Convert(converter = LearningGoalTaxonomy.TaxonomyConverter.class)
+    @JsonInclude
     private LearningGoalTaxonomy taxonomy;
 
     @ManyToOne
@@ -76,6 +81,14 @@ public class LearningGoal extends DomainObject {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Integer getMasteryThreshold() {
+        return masteryThreshold;
+    }
+
+    public void setMasteryThreshold(Integer masteryThreshold) {
+        this.masteryThreshold = masteryThreshold;
     }
 
     public LearningGoalTaxonomy getTaxonomy() {

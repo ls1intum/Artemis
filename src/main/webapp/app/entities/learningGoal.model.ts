@@ -7,12 +7,12 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
  * The available learning goal types (based on Bloom's Taxonomy)
  */
 export enum LearningGoalTaxonomy {
-    REMEMBER = 'remember',
-    UNDERSTAND = 'understand',
-    APPLY = 'apply',
-    ANALYZE = 'analyze',
-    EVALUATE = 'evaluate',
-    CREATE = 'create',
+    REMEMBER = 'REMEMBER',
+    UNDERSTAND = 'UNDERSTAND',
+    APPLY = 'APPLY',
+    ANALYZE = 'ANALYZE',
+    EVALUATE = 'EVALUATE',
+    CREATE = 'CREATE',
 }
 
 export class LearningGoal implements BaseEntity {
@@ -20,6 +20,7 @@ export class LearningGoal implements BaseEntity {
     public title?: string;
     public description?: string;
     public taxonomy?: LearningGoalTaxonomy;
+    public masteryThreshold?: number;
     public course?: Course;
     public exercises?: Exercise[];
     public lectureUnits?: LectureUnit[];

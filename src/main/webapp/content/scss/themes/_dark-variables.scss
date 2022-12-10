@@ -576,3 +576,11 @@ $graph-black: rgb(229, 229, 229);
 // User-Management
 $user-management-background-color: rgba($white, 0.02);
 $user-management-border-color: rgba($white, 0.15);
+
+// Learning Goal Rings
+$learning-goal-rings-red: $red;
+$learning-goal-rings-red-bg: transparentize($learning-goal-rings-red, 0.8);
+$learning-goal-rings-green: $green;
+$learning-goal-rings-green-bg: transparentize($learning-goal-rings-green, 0.8);
+$learning-goal-rings-blue: $blue;
+$learning-goal-rings-blue-bg: transparentize($learning-goal-rings-blue, 0.8);

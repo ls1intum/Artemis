@@ -1,13 +1,14 @@
 {
     "artemisApp": {
         "learningGoal": {
-            "created": "Lernziel erstellt",
-            "deleted": "Lernziel gelöscht",
-            "updated": "Lernziel bearbeitet",
-            "learningGoalButton": "Lernziele",
-            "title": "Lernziele",
+            "created": "Kompetenz erstellt",
+            "deleted": "Kompetenz gelöscht",
+            "updated": "Kompetenz bearbeitet",
+            "learningGoalButton": "Kompetenzen",
+            "title": "Kompetenzen",
             "description": "Beschreibung",
             "taxonomy": "Taxonomie",
+            "masteryThreshold": "Schwellwert zum Erreichen der Kompetenz",
             "taxonomies": {
                 "remember": "Erinnern",
                 "understand": "Verstehen",
@@ -17,17 +18,18 @@
                 "create": "Erstellen"
             },
             "manageLearningGoals": {
-                "title": "Lernzielmanagement"
+                "title": "Kompetenzmanagement",
+                "create": "Kompetenz erstellen"
             },
             "createLearningGoal": {
-                "title": "Erstelle ein neues Lernziel",
-                "titlePlaceholder": "Gib dem Lernziel einen Titel",
-                "titleRequiredValidationError": "Ein Lernziel braucht einen Titel",
-                "titleMaxLengthValidationError": "Der Titel eines Lernziels ist auf maximal 255 Symbole beschränkt",
-                "titleUniqueValidationError": "Es gibt bereits ein Lernziel mit diesem Titel in dem Kurs",
-                "descriptionPlaceholder": "Beschreibe das Lernziel. Was sollen die Studierenden lernen?",
-                "descriptionMaxLengthValidationError": "Die Beschreibung eines Lernziels ist auf maximal 10 000 Symbole beschränkt",
-                "connectWithLectureUnits": "Verbinde das Lernziel mit Vorlesungseinheiten",
+                "title": "Erstelle ein neues Kompetenz",
+                "titlePlaceholder": "Gib dem Kompetenz einen Titel",
+                "titleRequiredValidationError": "Ein Kompetenz braucht einen Titel",
+                "titleMaxLengthValidationError": "Der Titel eines Kompetenzen ist auf maximal 255 Symbole beschränkt",
+                "titleUniqueValidationError": "Es gibt bereits ein Kompetenz mit diesem Titel in dem Kurs",
+                "descriptionPlaceholder": "Beschreibe das Kompetenz. Was sollen die Studierenden lernen?",
+                "descriptionMaxLengthValidationError": "Die Beschreibung eines Kompetenzen ist auf maximal 10 000 Symbole beschränkt",
+                "connectWithLectureUnits": "Verbinde das Kompetenz mit Vorlesungseinheiten",
                 "selectLecture": "Wähle eine Vorlesung aus",
                 "noLectures": "Dieser Kurs hat keine Vorlesungen",
                 "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} Vorlesungseinheiten verbunden)",
@@ -44,33 +46,35 @@
                 }
             },
             "editLearningGoal": {
-                "title": "Bearbeite ein Lernziel"
+                "title": "Bearbeite ein Kompetenz"
             },
             "learningGoalCard": {
                 "connectedLectureUnits": "Verbundene Vorlesungseinheiten",
-                "connectedLectureUnitsExplanation": "Die folgenden Vorlesungseinheiten sind mit dem Lernziel verbunden: ",
+                "connectedLectureUnitsExplanation": "Die folgenden Vorlesungseinheiten sind mit dem Kompetenz verbunden:",
+                "ringsTooltip": "Dein Weg zum Erwerb der Kompetenz. (Rot = Kompetenzbeherrschung, Grün = Selbstsicherheit, Blau = Fortschritt)",
                 "exerciseNote": "Bitte beachte, dass bei Aufgabeneinheiten immer die letzte Einreichung berücksichtigt wird. Auch Einreichungen nach dem Fälligkeitsdatum. Das bedeutet, dass du z. B. deinen Fortschritt verbessern kannst, indem du ein Quiz beliebig oft erneut versuchst. Es ist daher normal, dass deine Bewertung hier von der Bewertung, welche du offiziell in einer Übung erreicht hast, abweichen kann.",
                 "delete": {
-                    "question": "Willst du wirklich das Lernziel <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
-                    "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen des Lernziels ein.",
+                    "question": "Willst du wirklich das Kompetenz <strong>{{ title }}</strong> löschen? Du kannst diese Aktion nicht rückgängig machen!",
+                    "typeNameToConfirm": "Bitte gib zur Bestätigung den Namen des Kompetenzen ein.",
                     "buttonText": "Löschen"
                 },
                 "remove": "Entfernen",
                 "achieved": "erreicht",
-                "progressUnavailable": "Die Fortschrittsberechnung ist momentan nur für Lernziele verfügbar, welche mit Lerneinheiten verbunden wurden.",
-                "noUnitsConnected": "Das Lernziel ist mit keinen Vorlesungseinheiten verbunden",
+                "progressUnavailable": "Die Fortschrittsberechnung ist momentan nur für Kompetenzen verfügbar, welche mit Lerneinheiten verbunden wurden.",
+                "noUnitsConnected": "Das Kompetenz ist mit keinen Vorlesungseinheiten verbunden",
                 "progressExplanation": "Fortschritt: Momentan hast du <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht.",
                 "progressCourseExplanation": "Durchschnittlicher Kurs Fortschritt: Momentan hat der Kurs durchschnittlich <strong>{{ progress }}%</strong> von <strong>{{ points }}</strong> Punkten erreicht."
             },
             "learningGoalPopover": {
-                "connectedLearningGoals": "Verbundene Lernziele",
-                "explanation": "Diese Vorlesungseinheit hilft dir bei der Erreichung der folgenden Lernziele: ",
-                "noLearningGoals": "Keine Lernziele verbunden mit dieser Vorlesungseinheit! "
+                "connectedLearningGoals": "Verbundene Kompetenzen",
+                "explanation": "Diese Vorlesungseinheit hilft dir bei der Erreichung der folgenden Kompetenzen: ",
+                "noLearningGoals": "Keine Kompetenzen verbunden mit dieser Vorlesungseinheit! "
             },
             "prerequisite": {
                 "title": "Voraussetzungen",
                 "managePrerequisites": {
-                    "title": "Voraussetzungen verwalten"
+                    "title": "Voraussetzungen verwalten",
+                    "select": "Voraussetzung auswählen"
                 },
                 "import": {
                     "title": "Voraussetzungen hinzufügen",
@@ -80,7 +84,7 @@
 
                         "doSelect": "Auswählen"
                     },
-                    "searchLearningGoal": "Nach Lernziel suchen:",
+                    "searchLearningGoal": "Nach Kompetenz suchen:",
                     "loading": "Lade..."
                 }
             }

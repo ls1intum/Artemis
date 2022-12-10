@@ -1,13 +1,14 @@
 {
     "artemisApp": {
         "learningGoal": {
-            "created": "Learning Goal created",
-            "deleted": "Learning Goal deleted",
-            "updated": "Learning Goal updated",
-            "learningGoalButton": "Learning Goals",
-            "title": "Learning Goals",
+            "created": "Competency created",
+            "deleted": "Competency deleted",
+            "updated": "Competency updated",
+            "learningGoalButton": "Competencies",
+            "title": "Title",
             "description": "Description",
             "taxonomy": "Taxonomy",
+            "masteryThreshold": "Mastery threshold",
             "taxonomies": {
                 "remember": "Remember",
                 "understand": "Understand",
@@ -17,17 +18,18 @@
                 "create": "Create"
             },
             "manageLearningGoals": {
-                "title": "Learning Goal Management"
+                "title": "Competency Management",
+                "create": "Create Competency"
             },
             "createLearningGoal": {
-                "title": "Create a new Learning Goal",
-                "titlePlaceholder": "Give the learning goal a title",
-                "titleRequiredValidationError": "A learning goal needs to have a title",
-                "titleMaxLengthValidationError": "A learning goal title is limited to 255 characters",
-                "titleUniqueValidationError": "There already exists a learning goal with this title in the course",
-                "descriptionPlaceholder": "Describe the learning goal. What do you expect students to learn?",
-                "descriptionMaxLengthValidationError": "A learning goal description is limited to 10 000 characters",
-                "connectWithLectureUnits": "Connect the learning goal with lecture units",
+                "title": "Create a new Competency",
+                "titlePlaceholder": "Give the competency a title",
+                "titleRequiredValidationError": "A competency needs to have a title",
+                "titleMaxLengthValidationError": "A competency title is limited to 255 characters",
+                "titleUniqueValidationError": "There already exists a competency with this title in the course",
+                "descriptionPlaceholder": "Describe the competency. What do you expect students to learn?",
+                "descriptionMaxLengthValidationError": "A competency description is limited to 10 000 characters",
+                "connectWithLectureUnits": "Connect the competency with lecture units",
                 "selectLecture": "Select a Lecture",
                 "noLectures": "This course has no lectures",
                 "dropdown": "{{lectureTitle}} ({{ noOfConnectedUnits }} unit(s) connected)",
@@ -44,33 +46,35 @@
                 }
             },
             "editLearningGoal": {
-                "title": "Edit a learning goal"
+                "title": "Edit a competency"
             },
             "learningGoalCard": {
                 "connectedLectureUnits": "Connected Lecture Units",
-                "connectedLectureUnitsExplanation": "The following lecture units are connected to this learning goal: ",
+                "connectedLectureUnitsExplanation": "The following lecture units are connected to this competency:",
+                "ringsTooltip": "Your route to competency mastery. (Red = Mastery, Green = Confidence, Blue = Progress)",
                 "exerciseNote": "Please note that we take always the last submission into account for exercise units. Even submissions after the due date. This means for example that you can improve your progress by re-trying a quiz as often as you like. It is therefore normal, that the score here might differ from the score you officially achieved in an exercise.",
                 "delete": {
-                    "question": "Do you really want to delete the learning goal <strong>{{ title }}</strong>? You can not undo this action!",
-                    "typeNameToConfirm": "Please enter the name of the learning goal for confirmation.",
+                    "question": "Do you really want to delete the competency <strong>{{ title }}</strong>? You can not undo this action!",
+                    "typeNameToConfirm": "Please enter the name of the competency for confirmation.",
                     "buttonText": "Delete"
                 },
                 "remove": "Remove",
                 "achieved": "achieved",
-                "progressUnavailable": "Progress calculation is currently only available for learning goals connected to lecture units.",
-                "noUnitsConnected": "This learning goal is not connected to any lecture units",
+                "progressUnavailable": "Progress calculation is currently only available for competencies connected to lecture units.",
+                "noUnitsConnected": "This competency is not connected to any lecture units",
                 "progressExplanation": "Progress: You achieved currently <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points",
                 "progressCourseExplanation": "Average Course Progress: The course achieved currently on average <strong>{{ progress }}%</strong> of <strong>{{ points }}</strong> points"
             },
             "learningGoalPopover": {
-                "connectedLearningGoals": "Connected Learning Goals",
-                "explanation": "This lecture unit helps you to achieve the following learning goals: ",
-                "noLearningGoals": "No learning goals are connected with this lecture unit! "
+                "connectedLearningGoals": "Connected Competencies",
+                "explanation": "This lecture unit helps you to achieve the following competencies: ",
+                "noLearningGoals": "No competencies are connected with this lecture unit! "
             },
             "prerequisite": {
                 "title": "Prerequisites",
                 "managePrerequisites": {
-                    "title": "Prerequisite Management"
+                    "title": "Prerequisite Management",
+                    "select": "Select Prerequisite"
                 },
                 "import": {
                     "title": "Add prerequisites",
@@ -80,7 +84,7 @@
                         "semester": "Semester",
                         "doSelect": "Select"
                     },
-                    "searchLearningGoal": "Search learning goal:",
+                    "searchLearningGoal": "Search competency:",
                     "loading": "Loading..."
                 }
             }

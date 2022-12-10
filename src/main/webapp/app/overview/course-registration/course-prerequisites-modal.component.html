@@ -3,18 +3,21 @@
     <button (click)="clear()" aria-hidden="true" class="btn-close" data-dismiss="modal" type="button"></button>
 </div>
 <div class="modal-body">
-    <div *ngIf="isLoading" class="d-flex justify-content-center">
-        <div class="spinner-border" role="status">
-            <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+    <div class="container">
+        <div *ngIf="isLoading" class="d-flex justify-content-center">
+            <div class="spinner-border" role="status">
+                <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+            </div>
         </div>
-    </div>
 
-    <div *ngIf="!isLoading" class="d-flex flex-wrap gap-3 justify-content-evenly">
-        <jhi-learning-goal-card
-            *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
-            [learningGoal]="prerequisite"
-            [isPrerequisite]="true"
-            [displayOnly]="true"
-        ></jhi-learning-goal-card>
+        <div *ngIf="!isLoading" class="row justify-content-center gx-5 gy-2">
+            <jhi-learning-goal-card
+                class="col-12 col-lg-6"
+                *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
+                [learningGoal]="prerequisite"
+                [isPrerequisite]="true"
+                [displayOnly]="true"
+            ></jhi-learning-goal-card>
+        </div>
     </div>
 </div>
