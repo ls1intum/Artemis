@@ -51,7 +51,6 @@ VOLUME ["/opt/artemis/config"]
 VOLUME ["/opt/artemis/data"]
 VOLUME ["/opt/artemis/public/content"]
 
-EXPOSE 8080
-EXPOSE 6300
+EXPOSE 8080 6300
 
 ENTRYPOINT ["/bin/bash", "/bootstrap.sh"]
