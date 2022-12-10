@@ -269,11 +269,6 @@ under ``localhost:7990``.
 
 #. Add a SSH key for the admin user
 
-    ..
-        TODO: Doesn't seem so optional as it throws errors and closed Artemis when it wasn't set...
-        Same problem on Gitlab/Jenkins?
-
-
     Artemis can clone/push the repositories during setup and for the online code editor using SSH.
     If the SSH key is not present, the username + token will be used as fallback
     (and all git operations will use HTTP(S) instead of SSH).
