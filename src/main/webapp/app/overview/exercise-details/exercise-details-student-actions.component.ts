@@ -75,7 +75,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
             this.uninitializedQuiz = ArtemisQuizService.isUninitialized(quizExercise);
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.programmingExercise = this.exercise;
+            this.programmingExercise = this.exercise as ProgrammingExercise;
         }
     }
 

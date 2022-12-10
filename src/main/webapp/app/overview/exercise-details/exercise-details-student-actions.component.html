@@ -21,7 +21,7 @@
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                *ngIf="quizNotStarted"
+                *ngIf="quizNotStarted || gradedParticipation?.initializationState === InitializationState.INITIALIZED"
                 (click)="startExercise()"
             ></button>
             <button
@@ -34,17 +34,6 @@
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
                 *ngIf="uninitializedQuiz"
-                (click)="startExercise()"
-            ></button>
-            <button
-                [id]="'open-exercise-' + exercise.id"
-                jhi-exercise-action-button
-                [buttonIcon]="faPlayCircle"
-                [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
-                *ngIf="gradedParticipation?.initializationState === InitializationState.INITIALIZED"
-                [buttonLoading]="!!exercise.loading"
-                [smallButton]="smallButtons"
-                [hideLabelMobile]="false"
                 (click)="startExercise()"
             ></button>
         </div>

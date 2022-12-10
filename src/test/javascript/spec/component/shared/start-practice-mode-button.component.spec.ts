@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/util/alert.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
@@ -25,6 +26,8 @@ describe('JhiStartPracticeModeButtonComponent', () => {
 
     let courseExerciseService: CourseExerciseService;
     let startPracticeStub: jest.SpyInstance;
+    let alertService: AlertService;
+    let alertServiceStub: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -39,9 +42,11 @@ describe('JhiStartPracticeModeButtonComponent', () => {
 
         fixture = TestBed.createComponent(StartPracticeModeButtonComponent);
         comp = fixture.componentInstance;
-        courseExerciseService = fixture.debugElement.injector.get(CourseExerciseService);
+        courseExerciseService = TestBed.inject(CourseExerciseService);
+        alertService = TestBed.inject(AlertService);
 
         startPracticeStub = jest.spyOn(courseExerciseService, 'startPractice');
+        alertServiceStub = jest.spyOn(alertService, 'success');
     });
 
     afterEach(() => {
@@ -53,7 +58,6 @@ describe('JhiStartPracticeModeButtonComponent', () => {
             id: 43,
             type: ExerciseType.PROGRAMMING,
             dueDate: dayjs().subtract(5, 'minutes'),
-            allowOfflineIde: true,
             studentParticipations: [] as StudentParticipation[],
         } as ProgrammingExercise;
         const inactivePart = { id: 2, initializationState: InitializationState.UNINITIALIZED, testRun: true } as StudentParticipation;
@@ -72,7 +76,8 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.exercise.studentParticipations).toEqual([inactivePart]);
+        expect(alertServiceStub).toHaveBeenCalledOnce();
+        expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.exercise.personalRepositoryOnline');
         expect(startPracticeStub).toHaveBeenCalledOnce();
 
         comp.exercise.studentParticipations = [];
@@ -81,7 +86,8 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.exercise.studentParticipations).toEqual([initPart]);
+        expect(alertServiceStub).toHaveBeenCalledTimes(2);
+        expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.exercise.personalRepositoryOnline');
 
         fixture.destroy();
         flush();
@@ -113,7 +119,8 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.exercise.studentParticipations).toEqual([gradedPart, inactivePart]);
+        expect(alertServiceStub).toHaveBeenCalledOnce();
+        expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.exercise.personalRepositoryClone');
         expect(startPracticeStub).toHaveBeenCalledOnce();
 
         participationSubject.next(initPart);
@@ -121,7 +128,8 @@ describe('JhiStartPracticeModeButtonComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.exercise.studentParticipations).toEqual([gradedPart, initPart]);
+        expect(alertServiceStub).toHaveBeenCalledTimes(2);
+        expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.exercise.personalRepositoryClone');
 
         fixture.destroy();
         flush();
