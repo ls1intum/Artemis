@@ -143,9 +143,9 @@
                                 </a>
                                 <ng-template #viewSubmission>
                                     <a
-                                        *ngIf="!submission.latestResult"
+                                        *ngIf="!submission.latestResult && submission.participation"
                                         [class.disabled]="busy"
-                                        [routerLink]="['/courses', exercise.course.id, 'programming-exercises', exercise.id, 'code-editor', submission.participation.id]"
+                                        [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', submission.participation.id]"
                                         class="btn btn-primary btn-sm mb-1"
                                     >
                                         <fa-icon [fixedWidth]="true" [icon]="faFolderOpen"></fa-icon>&nbsp;{{ 'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate }}
@@ -238,9 +238,9 @@
                                     {{ 'artemisApp.assessment.dashboard.actions.assess' | artemisTranslate }}
                                 </a>
                                 <a
-                                    *ngIf="!submission.latestResult && !newManualResultAllowed"
+                                    *ngIf="!submission.latestResult && !newManualResultAllowed && submission.participation"
                                     [class.disabled]="busy"
-                                    [routerLink]="['/courses', exercise.course.id, 'programming-exercises', exercise.id, 'code-editor', submission.participation.id]"
+                                    [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', submission.participation.id]"
                                     class="btn btn-primary btn-sm mb-1"
                                 >
                                     <fa-icon [fixedWidth]="true" [icon]="faFolderOpen"></fa-icon>&nbsp;{{ 'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate }}
