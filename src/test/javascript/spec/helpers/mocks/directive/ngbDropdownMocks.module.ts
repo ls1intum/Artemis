@@ -1,6 +1,4 @@
 import { Directive, EventEmitter, Input, NgModule, Output } from '@angular/core';
-import { PlacementArray } from '@ng-bootstrap/ng-bootstrap/util/positioning';
-import { Options } from '@popperjs/core';
 
 @Directive({
     selector: '[ngbDropdownItem]',
@@ -27,8 +25,8 @@ class NgbDropdownMock {
     @Input() autoClose: boolean | 'outside' | 'inside';
     @Input() dropdownClass: string;
     @Input('open') _open = false;
-    @Input() placement: PlacementArray;
-    @Input() popperOptions: (options: Partial<Options>) => Partial<Options>;
+    @Input() placement: any;
+    @Input() popperOptions: (options: Partial<any>) => Partial<any>;
     @Input() container: null | 'body';
     @Input() display: 'dynamic' | 'static';
     @Output() openChange = new EventEmitter<boolean>();
