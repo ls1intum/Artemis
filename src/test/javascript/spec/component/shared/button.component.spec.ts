@@ -9,6 +9,7 @@ import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockDirective } from 'ng-mocks';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ButtonComponent', () => {
     let comp: ButtonComponent;
@@ -19,7 +20,7 @@ describe('ButtonComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [ButtonComponent, FeatureToggleDirective, TranslatePipeMock, MockDirective(TranslateDirective)],
             providers: [{ provide: FeatureToggleService, useClass: MockFeatureToggleService }],
         })
