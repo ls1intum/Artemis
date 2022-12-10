@@ -5,7 +5,7 @@ import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entitie
 import { TextBlock, TextBlockType } from 'app/entities/text-block.model';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
@@ -51,7 +51,6 @@ describe('TextblockFeedbackEditorComponent', () => {
                 MockComponent(FaLayersComponent),
                 MockComponent(GradingInstructionLinkIconComponent),
                 MockDirective(TranslateDirective),
-                MockDirective(NgbTooltip),
                 MockDirective(NgModel),
             ],
             providers: [

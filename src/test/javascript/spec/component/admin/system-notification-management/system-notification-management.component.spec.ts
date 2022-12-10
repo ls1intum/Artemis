@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
@@ -39,7 +38,6 @@ describe('SystemNotificationManagementComponent', () => {
                 MockDirective(DeleteButtonDirective),
                 MockDirective(SortDirective),
                 MockComponent(ItemCountComponent),
-                MockComponent(NgbPagination),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },

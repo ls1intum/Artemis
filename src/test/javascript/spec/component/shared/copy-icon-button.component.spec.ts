@@ -3,7 +3,6 @@ import { MockPipe } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
-import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { ClipboardModule } from '@angular/cdk/clipboard';
 
 describe('JhiCopyIconButtonComponent', () => {
@@ -12,7 +11,7 @@ describe('JhiCopyIconButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ClipboardModule, NgbPopoverModule],
+            imports: [ArtemisTestModule, ClipboardModule],
             declarations: [CopyIconButtonComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [],
         }).compileComponents();

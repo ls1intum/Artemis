@@ -3,12 +3,11 @@ import { ThreadSidebarComponent } from 'app/overview/course-messages/thread-side
 import { directMessageUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { getElement } from '../../../../helpers/utils/general.utils';
 import { PostComponent } from 'app/shared/metis/post/post.component';
-import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
 import { FormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ThreadSidebarComponent', () => {
     let fixture: ComponentFixture<ThreadSidebarComponent>;
@@ -23,7 +22,6 @@ describe('ThreadSidebarComponent', () => {
                 MockComponent(MessageReplyInlineInputComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
-                MockDirective(NgbTooltip),
             ],
             providers: [],
         })
