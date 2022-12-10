@@ -10,8 +10,8 @@
 #
 # Usage:
 # - copy this file to application-local.yml
-# - uncomment the "Atlassian Stack" or "Gitlab / Jenkins Stack" IF you use these as CI/VCS
-# - uncomment the "Server Config" if you use a VCS inside Docker containers
+# - uncomment the "Atlassian Stack" or "Jenkins / GitLab Stack" sections IF you use these as CI/VCS
+# - uncomment the "Server" section if you use a VCS inside Docker containers
 #
 # ===================================================================
 
@@ -43,12 +43,12 @@ artemis:
 # ===================================================================
 
 # ===================================================================
-# Gitlab / Jenkins Stack START
+# Jenkins / GitLab Stack START
 # ===================================================================
 #    version-control:
 #        user: root
-#        password: artemis_admin # created in Gitlab Server Quickstart step 2
-#        token: artemis-gitlab-token # generated in Gitlab Server Quickstart steps 4 and 5
+#        password: artemis_admin # created in GitLab Server Quickstart step 2
+#        token: artemis-gitlab-token # generated in GitLab Server Quickstart steps 4 and 5
 #        ci-token: jenkins-secret-token # pre-generated or replaced in Automated Jenkins Server step 3
 #        health-api-token:
 #    continuous-integration:
@@ -60,10 +60,9 @@ artemis:
 #    internal-urls:
 #        ci-url: http://jenkins:8080
 #        vcs-url: http://gitlab:80
-# TODO: is this necessary for local setups? seems so from what can be extracted from the docs
 #    use-crumb: false
 # ===================================================================
-# Gitlab / Jenkins Stack END
+# Jenkins / GitLab Stack END
 # ===================================================================
 
 spring:
@@ -87,11 +86,11 @@ jhipster:
         password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
 
 # ===================================================================
-# Server Config START
+# Server START
 # ===================================================================
 #server:
 #    # see application.yml for further comments
 #    url: http://host.docker.internal:8080
 # ===================================================================
-# Server Config END
+# Server END
 # ===================================================================
