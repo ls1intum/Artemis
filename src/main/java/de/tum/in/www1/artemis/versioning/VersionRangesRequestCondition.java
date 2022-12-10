@@ -69,8 +69,9 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
         if (ranges.isEmpty()) {
             return apiVersions;
         }
-        return apiVersions.stream().filter(e -> ranges.stream().anyMatch(range -> inRangeCodes.contains(VersionRangeComparator.compare(range, getInstanceOfVersionRange(e, e)))))
-                .collect(Collectors.toList());
+        return apiVersions.stream()
+                .filter(version -> ranges.stream().anyMatch(range -> inRangeCodes.contains(VersionRangeComparator.compare(range, getInstanceOfVersionRange(version, version)))))
+                .toList();
     }
 
     /**
