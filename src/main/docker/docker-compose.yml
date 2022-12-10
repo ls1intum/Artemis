@@ -11,7 +11,7 @@ services:
             - ../resources/config/application-artemis.yml:/opt/artemis/application-artemis.yml:ro
         environment:
             _JAVA_OPTIONS: -Xmx5120m -Xms2560m
-            SPRING_PROFILES_ACTIVE: dev,bamboo,bitbucket,jira,artemis,scheduling,athene,local
+            SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,bamboo,bitbucket,jira,dev,local
             SPRING_DATASOURCE_URL: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
             SPRING_DATASOURCE_USERNAME: root
             SPRING_DATASOURCE_PASSWORD:

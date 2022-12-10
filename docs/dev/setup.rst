@@ -249,7 +249,7 @@ This is a service file that works on Debian/Ubuntu (using systemd):
      --add-opens java.management/sun.management=ALL-UNNAMED \
      --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
      -jar artemis.war \
-     --spring.profiles.active=prod,bamboo,bitbucket,jira,ldap,scheduling,openapi
+     --spring.profiles.active=artemis,scheduling,bamboo,bitbucket,jira,ldap,openapi,prod
    SuccessExitStatus=143
    StandardOutput=/opt/artemis/artemis.log
    StandardError=inherit
@@ -342,7 +342,7 @@ Other run / debug configurations
 * **Artemis (Server & Client):** Will start the server and the client. The client will be available at
   `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
 * **Artemis (Server, Jenkins & GitLab):** The server will be started separated from the client with the profiles
-  ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
+  ``artemis,jenkins,gitlab,dev`` instead of ``artemis,bamboo,bitbucket,jira,dev``.
 * **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled
   (see `Athene Service <#athene-service>`__).
 
@@ -361,7 +361,7 @@ The Artemis server should startup by running the main class
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling
+   --spring.profiles.active=artemis,scheduling,bamboo,bitbucket,jira,dev
 
 If you use IntelliJ (Community or Ultimate) you can set the active
 profiles by
@@ -369,7 +369,7 @@ profiles by
 * Choosing ``Run | Edit Configurations...``
 * Going to the ``Configuration Tab``
 * Expanding the ``Environment`` section to reveal ``VM Options`` and setting them to
-  ``-Dspring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling``
+  ``-Dspring.profiles.active=artemis,scheduling,bamboo,bitbucket,jira,dev``
 
 Set Spring profiles with IntelliJ Ultimate
 """"""""""""""""""""""""""""""""""""""""""
@@ -380,7 +380,7 @@ configuration:
 
 ::
 
-   dev,bamboo,bitbucket,jira,artemis,scheduling
+   artemis,scheduling,bamboo,bitbucket,jira,dev
 
 Run the server with the command line (Gradle wrapper)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -390,14 +390,14 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 
 ::
 
-   ./gradlew bootRun --args='--spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling'
+   ./gradlew bootRun --args='--spring.profiles.active=artemis,scheduling,bamboo,bitbucket,jira,dev'
 
 As an alternative, you might want to use Jenkins and GitLab with an
 internal user management in Artemis, then you would use the profiles:
 
 ::
 
-   dev,jenkins,gitlab,artemis,scheduling
+   artemis,scheduling,jenkins,gitlab,dev
 
 Configure Text Assessment Analytics Service
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -531,7 +531,7 @@ Enable the ``athene`` Spring profile:
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,athene
+   --spring.profiles.active=artemis,scheduling,athene,bamboo,bitbucket,jira,dev
 
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -564,7 +564,7 @@ Enable the ``apollon`` Spring profile:
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,apollon
+   --spring.profiles.active=artemis,scheduling,apollon,bamboo,bitbucket,jira,dev
 
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^

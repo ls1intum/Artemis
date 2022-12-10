@@ -2,7 +2,7 @@ version: '3'
 
 # NOTE: this docker compose file starts the artemis-server (as jar file) and the artemis-client in separate containers. This setup is aimed for development.
 # If you want to start the whole Artemis application (server and client) in the same container, you need to specify a different service and
-# you have to execute the command './gradlew -Pprod -Pwar clean bootWar && java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket,jira'
+# you have to execute the command './gradlew -Pprod -Pwar clean bootWar && java -jar build/libs/*.war --spring.profiles.active=artemis,scheduling,bamboo,bitbucket,jira,dev'
 
 services:
   artemis-server:
@@ -12,7 +12,7 @@ services:
     image: eclipse-temurin:17-jdk
     environment:
       - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
-      - SPRING_PROFILES_ACTIVE=dev,bamboo,bitbucket,jira,artemis,scheduling
+      - SPRING_PROFILES_ACTIVE=artemis,scheduling,bamboo,bitbucket,jira,dev
     networks:
       - artemis
     ports:

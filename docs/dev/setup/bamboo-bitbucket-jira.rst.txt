@@ -350,7 +350,7 @@ e.g.:
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling
+   --spring.profiles.active=artemis,scheduling,bamboo,bitbucket,jira,dev
 
 Please read :ref:`Server Setup` for more details.
 

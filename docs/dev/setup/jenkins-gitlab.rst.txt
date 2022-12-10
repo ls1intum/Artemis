@@ -86,7 +86,7 @@ In addition, you have to start Artemis with the profiles ``gitlab`` and
 
 ::
 
-   --spring.profiles.active=dev,jenkins,gitlab,artemis,scheduling
+   --spring.profiles.active=artemis,scheduling,jenkins,gitlab,dev
 
 Please read :ref:`Server Setup` for more details.
 
@@ -1394,7 +1394,7 @@ Artemis
 1. In ``docker-compose.yml``:
 
    1. Make sure to use unique ports, e.g. 8080 for Artemis, 8081 for GitLab and 8082 for Jenkins.
-   2. Change the ``SPRING_PROFILES_ACTIVE`` environment variable to ``dev,jenkins,gitlab,artemis,scheduling``.
+   2. Change the ``SPRING_PROFILES_ACTIVE`` environment variable to ``artemis,scheduling,jenkins,gitlab,dev``.
 
 2. In ``src/main/resources/config/application-dev.yml`` at ``server:`` use ``port: 8080`` for Artemis.
 
