@@ -183,6 +183,7 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     buildReactionMetaDataMap(reactions: Reaction[]): ReactionMetaDataMap {
         return reactions.reduce((metaDataMap: ReactionMetaDataMap, reaction: Reaction) => {
             const hasReacted = reaction.user?.id === this.metisService.getUser().id;
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             const reactingUser = hasReacted ? PLACEHOLDER_USER_REACTED : reaction.user?.name!;
             const reactionMetaData: ReactionMetaData = {
                 count: metaDataMap[reaction.emojiId!] ? metaDataMap[reaction.emojiId!].count + 1 : 1,

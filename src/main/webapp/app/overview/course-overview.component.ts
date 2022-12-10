@@ -245,7 +245,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /**
-     * Check if the course has an tutorial groups
+     * Check if the course has a tutorial groups
      */
     hasTutorialGroups(): boolean {
         return !!this.course?.tutorialGroups?.length;

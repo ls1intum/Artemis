@@ -95,12 +95,16 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                     // reference closing tag: [/referenceType] (wrapped between 3 characters)
                     // referenceStr: string to be displayed for the reference
                     // linkToReference: link to be navigated to on reference click
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     linkToReference = [this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex))];
                 } else if (ReferenceType.ATTACHMENT === referenceType) {
                     // referenceStr: string to be displayed for the reference
                     // attachmentToReference: location of attachment to be opened on reference click
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     referenceStr = this.content!.substring(this.content?.indexOf(']', patternMatch.startIndex)! + 1, this.content?.indexOf('(', patternMatch.startIndex)!);
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     attachmentToReference = this.content!.substring(this.content?.indexOf('(', patternMatch.startIndex)! + 1, this.content?.indexOf(')', patternMatch.startIndex));
                 }
 
@@ -164,7 +168,7 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         // find start and end index of referenced posts in content, for each reference save [startIndexOfReference, endIndexOfReference] in the referenceIndicesArray
         let match = pattern.exec(this.content!);
         while (match) {
-            let group: ReferenceType;
+            let group: ReferenceType | undefined = undefined;
 
             for (const groupsKey in match.groups) {
                 if (match.groups[groupsKey]) {
@@ -172,11 +176,13 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                 }
             }
 
-            patternMatches.push({
-                startIndex: match.index,
-                endIndex: pattern.lastIndex,
-                referenceType: group!,
-            } as PatternMatch);
+            if (group) {
+                patternMatches.push({
+                    startIndex: match.index,
+                    endIndex: pattern.lastIndex,
+                    referenceType: group!,
+                } as PatternMatch);
+            }
 
             match = pattern.exec(this.content!);
         }

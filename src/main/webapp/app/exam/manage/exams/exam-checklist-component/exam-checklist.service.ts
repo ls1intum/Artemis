@@ -76,6 +76,7 @@ export class ExamChecklistService {
         exam.exerciseGroups?.forEach((exerciseGroup) => {
             let maxPoints = 0;
             if (exerciseGroup.exercises && exerciseGroup.exercises!.length !== 0) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                 maxPoints = exerciseGroup.exercises?.[0].maxPoints!;
             }
             return exerciseGroup.exercises?.some((exercise) => {

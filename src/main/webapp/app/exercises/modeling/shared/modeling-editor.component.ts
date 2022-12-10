@@ -102,7 +102,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
             const newScroll = document.getElementsByTagName('html')[0].scrollTop;
             if (newScroll !== this.htmlScroll) {
                 const copy = this.htmlScroll;
-                // @ts-ignore behavior 'instant' works with safari
+                // @ts-ignore (behavior 'instant' works with safari)
                 requestAnimationFrame(() => window.scrollTo({ top: copy, left: 0, behavior: 'instant' }));
             }
         };

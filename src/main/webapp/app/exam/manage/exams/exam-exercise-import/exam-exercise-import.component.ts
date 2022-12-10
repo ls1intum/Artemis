@@ -179,6 +179,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * @param exercise the exercise to be checked
      */
     validateTitleOfProgrammingExercise(exercise: Exercise): boolean {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         return exercise.title?.length! > 0 && this.titleNamePattern.test(exercise.title!) && exercise.title !== this.getBlocklistTitleOfProgrammingExercise(exercise.id!);
     }
 
@@ -188,6 +189,7 @@ export class ExamExerciseImportComponent implements OnInit {
      */
     validateShortNameOfProgrammingExercise(exercise: Exercise): boolean {
         return (
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             exercise.shortName?.length! > 2 &&
             this.shortNamePattern.test(exercise.shortName!) &&
             exercise.shortName !== this.getBlocklistShortNameOfProgrammingExercise(exercise.id!)
@@ -200,6 +202,7 @@ export class ExamExerciseImportComponent implements OnInit {
     public validateUserInput(): boolean {
         let validConfiguration = true;
         this.selectedExercises?.forEach((value, key) => {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             if (!(key.title?.length! > 0)) {
                 validConfiguration = false;
             }
@@ -211,6 +214,7 @@ export class ExamExerciseImportComponent implements OnInit {
                     if (exercise.type === ExerciseType.PROGRAMMING) {
                         validConfiguration = this.validateTitleOfProgrammingExercise(exercise) && this.validateShortNameOfProgrammingExercise(exercise);
                     } else {
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                         validConfiguration = exercise.title?.length! > 0;
                     }
                 });

@@ -309,6 +309,8 @@ export class MetisService implements OnDestroy {
      * @param {CourseWideContext | undefined} courseWideContext optional course-wide context as default context
      * @param {Exercise | undefined} exercise optional exercise as default context
      * @param {Lecture | undefined} lecture optional lecture as default context
+     * @param plagiarismCase
+     * @param conversation
      * @return {Post} created default object
      */
     createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture, plagiarismCase?: PlagiarismCase, conversation?: Conversation): Post {

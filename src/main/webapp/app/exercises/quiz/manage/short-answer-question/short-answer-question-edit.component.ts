@@ -250,7 +250,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
 
     /**
      * @function parseMarkdown
-     * @param text {string} the markdown text to parse
+     * @param text {string} the Markdown text to parse
      * @desc Parse the markdown and apply the result to the question's data
      * The markdown rules are as follows:
      *
@@ -329,6 +329,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const spotIds = spots.split(',').map(Number);
 
         for (const id of spotIds) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             const spotForMapping = this.shortAnswerQuestion.spots?.find((spot) => spot.spotNr === id)!;
             this.shortAnswerQuestion.correctMappings!.push(new ShortAnswerMapping(spotForMapping, solution));
         }
@@ -363,6 +364,9 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * add the markdown for a solution option below the last visible row, which is connected to a spot in the given editor
      *
      * @param editor {object} the editor into which the solution option markdown will be inserted
+     * @param numberOfSpot
+     * @param optionText
+     * @param firstPressed
      */
     addOptionToSpot(editor: any, numberOfSpot: number, optionText: string, firstPressed: number) {
         let addedText: string;

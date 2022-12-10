@@ -40,14 +40,14 @@
                 "@typescript-eslint/no-non-null-assertion": "off",
                 "@typescript-eslint/no-unsafe-return": "off",
                 "@typescript-eslint/no-unsafe-member-access": "off",
-                "@typescript-eslint/restrict-plus-operands": "off",
                 "@typescript-eslint/no-unsafe-call": "off",
                 "@typescript-eslint/no-floating-promises": "off",
                 "@typescript-eslint/no-unsafe-assignment": "off",
                 "@angular-eslint/no-output-on-prefix": "off",
                 "@typescript-eslint/ban-ts-comment": "warn",
-                "@typescript-eslint/no-empty-function": "warn",
+                "@typescript-eslint/no-empty-function": "off",
                 "@typescript-eslint/no-non-null-asserted-optional-chain": "warn",
+                "@typescript-eslint/no-explicit-any": "off",
                 "no-case-declarations": "off",
                 "prefer-const": "warn",
                 "prefer-spread": "warn",
@@ -91,7 +91,8 @@
             "rules": {
                 "jest/expect-expect": "off",
                 "jest/no-conditional-expect": "off",
-                "@typescript-eslint/no-var-requires": "warn"
+                "@typescript-eslint/ban-ts-comment": "off",
+                "@typescript-eslint/no-var-requires": "off"
             }
         }
     ]

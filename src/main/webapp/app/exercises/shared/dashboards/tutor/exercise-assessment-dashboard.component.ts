@@ -699,6 +699,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param complaint
      */
     getComplaintQueryParams(complaint: Complaint) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const submission: Submission = complaint.result?.submission!;
         // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
         if (complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
