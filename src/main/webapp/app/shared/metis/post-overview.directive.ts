@@ -33,7 +33,7 @@ export abstract class PostOverviewDirective implements OnInit, OnDestroy {
     conversation?: Conversation;
     formGroup: FormGroup;
     createdPost: Post;
-    posts: Post[];
+    posts: Post[] = [];
     isLoading = true;
     totalItems = 0;
     pagingEnabled = true;
