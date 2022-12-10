@@ -3,7 +3,7 @@ const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collaps
     '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
     'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector', '@swimlane/ngx-charts',
     '@angular/service-worker', '@danielmoncada/angular-datetime-picker', '@flaviosantoro92/ngx-datatable', 'd3-color', 'd3-interpolate', 'd3-transition', 'd3-brush',
-    'd3-drag', 'd3-selection'].join('|');
+    'd3-drag', 'd3-selection', 'ngx-infinite-scroll'].join('|');
 
 const {
     compilerOptions: { baseUrl = './' },
@@ -61,8 +61,8 @@ module.exports = {
             // TODO: in the future, the following values should increase to at least 90%
             statements: 85.0,
             branches: 72.2,
-            functions: 78.1,
-            lines: 84.9,
+            functions: 78.2,
+            lines: 85.0,
         },
     },
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
