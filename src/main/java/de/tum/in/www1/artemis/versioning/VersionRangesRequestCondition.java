@@ -4,12 +4,7 @@ import static de.tum.in.www1.artemis.versioning.VersionRangeComparisonType.*;
 import static de.tum.in.www1.artemis.versioning.VersionRangeFactory.getInstanceOfVersionRange;
 import static de.tum.in.www1.artemis.versioning.VersionRangeService.versionRangeToIntegerList;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.springframework.web.servlet.mvc.condition.RequestCondition;
@@ -73,8 +68,9 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
         if (ranges.isEmpty()) {
             return apiVersions;
         }
-        return apiVersions.stream().filter(e -> ranges.stream().anyMatch(range -> inRangeCodes.contains(VersionRangeComparator.compare(range, getInstanceOfVersionRange(e, e)))))
-                .collect(Collectors.toList());
+        return apiVersions.stream()
+                .filter(version -> ranges.stream().anyMatch(range -> inRangeCodes.contains(VersionRangeComparator.compare(range, getInstanceOfVersionRange(version, version)))))
+                .toList();
     }
 
     /**
@@ -315,9 +311,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
 
     @Override
     public int hashCode() {
-        int result = getRanges() != null ? getRanges().hashCode() : 0;
-        result = 31 * result + inRangeCodes.hashCode();
-        return result;
+        return Objects.hash(getRanges(), inRangeCodes);
     }
 
     @Override

@@ -310,7 +310,7 @@ public class TextExerciseResource {
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
-        if (participation.getResults().size() == 0) {
+        if (participation.getResults().isEmpty()) {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
             participation.setResults(new HashSet<>(results));
         }

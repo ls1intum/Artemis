@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.versioning;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -14,12 +14,6 @@ public class VersionRangeService {
      * @return The list of integers representing versions
      */
     public static List<Integer> versionRangeToIntegerList(VersionRange range) {
-        List<Integer> list = new ArrayList<>();
-        int[] versions = range.value();
-        for (int version : versions) {
-            list.add(version);
-        }
-        return list;
+        return Arrays.stream(range.value()).boxed().toList();
     }
-
 }

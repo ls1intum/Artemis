@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.config;
 
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
 import org.springdoc.core.GroupedOpenApi;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -15,6 +14,7 @@ import io.swagger.v3.oas.models.ExternalDocumentation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Configures the available API versions and the versioned OpenAPI/Swagger documentation.

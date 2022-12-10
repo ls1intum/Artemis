@@ -150,7 +150,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST);
         // Api should return not found.
-        request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + fakeParticipationId, obj, HttpStatus.NOT_FOUND, new HttpHeaders());
+        request.postWithoutLocation("/api/programming-submissions/" + fakeParticipationId, obj, HttpStatus.NOT_FOUND, new HttpHeaders());
         // No submission should be created for the fake participation.
         assertThat(submissionRepository.findAllByParticipationIdWithResults(fakeParticipationId)).isEmpty();
     }
@@ -893,7 +893,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         changes.get(0).put("toHash", TEST_COMMIT);
 
         // Api should return ok.
-        request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api/programming-exercises/test-cases-changed/" + exerciseId, obj, HttpStatus.OK, new HttpHeaders());
     }
 
     /**
@@ -902,7 +902,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     private void postTestRepositorySubmissionWithoutCommit(HttpStatus status, String expectedErrorMessage) throws Exception {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST_WITHOUT_COMMIT);
-        request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, status, new HttpHeaders(), expectedErrorMessage);
+        request.postWithoutLocation("/api/programming-exercises/test-cases-changed/" + exerciseId, obj, status, new HttpHeaders(), expectedErrorMessage);
     }
 
     private String getBuildPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationIndex) {
@@ -960,7 +960,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
-        request.postWithoutLocation("/api/" + NEW_RESULT_RESOURCE_PATH, alteredObj, expectedStatus, httpHeaders);
+        request.postWithoutLocation("/api/programming-exercises/new-result", alteredObj, expectedStatus, httpHeaders);
     }
 
     private BambooBuildResultNotificationDTO createBambooBuildResultNotificationDTO(String buildPlanKey) throws Exception {

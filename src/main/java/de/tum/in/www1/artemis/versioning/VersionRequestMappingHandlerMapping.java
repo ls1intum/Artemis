@@ -4,13 +4,13 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 import org.springframework.web.util.pattern.PathPatternParser;
 
 import de.tum.in.www1.artemis.exception.ApiVersionAnnotationMismatchException;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * This class is responsible for integrating the API versions into the request mapping.

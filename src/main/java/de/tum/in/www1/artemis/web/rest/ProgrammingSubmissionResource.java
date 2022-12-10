@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -104,7 +103,7 @@ public class ProgrammingSubmissionResource {
      * @param requestBody the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
      */
-    @PostMapping(value = Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}")
+    @PostMapping("/programming-submissions/{participationId}")
     public ResponseEntity<?> processNewProgrammingSubmission(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
         log.debug("REST request to inform about new commit+push for participation: {}", participationId);
 
@@ -150,7 +149,7 @@ public class ProgrammingSubmissionResource {
      * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is not available.
      * The REST path would be: "/programming-submissions/{participationId}/trigger-build"
      */
-    @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-build")
+    @PostMapping("/programming-submissions/{participationId}/trigger-build")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
@@ -192,7 +191,7 @@ public class ProgrammingSubmissionResource {
      * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the build is running.
      */
     // TODO: we should definitely change this URL, it does not make sense to use /programming-submissions/{participationId}
-    @PostMapping(Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + "{participationId}/trigger-failed-build")
+    @PostMapping("/programming-submissions/{participationId}/trigger-failed-build")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
@@ -287,7 +286,7 @@ public class ProgrammingSubmissionResource {
      * @param requestBody the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PostMapping(Constants.TEST_CASE_CHANGED_PATH + "{exerciseId}")
+    @PostMapping("programming-exercises/test-cases-changed/{exerciseId}")
     public ResponseEntity<Void> testCaseChanged(@PathVariable Long exerciseId, @RequestBody Object requestBody) {
         log.info("REST request to inform about changed test cases of ProgrammingExercise : {}", exerciseId);
         // This is needed as a request using a custom query is made using the ExerciseRepository, but the user is not authenticated
