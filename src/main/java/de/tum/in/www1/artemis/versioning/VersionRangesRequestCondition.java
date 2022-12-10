@@ -71,9 +71,11 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
             return apiVersions;
         }
         // Collect all versions that collide with at least one range
-        return apiVersions.stream()
-                .filter(version -> ranges.stream().anyMatch(range -> inRangeCodes.contains(VersionRangeComparator.compare(range, getInstanceOfVersionRange(version, version)))))
-                .toList();
+        return apiVersions.stream().filter(this::containsVersion).toList();
+    }
+
+    private boolean containsVersion(int version) {
+        return ranges.stream().anyMatch(range -> inRangeCodes.contains(VersionRangeComparator.compare(range, getInstanceOfVersionRange(version, version))));
     }
 
     /**
