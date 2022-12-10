@@ -44,7 +44,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
             this.ranges = Set.copyOf(distinct);
         }
         else {
-            this.ranges = Set.of();
+            this.ranges = Collections.emptySet();
         }
     }
 
