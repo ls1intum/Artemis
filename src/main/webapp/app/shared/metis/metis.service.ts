@@ -182,7 +182,7 @@ export class MetisService implements OnDestroy {
             this.postService.getPosts(this.courseId, postContextFilter).subscribe((res) => {
                 if (!forceUpdate && PageType.OVERVIEW === this.pageType) {
                     // if infinite scroll enabled, add fetched posts to the end of cachedPosts
-                    this.cachedPosts.push.apply(this.cachedPosts, res.body!);
+                    this.cachedPosts.push(...res.body!);
                 } else {
                     // if the context changed, we need to fetch posts and dismiss cached posts
                     this.cachedPosts = res.body!;
