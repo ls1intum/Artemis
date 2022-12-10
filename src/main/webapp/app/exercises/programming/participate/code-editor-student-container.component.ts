@@ -161,7 +161,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     checkForTutorAssessment(dueDateHasPassed: boolean) {
         let isManualResult = false;
         let hasTutorFeedback = false;
-        if (!!this.latestResult) {
+        if (this.latestResult) {
             // latest result is the first element of results, see loadParticipationWithLatestResult
             isManualResult = Result.isManualResult(this.latestResult);
             if (isManualResult) {

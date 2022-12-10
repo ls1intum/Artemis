@@ -12,7 +12,7 @@ import { Component, Input, IterableDiffers } from '@angular/core';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({ selector: 'jhi-side-panel', template: '' })
-class MockSidePanel {
+class MockSidePanelComponent {
     @Input() panelHeader: string;
     @Input() panelDescriptionHeader?: string;
 }
@@ -32,7 +32,7 @@ describe('TutorialGroupFreeDaysOverviewComponent', () => {
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockSidePanel,
+                MockSidePanelComponent,
             ],
             providers: [SortService, IterableDiffers],
         }).compileComponents();

@@ -42,7 +42,7 @@ type filterValues = 'all' | 'onlyImported' | 'onlyNotImported';
     templateUrl: './tutorial-groups-registration-import-dialog.component.html',
     styleUrls: ['./tutorial-groups-registration-import-dialog.component.scss'],
 })
-export class TutorialGroupsRegistrationImportDialog implements OnInit, OnDestroy {
+export class TutorialGroupsRegistrationImportDialogComponent implements OnInit, OnDestroy {
     @ViewChild('fileInput') fileInput: ElementRef<HTMLInputElement>;
     selectedFile?: File;
 

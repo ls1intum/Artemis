@@ -162,12 +162,8 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
         const patternMatches: PatternMatch[] = [];
 
         // find start and end index of referenced posts in content, for each reference save [startIndexOfReference, endIndexOfReference] in the referenceIndicesArray
-        while (true) {
-            const match = pattern.exec(this.content!);
-            if (!match) {
-                break;
-            }
-
+        let match = pattern.exec(this.content!);
+        while (match) {
             let group: ReferenceType;
 
             for (const groupsKey in match.groups) {
@@ -181,6 +177,8 @@ export class PostingContentComponent implements OnInit, OnChanges, OnDestroy {
                 endIndex: pattern.lastIndex,
                 referenceType: group!,
             } as PatternMatch);
+
+            match = pattern.exec(this.content!);
         }
         return patternMatches;
     }

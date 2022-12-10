@@ -41,6 +41,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
 
     // all items being listed
+    // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('items') public originalItems: T[] | undefined = [];
 
     /**

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, TemplateRef, ViewChild } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { TutorialGroupsRegistrationImportDialog } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
+import { TutorialGroupsRegistrationImportDialogComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 
 @Component({
     selector: 'jhi-tutorial-groups-import-button',
@@ -18,7 +18,7 @@ export class TutorialGroupsImportButtonComponent {
 
     openTutorialGroupImportDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupsRegistrationImportDialog, { size: 'xl', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupsRegistrationImportDialogComponent, { size: 'xl', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.courseId = this.courseId;
 
         modalRef.result.then(

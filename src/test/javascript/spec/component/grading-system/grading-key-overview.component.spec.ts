@@ -179,6 +179,6 @@ describe('GradeKeyOverviewComponent', () => {
     it('should round correctly', () => {
         expect(comp.round(undefined)).toBeUndefined();
         expect(comp.round(5)).toBe(5);
-        expect(comp.round(3.33333333333333333)).toBe(3.33);
+        expect(comp.round(3.333333333333333)).toBe(3.33);
     });
 });

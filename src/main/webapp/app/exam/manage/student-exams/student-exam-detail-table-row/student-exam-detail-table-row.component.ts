@@ -9,7 +9,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    /* tslint:disable-next-line component-selector */
+    /* eslint-disable-next-line  @angular-eslint/component-selector */
     selector: '[jhi-student-exam-detail-table-row]',
     templateUrl: './student-exam-detail-table-row.component.html',
     providers: [],

@@ -46,7 +46,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
-    delete(modelingExerciseId: number): Observable<HttpResponse<{}>> {
+    delete(modelingExerciseId: number): Observable<HttpResponse<any>> {
         return this.http.delete(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' });
     }
 
@@ -111,7 +111,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * Build the clusters to use in Compass
      * @param modelingExerciseId id of the exercise to build the clusters for
      */
-    buildClusters(modelingExerciseId: number): Observable<{}> {
+    buildClusters(modelingExerciseId: number): Observable<any> {
         return this.http.post(`${this.adminResourceUrl}/${modelingExerciseId}/trigger-automatic-assessment`, { observe: 'response' });
     }
 
@@ -119,7 +119,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * Delete the clusters used in Compass
      * @param modelingExerciseId id of the exercise to delete the clusters of
      */
-    deleteClusters(modelingExerciseId: number): Observable<{}> {
+    deleteClusters(modelingExerciseId: number): Observable<any> {
         return this.http.delete(`${this.adminResourceUrl}/${modelingExerciseId}/clusters`, { observe: 'response' });
     }
 

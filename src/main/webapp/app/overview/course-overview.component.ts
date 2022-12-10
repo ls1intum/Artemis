@@ -228,6 +228,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * check if there is at least one exam which should be shown
      */
     hasVisibleExams(): boolean {
+        // eslint-disable-next-line no-unsafe-optional-chaining
         for (const exam of this.course?.exams!) {
             if (exam.visibleDate && dayjs(exam.visibleDate).isBefore(this.serverDateService.now())) {
                 return true;

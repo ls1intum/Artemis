@@ -18,7 +18,7 @@ export class ExamExerciseImportComponent implements OnInit {
     selectedExercises = new Map<ExerciseGroup, Set<Exercise>>();
     // Map / Blocklist with the title and shortName of the programming exercises, that have been either rejected by the server
     // or must be changed because the exam is imported into the same course
-    titleAndShortNameOfProgrammingExercises = new Map<number, String[]>();
+    titleAndShortNameOfProgrammingExercises = new Map<number, string[]>();
     // Expose enums to the template
     exerciseType = ExerciseType;
     // Map to determine, if an exercise group contains at least one programming exercise.
@@ -145,7 +145,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * Returns the placeholder title (i.e. the one rejected by the server) for the programming exercise
      * @param exerciseId the corresponding exercise
      */
-    getBlocklistTitleOfProgrammingExercise(exerciseId: number): String {
+    getBlocklistTitleOfProgrammingExercise(exerciseId: number): string {
         const title = this.titleAndShortNameOfProgrammingExercises.get(exerciseId)?.first();
         return title ? title! : ``;
     }
@@ -154,7 +154,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * Returns the placeholder shortName (i.e. the one rejected by the server) for the programming exercise
      * @param exerciseId the corresponding exercise
      */
-    getBlocklistShortNameOfProgrammingExercise(exerciseId: number): String {
+    getBlocklistShortNameOfProgrammingExercise(exerciseId: number): string {
         const shortName = this.titleAndShortNameOfProgrammingExercises.get(exerciseId)?.last();
         return shortName ? shortName! : ``;
     }

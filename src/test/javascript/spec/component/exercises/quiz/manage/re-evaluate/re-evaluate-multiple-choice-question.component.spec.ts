@@ -12,7 +12,7 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
 
-// tslint:disable-next-line:directive-selector
+// eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: '[sortableData]' })
 class MockSortableDataDirective {
     @Input('sortableData') data: any;

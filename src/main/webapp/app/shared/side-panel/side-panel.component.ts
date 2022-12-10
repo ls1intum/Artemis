@@ -5,14 +5,9 @@ import { Component, Input, OnInit } from '@angular/core';
     templateUrl: './side-panel.component.html',
     styleUrls: ['./side-panel.scss'],
 })
-export class SidePanelComponent implements OnInit {
+export class SidePanelComponent {
     @Input() panelHeader: string;
     @Input() panelDescriptionHeader?: string;
 
     constructor() {}
-
-    /**
-     * Do nothing on initialization.
-     */
-    ngOnInit() {}
 }

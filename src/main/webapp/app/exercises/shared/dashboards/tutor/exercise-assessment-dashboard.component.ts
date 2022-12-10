@@ -730,7 +730,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     toggleSecondCorrection() {
         this.togglingSecondCorrectionButton = true;
-        this.exerciseService.toggleSecondCorrection(this.exerciseId).subscribe((res: Boolean) => {
+        this.exerciseService.toggleSecondCorrection(this.exerciseId).subscribe((res: boolean) => {
             this.secondCorrectionEnabled = res as boolean;
             this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
             this.getSubmissionWithoutAssessmentForAllCorrectionRounds();

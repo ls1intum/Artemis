@@ -544,17 +544,16 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     getMappingIndex(mapping: ShortAnswerMapping): number {
         const visitedSpots: ShortAnswerSpot[] = [];
         // Save reference to this due to nested some calls
-        const that = this;
         if (
             this.shortAnswerQuestion.correctMappings?.some((correctMapping) => {
                 if (
                     !visitedSpots.some((spot: ShortAnswerSpot) => {
-                        return that.shortAnswerQuestionUtil.isSameSpot(spot, correctMapping.spot);
+                        return this.shortAnswerQuestionUtil.isSameSpot(spot, correctMapping.spot);
                     })
                 ) {
                     visitedSpots.push(correctMapping.spot!);
                 }
-                return that.shortAnswerQuestionUtil.isSameSpot(correctMapping.spot, mapping.spot);
+                return this.shortAnswerQuestionUtil.isSameSpot(correctMapping.spot, mapping.spot);
             })
         ) {
             return visitedSpots.length;

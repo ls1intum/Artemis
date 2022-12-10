@@ -302,7 +302,7 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     async back(): Promise<void> {
         const courseId = getCourseFromExercise(this.exercise!)?.id;
         // check if exam exercise
-        if (!!this.exercise?.exerciseGroup) {
+        if (this.exercise?.exerciseGroup) {
             const examId = this.exercise.exerciseGroup.exam?.id;
             const exerciseGroupId = this.exercise.exerciseGroup.id;
             if (this.readOnly || this.toComplete) {

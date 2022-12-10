@@ -38,9 +38,9 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
             this.overlapsWithFreePeriod = !!this.session.tutorialGroupFreePeriod;
             if (this.isCancelled) {
                 if (this.overlapsWithFreePeriod) {
-                    this.cancellationReason = !!this.session.tutorialGroupFreePeriod?.reason ? this.session.tutorialGroupFreePeriod.reason : undefined;
+                    this.cancellationReason = this.session.tutorialGroupFreePeriod?.reason ? this.session.tutorialGroupFreePeriod.reason : undefined;
                 } else {
-                    this.cancellationReason = !!this.session.statusExplanation ? this.session.statusExplanation : undefined;
+                    this.cancellationReason = this.session.statusExplanation ? this.session.statusExplanation : undefined;
                 }
             }
         }
