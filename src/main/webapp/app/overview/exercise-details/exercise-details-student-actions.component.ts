@@ -162,7 +162,7 @@ export class ExerciseDetailsStudentActionsComponent {
         const latestResult = participation?.results && participation.results.find(({ rated }) => showUngradedResults || rated === true);
         const allHiddenTestsPassed = latestResult?.score !== undefined && latestResult.score >= 100;
 
-        const requestAlreadySent = (participation?.individualDueDate && participation.individualDueDate.isBefore(Date.now())) ?? false;
+        const requestAlreadySent = (participation?.individualDueDate && participation.individualDueDate.isBefore(dayjs())) ?? false;
 
         return !allHiddenTestsPassed || requestAlreadySent || this.feedbackSent;
     }

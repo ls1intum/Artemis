@@ -18,6 +18,7 @@ import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { map } from 'rxjs/operators';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
+import dayjs from 'dayjs/esm';
 
 @Component({
     templateUrl: './programming-exercise-submissions.component.html',
@@ -25,6 +26,8 @@ import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tut
 export class ProgrammingExerciseSubmissionsComponent extends AbstractAssessmentDashboard implements OnInit {
     readonly ExerciseType = ExerciseType;
     readonly AssessmentType = AssessmentType;
+    readonly dayjs = dayjs;
+
     exercise: ProgrammingExercise;
     submissions: ProgrammingSubmission[] = [];
     filteredSubmissions: ProgrammingSubmission[] = [];
@@ -37,7 +40,6 @@ export class ProgrammingExerciseSubmissionsComponent extends AbstractAssessmentD
     exerciseGroupId: number;
     numberOfCorrectionrounds = 1;
     newManualResultAllowed: boolean;
-    automaticType = AssessmentType.AUTOMATIC;
     private cancelConfirmationText: string;
 
     // Icons
