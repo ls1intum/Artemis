@@ -7,9 +7,9 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { By } from '@angular/platform-browser';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 describe('TutorialGroupSessionRowComponent', () => {
     let component: TutorialGroupSessionRowComponent;
@@ -19,7 +19,8 @@ describe('TutorialGroupSessionRowComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [TutorialGroupSessionRowComponent, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTranslatePipe), MockDirective(NgbPopover)],
+            imports: [MockDirective(NgbPopover)],
+            declarations: [TutorialGroupSessionRowComponent, MockPipe(ArtemisDatePipe), MockPipe(ArtemisTranslatePipe)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(TutorialGroupSessionRowComponent);
