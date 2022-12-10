@@ -3,16 +3,6 @@ import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duratio
 describe('ArtemisDurationFromSecondsPipe', () => {
     const pipe: ArtemisDurationFromSecondsPipe = new ArtemisDurationFromSecondsPipe();
 
-    it('should return correct format for zero seconds', () => {
-        const localizedDuration = pipe.transform(0);
-        expect(localizedDuration).toBe('0min 0s');
-    });
-
-    it('should return correct format for negative seconds', () => {
-        const localizedDuration = pipe.transform(-42);
-        expect(localizedDuration).toBe('0min 0s');
-    });
-
     describe('long format', () => {
         it('should return correct format for only seconds', () => {
             const localizedDuration = pipe.transform(7);
@@ -48,6 +38,16 @@ describe('ArtemisDurationFromSecondsPipe', () => {
             const localizedDuration = pipe.transform(1357800, undefined);
             expect(localizedDuration).toBe('15d 17h 10min');
         });
+
+        it('should return correct format for zero seconds', () => {
+            const localizedDuration = pipe.transform(0, false);
+            expect(localizedDuration).toBe('0s');
+        });
+
+        it('should return correct format for negative seconds', () => {
+            const localizedDuration = pipe.transform(-42, false);
+            expect(localizedDuration).toBe('0s');
+        });
     });
 
     describe('short format', () => {
@@ -74,6 +74,16 @@ describe('ArtemisDurationFromSecondsPipe', () => {
         it('should return correct format for under one minute', () => {
             const localizedDuration = pipe.transform(21, true);
             expect(localizedDuration).toBe('0min 21s');
+        });
+
+        it('should return correct format for zero seconds', () => {
+            const localizedDuration = pipe.transform(0, true);
+            expect(localizedDuration).toBe('0min 0s');
+        });
+
+        it('should return correct format for negative seconds', () => {
+            const localizedDuration = pipe.transform(-42, true);
+            expect(localizedDuration).toBe('0min 0s');
         });
     });
 });
