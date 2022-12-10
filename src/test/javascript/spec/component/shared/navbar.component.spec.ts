@@ -1,7 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
-import { NgbCollapse, NgbDropdown, NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -36,6 +35,7 @@ import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 class MockBreadcrumb {
     label: string;
@@ -91,9 +91,7 @@ describe('NavbarComponent', () => {
             imports: [ArtemisTestModule, MockModule(NgbModule)],
             declarations: [
                 NavbarComponent,
-                MockDirective(NgbCollapse),
                 MockDirective(HasAnyAuthorityDirective),
-                MockDirective(NgbDropdown),
                 MockDirective(ActiveMenuDirective),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
