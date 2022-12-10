@@ -4,6 +4,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { Exercise } from 'app/entities/exercise.model';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
+import { getAllFeedbackGroups } from 'app/exercises/shared/feedback/group/feedback-groups';
+import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 
 export interface FeedbackItemService {
     /**
@@ -25,10 +27,6 @@ export interface FeedbackItemService {
 export class FeedbackItemServiceImpl implements FeedbackItemService {
     constructor(private translateService: TranslateService) {}
 
-    group(feedbackItems: FeedbackItem[]): FeedbackNode[] {
-        return feedbackItems;
-    }
-
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
         return feedbacks.map((feedback) => ({
@@ -39,5 +37,11 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
             positive: feedback.positive,
             credits: feedback.credits,
         }));
+    }
+
+    group(feedbackItems: FeedbackItem[]): FeedbackNode[] {
+        return getAllFeedbackGroups() //
+            .map((group: FeedbackGroup) => group.addAllItems(feedbackItems.filter(group.shouldContain)))
+            .filter((group: FeedbackGroup) => !group.isEmpty());
     }
 }

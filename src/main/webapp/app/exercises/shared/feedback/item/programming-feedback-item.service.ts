@@ -7,6 +7,7 @@ import { getAllFeedbackGroups } from 'app/exercises/shared/feedback/group/progra
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { Exercise } from 'app/entities/exercise.model';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
+import { FeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 
 @Injectable({ providedIn: 'root' })
 export class ProgrammingFeedbackItemService implements FeedbackItemService {
@@ -18,8 +19,8 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
 
     group(feedbackItems: FeedbackItem[], exercise: Exercise): FeedbackNode[] {
         return getAllFeedbackGroups(exercise) //
-            .map((group) => group.addAllItems(feedbackItems.filter(group.shouldContain)))
-            .filter((group) => !group.isEmpty());
+            .map((group: FeedbackGroup) => group.addAllItems(feedbackItems.filter(group.shouldContain)))
+            .filter((group: FeedbackGroup) => !group.isEmpty());
     }
 
     /**

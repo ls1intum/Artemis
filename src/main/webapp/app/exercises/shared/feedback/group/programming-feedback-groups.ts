@@ -7,13 +7,13 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
  * Returns all FeedbackItemGroups for Programming exercises in the order, in which they will be displayed
  */
 export const getAllFeedbackGroups = (exercise: Exercise): FeedbackGroup[] => {
-    return [new FeedbackGroupWrong(), new FeedbackGroupWarning(exercise), new FeedbackGroupInfo(), new FeedbackGroupCorrect()];
+    return [new ProgrammingFeedbackGroupWrong(), new ProgrammingFeedbackGroupWarning(exercise), new ProgrammingFeedbackGroupInfo(), new ProgrammingFeedbackGroupCorrect()];
 };
 
 /**
  * Negative feedbacks that are not SCA
  */
-class FeedbackGroupWrong extends FeedbackGroup {
+class ProgrammingFeedbackGroupWrong extends FeedbackGroup {
     constructor() {
         super();
         this.name = 'wrong';
@@ -32,7 +32,7 @@ class FeedbackGroupWrong extends FeedbackGroup {
  * - Negative feedbacks that are SCA
  * - Submission policy
  */
-class FeedbackGroupWarning extends FeedbackGroup {
+class ProgrammingFeedbackGroupWarning extends FeedbackGroup {
     constructor(exercise: Exercise) {
         super();
         this.name = 'warning';
@@ -52,7 +52,7 @@ class FeedbackGroupWarning extends FeedbackGroup {
  * - Reviewer feedback with no influence on grade
  * - Subsequent feedback
  */
-class FeedbackGroupInfo extends FeedbackGroup {
+class ProgrammingFeedbackGroupInfo extends FeedbackGroup {
     constructor() {
         super();
         this.name = 'info';
@@ -71,7 +71,7 @@ class FeedbackGroupInfo extends FeedbackGroup {
  * - Positive credits from Reviewer
  * - Positive credits from Test cases
  */
-class FeedbackGroupCorrect extends FeedbackGroup {
+class ProgrammingFeedbackGroupCorrect extends FeedbackGroup {
     constructor() {
         super();
         this.name = 'correct';
