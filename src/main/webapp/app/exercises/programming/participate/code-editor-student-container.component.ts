@@ -173,7 +173,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Check whether or not a latestResult exists and if, returns the unreferenced feedback of it
+     * Check whether a latestResult exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] {
         if (this.latestResult && this.latestResult.feedbacks) {
