@@ -206,8 +206,8 @@ Example of integrating the GuidedTour ``exampleTutorial`` into a component file
 Extend configuration file
 -------------------------
 
-The mapping of guided tutorials to certain courses and exercises is configured in the ``application-dev.yml`` and
-``application-prod.yml`` files.
+The mapping of guided tutorials to certain courses and exercises is configured in the ``application-dev.yml``,
+``application-prod.yml`` and ``application.yml`` files.
 The yaml configuration below shows that the guided tutorials are only enabled for the course with the short name
 ``artemistutorial``.
 The configuration for ``tours`` shows a list of mappings ``tutorialSettingsKey`` → ``exerciseIdentifier``.
