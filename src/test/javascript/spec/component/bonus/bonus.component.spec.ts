@@ -16,7 +16,6 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { HttpResponse } from '@angular/common/http';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
 import { NgModel } from '@angular/forms';
 
@@ -251,7 +250,6 @@ describe('BonusComponent', () => {
                 MockPipe(SafeHtmlPipe),
                 MockComponent(ModePickerComponent),
                 MockPipe(GradeStepBoundsPipe),
-                MockDirective(NgbTooltip),
                 MockComponent(DeleteDialogComponent),
                 MockDirective(NgModel),
             ],

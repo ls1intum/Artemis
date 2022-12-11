@@ -15,6 +15,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -98,6 +99,7 @@ public class QuizExercise extends Exercise {
         this.allowedNumberOfAttempts = allowedNumberOfAttempts;
     }
 
+    @JsonProperty
     public Integer getRemainingNumberOfAttempts() {
         return remainingNumberOfAttempts;
     }
