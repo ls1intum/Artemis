@@ -54,6 +54,7 @@ services:
         extra_hosts:
             - "host.docker.internal:host-gateway"
         image: ghcr.io/ls1intum/artemis-bamboo-build-agent:8.2.5
+        pull_policy: always
         volumes:
             - artemis-bamboo-build-agent:/var/atlassian/application-data/bamboo-agent
             - /var/run/docker.sock:/var/run/docker.sock
