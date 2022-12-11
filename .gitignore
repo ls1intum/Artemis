@@ -183,12 +183,6 @@ repos-download/
 /src/test/cypress/build
 
 ######################
-# JaCoCo jars
-######################
-!jacocoagent.jar
-!jacococli.jar
-
-######################
 # Coverage Files
 ######################
 /src/test/cypress/coverage
