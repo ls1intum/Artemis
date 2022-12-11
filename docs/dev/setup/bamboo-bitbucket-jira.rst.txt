@@ -282,10 +282,6 @@ under ``localhost:7990``.
 
     It is recommended to use a password to secure the private key, but it is not mandatory.
 
-    ..
-        TODO: add example ssh-keygen command?
-        ssh-keygen -t rsa -b 4096 -C "artemis_admin@artemis.example" -f <ssh-private-key-folder-path>/id_rsa
-
     Please note that the private key file **must** be named ``id_rsa``, ``id_dsa``, ``id_ecdsa`` or ``id_ed25519``,
     depending on the ciphers used.
 
@@ -296,7 +292,7 @@ under ``localhost:7990``.
     Navigate to ``BITBUCKET-URL/plugins/servlet/ssh/account/keys`` and add the SSH key by pasting the content of
     the public key.
 
-    ``<ssh-private-key-folder-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename).
+    ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename).
     It will be used in the configuration of Artemis to specify where Artemis should look for the key and
     store the ``known_hosts`` file.
 
