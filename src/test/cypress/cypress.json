@@ -16,5 +16,9 @@
     "reporterOptions": {
         "mochaFile": "build/cypress/test-reports/test-results.[hash].xml",
         "toConsole": true
+    },     
+    "retries": {
+        "runMode": 2,
+        "openMode": 0
     }
 }
