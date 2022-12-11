@@ -15,7 +15,7 @@ services:
             && /run_artemis.sh'
         environment:
             JAVA_REMOTE_DEBUG: true
-            SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,dev,docker,local-secrets,local
+            SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,dev,docker,local
         volumes:
             - ./scripts/wait-for.sh:/usr/local/bin/wait-for:ro
         depends_on:

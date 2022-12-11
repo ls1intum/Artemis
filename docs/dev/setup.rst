@@ -636,29 +636,68 @@ HTTP. We need to extend the configuration in the file
 
 ------------------------------------------------------------------------------------------------------------------------
 
-Alternative: Docker-Compose Setup
+Alternative: Docker Compose Setup
 ---------------------------------
+
+.. TODO: fix the implementation: currently you still have to create an empty /src/main/resources/application-local.yaml
+
+Getting Started with Docker Compose
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1. Install `Docker Desktop <https://docs.docker.com/desktop/#docker-for-mac>`__ or
+   `Docker Engine and Docker CLI with the Docker Compose Plugin <https://docs.docker.com/compose/install/>`__
+   (``docker compose`` command).
+
+   We **DON'T support** the usage of the **Compose standalone** binary (``docker-compose`` command) as its installation
+   method `is no longer supported by Docker <https://docs.docker.com/compose/install/>`__.
+
+   We recommend the latest version of Docker Desktop or Docker Engine and Docker CLI with Docker Compose Plugin.
+   The minimum version for Docker Compose is 1.27.0+ as of this version the
+   `latest Compose file format is supported <https://docs.docker.com/compose/compose-file/compose-versioning/#versioning>`__.
+
+   .. hint::
+     Make sure that Docker Desktop has enough memory (~ 6GB). To adapt it, go to ``Settings -> Resources``.
+
+2. Run ``docker compose pull && docker compose up`` in the project rootzs
+3. Open the Artemis instance in your browser at http://localhost:8080
+
+.. tip::
+  The first ``docker compose pull`` command is just necessary the first time as extra step, as otherwise Artemis will be
+  built from source as you don't already have an Artemis Image locally.
+
+Other Docker Compose Setups
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The easiest way to configure a local deployment via Docker is a deployment with a *docker compose* file.
 In the directory ``src/main/docker/`` you can find the following *docker compose* files for different setups:
 
 * ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
-* ``artemis-dev-mysql-gitlab-jenkins.yml``: **Artemis-Dev-MySQL-GitLab-Jenkins**
-  Setup containing the development build of Artemis, a MySQL DB, a GitLab and Jenkins instance
-* ``artemis-server-client-mysql.yml``: **Artemis-Server-Client-MySQL** Setup containing a separate client and server
+* ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the production build of Artemis and a MySQL DB
+* ``artemis-server-client-mysql.yml``: **(not maintained at the moment)** **Artemis-Server-Client-MySQL** Setup containing a separate client and server
   container which mount the code as volumes and are therefore just suited for development purposes.
   As Npm is used with its live reload mode to build and run the client, any change in the client’s codebase will trigger
   a rebuild automatically. In case of changes in the codebase of the server one has to restart the ``artemis-server``
   container.
 * ``atlassian.yml``: **Atlassian** Setup containing a Jira, Bitbucket and Bamboo instance
+  (see `Bamboo, Bitbucket and Jira Setup Guide <#bamboo-bitbucket-and-jira-setup>`__
+  for the configuration of this setup)
 * ``gitlab-gitlabci.yml``: **GitLab-GitLabCI** Setup containing a GitLab and GitLabCI instance
 * ``gitlab-jenkins.yml``: **GitLab-Jenkins** Setup containing a GitLab and Jenkins instance
-* ``gitlab-jenkins-mysql.yml``: **GitLab-Jenkins-MySQL** Setup containing a GitLab, Jenkins and MySQL DB instance
+  (see `Gitlab Server Quickstart Guide <#gitlab-server-quickstart>`__ for the configuration of this setup)
+* ``monitoring.yml``: **Prometheus-Grafana** Setup containing a Prometheus and Grafana instance
+* ``mysql.yml``: **MySQL** Setup containing a MySQL DB instance
 
-.. TODO: fix the implementation: currently you still have to create the file /src/main/resources/application-local.yaml
+Two example commands to run such setups:
+
+.. code:: bash
+
+  docker compose -f src/main/docker/atlassian.yml up
+  docker compose -f src/main/docker/mysql.yml -f src/main/docker/gitlab-jenkins.yml up
+
+.. TODO: fix the implementation: use env file instead of application-local.yml
 
 .. tip::
-  There is also a single ``docker-compose.yml`` in the project root which mirrors the setup of ``artemis-dev-mysql.yml``.
+  There is also a single ``docker-compose.yml`` in the project root which mirrors the setup of ``artemis-prod-mysql.yml``.
   This should provide a quick way, without manual changes necessary, for new contributors to startup an Artemis instance.
 
 For each service being used in these *docker compose* files a **base service** (containing similar settings)
@@ -683,27 +722,6 @@ An example command to run such an extended setup:
 .. warning::
   If you want to run multiple *docker compose* setups in parallel on one host you might have to modify
   volume, container and network names!
-
-Getting Started with Docker-Compose Setups
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-To get started with one of the mentioned Docker-Compose Setups do the following:
-
-.. TODO: modify config part accordingly to config decision
-
-1. Install `docker <https://docs.docker.com/install/>`__ (``docker compose`` is shipped as part of docker and is used in
-   this project instead of the Python implementation ``docker-compose``)
-2. ( Depending on the chosen setup it's necessary to configure the Artemis configs like ``application-local.yml``
-   in the folder ``src/main/resources/config`` as described in the section `Dockerfile <#dockerfile>`__.
-   The default setup ``docker-compose.yml`` should run without the default configurations, so no changes are required.)
-3. Run ``docker compose pull && docker compose up`` or
-   ``docker compose -f src/main/docker/<setup to be launched>.yml pull &&
-   docker compose -f src/main/docker/<setup to be launched>.yml up``
-4. For Artemis instances go to http://localhost:8080 (http://localhost:9000 for the seperated server and client setup)
-
-.. tip::
-  The first ``docker compose pull`` command is just necessary the first time as extra step, as otherwise Artemis will be
-  built from source as you don't already have an Artemis Image locally.
 
 Debugging with Docker
 ^^^^^^^^^^^^^^^^^^^^^

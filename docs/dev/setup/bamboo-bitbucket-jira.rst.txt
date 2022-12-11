@@ -1,3 +1,5 @@
+.. _Bamboo Bitbucket and Jira Setup:
+
 Bamboo, Bitbucket and Jira Setup
 --------------------------------
 
