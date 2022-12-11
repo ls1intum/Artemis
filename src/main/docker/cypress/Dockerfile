@@ -38,7 +38,6 @@ WORKDIR /opt/artemis
 ARG WAR_PATH=build/libs
 COPY $WAR_PATH/*.war Artemis.war
 
-COPY jars/jacocoagent.jar jacocoagent.jar
 COPY bootstrap-coverage.sh /bootstrap.sh
 
 RUN chmod +x /bootstrap.sh \

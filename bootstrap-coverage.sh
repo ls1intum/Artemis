@@ -14,6 +14,8 @@ fi
 # Ensure at least the directories are owned by artemis. "-R" takes too long
 chown artemis:artemis config data
 
+jar xf Artemis*.war WEB-INF/lib/org.jacoco.agent-0.8.8.jar
+
 echo "Starting application..."
 exec gosu artemis java \
   -Djdk.tls.ephemeralDHKeySize=2048 \
@@ -30,5 +32,5 @@ exec gosu artemis java \
   --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
   --add-opens java.management/sun.management=ALL-UNNAMED \
   --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
-  -javaagent:jacocoagent.jar=output=tcpserver,address=* \
+  -javaagent:./WEB-INF/lib/org.jacoco.agent-0.8.8.jar=output=tcpserver,address=* \
   -jar Artemis.war
