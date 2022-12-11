@@ -15,6 +15,7 @@ fi
 chown artemis:artemis config data
 
 unzip Artemis*.war "*.jacoco.agent*.jar" -d .
+unzip WEB-INF/lib/org.jacoco.agent*.jar jacocoagent.jar
 
 echo "Starting application..."
 exec gosu artemis java \
@@ -32,5 +33,5 @@ exec gosu artemis java \
   --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
   --add-opens java.management/sun.management=ALL-UNNAMED \
   --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED \
-  -javaagent:./WEB-INF/lib/org.jacoco.agent-0.8.8.jar=output=tcpserver,address=* \
+  -javaagent:jacocoagent.jar=output=tcpserver,address=* \
   -jar Artemis.war
