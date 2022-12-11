@@ -24,6 +24,8 @@ GitLab,** ``8082`` **for Jenkins,** ``8080`` **for Artemis)**
     :local:
     :depth: 3
 
+.. _Configure Artemis for Jenkins GitLab:
+
 Configure Artemis
 ^^^^^^^^^^^^^^^^^
 

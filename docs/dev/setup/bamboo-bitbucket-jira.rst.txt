@@ -53,6 +53,8 @@ Make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Settings -
 In case you want to enable Swift or C programming exercises, refer to the readme in
 ``src/main/docker``
 
+.. _Configure Artemis for Bamboo Bitbucket Jira:
+
 Configure Artemis
 ^^^^^^^^^^^^^^^^^
 
