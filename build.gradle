@@ -284,7 +284,6 @@ dependencies {
 
     // JaCoCo is listed as a regular dependency so that coverage can be measured during integration tests
     implementation "org.jacoco:org.jacoco.agent:${jacoco_version}"
-    implementation "org.jacoco:org.jacoco.cli:${jacoco_version}"
 
     annotationProcessor "org.hibernate:hibernate-jpamodelgen:${hibernate_version}"
     annotationProcessor ("org.glassfish.jaxb:jaxb-runtime:${jaxb_runtime_version}") {

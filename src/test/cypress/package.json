@@ -24,6 +24,6 @@
         "update": "npm-upgrade"
     },
     "dependencies": {
-        "@heddendorp/cypress-plugin-multilanguage-coverage": "^1.2.2"
+        "@heddendorp/cypress-plugin-multilanguage-coverage": "^1.2.1"
     }
 }
