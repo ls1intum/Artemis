@@ -122,7 +122,12 @@ a:not(.btn):hover {
             .navbar-version {
                 padding-top: 3px;
                 font-size: 10px;
+                font-weight: 700;
                 color: var(--navbar-foreground);
+            }
+
+            .navbar-title {
+                font-weight: 700;
             }
 
             &:hover {

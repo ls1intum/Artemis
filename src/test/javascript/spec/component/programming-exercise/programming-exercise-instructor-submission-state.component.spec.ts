@@ -16,7 +16,6 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ProgrammingExerciseTriggerAllButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-trigger-all-button.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { DurationPipe } from 'app/shared/pipes/duration.pipe';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
@@ -55,7 +54,6 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
                 FeatureToggleDirective,
                 FeatureToggleLinkDirective,
                 TranslatePipeMock,
-                MockDirective(NgbTooltip),
                 MockDirective(TranslateDirective),
                 MockPipe(DurationPipe),
             ],

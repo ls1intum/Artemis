@@ -7,8 +7,8 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
-import { NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MockPipe } from 'ng-mocks';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Plagiarism Case Verdict Component', () => {
     let comp: PlagiarismCaseVerdictComponent;
@@ -18,7 +18,7 @@ describe('Plagiarism Case Verdict Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule, NgbModule],
             declarations: [PlagiarismCaseVerdictComponent, MockPipe(ArtemisDatePipe)],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockDirective(NgbTooltip)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismCaseVerdictComponent);
