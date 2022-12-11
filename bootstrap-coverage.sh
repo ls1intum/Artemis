@@ -14,7 +14,7 @@ fi
 # Ensure at least the directories are owned by artemis. "-R" takes too long
 chown artemis:artemis config data
 
-jar xf Artemis*.war WEB-INF/lib/org.jacoco.agent-0.8.8.jar
+unzip Artemis*.war "*.jacoco.agent*.jar" -d .
 
 echo "Starting application..."
 exec gosu artemis java \
