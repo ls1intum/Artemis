@@ -21,7 +21,7 @@ import path from 'path';
 module.exports = (on: (arg0: string, arg1: {}) => void, config: any) => {
     // `on` is used to hook into various events Cypress emits
     // `config` is the resolved Cypress config
-    registerMultilanguageCoveragePlugin({ workingDirectory: path.join(__dirname, '..'), saveRawCoverage: true })(on, config);
+    process.env.CYPRESS_COLLECT_COVERAGE === 'true' && registerMultilanguageCoveragePlugin({ workingDirectory: path.join(__dirname, '..'), saveRawCoverage: true })(on, config);
     on('task', {
         error(message: string) {
             console.error('\x1b[31m', 'ERROR: ', message, '\x1b[0m');
