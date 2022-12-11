@@ -54,7 +54,7 @@ jenkins:
     # This is useful when the internal communication between Jenkins and Gitlab is
     # different to how clients should access those services.
     # The client-facing URLs (e.g. for the repository clone URL, link to the build plans)
-    # will still be constructed from the ones defined in application-artemis.yml.
+    # will still be constructed from the ones defined in artemis.continuous-integration.url.
     # internal-urls:
         # Override the ci url used e.g. in Gitlab as the webhook url.
         # http://jenkins:8080
