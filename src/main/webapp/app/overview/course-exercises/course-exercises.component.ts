@@ -64,7 +64,7 @@ export class CourseExercisesComponent implements OnInit, OnChanges, OnDestroy, A
     private currentUser?: User;
     public course?: Course;
     public weeklyIndexKeys: string[];
-    public weeklyExercisesGrouped: object;
+    public weeklyExercisesGrouped: object; // TODO: convert into map
     public upcomingExercises: ExerciseWithDueDate[] = [];
     public exerciseCountMap: Map<string, number>;
 
