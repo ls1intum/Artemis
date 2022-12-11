@@ -9,7 +9,8 @@ it('Logs in once with all required users', () => {
     cy.login(users.getStudentOne());
     cy.login(users.getStudentTwo());
     cy.login(users.getStudentThree());
-    if (Math.random() > 0.5) {
-        throw new Error('This is a random error to test the error logging');
+    if (Math.random() > 0.3) {
+        console.error('This is a random error to test the retry logic');
+        throw new Error('This is a random error to test the retry logic');
     }
 });
