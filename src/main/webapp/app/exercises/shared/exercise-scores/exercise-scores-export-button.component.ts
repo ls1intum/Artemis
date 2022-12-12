@@ -102,7 +102,7 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
 
             let keys;
             let rows;
-            if (withTestCases && results.first()) {
+            if (withTestCases) {
                 const testCasesNames = this.getTestCaseNamesFromResults(results);
                 keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria, testCasesNames);
                 rows = results.map((resultWithPoints) => {
