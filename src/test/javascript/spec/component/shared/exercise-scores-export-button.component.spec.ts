@@ -127,7 +127,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         },
     ];
 
-    const expectedColumnsWithTestCases = ['Name', 'Username', 'Score', 'Points', 'Repo Link', 'Test Name1', 'Test Name2'];
+    const expectedColumnsWithTestCases = ['Name', 'Username', 'Score', 'Points', 'Repo Link', 'TestName1', 'TestName2'];
     const expectedRowsWithTestCases = [
         {
             Name: 'Student B',
@@ -135,8 +135,8 @@ describe('ExerciseScoresExportButtonComponent', () => {
             Score: 2,
             Points: 4,
             'Repo Link': 'https://www.gitlab.local/studentB',
-            'Test Name1': 'Passed',
-            'Test Name2': 'Failed',
+            TestName1: 'Passed',
+            TestName2: 'Failed',
         },
     ];
 
@@ -147,21 +147,15 @@ describe('ExerciseScoresExportButtonComponent', () => {
             Score: 2,
             Points: 4,
             'Repo Link': 'https://www.gitlab.local/studentB',
-            'Test Name1': 'Passed',
-            'Test Name2': 'Failed: "Detailed text with \nnewlines and \nsymbols ;.\'~""',
+            TestName1: 'Passed',
+            TestName2: 'Failed: "Detailed text with \nnewlines and \nsymbols ;.\'~""',
         },
     ];
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [
-                ExerciseScoresExportButtonComponent,
-                MockComponent(FaIconComponent),
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
-            ],
+            imports: [MockDirective(NgbTooltip)],
+            declarations: [ExerciseScoresExportButtonComponent, MockComponent(FaIconComponent), MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(AlertService), { provide: ResultService, useClass: MockResultService }, { provide: TranslateService, useClass: MockTranslateService }],
         }).compileComponents();
 
@@ -327,11 +321,11 @@ describe('ExerciseScoresExportButtonComponent', () => {
         const feedbacks: Feedback[] = [];
 
         const feedback1 = new Feedback();
-        feedback1.text = 'Name1';
+        feedback1.text = 'TestName1';
         feedback1.positive = true;
 
         const feedback2 = new Feedback();
-        feedback2.text = 'Name2';
+        feedback2.text = 'TestName2';
         feedback2.positive = false;
         feedback2.detailText = 'Detailed text with \nnewlines and \nsymbols ;.\'~"';
 

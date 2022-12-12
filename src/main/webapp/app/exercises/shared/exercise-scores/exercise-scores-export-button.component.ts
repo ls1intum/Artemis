@@ -10,6 +10,7 @@ import { GradingCriterion } from 'app/exercises/shared/structured-grading-criter
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ExportToCsv } from 'export-to-csv';
+import { Feedback } from 'app/entities/feedback.model';
 
 interface TestCaseResult {
     testName: string;
@@ -102,7 +103,7 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
             let keys;
             let rows;
             if (withTestCases && results.first()) {
-                const testCasesNames = this.getTestCaseNamesFromResult(results.first()!);
+                const testCasesNames = this.getTestCaseNamesFromResults(results);
                 keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria, testCasesNames);
                 rows = results.map((resultWithPoints) => {
                     const studentParticipation = resultWithPoints.result.participation! as StudentParticipation;
@@ -172,16 +173,20 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
 
     /**
      * Retrieves a list of test cases names contained in a result's feedback list
-     * @param result
+     * @param results list of results to extract the test case names from
      * @private
      */
-    private getTestCaseNamesFromResult(result: ResultWithPointsPerGradingCriterion): string[] {
-        if (!result.result.feedbacks) {
-            return [];
-        }
-        return result.result.feedbacks.map((f) => {
-            return f.text ? 'Test ' + f.text : 'Test ' + result.result.feedbacks?.indexOf(f) + 1;
+    private getTestCaseNamesFromResults(results: ResultWithPointsPerGradingCriterion[]): string[] {
+        const testCasesNames: Set<string> = new Set();
+        results.forEach((result) => {
+            if (!result.result.feedbacks) {
+                return [];
+            }
+            result.result.feedbacks.map((f) => {
+                testCasesNames.add(f.text ? f.text : 'Test ' + result.result.feedbacks?.indexOf(f) + 1);
+            });
         });
+        return Array.from(testCasesNames);
     }
 
     /**
@@ -193,17 +198,40 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
      * @private
      */
     private getTestCaseResults(result: ResultWithPointsPerGradingCriterion, testCaseNames: string[], withFeedback?: boolean): TestCaseResult[] {
-        return (
-            result.result.feedbacks?.map((f, i) => {
+        const testCaseResults: TestCaseResult[] = [];
+
+        testCaseNames.forEach((testCaseName) => {
+            const feedback = this.getFeedbackByTestCase(testCaseName, result.result.feedbacks);
+
+            if (!feedback) {
+                testCaseResults.push({ testName: testCaseName, testResult: 'Skipped' } as TestCaseResult);
+            } else {
                 let resultText;
-                if (f.positive) {
+                if (feedback.positive) {
                     resultText = 'Passed';
                 } else {
-                    resultText = !!withFeedback && f.detailText ? 'Failed: "' + f.detailText + '"' : 'Failed';
+                    resultText = !!withFeedback && feedback.detailText ? 'Failed: "' + feedback.detailText + '"' : 'Failed';
                 }
-                return { testName: testCaseNames[i], testResult: resultText } as TestCaseResult;
-            }) ?? []
-        );
+                testCaseResults.push({ testName: testCaseName, testResult: resultText } as TestCaseResult);
+            }
+        });
+        return testCaseResults;
+    }
+
+    /**
+     * Retrieves a feedback object from a result's feedback list by a given test case name.
+     *
+     * If no feedback is found for the given test case name, null is returned.
+     * @param feedbacks the list of result feedbacks to search in
+     * @param testCase the name of the test case to search for
+     * @private
+     */
+    private getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]): Feedback | null {
+        if (!feedbacks) {
+            return null;
+        }
+        const i = feedbacks.findIndex((feedback) => feedback.text?.localeCompare(testCase) === 0);
+        return i !== -1 ? feedbacks[i] : null;
     }
 }
 
