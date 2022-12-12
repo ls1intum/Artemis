@@ -19,6 +19,8 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 
 class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "progexservice";
+
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -31,7 +33,7 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @BeforeEach
     void init() {
-        database.addUsers(0, 0, 0, 2);
+        database.addUsers(TEST_PREFIX, 0, 0, 0, 2);
         var course1 = database.addCourseWithOneProgrammingExercise();
         var course2 = database.addCourseWithOneProgrammingExercise();
 
@@ -50,7 +52,7 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldFindProgrammingExerciseWithBuildAndTestDateInFuture() {
         programmingExercise1.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(programmingExercise1);

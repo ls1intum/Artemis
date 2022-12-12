@@ -26,6 +26,8 @@ import net.sourceforge.plantuml.core.DiagramDescription;
 
 class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "plantumlintegration";
+
     private static final String UML_DIAGRAM_STRING = "@somePlantUml";
 
     private static final String UML_SVG = "foobar";
@@ -36,7 +38,7 @@ class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @BeforeEach
     void setUp() throws IOException {
-        database.addUsers(1, 0, 0, 0);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
     }
 
     @AfterEach
@@ -45,7 +47,7 @@ class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void generatePng_asStudent_success() throws Exception {
         try (var ignored = Mockito.mockConstruction(ByteArrayOutputStream.class, (bosMock, context) -> doReturn(UML_PNG).when(bosMock).toByteArray())) {
             try (var ignored2 = Mockito.mockConstruction(SourceStringReader.class, (readerMock, context) -> doReturn(description).when(readerMock).outputImage(any(), any()))) {
@@ -58,7 +60,7 @@ class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void generateSvg_asStudent_success() throws Exception {
         // Mock the method outputImage, so that it simply writes the expected value into the byte array output stream
         Answer<DiagramDescription> answer = invocation -> {
@@ -75,7 +77,7 @@ class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void generateSvg_asStudent_error() throws Exception {
         final var paramMap = new LinkedMultiValueMap<String, String>();
         paramMap.setAll(Map.of("plantuml", ""));    // empty string

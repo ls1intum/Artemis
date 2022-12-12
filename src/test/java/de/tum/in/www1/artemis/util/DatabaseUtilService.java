@@ -879,14 +879,6 @@ public class DatabaseUtilService {
         return onlineUnitRepository.save(onlineUnit);
     }
 
-    public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations) throws Exception {
-        return createCoursesWithExercisesAndLectures(withParticipations, false);
-    }
-
-    public List<Course> createCoursesWithExercisesAndLectures(boolean withParticipations, boolean withFiles) throws Exception {
-        return createCoursesWithExercisesAndLectures("", withParticipations, withFiles);
-    }
-
     public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations) throws Exception {
         return createCoursesWithExercisesAndLectures(prefix, withParticipations, false);
     }
@@ -1188,9 +1180,9 @@ public class DatabaseUtilService {
         return answerPosts;
     }
 
-    public void createMultipleCoursesWithAllExercisesAndLectures(int numberOfCoursesWithExercises, int numberOfCoursesWithLectures) throws Exception {
+    public void createMultipleCoursesWithAllExercisesAndLectures(String userPrefix, int numberOfCoursesWithExercises, int numberOfCoursesWithLectures) throws Exception {
         for (int i = 0; i < numberOfCoursesWithExercises; i++) {
-            createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(true);
+            createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(userPrefix, true);
         }
         for (int i = 0; i < numberOfCoursesWithLectures; i++) {
             createCoursesWithExercisesAndLecturesAndLectureUnits(true, true);
@@ -1219,7 +1211,7 @@ public class DatabaseUtilService {
         return conversationParticipantRepository.save(conversationParticipant);
     }
 
-    public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {
+    public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(String userPrefix, boolean hasAssessmentDueDatePassed) {
         var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
 
@@ -1251,7 +1243,7 @@ public class DatabaseUtilService {
         quizExercise = exerciseRepo.save(quizExercise);
 
         // Get user and setup participations
-        User user = (userRepo.findOneByLogin("student1")).get();
+        User user = (userRepo.findOneByLogin(userPrefix + "student1")).get();
         StudentParticipation participationModeling = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, modelingExercise, user);
         StudentParticipation participationText = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, user);
         StudentParticipation participationFileUpload = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, fileUploadExercise, user);
@@ -2280,9 +2272,9 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public Course addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(String similarSubmissionText, int studentsAmount) {
+    public Course addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(String userPrefix, String similarSubmissionText, int studentsAmount) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        addUsers(studentsAmount, 1, 1, 1);
+        addUsers(userPrefix, studentsAmount, 1, 1, 1);
 
         // Add text exercise to the course
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
@@ -2295,7 +2287,7 @@ public class DatabaseUtilService {
         Set<StudentParticipation> participations = new HashSet<>();
 
         for (int i = 0; i < studentsAmount; i++) {
-            User participant = getUserByLogin("student" + (i + 1));
+            User participant = getUserByLogin(userPrefix + "student" + (i + 1));
             StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, participant);
             participation.setParticipant(participant);
             TextSubmission submission = ModelFactory.generateTextSubmission(similarSubmissionText, Language.ENGLISH, true);
@@ -2313,7 +2305,7 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public Course addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(String similarSubmissionModel, int studentsAmount, Course course) {
+    public Course addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(String userPrefix, String similarSubmissionModel, int studentsAmount, Course course) {
         // Add text exercise to the course
         ModelingExercise exercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
         exercise.setTitle("finished");
@@ -2326,7 +2318,7 @@ public class DatabaseUtilService {
         Set<StudentParticipation> participations = new HashSet<>();
 
         for (int i = 0; i < studentsAmount; i++) {
-            User participant = getUserByLogin("student" + (i + 1));
+            User participant = getUserByLogin(userPrefix + "student" + (i + 1));
             StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, exercise, participant);
             participation.setParticipant(participant);
             ModelingSubmission submission = ModelFactory.generateModelingSubmission(similarSubmissionModel, true);
@@ -4407,13 +4399,13 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public Course createCourseWithInstructorAndTextExercise() {
+    public Course createCourseWithInstructorAndTextExercise(String userPrefix) {
         Course course = this.createCourse();
         TextExercise textExercise = createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         StudentParticipation participation = ModelFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
         studentParticipationRepo.save(participation);
         course.addExercises(textExercise);
-        addUsers(0, 0, 0, 1);
+        addUsers(userPrefix, 0, 0, 0, 1);
         return course;
     }
 

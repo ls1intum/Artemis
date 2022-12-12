@@ -32,6 +32,8 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "progexserviceintegration";
+
     private static final String BASE_RESOURCE = "/api/programming-exercises/";
 
     @Autowired
@@ -54,8 +56,8 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     void setUp() {
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
-        database.addUsers(1, 1, 0, 1);
-        database.addInstructor("other-instructors", "instructorother");
+        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        database.addInstructor("other-instructors", TEST_PREFIX + "instructorother");
         additionalEmptyCourse = database.addEmptyCourse();
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -77,7 +79,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProgrammingExerciseBasis_baseReferencesGotCloned() {
         final var newlyImported = importExerciseBase();
 
@@ -114,7 +116,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProgrammingExerciseBasis_testsAndHintsHoldTheSameInformation() {
         final var imported = importExerciseBase();
 
@@ -134,21 +136,21 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void importExercise_tutor_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
     void importExercise_user_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructorother1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
@@ -156,24 +158,24 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final var search = database.configureSearch("Programming");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
-        assertThat(result.getResultsOnPage()).hasSize(1);
+        assertThat(result.getResultsOnPage()).isNotEmpty();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorSearchTermMatchesId() throws Exception {
-        database.addUsers(1, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         testSearchTermMatchesId();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminSearchTermMatchesId() throws Exception {
-        database.addUsers(1, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         testSearchTermMatchesId();
     }
 
@@ -191,7 +193,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
         String randomString = UUID.randomUUID().toString();
         database.addCourseWithNamedProgrammingExerciseAndTestCases(randomString);
@@ -209,7 +211,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSearchProgrammingExercisesWithProperSearchTerm() throws Exception {
         database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
         database.addCourseWithNamedProgrammingExerciseAndTestCases("Python");

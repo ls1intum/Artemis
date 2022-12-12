@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.repository.*;
 
 class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "lectureunitintegration";
+
     @Autowired
     private CourseRepository courseRepository;
 
@@ -56,28 +58,28 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @BeforeEach
     void initTestCase() throws Exception {
-        this.database.addUsers(10, 10, 0, 10);
-        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true);
+        this.database.addUsers(TEST_PREFIX, 10, 10, 0, 10);
+        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
         Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = course1.getLectures().stream().findFirst().get();
 
         // Add users that are not in the course
-        database.createAndSaveUser("student42");
-        database.createAndSaveUser("tutor42");
-        database.createAndSaveUser("instructor42");
+        database.createAndSaveUser(TEST_PREFIX + "student42");
+        database.createAndSaveUser(TEST_PREFIX + "tutor42");
+        database.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         this.textUnit = database.createTextUnit();
         this.textUnit2 = database.createTextUnit();
@@ -93,7 +95,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit() throws Exception {
         var lectureUnitId = lecture1.getLectureUnits().get(0).getId();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.OK);
@@ -102,10 +104,10 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_shouldRemoveCompletions() throws Exception {
         var lectureUnit = lecture1.getLectureUnits().get(0);
-        var user = userRepo.findOneByLogin("student1").get();
+        var user = userRepo.findOneByLogin(TEST_PREFIX + "student1").get();
 
         LectureUnitCompletion completion = new LectureUnitCompletion();
         completion.setLectureUnit(lectureUnit);
@@ -123,14 +125,14 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void deleteLectureUnit_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         var lectureUnitId = lecture1.getLectureUnits().get(0).getId();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_notPartOfLecture_shouldReturnNotFound() throws Exception {
         var lectureUnitId = lecture1.getLectureUnits().get(0).getId();
         request.delete("/api/lectures/" + Integer.MAX_VALUE + "/lecture-units/" + lectureUnitId, HttpStatus.CONFLICT);
@@ -141,7 +143,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
      * from entering nulls into the list to keep the order of lecture units
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_FirstLectureUnit_ShouldReorderList() throws Exception {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
         assertThat(lecture.getLectureUnits()).hasSize(4);
@@ -160,7 +162,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLectureUnitOrder_asInstructor_shouldUpdateLectureUnitOrder() throws Exception {
         List<Long> newlyOrderedList = lecture1.getLectureUnits().stream().map(DomainObject::getId).collect(Collectors.toCollection(ArrayList::new));
         Collections.swap(newlyOrderedList, 0, 1);
@@ -171,14 +173,14 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLectureUnitOrder_wrongSizeOfIds_shouldReturnConflict() throws Exception {
         List<Long> newlyOrderedList = lecture1.getLectureUnits().stream().map(DomainObject::getId).skip(1).toList();
         request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", newlyOrderedList, HttpStatus.CONFLICT);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLectureUnitOrder_newTextUnitInOrderedList_shouldReturnConflict() throws Exception {
         List<Long> newlyOrderedList = lecture1.getLectureUnits().stream().map(DomainObject::getId).collect(Collectors.toCollection(ArrayList::new));
         // textUnit3 is not in specified lecture
@@ -187,19 +189,19 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLectureUnitOrder_asInstructorWithWrongLectureId_shouldReturnNotFound() throws Exception {
         request.put("/api/lectures/" + 0L + "/lecture-units-order", List.of(), HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void updateLectureUnitOrder_notInstructorInCourse_shouldReturnForbidden() throws Exception {
         request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void setLectureUnitCompletion() throws Exception {
         // Set lecture unit as completed for current user
         request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=true", null,
@@ -225,14 +227,14 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void setLectureUnitCompletion_lectureUnitNotPartOfLecture_shouldReturnConflict() throws Exception {
         request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit3.getId() + "/completion?completed=true", null, HttpStatus.CONFLICT,
                 null);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void setLectureUnitCompletion_lectureUnitNotVisible_shouldReturnConflict() throws Exception {
         this.textUnit.setReleaseDate(ZonedDateTime.now().plusDays(1));
         textUnitRepository.save(this.textUnit);
@@ -241,7 +243,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "student42", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void setLectureUnitCompletion_shouldReturnForbidden() throws Exception {
         // User is not in same course as lecture unit
         request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lecture1.getLectureUnits().get(0).getId() + "/completion?completed=true", null,

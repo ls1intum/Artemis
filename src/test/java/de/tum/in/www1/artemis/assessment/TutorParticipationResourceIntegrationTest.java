@@ -23,6 +23,8 @@ import de.tum.in.www1.artemis.repository.TutorParticipationRepository;
 
 class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "tutorparticipationresource";
+
     @Autowired
     private ExerciseRepository exerciseRepository;
 
@@ -38,8 +40,8 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(1, 5, 0, 1);
-        var courses = database.createCoursesWithExercisesAndLectures(true);
+        database.addUsers(TEST_PREFIX, 1, 5, 0, 1);
+        var courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
         course1 = courses.get(0);
         exercise = course1.getExercises().iterator().next();
     }
@@ -50,12 +52,12 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testRemoveTutorParticipationForGuidedTour() throws Exception {
         var tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_Course(course1);
         assertThat(tutorParticipations).hasSize(5);
 
-        User tutor = database.getUserByLogin("tutor1");
+        User tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
         TutorParticipation tutorParticipation = tutorParticipations.get(0);
         tutorParticipation.tutor(tutor).assessedExercise(exercise);
         tutorParticipationRepository.save(tutorParticipation);
@@ -75,7 +77,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testRemoveTutorParticipationForGuidedTour_noMatchingExercise() throws Exception {
         exercise.setTitle("Patterns in Software Engineering");
         exerciseRepository.save(exercise);
@@ -84,7 +86,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testRemoveTutorParticipationForGuidedTour_forbidden() throws Exception {
         request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.FORBIDDEN);
 

@@ -28,6 +28,8 @@ import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 
 class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "onlineunitintegration";
+
     @Autowired
     private UserRepository userRepository;
 
@@ -45,7 +47,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void initTestCase() throws Exception {
-        this.database.addUsers(1, 1, 0, 1);
+        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.onlineUnit = new OnlineUnit();
         this.onlineUnit.setDescription("LoremIpsum");
@@ -53,9 +55,9 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         this.onlineUnit.setSource("oHg5SJYRHA0");
 
         // Add users that are not in the course
-        database.createAndSaveUser("student42");
-        database.createAndSaveUser("tutor42");
-        database.createAndSaveUser("instructor42");
+        database.createAndSaveUser(TEST_PREFIX + "student42");
+        database.createAndSaveUser(TEST_PREFIX + "tutor42");
+        database.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         jsoupMock = mockStatic(Jsoup.class);
     }
@@ -73,19 +75,19 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createOnlineUnit_asInstructor_shouldCreateOnlineUnit() throws Exception {
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         var persistedOnlineUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.CREATED);
@@ -93,14 +95,14 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateOnlineUnit_asInstructor_shouldUpdateOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
@@ -112,7 +114,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateOnlineUnit_asInstructor_shouldKeepOrdering() throws Exception {
         persistOnlineUnitWithLecture();
 
@@ -138,7 +140,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void updateOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         persistOnlineUnitWithLecture();
 
@@ -149,7 +151,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateOnlineUnit_noId_shouldReturnBadRequest() throws Exception {
         persistOnlineUnitWithLecture();
 
@@ -159,7 +161,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getOnlineUnit_correctId_shouldReturnOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
@@ -169,7 +171,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void getOnlineResource() throws Exception {
         String url = "https://www.google.de";
         var connectionMock = mock(Connection.class);
@@ -187,7 +189,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteOnlineUnit_correctId_shouldDeleteOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 

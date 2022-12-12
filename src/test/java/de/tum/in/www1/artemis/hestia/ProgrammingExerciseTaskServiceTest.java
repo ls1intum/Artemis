@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
 class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "progextaskservice";
+
     @Autowired
     private ProgrammingExerciseTaskService programmingExerciseTaskService;
 
@@ -44,7 +46,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     void init() {
-        database.addUsers(2, 2, 1, 2);
+        database.addUsers(TEST_PREFIX, 2, 2, 1, 2);
 
         final Course course = database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);

@@ -39,6 +39,8 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 
 class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "tutorialgroupnotifservice";
+
     @Autowired
     private TutorialGroupNotificationRepository tutorialGroupNotificationRepository;
 
@@ -66,15 +68,19 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
     @BeforeEach
     void setUp() {
         // creating the users student1-student10, tutor1-tutor10, editor1-editor10 and instructor1-instructor10
-        this.database.addUsers(10, 10, 10, 10);
+        this.database.addUsers(TEST_PREFIX, 10, 10, 10, 10);
         Course course = this.database.createCourse();
-        student1 = userRepository.findOneByLogin("student1").get();
-        tutor1 = userRepository.findOneByLogin("tutor1").get();
+        student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
         tutorialGroup = createAndSaveTutorialGroup(course.getId(), "ExampleTitle1", "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
-                userRepository.findOneByLogin("tutor1").get(), ImmutableSet.of(userRepository.findOneByLogin("student1").get(), userRepository.findOneByLogin("student2").get(),
-                        userRepository.findOneByLogin("student3").get(), userRepository.findOneByLogin("student4").get(), userRepository.findOneByLogin("student5").get()));
+                userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get(),
+                ImmutableSet.of(userRepository.findOneByLogin(TEST_PREFIX + "student1").get(), userRepository.findOneByLogin(TEST_PREFIX + "student2").get(),
+                        userRepository.findOneByLogin(TEST_PREFIX + "student3").get(), userRepository.findOneByLogin(TEST_PREFIX + "student4").get(),
+                        userRepository.findOneByLogin(TEST_PREFIX + "student5").get()));
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
+
+        notificationSettingRepository.deleteAll();
     }
 
     @AfterEach
@@ -91,7 +97,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void notifyAboutTutorialGroupUpdate_shouldSaveAndSend(boolean contactTutor) {
         prepareNotificationSettingForTest(student1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
         prepareNotificationSettingForTest(tutor1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
@@ -107,7 +113,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void notifyAboutTutorialGroupDeletion_shouldSaveAndSend() {
         prepareNotificationSettingForTest(student1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
         tutorialGroupNotificationService.notifyAboutTutorialGroupDeletion(tutorialGroup);

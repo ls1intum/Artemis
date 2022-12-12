@@ -49,7 +49,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     @BeforeEach
     void init() {
         database.addUsers(TEST_PREFIX, 2, 2, 0, 1);
-        course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(false);
+        course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
     }
 
     @Test

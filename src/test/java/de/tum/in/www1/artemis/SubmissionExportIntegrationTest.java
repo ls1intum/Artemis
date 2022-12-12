@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
-import java.util.List;
 import java.util.regex.Pattern;
 import java.util.zip.ZipFile;
 
@@ -26,6 +25,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 
 class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "submissionexportintegration";
 
     private ModelingExercise modelingExercise;
 
@@ -55,20 +56,19 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @BeforeEach
     void initTestCase() {
-        List<User> users = database.addUsers(3, 1, 0, 1);
-        users.remove(database.getUserByLogin("admin"));
+        database.addUsers(TEST_PREFIX, 3, 1, 0, 1);
         Course course1 = database.addCourseWithModelingAndTextAndFileUploadExercise();
         course1.getExercises().forEach(exercise -> {
-            database.createAndSaveParticipationForExercise(exercise, "student1");
-            database.createAndSaveParticipationForExercise(exercise, "student2");
-            database.createAndSaveParticipationForExercise(exercise, "student3");
+            database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+            database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
+            database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student3");
 
             if (exercise instanceof ModelingExercise) {
                 modelingExercise = (ModelingExercise) exercise;
                 try {
-                    modelingSubmission1 = database.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54727.json", "student1");
-                    modelingSubmission2 = database.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54742.json", "student2");
-                    modelingSubmission3 = database.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54745.json", "student3");
+                    modelingSubmission1 = database.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54727.json", TEST_PREFIX + "student1");
+                    modelingSubmission2 = database.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54742.json", TEST_PREFIX + "student2");
+                    modelingSubmission3 = database.addModelingSubmissionFromResources(modelingExercise, "test-data/model-submission/model.54745.json", TEST_PREFIX + "student3");
                 }
                 catch (Exception e) {
                     e.printStackTrace();
@@ -77,16 +77,20 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
             else if (exercise instanceof TextExercise) {
                 textExercise = (TextExercise) exercise;
 
-                textSubmission1 = database.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true), "student1");
-                textSubmission2 = database.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("some other text", Language.ENGLISH, true), "student2");
-                textSubmission3 = database.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("a third text", Language.ENGLISH, true), "student3");
+                textSubmission1 = database.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("example text", Language.ENGLISH, true), TEST_PREFIX + "student1");
+                textSubmission2 = database.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("some other text", Language.ENGLISH, true),
+                        TEST_PREFIX + "student2");
+                textSubmission3 = database.saveTextSubmission(textExercise, ModelFactory.generateTextSubmission("a third text", Language.ENGLISH, true), TEST_PREFIX + "student3");
             }
             else if (exercise instanceof FileUploadExercise) {
                 fileUploadExercise = (FileUploadExercise) exercise;
 
-                fileUploadSubmission1 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"), "student1");
-                fileUploadSubmission2 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"), "student2");
-                fileUploadSubmission3 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"), "student3");
+                fileUploadSubmission1 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"),
+                        TEST_PREFIX + "student1");
+                fileUploadSubmission2 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"),
+                        TEST_PREFIX + "student2");
+                fileUploadSubmission3 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"),
+                        TEST_PREFIX + "student3");
 
                 try {
                     saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission1);
@@ -124,12 +128,12 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     @AfterEach
     void resetDatabase() throws Exception {
         // change back to instructor user
-        database.changeUser("instructor1");
+        database.changeUser(TEST_PREFIX + "instructor1");
         database.resetDatabase();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
@@ -141,7 +145,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNoSubmissionsForStudent_asInstructor() throws Exception {
         baseExportOptions.setExportAllParticipants(false);
         baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
@@ -151,7 +155,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNoSubmissionsForStudent_asInstructorNotInGroup() throws Exception {
         baseExportOptions.setExportAllParticipants(false);
         baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
@@ -164,7 +168,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testNoSubmissionsForStudent_asTutor() throws Exception {
         baseExportOptions.setExportAllParticipants(true);
         baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
@@ -174,7 +178,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testWrongExerciseId_asInstructor() throws Exception {
         baseExportOptions.setExportAllParticipants(false);
         baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
@@ -185,7 +189,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testNoSubmissionsForDate_asInstructor() throws Exception {
         baseExportOptions.setFilterLateSubmissions(true);
         baseExportOptions.setFilterLateSubmissionsDate(ZonedDateTime.now().minusDays(2));
@@ -195,7 +199,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportAll() throws Exception {
         File textZip = request.postWithResponseBodyFile("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.OK);
         assertZipContains(textZip, textSubmission1, textSubmission2, textSubmission3);
@@ -208,7 +212,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportAll_IOException() throws Exception {
         doThrow(IOException.class).when(zipFileService).createZipFile(any(), any(), any());
         request.postWithResponseBodyFile("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
@@ -217,7 +221,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testExportTextExerciseSubmission_IOException() throws Exception {
         doThrow(IOException.class).when(zipFileService).createZipFile(any(), any(), any());
         request.postWithResponseBodyFile("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);

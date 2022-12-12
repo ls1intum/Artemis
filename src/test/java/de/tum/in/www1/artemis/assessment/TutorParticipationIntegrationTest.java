@@ -34,6 +34,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "tutorparticipationintegration";
+
     @Autowired
     private ExerciseRepository exerciseRepo;
 
@@ -65,7 +67,7 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(0, 1, 0, 0);
+        database.addUsers(TEST_PREFIX, 0, 1, 0, 0);
         Course course = database.addCourseWithModelingAndTextExercise();
         for (Exercise exercise : course.getExercises()) {
             if (exercise instanceof ModelingExercise) {
@@ -92,12 +94,12 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorParticipateInModelingExerciseWithExampleSubmission(boolean usedForTutorial) throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(usedForTutorial);
         var tutorParticipation = request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.OK);
         assertThat(tutorParticipation.getTrainedExampleSubmissions()).as("Tutor participation has example submission").hasSize(1);
-        assertThat(tutorParticipation.getTutor().getLogin()).as("Tutor participation belongs to correct tutor").isEqualTo("tutor1");
+        assertThat(tutorParticipation.getTutor().getLogin()).as("Tutor participation belongs to correct tutor").isEqualTo(TEST_PREFIX + "tutor1");
         assertThat(tutorParticipation.getAssessedExercise()).as("Tutor participation belongs to correct exercise").isEqualTo(modelingExercise);
         assertThat(tutorParticipation.getStatus()).as("Tutor participation has correct status").isEqualTo(TutorParticipationStatus.TRAINED);
     }
@@ -107,12 +109,12 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
      * In case tutor has provided a feedback which was not provided by the instructor, response is BAD_REQUEST.
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
 
         // Tutor reviewed the instructions.
-        var tutor = database.getUserByLogin("tutor1");
+        var tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
         var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationService.createNewParticipation(textExercise, tutor);
         exampleSubmission.addTutorParticipations(tutorParticipation);
@@ -127,12 +129,12 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
      * Tests when tutor provides unnecessry unreferenced feedback in text example assessment, bad request exception is thrown
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
 
         // Tutor reviewed the instructions.
-        var tutor = database.getUserByLogin("tutor1");
+        var tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
         var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationService.createNewParticipation(textExercise, tutor);
         exampleSubmission.addTutorParticipations(tutorParticipation);
@@ -148,12 +150,12 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
      * In case tutor has provided a feedback which was not provided by the instructor, response is BAD_REQUEST.
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
 
         // Tutor reviewed the instructions.
-        var tutor = database.getUserByLogin("tutor1");
+        var tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
         var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationService.createNewParticipation(textExercise, tutor);
         exampleSubmission.addTutorParticipations(tutorParticipation);
@@ -168,12 +170,12 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
      * Tests when tutor provides unnecessry unreferenced feedback in modeling example assessment, bad request exception is thrown
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
 
         // Tutor reviewed the instructions.
-        var tutor = database.getUserByLogin("tutor1");
+        var tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
         var tutorParticipation = new TutorParticipation().tutor(tutor).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationService.createNewParticipation(textExercise, tutor);
         exampleSubmission.addTutorParticipations(tutorParticipation);

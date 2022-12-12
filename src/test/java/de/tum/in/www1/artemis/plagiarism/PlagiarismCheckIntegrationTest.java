@@ -21,6 +21,8 @@ import de.tum.in.www1.artemis.util.FileUtils;
 
 class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "plagiarismcheck";
+
     private Course course;
 
     @BeforeEach
@@ -29,8 +31,8 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationBambooBitb
         String submissionModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         int studentAmount = 5;
 
-        course = database.addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(submissionText, studentAmount);
-        database.addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(submissionModel, studentAmount, course);
+        course = database.addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(TEST_PREFIX, submissionText, studentAmount);
+        database.addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(TEST_PREFIX, submissionModel, studentAmount, course);
     }
 
     @AfterEach
@@ -39,7 +41,7 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testCheckPlagiarismResultForTextExercise() throws Exception {
         var textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
         String path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
@@ -47,7 +49,7 @@ class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismResultForModelingExercise() throws Exception {
         var modelingExercise = database.getFirstExerciseWithType(course, ModelingExercise.class);
         String path = "/api/modeling-exercises/" + modelingExercise.getId() + "/check-plagiarism";

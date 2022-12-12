@@ -7,7 +7,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -131,7 +130,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateTeam_StudentsAlreadyAssigned_BadRequest() throws Exception {
         // Create team that contains student "student1"
-        Team team1 = new Team().name(TEST_PREFIX + "Team 1").shortName(TEST_PREFIX + "team1").exercise(exercise).students(Set.of(userRepo.findOneByLogin(TEST_PREFIX + "student1").orElseThrow()));
+        Team team1 = new Team().name(TEST_PREFIX + "Team 1").shortName(TEST_PREFIX + "team1").exercise(exercise)
+                .students(Set.of(userRepo.findOneByLogin(TEST_PREFIX + "student1").orElseThrow()));
         teamRepo.save(team1);
 
         // Try to create team with a student that is already assigned to another team
@@ -439,13 +439,14 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAssignedTeamIdOnExerciseForCurrentUser() throws Exception {
         // Create team that contains student "student1" (Team shortName needs to be empty since it is used as a prefix for the generated student logins)
-        Team team = new Team().name(TEST_PREFIX + "Team").shortName(TEST_PREFIX + "team").exercise(exercise).students(userRepo.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow());
+        Team team = new Team().name(TEST_PREFIX + "Team").shortName(TEST_PREFIX + "team").exercise(exercise)
+                .students(userRepo.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow());
         team = teamRepo.save(team);
 
         // Check for endpoint: @GetMapping("/courses/for-dashboard")
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
         Exercise serverExercise = courses.stream().filter(c -> c.getId().equals(course.getId())).findAny()
-            .flatMap(c -> c.getExercises().stream().filter(e -> e.getId().equals(exercise.getId())).findAny()).orElseThrow();
+                .flatMap(c -> c.getExercises().stream().filter(e -> e.getId().equals(exercise.getId())).findAny()).orElseThrow();
         assertThat(serverExercise.getStudentAssignedTeamId()).as("Assigned team id on exercise from dashboard is correct for student.").isEqualTo(team.getId());
         assertThat(serverExercise.isStudentAssignedTeamIdComputed()).as("Assigned team id on exercise was computed.").isTrue();
 
@@ -468,7 +469,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCourseWithExercisesAndParticipationsForTeam_AsTutor() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false);
         Course course = courses.get(0);
 
         ProgrammingExercise programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
@@ -505,7 +506,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(course1.getExercises()).as("All exercises of team 1 in course were returned").hasSize(3);
         assertThat(course1.getExercises().stream().map(Exercise::getTeams).collect(Collectors.toSet())).as("All team instances of team 1 in course were returned").hasSize(3);
         assertThat(course1.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).collect(Collectors.toSet()))
-            .as("All participations of team 1 in course were returned").hasSize(2);
+                .as("All participations of team 1 in course were returned").hasSize(2);
 
         Course course2 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team2a), HttpStatus.OK, Course.class);
         assertThat(course2.getExercises()).as("All exercises of team 2 in course were returned").hasSize(2);
@@ -520,7 +521,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Course course3 = request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team1a), HttpStatus.OK, Course.class);
         StudentParticipation participation = course3.getExercises().stream().filter(exercise -> exercise.equals(textExercise)).findAny().orElseThrow().getStudentParticipations()
-            .iterator().next();
+                .iterator().next();
         assertThat(participation.getSubmissions()).as("Latest submission is present").hasSize(1);
         assertThat(((TextSubmission) participation.getSubmissions().iterator().next()).getText()).as("Latest submission is present").isEqualTo(submissionText);
         assertThat(participation.getResults()).as("Latest result is present").hasSize(1);
@@ -538,7 +539,8 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getCourseWithExercisesAndParticipationsForTeam_AsStudentInTeam_Allowed() throws Exception {
-        Team team = teamRepo.save(new Team().name(TEST_PREFIX + "Team").shortName(TEST_PREFIX + "team").exercise(exercise).students(userRepo.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow()));
+        Team team = teamRepo.save(new Team().name(TEST_PREFIX + "Team").shortName(TEST_PREFIX + "team").exercise(exercise)
+                .students(userRepo.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow()));
         request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.OK, Course.class);
     }
 

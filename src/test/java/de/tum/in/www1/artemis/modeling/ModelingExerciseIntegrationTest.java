@@ -36,6 +36,8 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "modelingexerciseintegration";
+
     @Autowired
     private ModelingExerciseUtilService modelingExerciseUtilService;
 
@@ -75,13 +77,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(2, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         Course course = database.addCourseWithOneModelingExercise();
         classExercise = (ModelingExercise) course.getExercises().iterator().next();
 
         // Add users that are not in course
-        database.createAndSaveUser("instructor2");
-        database.createAndSaveUser("tutor2");
+        database.createAndSaveUser(TEST_PREFIX + "instructor2");
+        database.createAndSaveUser(TEST_PREFIX + "tutor2");
 
     }
 
@@ -91,13 +93,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "user1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "user1", roles = "USER")
     void testGetModelingExercise_asStudent_Forbidden() throws Exception {
         request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN, ModelingExercise.class);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetModelingExercise_asTA() throws Exception {
         ModelingExercise receivedModelingExercise = request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK, ModelingExercise.class);
         gradingCriteria = database.addGradingInstructionsToExercise(receivedModelingExercise);
@@ -111,13 +113,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testGetModelingExercise_tutorNotInCourse() throws Exception {
         request.get("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN, ModelingExercise.class);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetModelingExercise_setGradingInstructionFeedbackUsed() throws Exception {
 
         gradingCriteria = database.addGradingInstructionsToExercise(classExercise);
@@ -132,19 +134,19 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetModelingExerciseForCourse_asTA() throws Exception {
         request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/modeling-exercises", HttpStatus.OK, List.class);
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testGetModelingExerciseForCourse_tutorNotInCourse() throws Exception {
         request.get("/api/courses/" + classExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/modeling-exercises", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
@@ -160,14 +162,14 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testCreateModelingExercise_instructorNotInCourse() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         request.post("/api/modeling-exercises", modelingExercise, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExercise_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
@@ -188,7 +190,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExercise_updatingCourseId_conflict() throws Exception {
         // Create a modeling exercise.
         ModelingExercise createdModelingExercise = classExercise;
@@ -207,7 +209,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExerciseCriteria_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
@@ -229,7 +231,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExerciseInstructions_asInstructor() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
@@ -254,7 +256,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateModelingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
@@ -264,15 +266,15 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateModelingExerciseDueDate() throws Exception {
         final ZonedDateTime individualDueDate = ZonedDateTime.now().plusHours(20);
 
         {
             final ModelingSubmission submission1 = ModelFactory.generateModelingSubmission("model1", true);
-            database.addModelingSubmission(classExercise, submission1, "student1");
+            database.addModelingSubmission(classExercise, submission1, TEST_PREFIX + "student1");
             final ModelingSubmission submission2 = ModelFactory.generateModelingSubmission("model2", false);
-            database.addModelingSubmission(classExercise, submission2, "student2");
+            database.addModelingSubmission(classExercise, submission2, TEST_PREFIX + "student2");
 
             final var participations = new ArrayList<>(studentParticipationRepository.findByExerciseId(classExercise.getId()));
             assertThat(participations).hasSize(2);
@@ -296,32 +298,32 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testUpdateModelingExercise_instructorNotInCourse() throws Exception {
         request.put("/api/modeling-exercises", classExercise, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteModelingExercise_asInstructor() throws Exception {
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteModelingExercise_asTutor_Forbidden() throws Exception {
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testDeleteModelingExercise_notInstructorInCourse() throws Exception {
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromCourseToCourse() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
@@ -334,7 +336,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseWithExampleSubmissionFromCourseToCourse() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
@@ -364,7 +366,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromCourseToExam() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
@@ -381,7 +383,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "TA")
     void importModelingExerciseFromCourseToExam_forbidden() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
@@ -395,7 +397,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromExamToCourse() throws Exception {
         ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
@@ -408,7 +410,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "TA")
     void importModelingExerciseFromExamToCourse_forbidden() throws Exception {
         ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup1);
@@ -421,7 +423,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromExamToExam() throws Exception {
         ExerciseGroup exerciseGroup1 = database.addExerciseGroupWithExamAndCourse(true);
         ExerciseGroup exerciseGroup2 = database.addExerciseGroupWithExamAndCourse(true);
@@ -433,7 +435,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromCourseToCourse_badRequest() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
@@ -445,7 +447,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importModelingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
@@ -467,7 +469,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExerciseForExam() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
@@ -488,7 +490,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
@@ -497,7 +499,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_setCourseAndExerciseGroup_badRequest() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
@@ -506,14 +508,14 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, null);
         request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_InvalidMaxScore() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         modelingExercise.setMaxPoints(0.0);
@@ -521,7 +523,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         modelingExercise.setMaxPoints(10.0);
@@ -531,7 +533,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_NotIncludedInvalidBonusPoints() throws Exception {
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(classExercise.getCourseViaExerciseGroupOrCourseMember().getId());
         modelingExercise.setMaxPoints(10.0);
@@ -541,7 +543,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
         final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
@@ -549,10 +551,10 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorSearchTermMatchesTitle() throws Exception {
         database.resetDatabase();
-        database.addUsers(1, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         testSearchTermMatchesTitle();
     }
 
@@ -560,7 +562,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminSearchTermMatchesTitle() throws Exception {
         database.resetDatabase();
-        database.addUsers(1, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         testSearchTermMatchesTitle();
     }
 
@@ -578,7 +580,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final String uuid = UUID.randomUUID().toString();
         database.addCourseWithOneModelingExercise("ClassDiagram" + uuid);
@@ -605,7 +607,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
         String randomString = UUID.randomUUID().toString();
         database.addCourseWithOneReleasedModelExerciseWithKnowledge(randomString);
@@ -623,7 +625,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImport_team_modeChange() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
@@ -658,7 +660,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImport_individual_modeChange() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();
@@ -696,7 +698,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismResult() throws Exception {
         final Course course = database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -708,7 +710,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismResultWithoutResult() throws Exception {
         final Course course = database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -717,7 +719,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismResultWithoutExercise() throws Exception {
         Long exerciseId = classExercise.getId();
         modelingExerciseRepository.deleteById(exerciseId);
@@ -726,13 +728,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateModelingExercise() throws Exception {
 
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(classExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
-        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(classExercise, "instructor1");
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(classExercise, TEST_PREFIX + "instructor1");
 
         // change grading instruction score
         gradingCriteria.get(0).getStructuredGradingInstructions().get(0).setCredits(3);
@@ -748,12 +750,12 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateModelingExercise_shouldDeleteFeedbacks() throws Exception {
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(classExercise);
         gradingCriterionRepository.saveAll(gradingCriteria);
 
-        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(classExercise, "instructor1");
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(classExercise, TEST_PREFIX + "instructor1");
 
         // remove instruction which is associated with feedbacks
         gradingCriteria.remove(1);
@@ -769,7 +771,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateModelingExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         Course course = database.addCourseWithOneModelingExercise();
         classExercise = (ModelingExercise) course.getExercises().iterator().next();
@@ -779,7 +781,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateModelingExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         ModelingExercise modelingExerciseToBeConflicted = modelingExerciseRepository.findByIdElseThrow(classExercise.getId());
         modelingExerciseToBeConflicted.setId(123456789L);
@@ -789,7 +791,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testReEvaluateAndUpdateModelingExercise_notFound() throws Exception {
         request.put("/api/modeling-exercises/" + 123456789 + "/re-evaluate", classExercise, HttpStatus.NOT_FOUND);
     }
@@ -803,7 +805,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
         final var baseTime = ZonedDateTime.now();
         final Course course = database.addCourseWithOneModelingExercise();
@@ -826,7 +828,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_setValidExampleSolutionPublicationDate() throws Exception {
         final var baseTime = ZonedDateTime.now();
         final Course course = database.addCourseWithOneModelingExercise();
@@ -855,15 +857,15 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetModelingExercise_asStudent_exampleSolutionVisibility() throws Exception {
-        testGetModelingExercise_exampleSolutionVisibility(true, "student1");
+        testGetModelingExercise_exampleSolutionVisibility(true, TEST_PREFIX + "student1");
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetModelingExercise_asInstructor_exampleSolutionVisibility() throws Exception {
-        testGetModelingExercise_exampleSolutionVisibility(false, "instructor1");
+        testGetModelingExercise_exampleSolutionVisibility(false, TEST_PREFIX + "instructor1");
     }
 
     private void testGetModelingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
@@ -922,7 +924,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testImportModelingExercise_setGradingInstructionForCopiedFeedback() throws Exception {
         var now = ZonedDateTime.now();
         Course course1 = database.addEmptyCourse();

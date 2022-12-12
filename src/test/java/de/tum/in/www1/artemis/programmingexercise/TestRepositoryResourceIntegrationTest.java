@@ -40,6 +40,8 @@ import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
 
 class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "testrepositoryresourceint";
+
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -60,7 +62,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @BeforeEach
     void setup() throws Exception {
-        database.addUsers(1, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         Course course = database.addEmptyCourse();
         programmingExercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
         testRepo.configureRepos("testLocalRepo", "testOriginRepo");
@@ -96,7 +98,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFiles() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var files = request.getMap(testRepoBaseUrl + programmingExercise.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
@@ -109,7 +111,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFilesAsStudent() throws Exception {
 
         programmingExerciseRepository.save(programmingExercise);
@@ -123,7 +125,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -135,7 +137,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -146,7 +148,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateFile_alreadyExists() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -158,7 +160,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateFile_invalidRepository() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -173,7 +175,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -184,7 +186,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRenameFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
@@ -197,7 +199,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRenameFile_alreadyExists() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         FileMove fileMove = createRenameFileMove();
@@ -207,7 +209,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRenameFile_invalidExistingFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         FileMove fileMove = createRenameFileMove();
@@ -231,7 +233,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRenameFolder() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName))).isTrue();
@@ -244,7 +246,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -255,7 +257,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteFile_notFound() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -268,7 +270,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteFile_invalidFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -285,7 +287,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteFile_validFile() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -305,7 +307,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCommitChanges() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -315,7 +317,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
         var testRepoCommits = testRepo.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
-        assertThat(database.getUserByLogin("instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+        assertThat(database.getUserByLogin(TEST_PREFIX + "instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
     private List<FileSubmission> getFileSubmissions() {
@@ -328,7 +330,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveFiles() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
@@ -339,7 +341,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveFilesAndCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
@@ -357,12 +359,12 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
         var testRepoCommits = testRepo.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
-        assertThat(database.getUserByLogin("instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+        assertThat(database.getUserByLogin(TEST_PREFIX + "instructor1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
     @Test
     @DisabledOnOs(OS.WINDOWS) // git file locking issues
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testPullChanges() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         String fileName = "remoteFile";
@@ -396,7 +398,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @DisabledOnOs(OS.WINDOWS) // git file locking issues
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testResetToLastCommit() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         String fileName = "testFile";
@@ -450,7 +452,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetStatus() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         var receivedStatusBeforeCommit = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -467,7 +469,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIsClean() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         doReturn(true).when(gitService).isRepositoryCached(any());
@@ -476,13 +478,13 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCheckoutRepositoryByNameAsStudent() {
         ProgrammingExercise exercise = programmingExerciseRepository.save(programmingExercise);
         assertThrows(IllegalAccessException.class, () -> repositoryService.checkoutRepositoryByName(exercise, exercise.getVcsTemplateRepositoryUrl(), false));
 
         Principal mockPrincipal = mock(Principal.class);
-        doReturn("student1").when(mockPrincipal).getName();
+        doReturn(TEST_PREFIX + "student1").when(mockPrincipal).getName();
         assertThrows(IllegalAccessException.class, () -> repositoryService.checkoutRepositoryByName(mockPrincipal, exercise, exercise.getVcsTemplateRepositoryUrl()));
     }
 }

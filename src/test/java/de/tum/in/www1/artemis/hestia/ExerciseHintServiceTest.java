@@ -29,6 +29,8 @@ import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
 class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "exercisehintservice";
+
     @Autowired
     private UserRepository userRepository;
 
@@ -76,10 +78,10 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         final ProgrammingExercise programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
-        database.addUsers(2, 2, 1, 2);
+        database.addUsers(TEST_PREFIX, 2, 2, 1, 2);
 
-        student = userRepository.getUserWithGroupsAndAuthorities("student1");
-        database.changeUser("student1");
+        student = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
+        database.changeUser(TEST_PREFIX + "student1");
 
         var activatedTestCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream().peek(testCase -> testCase.setActive(true)).toList();
         programmingExerciseTestCaseRepository.saveAll(activatedTestCases);

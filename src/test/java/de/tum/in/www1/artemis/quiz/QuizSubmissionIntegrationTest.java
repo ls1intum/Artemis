@@ -321,7 +321,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitLiveMode_badRequest_notActive(QuizMode quizMode) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusSeconds(20), ZonedDateTime.now().plusSeconds(30), quizMode);
         quizExercise.setDuration(10);
@@ -829,7 +829,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student16", roles = "USER")
     @ValueSource(booleans = { true, false })
     void submitExercise_shortAnswer_tooLarge(boolean tooLarge) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false);
         Course course = courses.get(0);
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), QuizMode.SYNCHRONIZED, course);
         quizExercise.addQuestions(database.createShortAnswerQuestion());

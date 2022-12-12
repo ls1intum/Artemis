@@ -30,6 +30,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "gtsettingtest";
+
     @Autowired
     private TextExerciseRepository textExerciseRepository;
 
@@ -54,7 +56,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(1, 1, 1, 1);
+        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         course1 = database.addEmptyCourse();
         exam1 = database.addExamWithExerciseGroup(course1, true);
         exam2 = database.addExamWithExerciseGroup(course1, true);
@@ -70,13 +72,13 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
@@ -93,7 +95,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testCreateExerciseGroup_asEditor() throws Exception {
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setId(55L);
@@ -107,7 +109,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testUpdateExerciseGroup_asEditor() throws Exception {
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setExam(null);
@@ -117,7 +119,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetExerciseGroup_asEditor() throws Exception {
         ExerciseGroup result = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK,
                 ExerciseGroup.class);
@@ -126,7 +128,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetExerciseGroupsForExam_asEditor() throws Exception {
         List<ExerciseGroup> result = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", HttpStatus.OK, ExerciseGroup.class);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
@@ -137,7 +139,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testDeleteExerciseGroup_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, course1.getId(), exam1.getId(), exerciseGroup1);
@@ -145,13 +147,13 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testDeleteExerciseGroup_asEditor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseGroup_successfulWithExercisesIntoSameExam() throws Exception {
         Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
@@ -178,7 +180,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void importExerciseGroup_successfulIntoDifferentExam() throws Exception {
         Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
@@ -204,7 +206,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseGroup_successfulWithImportToOtherCourse() throws Exception {
         Course course2 = database.addEmptyCourse();
         Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
@@ -237,7 +239,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importExerciseGroup_preCheckFailed() throws Exception {
         Exam exam = ModelFactory.generateExam(course1);
         ExerciseGroup programmingGroup = ModelFactory.generateExerciseGroup(false, exam);

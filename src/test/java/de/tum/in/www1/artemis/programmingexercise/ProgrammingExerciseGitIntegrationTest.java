@@ -33,6 +33,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "progexgitintegration";
+
     @Autowired
     private GitUtilService gitUtilService;
 
@@ -47,13 +49,13 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBam
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(3, 2, 0, 2);
+        database.addUsers(TEST_PREFIX, 3, 2, 0, 2);
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
 
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
 
         localRepoFile = Files.createTempDirectory("repo").toFile();
         localGit = LocalRepository.initialize(localRepoFile, defaultBranch);
@@ -92,7 +94,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "student3")
+    @WithMockUser(username = TEST_PREFIX + "student3")
     void testRepositoryMethods() {
         assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(Long.MAX_VALUE));
@@ -107,7 +109,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits() throws Exception {
         File originRepoFile = Files.createTempDirectory("repoOrigin").toFile();
         Git remoteGit = LocalRepository.initialize(originRepoFile, defaultBranch);
@@ -126,7 +128,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits_invalidId_notFound() throws Exception {
         programmingExercise.setId(20L);
         final var path = ProgrammingExerciseResourceEndpoints.ROOT
@@ -135,9 +137,9 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "instructoralt1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructoralt1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits_instructorNotInCourse_forbidden() throws Exception {
-        database.addInstructor("other-instructors", "instructoralt");
+        database.addInstructor("other-instructors", TEST_PREFIX + "instructoralt");
         final var path = ProgrammingExerciseResourceEndpoints.ROOT
                 + ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(path, Void.class, HttpStatus.FORBIDDEN);

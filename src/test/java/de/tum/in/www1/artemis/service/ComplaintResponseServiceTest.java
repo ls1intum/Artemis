@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Set;
 
-import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,10 +15,13 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "complaintresponseservice";
 
     @Autowired
     private ComplaintResponseService complaintResponseService;
@@ -54,38 +56,39 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @BeforeEach
     void initTestCase() throws Exception {
-        this.database.addUsers(2, 2, 0, 1);
+        this.database.addUsers(TEST_PREFIX, 2, 2, 0, 1);
         Course course = this.database.createCourse();
 
-        this.student1 = this.database.getUserByLogin("student1");
+        this.student1 = this.database.getUserByLogin(TEST_PREFIX + "student1");
         this.student1.setGroups(Set.of(course.getStudentGroupName()));
         userRepository.save(this.student1);
 
-        this.student2 = this.database.getUserByLogin("student2");
+        this.student2 = this.database.getUserByLogin(TEST_PREFIX + "student2");
         this.student2.setGroups(Set.of(course.getStudentGroupName()));
         userRepository.save(this.student2);
 
-        this.tutor1 = this.database.getUserByLogin("tutor1");
+        this.tutor1 = this.database.getUserByLogin(TEST_PREFIX + "tutor1");
         this.tutor1.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepository.save(this.tutor1);
 
-        this.tutor2 = this.database.getUserByLogin("tutor2");
+        this.tutor2 = this.database.getUserByLogin(TEST_PREFIX + "tutor2");
         this.tutor2.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepository.save(this.tutor2);
 
-        this.instructor = this.database.getUserByLogin("instructor1");
+        this.instructor = this.database.getUserByLogin(TEST_PREFIX + "instructor1");
         this.instructor.setGroups(Set.of(course.getInstructorGroupName()));
         userRepository.save(this.instructor);
 
         this.textExercise = this.database.createIndividualTextExercise(course, null, null, null);
         this.teamTextExercise = this.database.createTeamTextExercise(course, null, null, null);
 
-        this.team = this.database.createTeam(Set.of(this.student1), this.tutor1, this.teamTextExercise, "Team");
+        this.team = this.database.createTeam(Set.of(this.student1), this.tutor1, this.teamTextExercise, TEST_PREFIX + "Team");
     }
 
     @AfterEach
     void tearDown() {
-        migrationChangeRepository.deleteAllInBatch();;
+        migrationChangeRepository.deleteAllInBatch();
+        ;
     }
 
     @Test
@@ -101,7 +104,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testIsUserAuthorizedToRespondToComplaintForInstructor() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
@@ -111,7 +114,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "INSTRUCTOR")
     void testIsUserAuthorizedToRespondToComplaintForStudent() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
@@ -121,7 +124,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testIsUserAuthorizedToRespondToComplaintForTeamOwner() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(teamTextExercise.getId(), team, 0d, 0d, 10, true);
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
@@ -131,7 +134,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void testIsUserAuthorizedToRespondToComplaintForNotTeamOwner() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(teamTextExercise.getId(), team, 0d, 0d, 10, true);
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
@@ -141,7 +144,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testIsUserAuthorizedToRespondToComplaintForNoComplaintType() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         Submission submission = textExerciseResult.getSubmission();
@@ -156,7 +159,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testIsUserAuthorizedToRespondToComplaintForComplaints() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         Submission submission = textExerciseResult.getSubmission();
@@ -171,7 +174,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testIsUserAuthorizedToRespondToComplaintForComplaintsWithAutomaticAssessment() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
@@ -182,7 +185,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testIsUserAuthorizedToRespondToComplaintForFeedbackRequest() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         Submission submission = textExerciseResult.getSubmission();
@@ -197,7 +200,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testIsUserAuthorizedToRespondToComplaintForFeedbackRequestWithAutomaticAssessment() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.MORE_FEEDBACK);

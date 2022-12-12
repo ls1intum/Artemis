@@ -24,6 +24,8 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 
 class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "testwisecoveragereportservice";
+
     @Autowired
     private TestwiseCoverageService testwiseCoverageService;
 
@@ -50,7 +52,7 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void setup() throws Exception {
-        database.addUsers(1, 0, 0, 1);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         final Course course = database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
@@ -73,7 +75,7 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateFullTestwiseCoverageReport() {
         var fileReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
         testwiseCoverageService.createTestwiseCoverageReport(fileReportsByTestName, programmingExercise, solutionSubmission);

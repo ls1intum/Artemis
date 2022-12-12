@@ -16,13 +16,15 @@ import de.tum.in.www1.artemis.config.ApiVersionFilter;
 
 class ContentVersionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "contentversion";
+
     @BeforeEach
     void initTestCase() {
-        database.addUsers(1, 0, 0, 0);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testContentVersionHeaderIsSetCorrectly() throws Exception {
         MvcResult res = request.getMvc().perform(MockMvcRequestBuilders.get(new URI("/api/account"))).andReturn();
         final MockHttpServletResponse response = res.getResponse();

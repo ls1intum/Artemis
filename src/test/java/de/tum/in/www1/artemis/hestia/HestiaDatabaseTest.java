@@ -30,6 +30,8 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
  */
 class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "hestiadatabase";
+
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -49,7 +51,7 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @BeforeEach
     void init() {
-        database.addUsers(2, 2, 0, 2);
+        database.addUsers(TEST_PREFIX, 2, 2, 0, 2);
         final Course course = database.addCourseWithOneProgrammingExercise();
         programmingExerciseId = database.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }

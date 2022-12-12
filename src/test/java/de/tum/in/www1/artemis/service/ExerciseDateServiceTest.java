@@ -18,6 +18,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "exercisedateservice";
+
     @Autowired
     private ExerciseDateService exerciseDateService;
 
@@ -33,13 +35,13 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     void init() {
         SecurityUtils.setAuthorizationObject();
 
-        database.addUsers(3, 2, 0, 2);
+        database.addUsers(TEST_PREFIX, 3, 2, 0, 2);
         database.addCourseWithOneModelingExercise();
         exercise = exerciseRepository.findAll().get(0);
 
         for (int i = 1; i <= 3; ++i) {
             var submission = ModelFactory.generateModelingSubmission(String.format("model%d", i), true);
-            database.addModelingSubmission(exercise, submission, "student1");
+            database.addModelingSubmission(exercise, submission, TEST_PREFIX + "student1");
         }
 
         exercise = exerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exercise.getId());

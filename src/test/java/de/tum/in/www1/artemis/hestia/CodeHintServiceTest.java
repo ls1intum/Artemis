@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "codehintservice";
+
     @Autowired
     private CodeHintService codeHintService;
 
@@ -46,7 +48,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(0, 0, 0, 1);
+        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         final Course course = database.addCourseWithOneProgrammingExercise();
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
@@ -103,7 +105,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerationWithNoSolutionEntry() {
         var testCase = addTestCaseToExercise("TestCase1");
         addTaskToExercise("Task1", Arrays.asList(testCase));
@@ -113,7 +115,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerationWithOneSolutionEntry() {
         var testCase = addTestCaseToExercise("TestCase1");
         var solutionEntry = addSolutionEntryToTestCase(testCase);
@@ -126,7 +128,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerationTwiceShouldDeleteOldHint() {
         var testCase = addTestCaseToExercise("TestCase1");
         var solutionEntry = addSolutionEntryToTestCase(testCase);
@@ -148,7 +150,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerationTwiceShouldNotDeleteOldHint() {
         var testCase = addTestCaseToExercise("TestCase1");
         var solutionEntry = addSolutionEntryToTestCase(testCase);
@@ -167,7 +169,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateTestCaseOfSolutionEntry() {
         var testCase1 = addTestCaseToExercise("testCase1");
         var testCase2 = addTestCaseToExercise("testCase2");
@@ -185,7 +187,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdatedContentOfSolutionEntry() {
         var testCase1 = addTestCaseToExercise("testCase");
         var entry = addSolutionEntryToTestCase(testCase1);
@@ -206,7 +208,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveWithNewSolutionEntry() {
         // the entry has been created and persisted, but not assigned to the hint yet
         var testCase = addTestCaseToExercise("testCase");
@@ -222,7 +224,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveWithRemovedSolutionEntry() {
         // the entry has been created and persisted, but not assigned to the hint yet
         var testCase = addTestCaseToExercise("testCase");
@@ -241,7 +243,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testSaveEntryWithTestCaseUnrelatedToHintTask() {
         // the test case of an entry belongs to a task unequal to the task of the hint that is updated
         var unrelatedTestCase = addTestCaseToExercise("unrelatedTaskTestCase");

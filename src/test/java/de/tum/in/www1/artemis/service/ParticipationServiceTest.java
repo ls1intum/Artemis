@@ -31,6 +31,8 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 
 class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
+    private static final String TEST_PREFIX = "participationservice";
+
     @Autowired
     private ParticipationService participationService;
 
@@ -46,7 +48,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @BeforeEach
     void init() {
-        database.addUsers(3, 0, 0, 1);
+        database.addUsers(TEST_PREFIX, 3, 0, 0, 1);
         Course course = database.addCourseWithOneProgrammingExercise();
         this.programmingExercise = database.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -69,9 +71,9 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
      * Test for methods of {@link ParticipationService} used by {@link de.tum.in.www1.artemis.web.rest.ResultResource#createResultForExternalSubmission(Long, String, Result)}.
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateParticipationForExternalSubmission() throws Exception {
-        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin("student1");
+        Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(TEST_PREFIX + "student1");
         mockCreationOfExerciseParticipation(false, null);
 
         StudentParticipation participation = participationService.createParticipationWithEmptySubmissionIfNotExisting(programmingExercise, student.get(), SubmissionType.EXTERNAL);
@@ -84,11 +86,11 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStartExerciseWithInitializationDate_newParticipation() {
         Course course = database.addCourseWithOneReleasedTextExercise();
         Exercise modelling = course.getExercises().iterator().next();
-        Participant participant = database.getUserByLogin("student1");
+        Participant participant = database.getUserByLogin(TEST_PREFIX + "student1");
         ZonedDateTime initializationDate = ZonedDateTime.now().minusHours(5);
 
         StudentParticipation studentParticipationReceived = participationService.startExerciseWithInitializationDate(modelling, participant, true, initializationDate);
@@ -101,9 +103,9 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void canStartExerciseWithPracticeParticipationAfterDueDateChange() throws URISyntaxException {
-        Participant participant = database.getUserByLogin("student1");
+        Participant participant = database.getUserByLogin(TEST_PREFIX + "student1");
         mockCreationOfExerciseParticipation(false, null);
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
@@ -121,11 +123,11 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStartExercise_newParticipation() {
         Course course = database.addCourseWithOneReleasedTextExercise();
         Exercise modelling = course.getExercises().iterator().next();
-        Participant participant = database.getUserByLogin("student1");
+        Participant participant = database.getUserByLogin(TEST_PREFIX + "student1");
 
         StudentParticipation studentParticipationReceived = participationService.startExercise(modelling, participant, true);
 
@@ -139,12 +141,12 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     @ValueSource(booleans = { true, false })
     void testStartPracticeMode(boolean useGradedParticipation) throws URISyntaxException {
         database.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusMinutes(2));
-        Participant participant = database.getUserByLogin("student1");
-        Result gradedResult = database.addProgrammingParticipationWithResultForExercise(programmingExercise, "student1");
+        Participant participant = database.getUserByLogin(TEST_PREFIX + "student1");
+        Result gradedResult = database.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "student1");
 
         mockCreationOfExerciseParticipation(useGradedParticipation, gradedResult);
 
