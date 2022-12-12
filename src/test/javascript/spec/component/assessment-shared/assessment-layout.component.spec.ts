@@ -7,7 +7,6 @@ import { AssessmentComplaintAlertComponent } from 'app/assessment/assessment-com
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { Complaint } from 'app/entities/complaint.model';
 import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
-import { NgbAlert, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
@@ -28,10 +27,8 @@ describe('AssessmentLayoutComponent', () => {
                 AssessmentHeaderComponent,
                 MockComponent(ComplaintsForTutorComponent),
                 MockComponent(AssessmentComplaintAlertComponent),
-                MockComponent(NgbAlert),
                 MockComponent(AssessmentWarningComponent),
                 MockDirective(TranslateDirective),
-                MockDirective(NgbTooltip),
                 TranslatePipeMock,
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,

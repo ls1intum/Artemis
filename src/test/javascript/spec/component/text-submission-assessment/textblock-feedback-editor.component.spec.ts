@@ -40,7 +40,7 @@ describe('TextblockFeedbackEditorComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateModule.forRoot(), TranslateTestingModule],
+            imports: [ArtemisTestModule, TranslateModule.forRoot(), TranslateTestingModule, MockDirective(NgbTooltip)],
             declarations: [
                 TextblockFeedbackEditorComponent,
                 AssessmentCorrectionRoundBadgeComponent,
@@ -51,7 +51,6 @@ describe('TextblockFeedbackEditorComponent', () => {
                 MockComponent(FaLayersComponent),
                 MockComponent(GradingInstructionLinkIconComponent),
                 MockDirective(TranslateDirective),
-                MockDirective(NgbTooltip),
                 MockDirective(NgModel),
             ],
             providers: [
