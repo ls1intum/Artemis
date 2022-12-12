@@ -85,7 +85,7 @@ public class MessageService extends PostingService {
             savedMessage.setConversation(conversation);
 
             conversationService.updateConversation(conversation);
-            conversationService.incrementUnreadMessagesCountOfParticipants(user.getId(), conversation.getId());
+            conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
             conversation = conversationService.getConversationById(conversation.getId());
 
             broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
@@ -187,7 +187,7 @@ public class MessageService extends PostingService {
 
         // delete
         messageRepository.deleteById(postId);
-        conversationService.decrementUnreadMessagesCountOfParticipants(user.getId(), conversation.getId());
+        conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
         conversation = conversationService.getConversationById(conversation.getId());
 
         conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.UPDATE), null);

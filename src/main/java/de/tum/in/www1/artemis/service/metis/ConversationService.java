@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service.metis;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -175,6 +174,7 @@ public class ConversationService {
         conversationParticipant.setConversation(conversation);
         // set the last reading time of a participant in the past when creating conversation for the first time!
         conversationParticipant.setLastRead(ZonedDateTime.now().minusYears(2));
+        conversationParticipant.setUnreadMessagesCount(0L);
         return conversationParticipant;
     }
 
@@ -215,47 +215,5 @@ public class ConversationService {
                 .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId())).findAny().get();
         readingParticipant.setLastRead(ZonedDateTime.now());
         return readingParticipant.getLastRead();
-    }
-
-    /**
-     * Increment unreadMessageCount field of ConversationParticipant
-     *
-     * @param userId            userId of the sender of the message(Post)
-     * @param conversationId    conversationId id of the conversation with participants
-     */
-    public void incrementUnreadMessagesCountOfParticipants(Long userId, Long conversationId) {
-
-        List<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(conversationId);
-        conversationParticipants.forEach((conversationParticipant) -> {
-            if (!Objects.equals(conversationParticipant.getUser().getId(), userId)) {
-
-                if (conversationParticipant.getUnreadMessagesCount() == null) {
-                    conversationParticipant.setUnreadMessagesCount(0L);
-                }
-                long unreadMessagesCount = conversationParticipant.getUnreadMessagesCount();
-                conversationParticipant.setUnreadMessagesCount(++unreadMessagesCount);
-                conversationParticipantRepository.save(conversationParticipant);
-            }
-        });
-    }
-
-    /**
-     * Decrement unreadMessageCount field of ConversationParticipant
-     *
-     * @param userId            userId of the sender of the message(Post)
-     * @param conversationId    conversationId id of the conversation with participants
-     */
-    public void decrementUnreadMessagesCountOfParticipants(Long userId, Long conversationId) {
-
-        List<ConversationParticipant> conversationParticipants = conversationParticipantRepository.findConversationParticipantByConversationId(conversationId);
-        conversationParticipants.forEach((conversationParticipant) -> {
-            if (!Objects.equals(conversationParticipant.getUser().getId(), userId) && conversationParticipant.getUnreadMessagesCount() != null) {
-                long unreadMessagesCount = conversationParticipant.getUnreadMessagesCount();
-                if (unreadMessagesCount > 0L) {
-                    conversationParticipant.setUnreadMessagesCount(--unreadMessagesCount);
-                    conversationParticipantRepository.save(conversationParticipant);
-                }
-            }
-        });
     }
 }
