@@ -15,7 +15,7 @@ docker run --rm -v ${PWD}:/certs $(docker build -q . ) /certs/generate-certs.sh 
 ```
 
 The CA private key `rootCA-key.pem` doesn't need to be in version control as it's just necessary for new certificates,
-but as we can also just recreate the whole CA and client certificates.
+but we can also just recreate the whole CA and client certificates.
 
 ## Using the client certificates locally
 If you want to access the artemis-nginx locally from your browser instead of the cypress container's browser,
