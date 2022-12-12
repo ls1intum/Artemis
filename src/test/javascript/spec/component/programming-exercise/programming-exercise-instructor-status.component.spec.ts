@@ -3,7 +3,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Subject } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { By } from '@angular/platform-browser';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { Result } from 'app/entities/result.model';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -16,6 +15,7 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockDirective, MockPipe } from 'ng-mocks';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseInstructorStatusComponent', () => {
     let comp: ProgrammingExerciseInstructorStatusComponent;
@@ -26,8 +26,8 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe), MockDirective(NgbTooltip)],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            declarations: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },

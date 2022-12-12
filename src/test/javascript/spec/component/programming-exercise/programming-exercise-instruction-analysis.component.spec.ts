@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { triggerChanges } from '../../helpers/utils/general.utils';
@@ -10,6 +9,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockProgrammingExerciseInstructionAnalysisService } from '../../helpers/mocks/service/mock-programming-exericse-instruction-analysis.service';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     let comp: ProgrammingExerciseInstructionAnalysisComponent;
@@ -33,8 +33,8 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [],
-                declarations: [ProgrammingExerciseInstructionAnalysisComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+                imports: [MockDirective(NgbTooltip)],
+                declarations: [ProgrammingExerciseInstructionAnalysisComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
                 providers: [{ provide: ProgrammingExerciseInstructionAnalysisService, useClass: MockProgrammingExerciseInstructionAnalysisService }],
             })
                 .compileComponents()

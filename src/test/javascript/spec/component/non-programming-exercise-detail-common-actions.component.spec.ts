@@ -4,9 +4,8 @@ import { NonProgrammingExerciseDetailCommonActionsComponent } from 'app/exercise
 import { ArtemisTestModule } from '../test.module';
 import { MockFileUploadExerciseService } from '../helpers/mocks/service/mock-file-upload-exercise.service';
 import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission-export/submission-export-button.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { MockDirective } from 'ng-mocks';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';

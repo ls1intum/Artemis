@@ -34,7 +34,6 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { LoadingNotificationComponent } from 'app/shared/notification/loading-notification/loading-notification.component';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { MockHasAnyAuthorityDirective } from '../helpers/mocks/directive/mock-has-any-authority.directive';
-import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { MockRouter } from '../helpers/mocks/mock-router';
@@ -161,10 +160,8 @@ describe('GuidedTourService', () => {
                     MockPipe(SafeResourceUrlPipe),
                     MockComponent(LoadingNotificationComponent),
                     MockComponent(NotificationSidebarComponent),
-                    MockDirective(NgbCollapse),
                     MockHasAnyAuthorityDirective,
                     MockDirective(ActiveMenuDirective),
-                    MockDirective(NgbDropdown),
                     MockPipe(FindLanguageFromKeyPipe),
                 ],
                 providers: [
