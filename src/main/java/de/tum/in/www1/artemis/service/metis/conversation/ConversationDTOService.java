@@ -6,6 +6,8 @@ import java.util.stream.Collectors;
 import javax.persistence.Persistence;
 
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -23,6 +25,8 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
 
 @Service
 public class ConversationDTOService {
+
+    private final Logger log = LoggerFactory.getLogger(ConversationDTOService.class);
 
     private final UserRepository userRepository;
 
@@ -95,13 +99,20 @@ public class ConversationDTOService {
         participantOptional.ifPresent(conversationParticipant -> channelDTO.setLastReadDate(conversationParticipant.getLastRead()));
         channelDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
         channelDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
-        channelDTO.setIsCreator(channel.getCreator().getId().equals(requestingUser.getId()));
+        if (channel.getCreator() != null) {
+            channelDTO.setIsCreator(channel.getCreator().getId().equals(requestingUser.getId()));
+        }
+        else {
+            log.error("Unexpected Behaviour: Channel {} has no creator", channel.getId());
+            channelDTO.setIsCreator(false);
+        }
         channelDTO.setNumberOfMembers(conversationParticipantRepository.countByConversationId(channel.getId()));
         return channelDTO;
     }
 
     /**
      * Creates a OneToOneChatDTO from a OneToOneChat
+     * w
      *
      * @param requestingUser the user requesting the DTO
      * @param oneToOneChat   the one to one chat to create the DTO from
@@ -120,7 +131,13 @@ public class ConversationDTOService {
         participantOfRequestingUser.ifPresent(conversationParticipant -> oneToOneChatDTO.setIsFavorite(conversationParticipant.getIsFavorite()));
         participantOfRequestingUser.ifPresent(conversationParticipant -> oneToOneChatDTO.setIsHidden(conversationParticipant.getIsHidden()));
         oneToOneChatDTO.setMembers(chatParticipants);
-        oneToOneChatDTO.setIsCreator(oneToOneChat.getCreator().getId().equals(requestingUser.getId()));
+        if (oneToOneChat.getCreator() != null) {
+            oneToOneChatDTO.setIsCreator(oneToOneChat.getCreator().getId().equals(requestingUser.getId()));
+        }
+        else {
+            log.warn("Unexpected Behaviour: OneToOneChat {} has no creator. Can happen with db entries before December 2022", oneToOneChat.getId());
+            oneToOneChatDTO.setIsCreator(false);
+        }
         oneToOneChatDTO.setNumberOfMembers(conversationParticipants.size());
         return oneToOneChatDTO;
     }
@@ -145,7 +162,13 @@ public class ConversationDTOService {
         participantOfRequestingUser.ifPresent(conversationParticipant -> groupChatDTO.setIsFavorite(conversationParticipant.getIsFavorite()));
         participantOfRequestingUser.ifPresent(conversationParticipant -> groupChatDTO.setIsHidden(conversationParticipant.getIsHidden()));
         groupChatDTO.setMembers(chatParticipants);
-        groupChatDTO.setIsCreator(groupChat.getCreator().getId().equals(requestingUser.getId()));
+        if (groupChat.getCreator() != null) {
+            groupChatDTO.setIsCreator(groupChat.getCreator().getId().equals(requestingUser.getId()));
+        }
+        else {
+            log.error("Unexpected Behaviour: GroupChat {} has no creator", groupChat.getId());
+            groupChatDTO.setIsCreator(false);
+        }
         groupChatDTO.setNumberOfMembers(conversationParticipants.size());
         return groupChatDTO;
     }
