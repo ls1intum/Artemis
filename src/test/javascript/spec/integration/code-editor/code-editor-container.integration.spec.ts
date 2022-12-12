@@ -91,7 +91,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule],
+            imports: [ArtemisTestModule, AceEditorModule, MockDirective(NgbDropdown)],
             declarations: [
                 CodeEditorContainerComponent,
                 MockComponent(CodeEditorGridComponent),
@@ -99,7 +99,6 @@ describe('CodeEditorContainerIntegration', () => {
                 KeysPipe,
                 MockDirective(FeatureToggleDirective),
                 MockDirective(FeatureToggleLinkDirective),
-                MockDirective(NgbDropdown),
                 MockDirective(NgModel),
                 MockPipe(ArtemisTranslatePipe),
                 CodeEditorActionsComponent,

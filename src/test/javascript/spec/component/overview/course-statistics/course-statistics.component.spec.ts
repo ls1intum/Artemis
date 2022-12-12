@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
@@ -15,7 +15,6 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RouterTestingModule } from '@angular/router/testing';
 import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
@@ -331,7 +330,6 @@ describe('CourseStatisticsComponent', () => {
                 MockComponent(ExerciseScoresChartComponent),
                 MockTranslateValuesDirective,
                 ArtemisTranslatePipe,
-                MockDirective(NgbTooltip),
             ],
             providers: [MockProvider(ArtemisNavigationUtilService), MockProvider(ChartCategoryFilter), { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } }],
         })
