@@ -40,7 +40,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             AND (conversationParticipant.user.id <> :#{#senderId})
             AND conversationParticipant.unreadMessagesCount IS NOT null
             """)
-    int incrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
+    void incrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
 
     /**
      * Decrement unreadMessageCount field of ConversationParticipant
@@ -58,5 +58,5 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             AND conversationParticipant.unreadMessagesCount > 0
             AND conversationParticipant.unreadMessagesCount IS NOT null
             """)
-    int decrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
+    void decrementUnreadMessagesCountOfParticipants(@Param("conversationId") Long conversationId, @Param("senderId") Long senderId);
 }
