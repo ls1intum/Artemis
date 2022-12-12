@@ -292,4 +292,35 @@ describe('Exercise Service', () => {
         expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
         expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
     });
+
+    it('should determine is included in score string', () => {
+        const translateService = TestBed.inject(TranslateService);
+        const translateServiceSpy = jest.spyOn(translateService, 'instant');
+
+        let callCount = 0;
+        const result = service.isIncludedInScore({} as Exercise);
+        expect(result).toBe('');
+        expect(translateServiceSpy).not.toHaveBeenCalled();
+
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
+        service.isIncludedInScore(exercise);
+
+        callCount++;
+        expect(translateServiceSpy).toHaveBeenCalledTimes(callCount);
+        expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.bonus');
+
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        service.isIncludedInScore(exercise);
+
+        callCount++;
+        expect(translateServiceSpy).toHaveBeenCalledTimes(callCount);
+        expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.yes');
+
+        exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+        service.isIncludedInScore(exercise);
+
+        callCount++;
+        expect(translateServiceSpy).toHaveBeenCalledTimes(callCount);
+        expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.no');
+    });
 });

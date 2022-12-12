@@ -53,6 +53,10 @@ import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
+import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -119,6 +123,7 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(QuizExerciseService),
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(ComplaintService),
+                MockProvider(SubmissionPolicyService),
             ],
         })
             .compileComponents()
@@ -237,5 +242,63 @@ describe('CourseExerciseDetailsComponent', () => {
 
         comp.showIfExampleSolutionPresent({ ...textExercise, isAtLeastTutor: false });
         expect(comp.exampleSolutionCollapsed).toBeFalse();
+    });
+
+    it('should collapse/uncollapse example solution when clicked', () => {
+        expect(comp.exampleSolutionCollapsed).toBeUndefined();
+        comp.changeExampleSolution();
+        expect(comp.exampleSolutionCollapsed).toBeTrue();
+
+        comp.changeExampleSolution();
+        expect(comp.exampleSolutionCollapsed).toBeFalse();
+    });
+
+    it('should store a reference to child component', () => {
+        comp.exercise = exercise;
+
+        const childComponent = {} as DiscussionSectionComponent;
+        comp.onChildActivate(childComponent);
+        expect(childComponent.exercise).toEqual(exercise);
+    });
+
+    it('should activate hint', () => {
+        comp.availableExerciseHints = [{ id: 1 }, { id: 2 }];
+        comp.activatedExerciseHints = [];
+
+        const activatedHint = comp.availableExerciseHints[0];
+        comp.onHintActivated(activatedHint);
+        expect(comp.availableExerciseHints).not.toContain(activatedHint);
+        expect(comp.activatedExerciseHints).toContain(activatedHint);
+    });
+
+    it('should handle new programming exercise', () => {
+        const submissionPolicyService = fixture.debugElement.injector.get(SubmissionPolicyService);
+        const submissionPolicy = new LockRepositoryPolicy();
+        const submissionPolicyServiceSpy = jest.spyOn(submissionPolicyService, 'getSubmissionPolicyOfProgrammingExercise').mockReturnValue(of(submissionPolicy));
+
+        const programmingExercise = {
+            id: exercise.id,
+            type: ExerciseType.PROGRAMMING,
+            studentParticipations: [],
+            course: { id: 2 },
+            allowComplaintsForAutomaticAssessments: true,
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: true,
+            numberOfAssessmentsOfCorrectionRounds: [],
+        } as ProgrammingExercise;
+
+        const childComponent = {} as DiscussionSectionComponent;
+        comp.onChildActivate(childComponent);
+
+        comp.hasSubmissionPolicy = false;
+        comp.courseId = programmingExercise.course?.id!;
+
+        comp.handleNewExercise(programmingExercise);
+        expect(comp.baseResource).toBe(`/course-management/${programmingExercise.course?.id!}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
+        expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
+        expect(comp.hasSubmissionPolicy).toBeTrue();
+        expect(submissionPolicyServiceSpy).toHaveBeenCalledOnce();
+        expect(comp.submissionPolicy).toEqual(submissionPolicy);
+        expect(childComponent.exercise).toEqual(programmingExercise);
     });
 });
