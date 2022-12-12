@@ -28,7 +28,7 @@ artemis:
         registration:
             enabled: false
             allowed-email-pattern: '[a-zA-Z0-9_\-\.\+]+@(artemis\.local|artemis\.example)'
-            allowed-email-pattern-readable: '@artemis.local, @artemis.example'
+            allowed-email-pattern-readable: '@artemis.example'
             # The amount of time until non-activated accounts are deleted automatically
             cleanup-time-minutes: 60
         # whether users have to accept terms before they can log in, from a privacy point of view this is not needed during education, therefore the default value is false

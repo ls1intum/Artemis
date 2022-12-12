@@ -94,7 +94,7 @@ for i in {1..20}; do
     --show-error \
     --data "{
                 \"password\": \"artemis_test_user_$i\",
-                \"emailAddress\": \"artemis_test_user_$i@artemis.local\",
+                \"emailAddress\": \"artemis_test_user_$i@artemis.example\",
                 \"displayName\": \"Artemis Test User $i\",
                 \"name\": \"artemis_test_user_$i\"
 
