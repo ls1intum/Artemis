@@ -16,10 +16,17 @@ export default defineConfig({
         toConsole: true,
     },
     e2e: {
-        // We've imported your old cypress plugins here.
-        // You may want to clean this up later by importing these.
-        setupNodeEvents(on, config) {
-            return require('./plugins/index.ts')(on, config);
+        setupNodeEvents(on) {
+            on('task', {
+                error(message: string) {
+                    console.error('\x1b[31m', 'ERROR: ', message, '\x1b[0m');
+                    return null;
+                },
+                warn(message: string) {
+                    console.error('\x1b[33m', 'WARNING: ', message, '\x1b[0m');
+                    return null;
+                },
+            });
         },
         specPattern: ['init/ImportUsers.cy.ts', 'e2e/**/*.cy.{js,jsx,ts,tsx}'],
         supportFile: 'support/index.ts',
