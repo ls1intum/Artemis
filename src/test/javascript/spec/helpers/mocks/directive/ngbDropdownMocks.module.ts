@@ -1,4 +1,4 @@
-import { Directive, NgModule } from '@angular/core';
+import { Directive, EventEmitter, Input, NgModule, Output } from '@angular/core';
 
 @Directive({
     selector: '[ngbDropdownItem]',
@@ -19,7 +19,16 @@ class NgbDropdownToggleMock {}
     selector: '[ngbDropdown]',
     exportAs: 'ngbDropdown',
 })
-class NgbDropdownMock {}
+class NgbDropdownMock {
+    @Input() autoClose: boolean | 'outside' | 'inside';
+    @Input() dropdownClass: string;
+    @Input('open') _open = false;
+    @Input() placement: any;
+    @Input() popperOptions: (options: Partial<any>) => Partial<any>;
+    @Input() container: null | 'body';
+    @Input() display: 'dynamic' | 'static';
+    @Output() openChange = new EventEmitter<boolean>();
+}
 
 @Directive({
     selector: '[ngbDropdownAnchor]',

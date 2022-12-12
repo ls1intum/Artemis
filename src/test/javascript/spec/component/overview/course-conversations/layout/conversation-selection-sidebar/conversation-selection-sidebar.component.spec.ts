@@ -2,11 +2,11 @@ import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angul
 import { ConversationSelectionSidebarComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-selection-sidebar.component';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Type } from '@angular/core';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgbDropdownMocksModule } from '../../../../../helpers/mocks/directive/ngbDropdownMocks.module';
-import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -30,6 +30,7 @@ import { ConversationSidebarEntryComponent } from 'app/overview/course-conversat
 import { TranslateService } from '@ngx-translate/core';
 import { GroupChatIconComponent } from 'app/overview/course-conversations/other/group-chat-icon/group-chat-icon.component';
 import { ChannelIconComponent } from 'app/overview/course-conversations/other/channel-icon/channel-icon.component';
+import { NgbTooltipMocksModule } from '../../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
@@ -56,14 +57,13 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [NgbDropdownMocksModule, NgbCollapseMocksModule],
+                imports: [NgbDropdownMocksModule, NgbCollapseMocksModule, NgbTooltipMocksModule],
                 declarations: [
                     ConversationSelectionSidebarComponent,
                     ConversationSidebarSectionComponent,
                     ConversationSidebarEntryComponent,
                     MockComponent(FaIconComponent),
                     MockPipe(ArtemisTranslatePipe),
-                    MockDirective(NgbTooltip),
                     MockComponent(GroupChatIconComponent),
                     MockComponent(ChannelIconComponent),
                 ],

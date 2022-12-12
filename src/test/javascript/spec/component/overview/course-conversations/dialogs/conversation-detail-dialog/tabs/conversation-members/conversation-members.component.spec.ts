@@ -8,7 +8,7 @@ import { ConversationDto } from 'app/entities/metis/conversation/conversation.mo
 import { Course } from 'app/entities/course.model';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
-import { NgbModal, NgbModalRef, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from '../../../../helpers/conversationExampleModels';
@@ -17,6 +17,7 @@ import { of } from 'rxjs';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ConversationAddUsersDialogComponent } from 'app/overview/course-conversations/dialogs/conversation-add-users-dialog/conversation-add-users-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { NgbPaginationMocksModule } from '../../../../../../../helpers/mocks/directive/ngbPaginationMocks.module';
 
 @Component({ selector: '[jhi-conversation-member-row]', template: '' })
 class ConversationMemberRowStubComponent {
@@ -44,14 +45,13 @@ examples.forEach((activeConversation) => {
 
         beforeEach(waitForAsync(() => {
             TestBed.configureTestingModule({
-                imports: [FormsModule, ReactiveFormsModule],
+                imports: [FormsModule, ReactiveFormsModule, NgbPaginationMocksModule],
                 declarations: [
                     ConversationMembersComponent,
                     ConversationMemberRowStubComponent,
                     MockPipe(ArtemisTranslatePipe),
                     MockComponent(FaIconComponent),
                     MockComponent(ItemCountComponent),
-                    MockComponent(NgbPagination),
                 ],
                 providers: [MockProvider(ConversationService), MockProvider(AlertService), MockProvider(NgbModal)],
             }).compileComponents();
