@@ -9,10 +9,11 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Location } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     template: '',
@@ -32,6 +33,7 @@ describe('CourseLectureRow', () => {
                     { path: 'courses/:courseId/lectures', component: DummyComponent },
                     { path: 'courses/:courseId/lectures/:lectureId', component: DummyComponent },
                 ]),
+                MockDirective(NgbTooltip),
             ],
             declarations: [
                 DummyComponent,
