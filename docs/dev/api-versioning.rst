@@ -10,7 +10,7 @@ There a three ways to specify what version an endpoint supports:
     - ``@VersionRange``: The endpoint supports all versions in the specified range or limit.
     - ``@VersionRanges``: The endpoint supports all versions in the specified ranges or limits. This annotation contains a list of ``@VersionRange`` annotations.
 
-If a range contains two elements, an actual range is specified. ``@VersionRange{1,3}`` specifies that the endpoint accepts versions 1, 2, and 3, assuming that Artemis supports at least until version 3. If a range contains only one element, a lower limit is specified. ``@VersionRange{1}`` specifies that the endpoint accepts all versions starting from 1. ``@VersionRanges`` with no supplied parameters gets interpreted as no annotation. Hence, qualifies for all versions. Other configurations are illegal.
+If a range contains two elements, an actual range is specified. ``@VersionRange({1,3})`` specifies that the endpoint accepts versions 1, 2, and 3, assuming that Artemis supports at least until version 3. If a range contains only one element, a lower limit is specified. ``@VersionRange({1})`` specifies that the endpoint accepts all versions starting from 1. ``@VersionRanges`` with no supplied parameters gets interpreted as no annotation. Hence, qualifies for all versions. Other configurations are illegal.
 
 If you need to deviate from the default versioning scheme, you can use the ``@IgnoreGlobalMapping`` annotation. See the JavaDoc for more information. Use with caution!
 
