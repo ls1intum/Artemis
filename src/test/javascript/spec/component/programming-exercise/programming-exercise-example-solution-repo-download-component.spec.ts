@@ -3,7 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock-programming-exercise.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 
@@ -16,7 +16,7 @@ describe('ProgrammingExerciseExampleSolutionRepoDownloadComponent', () => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot()],
             declarations: [ProgrammingExerciseExampleSolutionRepoDownloadComponent, MockComponent(ButtonComponent)],
-            providers: [MockProvider(ProgrammingExerciseService)],
+            providers: [{ provide: ProgrammingExerciseService, useClass: MockProgrammingExerciseService }],
         }).compileComponents();
 
         fixture = TestBed.createComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent);
