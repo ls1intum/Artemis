@@ -143,7 +143,7 @@
                     "requiredError": "You must select at least one user",
                     "maxError": "You can only add {{ max }} users",
                     "addUserLabel": "Search for users in the course",
-                    "maxUsersNote": "Note: You can only add {{ max }} users to this conversation",
+                    "maxUsersNote": "Note: You can add {{ max }} users to this conversation",
                     "addIndividualUsers": "Add individual users",
                     "addWholeGroups": "Add whole groups",
                     "addAllStudents": "Add all students",

@@ -28,7 +28,7 @@ export class GroupChatCreateDialogComponent extends AbstractDialogComponent {
         if (this.form) {
             return;
         }
-        const validators = [Validators.required, Validators.maxLength(10)];
+        const validators = [Validators.required, Validators.maxLength(9)];
 
         this.form = this.fb.group({
             selectedUsers: [[], validators],

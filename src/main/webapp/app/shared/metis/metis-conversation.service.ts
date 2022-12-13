@@ -285,6 +285,11 @@ export class MetisConversationService implements OnDestroy {
             conversationsCopy[indexOfCachedConversation] = updatedConversation;
         }
         this._conversationsOfUser = conversationsCopy;
+
+        // Note: We do not update the active conversation here because it would cause a UI refresh for all users whenever
+        // for example a new users joins.
+        // This would disrupt the user experience, because the user might be in the middle of writing a message.
+        // Therefore we live with a small inconsistency until the users opens the conversation again.
     }
 
     private handleNewMessage(conversationWithNewMessage: ConversationDto) {

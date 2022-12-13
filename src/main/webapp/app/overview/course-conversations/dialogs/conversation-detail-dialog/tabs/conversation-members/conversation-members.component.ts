@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ConversationMemberSearchFilter, ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Course } from 'app/entities/course.model';
@@ -59,7 +59,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     STUDENT_FILTER_OPTION = ConversationMemberSearchFilter.STUDENT;
     CHANNEL_ADMIN_FILTER_OPTION = ConversationMemberSearchFilter.CHANNEL_ADMIN;
 
-    constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal) {}
+    constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal, private cdr: ChangeDetectorRef) {}
 
     trackIdentity(index: number, item: ConversationUserDTO) {
         return item.id;
@@ -166,6 +166,11 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
 
     private onSuccess(members: ConversationUserDTO[] | null, headers: HttpHeaders): void {
         this.totalItems = Number(headers.get('X-Total-Count'));
+        if (this.activeConversation) {
+            // might have changed because of user deletion or addition
+            this.activeConversation.numberOfMembers = this.totalItems;
+        }
         this.members = members || [];
+        this.cdr.detectChanges();
     }
 }
