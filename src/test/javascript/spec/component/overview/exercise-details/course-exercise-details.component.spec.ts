@@ -34,7 +34,7 @@ import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { cloneDeep } from 'lodash-es';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { MockParticipationWebsocketService } from '../../../helpers/mocks/service/mock-participation-websocket.service';
 import { MockProfileService } from '../../../helpers/mocks/service/mock-profile.service';
@@ -56,6 +56,11 @@ import { DiscussionSectionComponent } from 'app/overview/discussion-section/disc
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
 import { LockRepositoryPolicy } from 'app/entities/submission-policy.model';
+import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { HttpResponse } from '@angular/common/http';
+import { AlertService } from 'app/core/util/alert.service';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -122,6 +127,8 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(ProgrammingSubmissionService),
                 MockProvider(ComplaintService),
                 MockProvider(SubmissionPolicyService),
+                MockProvider(PlagiarismCasesService),
+                MockProvider(AlertService),
             ],
         })
             .compileComponents()
@@ -189,6 +196,12 @@ describe('CourseExerciseDetailsComponent', () => {
         jest.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([studentParticipation]);
         jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({} as EntityResponseType));
 
+        const plagiarismCaseService = fixture.debugElement.injector.get(PlagiarismCasesService);
+        const plagiarismCaseInfo = { id: 20, verdict: PlagiarismVerdict.WARNING };
+        const plagiarismCaseServiceSpy = jest
+            .spyOn(plagiarismCaseService, 'getPlagiarismCaseInfoForStudent')
+            .mockReturnValue(of({ body: plagiarismCaseInfo } as HttpResponse<PlagiarismCaseInfo>));
+
         // mock participationService, needed for team assignment
         participationService = TestBed.inject(ParticipationService);
         mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
@@ -210,8 +223,11 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.studentParticipations?.[0].exercise?.id).toBe(exerciseDetail.id);
         expect(comp.exercise!.id).toBe(exercise.id);
         expect(comp.exercise!.studentParticipations![0].results![0]).toStrictEqual(changedResult);
+        expect(comp.plagiarismCaseInfo).toEqual(plagiarismCaseInfo);
         expect(comp.hasMoreResults).toBeFalse();
         expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
+        expect(plagiarismCaseServiceSpy).toHaveBeenCalledTimes(2);
+        expect(plagiarismCaseServiceSpy).toHaveBeenCalledWith(1, exercise.id);
     }));
 
     it('should not be a quiz exercise', () => {
@@ -299,4 +315,25 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.submissionPolicy).toEqual(submissionPolicy);
         expect(childComponent.exercise).toEqual(programmingExercise);
     });
+
+    it('should handle error when getting latest rated result', fakeAsync(() => {
+        const alertService = fixture.debugElement.injector.get(AlertService);
+        const alertServiceSpy = jest.spyOn(alertService, 'error');
+        const error = { message: 'Error msg' };
+        const complaintServiceSpy = jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(throwError(error));
+
+        const submissionId = 55;
+        comp.gradedStudentParticipation = { submissions: [{ id: submissionId }] };
+        comp.sortedHistoryResults = [{ id: 2 }];
+        comp.exercise = { ...exercise };
+
+        comp.getLatestRatedResult();
+        tick();
+
+        expect(complaintServiceSpy).toHaveBeenCalledOnce();
+        expect(complaintServiceSpy).toHaveBeenCalledWith(submissionId);
+
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
+        expect(alertServiceSpy).toHaveBeenCalledWith(error.message);
+    }));
 });
