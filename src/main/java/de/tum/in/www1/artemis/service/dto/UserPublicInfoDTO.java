@@ -142,11 +142,11 @@ public class UserPublicInfoDTO {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) {
+    public boolean equals(Object object) {
+        if (this == object) {
             return true;
         }
-        if (!(o instanceof UserPublicInfoDTO that)) {
+        if (!(object instanceof UserPublicInfoDTO that)) {
             return false;
         }
         return id.equals(that.id);

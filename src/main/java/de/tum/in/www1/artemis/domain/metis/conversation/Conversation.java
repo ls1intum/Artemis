@@ -52,10 +52,6 @@ public abstract class Conversation extends DomainObject {
     @Column(name = "last_message_date")
     private ZonedDateTime lastMessageDate;
 
-    public Conversation() {
-        // default constructor
-    }
-
     public Set<ConversationParticipant> getConversationParticipants() {
         return conversationParticipants;
     }

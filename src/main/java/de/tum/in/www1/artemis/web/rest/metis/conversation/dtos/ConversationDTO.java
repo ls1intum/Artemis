@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({ @JsonSubTypes.Type(value = OneToOneChatDTO.class, name = "oneToOneChat"), @JsonSubTypes.Type(value = GroupChatDTO.class, name = "groupChat"),
         @JsonSubTypes.Type(value = ChannelDTO.class, name = "channel"), })
-public abstract class ConversationDTO {
+public class ConversationDTO {
 
     /**
      * Determines the type of the conversation, either "channel" , "groupChat" or "oneToOneChat"  depending on the subclass
