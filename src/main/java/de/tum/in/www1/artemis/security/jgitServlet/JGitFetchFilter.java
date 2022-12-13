@@ -17,6 +17,7 @@ import org.springframework.data.util.Pair;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -88,32 +89,26 @@ public class JGitFetchFilter extends OncePerRequestFilter {
             SecurityUtils.checkUsernameAndPasswordValidity(username, password);
         } catch (AccessForbiddenException e) {
             servletResponse.setStatus(401);
+            return;
         }
 
         // Try to authenticate the user.
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
         try {
-            // authenticationToken.setDetails(Pair.of("userAgent", userAgent));
-            Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-        } catch (Exception e) {
+            authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        } catch (AuthenticationException e) {
             log.error(e.getMessage());
+            servletResponse.setStatus(401);
+            return;
         }
 
         User user = userRepository.findOneByLogin(username).orElse(null);
 
         // Check that the user exists.
-        // if (user == null) {
-        //   servletResponse.setStatus(401);
-        // return;
-        //}
-
-        // Check that the user's password is correct.
-        //log.debug("user.getPassword(): {}", user.getPassword());
-        //try {
-        //   log.debug("userDetails: {}", userDetailsService.loadUserByUsername(username).getPassword());
-        //} catch (UsernameNotFoundException e) {
-        //  log.debug(e.getMessage());
-        // }
+        if (user == null) {
+            servletResponse.setStatus(401);
+            return;
+        }
 
         String[] uri = servletRequest.getRequestURI().split("/");
 
@@ -125,8 +120,8 @@ public class JGitFetchFilter extends OncePerRequestFilter {
             return;
         }
 
-        String projectKey = uri[1].toLowerCase();
-        String repositoryName = uri[2];
+        String projectKey = uri[2].toLowerCase();
+        String repositoryName = uri[3];
         String repositoryTypeOrUserName = getRepositoryTypeOrUserName(projectKey, repositoryName);
 
         // TODO: Find a way to save the course short name with the repository (e.g. as part of the URL or in the config)
@@ -136,7 +131,7 @@ public class JGitFetchFilter extends OncePerRequestFilter {
         List<Course> coursesFiltered = new ArrayList<>();
 
         for (Course course : courses) {
-            if (projectKey.startsWith(course.getShortName())) {
+            if (projectKey.startsWith(course.getShortName().toLowerCase())) {
                 coursesFiltered.add(course);
             }
         }
@@ -193,7 +188,7 @@ public class JGitFetchFilter extends OncePerRequestFilter {
     }
 
     private void validateLocalGitUri(String[] uri) throws LocalGitException {
-        if (!uri[2].startsWith(uri[1].toLowerCase())) {
+        if (!uri[3].startsWith(uri[2].toLowerCase())) {
             throw new LocalGitException("Badly formed Local Git URI: " + String.join("/", uri) + " Expected the repository name to start with the lower case course short name.");
         }
     }
