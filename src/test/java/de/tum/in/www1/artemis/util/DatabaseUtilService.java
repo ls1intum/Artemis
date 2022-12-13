@@ -556,14 +556,10 @@ public class DatabaseUtilService {
         }
 
         if (usersToAdd.size() > 0) {
-            userRepo.saveAll(usersToAdd);
+            usersToAdd = userRepo.saveAll(usersToAdd);
         }
 
-        var allUsers = userRepo.findAll();
-        assertThat(allUsers).as("all users are created").hasSizeGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1);
-        // assertThat(allUsers).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
-
-        return allUsers;
+        return usersToAdd;
     }
 
     public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {

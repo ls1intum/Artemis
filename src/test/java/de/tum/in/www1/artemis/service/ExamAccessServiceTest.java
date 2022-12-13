@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.ZonedDateTime;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -68,7 +67,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @BeforeEach
     void init() {
-        List<User> users = database.addUsers(TEST_PREFIX, 2, 1, 1, 2);
+        database.addUsers(TEST_PREFIX, 2, 1, 1, 2);
         User instructor1 = database.getUserByLogin(TEST_PREFIX + "instructor1");
         User instructor2 = database.getUserByLogin(TEST_PREFIX + "instructor2");
         User student1 = database.getUserByLogin(TEST_PREFIX + "student1");

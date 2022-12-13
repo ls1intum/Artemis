@@ -47,7 +47,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @BeforeEach
     void initTestCase() throws Exception {
-        List<User> users = database.addUsers(TEST_PREFIX, 1, 0, 1, 0);
+        database.addUsers(TEST_PREFIX, 1, 0, 1, 0);
         student = database.getUserByLogin(TEST_PREFIX + "student1");
         editor = database.getUserByLogin(TEST_PREFIX + "editor1");
 
