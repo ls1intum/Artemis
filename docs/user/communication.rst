@@ -59,20 +59,21 @@ Here, users can easily query, sort, and filter existing posts.
 
 Secluded Communication
 ----------------------
+
 Users of a course can communicate in private via the Messages page. (see image below) The page consists of a collapsible
 Conversation sidebar on the left, where users can search for other participants of the current course and start a conversation
 with them.
 
 If the recipient is browsing another conversation when they receive a new message, an envelope icon appears in their
-Conversation Sidebar, next to the affiliated user who has sent the message. This way, users become aware of the new message
+Conversation sidebar, next to the affiliated user who has sent the message. This way, users become aware of the new message
 within that discussion.
 
 The authorities of tutors and instructors are more restricted in the Messages Page compared to the Course Communication
 Overview. Only the authors of messages and replies can edit or delete them.
 
 Messages do not have a title and tags and are not resolvable, pinnable, or archivable. Users can continue a discussion
-around a specific message topic by clicking the messages’ “Reply in thread” button, which opens the Thread Sidebar.
-(see image below). The Thread Sidebar is a collapsible sidebar located on the right-hand side of the Messages Page when
+around a specific message topic by clicking the messages’ “Reply in thread” button, which opens the Thread sidebar.
+(see image below). The Thread sidebar is a collapsible sidebar located on the right-hand side of the Messages Page when
 displayed.
 
 |messages|
@@ -86,7 +87,7 @@ Search, Filter, and Sort Posts
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 On the course communication overview, a user can query *all* existing posts according to the following criteria and their
-possible combinations;
+possible combinations:
 
 * Text-based search
     * Post ID (prepend hashtag ``#`` to post identifier, i.e. #396)
@@ -114,6 +115,7 @@ A simplified version of this feature is available on the exercise and lecture de
 
 Verify User Authority
 ^^^^^^^^^^^^^^^^^^^^^
+
 To build trust between users utilizing the system's communication features, we prepend an icon to the author’s name in the
 headers of posts and their replies. The icon we introduce differs according to the role of the author within the course
 and reveals their highest authoritative role. Via tooltips that are shown as users hover over these icons (see images below),
@@ -154,13 +156,13 @@ Reference Posts
 If users want to refer to other posts, they can integrate a simple pattern including the hashtag (``#``) combined with
 the post identifier. A post's identifier is appended to the post title (such as seen in the screenshots above).
 
-When clicking a post reference used in a post's text, the user is navigated to the referenced post respectfully.
+When clicking a post reference used in a post's text, the user is navigated to the referenced post.
 
 Reference Course Exercises
 """"""""""""""""""""""""""
 Users can refer to exercises of the current course, via the dropdown menu ``Exercise`` available on the posting markdown
-editor. (see image above) The following types of exercises are prepended unique icons to help users distinguish the type
-of the exercise being referenced.
+editor (see image above). The following types of exercises are prepended unique icons to help distinguish the type of the
+exercise being referenced.
 
 * Text Exercise
 * Quiz Exercise
@@ -170,13 +172,15 @@ of the exercise being referenced.
 
 Reference Course Lectures
 """""""""""""""""""""""""
+
 Users can refer to lectures of the current course, via the dropdown menu ``Lecture`` available on the posting markdown
-editor. (see image above)
+editor (see image above).
 
 Reference Lecture Attachments
-"""""""""""""""""""""""""""
+"""""""""""""""""""""""""""""
+
 Users can refer to lectures of the current course, via the dropdown menu ``Lecture`` available on the posting markdown
-editor. (see image above) Here, lecture attachments can be found in a nested structure.
+editor (see image above). Here, lecture attachments can be found in a nested structure.
 
 Prevent Post Duplication
 ^^^^^^^^^^^^^^^^^^^^^^^^
@@ -189,7 +193,7 @@ Mark Your Post As Resolved
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Marking a post as resolved will indicate to other users that the posted question is resolved and does not need any further input.
-This can be done by clicking the checkmark next to the answer post. (see image below)
+This can be done by clicking the check mark next to the answer post. (see image below)
 Note, that only the author of the post as well as a moderator can perform this action.
 This is helpful for moderators to identify open questions, e.g., by applying the according filter in the course overview.
 It also highlights the correct answer for other students that have a similar problem and search for a suitable solution.
