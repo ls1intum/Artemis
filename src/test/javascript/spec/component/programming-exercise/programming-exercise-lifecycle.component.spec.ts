@@ -123,7 +123,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(comp.exercise.allowComplaintsForAutomaticAssessments).toBeTrue();
     });
 
-    it('should change feedback Request allowed after toggling', () => {
+    it('should change feedback request allowed after toggling', () => {
         comp.exercise = { ...exercise, allowManualFeedbackRequests: false };
         expect(comp.exercise.allowManualFeedbackRequests).toBeFalse();
 
@@ -148,6 +148,13 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
         expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
         expect(comp.exercise.assessmentDueDate).toBeUndefined();
+    });
+
+    it('should change publication of tests for programming exercise with published solution', () => {
+        comp.exercise = { ...exercise, exampleSolutionPublicationDate: dayjs() };
+        expect(comp.exercise.releaseTestsWithExampleSolution).toBeFalsy();
+        comp.toggleReleaseTests();
+        expect(comp.exercise.releaseTestsWithExampleSolution).toBeTrue();
     });
 
     it('should not cascade date changes when updateReleaseDate is called when readOnly is true', () => {

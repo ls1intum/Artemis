@@ -102,11 +102,11 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         mockCreationOfExerciseParticipation(false, null);
 
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        database.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().minusHours(1));
         StudentParticipation practiceParticipation = participationService.startPracticeMode(programmingExercise, participant, Optional.empty(), false);
 
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        database.updateExerciseDueDate(programmingExercise.getId(), ZonedDateTime.now().plusHours(1));
         StudentParticipation studentParticipationReceived = participationService.startExercise(programmingExercise, participant, true);
 
         programmingExercise = programmingExerciseRepository.findWithAllParticipationsById(programmingExercise.getId()).get();

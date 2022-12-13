@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../test.module';
 import { ExternalSubmissionDialogComponent } from 'app/exercises/shared/external-submission/external-submission-dialog.component';
-import { NgbModal, NgbModalRef, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockDirective } from 'ng-mocks';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { NgForm, NgModel } from '@angular/forms';
 import { ExternalSubmissionButtonComponent } from 'app/exercises/shared/external-submission/external-submission-button.component';
 import { Exercise } from 'app/entities/exercise.model';
@@ -11,6 +10,7 @@ import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { By } from '@angular/platform-browser';
+import { MockDirective } from 'ng-mocks';
 
 describe('External Submission Dialog', () => {
     let fixture: ComponentFixture<ExternalSubmissionButtonComponent>;
@@ -28,7 +28,6 @@ describe('External Submission Dialog', () => {
                 MockDirective(TranslateDirective),
                 MockDirective(NgForm),
                 MockDirective(NgModel),
-                MockDirective(NgbTooltip),
                 MockDirective(FeatureToggleDirective),
             ],
             providers: [{ provide: NgbModal, useValue: modalService }],
