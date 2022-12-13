@@ -9,9 +9,18 @@ $conversation-section-card-min-width: 215px;
 
 .expanded-conversations {
     display: flex;
-    height: 100%;
     width: calc(#{$draggable-width} + #{$conversation-section-card-min-width});
     margin-left: auto;
+
+    .scrollbar {
+        position: relative;
+        max-height: 600px;
+        overflow: auto;
+    }
+
+    .wrapper-scroll-y {
+        display: block;
+    }
 
     .draggable-right {
         display: flex;

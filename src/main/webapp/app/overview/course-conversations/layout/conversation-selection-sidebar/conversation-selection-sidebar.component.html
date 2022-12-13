@@ -1,4 +1,4 @@
-<div *ngIf="course" class="h-100">
+<div *ngIf="course">
     <div *ngIf="!collapsed; else collapsedConversations" class="expanded-conversations">
         <div class="card">
             <!-- header -->
@@ -33,7 +33,7 @@
                         <span>{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.collapseAll' | artemisTranslate }}</span>
                     </button>
                 </div>
-                <div>
+                <div class="scrollbar wrapper-scroll-y">
                     <!-- Starred -->
                     <div [hidden]="searchTerm && searchTerm.length > 0 && !displayedStarredConversations?.length">
                         <jhi-conversation-sidebar-section
