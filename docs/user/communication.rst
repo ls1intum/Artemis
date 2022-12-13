@@ -7,7 +7,7 @@ Communication
     :local:
     :depth: 3
 
-Artemis enables students, tutors, and instructors to actively participate with its communication feature.
+Artemis enables students, tutors, and instructors to actively participate with its communication capabilities.
 Various communication features allow students to engage with peers and ask all kinds of questions whereas moderators
 (e.g., instructors and tutors) can provide general course information and answer content-related questions.
 Communication can be made in different contexts, namely for lectures, exercises, or courses. Course participants can also
@@ -69,12 +69,12 @@ Conversation sidebar, next to the affiliated user who has sent the message. This
 within that discussion.
 
 The authorities of tutors and instructors are more restricted in the Messages Page compared to the Course Communication
-Overview. Only the authors of messages and replies can edit or delete them.
+Overview. Messages of a conversation are exclusive to its participants and are only editable or deletable by their respective
+author.
 
-Messages do not have a title and tags and are not resolvable, pinnable, or archivable. Users can continue a discussion
-around a specific message topic by clicking the messages’ “Reply in thread” button, which opens the Thread sidebar.
-(see image below). The Thread sidebar is a collapsible sidebar located on the right-hand side of the Messages Page when
-displayed.
+Messages do not consist of titles. Users can continue a discussion around a specific message topic by clicking the messages’
+“Reply in thread” button, which opens the Thread sidebar (see image below). The Thread sidebar is a collapsible sidebar
+located on the right-hand side of the Messages Page when displayed.
 
 |messages|
 
