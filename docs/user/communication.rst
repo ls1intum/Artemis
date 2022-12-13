@@ -154,7 +154,7 @@ Reference Posts
 If users want to refer to other posts, they can integrate a simple pattern including the hashtag (``#``) combined with
 the post identifier. A post's identifier is appended to the post title (such as seen in the screenshots above).
 
-When clicking a post reference used in a post's text, the user is navigated to the referenced post respectfully.
+When clicking a post reference used in a post's text, the user is navigated to the referenced post.
 
 Reference Course Exercises
 """"""""""""""""""""""""""
