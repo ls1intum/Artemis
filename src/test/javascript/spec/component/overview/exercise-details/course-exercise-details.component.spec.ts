@@ -70,11 +70,15 @@ describe('CourseExerciseDetailsComponent', () => {
     let teamService: TeamService;
     let participationService: ParticipationService;
     let participationWebsocketService: ParticipationWebsocketService;
+    let complaintService: ComplaintService;
+    let plagiarismCaseService: PlagiarismCasesService;
+
     let getProfileInfoMock: jest.SpyInstance;
     let getExerciseDetailsMock: jest.SpyInstance;
     let mergeStudentParticipationMock: jest.SpyInstance;
     let subscribeForParticipationChangesMock: jest.SpyInstance;
-    let complaintService: ComplaintService;
+    let plagiarismCaseServiceMock: jest.SpyInstance;
+
     const exercise = { id: 42, type: ExerciseType.TEXT, studentParticipations: [], course: {} } as unknown as Exercise;
 
     const textExercise = {
@@ -83,6 +87,8 @@ describe('CourseExerciseDetailsComponent', () => {
         studentParticipations: [],
         exampleSolution: 'Example<br>Solution',
     } as unknown as TextExercise;
+
+    const plagiarismCaseInfo = { id: 20, verdict: PlagiarismVerdict.WARNING };
 
     const route = { params: of({ courseId: 1, exerciseId: exercise.id }), queryParams: of({ welcome: '' }) };
 
@@ -160,7 +166,13 @@ describe('CourseExerciseDetailsComponent', () => {
                 subscribeForParticipationChangesMock = jest.spyOn(participationWebsocketService, 'subscribeForParticipationChanges');
                 subscribeForParticipationChangesMock.mockReturnValue(new BehaviorSubject<Participation | undefined>(undefined));
 
-                complaintService = TestBed.inject(ComplaintService);
+                complaintService = fixture.debugElement.injector.get(ComplaintService);
+
+                // mock plagiarismCaseService used when loading exercises
+                plagiarismCaseService = fixture.debugElement.injector.get(PlagiarismCasesService);
+                plagiarismCaseServiceMock = jest
+                    .spyOn(plagiarismCaseService, 'getPlagiarismCaseInfoForStudent')
+                    .mockReturnValue(of({ body: plagiarismCaseInfo } as HttpResponse<PlagiarismCaseInfo>));
             });
     });
 
@@ -196,12 +208,6 @@ describe('CourseExerciseDetailsComponent', () => {
         jest.spyOn(participationWebsocketService, 'getParticipationsForExercise').mockReturnValue([studentParticipation]);
         jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(of({} as EntityResponseType));
 
-        const plagiarismCaseService = fixture.debugElement.injector.get(PlagiarismCasesService);
-        const plagiarismCaseInfo = { id: 20, verdict: PlagiarismVerdict.WARNING };
-        const plagiarismCaseServiceSpy = jest
-            .spyOn(plagiarismCaseService, 'getPlagiarismCaseInfoForStudent')
-            .mockReturnValue(of({ body: plagiarismCaseInfo } as HttpResponse<PlagiarismCaseInfo>));
-
         // mock participationService, needed for team assignment
         participationService = TestBed.inject(ParticipationService);
         mergeStudentParticipationMock = jest.spyOn(participationService, 'mergeStudentParticipations');
@@ -226,8 +232,8 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.plagiarismCaseInfo).toEqual(plagiarismCaseInfo);
         expect(comp.hasMoreResults).toBeFalse();
         expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
-        expect(plagiarismCaseServiceSpy).toHaveBeenCalledTimes(2);
-        expect(plagiarismCaseServiceSpy).toHaveBeenCalledWith(1, exercise.id);
+        expect(plagiarismCaseServiceMock).toHaveBeenCalledTimes(2);
+        expect(plagiarismCaseServiceMock).toHaveBeenCalledWith(1, exercise.id);
     }));
 
     it('should not be a quiz exercise', () => {
