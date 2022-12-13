@@ -57,7 +57,7 @@ Here, users can easily query, sort, and filter existing posts.
 
 |course-posts|
 
-Secluded Communication
+Private Communication
 ----------------------
 Users of a course can communicate in private via the Messages page. (see image below) The page consists of a collapsible
 Conversation sidebar on the left, where users can search for other participants of the current course and start a conversation
