@@ -3,14 +3,12 @@ import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
-
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
-
 import { CourseLectureDetailsComponent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { AttachmentUnitComponent } from 'app/overview/course-lectures/attachment-unit/attachment-unit.component';
 import { ExerciseUnitComponent } from 'app/overview/course-lectures/exercise-unit/exercise-unit.component';
@@ -18,7 +16,6 @@ import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-u
 import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/video-unit.component';
 import { LearningGoalsPopoverComponent } from 'app/course/learning-goals/learning-goals-popover/learning-goals-popover.component';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
-
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -30,7 +27,6 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { FileService } from 'app/shared/http/file.service';
 import { LectureService } from 'app/lecture/lecture.service';
-
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
@@ -44,6 +40,7 @@ import { MockFileService } from '../../../helpers/mocks/service/mock-file.servic
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
+import { NgbCollapse, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CourseLectureDetails', () => {
     let fixture: ComponentFixture<CourseLectureDetailsComponent>;
@@ -84,7 +81,7 @@ describe('CourseLectureDetails', () => {
         const response = of(new HttpResponse({ body: lecture, headers, status: 200 }));
 
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule],
+            imports: [RouterTestingModule, MockDirective(NgbTooltip), MockDirective(NgbCollapse), MockDirective(NgbPopover)],
             declarations: [
                 CourseLectureDetailsComponent,
                 AttachmentUnitComponent,

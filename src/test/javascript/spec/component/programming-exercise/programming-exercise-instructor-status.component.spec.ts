@@ -14,7 +14,8 @@ import { TemplateProgrammingExerciseParticipation } from 'app/entities/participa
 import { SolutionProgrammingExerciseParticipation } from 'app/entities/participation/solution-programming-exercise-participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseInstructorStatusComponent', () => {
     let comp: ProgrammingExerciseInstructorStatusComponent;
@@ -25,7 +26,7 @@ describe('ProgrammingExerciseInstructorStatusComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [ProgrammingExerciseInstructorStatusComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
