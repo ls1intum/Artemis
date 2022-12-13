@@ -630,9 +630,9 @@ public class CourseTestService {
 
         List<Course> courses = request.getList("/api/courses/courses-with-quiz", HttpStatus.OK, Course.class);
 
-        assertThat(courses.stream().filter(c -> c.getId() == inactiveCourse.getId()).toList()).as("Inactive course was filtered out").isEmpty();
+        assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), inactiveCourse.getId())).toList()).as("Inactive course was filtered out").isEmpty();
 
-        Optional<Course> optionalCourse = courses.stream().filter(c -> c.getId() == activeCourse.getId()).findFirst();
+        Optional<Course> optionalCourse = courses.stream().filter(c -> Objects.equals(c.getId(), activeCourse.getId())).findFirst();
         assertThat(optionalCourse).as("Active course was not filtered").isPresent();
         Course activeCourseNotFiltered = optionalCourse.get();
 
@@ -813,9 +813,8 @@ public class CourseTestService {
         courseRepo.save(courseNotActiveFuture);
 
         List<Course> courses = request.getList("/api/courses/for-registration", HttpStatus.OK, Course.class);
-        assertThat(courses).as("Exactly one course is available to register").hasSize(1);
-        courses.get(0).setId(courseActiveRegistrationEnabled.getId());
-        assertThat(courses.get(0)).as("Only active course is returned").isEqualTo(courseActiveRegistrationEnabled);
+        assertThat(courses).as("Only active course is returned").contains(courseActiveRegistrationEnabled);
+        assertThat(courses).as("Inactive courses are not returned").doesNotContain(courseActiveRegistrationDisabled, courseNotActivePast, courseNotActiveFuture);
     }
 
     // Test
@@ -1668,7 +1667,7 @@ public class CourseTestService {
 
         for (Submission submission : submissions) {
             Participation participation = submission.getParticipation();
-            if (participation != null && participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId() == updatedCourse.getId()) {
+            if (participation != null && Objects.equals(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), updatedCourse.getId())) {
                 if (submission instanceof FileUploadSubmission) {
                     assertThat(filenames).contains(Path.of("FileUpload-" + userPrefix + "student1-" + submission.getId() + ".png"));
                 }
@@ -1761,9 +1760,9 @@ public class CourseTestService {
 
         var courses = request.getList("/api/courses/course-management-overview", HttpStatus.OK, Course.class);
 
-        assertThat(courses.stream().filter(c -> c.getId() == nonInstructorsCourse.getId()).toList()).as("Non instructors course was filtered out").isEmpty();
+        assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), nonInstructorsCourse.getId())).toList()).as("Non instructors course was filtered out").isEmpty();
 
-        Optional<Course> optionalCourse = courses.stream().filter(c -> c.getId() == instructorsCourse.getId()).findFirst();
+        Optional<Course> optionalCourse = courses.stream().filter(c -> Objects.equals(c.getId(), instructorsCourse.getId())).findFirst();
         assertThat(optionalCourse).as("Instructors course is returned").isPresent();
         Course returnedCourse = optionalCourse.get();
 
@@ -1788,9 +1787,9 @@ public class CourseTestService {
 
         var courses = request.getList("/api/courses/exercises-for-management-overview", HttpStatus.OK, Course.class);
 
-        assertThat(courses.stream().filter(c -> c.getId() == nonInstructorsCourse.getId()).toList()).as("Non instructors course was filtered out").isEmpty();
+        assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), nonInstructorsCourse.getId())).toList()).as("Non instructors course was filtered out").isEmpty();
 
-        Optional<Course> optionalCourse = courses.stream().filter(c -> c.getId() == instructorsCourse.getId()).findFirst();
+        Optional<Course> optionalCourse = courses.stream().filter(c -> Objects.equals(c.getId(), instructorsCourse.getId())).findFirst();
         assertThat(optionalCourse).as("Instructors course is returned").isPresent();
         Course returnedCourse = optionalCourse.get();
 
