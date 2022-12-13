@@ -80,11 +80,12 @@ public class LearningGoalProgressService {
                 learningGoals = lectureUnitRepository.findByIdWithLearningGoals(lectureUnit.getId()).map(LectureUnit::getLearningGoals).orElse(null);
             }
             else {
-                return;
+                throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
             }
 
             if (learningGoals == null) {
                 // Learning goals couldn't be loaded, the exercise/lecture unit might have already been deleted
+                logger.debug("Learning goals could not be fetched, skipping.");
                 return;
             }
 
@@ -110,6 +111,7 @@ public class LearningGoalProgressService {
 
         if (user == null || learningGoal == null) {
             // If the user or learning goal no longer exist, there is nothing to do
+            logger.debug("User or learning goal no longer exist, skipping.");
             return;
         }
 
@@ -119,6 +121,7 @@ public class LearningGoalProgressService {
             var lastModified = learningGoalProgress.get().getLastModifiedDate();
             if (lastModified != null && lastModified.isAfter(Instant.now().minusSeconds(5))) {
                 // If we have updated the progress within the last five seconds, skip it
+                logger.debug("Learning goal progress has been updated very recently, skipping.");
                 return;
             }
         }
@@ -183,7 +186,7 @@ public class LearningGoalProgressService {
             var teamScores = teamScoreRepository.findAllByExercisesAndUser(List.of(exercise), user);
             return Stream.concat(studentScores.stream(), teamScores.stream()).findAny().isPresent();
         }
-        throw new IllegalArgumentException("Completable must be either LectureUnit or Exercise");
+        throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
     }
 
 }
