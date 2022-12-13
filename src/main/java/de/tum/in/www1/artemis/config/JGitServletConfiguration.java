@@ -18,6 +18,7 @@ import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.io.File;
@@ -47,12 +48,15 @@ public class JGitServletConfiguration {
 
     private final ExerciseRepository exerciseRepository;
 
-    public JGitServletConfiguration(UserRepository userRepository, UserDetailsService userDetailsService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository) {
+    private final AuthenticationManagerBuilder authenticationManagerBuilder;
+
+    public JGitServletConfiguration(UserRepository userRepository, UserDetailsService userDetailsService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, AuthenticationManagerBuilder authenticationManagerBuilder) {
         this.userRepository = userRepository;
         this.userDetailsService = userDetailsService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseRepository = exerciseRepository;
+        this.authenticationManagerBuilder = authenticationManagerBuilder;
     }
 
     @Bean
@@ -96,7 +100,7 @@ public class JGitServletConfiguration {
                 return repository;
             });
 
-            gs.addUploadPackFilter(new JGitFetchFilter(userRepository, userDetailsService, courseRepository, authorizationCheckService, exerciseRepository));
+            gs.addUploadPackFilter(new JGitFetchFilter(userRepository, userDetailsService, courseRepository, authorizationCheckService, exerciseRepository, authenticationManagerBuilder));
             gs.addReceivePackFilter(new JGitPushFilter(userRepository, authorizationCheckService));
 
             log.info("Registering GitServlet");

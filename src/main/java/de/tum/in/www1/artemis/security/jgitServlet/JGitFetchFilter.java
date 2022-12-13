@@ -8,9 +8,15 @@ import de.tum.in.www1.artemis.exception.LocalGitException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.util.Pair;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -42,12 +48,15 @@ public class JGitFetchFilter extends OncePerRequestFilter {
 
     private final ExerciseRepository exerciseRepository;
 
-    public JGitFetchFilter(UserRepository userRepository, UserDetailsService userDetailsService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository) {
+    private final AuthenticationManagerBuilder authenticationManagerBuilder;
+
+    public JGitFetchFilter(UserRepository userRepository, UserDetailsService userDetailsService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, AuthenticationManagerBuilder authenticationManagerBuilder) {
         this.userRepository = userRepository;
         this.userDetailsService = userDetailsService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseRepository = exerciseRepository;
+        this.authenticationManagerBuilder = authenticationManagerBuilder;
     }
 
     @Override
@@ -69,27 +78,42 @@ public class JGitFetchFilter extends OncePerRequestFilter {
         }
 
         String basicAuthCredentials = new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
-        String login = basicAuthCredentials.split(":")[0];
+        String username = basicAuthCredentials.split(":")[0];
         String password = basicAuthCredentials.split(":")[1];
 
         // TODO: Remove!
-        log.debug("Found user with login {} and password {} in fetch request.", login, password);
+        log.debug("Found user with login {} and password {} in fetch request.", username, password);
 
-        User user = userRepository.findOneByLogin(login).orElse(null);
+        try {
+            SecurityUtils.checkUsernameAndPasswordValidity(username, password);
+        } catch (AccessForbiddenException e) {
+            servletResponse.setStatus(401);
+        }
+
+        // Try to authenticate the user.
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
+        try {
+            // authenticationToken.setDetails(Pair.of("userAgent", userAgent));
+            Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+
+        User user = userRepository.findOneByLogin(username).orElse(null);
 
         // Check that the user exists.
-        if (user == null) {
-            servletResponse.setStatus(401);
-            return;
-        }
+        // if (user == null) {
+        //   servletResponse.setStatus(401);
+        // return;
+        //}
 
         // Check that the user's password is correct.
-        log.debug("user.getPassword(): {}", user.getPassword());
-        try {
-            log.debug("userDetails: {}", userDetailsService.loadUserByUsername(login).getPassword());
-        } catch (UsernameNotFoundException e) {
-            log.debug(e.getMessage());
-        }
+        //log.debug("user.getPassword(): {}", user.getPassword());
+        //try {
+        //   log.debug("userDetails: {}", userDetailsService.loadUserByUsername(username).getPassword());
+        //} catch (UsernameNotFoundException e) {
+        //  log.debug(e.getMessage());
+        // }
 
         String[] uri = servletRequest.getRequestURI().split("/");
 
@@ -145,7 +169,7 @@ public class JGitFetchFilter extends OncePerRequestFilter {
         // ---- Requesting one of the participant repositories ----
 
         // Check that the user name in the repository name corresponds to the user name used for Basic Auth.
-        if (!login.equals(repositoryTypeOrUserName)) {
+        if (!username.equals(repositoryTypeOrUserName)) {
             servletResponse.setStatus(401);
             return;
         }
