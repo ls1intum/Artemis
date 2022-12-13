@@ -5,7 +5,7 @@ import { catchError, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import { Feedback } from 'app/entities/feedback.model';
-import { ResultService } from 'app/exercises/shared/result/result.service';
+import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
@@ -93,10 +93,11 @@ export class FeedbackComponent implements OnInit {
         },
         results: [],
     };
-
     // Static chart settings
     labels: string[];
     legendPosition = LegendPosition.Below;
+
+    badge: Badge;
 
     feedbackItemService: FeedbackItemService;
     feedbackItemNodes: FeedbackNode[];
@@ -127,6 +128,8 @@ export class FeedbackComponent implements OnInit {
 
         this.feedbackItemService = this.exerciseType === ExerciseType.PROGRAMMING ? this.injector.get(ProgrammingFeedbackItemService) : this.injector.get(FeedbackItemServiceImpl);
         this.fetchAdditionalInformation();
+
+        this.badge = ResultService.evaluateBadge(this.result.participation!, this.result);
 
         this.commitHash = this.getCommitHash().slice(0, 11);
 

@@ -24,25 +24,30 @@
     <!-- Feedbacks container -->
     <ng-template #feedbackContainer>
         <div *ngIf="!loadingFailed && feedbackItemNodes && feedbackItemNodes.length; else buildLogsContainer" class="result-detail-container">
-            <div class="feedback__description">
-                <h4>
-                    <span *ngIf="!exercise?.maxPoints; else scoreWithPoints">
-                        {{ 'artemisApp.result.score' | artemisTranslate : { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
-                    </span>
-                    <ng-template #scoreWithPoints>
-                        <span *ngIf="result.score && exercise && exercise.maxPoints">
-                            {{
-                                'artemisApp.result.scoreWithPoints'
-                                    | artemisTranslate
-                                        : {
-                                              score: roundValueSpecifiedByCourseSettings(result.score, course),
-                                              points: roundValueSpecifiedByCourseSettings((result.score * exercise.maxPoints) / 100, course)
-                                          }
-                            }}
+            <div>
+                <div class="d-flex justify-content-between align-items-start">
+                    <h4>
+                        <span *ngIf="!exercise?.maxPoints; else scoreWithPoints">
+                            {{ 'artemisApp.result.score' | artemisTranslate : { score: roundValueSpecifiedByCourseSettings(result.score, course) } }}
                         </span>
-                    </ng-template>
-                </h4>
-                <!--TODO Add badge-->
+                        <ng-template #scoreWithPoints>
+                            <span *ngIf="exercise && exercise.maxPoints">
+                                {{
+                                    'artemisApp.result.scoreWithPoints'
+                                        | artemisTranslate
+                                            : {
+                                                  score: roundValueSpecifiedByCourseSettings(result.score ?? 0, course),
+                                                  points: roundValueSpecifiedByCourseSettings(((result.score ?? 0) * exercise.maxPoints) / 100, course)
+                                              }
+                                }}
+                            </span>
+                        </ng-template>
+                    </h4>
+
+                    <span class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
+                        {{ badge.text | artemisTranslate | uppercase }}
+                    </span>
+                </div>
 
                 <!-- Show and link to the commit hash in case of programming exercise results -->
                 <p *ngIf="exerciseType === ExerciseType.PROGRAMMING && result.submission">
