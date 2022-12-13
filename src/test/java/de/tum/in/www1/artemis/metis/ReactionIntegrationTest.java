@@ -255,8 +255,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
         SortingOrder sortingOrder = SortingOrder.DESCENDING;
 
-        User student1 = database.getUserByLogin("student1");
-        User student2 = database.getUserByLogin("student2");
+        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student2 = database.getUserByLogin(TEST_PREFIX + "student2");
 
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
@@ -292,8 +292,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         PostSortCriterion sortCriterion = PostSortCriterion.VOTES;
         SortingOrder sortingOrder = SortingOrder.ASCENDING;
 
-        User student1 = database.getUserByLogin("student1");
-        User student2 = database.getUserByLogin("student2");
+        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student2 = database.getUserByLogin(TEST_PREFIX + "student2");
 
         Post postReactedOn = existingPostsWithAnswers.get(0);
         createVoteReactionOnPost(postReactedOn, student1);

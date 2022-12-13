@@ -657,7 +657,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteResolvingAnswerPost_asTutor() throws Exception {
         AnswerPost answerPostToDeleteWhichResolves = existingAnswerPosts.get(3);
 

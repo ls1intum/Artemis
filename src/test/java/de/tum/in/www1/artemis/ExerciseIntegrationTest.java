@@ -90,12 +90,12 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
             textSubmission.text("Text");
             textSubmission.submitted(true);
             textSubmission.submissionDate(ZonedDateTime.now());
-            submissions.add(database.addSubmission(textExercise, textSubmission, "student" + (i + 1))); // student1 was already used
+            submissions.add(database.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student" + (i + 1))); // student1 was already used
             if (i % 3 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"));
+                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"));
             }
             else if (i % 4 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin("instructor1"));
+                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin(TEST_PREFIX + "instructor1"));
             }
         }
         StatsForDashboardDTO statsForDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
@@ -114,7 +114,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetStatsForExamExerciseAssessmentDashboard() throws Exception {
-        var user = database.getUserByLogin("student1");
+        var user = database.getUserByLogin(TEST_PREFIX + "student1");
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
         course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
         var exam = examRepository.findByCourseId(course.getId()).get(0);
@@ -135,10 +135,10 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFilterOutExercisesThatUserShouldNotSee() throws Exception {
-        assertThrows(EntityNotFoundException.class, () -> exerciseService.findOneWithDetailsForStudents(Long.MAX_VALUE, database.getUserByLogin("student1")));
+        assertThrows(EntityNotFoundException.class, () -> exerciseService.findOneWithDetailsForStudents(Long.MAX_VALUE, database.getUserByLogin(TEST_PREFIX + "student1")));
         var course = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false).get(0); // the course with exercises
         var exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
-        var student = userRepository.getUserWithGroupsAndAuthorities("student1");
+        var student = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "student1");
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(Set.of(), student)).isEmpty();
         var exercise = exercises.iterator().next();
         exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
@@ -146,7 +146,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), student)).hasSize(exercises.size() - 1);
 
-        var tutor = userRepository.getUserWithGroupsAndAuthorities("tutor1");
+        var tutor = userRepository.getUserWithGroupsAndAuthorities(TEST_PREFIX + "tutor1");
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), tutor)).hasSize(exercises.size());
 
         course.setOnlineCourse(true);
@@ -495,7 +495,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_exerciseWithTutorParticipation() throws Exception {
         var exercise = database.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
-        var tutorParticipation = new TutorParticipation().tutor(database.getUserByLogin("tutor1")).assessedExercise(exercise)
+        var tutorParticipation = new TutorParticipation().tutor(database.getUserByLogin(TEST_PREFIX + "tutor1")).assessedExercise(exercise)
                 .status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationRepo.save(tutorParticipation);
         var textExercise = request.get("/api/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, TextExercise.class);
@@ -673,9 +673,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testGetLatestDueDate() throws Exception {
         Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
-        database.createAndSaveParticipationForExercise(exercise, "student1");
-        StudentParticipation studentParticipation2 = database.createAndSaveParticipationForExercise(exercise, "student2");
-        StudentParticipation studentParticipation3 = database.createAndSaveParticipationForExercise(exercise, "student3");
+        database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        StudentParticipation studentParticipation2 = database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
+        StudentParticipation studentParticipation3 = database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student3");
 
         studentParticipation2.setIndividualDueDate(exercise.getDueDate().plusHours(2));
         studentParticipation3.setIndividualDueDate(exercise.getDueDate().plusHours(4));
@@ -691,8 +691,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testGetLatestDueDateWhenNoIndividualDeadline() throws Exception {
         Course courseWithOneReleasedTextExercise = database.addCourseWithOneReleasedTextExercise();
         Exercise exercise = (Exercise) courseWithOneReleasedTextExercise.getExercises().toArray()[0];
-        database.createAndSaveParticipationForExercise(exercise, "student1");
-        database.createAndSaveParticipationForExercise(exercise, "student2");
+        database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
+        database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student2");
 
         ZonedDateTime latestDueDate = request.get("/api/exercises/" + exercise.getId() + "/latest-due-date", HttpStatus.OK, ZonedDateTime.class);
         assertThat(latestDueDate).isCloseTo(exercise.getDueDate(), within(1, ChronoUnit.SECONDS));
