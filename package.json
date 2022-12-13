@@ -145,7 +145,7 @@
         "jest-preset-angular": "12.2.3",
         "lint-staged": "13.1.0",
         "merge-jsons-webpack-plugin": "2.0.1",
-        "ng-mocks": "14.5.0",
+        "ng-mocks": "14.4.0",
         "prettier": "2.8.1",
         "sass": "1.56.2",
         "ts-jest": "29.0.3",
