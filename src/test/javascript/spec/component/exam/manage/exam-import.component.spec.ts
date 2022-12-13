@@ -4,7 +4,7 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -48,7 +48,6 @@ describe('Exam Import Component', () => {
             declarations: [
                 ExamImportComponent,
                 ExamExerciseImportComponent,
-                MockComponent(NgbPagination),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
