@@ -8,7 +8,6 @@ import { ButtonComponent } from 'app/shared/components/button.component';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { of } from 'rxjs';
@@ -31,8 +30,6 @@ describe('ProgrammingExerciseImportComponent', () => {
                 ProgrammingExerciseImportComponent,
                 MockPipe(ExerciseCourseTitlePipe),
                 MockComponent(ButtonComponent),
-                MockComponent(NgbHighlight),
-                MockComponent(NgbPagination),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
             ],

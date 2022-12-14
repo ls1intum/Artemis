@@ -37,7 +37,6 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { SafeResourceUrlPipe } from 'app/shared/pipes/safe-resource-url.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
-import { NgbCollapse, NgbDropdown, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PieChartModule } from '@swimlane/ngx-charts';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
 
@@ -86,9 +85,6 @@ describe('Guided tour integration', () => {
                 MockPipe(FindLanguageFromKeyPipe),
                 MockDirective(ActiveMenuDirective),
                 MockDirective(TranslateDirective),
-                MockDirective(NgbTooltip),
-                MockDirective(NgbCollapse),
-                MockDirective(NgbDropdown),
                 MockComponent(JhiConnectionWarningComponent),
             ],
             providers: [
