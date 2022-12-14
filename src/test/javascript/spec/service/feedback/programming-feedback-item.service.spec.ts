@@ -18,6 +18,7 @@ describe('ProgrammingFeedbackItemService', () => {
         feedback.text = SUBMISSION_POLICY_FEEDBACK_IDENTIFIER;
 
         const expected = new FeedbackItem();
+        expected.color = 'primary';
         expected.type = 'Submission Policy';
         expected.name = 'artemisApp.programmingExercise.submissionPolicy.title';
         expected.credits = 0;
@@ -61,7 +62,7 @@ describe('ProgrammingFeedbackItemService', () => {
 
         const expected = new FeedbackItem();
         expected.credits = 0;
-        expected.name = 'artemisApp.result.detail.feedback';
+        expected.name = 'artemisApp.result.detail.test.name';
         expected.type = 'Test';
 
         expect(service.create([feedback], false)).toEqual([expected]);
