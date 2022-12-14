@@ -34,15 +34,15 @@ class VersionRangesRequestConditionTest {
         List<VersionRange> list = Arrays.asList(getInstanceOfVersionRange(2), getInstanceOfVersionRange(3), getInstanceOfVersionRange(4));
         VersionRangesRequestCondition condition = new VersionRangesRequestCondition(testApiVersions, list);
 
-        DUMMY_REQUEST.setRequestURI("/api/v1");
+        DUMMY_REQUEST.setRequestURI("/api/v1/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isNull();
-        DUMMY_REQUEST.setRequestURI("/api/v2");
+        DUMMY_REQUEST.setRequestURI("/api/v2/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
-        DUMMY_REQUEST.setRequestURI("/api/v3");
+        DUMMY_REQUEST.setRequestURI("/api/v3/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
-        DUMMY_REQUEST.setRequestURI("/api/v4");
+        DUMMY_REQUEST.setRequestURI("/api/v4/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
-        DUMMY_REQUEST.setRequestURI("/api/start");
+        DUMMY_REQUEST.setRequestURI("/api/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
     }
 
@@ -51,17 +51,17 @@ class VersionRangesRequestConditionTest {
         List<VersionRange> list = Arrays.asList(getInstanceOfVersionRange(2, 2), getInstanceOfVersionRange(4, 4));
         VersionRangesRequestCondition condition = new VersionRangesRequestCondition(testApiVersions, list);
 
-        DUMMY_REQUEST.setRequestURI("/api/v1");
+        DUMMY_REQUEST.setRequestURI("/api/v1/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isNull();
-        DUMMY_REQUEST.setRequestURI("/api/v2");
+        DUMMY_REQUEST.setRequestURI("/api/v2/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
-        DUMMY_REQUEST.setRequestURI("/api/v3");
+        DUMMY_REQUEST.setRequestURI("/api/v3/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isNull();
-        DUMMY_REQUEST.setRequestURI("/api/v4");
+        DUMMY_REQUEST.setRequestURI("/api/v4/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
-        DUMMY_REQUEST.setRequestURI("/api/v5");
+        DUMMY_REQUEST.setRequestURI("/api/v5/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isNull();
-        DUMMY_REQUEST.setRequestURI("/api/start");
+        DUMMY_REQUEST.setRequestURI("/api/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isNull();
     }
 
@@ -70,33 +70,33 @@ class VersionRangesRequestConditionTest {
         List<VersionRange> list = Arrays.asList(getInstanceOfVersionRange(2), getInstanceOfVersionRange(4, 4));
         VersionRangesRequestCondition condition = new VersionRangesRequestCondition(testApiVersions, list);
 
-        DUMMY_REQUEST.setRequestURI("/api/v1");
+        DUMMY_REQUEST.setRequestURI("/api/v1/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isNull();
-        DUMMY_REQUEST.setRequestURI("/api/v2");
+        DUMMY_REQUEST.setRequestURI("/api/v2/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
-        DUMMY_REQUEST.setRequestURI("/api/v3");
+        DUMMY_REQUEST.setRequestURI("/api/v3/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
-        DUMMY_REQUEST.setRequestURI("/api/v4");
+        DUMMY_REQUEST.setRequestURI("/api/v4/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
-        DUMMY_REQUEST.setRequestURI("/api/v5");
+        DUMMY_REQUEST.setRequestURI("/api/v5/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
-        DUMMY_REQUEST.setRequestURI("/api/start");
+        DUMMY_REQUEST.setRequestURI("/api/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
 
         list = Arrays.asList(getInstanceOfVersionRange(2, 2), getInstanceOfVersionRange(4));
         condition = new VersionRangesRequestCondition(testApiVersions, list);
 
-        DUMMY_REQUEST.setRequestURI("/api/v1");
+        DUMMY_REQUEST.setRequestURI("/api/v1/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isNull();
-        DUMMY_REQUEST.setRequestURI("/api/v2");
+        DUMMY_REQUEST.setRequestURI("/api/v2/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
-        DUMMY_REQUEST.setRequestURI("/api/v3");
+        DUMMY_REQUEST.setRequestURI("/api/v3/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isNull();
-        DUMMY_REQUEST.setRequestURI("/api/v4");
+        DUMMY_REQUEST.setRequestURI("/api/v4/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
-        DUMMY_REQUEST.setRequestURI("/api/v5");
+        DUMMY_REQUEST.setRequestURI("/api/v5/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
-        DUMMY_REQUEST.setRequestURI("/api/start");
+        DUMMY_REQUEST.setRequestURI("/api/test");
         assertThat(condition.getMatchingCondition(DUMMY_REQUEST)).isSameAs(condition);
     }
 
