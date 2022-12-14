@@ -60,6 +60,8 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
             password,
             rememberMe: true,
         },
+        log: false,
+        failOnStatusCode: false,
     }).then((response) => {
         expect(response.status).to.equal(200);
         if (url) {

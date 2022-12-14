@@ -8,7 +8,7 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
 ENV spring.profiles.active ""
 
 RUN echo "Installing needed dependencies" \
-  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
+  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget unzip \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
@@ -38,7 +38,7 @@ WORKDIR /opt/artemis
 ARG WAR_PATH=build/libs
 COPY $WAR_PATH/*.war Artemis.war
 
-COPY bootstrap.sh /bootstrap.sh
+COPY bootstrap-coverage.sh /bootstrap.sh
 
 RUN chmod +x /bootstrap.sh \
   && useradd -ms /bin/bash artemis
@@ -50,6 +50,6 @@ VOLUME ["/opt/artemis/config"]
 VOLUME ["/opt/artemis/data"]
 VOLUME ["/opt/artemis/public/content"]
 
-EXPOSE 8080
+EXPOSE 8080 6300
 
 ENTRYPOINT ["/bin/bash", "/bootstrap.sh"]
