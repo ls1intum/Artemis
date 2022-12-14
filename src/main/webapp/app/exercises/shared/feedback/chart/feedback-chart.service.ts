@@ -92,10 +92,10 @@ export class FeedbackChartService {
      * Sets credits in nodes to absolute value
      */
     private absCredits = (feedbackNodes: FeedbackNode[]) => {
-        return feedbackNodes.map((node) => {
-            node.credits = Math.abs(node.credits ?? 0);
-            return node;
-        });
+        return feedbackNodes.map((node) => ({
+            ...node,
+            credits: Math.abs(node.credits ?? 0),
+        }));
     };
 
     /*
