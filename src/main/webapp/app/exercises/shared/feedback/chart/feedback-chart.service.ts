@@ -2,7 +2,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { Exercise } from 'app/entities/exercise.model';
-import { round } from 'app/shared/util/utils';
+import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Injectable } from '@angular/core';
 import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-data';
 
@@ -18,7 +18,7 @@ export class FeedbackChartService {
                 name: 'scores',
                 series: summarizedNodes.map((node: FeedbackNode) => ({
                     name: node.name,
-                    value: this.calculatePercentage(node, exercise.maxPoints!),
+                    value: this.calculatePercentage(node, exercise),
                 })),
             },
         ];
@@ -71,6 +71,7 @@ export class FeedbackChartService {
             };
         });
     };
+
     /*
      * Separates a list of feedback nodes by node credits. Has runtime of O(3n)
      * @param feedbackNodes
@@ -108,11 +109,6 @@ export class FeedbackChartService {
         }));
     };
 
-    private roundToDecimals = (i: number, n: number) => {
-        const f = 10 ** n;
-        return round(i, f);
-    };
-
     private capCredits = (credits: number, maxCredits?: number): number => {
         // no maxCredits or credits and maxCredits do not have the same sign;
         if (!maxCredits || credits * maxCredits < 0) {
@@ -124,8 +120,8 @@ export class FeedbackChartService {
         return Math.sign(credits) * Math.min(absCredits, absMaxCredits);
     };
 
-    private calculatePercentage = (node: FeedbackNode, maxPoints: number) => {
+    private calculatePercentage = (node: FeedbackNode, exercise: Exercise) => {
         const appliedCredits = this.capCredits(node.credits ?? 0, node.maxCredits);
-        return this.roundToDecimals((appliedCredits / maxPoints) * 100, 2);
+        return roundScorePercentSpecifiedByCourseSettings(appliedCredits / exercise.maxPoints!, exercise.course);
     };
 }
