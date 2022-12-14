@@ -14,14 +14,37 @@ public class LectureUnitSplitDTO {
 
     public String version;
 
+    public String startPage;
+
+    public String endPage;
+
     public LectureUnitSplitDTO() {
     }
 
-    public LectureUnitSplitDTO(String attachmentName, String description, ZonedDateTime releaseDate, String version) {
+    public LectureUnitSplitDTO(String attachmentName, String description, byte[] file, ZonedDateTime releaseDate, String version, String startPage, String endPage) {
         this.attachmentName = attachmentName;
         this.description = description;
+        this.file = file;
         this.releaseDate = releaseDate;
         this.version = version;
+        this.startPage = startPage;
+        this.endPage = endPage;
+    }
+
+    public String getStartPage() {
+        return startPage;
+    }
+
+    public void setStartPage(String startPage) {
+        this.startPage = startPage;
+    }
+
+    public String getEndPage() {
+        return endPage;
+    }
+
+    public void setEndPage(String endPage) {
+        this.endPage = endPage;
     }
 
     public String getAttachmentName() {

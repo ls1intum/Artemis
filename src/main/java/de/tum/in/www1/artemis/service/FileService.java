@@ -1020,6 +1020,8 @@ public class FileService implements DisposableBean {
             newLectureUnit.setFile(outputStream.toByteArray());
             newLectureUnit.setAttachmentName(doc.getDocumentInformation().getTitle());
             newLectureUnit.setDescription(doc.getDocumentInformation().getSubject());
+            newLectureUnit.setStartPage(doc.getDocumentInformation().getCustomMetadataValue("startPage"));
+            newLectureUnit.setEndPage(doc.getDocumentInformation().getCustomMetadataValue("endPage"));
             units.add(newLectureUnit);
             outputStream.reset();
             doc.close();
@@ -1083,7 +1085,6 @@ public class FileService implements DisposableBean {
             }
             newDocument.addPage(pdfStripper.getCurrentPage());
         }
-        document.close();
         return newDocument;
     }
 
@@ -1107,7 +1108,7 @@ public class FileService implements DisposableBean {
             if (slideText.contains("Outline")) {
                 outlineCount++;
 
-                outlineMap.put(outlineCount, new Tuple<>(index, document.getNumberOfPages()));
+                outlineMap.put(outlineCount, new Tuple<>((outlineCount == 1) ? 1 : index, document.getNumberOfPages()));
                 if (outlineCount > 1) {
                     int previousOutlineCount = outlineCount - 1;
                     int previousStart = outlineMap.get(previousOutlineCount).x();
@@ -1133,6 +1134,8 @@ public class FileService implements DisposableBean {
                 pdDocumentInformation.setTitle("unitFileName:" + k);
                 pdDocumentInformation.setSubject("Description test:" + k);
                 pdDocumentInformation.setKeywords((v.x() + ":" + v.y()));
+                pdDocumentInformation.setCustomMetadataValue("startPage", v.x().toString());
+                pdDocumentInformation.setCustomMetadataValue("endPage", v.y().toString());
                 unit.setDocumentInformation(pdDocumentInformation);
                 unit.addPage(pdfStripper.getCurrentPage());
                 units.add(unit);
