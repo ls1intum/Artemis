@@ -5,6 +5,7 @@ import java.util.Set;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -29,6 +30,8 @@ public class GradingScale extends DomainObject {
 
     public static final String DEFAULT_NO_PARTICIPATION_GRADE = "X";  // This should be the same as the same named constant in grading-scale.model.ts
 
+    private static final int MAX_SPECIAL_GRADE_SIZE = 100;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "grade_type")
     private GradeType gradeType = GradeType.NONE; // default
@@ -37,9 +40,11 @@ public class GradingScale extends DomainObject {
     @Column(name = "bonus_strategy")
     private BonusStrategy bonusStrategy;
 
+    @Size(max = MAX_SPECIAL_GRADE_SIZE)
     @Column(name = "plagiarism_grade")
     private String plagiarismGrade;
 
+    @Size(max = MAX_SPECIAL_GRADE_SIZE)
     @Column(name = "no_participation_grade")
     private String noParticipationGrade;
 
