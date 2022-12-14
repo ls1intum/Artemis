@@ -1,9 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { ArtemisTestModule } from '../../test.module';
+import { ArtemisTestModule } from '../../../test.module';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -12,21 +12,21 @@ import { BuildLogService } from 'app/exercises/programming/shared/service/build-
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { SubmissionType } from 'app/entities/submission.model';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
-import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
+import { TranslatePipeMock } from '../../../helpers/mocks/service/mock-translate.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { FeedbackCollapseComponent } from 'app/exercises/shared/feedback/collapse/feedback-collapse.component';
-import { NgbActiveModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { BarChartModule } from '@swimlane/ngx-charts';
 import { Course } from 'app/entities/course.model';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 
-describe('ResultDetailComponent', () => {
+describe('FeedbackComponent', () => {
     let comp: FeedbackComponent;
     let fixture: ComponentFixture<FeedbackComponent>;
     let debugElement: DebugElement;
@@ -162,7 +162,7 @@ describe('ResultDetailComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(BarChartModule)],
-            declarations: [FeedbackComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockComponent(FeedbackCollapseComponent), MockDirective(NgbTooltip)],
+            declarations: [FeedbackComponent, TranslatePipeMock, MockPipe(ArtemisDatePipe), MockComponent(FeedbackCollapseComponent)],
             providers: [MockProvider(NgbActiveModal), MockProvider(ResultService), MockProvider(BuildLogService), MockProvider(ProfileService)],
         })
             .compileComponents()
@@ -355,59 +355,4 @@ describe('ResultDetailComponent', () => {
         expect(comp.loadingFailed).toBeTrue();
         expect(comp.isLoading).toBeFalse();
     });
-
-    it('should only show the first line of feedback as preview', () => {
-        const feedback: Feedback = {
-            text: 'Summary',
-            detailText: 'Multi\nLine\nText',
-            credits: 0,
-        };
-
-        const expectedFeedbackItem: FeedbackItem = {
-            type: 'Feedback',
-            name: 'artemisApp.result.detail.feedback',
-            title: feedback.text,
-            text: feedback.detailText,
-            positive: undefined,
-            credits: 0,
-        };
-
-        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.QUIZ);
-    });
-
-    it('should shorten the preview text if it is long', () => {
-        const feedback: Feedback = {
-            text: 'Summary',
-            detailText: '0'.repeat(400),
-            credits: 0,
-        };
-
-        const expectedFeedbackItem: FeedbackItem = {
-            type: 'Feedback',
-            name: 'artemisApp.result.detail.feedback',
-            title: feedback.text,
-            text: feedback.detailText,
-            positive: undefined,
-            credits: 0,
-        };
-
-        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.MODELING);
-
-        // the first line should also be shortened if there is more feedback afterwards
-        feedback.detailText = '0'.repeat(400) + '\nAdditional Line\n' + '1'.repeat(400);
-        expectedFeedbackItem.text = feedback.detailText;
-        shouldGenerateFeedbackItem(feedback, expectedFeedbackItem, ExerciseType.MODELING);
-    });
-
-    const shouldGenerateFeedbackItem = (feedback: Feedback, expectedFeedbackItem: FeedbackItem, exerciseType: ExerciseType = ExerciseType.PROGRAMMING, showTestDetails = true) => {
-        comp.exerciseType = exerciseType;
-        comp.result.feedbacks = [feedback];
-        comp.showTestDetails = showTestDetails;
-
-        comp.ngOnInit();
-
-        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
-        expect(comp.feedbackItemNodes).toEqual([expectedFeedbackItem]);
-        expect(comp.isLoading).toBeFalse();
-    };
 });
