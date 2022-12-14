@@ -5,12 +5,15 @@ import static de.tum.in.www1.artemis.versioning.VersionRangeFactory.getInstanceO
 import static de.tum.in.www1.artemis.versioning.VersionRangeService.versionRangeToIntegerList;
 
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.mvc.condition.RequestCondition;
 
 import de.tum.in.www1.artemis.exception.ApiVersionRangeNotValidException;
@@ -19,6 +22,8 @@ import de.tum.in.www1.artemis.exception.ApiVersionRangeNotValidException;
  * A request condition for {@link VersionRanges} controlling a set of {@link VersionRange}s.
  */
 public class VersionRangesRequestCondition implements RequestCondition<VersionRangesRequestCondition> {
+
+    private final Logger log = LoggerFactory.getLogger(VersionRangesRequestCondition.class);
 
     private final Set<VersionRange> ranges;
 
@@ -79,7 +84,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
     }
 
     /**
-     * Attempts to combine two {@link VersionRangesRequestCondition}s into one.
+     * Combines two {@link VersionRangesRequestCondition}s into one.
      *
      * @param other the condition to combine with.
      * @return the combined condition.
@@ -276,26 +281,24 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
      */
     public boolean versionRangeMatchesRequest(@NotNull VersionRange range, @NotNull HttpServletRequest request) {
         String path = request.getRequestURI();
-        if (!path.matches("^/?api/.*")) {
+        // Expect optional leading slash, "api/", optional numerical version with a "v" prefix and some path afterwards
+        var pattern = Pattern.compile("^/?api(/v(\\d*))?/.+$");
+        var matcher = pattern.matcher(path);
+        if (!matcher.matches()) {
             return false;
         }
-        String urlString = path.startsWith("/") ? path.substring(1) : path;
-        String[] parts = urlString.split("/");
-        if (parts.length < 2) {
-            // No path specified "/api"
-            return false;
-        }
-
-        if (parts[1].matches("^v\\d*$")) {
-            int requestedVersion = Integer.parseInt(parts[1].substring(1));
-            return checkVersion(range, requestedVersion);
-        }
-        else {
-            // no version found, assume the latest version
+        if (matcher.groupCount() == 0) {
+            // No version found, assume the latest version
             int latestVersion = apiVersions.get(apiVersions.size() - 1);
             return checkVersion(range, latestVersion);
         }
+        else if (matcher.groupCount() == 2) {
+            int requestedVersion = Integer.parseInt(matcher.group(2));
+            return checkVersion(range, requestedVersion);
+        }
 
+        log.error("Request for path {} matches request pattern but has illegal pattern group count {}.", path, matcher.groupCount());
+        return false;
     }
 
     /**
