@@ -1,4 +1,3 @@
-#TODO: describe process in docs and inline also that you can have multiple application-local-SETUP.yml files and then just copy to the real one for switching ;)
 # ===================================================================
 # Configuration template for application-local.yml
 #
