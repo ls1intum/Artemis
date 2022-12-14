@@ -5,8 +5,10 @@
 services:
     artemis-app:
         container_name: artemis-app
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
         # TODO: add support for armv8
-        platform: linux/x86_64
+        platform: amd64
         # TODO: add hint in documentation or here: build vs pre-built image from registry
         # TODO: change to develop again before merging
         image: ghcr.io/ls1intum/artemis:pr-5915
@@ -14,20 +16,21 @@ services:
             context: ../../../..
             dockerfile: src/main/docker/artemis/Dockerfile
             pull: true
-        pull_policy: always
-        # maps application-local.yml to the container as this is the override file for all other configs
-        # (the default configs are packaged in the war file and don't need to be mapped here)
-        # TODO: check how the non-existent application-local.yml problem can be solved
         volumes:
             - artemis-data:/opt/artemis/data
-            - ../../resources/config/application-local.yml:/opt/artemis/config/application-local.yml:ro
-        # environments can also be used for custom overrides (alternative to application-local.yml volume)
+        env_file:
+            - ../../resources/config/docker-application-local.env
+        # environments can also be used for custom overrides (alternative to application-local.yml)
         # the following environments are necessary for docker images orchestrated by docker compose
         environment:
             _JAVA_OPTIONS: -Xmx5120m -Xms2560m
-            SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,prod,docker,local
+            SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,prod,docker
         # TODO: add a restart at a certain stage for prod systems for sure, not sure about dev systems?, discuss
         # restart: unless-stopped
+        healthcheck:
+            test: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
+            start_period: 300s
+            interval: 1s
         ports:
             - 8080:8080
         networks:

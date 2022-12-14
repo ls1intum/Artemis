@@ -15,11 +15,12 @@ services:
             && /run_artemis.sh'
         environment:
             JAVA_REMOTE_DEBUG: true
-            SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,dev,docker,local
+            SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,dev,docker
         volumes:
             - ./scripts/wait-for.sh:/usr/local/bin/wait-for:ro
         depends_on:
-            - mysql
+            mysql:
+                condition: service_healthy
     mysql:
         extends:
             file: mysql.yml

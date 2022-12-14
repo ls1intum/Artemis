@@ -1,5 +1,5 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# Artemis-Server-Client-MySQL Setup
+# Artemis-Server-Client-MySQL Setup (CURRENTLY NOT MAINTAINED)
 # ----------------------------------------------------------------------------------------------------------------------
 
 # NOTE: this docker compose file starts the artemis-server (as jar file) and the artemis-client in separate containers.

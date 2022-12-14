@@ -289,20 +289,15 @@ You can find the latest Artemis Dockerfile at ``src/main/docker/artemis/Dockerfi
 * The Dockerfile has multiple stages: A `build stage`, building the ``.war`` file, and a `runtime stage` with minimal
   dependencies just for running artemis.
 
-.. TODO: add defaults and recheck config volume to docker compose base service and Dockerfile
-   also recheck if the envs are still necessary
-
 * The Dockerfile defines three Docker volumes (at the specified paths inside the container):
 
     * **/opt/artemis/config:**
 
       This will be used to store additional configuration of Artemis in YAML files.
-      ``src/main/resources/application-local.yml`` for instance is such an additional configuration file.
-      It should contain all custom configurations.
+      The usage is optional and we recommend using the environment files for overriding your custom configurations
+      instead of using ``src/main/resources/application-local.yml`` as such an additional configuration file.
       The other configurations like ``src/main/resources/application.yml``, ... are built into the ``.war`` file and
       therefore are not needed in this directory.
-
-      .. TODO: add better description here when this problem is solved how we handle configs
 
       .. tip::
         Instead of mounting this config directory, you can also use environment variables for the configuration as
@@ -639,8 +634,6 @@ HTTP. We need to extend the configuration in the file
 Alternative: Docker Compose Setup
 ---------------------------------
 
-.. TODO: fix the implementation: currently you still have to create an empty /src/main/resources/application-local.yaml
-
 Getting Started with Docker Compose
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -658,8 +651,11 @@ Getting Started with Docker Compose
    .. hint::
      Make sure that Docker Desktop has enough memory (~ 6GB). To adapt it, go to ``Settings -> Resources``.
 
-2. Run ``docker compose pull && docker compose up`` in the project rootzs
-3. Open the Artemis instance in your browser at http://localhost:8080
+2. Check that all local network ports used by Docker Compose are free (e.g. you haven't started a local MySQL server
+   when you would like to start a Docker Compose instance of mysql)
+3. Run ``docker compose pull && docker compose up`` in the project root
+4. Open the Artemis instance in your browser at http://localhost:8080
+5. Run ``docker compose down`` in the project root to stop and remove the docker containers
 
 .. tip::
   The first ``docker compose pull`` command is just necessary the first time as extra step, as otherwise Artemis will be
@@ -693,8 +689,6 @@ Two example commands to run such setups:
 
   docker compose -f src/main/docker/atlassian.yml up
   docker compose -f src/main/docker/mysql.yml -f src/main/docker/gitlab-jenkins.yml up
-
-.. TODO: fix the implementation: use env file instead of application-local.yml
 
 .. tip::
   There is also a single ``docker-compose.yml`` in the project root which mirrors the setup of ``artemis-prod-mysql.yml``.
@@ -766,6 +760,7 @@ Other useful commands
 - Stop a service: ``docker compose stop <name of the service>`` (restart via
   ``docker compose start <name of the service>``)
 - Restart a service: ``docker compose restart <name of the service>``
+- Remove all local Artemis Docker images: ``docker rmi $(docker images -q ghcr.io/ls1intum/artemis)``
 
 ------------------------------------------------------------------------------------------------------------------------
 

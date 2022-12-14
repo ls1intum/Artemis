@@ -19,6 +19,12 @@ services:
         # mbind: Operation not permitted workaround for docker compose (see https://github.com/docker-library/mysql/issues/303)
         cap_add:
             - SYS_NICE  # CAP_SYS_NICE
+        healthcheck:
+            test: mysqladmin ping -h localhost
+            interval: 5s
+            timeout: 3s
+            retries: 30
+            start_period: 30s
         networks:
             - artemis
 

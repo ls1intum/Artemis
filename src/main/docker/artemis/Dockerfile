@@ -1,4 +1,15 @@
+#-----------------------------------------------------------------------------------------------------------------------
+# gradle dependecies caching stage
+#-----------------------------------------------------------------------------------------------------------------------
 #TODO: cache beforehand of the gradle dependencies which don't change often ...
+#FROM eclipse-temurin:17-jdk as gradle-cache
+#WORKDIR /opt/gradle-cache
+#ENV GRADLE_USER_HOME /opt/gradle-cache
+#COPY gradlew gradlew.bat /opt/java-code/
+#COPY build.gradle gradle.properties settings.gradle /opt/java-code/
+#COPY gradle/ /opt/java-code/gradle/
+#WORKDIR /opt/java-code
+#RUN ./gradlew -i --stacktrace --no-daemon clean build > /dev/null 2>&1 || true
 
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
@@ -11,14 +22,13 @@ WORKDIR /opt/artemis
 # maybe build dependencies before that could be more performant than copying everything at once
 # COPY src gradle gradlew  .
 COPY . .
-# TODO: would be obsolete after integration of PR5622
-ENV NODE_OPTIONS "--max_old_space_size=6144"
+
 RUN ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
 
 #-----------------------------------------------------------------------------------------------------------------------
 # runtime stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM eclipse-temurin:17-jre
+FROM eclipse-temurin:17-jre as runtime
 
 # TODO: do we need all of these? If so why? Or should we maybe declare them somewhere else?
 ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
@@ -28,8 +38,8 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
 # Specify profiles for Spring Boot
 ENV spring.profiles.active ""
 
-# Docker Compose: wget and netcat (service checks)
-# Artemis: wget(?), graphviz, locales
+# Docker Compose: wget (healthcheck docker compose)
+# Artemis: graphviz, locales
 # versions just pinned for reproducibility
 RUN echo "Installing needed dependencies" \
   && apt-get update && apt-get install -y --no-install-recommends locales=2.35-0ubuntu3.1 \
@@ -46,7 +56,6 @@ ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US.UTF-8
 
 # Create directories for volumes, create artemis user and set right owners
-# also create an empty application-local.yml file as placeholder to be overwritten with a bind volume mount
 RUN mkdir -p /opt/artemis/config /opt/artemis/data /opt/artemis/public/content \
   && useradd -Ums /bin/bash artemis \
   && chown -R artemis:artemis /opt/artemis

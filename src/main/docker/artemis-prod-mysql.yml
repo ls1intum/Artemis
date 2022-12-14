@@ -9,14 +9,9 @@ services:
         extends:
             file: ./artemis/artemis.yml
             service: artemis-app
-        command: >
-            /bin/sh -c
-            '/usr/local/bin/wait-for -t 0 artemis-mysql:3306
-            && /run_artemis.sh'
-        volumes:
-            - ./scripts/wait-for.sh:/usr/local/bin/wait-for:ro
         depends_on:
-            - mysql
+            mysql:
+                condition: service_healthy
     mysql:
         extends:
             file: mysql.yml
