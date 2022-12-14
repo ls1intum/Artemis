@@ -19,7 +19,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
-
 import { MockExerciseService } from '../../../../helpers/mocks/service/mock-exercise.service';
 import { conversationsOfUser1, messagesBetweenUser1User2, metisCourse } from '../../../../helpers/sample/metis-sample-data';
 import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-answer-post.service';
@@ -30,6 +29,7 @@ import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-
 import { MessagesComponent } from 'app/overview/course-messages/messages/messages.component';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 describe('MessagesComponent', () => {
     let component: MessagesComponent;
@@ -51,7 +51,7 @@ describe('MessagesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(InfiniteScrollModule)],
             declarations: [
                 MessagesComponent,
                 MockComponent(PostingThreadComponent),
