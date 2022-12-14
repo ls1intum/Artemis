@@ -96,7 +96,7 @@ test {
     testLogging.showStandardStreams = true
     reports.html.required = false
     minHeapSize = "1024m" // initial heap size
-    maxHeapSize = "2048m" // maximum heap size
+    maxHeapSize = "3072m" // maximum heap size
 }
 
 task testReport(type: TestReport) {
