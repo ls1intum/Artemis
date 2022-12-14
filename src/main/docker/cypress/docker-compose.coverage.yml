@@ -1,8 +1,9 @@
 version: '2.4'
 services:
     artemis-app:
-        args:
-            - BOOTSTRAP_SCRIPT=bootstrap-coverage.sh
+        build:
+            args:
+                - BOOTSTRAP_SCRIPT=bootstrap-coverage.sh
         ports:
             - ${SERVER_PORT}:${SERVER_PORT}
             - "6300:6300" # JaCoCo agent port
