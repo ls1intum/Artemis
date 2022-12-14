@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -13,7 +13,6 @@ import { MockReactionService } from '../../../../../helpers/mocks/service/mock-r
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../../../helpers/mocks/service/mock-account.service';
 import { EmojiData, EmojiModule } from '@ctrl/ngx-emoji-mart/ngx-emoji';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PickerModule } from '@ctrl/ngx-emoji-mart';
 import { DisplayPriority } from 'app/shared/metis/metis.util';
@@ -46,14 +45,7 @@ describe('PostReactionsBarComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule)],
-            declarations: [
-                PostReactionsBarComponent,
-                TranslatePipeMock,
-                MockPipe(ReactingUsersOnPostingPipe),
-                MockDirective(NgbTooltip),
-                MockComponent(FaIconComponent),
-                EmojiComponent,
-            ],
+            declarations: [PostReactionsBarComponent, TranslatePipeMock, MockPipe(ReactingUsersOnPostingPipe), MockComponent(FaIconComponent), EmojiComponent],
             providers: [
                 MockProvider(SessionStorageService),
                 { provide: MetisService, useClass: MetisService },
