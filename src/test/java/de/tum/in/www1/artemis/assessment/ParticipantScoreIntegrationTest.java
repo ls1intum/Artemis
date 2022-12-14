@@ -85,14 +85,26 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         this.database.addUsers(TEST_PREFIX, 5, 10, 0, 10);
         // Instructors should only be part of "participantscoreinstructor"
         for (int i = 1; i <= 10; i++) {
-            var tutor = database.getUserByLogin(TEST_PREFIX + "instructor" + i);
-            tutor.setGroups(Set.of("participantscoreinstructor"));
+            var instructor = database.getUserByLogin(TEST_PREFIX + "instructor" + i);
+            instructor.setGroups(Set.of("participantscoreinstructor"));
+            userRepository.save(instructor);
+        }
+        for (int i = 1; i <= 10; i++) {
+            var tutor = database.getUserByLogin(TEST_PREFIX + "tutor" + i);
+            tutor.setGroups(Set.of("participantscoretutor"));
             userRepository.save(tutor);
+        }
+        for (int i = 1; i <= 5; i++) {
+            var student = database.getUserByLogin(TEST_PREFIX + "student" + i);
+            student.setGroups(Set.of("participantscorestudent"));
+            userRepository.save(student);
         }
 
         // creating course
         Course course = this.database.createCourse();
         course.setInstructorGroupName("participantscoreinstructor");
+        course.setTeachingAssistantGroupName("participantscoretutor");
+        course.setStudentGroupName("participantscorestudent");
         courseRepository.save(course);
 
         Lecture lecture = new Lecture();

@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -40,6 +41,8 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+
+    private static final String TEST_PREFIX = "internalauth";
 
     @Autowired
     private PasswordService passwordService;
@@ -85,7 +88,9 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     private User student;
 
-    private static final String USERNAME = "student1";
+    private Course course;
+
+    private static final String USERNAME = TEST_PREFIX + "student1";
 
     private ProgrammingExercise programmingExercise;
 
@@ -95,8 +100,8 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     void setUp() {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
 
-        database.addUsers(1, 0, 0, 0);
-        var course = database.addCourseWithOneProgrammingExercise();
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        course = database.addCourseWithOneProgrammingExercise();
         database.addOnlineCourseConfigurationToCourse(course);
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
@@ -120,6 +125,16 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @AfterEach
     void teardown() {
+        // Set the student group to some other group because only one group can have the tutorialGroupStudents-group
+        SecurityUtils.setAuthorizationObject();
+        var tutorialCourse = courseRepository.findCourseByStudentGroupName(tutorialGroupStudents.get());
+        if (tutorialCourse != null) {
+            tutorialCourse.setStudentGroupName("non-tutorial-course");
+            tutorialCourse.setTeachingAssistantGroupName("non-tutorial-course");
+            tutorialCourse.setEditorGroupName("non-tutorial-course");
+            tutorialCourse.setInstructorGroupName("non-tutorial-course");
+            courseRepository.save(tutorialCourse);
+        }
         database.resetDatabase();
     }
 
@@ -128,9 +143,9 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         ltiLaunchRequest.setCustom_lookup_user_by_email(true);
         request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
 
-        final var user = userRepository.findAll().get(0);
-        final var ltiUser = ltiUserIdRepository.findAll().get(0);
-        final var ltiOutcome = ltiOutcomeUrlRepository.findAll().get(0);
+        final var user = database.getUserByLogin(USERNAME);
+        final var ltiUser = ltiUserIdRepository.findByUser(user).get();
+        final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).get();
         assertThat(ltiUser.getUser()).isEqualTo(user);
         assertThat(ltiUser.getLtiUserId()).isEqualTo(ltiLaunchRequest.getUser_id());
         assertThat(ltiOutcome.getUser()).isEqualTo(user);
@@ -173,6 +188,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @NotNull
     private User createUserWithRestApi(Set<Authority> authorities) throws Exception {
+        userRepository.findOneByLogin("user1").ifPresent(userRepository::delete);
         gitlabRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.mockGetUserID();
         database.addTutorialCourse();

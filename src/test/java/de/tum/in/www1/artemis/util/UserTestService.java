@@ -577,7 +577,7 @@ public class UserTestService {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
-        params.add("searchTerm", "");
+        params.add("searchTerm", TEST_PREFIX);
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
         params.add("authorities", "");
@@ -586,7 +586,7 @@ public class UserTestService {
         params.add("status", "");
         params.add("courseIds", "");
         List<UserDTO> users = request.getList("/api/users", HttpStatus.OK, UserDTO.class, params);
-        assertThat(users).hasSize((int) userRepository.count());
+        assertThat(users).hasSize(numberOfStudents + numberOfEditors + numberOfTutors + numberOfInstructors);
     }
 
     // Test

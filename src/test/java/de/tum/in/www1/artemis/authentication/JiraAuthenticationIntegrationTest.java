@@ -119,8 +119,9 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithAnonymousUser
     void launchLtiRequest_authViaEmail_success(String launchEmail) throws Exception {
         final var username = "mrrobot";
+        userRepository.findOneByLogin(username).ifPresent(userRepository::delete);
         final var firstName = "Elliot";
-        final var groups = Set.of("allsec", "security", ADMIN_GROUP_NAME, course.getInstructorGroupName(), course.getTeachingAssistantGroupName());
+        final var groups = Set.of("allsec", "security", ADMIN_GROUP_NAME, course.getInstructorGroupName(), course.getTeachingAssistantGroupName(), course.getEditorGroupName());
         final var email = LTI_USER_EMAIL;
         ltiLaunchRequest.setLis_person_contact_email_primary(launchEmail);
         jiraRequestMockProvider.mockGetUsernameForEmail(launchEmail, email, username);
