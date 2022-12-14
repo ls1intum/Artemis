@@ -1,12 +1,12 @@
-class StudentScoresForStudentStatistics {
+class StudentScores {
     absoluteScore: number;
     relativeScore: number;
     currentRelativeScore: number;
     presentationScore: number;
 }
 
-export class CourseScoresForStudentStatisticsDTO {
+export class CourseScoresDTO {
     maxPoints: number;
     reachablePoints: number;
-    studentScores: StudentScoresForStudentStatistics;
+    studentScores: StudentScores;
 }

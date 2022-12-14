@@ -11,22 +11,10 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseScoresForExamBonusSourceDTO(double maxPoints, double reachablePoints,
                                                 Integer presentationScoreThreshold,
-                                                List<StudentScoresForExamBonusSource> studentScores) {
-
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record StudentScoresForExamBonusSource(Long studentId, double absolutePoints, double relativeScore,
-                                                  double currentRelativeScore,
-                                                  int achievedPresentationScore,
-                                                  boolean presentationScorePassed,
-                                                  PlagiarismVerdict mostSeverePlagiarismVerdict) {
-
-        public double getAbsolutePointsEligibleForBonus() {
-            return presentationScorePassed ? absolutePoints : 0.0;
-        }
-    }
+                                                List<StudentScoresForExamBonusSourceDTO> studentScores) {
 
     public Map<Long, BonusSourceResultDTO> toBonusSourceResultMap() {
-        return studentScores.stream().collect(Collectors.toMap(StudentScoresForExamBonusSource::studentId, studentScore -> new BonusSourceResultDTO(studentScore.getAbsolutePointsEligibleForBonus(),
-            studentScore.mostSeverePlagiarismVerdict(), studentScore.achievedPresentationScore(), presentationScoreThreshold)));
+        return studentScores.stream().collect(Collectors.toMap(StudentScoresForExamBonusSourceDTO::getStudentId, studentScore -> new BonusSourceResultDTO(studentScore.getAbsolutePointsEligibleForBonus(),
+            studentScore.getMostSeverePlagiarismVerdict(), studentScore.getPresentationScore(), presentationScoreThreshold)));
     }
 }

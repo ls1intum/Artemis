@@ -1,19 +1,19 @@
 import { Injectable } from '@angular/core';
-import { CourseScoresForStudentStatisticsDTO } from 'app/course/course-scores-for-student-statistics-dto';
+import { CourseScoresDTO } from 'app/course/course-scores-dto';
 import { ExerciseType, ExerciseTypeTOTAL } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 
 @Injectable({ providedIn: 'root' })
 export class ScoresStorageService {
-    private storedScoresPerExerciseType: Map<number, Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresForStudentStatisticsDTO>> = new Map();
+    private storedScoresPerExerciseType: Map<number, Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO>> = new Map();
 
     private participationResults: Result[] = [];
 
-    getStoredScoresPerExerciseType(courseId: number): Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresForStudentStatisticsDTO> | undefined {
+    getStoredScoresPerExerciseType(courseId: number): Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO> | undefined {
         return this.storedScoresPerExerciseType.get(courseId);
     }
 
-    setStoredScoresPerExerciseType(courseId: number, scoresPerExerciseType: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresForStudentStatisticsDTO>): void {
+    setStoredScoresPerExerciseType(courseId: number, scoresPerExerciseType: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO>): void {
         this.storedScoresPerExerciseType.set(courseId, scoresPerExerciseType);
     }
 

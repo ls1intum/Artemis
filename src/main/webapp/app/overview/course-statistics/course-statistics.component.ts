@@ -550,7 +550,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
             const scoresPerExerciseTypeForCourse = this.scoresStorageService.getStoredScoresPerExerciseType(this.courseId);
             if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse[exerciseType]) {
                 if ([ScoreType.ABSOLUTE_SCORE, ScoreType.RELATIVE_SCORE, ScoreType.PRESENTATION_SCORE, ScoreType.CURRENT_RELATIVE_SCORE].includes(scoreType)) {
-                    return scoresPerExerciseTypeForCourse[exerciseType].studentScoreForStudentStatistics[scoreType];
+                    return scoresPerExerciseTypeForCourse[exerciseType].studentScores[scoreType];
                 }
                 return scoresPerExerciseTypeForCourse[exerciseType][scoreType];
             }

@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import de.tum.in.www1.artemis.web.rest.dto.CourseScoresForExamBonusSourceDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StudentScoresDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StudentScoresForExamBonusSourceDTO;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,18 +51,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @Test
-    @WithMockUser()
-    void calculateMaxAndReachablePoints() {
-        // Normal mit einigen exercises
-    }
-
-    @Test
-    @WithMockUser()
-    void calculateMaxAndReachablePointsEC1() {
-        // Für einen Edge Case (z.B. irgendwelche Points undefined?)
-    }
-
-    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoresForExamBonusSourceWithNotIncludedExercises() {
         var exerciseList = new ArrayList<>(course.getExercises());
@@ -77,13 +68,13 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         User student = userRepository.findOneByLogin("student1").get();
 
-        var courseResult = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course.getId(), List.of(student.getId()));
+        CourseScoresForExamBonusSourceDTO courseResult = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course.getId(), List.of(student.getId()));
         assertThat(courseResult.maxPoints()).isEqualTo(0.0);
         assertThat(courseResult.reachablePoints()).isEqualTo(0.0);
         assertThat(courseResult.studentScores()).hasSize(1);
-        assertThat(courseResult.studentScores().get(0).absolutePoints()).isEqualTo(0.0);
-        assertThat(courseResult.studentScores().get(0).relativeScore()).isEqualTo(0.0);
-        assertThat(courseResult.studentScores().get(0).currentRelativeScore()).isEqualTo(0.0);
+        assertThat(courseResult.studentScores().get(0).getAbsoluteScore()).isEqualTo(0.0);
+        assertThat(courseResult.studentScores().get(0).getRelativeScore()).isEqualTo(0.0);
+        assertThat(courseResult.studentScores().get(0).getCurrentRelativeScore()).isEqualTo(0.0);
         assertThat(courseResult.studentScores().get(0).getAbsolutePointsEligibleForBonus()).isEqualTo(0.0);
 
     }
@@ -130,17 +121,12 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         // Test with empty result set.
         studentParticipations.get(2).setResults(Collections.emptySet());
 
-        var studentScoreResult = courseScoreCalculationService.calculateCourseScoreForStudent(course, student.getId(), studentParticipations, 25.0, 5.0,
+        StudentScoresDTO studentScoreResult = courseScoreCalculationService.calculateCourseScoreForStudent(course, student.getId(), studentParticipations, 25.0, 5.0,
             new ArrayList<>());
-        assertThat(studentScoreResult.studentId()).isEqualTo(student.getId());
-        assertThat(studentScoreResult.relativeScore()).isEqualTo(16.0);
-        assertThat(studentScoreResult.absolutePoints()).isEqualTo(4.0);
-        assertThat(studentScoreResult.currentRelativeScore()).isEqualTo(80.0);
-        assertThat(studentScoreResult.achievedPresentationScore()).isEqualTo(0);
-        assertThat(studentScoreResult.presentationScorePassed()).isFalse();
-        assertThat(studentScoreResult.mostSeverePlagiarismVerdict()).isNull();
-        assertThat(studentScoreResult.getAbsolutePointsEligibleForBonus()).isEqualTo(0.0);
-
+        assertThat(studentScoreResult.getRelativeScore()).isEqualTo(16.0);
+        assertThat(studentScoreResult.getAbsoluteScore()).isEqualTo(4.0);
+        assertThat(studentScoreResult.getCurrentRelativeScore()).isEqualTo(80.0);
+        assertThat(studentScoreResult.getPresentationScore()).isEqualTo(0);
     }
 
     @Test

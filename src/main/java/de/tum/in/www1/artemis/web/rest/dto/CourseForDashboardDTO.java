@@ -15,6 +15,6 @@ import java.util.Map;
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public record CourseForDashboardDTO(Course course,
-                                    Map<String, CourseScoresForStudentStatisticsDTO> scoresPerExerciseType,
+                                    Map<String, CourseScoresDTO> scoresPerExerciseType,
                                     List<Result> participationResults) {
 }

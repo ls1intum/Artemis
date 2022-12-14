@@ -441,6 +441,7 @@ public class CourseResource {
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
+        log.info("CourseResource - getAllCoursesForDashboard: courses: {}", courses);
 
         List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
 

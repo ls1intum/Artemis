@@ -4,7 +4,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { Course } from 'app/entities/course.model';
-import { Exercise, ExerciseTypeTOTAL, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, ExerciseTypeTOTAL, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
@@ -13,6 +13,7 @@ import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils
 import { GraphColors } from 'app/entities/statistics.model';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { ScoreType } from 'app/shared/constants/score-type.constants';
+import { CourseScoresDTO } from 'app/course/course-scores-dto';
 
 @Component({
     selector: 'jhi-overview-course-card',
@@ -67,10 +68,12 @@ export class CourseCardComponent implements OnChanges {
                 this.nextExerciseTooltip = getIconTooltip(this.nextRelevantExercise!.type);
             }
 
-            const scoresPerExerciseTypeForCourse = this.scoresStorageService.getStoredScoresPerExerciseType(this.course.id!);
+            const scoresPerExerciseTypeForCourse: Map<ExerciseType | ExerciseTypeTOTAL, CourseScoresDTO> | undefined = this.scoresStorageService.getStoredScoresPerExerciseType(
+                this.course.id!,
+            );
             if (scoresPerExerciseTypeForCourse && scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL]) {
-                this.totalRelativeScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL].studentScoreForStudentStatistics[ScoreType.CURRENT_RELATIVE_SCORE];
-                this.totalAbsoluteScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL].studentScoreForStudentStatistics[ScoreType.ABSOLUTE_SCORE];
+                this.totalRelativeScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL].studentScores[ScoreType.CURRENT_RELATIVE_SCORE];
+                this.totalAbsoluteScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL].studentScores[ScoreType.ABSOLUTE_SCORE];
                 this.totalReachableScore = scoresPerExerciseTypeForCourse[ExerciseTypeTOTAL.TOTAL][ScoreType.REACHABLE_POINTS];
             }
 
