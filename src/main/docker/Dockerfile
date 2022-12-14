@@ -10,7 +10,7 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
 ENV spring.profiles.active ""
 
 RUN echo "Installing needed dependencies" \
-  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
+  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget unzip \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
