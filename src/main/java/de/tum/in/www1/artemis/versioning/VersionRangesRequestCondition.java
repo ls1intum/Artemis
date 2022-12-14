@@ -287,14 +287,16 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
         if (!matcher.matches()) {
             return false;
         }
-        if (matcher.groupCount() == 0) {
-            // No version found, assume the latest version
-            int latestVersion = apiVersions.get(apiVersions.size() - 1);
-            return checkVersion(range, latestVersion);
-        }
-        else if (matcher.groupCount() == 2) {
-            int requestedVersion = Integer.parseInt(matcher.group(2));
-            return checkVersion(range, requestedVersion);
+        if (matcher.groupCount() == 2) {
+            if (matcher.group(2) == null) {
+                // No version found, assume the latest version
+                int latestVersion = apiVersions.get(apiVersions.size() - 1);
+                return checkVersion(range, latestVersion);
+            }
+            else {
+                int requestedVersion = Integer.parseInt(matcher.group(2));
+                return checkVersion(range, requestedVersion);
+            }
         }
 
         log.error("Request for path {} matches request pattern but has illegal pattern group count {}.", path, matcher.groupCount());
