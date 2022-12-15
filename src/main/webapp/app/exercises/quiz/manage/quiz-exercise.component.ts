@@ -314,4 +314,18 @@ export class QuizExerciseComponent extends ExerciseComponent {
             () => {},
         );
     }
+
+    /**
+     * Check if quiz is editable
+     * @param quizExercise the quiz exercise which will be checked
+     * @return {boolean} true if the quiz is editable and false otherwise
+     */
+    isQuizEditable(quizExercise: QuizExercise): boolean {
+        if (quizExercise.quizMode === QuizMode.BATCHED) {
+            if (quizExercise.quizBatches?.length ?? 0 > 0) {
+                return false;
+            }
+        }
+        return quizExercise.status !== QuizStatus.ACTIVE && !this.quizIsOver(quizExercise);
+    }
 }
