@@ -294,7 +294,7 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param participation The programming exercise participation in which the submission was made (including a reference to the programming exercise)
      * @param branchName    The branch received from the CI system.
-     * @throws IllegalArgumentException Thrown if the result does not belong to the default branch of the exercise.
+     * @throws IllegalStateException Thrown if the result does not belong to the default branch of the exercise.
      */
     public void checkCorrectBranchElseThrow(ProgrammingExerciseParticipation participation, String branchName) {
         String participationDefaultBranch = null;
@@ -306,7 +306,7 @@ public class ProgrammingExerciseParticipationService {
         }
 
         if (!Objects.equals(branchName, participationDefaultBranch)) {
-            throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
+            throw new IllegalStateException("Result was produced for a different branch than the default branch");
         }
     }
 }
