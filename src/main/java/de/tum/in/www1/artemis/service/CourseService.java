@@ -137,15 +137,15 @@ public class CourseService {
     private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
-            ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
-            GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
-            UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
-            ExamRepository examRepository, CourseExamExportService courseExamExportService, LearningGoalService learningGoalService, GradingScaleRepository gradingScaleRepository,
-            StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
-            RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
-            ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository,
-            TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository) {
+                         ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
+                         GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
+                         UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
+                         ExamRepository examRepository, CourseExamExportService courseExamExportService, LearningGoalService learningGoalService, GradingScaleRepository gradingScaleRepository,
+                         StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorLeaderboardService tutorLeaderboardService,
+                         RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
+                         ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+                         ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository,
+                         TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -185,11 +185,10 @@ public class CourseService {
     /**
      * Note: The number of courses should not change
      *
-     * @param courses           the courses for which the participations should be fetched
-     * @param user              the user for which the participations should be fetched
-     * @param startTimeInMillis start time for logging purposes
+     * @param courses the courses for which the participations should be fetched
+     * @param user    the user for which the participations should be fetched
      */
-    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, long startTimeInMillis) {
+    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user) {
         Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
         List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises);
         if (participationsOfUserInExercises.isEmpty()) {
@@ -209,8 +208,7 @@ public class CourseService {
         Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
         int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
         int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
-        log.info("/courses/for-dashboard.done in {}ms for {} courses with {} individual exercises and {} team exercises for user {}",
-                System.currentTimeMillis() - startTimeInMillis, courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
+        log.info("/courses/for-dashboard: Fetching {} courses with {} individual exercises and {} team exercises for user {}", courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
     }
 
     /**
@@ -245,7 +243,7 @@ public class CourseService {
      */
     public List<Course> findAllActiveForUser(User user) {
         return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
-                .filter(course -> isCourseVisibleForUser(user, course)).toList();
+            .filter(course -> isCourseVisibleForUser(user, course)).toList();
     }
 
     /**
@@ -256,16 +254,16 @@ public class CourseService {
      */
     public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
         return courseRepository.findAllActiveWithLecturesAndExams().stream()
-                // filter old courses and courses the user should not be able to see
-                // skip old courses that have already finished
-                .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isCourseVisibleForUser(user, course))
-                .peek(course -> {
-                    course.setExercises(exerciseService.findAllForCourse(course, user));
-                    course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
-                    if (authCheckService.isOnlyStudentInCourse(course, user)) {
-                        course.setExams(examRepository.filterVisibleExams(course.getExams()));
-                    }
-                }).toList();
+            // filter old courses and courses the user should not be able to see
+            // skip old courses that have already finished
+            .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now())).filter(course -> isCourseVisibleForUser(user, course))
+            .peek(course -> {
+                course.setExercises(exerciseService.findAllForCourse(course, user));
+                course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
+                if (authCheckService.isOnlyStudentInCourse(course, user)) {
+                    course.setExams(examRepository.filterVisibleExams(course.getExams()));
+                }
+            }).toList();
     }
 
     private boolean isCourseVisibleForUser(User user, Course course) {
@@ -380,8 +378,7 @@ public class CourseService {
             ExerciseGroup exerciseGroup = exerciseGroupRepository.findByIdElseThrow(exercise.getExerciseGroup().getId());
             exercise.setExerciseGroup(exerciseGroup);
             return exerciseGroup.getExam().getCourse();
-        }
-        else {
+        } else {
             Course course = courseRepository.findByIdElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
             exercise.setCourse(course);
             return course;
@@ -409,9 +406,9 @@ public class CourseService {
      * This method first tries to find the user in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
-     * @param courseId      the id of the course
-     * @param studentDTOs   the list of students (with at least registration number)
-     * @param courseGroup   the group the students should be added to
+     * @param courseId    the id of the course
+     * @param studentDTOs the list of students (with at least registration number)
+     * @param courseGroup the group the students should be added to
      * @return the list of students who could not be registered for the course, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
      */
     public List<StudentDTO> registerUsersForCourseGroup(Long courseId, List<StudentDTO> studentDTOs, String courseGroup) {
@@ -449,8 +446,8 @@ public class CourseService {
      *
      * @param exerciseIds the ids to get the active students for
      * @param periodIndex the deviation from the current time
-     * @param length the length of the chart which we want to fill. This can either be 4 for the course overview or 17 for the course detail view
-     * @param date the date for which the active students' calculation should end (e.g. now)
+     * @param length      the length of the chart which we want to fill. This can either be 4 for the course overview or 17 for the course detail view
+     * @param date        the date for which the active students' calculation should end (e.g. now)
      * @return An Integer list containing active students for each index. An index corresponds to a week
      */
     public List<Integer> getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length, ZonedDateTime date) {
@@ -469,7 +466,7 @@ public class CourseService {
         // the endDate depends on whether the current week is shown. If it is, the endDate is the Sunday of the current week at 23:59.
         // If the timeframe was adapted (periodIndex != 0), the endDate needs to be adapted according to the deviation
         ZonedDateTime endDate = periodIndex != 0 ? localEndDate.atZone(zone).minusWeeks(length * (-periodIndex)).withHour(23).withMinute(59).withSecond(59)
-                : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
+            : localEndDate.atZone(zone).withHour(23).withMinute(59).withSecond(59);
         List<StatisticsEntry> outcome = courseRepository.getActiveStudents(exerciseIds, startDate, endDate);
         List<StatisticsEntry> distinctOutcome = removeDuplicateActiveUserRows(outcome, startDate);
         List<Integer> result = new ArrayList<>(Collections.nCopies(length, 0));
@@ -482,7 +479,7 @@ public class CourseService {
      * This method compares the values and returns a List<StatisticsEntry> without duplicated entries.
      *
      * @param activeUserRows a list of entries
-     * @param startDate the startDate of the period
+     * @param startDate      the startDate of the period
      * @return a List<StatisticsEntry> containing date and amount of active users in this period
      */
 
@@ -503,7 +500,7 @@ public class CourseService {
              * true, we shift the index the submission is sorted in to the calendar week of startDate, as this is the first bucket in the timeframe of interest.
              */
             var unifiedDateWeekBeforeStartIndex = startIndex == 1 ? Math.toIntExact(IsoFields.WEEK_OF_WEEK_BASED_YEAR.rangeRefinedBy(startDate.minusWeeks(1)).getMaximum())
-                    : startIndex - 1;
+                : startIndex - 1;
             index = index == unifiedDateWeekBeforeStartIndex ? startIndex : index;
             statisticsRepository.addUserToTimeslot(usersByDate, listElement, index);
         }
@@ -529,7 +526,7 @@ public class CourseService {
         Set<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(course.getId());
         // For the average score we need to only consider scores which are included completely or as bonus
         Set<Exercise> includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
-                .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
+            .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
         Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
         averageScoreForCourse = averageScoreForCourse != null ? averageScoreForCourse : 0.0;
         double currentMaxAverageScore = includedExercises.stream().map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
@@ -549,19 +546,19 @@ public class CourseService {
         long numberOfAssessments = assessments.inTime() + assessments.late();
 
         long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIds)
-                + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIds);
+            + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIds);
         long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(exerciseIds);
 
         long numberOfSubmissions = numberOfInTimeSubmissions + numberOfLateSubmissions;
         var currentPercentageAssessments = calculatePercentage(numberOfAssessments, numberOfSubmissions);
 
         long currentAbsoluteComplaints = complaintResponseRepository
-                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), COMPLAINT);
+            .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), COMPLAINT);
         long currentMaxComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(course.getId(), COMPLAINT);
         var currentPercentageComplaints = calculatePercentage(currentAbsoluteComplaints, currentMaxComplaints);
 
         long currentAbsoluteMoreFeedbacks = complaintResponseRepository
-                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), MORE_FEEDBACK);
+            .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(course.getId(), MORE_FEEDBACK);
         long currentMaxMoreFeedbacks = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(course.getId(), MORE_FEEDBACK);
         var currentPercentageMoreFeedbacks = calculatePercentage(currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks);
 
@@ -569,9 +566,9 @@ public class CourseService {
         var currentPercentageAverageScore = currentMaxAverageScore > 0.0 ? roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course) : 0.0;
 
         return new CourseManagementDetailViewDTO(numberOfStudentsInCourse, numberOfTeachingAssistantsInCourse, numberOfEditorsInCourse, numberOfInstructorsInCourse,
-                currentPercentageAssessments, numberOfAssessments, numberOfSubmissions, currentPercentageComplaints, currentAbsoluteComplaints, currentMaxComplaints,
-                currentPercentageMoreFeedbacks, currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks, currentPercentageAverageScore, currentAbsoluteAverageScore,
-                currentMaxAverageScore, activeStudents);
+            currentPercentageAssessments, numberOfAssessments, numberOfSubmissions, currentPercentageComplaints, currentAbsoluteComplaints, currentMaxComplaints,
+            currentPercentageMoreFeedbacks, currentAbsoluteMoreFeedbacks, currentMaxMoreFeedbacks, currentPercentageAverageScore, currentAbsoluteAverageScore,
+            currentMaxAverageScore, activeStudents);
     }
 
     private double calculatePercentage(double positive, double total) {
@@ -597,7 +594,7 @@ public class CourseService {
         stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
         // no examMode here, so it's the same as totalNumberOfAssessments
-        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = { totalNumberOfAssessments };
+        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = {totalNumberOfAssessments};
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
         stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
 
@@ -610,7 +607,7 @@ public class CourseService {
         final long numberOfComplaintResponses = complaintService.countComplaintResponsesByCourseId(course.getId());
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
         final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(),
-                course.getId());
+            course.getId());
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
         final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByCourseId(course.getId());
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
@@ -653,13 +650,11 @@ public class CourseService {
             if (archivedCoursePath.isPresent()) {
                 course.setCourseArchivePath(archivedCoursePath.get().getFileName().toString());
                 courseRepository.save(course);
-            }
-            else {
+            } else {
                 groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, NotificationType.COURSE_ARCHIVE_FAILED, exportErrors);
                 return;
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             var error = "Failed to create course archives directory " + courseArchivesDirPath + ": " + e.getMessage();
             exportErrors.add(error);
             log.info(error);
@@ -685,7 +680,7 @@ public class CourseService {
         // The Objects::nonNull is needed here because the relationship exam -> exercise groups is ordered and
         // hibernate sometimes adds nulls to in the list of exercise groups to keep the order
         Set<Exercise> examExercises = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId).stream().map(Exam::getExerciseGroups).flatMap(Collection::stream)
-                .filter(Objects::nonNull).map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
+            .filter(Objects::nonNull).map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toSet());
 
         var exercisesToCleanup = Stream.concat(course.getExercises().stream(), examExercises.stream()).collect(Collectors.toSet());
         exercisesToCleanup.forEach(exercise -> {
@@ -730,8 +725,8 @@ public class CourseService {
     /**
      * Search for users of all user groups by login or name in course
      *
-     * @param course        Course in which to search students
-     * @param nameOfUser    Login or name by which to search students
+     * @param course     Course in which to search students
+     * @param nameOfUser Login or name by which to search students
      * @return users whose login matched
      */
     public List<User> searchOtherUsersNameInCourse(Course course, String nameOfUser) {
@@ -761,6 +756,7 @@ public class CourseService {
 
     /**
      * checks if the given group exists in the authentication provider, only on production systems
+     *
      * @param group the group that should be available
      */
     public void checkIfGroupsExists(String group) {
@@ -776,6 +772,7 @@ public class CourseService {
     /**
      * If the corresponding group (student, tutor, editor, instructor) is not defined, this method will create the default group.
      * If the group is defined, it will check that the group exists
+     *
      * @param course the course (typically created on the client and not yet existing) for which the groups should be validated
      */
     public void createOrValidateGroups(Course course) {
@@ -787,42 +784,36 @@ public class CourseService {
             if (!StringUtils.hasText(course.getStudentGroupName())) {
                 course.setStudentGroupName(course.getDefaultStudentGroupName());
                 artemisAuthenticationProvider.createGroup(course.getStudentGroupName());
-            }
-            else {
+            } else {
                 checkIfGroupsExists(course.getStudentGroupName());
             }
 
             if (!StringUtils.hasText(course.getTeachingAssistantGroupName())) {
                 course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
                 artemisAuthenticationProvider.createGroup(course.getTeachingAssistantGroupName());
-            }
-            else {
+            } else {
                 checkIfGroupsExists(course.getTeachingAssistantGroupName());
             }
 
             if (!StringUtils.hasText(course.getEditorGroupName())) {
                 course.setEditorGroupName(course.getDefaultEditorGroupName());
                 artemisAuthenticationProvider.createGroup(course.getEditorGroupName());
-            }
-            else {
+            } else {
                 checkIfGroupsExists(course.getEditorGroupName());
             }
 
             if (!StringUtils.hasText(course.getInstructorGroupName())) {
                 course.setInstructorGroupName(course.getDefaultInstructorGroupName());
                 artemisAuthenticationProvider.createGroup(course.getInstructorGroupName());
-            }
-            else {
+            } else {
                 checkIfGroupsExists(course.getInstructorGroupName());
             }
-        }
-        catch (GroupAlreadyExistsException ex) {
+        } catch (GroupAlreadyExistsException ex) {
             throw new BadRequestAlertException(
-                    ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
-                            + "Please choose a different short name!",
-                    Course.ENTITY_NAME, "shortNameWasAlreadyUsed", true);
-        }
-        catch (ArtemisAuthenticationException ex) {
+                ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
+                    + "Please choose a different short name!",
+                Course.ENTITY_NAME, "shortNameWasAlreadyUsed", true);
+        } catch (ArtemisAuthenticationException ex) {
             // a specified group does not exist, notify the client
             throw new BadRequestAlertException(ex.getMessage(), Course.ENTITY_NAME, "groupNotFound", true);
         }
@@ -830,6 +821,7 @@ public class CourseService {
 
     /**
      * Special case for editors: checks if the default editor group needs to be created when old courses are edited
+     *
      * @param course the course for which the default editor group will be created if it does not exist
      */
     public void checkIfEditorGroupsNeedsToBeCreated(Course course) {
@@ -842,14 +834,12 @@ public class CourseService {
                 if (!artemisAuthenticationProvider.isGroupAvailable(course.getDefaultEditorGroupName())) {
                     artemisAuthenticationProvider.createGroup(course.getDefaultEditorGroupName());
                 }
-            }
-            catch (GroupAlreadyExistsException ex) {
+            } catch (GroupAlreadyExistsException ex) {
                 throw new BadRequestAlertException(
-                        ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
-                                + "Please choose a different short name!",
-                        Course.ENTITY_NAME, "shortNameWasAlreadyUsed", true);
-            }
-            catch (ArtemisAuthenticationException ex) {
+                    ex.getMessage() + ": One of the groups already exists (in the external user management), because the short name was already used in Artemis before. "
+                        + "Please choose a different short name!",
+                    Course.ENTITY_NAME, "shortNameWasAlreadyUsed", true);
+            } catch (ArtemisAuthenticationException ex) {
                 // a specified group does not exist, notify the client
                 throw new BadRequestAlertException(ex.getMessage(), Course.ENTITY_NAME, "groupNotFound", true);
             }
@@ -860,6 +850,7 @@ public class CourseService {
     /**
      * Determines end date for the displayed time span of active student charts
      * If the course end date is passed, only information until this date are collected and sent
+     *
      * @param course the corresponding course the active students should be collected
      * @return end date of the time span
      */
@@ -875,8 +866,9 @@ public class CourseService {
      * Determines the allowed time span for active student charts
      * The span time can be restricted if the temporal distance between the course start date
      * and the priorly determined end date is smaller than the intended time frame
-     * @param course the corresponding course the time frame should be computed
-     * @param endDate the priorly determined end date of the time span
+     *
+     * @param course      the corresponding course the time frame should be computed
+     * @param endDate     the priorly determined end date of the time span
      * @param maximalSize the normal time span size
      * @return the allowed time span size
      */
@@ -892,8 +884,9 @@ public class CourseService {
     /**
      * Auxiliary method that returns the number of weeks between two dates
      * Note: The calculation includes the week of the end date. This is needed for the active students line charts
+     *
      * @param startDate the start date of the period to calculate
-     * @param endDate the end date of the period to calculate
+     * @param endDate   the end date of the period to calculate
      * @return the number of weeks the period contains + one week
      */
     public long calculateWeeksBetweenDates(ZonedDateTime startDate, ZonedDateTime endDate) {
@@ -905,7 +898,7 @@ public class CourseService {
     /**
      * Helper method which removes some values from the user entity which are not needed in the client
      *
-     * @param usersInGroup  user whose variables are removed
+     * @param usersInGroup user whose variables are removed
      */
     private void removeUserVariables(List<User> usersInGroup) {
         usersInGroup.forEach(user -> {

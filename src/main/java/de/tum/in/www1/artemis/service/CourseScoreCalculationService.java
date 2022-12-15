@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
-import static java.util.stream.Collectors.toSet;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -9,10 +8,8 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
-import de.tum.in.www1.artemis.web.rest.CourseResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -49,14 +46,12 @@ public class CourseScoreCalculationService {
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
 
-    private final ParticipantScoreService participantScoreService;
 
     public CourseScoreCalculationService(StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
-                                         PlagiarismCaseRepository plagiarismCaseRepository, ParticipantScoreService participantScoreService) {
+                                         PlagiarismCaseRepository plagiarismCaseRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.exerciseRepository = exerciseRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
-        this.participantScoreService = participantScoreService;
     }
 
     private record MaxAndReachablePoints(double maxPoints, double reachablePoints) {
@@ -194,7 +189,7 @@ public class CourseScoreCalculationService {
      * @param userId the id of the user whose scores will be calculated
      * @return a map of the scores for the different exercise types (total, for programming exercises etc.). For each type, the map contains the max and reachable max points and the scores of the current user.
      */
-    public Map<String, CourseScoresDTO> calculateCourseScoresPerExerciseType(Course course, long userId) {
+    private Map<String, CourseScoresDTO> calculateCourseScoresPerExerciseType(Course course, long userId) {
 
         Map<String, CourseScoresDTO> scoresPerExerciseType = new HashMap<>();
 
@@ -258,8 +253,8 @@ public class CourseScoreCalculationService {
      * @param plagiarismCases            the plagiarism verdicts for the student for the participated exercises.
      * @return a StudentScore instance with the presentation score, relative and absolute points achieved by the given student and the most severe plagiarism verdict.
      */
-    public StudentScoresDTO calculateCourseScoreForStudent(Course course, Long studentId, List<StudentParticipation> participationsOfStudent, double maxPointsInCourse,
-                                                           double reachableMaxPointsInCourse, List<PlagiarismCase> plagiarismCases) {
+    private StudentScoresDTO calculateCourseScoreForStudent(Course course, Long studentId, List<StudentParticipation> participationsOfStudent, double maxPointsInCourse,
+                                                            double reachableMaxPointsInCourse, List<PlagiarismCase> plagiarismCases) {
 
         log.info("CourseScoreCalculationService - calculateCourseScoreForStudent: arguments: {}, {}, {}, {}, {}, {}", course, studentId, participationsOfStudent, maxPointsInCourse, reachableMaxPointsInCourse, plagiarismCases);
 
@@ -367,10 +362,10 @@ public class CourseScoreCalculationService {
             log.info("CourseScoreCalculationService - getResultForParticipation: resultsListSorted: {}", resultsList);
 
             long gracePeriodInSeconds = 10L;
-            if (dueDate == null || !dueDate.plusSeconds(gracePeriodInSeconds).isBefore(resultsList.get(0).getCompletionDate())) {
+            if (dueDate == null || (resultsList.get(0).getCompletionDate() != null && !dueDate.plusSeconds(gracePeriodInSeconds).isBefore(resultsList.get(0).getCompletionDate()))) {
                 // find the first result that is before the due date
                 chosenResult = resultsList.get(0);
-            } else if (dueDate.plusSeconds(gracePeriodInSeconds).isBefore(resultsList.get(0).getCompletionDate())) {
+            } else if (resultsList.get(0).getCompletionDate() == null || dueDate.plusSeconds(gracePeriodInSeconds).isBefore(resultsList.get(0).getCompletionDate())) {
                 chosenResult = new Result();
                 chosenResult.setScore(0.0);
             } else {

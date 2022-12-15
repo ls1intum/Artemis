@@ -420,8 +420,9 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user);
-        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
+        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
 
+        log.info("GET /courses/{}/for-dashboard took {}ms", courseId, System.currentTimeMillis() - start);
         return courseScoreCalculationService.getScoresAndParticipationResults(course, user.getId());
     }
 
@@ -440,7 +441,7 @@ public class CourseResource {
 
         // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
-        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
+        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user);
         log.info("CourseResource - getAllCoursesForDashboard: courses: {}", courses);
 
         List<CourseForDashboardDTO> coursesForDashboard = new ArrayList<>();
@@ -450,7 +451,7 @@ public class CourseResource {
             coursesForDashboard.add(courseForDashboard);
         }
 
-        log.info("get all courses for dashboard took {}ms", System.currentTimeMillis() - start);
+        log.info("GET /courses/for-dashboard took {}ms", System.currentTimeMillis() - start);
         return coursesForDashboard;
     }
 
