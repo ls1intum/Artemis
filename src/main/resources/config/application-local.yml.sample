@@ -1,0 +1,95 @@
+# ===================================================================
+# Configuration template for application-local.yml
+#
+# This template file contains and overwrites all configuration secrets.
+# This template file also contains the bare minimum of REALLY necessary configurations where it's hard to use
+# a default value for most development environments!
+#
+# The goal of this template file is to make it easier for new developers to get up and running.
+#
+# Usage:
+# - copy this file to application-local.yml
+# - uncomment the "Atlassian Stack" or "Jenkins / GitLab Stack" sections IF you use these as CI/VCS
+# - uncomment the "Server" section if you use a VCS inside Docker containers
+#
+# ===================================================================
+
+artemis:
+    encryption-password: artemis_admin # LEGACY: arbitrary password for encrypting database values
+    athene:
+        base64-secret: YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=
+    user-management:
+        internal-admin:
+            username: artemis_admin
+            password: artemis_admin
+# ===================================================================
+# Atlassian Stack START
+# ===================================================================
+#        external:
+#            user: # e.g. ga12abc
+#            password:
+#    version-control:
+#        user: # e.g. ga12abc
+#        password:
+#        token:
+#    continuous-integration:
+#        user: # e.g. ga12abc
+#        password:
+#        token:
+#        artemis-authentication-token-value:
+# ===================================================================
+# Atlassian Stack END
+# ===================================================================
+
+# ===================================================================
+# Jenkins / GitLab Stack START
+# ===================================================================
+#    version-control:
+#        user: root
+#        password: artemis_admin # created in GitLab Server Quickstart step 2
+#        token: artemis-gitlab-token # generated in GitLab Server Quickstart steps 4 and 5
+#        ci-token: jenkins-secret-token # pre-generated or replaced in Automated Jenkins Server step 3
+#        health-api-token:
+#    continuous-integration:
+#        user: artemis_admin
+#        password: artemis_admin
+#        secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # pre-generated or replaced in Automated Jenkins Server step 3
+#        artemis-authentication-token-value: artemis_admin
+#jenkins:
+#    internal-urls:
+#        ci-url: http://jenkins:8080
+#        vcs-url: http://gitlab:80
+#    use-crumb: false
+# ===================================================================
+# Jenkins / GitLab Stack END
+# ===================================================================
+
+spring:
+    datasource:
+        username: root
+        password:
+    mail:
+        username:
+        password:
+    websocket:
+        broker:
+            username: guest
+            password: guest
+
+jhipster:
+    security:
+        authentication:
+            jwt:
+                base64-secret: bXktc2VjcmV0LWtleS13aGljaC1zaG91bGQtYmUtY2hhbmdlZC1pbi1wcm9kdWN0aW9uLWFuZC1iZS1iYXNlNjQtZW5jb2RlZAo=
+    registry:
+        password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
+
+# ===================================================================
+# Server START
+# ===================================================================
+#server:
+#    # see application.yml for further comments
+#    url: http://host.docker.internal:8080
+# ===================================================================
+# Server END
+# ===================================================================

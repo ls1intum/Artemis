@@ -1,0 +1,4 @@
+.. hint::
+    If you want to customize configuration values, use the override configuration file
+    ``src/main/resources/config/application-local.yml`` activated by the ``local`` spring profile.
+    Another way for overriding these values is using environment variables passed to Spring Boot.
