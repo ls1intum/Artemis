@@ -326,8 +326,8 @@ export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, 
         let resultText = 'Skipped';
         if (feedback?.positive) {
             resultText = 'Passed';
-        } else if (feedback && !feedback.positive) {
-            resultText = !!withFeedback && feedback.detailText ? `Failed: "${feedback.detailText}"` : 'Failed';
+        } else if (!feedback?.positive) {
+            resultText = !!withFeedback && feedback?.detailText ? `Failed: "${feedback.detailText}"` : 'Failed';
         }
         testCaseResults.push({ testName, testResult: resultText } as TestCaseResult);
     });
