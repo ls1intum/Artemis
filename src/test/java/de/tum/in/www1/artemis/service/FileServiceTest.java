@@ -311,4 +311,17 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         assertDoesNotThrow(() -> fileService.deleteFiles(List.of(path)));
         mockedFiles.close();
     }
+
+    @Test
+    void testRenameDirectory() {
+        // File is deleted automatically after test
+        writeFile("some-path/some-file", "some-content");
+        Path source_dir = Path.of("./exportTest/some-path");
+        Path target_dir = Path.of("./exportTest/some-path2");
+        Path target_file = Path.of("./exportTest/some-path2/some-file");
+        assertDoesNotThrow(() -> fileService.renameDirectory(source_dir, target_dir));
+        assertThat(target_file.toFile().exists()).isTrue();
+        assertThat(target_dir.toFile().exists()).isTrue();
+        assertThat(source_dir.toFile().exists()).isFalse();
+    }
 }

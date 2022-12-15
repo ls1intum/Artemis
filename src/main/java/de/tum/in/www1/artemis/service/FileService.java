@@ -541,14 +541,15 @@ public class FileService implements DisposableBean {
      * @param targetDirectoryPath the path of the folder where the renamed folder should be located
      * @throws IOException if the directory could not be renamed.
      */
-    public void renameDirectory(String oldDirectoryPath, String targetDirectoryPath) throws IOException {
-        File oldDirectory = new File(oldDirectoryPath);
+
+    public void renameDirectory(Path oldDirectoryPath, Path targetDirectoryPath) throws IOException {
+        File oldDirectory = oldDirectoryPath.toFile();
         if (!oldDirectory.exists()) {
-            log.error("Directory {} should be renamed but does not exist.", oldDirectoryPath);
-            throw new RuntimeException("Directory " + oldDirectoryPath + " should be renamed but does not exist.");
+            log.error("Directory {} should be moved but does not exist.", oldDirectoryPath);
+            throw new RuntimeException("Directory " + oldDirectoryPath + " should be moved but does not exist.");
         }
 
-        File targetDirectory = new File(targetDirectoryPath);
+        File targetDirectory = targetDirectoryPath.toFile();
 
         FileUtils.moveDirectory(oldDirectory, targetDirectory);
     }
@@ -640,7 +641,7 @@ public class FileService implements DisposableBean {
         if (startPath.contains(targetString)) {
             log.debug("Target String found, replacing..");
             String targetPath = startPath.replace(targetString, replacementString);
-            renameDirectory(startPath, targetPath);
+            renameDirectory(Path.of(startPath), Path.of(targetPath));
             directory = new File(targetPath);
         }
 
