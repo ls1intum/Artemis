@@ -323,17 +323,13 @@ export function getTestCaseResults(result: ResultWithPointsPerGradingCriterion, 
     testCaseNames.forEach((testName) => {
         const feedback = getFeedbackByTestCase(testName, result.result.feedbacks);
 
-        if (!feedback) {
-            testCaseResults.push({ testName, testResult: 'Skipped' } as TestCaseResult);
-        } else {
-            let resultText;
-            if (feedback.positive) {
-                resultText = 'Passed';
-            } else if (!feedback.positive) {
-                resultText = !!withFeedback && feedback.detailText ? `Failed: "${feedback.detailText}"` : 'Failed';
-            }
-            testCaseResults.push({ testName, testResult: resultText } as TestCaseResult);
+        let resultText = 'Skipped';
+        if (feedback?.positive) {
+            resultText = 'Passed';
+        } else if (feedback && !feedback.positive) {
+            resultText = !!withFeedback && feedback.detailText ? `Failed: "${feedback.detailText}"` : 'Failed';
         }
+        testCaseResults.push({ testName, testResult: resultText } as TestCaseResult);
     });
     return testCaseResults;
 }
