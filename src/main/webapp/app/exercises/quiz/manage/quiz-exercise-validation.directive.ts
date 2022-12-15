@@ -95,6 +95,7 @@ export abstract class QuizExerciseValidationDirective {
                         question.title.length < this.maxLengthThreshold &&
                         mcQuestion.answerOptions!.every(
                             (answerOption) =>
+                                answerOption.isCorrect !== undefined &&
                                 (!answerOption.explanation || answerOption.explanation.length <= this.explanationLengthThreshold) &&
                                 (!answerOption.hint || answerOption.hint.length <= this.hintLengthThreshold),
                         )
