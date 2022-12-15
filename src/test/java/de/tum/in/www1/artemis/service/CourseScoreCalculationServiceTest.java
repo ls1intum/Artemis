@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -35,6 +36,9 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ResultRepository resultRepository;
 
     private Course course;
 
@@ -89,7 +93,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         User student = userRepository.findOneByLogin("student1").get();
 
-        var studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
+        List<StudentParticipation> studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 
         assertThat(studentParticipations).isNotEmpty();
 
@@ -107,6 +111,11 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         // Test with empty result set.
         studentParticipations.get(2).setResults(Collections.emptySet());
 
+        // Save results and participations.
+        //resultRepository.saveAll(studentParticipations.get(1).getResults());
+        resultRepository.saveAll(studentParticipations.get(2).getResults());
+        studentParticipationRepository.saveAll(studentParticipations);
+
         CourseScoresForExamBonusSourceDTO courseResult = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course.getId(), List.of(student.getId()));
         assertThat(courseResult.studentScores()).hasSize(1);
         assertThat(courseResult.studentScores().get(0).getStudentId()).isEqualTo(student.getId());
@@ -121,7 +130,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser()
-    void getScoresAndParticipationResultsWithNotIncludedExercises() {
+    void getScoresAndParticipationResultsWithNotIncludedExercise() {
         var exerciseList = new ArrayList<>(course.getExercises());
         exerciseList.sort(Comparator.comparing(Exercise::getId));
 
@@ -130,8 +139,6 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         exercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
 
         exerciseRepository.save(exercise);
-
-        System.out.println("exerciseList:" + exerciseList);
 
         User student = userRepository.findOneByLogin("student1").get();
 
@@ -143,13 +150,39 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         assertThat(totalCourseScores.studentScores().getAbsoluteScore()).isEqualTo(0.0);
         assertThat(totalCourseScores.studentScores().getRelativeScore()).isEqualTo(0.0);
         assertThat(totalCourseScores.studentScores().getCurrentRelativeScore()).isEqualTo(0.0);
+
+        assertThat(courseForDashboard.participationResults().size()).isEqualTo(5);
     }
 
     @Test
     @WithMockUser()
-    void getScoresAndParticipationResultsWithMultipleResultsInParticipation() {
-        // Normal
+    void getScoresAndParticipationResultsForPastCourse() {
+        // Create course with assessment due date passed.
+        Course pastCourse = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(true);
+
+        User student = userRepository.findOneByLogin("student1").get();
+
+        CourseForDashboardDTO courseForDashboard = courseScoreCalculationService.getScoresAndParticipationResults(pastCourse, student.getId());
+        assertThat(courseForDashboard.course()).isEqualTo(pastCourse);
+        CourseScoresDTO totalCourseScores = courseForDashboard.scoresPerExerciseType().get("total");
+        assertThat(totalCourseScores.maxPoints()).isEqualTo(5.0);
+        assertThat(totalCourseScores.reachablePoints()).isEqualTo(5.0);
+        assertThat(totalCourseScores.studentScores().getAbsoluteScore()).isEqualTo(0.0);
+        assertThat(totalCourseScores.studentScores().getRelativeScore()).isEqualTo(0.0);
+        assertThat(totalCourseScores.studentScores().getCurrentRelativeScore()).isEqualTo(0.0);
+
+        CourseScoresDTO programmingExerciseScores = courseForDashboard.scoresPerExerciseType().get(ExerciseType.PROGRAMMING.getExerciseTypeAsString());
+        assertThat(programmingExerciseScores.maxPoints()).isEqualTo(0.0);
+        assertThat(programmingExerciseScores.reachablePoints()).isEqualTo(0.0);
+        assertThat(programmingExerciseScores.studentScores().getAbsoluteScore()).isEqualTo(0.0);
+        assertThat(programmingExerciseScores.studentScores().getRelativeScore()).isEqualTo(0.0);
+        assertThat(programmingExerciseScores.studentScores().getCurrentRelativeScore()).isEqualTo(0.0);
+
+        CourseScoresDTO quizExerciseScores = courseForDashboard.scoresPerExerciseType().get(ExerciseType.QUIZ.getExerciseTypeAsString());
+        assertThat(quizExerciseScores.maxPoints()).isEqualTo(5.0);
+        assertThat(quizExerciseScores.reachablePoints()).isEqualTo(5.0);
+        assertThat(quizExerciseScores.studentScores().getAbsoluteScore()).isEqualTo(0.0);
+        assertThat(quizExerciseScores.studentScores().getRelativeScore()).isEqualTo(0.0);
+        assertThat(quizExerciseScores.studentScores().getCurrentRelativeScore()).isEqualTo(0.0);
     }
-
-
 }
