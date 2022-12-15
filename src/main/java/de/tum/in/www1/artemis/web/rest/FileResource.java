@@ -32,10 +32,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.FilePathService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -51,6 +48,8 @@ public class FileResource {
     private final Logger log = LoggerFactory.getLogger(FileResource.class);
 
     private final FileService fileService;
+
+    private final UnitProcessingService unitProcessingService;
 
     private final ResourceLoaderService resourceLoaderService;
 
@@ -68,10 +67,11 @@ public class FileResource {
 
     private final UserRepository userRepository;
 
-    public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository,
+    public FileResource(UnitProcessingService unitProcessingService, FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository,
             FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository, AttachmentRepository attachmentRepository,
             AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.fileService = fileService;
+        this.unitProcessingService = unitProcessingService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
@@ -329,20 +329,20 @@ public class FileResource {
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_PDF).body(file.get());
     }
 
-    @PostMapping("fileUpload/lecture/{lectureId}/process-units")
+    @PostMapping("files/lecture/{lectureId}/process-units")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Optional<List<LectureUnitSplitDTO>>> splitLectureIntoUnits(@RequestParam(value = "file") MultipartFile file,
-            @RequestParam(defaultValue = "false") boolean keepFileName, @PathVariable String lectureId) throws IOException {
+            @RequestParam(defaultValue = "false") boolean keepFileName, @PathVariable String lectureId, @RequestBody Lecture lecture) throws IOException {
         log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
 
         // TODO: split file into multiple files and return multiple files
-        Optional<List<LectureUnitSplitDTO>> filesSplited = fileService.splitPdfFile(file, lectureId);
-        if (filesSplited.isEmpty()) {
+        Optional<List<LectureUnitSplitDTO>> splitedFiles = unitProcessingService.splitPdfFile(file, lectureId);
+        if (splitedFiles.isEmpty()) {
             log.error("Failed to split PDF lecture units for lecture with id {}", lectureId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
-        return ResponseEntity.ok().body(filesSplited);
+        return ResponseEntity.ok().body(splitedFiles);
 
     }
 

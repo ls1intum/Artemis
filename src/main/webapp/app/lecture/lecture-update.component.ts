@@ -174,7 +174,9 @@ export class LectureUpdateComponent implements OnInit {
             console.log('test Unit mode');
             this.isSaving = false;
             this.isProcessing = false;
-            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process']);
+            this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
+                state: { file: this.file },
+            });
         } else {
             this.isSaving = false;
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);

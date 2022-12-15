@@ -1,16 +1,39 @@
 <jhi-lecture-unit-layout [isLoading]="isLoading">
-    <div *ngFor="let unit of units; let i = index" [attr.data-index]="i">
-        <div class="shadow-lg p-3 mb-5 bg-white rounded">
-            <h1>{{ i + 1 }}. Unit</h1>
-            <jhi-attachment-unit-form #attachmentUnitForm [isEditMode]="false" [isProcessingMode]="true" (formSubmitted)="createAttachmentUnits($event)"></jhi-attachment-unit-form>
-        </div>
+    <div class="col-4">
+        <h2 id="page-heading">
+            <span jhiTranslate="artemisApp.lecture.home.title">Units</span>
+        </h2>
     </div>
-    <div class="">
-        <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
-            <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
-        </button>
-        <button type="submit" id="save-entity" [disabled]="isLoading" class="btn btn-primary">
-            <span jhiTranslate="entity.action.submit">Submit</span>
-        </button>
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th><span jhiTranslate="global.field.id">Unit Name</span></th>
+                    <th><span jhiTranslate="artemisApp.lecture.title">Release Date</span></th>
+                    <th><span jhiTranslate="artemisApp.lecture.description">Start Page</span></th>
+                    <th><span jhiTranslate="artemisApp.lecture.endDate">End Page</span></th>
+                </tr>
+            </thead>
+            <tbody class="markdown-preview" id="lecture-preview">
+                <tr *ngFor="let unit of units; let i = index" id="unit-row-{{ i }}">
+                    <td>
+                        <a [routerLink]="[unit.id]">Nmaee</a>
+                    </td>
+                    <td>release</td>
+                    <td>asd</td>
+                    <td>asdf</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="row">
+            <div class="col-12">
+                <button id="submitButton" class="btn btn-primary" type="submit">
+                    <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+                </button>
+                <button (click)="previousState()" class="btn btn-default">
+                    <span jhiTranslate="entity.action.cancel">Cancel</span>
+                </button>
+            </div>
+        </div>
     </div>
 </jhi-lecture-unit-layout>

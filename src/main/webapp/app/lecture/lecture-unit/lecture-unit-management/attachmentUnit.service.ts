@@ -6,6 +6,7 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 type EntityResponseType = HttpResponse<AttachmentUnit>;
+type EntityResponseTypeArray = HttpResponse<AttachmentUnit[]>;
 
 @Injectable({
     providedIn: 'root',
@@ -36,5 +37,9 @@ export class AttachmentUnitService {
                 { observe: 'response' },
             )
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
+    }
+
+    splitFileIntoUnits(formData: FormData): any {
+        return this.httpClient.post(`${this.resourceURL}/files/lecture/6/process-units`, formData, { observe: 'response' });
     }
 }
