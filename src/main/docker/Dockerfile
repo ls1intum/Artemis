@@ -1,7 +1,5 @@
 FROM eclipse-temurin:17-jre
 
-ARG BOOTSTRAP_SCRIPT=bootstrap.sh
-
 ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
     JHIPSTER_SLEEP=0 \
     JAVA_OPTS=""
@@ -10,7 +8,7 @@ ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
 ENV spring.profiles.active ""
 
 RUN echo "Installing needed dependencies" \
-  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget unzip \
+  && apt-get update && apt-get install -y --no-install-recommends locales graphviz wget \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
@@ -40,7 +38,7 @@ WORKDIR /opt/artemis
 ARG WAR_PATH=build/libs
 COPY $WAR_PATH/*.war Artemis.war
 
-COPY ${BOOTSTRAP_SCRIPT} /bootstrap.sh
+COPY bootstrap.sh /bootstrap.sh
 
 RUN chmod +x /bootstrap.sh \
   && useradd -ms /bin/bash artemis

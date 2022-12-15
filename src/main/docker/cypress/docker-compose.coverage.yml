@@ -2,10 +2,8 @@ version: '2.4'
 services:
     artemis-app:
         build:
-            args:
-                - BOOTSTRAP_SCRIPT=bootstrap-coverage.sh
+            dockerfile: src/main/docker/cypress/Coverage-Dockerfile
         ports:
-            - ${SERVER_PORT}:${SERVER_PORT}
             - "6300:6300" # JaCoCo agent port
 
     artemis-cypress:
