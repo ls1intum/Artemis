@@ -19,8 +19,6 @@ import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import com.google.common.base.Strings;
-
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
@@ -54,6 +52,8 @@ public class ProgrammingExerciseGradingService {
     private final ProgrammingExerciseTestCaseService testCaseService;
 
     private final ProgrammingTriggerService programmingTriggerService;
+
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -92,7 +92,7 @@ public class ProgrammingExerciseGradingService {
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
-            TestwiseCoverageService testwiseCoverageService) {
+            TestwiseCoverageService testwiseCoverageService, ProgrammingExerciseParticipationService programmingExerciseParticipationService) {
         this.testCaseService = testCaseService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -112,6 +112,7 @@ public class ProgrammingExerciseGradingService {
         this.exerciseDateService = exerciseDateService;
         this.buildLogService = buildLogService;
         this.testwiseCoverageService = testwiseCoverageService;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
     }
 
     /**
@@ -129,7 +130,11 @@ public class ProgrammingExerciseGradingService {
         Result newResult = null;
         try {
             var buildResult = continuousIntegrationService.get().convertBuildResult(requestBody);
-            checkCorrectBranchElseThrow(participation, buildResult);
+            var branchInformation = buildResult.getBranchNameFromAssignmentRepo();
+            // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
+            if (branchInformation.isPresent()) {
+                programmingExerciseParticipationService.checkCorrectBranchElseThrow(participation, branchInformation.get());
+            }
 
             newResult = continuousIntegrationService.get().createResultFromBuildResult(buildResult, participation);
 
@@ -165,32 +170,6 @@ public class ProgrammingExerciseGradingService {
         }
 
         return Optional.ofNullable(newResult).map(result -> processNewProgrammingExerciseResult(participation, result));
-    }
-
-    /**
-     * Checks that the build result belongs to the default branch of the student participation (in case it has a branch).
-     * For all other cases (template/solution or student participation without a branch) it falls back to check the default branch of the programming exercise.
-     *
-     * @param participation The programming exercise participation in which the submission was made (including a reference to the programming exercise)
-     * @param buildResult   The build result received from the CI system.
-     * @throws IllegalArgumentException Thrown if the result does not belong to the default branch of the exercise.
-     */
-    private void checkCorrectBranchElseThrow(final ProgrammingExerciseParticipation participation, final AbstractBuildResultNotificationDTO buildResult)
-            throws IllegalArgumentException {
-        // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
-        buildResult.getBranchNameFromAssignmentRepo().ifPresent(branchName -> {
-            String participationDefaultBranch = null;
-            if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-                participationDefaultBranch = studentParticipation.getBranch();
-            }
-            if (Strings.isNullOrEmpty(participationDefaultBranch)) {
-                participationDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
-            }
-
-            if (!Objects.equals(branchName, participationDefaultBranch)) {
-                throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
-            }
-        });
     }
 
     /**

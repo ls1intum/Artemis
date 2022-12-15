@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.programming;
 
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
@@ -12,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
+
+import com.google.common.base.Strings;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
@@ -205,7 +208,7 @@ public class ProgrammingExerciseParticipationService {
      * Lock the repository associated with a programming participation
      *
      * @param programmingExercise the programming exercise
-     * @param participation the programming exercise student participation whose repository should be locked
+     * @param participation       the programming exercise student participation whose repository should be locked
      * @throws VersionControlException if locking was not successful, e.g. if the repository was already locked
      */
     public void lockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
@@ -221,7 +224,7 @@ public class ProgrammingExerciseParticipationService {
      * Unlock the repository associated with a programming participation
      *
      * @param programmingExercise the programming exercise
-     * @param participation the programming exercise student participation whose repository should be unlocked
+     * @param participation       the programming exercise student participation whose repository should be unlocked
      * @throws VersionControlException if unlocking was not successful, e.g. if the repository was already unlocked
      */
     public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
@@ -238,7 +241,7 @@ public class ProgrammingExerciseParticipationService {
      * Stashes all changes, which were not submitted/committed before the due date, of a programming participation
      *
      * @param programmingExercise exercise with information about the due date
-     * @param participation student participation whose not submitted changes will be stashed
+     * @param participation       student participation whose not submitted changes will be stashed
      */
     public void stashChangesInStudentRepositoryAfterDueDateHasPassed(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
@@ -283,5 +286,27 @@ public class ProgrammingExerciseParticipationService {
 
         gitService.stageAllChanges(targetRepo);
         gitService.commitAndPush(targetRepo, "Reset Exercise", true, null);
+    }
+
+    /**
+     * Checks that the result belongs to the default branch of the student participation (in case it has a branch).
+     * For all other cases (template/solution or student participation without a branch) it falls back to check the default branch of the programming exercise.
+     *
+     * @param participation The programming exercise participation in which the submission was made (including a reference to the programming exercise)
+     * @param branchName    The branch received from the CI system.
+     * @throws IllegalArgumentException Thrown if the result does not belong to the default branch of the exercise.
+     */
+    public void checkCorrectBranchElseThrow(ProgrammingExerciseParticipation participation, String branchName) {
+        String participationDefaultBranch = null;
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+            participationDefaultBranch = studentParticipation.getBranch();
+        }
+        if (Strings.isNullOrEmpty(participationDefaultBranch)) {
+            participationDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+        }
+
+        if (!Objects.equals(branchName, participationDefaultBranch)) {
+            throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
+        }
     }
 }

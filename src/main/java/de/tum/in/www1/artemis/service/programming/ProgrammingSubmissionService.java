@@ -123,12 +123,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throw new IllegalArgumentException(ex);
         }
 
-        String branch = versionControlService.get().getOrRetrieveBranchOfParticipation(programmingExerciseParticipation);
-        if (commit.getBranch() != null && !commit.getBranch().equalsIgnoreCase(branch)) {
-            // if the commit was made in a branch different from the default, ignore this
-            throw new IllegalStateException(
-                    "Submission for participation id " + participationId + " in branch " + commit.getBranch() + " will be ignored! Only the default branch is considered");
-        }
+        programmingExerciseParticipationService.checkCorrectBranchElseThrow(programmingExerciseParticipation, commit.getBranch());
+
         if (artemisGitName.equalsIgnoreCase(commit.getAuthorName()) && artemisGitEmail.equalsIgnoreCase(commit.getAuthorEmail())
                 && SETUP_COMMIT_MESSAGE.equals(commit.getMessage())) {
             // if the commit was made by Artemis and the message is "Setup" (this means it is an empty setup commit), we ignore this as well and do not create a submission!
@@ -204,8 +200,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
         ProgrammingExercise programmingExercise = programmingExerciseParticipation.getProgrammingExercise();
         boolean isExamExercise = programmingExercise.isExamExercise();
         // Students are not allowed to submit a programming exercise after the exam due date, if this happens we set the Submission to ILLEGAL
-        if (isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation) {
-            var optionalStudent = ((ProgrammingExerciseStudentParticipation) programmingExerciseParticipation).getStudent();
+        if (isExamExercise && programmingExerciseParticipation instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
+            Optional<User> optionalStudent = programmingExerciseStudentParticipation.getStudent();
             Optional<User> optionalStudentWithGroups = optionalStudent.isPresent() ? userRepository.findOneWithGroupsAndAuthoritiesByLogin(optionalStudent.get().getLogin())
                     : Optional.empty();
             if (optionalStudentWithGroups.isPresent() && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optionalStudentWithGroups.get(), true)) {
