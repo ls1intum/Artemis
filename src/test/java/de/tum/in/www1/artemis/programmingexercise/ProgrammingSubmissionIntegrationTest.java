@@ -468,11 +468,14 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         Commit mockCommit = mock(Commit.class);
         doReturn(mockCommit).when(versionControlService).getLastCommitDetails(any());
-        doReturn("branch").when(versionControlService).getDefaultBranchOfRepository(any());
+        doReturn("branch").when(versionControlService).getOrRetrieveBranchOfExercise(exercise);
         doReturn("another-branch").when(mockCommit).getBranch();
 
         String url = "/api/programming-submissions/" + participation.getId();
         request.postWithoutLocation(url, "test", HttpStatus.OK, new HttpHeaders());
+
+        verify(mockCommit, atLeastOnce()).getBranch();
+        verify(versionControlService, atLeastOnce()).getOrRetrieveBranchOfExercise(exercise);
     }
 
     @Test
