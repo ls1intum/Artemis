@@ -5,13 +5,12 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Component, Injectable, Input, OnInit } from '@angular/core';
 import { ResultService } from 'app/exercises/shared/result/result.service';
-import { getTestCaseResults, getTestCaseNamesFromResults } from 'app/exercises/shared/result/result.utils';
+import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercises/shared/result/result.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ExportToCsv } from 'export-to-csv';
-import { Feedback } from 'app/entities/feedback.model';
 import { TestCaseResult } from 'app/entities/test-case-result.model';
 
 @Component({
