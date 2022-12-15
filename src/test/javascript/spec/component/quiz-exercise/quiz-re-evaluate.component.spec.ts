@@ -128,17 +128,6 @@ describe('QuizExercise Re-evaluate Component', () => {
         expect(quizServiceFindStub).toHaveBeenCalledOnce();
     });
 
-    it('should create correct duration strings', () => {
-        comp.duration = new Duration(1, 0);
-        expect(comp.durationString()).toBe('1:00');
-
-        comp.duration = new Duration(1, 9);
-        expect(comp.durationString()).toBe('1:09');
-
-        comp.duration = new Duration(1, 10);
-        expect(comp.durationString()).toBe('1:10');
-    });
-
     it('should delete quiz question', () => {
         comp.ngOnInit();
         expect(comp.quizExercise.quizQuestions).toHaveLength(2);
