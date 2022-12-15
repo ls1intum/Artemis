@@ -272,6 +272,12 @@ export abstract class QuizExerciseValidationDirective {
                         translateValues: { index: index + 1, threshold: this.hintLengthThreshold },
                     });
                 }
+                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect === undefined)) {
+                    invalidReasons.push({
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.multipleChoiceQuestionAnswerOptionInvalid',
+                        translateValues: { index: index + 1, threshold: this.hintLengthThreshold },
+                    });
+                }
             }
             if (question.title && question.title.length >= this.maxLengthThreshold) {
                 invalidReasons.push({
