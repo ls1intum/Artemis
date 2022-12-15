@@ -22,6 +22,9 @@ import jakarta.validation.constraints.NotNull;
  */
 public class VersionRangesRequestCondition implements RequestCondition<VersionRangesRequestCondition> {
 
+    // Expect optional leading slash, "api/", optional numerical version with a "v" prefix and some path afterwards
+    private static final Pattern PATH_PATTERN = Pattern.compile("^/?api(/v(\\d*))?/.+$");
+
     private final Logger log = LoggerFactory.getLogger(VersionRangesRequestCondition.class);
 
     private final Set<VersionRange> ranges;
@@ -254,7 +257,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
     @Override
     public VersionRangesRequestCondition getMatchingCondition(@NotNull HttpServletRequest request) {
         String path = request.getRequestURI();
-        if (!path.matches("^/?api/.*")) {
+        if (!path.startsWith("/api/") && !path.startsWith("api/")) {
             return null;
         }
         // If any version is valid, return this
@@ -280,9 +283,7 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
      */
     public boolean versionRangeMatchesRequest(@NotNull VersionRange range, @NotNull HttpServletRequest request) {
         String path = request.getRequestURI();
-        // Expect optional leading slash, "api/", optional numerical version with a "v" prefix and some path afterwards
-        var pattern = Pattern.compile("^/?api(/v(\\d*))?/.+$");
-        var matcher = pattern.matcher(path);
+        var matcher = PATH_PATTERN.matcher(path);
         if (!matcher.matches()) {
             return false;
         }
