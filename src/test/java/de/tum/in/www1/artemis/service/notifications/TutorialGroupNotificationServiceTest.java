@@ -81,6 +81,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
 
         notificationSettingRepository.deleteAll();
+        tutorialGroupNotificationRepository.deleteAll();
     }
 
     @AfterEach
