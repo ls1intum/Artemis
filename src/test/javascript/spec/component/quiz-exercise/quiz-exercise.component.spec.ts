@@ -331,8 +331,6 @@ describe('QuizExercise Management Component', () => {
     });
 
     it('should check if quiz is editable', () => {
-        const quizExercise = new QuizExercise(undefined, undefined);
-
         quizExercise.quizMode = QuizMode.BATCHED;
         quizExercise.quizBatches = undefined;
         expect(comp.isQuizEditable(quizExercise)).toBeTrue();
