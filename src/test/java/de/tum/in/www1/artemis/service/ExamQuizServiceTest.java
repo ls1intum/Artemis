@@ -58,9 +58,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private StudentExamRepository studentExamRepository;
 
-    @Autowired
-    private ParticipationRepository participationRepository;
-
     private QuizExercise quizExercise;
 
     private Course course;
@@ -173,7 +170,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
-        await().pollDelay(Durations.FIVE_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         database.changeUser("instructor1");
         // All exams should be over before evaluation
@@ -184,7 +181,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        await().pollDelay(Durations.FIVE_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
@@ -236,7 +233,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        await().pollDelay(Durations.FIVE_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
@@ -280,7 +277,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             quizSubmission2.setParticipation(studentParticipation);
             quizSubmissionRepository.save(quizSubmission2);
         }
-        await().pollDelay(Durations.FIVE_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         database.changeUser("instructor1");
         // All exams should be over before evaluation
@@ -291,7 +288,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        await().pollDelay(Durations.FIVE_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
@@ -329,7 +326,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
-        await().pollDelay(Durations.FIVE_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         database.changeUser("instructor1");
         // All exams should be over before evaluation
@@ -340,14 +337,14 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        await().pollDelay(Durations.FIVE_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
         // Evaluate quiz twice
         numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        await().pollDelay(Durations.FIVE_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
