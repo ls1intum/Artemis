@@ -5,17 +5,14 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Component, Injectable, Input, OnInit } from '@angular/core';
 import { ResultService } from 'app/exercises/shared/result/result.service';
+import { getTestCaseResults, getTestCaseNamesFromResults } from 'app/exercises/shared/result/result.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { ResultWithPointsPerGradingCriterion } from 'app/entities/result-with-points-per-grading-criterion.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { ExportToCsv } from 'export-to-csv';
 import { Feedback } from 'app/entities/feedback.model';
-
-interface TestCaseResult {
-    testName: string;
-    testResult: string;
-}
+import { TestCaseResult } from 'app/entities/test-case-result.model';
 
 @Component({
     selector: 'jhi-exercise-scores-export-button',
@@ -66,7 +63,7 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
     constructor(private resultService: ResultService, private alertService: AlertService) {}
 
     ngOnInit(): void {
-        this.isProgrammingExerciseResults = this.exercises.concat(this.exercise).every((exercise) => exercise && exercise.type && exercise.type === ExerciseType.PROGRAMMING);
+        this.isProgrammingExerciseResults = this.exercises.concat(this.exercise).every((exercise) => exercise?.type === ExerciseType.PROGRAMMING);
     }
 
     /**
@@ -103,11 +100,11 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
             let keys;
             let rows;
             if (withTestCases) {
-                const testCasesNames = this.getTestCaseNamesFromResults(results);
+                const testCasesNames = getTestCaseNamesFromResults(results);
                 keys = ExerciseScoresRowBuilder.keys(exercise, isTeamExercise, gradingCriteria, testCasesNames);
                 rows = results.map((resultWithPoints) => {
                     const studentParticipation = resultWithPoints.result.participation! as StudentParticipation;
-                    const testCaseResults = this.getTestCaseResults(resultWithPoints, testCasesNames, withFeedback);
+                    const testCaseResults = getTestCaseResults(resultWithPoints, testCasesNames, withFeedback);
                     return new ExerciseScoresRowBuilder(exercise, gradingCriteria, studentParticipation, resultWithPoints, testCaseResults).build();
                 });
             } else {
@@ -169,69 +166,6 @@ export class ExerciseScoresExportButtonComponent implements OnInit {
                 }
             }) || []
         );
-    }
-
-    /**
-     * Retrieves a list of test cases names contained in a result's feedback list
-     * @param results list of results to extract the test case names from
-     * @private
-     */
-    private getTestCaseNamesFromResults(results: ResultWithPointsPerGradingCriterion[]): string[] {
-        const testCasesNames: Set<string> = new Set();
-        results.forEach((result) => {
-            if (!result.result.feedbacks) {
-                return [];
-            }
-            result.result.feedbacks.map((f) => {
-                testCasesNames.add(f.text ? f.text : 'Test ' + result.result.feedbacks?.indexOf(f) + 1);
-            });
-        });
-        return Array.from(testCasesNames);
-    }
-
-    /**
-     * Extracts test case results from a given result and returns them.
-     * If no feedback is found in the result an empty array is returned
-     * @param result from which the test case results should be extracted
-     * @param testCaseNames list containing the test names
-     * @param withFeedback if true, the feedback's full text is included in case of failed test case
-     * @private
-     */
-    private getTestCaseResults(result: ResultWithPointsPerGradingCriterion, testCaseNames: string[], withFeedback?: boolean): TestCaseResult[] {
-        const testCaseResults: TestCaseResult[] = [];
-
-        testCaseNames.forEach((testCaseName) => {
-            const feedback = this.getFeedbackByTestCase(testCaseName, result.result.feedbacks);
-
-            if (!feedback) {
-                testCaseResults.push({ testName: testCaseName, testResult: 'Skipped' } as TestCaseResult);
-            } else {
-                let resultText;
-                if (feedback.positive) {
-                    resultText = 'Passed';
-                } else {
-                    resultText = !!withFeedback && feedback.detailText ? 'Failed: "' + feedback.detailText + '"' : 'Failed';
-                }
-                testCaseResults.push({ testName: testCaseName, testResult: resultText } as TestCaseResult);
-            }
-        });
-        return testCaseResults;
-    }
-
-    /**
-     * Retrieves a feedback object from a result's feedback list by a given test case name.
-     *
-     * If no feedback is found for the given test case name, null is returned.
-     * @param feedbacks the list of result feedbacks to search in
-     * @param testCase the name of the test case to search for
-     * @private
-     */
-    private getFeedbackByTestCase(testCase: string, feedbacks?: Feedback[]): Feedback | null {
-        if (!feedbacks) {
-            return null;
-        }
-        const i = feedbacks.findIndex((feedback) => feedback.text?.localeCompare(testCase) === 0);
-        return i !== -1 ? feedbacks[i] : null;
     }
 }
 
@@ -403,11 +337,9 @@ class ExerciseScoresRowBuilder {
             columns.push('Students');
         }
 
-        if (testCases) {
-            testCases.forEach((testCase) => {
-                columns.push(testCase);
-            });
-        }
+        testCases?.forEach((testCase) => {
+            columns.push(testCase);
+        });
 
         return columns;
     }
