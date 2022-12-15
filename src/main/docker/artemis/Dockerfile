@@ -18,9 +18,7 @@
 FROM ghcr.io/ls1intum/docker-jdk-node-yarn:java17node16-3 as builder
 
 WORKDIR /opt/artemis
-# TODO: make this more secure/performant and don't copy everything? or let this be handled just by the .dockerignore?
-# maybe build dependencies before that could be more performant than copying everything at once
-# COPY src gradle gradlew  .
+# so far just using the .dockerignore to define what isn't necessary here
 COPY . .
 
 RUN ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar

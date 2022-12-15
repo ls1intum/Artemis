@@ -19,7 +19,6 @@ services:
     container_name: artemis-grafana
     image: grafana/grafana:9.0.2
     pull_policy: always
-    # TODO: docker named volume maybe instead of this? otherwise .gitignore the used bind src mount
     volumes:
       - ./monitoring/grafana/provisioning/:/etc/grafana/provisioning/
     environment:
