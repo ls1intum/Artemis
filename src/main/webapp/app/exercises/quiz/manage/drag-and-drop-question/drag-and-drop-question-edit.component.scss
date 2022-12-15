@@ -130,4 +130,47 @@
             width: 100%;
         }
     }
+
+    .question-card-header {
+        width: 100%;
+        .row {
+            width: 100%;
+        }
+        padding: 15px 5px 5px 5px;
+
+        .question-collapse {
+            margin-top: -15px;
+            width: 3.25rem;
+        }
+    }
+
+    .card-body {
+        .form-group {
+            display: flex;
+            align-items: center;
+            margin: 0 5px 15px;
+        }
+
+        .form-control:disabled {
+            background-color: #e9ecef;
+        }
+
+        .form-group > * {
+            margin: 0 4px;
+        }
+    }
+
+    .invalid-button {
+        width: 100%;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+
+    .delete-button {
+        cursor: pointer;
+    }
+
+    .delete-button:hover {
+        color: red;
+    }
 }

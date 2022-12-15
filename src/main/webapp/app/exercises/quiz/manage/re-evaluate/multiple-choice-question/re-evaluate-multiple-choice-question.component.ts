@@ -7,7 +7,7 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { cloneDeep } from 'lodash-es';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
-import { faArrowsAltV, faChevronDown, faChevronUp, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faArrowsAltV, faChevronDown, faChevronUp, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
@@ -29,12 +29,17 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
     // Create Backup Question for resets
     @Input() backupQuestion: MultipleChoiceQuestion;
 
+    /** Status boolean for collapse status **/
+    isQuestionCollapsed: boolean;
+
     // Icons
     faTrash = faTrash;
     faUndo = faUndo;
     faChevronUp = faChevronUp;
     faChevronDown = faChevronDown;
     faArrowsAltV = faArrowsAltV;
+    faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
 
     /**
      * generate the question using the markdown service

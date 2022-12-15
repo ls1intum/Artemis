@@ -11,7 +11,10 @@
         flex-wrap: wrap;
         width: 100%;
 
-        input,
+        input {
+            display: inline-block;
+        }
+
         .input-group-btn {
             display: inline-block;
             width: auto;
@@ -25,23 +28,36 @@
             display: inline-block;
         }
 
-        .input-group > input {
-            height: 100%;
-        }
-
         .form-group {
             display: flex;
-            align-items: center;
-            margin: 0 5px 15px;
+            flex-direction: column;
+            margin-bottom: 1.5rem;
 
-            > * {
-                margin: 0 4px;
+            .start-time {
+                width: 80%;
+            }
+
+            label {
+                font-size: 17px;
+                font-weight: bolder;
+            }
+
+            .form-check-label {
+                font-size: 15px;
             }
 
             > div.time-picker {
                 margin-top: -15px;
                 margin-left: 0px;
             }
+
+            .form-control:disabled {
+                background-color: #e9ecef;
+            }
+        }
+
+        .custom-checkbox {
+            display: block;
         }
 
         .background-file,
