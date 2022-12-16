@@ -7,10 +7,9 @@ import { Feedback, FeedbackCorrectionErrorType, FeedbackType } from 'app/entitie
 import { ModelingAssessmentComponent } from 'app/exercises/modeling/assess/modeling-assessment.component';
 import { ModelingExplanationEditorComponent } from 'app/exercises/modeling/shared/modeling-explanation-editor.component';
 import { ScoreDisplayComponent } from 'app/shared/score-display/score-display.component';
-import { MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ModelElementCount } from 'app/entities/modeling-submission.model';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
@@ -105,7 +104,7 @@ describe('ModelingAssessmentComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(FormsModule)],
-            declarations: [ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe)],
+            declarations: [ModelingAssessmentComponent, ScoreDisplayComponent, ModelingExplanationEditorComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(ArtemisTranslatePipe)],
         })
             .compileComponents()

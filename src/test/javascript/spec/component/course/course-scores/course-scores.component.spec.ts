@@ -29,7 +29,6 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
@@ -243,7 +242,6 @@ describe('CourseScoresComponent', () => {
                 MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(TranslateDirective),
-                MockDirective(NgbTooltip),
                 MockTranslateValuesDirective,
             ],
             providers: [

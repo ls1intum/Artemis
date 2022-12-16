@@ -11,7 +11,7 @@ import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbModal, NgbModalRef, NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
 import { CancellationModalComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/cancellation-modal/cancellation-modal.component';
 import { Course } from 'app/entities/course.model';
@@ -35,7 +35,6 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
                 MockDirective(DeleteButtonDirective),
-                MockDirective(NgbPopover),
             ],
             providers: [MockProvider(TutorialGroupSessionService), { provide: NgbModal, useClass: MockNgbModalService }],
         })
@@ -93,7 +92,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
         const modalService = TestBed.inject(NgbModal);
         const mockModalRef = {
             componentInstance: { tutorialGroupSession: undefined, course: undefined, tutorialGroupId: undefined },
-            result: { then: () => undefined },
+            result: { then: () => Promise.resolve() },
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
 
