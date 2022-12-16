@@ -322,7 +322,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
      */
     isQuizEditable(quizExercise: QuizExercise): boolean {
         if (quizExercise.quizMode === QuizMode.BATCHED) {
-            if (quizExercise.quizBatches?.length ?? 0 > 0) {
+            if (quizExercise.quizBatches?.length) {
                 return false;
             }
         }
