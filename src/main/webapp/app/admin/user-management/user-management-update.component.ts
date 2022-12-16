@@ -196,7 +196,13 @@ export class UserManagementUpdateComponent implements OnInit {
     }
 
     onGroupAdd(user: User, event: MatChipInputEvent) {
-        user.groups?.push(event.value);
+        const groupString = (event.value || '').trim();
+        if (groupString && !user.groups?.includes(groupString)) {
+            if (!user.groups) {
+                user.groups = [];
+            }
+            user.groups.push(groupString);
+        }
         // Clear the input value
         event.chipInput!.clear();
         this.groupCtrl.setValue(null);
