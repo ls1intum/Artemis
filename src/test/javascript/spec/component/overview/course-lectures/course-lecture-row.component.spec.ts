@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { By } from '@angular/platform-browser';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { Lecture } from 'app/entities/lecture.model';
 import { CourseLectureRowComponent } from 'app/overview/course-lectures/course-lecture-row.component';
@@ -14,6 +13,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Location } from '@angular/common';
 import { Component } from '@angular/core';
 import { Router } from '@angular/router';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     template: '',
@@ -33,6 +33,7 @@ describe('CourseLectureRow', () => {
                     { path: 'courses/:courseId/lectures', component: DummyComponent },
                     { path: 'courses/:courseId/lectures/:lectureId', component: DummyComponent },
                 ]),
+                MockDirective(NgbTooltip),
             ],
             declarations: [
                 DummyComponent,
@@ -40,7 +41,6 @@ describe('CourseLectureRow', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(FaIconComponent),
-                MockDirective(NgbTooltip),
                 MockPipe(ArtemisTimeAgoPipe),
             ],
             providers: [],

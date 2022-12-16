@@ -275,4 +275,25 @@ describe('QuizExercise Re-evaluate Component', () => {
         comp.includedInOverallScoreChange(IncludedInOverallScore.INCLUDED_AS_BONUS);
         expect(comp.quizExercise.includedInOverallScore).toEqual(IncludedInOverallScore.INCLUDED_AS_BONUS);
     });
+
+    it('should be valid when mc option is marked as invalid', () => {
+        quizExercise.title = 'Test';
+        quizExercise.duration = 100;
+        const question = new MultipleChoiceQuestion();
+        question.title = 'Test Question';
+        question.singleChoice = false;
+        const answerOption1 = new AnswerOption();
+        answerOption1.isCorrect = true;
+        const answerOption2 = new AnswerOption();
+        answerOption2.isCorrect = true;
+        const answerOption3 = new AnswerOption();
+        answerOption3.isCorrect = false;
+        question.answerOptions = [answerOption1, answerOption2, answerOption3];
+        question.points = 100;
+        quizExercise.quizQuestions = [question];
+        comp.quizExercise = quizExercise;
+        // @ts-ignore
+        comp.invalidFlaggedQuestions = [question];
+        expect(comp.isValidQuiz()).toBeTrue();
+    });
 });

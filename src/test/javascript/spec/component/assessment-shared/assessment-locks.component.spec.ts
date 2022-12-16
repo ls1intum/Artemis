@@ -3,10 +3,9 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { AssessmentLocksComponent } from 'app/assessment/assessment-locks/assessment-locks.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ModelingSubmission } from 'app/entities/modeling-submission.model';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
@@ -38,14 +37,7 @@ describe('AssessmentLocksComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [TranslateModule.forRoot(), ArtemisTestModule],
-            declarations: [
-                AssessmentLocksComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockRouterLinkDirective,
-                MockHasAnyAuthorityDirective,
-                MockDirective(NgbTooltip),
-                MockPipe(ArtemisDatePipe),
-            ],
+            declarations: [AssessmentLocksComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockHasAnyAuthorityDirective, MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: textAssessmentService, useClass: TextAssessmentService },
                 { provide: programmingAssessmentService, useClass: ProgrammingAssessmentManualResultService },
