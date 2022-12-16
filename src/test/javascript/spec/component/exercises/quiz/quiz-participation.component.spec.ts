@@ -37,7 +37,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 
 // Store a copy of now to avoid timing issues
