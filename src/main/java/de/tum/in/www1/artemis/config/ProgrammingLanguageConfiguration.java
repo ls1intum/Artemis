@@ -32,7 +32,7 @@ public class ProgrammingLanguageConfiguration {
 
     /**
      * Set the map of languages to build images.
-     * (Implicitly called by spring with the yaml configs as parameter)
+     * (Method Implicitly called by spring with the yaml configs as parameter)
      *
      * @param buildImages the map of languages to build images
      */
@@ -52,8 +52,9 @@ public class ProgrammingLanguageConfiguration {
 
     /**
      * Sets the default docker run arguments based on the spring configuration
-     * (Implicitly called by spring with the yaml configs as parameter)
-     * @param dockerFlags key value paris of run run arguments
+     * (Method Implicitly called by spring with the yaml configs as parameter)
+     *
+     * @param dockerFlags key value pairs of run arguments
      */
     public void setDefaultDockerFlags(final Map<String, String> dockerFlags) {
         log.info("Set Docker flags to " + dockerFlags);

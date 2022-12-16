@@ -171,8 +171,7 @@ public class BambooBuildPlanService {
          */
         Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
 
-        // Do not run the builds in extra docker containers if the dev-profile is active
-        // Xcode has no dockerfile, it only runs on agents (e.g. sb2-agent-0050562fddde)
+        // Xcode has no dockerfile, it only runs on macOS agents
         if (!ProjectType.XCODE.equals(projectType)) {
             defaultJob.dockerConfiguration(dockerConfigurationFor(programmingLanguage, Optional.ofNullable(projectType)));
         }
@@ -499,6 +498,12 @@ public class BambooBuildPlanService {
         }
     }
 
+    /** Assembles a bamboo docker configuration for a given programming exercise and project type
+     *
+     * @param programmingLanguage
+     * @param projectType
+     * @return bamboo docker configuration
+     */
     private DockerConfiguration dockerConfigurationFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType) {
         var dockerConfiguration = new DockerConfiguration();
 
@@ -508,8 +513,10 @@ public class BambooBuildPlanService {
         return dockerConfiguration;
     }
 
-    /** Get the docker run arguments for a Bamboo DockerConfiguration. The configuration is obtained from the programmingLanguageConfiguration.
-     * @return An array of string containing all the configured docker run argument key-value pairs
+    /** Get the docker run arguments for a Bamboo DockerConfiguration.
+     * The configuration is obtained from the programmingLanguageConfiguration.
+     *
+     * @return An array of string containing all the configured docker run argument key-value pairs prefixed with two dashes
      */
     private String[] getDefaultDockerRunArguments() {
         // Bamboo needs all docker run arguments in separate lines
