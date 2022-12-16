@@ -98,6 +98,35 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void createNewTutorialGroupWithSchedule_wrongDateFormatInSchedule_shouldReturnBadRequest() throws Exception {
+        // given
+        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday);
+        var scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
+        // wrong format as not uuuu-MM-dd
+        scheduleToCreate.setValidFromInclusive("2022-11-25T23:00:00.000Z");
+        request.postWithResponseBody(getTutorialGroupsPath(), newTutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+
+        newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday);
+        scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
+        // wrong format as not uuuu-MM-dd
+        scheduleToCreate.setValidToInclusive("2022-11-25T23:00:00.000Z");
+        request.postWithResponseBody(getTutorialGroupsPath(), newTutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+
+        newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday);
+        scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
+        // wrong format as not hh:mm:ss
+        scheduleToCreate.setStartTime("23:00:00.000Z");
+        request.postWithResponseBody(getTutorialGroupsPath(), newTutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+
+        newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday);
+        scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
+        // wrong format as not hh:mm:ss
+        scheduleToCreate.setEndTime("23:00:00.000Z");
+        request.postWithResponseBody(getTutorialGroupsPath(), newTutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void addScheduleToTutorialGroupWithoutSchedule_asInstructor_shouldAddScheduleAndCreateSessions() throws Exception {
         // given
         var tutorialGroup = this.buildAndSaveTutorialGroupWithoutSchedule();
