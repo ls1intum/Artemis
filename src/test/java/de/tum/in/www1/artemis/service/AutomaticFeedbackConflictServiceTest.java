@@ -102,11 +102,10 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
         atheneRequestMockProvider.mockFeedbackConsistency(createRemoteServiceResponse(feedback1, feedback2));
         automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(Set.of(textBlock1), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
 
-        await().until(() -> feedbackConflictRepository.count() >= 0);
+        Feedback finalFeedback = feedback1;
+        await().until(() -> feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(finalFeedback.getId())).size() > 0);
 
-        assertThat(feedbackConflictRepository.findAll()).hasSize(1);
-        assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback()).isIn(feedback1, feedback2);
-        assertThat(feedbackConflictRepository.findAll().get(0).getSecondFeedback()).isIn(feedback1, feedback2);
+        assertThat(feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(feedback1.getId()))).hasSize(1);
     }
 
     /**
@@ -143,6 +142,7 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
 
         await().until(() -> feedbackConflictRepository.count() >= 0);
 
+        // TODO: Fix this
         assertThat(feedbackConflictRepository.findAll()).hasSize(1);
         assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback()).isEqualTo(feedback1);
         assertThat(feedbackConflictRepository.findAll().get(0).getSecondFeedback()).isEqualTo(feedback2);
@@ -181,13 +181,16 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
         atheneRequestMockProvider.mockFeedbackConsistency(List.of());
         automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(Set.of(textBlock), new ArrayList<>(List.of(feedback1, feedback2)), textExercise.getId());
 
-        await().until(() -> feedbackConflictRepository.count() >= 0);
+        Feedback finalFeedback = feedback1;
+        await().until(() -> feedbackConflictRepository.findByFirstFeedbackIdAndConflict(finalFeedback.getId(), false).size() > 0);
 
-        assertThat(feedbackConflictRepository.findAll()).hasSize(1);
-        assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback()).isEqualTo(feedback1);
-        assertThat(feedbackConflictRepository.findAll().get(0).getSecondFeedback()).isEqualTo(feedback2);
-        assertThat(feedbackConflictRepository.findAll().get(0).getConflict()).isFalse();
-        assertThat(feedbackConflictRepository.findAll().get(0).getSolvedAt()).isNotNull();
+        assertThat(feedbackConflictRepository.findByFirstFeedbackIdAndConflict(finalFeedback.getId(), false)).hasSize(1);
+
+        var returnedFeedbackConflict = feedbackConflictRepository.findByFirstFeedbackIdAndConflict(finalFeedback.getId(), false).get(0);
+        assertThat(returnedFeedbackConflict.getFirstFeedback()).isEqualTo(feedback1);
+        assertThat(returnedFeedbackConflict.getSecondFeedback()).isEqualTo(feedback2);
+        assertThat(returnedFeedbackConflict.getConflict()).isFalse();
+        assertThat(returnedFeedbackConflict.getSolvedAt()).isNotNull();
     }
 
     /**
@@ -197,8 +200,12 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testSubmissionDelete() {
         TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
+
+        assertThat(feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(textSubmission.getLatestResult().getFeedbacks().get(0).getId()))).isNotEmpty();
+
         textSubmissionRepository.deleteById(textSubmission.getId());
-        assertThat(feedbackConflictRepository.findAll()).isEmpty();
+
+        assertThat(feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(textSubmission.getLatestResult().getFeedbacks().get(0).getId()))).isEmpty();
     }
 
     /**
@@ -208,8 +215,12 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testResultDelete() {
         TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
+
+        assertThat(feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(textSubmission.getLatestResult().getFeedbacks().get(0).getId()))).isNotEmpty();
+
         resultRepository.deleteById(textSubmission.getLatestResult().getId());
-        assertThat(feedbackConflictRepository.findAll()).isEmpty();
+
+        assertThat(feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(textSubmission.getLatestResult().getFeedbacks().get(0).getId()))).isEmpty();
     }
 
     /**
@@ -218,9 +229,13 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFeedbackDelete() {
-        this.createTextSubmissionWithResultFeedbackAndConflicts();
+        TextSubmission textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
+
+        assertThat(feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(textSubmission.getLatestResult().getFeedbacks().get(0).getId()))).isNotEmpty();
+
         feedbackRepository.deleteAll();
-        assertThat(feedbackConflictRepository.findAll()).isEmpty();
+
+        assertThat(feedbackConflictRepository.findAllConflictsByFeedbackList(List.of(textSubmission.getLatestResult().getFeedbacks().get(0).getId()))).isEmpty();
     }
 
     /**
@@ -229,6 +244,7 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFeedbackConflictDelete() {
+        // TODO: Fix this
         createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackConflictRepository.deleteAll();
         assertThat(feedbackRepository.findAll()).hasSize(2);

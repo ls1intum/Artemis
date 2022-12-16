@@ -312,13 +312,13 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForTestExam_studentExamExists() {
-        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), testExam1.getId(), 555L)).isInstanceOf(EntityNotFoundException.class);
+        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), testExam1.getId(), -1L)).isInstanceOf(EntityNotFoundException.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStudentExamForTestExam_wrongExamId() {
-        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), 7777L, studentExamForTestExam1.getId()))
+        assertThatThrownBy(() -> examAccessService.getStudentExamForTestExamElseThrow(course1.getId(), -1L, studentExamForTestExam1.getId()))
                 .isInstanceOf(BadRequestAlertException.class);
     }
 

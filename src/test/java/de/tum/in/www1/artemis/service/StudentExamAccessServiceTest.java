@@ -79,9 +79,9 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExamExists() {
-        assertThrows(EntityNotFoundException.class, () -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), 1255L, student1, false, true));
-        assertThrows(EntityNotFoundException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), 1255L, studentExam1.getId()));
-        assertThrows(EntityNotFoundException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), 1255L, studentExam1, student1));
+        assertThrows(EntityNotFoundException.class, () -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), -1L, student1, false, true));
+        assertThrows(EntityNotFoundException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), -1L, studentExam1.getId()));
+        assertThrows(EntityNotFoundException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), -1L, studentExam1, student1));
     }
 
     @Test

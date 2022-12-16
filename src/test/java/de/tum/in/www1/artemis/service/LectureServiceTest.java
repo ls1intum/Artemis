@@ -17,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -31,6 +32,9 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private LectureRepository lectureRepository;
 
     @Autowired
     private MigrationChangeRepository migrationChangeRepository;
@@ -97,6 +101,11 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         // the database should contain 2 lectures (see createCoursesWithExercisesAndLecturesAndLectureUnits) both with the same title
         // to enable a proper search after title, we change it
 
+        // Use custom lecture name that is unique to test
+        course.getLectures().forEach(lecture -> lecture.setTitle(lecture.getTitle() + "testPageableResults"));
+        lectureRepository.saveAll(course.getLectures());
+        lecture = lectureRepository.findByIdElseThrow(lecture.getId());
+
         PageableSearchDTO<String> pageable = database.configureLectureSearch(lecture.getTitle());
         pageable.setSortedColumn(Lecture.LectureSearchColumn.ID.name());
         pageable.setPageSize(1);
@@ -118,6 +127,11 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetLecturesPageable() {
+        // Use custom lecture name that is unique to test
+        course.getLectures().forEach(lecture -> lecture.setTitle(lecture.getTitle() + "testGetLecturesPageable"));
+        lectureRepository.saveAll(course.getLectures());
+        lecture = lectureRepository.findByIdElseThrow(lecture.getId());
+
         SearchResultPageDTO<Lecture> result = searchQueryWithUser(lecture.getTitle(), editor);
         assertThat(result.getNumberOfPages()).isEqualTo(1);
         assertThat(result.getResultsOnPage()).contains(lecture);

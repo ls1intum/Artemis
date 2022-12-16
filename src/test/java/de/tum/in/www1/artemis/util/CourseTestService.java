@@ -729,12 +729,8 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-        Course courseInList = null;
-        for (Course c : courses) {
-            if (Objects.equals(c.getId(), course.getId())) {
-                courseInList = c;
-            }
-        }
+        Course finalCourse = course;
+        Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
         assertThat(courseInList).isNotNull();
         assertThat(courseInList.getExercises()).as("Course doesn't have any exercises").isEmpty();
     }
