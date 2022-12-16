@@ -296,9 +296,6 @@ public class DatabaseUtilService {
     @Autowired
     private PasswordService passwordService;
 
-    @Autowired
-    private CourseService courseService;
-
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 

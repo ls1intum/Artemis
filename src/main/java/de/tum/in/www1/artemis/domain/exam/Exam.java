@@ -388,7 +388,6 @@ public class Exam extends DomainObject {
         this.registeredUsers.remove(user);
     }
 
-    // needed for Jackson
     public Long getNumberOfRegisteredUsers() {
         return this.numberOfRegisteredUsersTransient;
     }
@@ -397,11 +396,20 @@ public class Exam extends DomainObject {
         this.numberOfRegisteredUsersTransient = numberOfRegisteredUsers;
     }
 
+    public String getExamArchivePath() {
+        return examArchivePath;
+    }
+
+    public void setExamArchivePath(String examArchivePath) {
+        this.examArchivePath = examArchivePath;
+    }
+
     /**
      * check if students are allowed to see this exam
      *
      * @return true, if students are allowed to see this exam, otherwise false, null if this cannot be determined
      */
+    @JsonIgnore
     public Boolean isVisibleToStudents() {
         if (visibleDate == null) {  // no visible date means the exam is configured wrongly and should not be visible!
             return null;
@@ -414,6 +422,7 @@ public class Exam extends DomainObject {
      *
      * @return true, if the exam has started, otherwise false, null if this cannot be determined
      */
+    @JsonIgnore
     public Boolean isStarted() {
         if (startDate == null) {   // no start date means the exam is configured wrongly and we cannot answer the question!
             return null;
@@ -426,6 +435,7 @@ public class Exam extends DomainObject {
      *
      * @return true, if the results are published, false if not published or not set!
      */
+    @JsonIgnore
     public Boolean resultsPublished() {
         if (publishResultsDate == null) {
             return false;
@@ -443,16 +453,9 @@ public class Exam extends DomainObject {
         return ZonedDateTime.now().isAfter(getStartDate().plusSeconds(getStudentExams().stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0)));
     }
 
+    @JsonIgnore
     public boolean hasExamArchive() {
         return examArchivePath != null && !examArchivePath.isEmpty();
-    }
-
-    public String getExamArchivePath() {
-        return examArchivePath;
-    }
-
-    public void setExamArchivePath(String examArchivePath) {
-        this.examArchivePath = examArchivePath;
     }
 
     /**

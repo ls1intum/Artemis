@@ -1084,18 +1084,21 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testGetExamsForCourse_asInstructor() throws Exception {
         request.getList("/api/courses/" + course1.getId() + "/exams", HttpStatus.OK, Exam.class);
         verify(examAccessService, times(1)).checkCourseAccessForTeachingAssistantElseThrow(course1.getId());
+        // TODO: add assert statement
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamsForUser_asInstructor() throws Exception {
         request.getList("/api/courses/" + course1.getId() + "/exams-for-user", HttpStatus.OK, Exam.class);
+        // TODO: add assert statement
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetCurrentAndUpcomingExams() throws Exception {
         request.getList("/api/courses/upcoming-exams", HttpStatus.OK, Exam.class);
+        // TODO: add assert statement
     }
 
     @Test
