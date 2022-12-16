@@ -1518,9 +1518,6 @@ public class ProgrammingExerciseTestService {
 
         // Start participation with original team
         assertThrows(GitLabException.class, () -> participationService.startExercise(exercise, team, false));
-
-        // Clean up generated user
-        userRepo.findOneByLogin(edxUsername + "1").ifPresent(userRepo::delete);
     }
 
     // TEST
