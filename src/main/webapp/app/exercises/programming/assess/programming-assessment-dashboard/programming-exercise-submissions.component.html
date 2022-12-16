@@ -113,8 +113,7 @@
                         </ng-container>
                     </td>
                     <td>
-                        {{ submission.durationInMinutes }}
-                        {{ 'artemisApp.assessment.dashboard.minutes' | artemisTranslate }}
+                        {{ (submission.durationInMinutes ?? 0) * 60 | artemisDurationFromSeconds }}
                     </td>
                     <td>{{ assessmentTypeTranslationKey(submission.latestResult) | artemisTranslate }}</td>
                     <td *ngIf="newManualResultAllowed">
