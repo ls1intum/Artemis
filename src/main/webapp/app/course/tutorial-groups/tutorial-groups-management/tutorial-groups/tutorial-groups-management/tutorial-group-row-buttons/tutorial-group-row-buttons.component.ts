@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { faCalendarAlt, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { Subject, from } from 'rxjs';
@@ -8,12 +8,15 @@ import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/registered-students/registered-students.component';
 import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-tutorial-group-row-buttons',
     templateUrl: './tutorial-group-row-buttons.component.html',
 })
-export class TutorialGroupRowButtonsComponent {
+export class TutorialGroupRowButtonsComponent implements OnDestroy {
+    ngUnsubscribe = new Subject<void>();
+
     @Input() isAtLeastInstructor = false;
     @Input() course: Course;
     @Input() tutorialGroup: TutorialGroup;
@@ -37,6 +40,9 @@ export class TutorialGroupRowButtonsComponent {
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroupId = this.tutorialGroup.id!;
         modalRef.componentInstance.initialize();
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe(() => {});
     }
 
     openRegistrationDialog(event: MouseEvent) {
@@ -45,18 +51,29 @@ export class TutorialGroupRowButtonsComponent {
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroupId = this.tutorialGroup.id!;
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe(() => {
-            this.registrationsChanged.emit();
-        });
+        from(modalRef.result)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe(() => {
+                this.registrationsChanged.emit();
+            });
     }
 
     deleteTutorialGroup = () => {
-        this.tutorialGroupsService.delete(this.course.id!, this.tutorialGroup.id!).subscribe({
-            next: () => {
-                this.dialogErrorSource.next('');
-                this.tutorialGroupDeleted.emit();
-            },
-            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
-        });
+        this.tutorialGroupsService
+            .delete(this.course.id!, this.tutorialGroup.id!)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe({
+                next: () => {
+                    this.dialogErrorSource.next('');
+                    this.tutorialGroupDeleted.emit();
+                },
+                error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+            });
     };
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+        this.dialogErrorSource.unsubscribe();
+    }
 }
