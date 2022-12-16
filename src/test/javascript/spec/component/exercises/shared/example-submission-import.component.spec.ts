@@ -7,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
@@ -43,13 +42,11 @@ describe('ExampleSubmissionImportComponent', () => {
                 ExampleSubmissionImportComponent,
                 MockComponent(ButtonComponent),
                 MockComponent(ResultComponent),
-                MockComponent(NgbPagination),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
                 MockDirective(NgModel),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
             ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })

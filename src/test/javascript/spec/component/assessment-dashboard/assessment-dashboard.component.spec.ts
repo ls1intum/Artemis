@@ -32,7 +32,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgModel } from '@angular/forms';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -154,7 +153,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 MockComponent(FaIconComponent),
                 MockDirective(SortDirective),
                 MockDirective(NgModel),
-                MockDirective(NgbTooltip),
                 MockComponent(NotReleasedTagComponent),
                 MockPipe(ArtemisTimeAgoPipe),
                 MockDirective(MockHasAnyAuthorityDirective),
