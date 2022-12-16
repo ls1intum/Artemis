@@ -30,7 +30,7 @@
                 "text": "<a href={{ assessmentUrl }}>Bewertung:</a> Doppelblind-Bewertung mit strukturierten Bewertungskriterien, Ranglisten sowie Bewertungen/Beschwerden verbessert die Konsistenz/Fairness."
             },
             "communication": {
-                "text": "<a href={{ communicationUrl }}>Kommunikation:</a> Ankündigungen veröffentlichen. Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Fragen filtern."
+                "text": "<a href={{ communicationUrl }}>Kommunikation:</a> Ankündigungen veröffentlichen. Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Fragen filtern. Kursteilnehmer privat anschreiben."
             },
             "notifications": {
                 "text": "<a href = {{ notificationsURL }}>Benachrichtigungen:</a> Anpassbare Web- und E-Mail-Benachrichtigungen. Benutzer können verschiedene Benachrichtigungstypen aktivieren und deaktivieren."
