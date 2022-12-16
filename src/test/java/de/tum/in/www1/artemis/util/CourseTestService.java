@@ -1663,19 +1663,20 @@ public class CourseTestService {
             filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
         }
 
-        var submissions = submissionRepository.findAll();
-
-        for (Submission submission : submissions) {
-            Participation participation = submission.getParticipation();
-            if (participation != null && Objects.equals(participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), updatedCourse.getId())) {
-                if (submission instanceof FileUploadSubmission) {
-                    assertThat(filenames).contains(Path.of("FileUpload-" + userPrefix + "student1-" + submission.getId() + ".png"));
-                }
-                if (submission instanceof TextSubmission) {
-                    assertThat(filenames).contains(Path.of("Text-" + userPrefix + "student1-" + submission.getId() + ".txt"));
-                }
-                if (submission instanceof ModelingSubmission) {
-                    assertThat(filenames).contains(Path.of("Modeling-" + userPrefix + "student1-" + submission.getId() + ".json"));
+        var exercises = exerciseRepo.findAllExercisesByCourseId(updatedCourse.getId());
+        for (Exercise exercise : exercises) {
+            var exerciseWithParticipation = exerciseRepo.findWithEagerStudentParticipationsStudentAndSubmissionsById(exercise.getId()).get();
+            for (Participation participation : exerciseWithParticipation.getStudentParticipations()) {
+                for (Submission submission : participation.getSubmissions()) {
+                    if (submission instanceof FileUploadSubmission) {
+                        assertThat(filenames).contains(Path.of("FileUpload-" + userPrefix + "student1-" + submission.getId() + ".png"));
+                    }
+                    if (submission instanceof TextSubmission) {
+                        assertThat(filenames).contains(Path.of("Text-" + userPrefix + "student1-" + submission.getId() + ".txt"));
+                    }
+                    if (submission instanceof ModelingSubmission) {
+                        assertThat(filenames).contains(Path.of("Modeling-" + userPrefix + "student1-" + submission.getId() + ".json"));
+                    }
                 }
             }
         }
