@@ -229,9 +229,10 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFeedbackConflictDelete() {
+        var countBefore = feedbackRepository.count();
         createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackConflictRepository.deleteAll();
-        assertThat(feedbackRepository.findAll()).hasSize(2);
+        assertThat(feedbackRepository.count()).isEqualTo(countBefore + 2);
     }
 
     private List<FeedbackConflictResponseDTO> createRemoteServiceResponse(Feedback firstFeedback, Feedback secondFeedback) {

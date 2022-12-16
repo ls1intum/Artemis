@@ -17,6 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -31,6 +32,9 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @Autowired
     private CourseRepository courseRepository;
+
+    @Autowired
+    private LectureRepository lectureRepository;
 
     @Autowired
     private MigrationChangeRepository migrationChangeRepository;
@@ -55,6 +59,8 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         // always use the lecture and course with the smallest ID, otherwise tests below related to search might fail (in a flaky way)
         course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).get().getId());
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).get();
+        lecture.setTitle("LectureServiceTestSpecialTitle");
+        lecture = lectureRepository.save(lecture);
 
         // Add a custom attachment for filtering tests
         testAttachment = ModelFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
