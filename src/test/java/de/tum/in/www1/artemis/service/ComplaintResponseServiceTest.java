@@ -88,7 +88,6 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @AfterEach
     void tearDown() {
         migrationChangeRepository.deleteAllInBatch();
-        ;
     }
 
     @Test

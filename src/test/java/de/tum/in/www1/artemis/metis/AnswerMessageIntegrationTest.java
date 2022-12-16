@@ -49,7 +49,7 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         List<Post> existingPostsAndConversationPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse(TEST_PREFIX).stream()
                 .filter(coursePost -> (coursePost.getAnswers() != null)).toList();
 
-        List<Post> existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
+        List<Post> existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() == null).toList();
 
         existingConversationPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() != null).collect(Collectors.toList());
 
@@ -214,8 +214,9 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteAnswerPost_asTutor_notFound() throws Exception {
-        request.delete("/api/courses/" + courseId + "/answer-messages/" + 9999L, HttpStatus.NOT_FOUND);
-        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
+        var countBefore = answerPostRepository.count();
+        request.delete("/api/courses/" + courseId + "/answer-messages/" + 999999999L, HttpStatus.NOT_FOUND);
+        assertThat(answerPostRepository.count()).isEqualTo(countBefore);
 
         // conversation participants should not be notified
         verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));

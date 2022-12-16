@@ -9,7 +9,6 @@ import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 
-import de.tum.in.www1.artemis.service.connectors.LtiService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +25,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
@@ -77,7 +77,7 @@ class LtiServiceTest {
         closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
         ltiService = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, courseRepository,
-            ltiUserIdRepository);
+                ltiUserIdRepository);
         course = new Course();
         course.setId(100L);
         course.setStudentGroupName(courseStudentGroupName);
@@ -103,7 +103,6 @@ class LtiServiceTest {
             closeable.close();
         }
     }
-
 
     @Test
     void handleLaunchRequest_LTILaunchFromEdxStudio() {
@@ -166,7 +165,7 @@ class LtiServiceTest {
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
         when(userRepository.findOneByLogin(username)).thenReturn(Optional.empty());
         when(userCreationService.createUser(username, null, groups, firstName, lastName, launchRequest.getLis_person_contact_email_primary(), null, null, "en", true))
-            .thenReturn(user);
+                .thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
         ltiService.handleLaunchRequest(launchRequest, exercise, onlineCourseConfiguration);

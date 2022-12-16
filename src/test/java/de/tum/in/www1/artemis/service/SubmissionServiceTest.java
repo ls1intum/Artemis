@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-import de.tum.in.www1.artemis.repository.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,6 +23,7 @@ import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionWithComplaintDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -122,7 +122,7 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         if (submissionListTutor2CorrectionRound1 != null) {
             submissionListTutor2CorrectionRound1.clear();
         }
-        migrationChangeRepository.deleteAllInBatch();;
+        migrationChangeRepository.deleteAllInBatch();
     }
 
     @Test

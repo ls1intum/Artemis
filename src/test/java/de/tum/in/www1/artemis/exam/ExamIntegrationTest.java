@@ -1944,7 +1944,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Compare generated results to data in ExamScoresDTO
         // Compare top-level DTO properties
-        assertThat(examScores.maxPoints()).isEqualTo(exam.getMaxPoints());
+        assertThat(examScores.maxPoints()).isEqualTo(exam.getExamMaxPoints());
         // TODO: create another test case for which hasSecondCorrectionAndStarted is true
         assertThat(examScores.hasSecondCorrectionAndStarted()).isFalse();
 
@@ -3034,7 +3034,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     public void testImportExamWithExercises_pointConflict() throws Exception {
         final Exam examA = ModelFactory.generateExam(course1);
-        examA.setMaxPoints(-5);
+        examA.setExamMaxPoints(-5);
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
     }
 
@@ -3072,7 +3072,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(received.getEndText()).isEqualTo("End Text");
         assertThat(received.getConfirmationStartText()).isEqualTo("Confirmation Start Text");
         assertThat(received.getConfirmationEndText()).isEqualTo("Confirmation End Text");
-        assertThat(received.getMaxPoints()).isEqualTo(90);
+        assertThat(received.getExamMaxPoints()).isEqualTo(90);
         assertThat(received.getNumberOfExercisesInExam()).isEqualTo(1);
         assertThat(received.getRandomizeExerciseOrder()).isFalse();
         assertThat(received.getNumberOfCorrectionRoundsInExam()).isEqualTo(1);

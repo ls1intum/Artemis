@@ -10,7 +10,7 @@
             </div>
             <div class="text-end mb-4 mt-4" style="width: unset">
                 <div *ngIf="nextRelevantExam.startDate">{{ 'artemisApp.exam.overview.start' | artemisTranslate : { start: nextRelevantExam.startDate | artemisDate } }}</div>
-                <div *ngIf="nextRelevantExam.maxPoints">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate : { points: nextRelevantExam.maxPoints } }}</div>
+                <div *ngIf="nextRelevantExam.examMaxPoints">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate : { points: nextRelevantExam.examMaxPoints } }}</div>
             </div>
         </div>
     </div>

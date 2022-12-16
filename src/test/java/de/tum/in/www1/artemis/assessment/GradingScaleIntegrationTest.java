@@ -227,7 +227,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveGradingScaleForExamInvalidGradeSteps() throws Exception {
-        exam.setMaxPoints(null);
+        exam.setExamMaxPoints(null);
         examRepository.save(exam);
         gradeSteps = database.generateGradeStepSet(examGradingScale, false);
         examGradingScale.setGradeSteps(gradeSteps);
@@ -245,7 +245,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testSaveGradingScaleForExam() throws Exception {
         gradeSteps = database.generateGradeStepSet(examGradingScale, true);
         examGradingScale.setGradeSteps(gradeSteps);
-        exam.setMaxPoints(null);
+        exam.setExamMaxPoints(null);
         examRepository.save(exam);
 
         GradingScale savedGradingScale = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale,
@@ -320,7 +320,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateGradingScaleForExamInvalidGradeSteps() throws Exception {
-        exam.setMaxPoints(null);
+        exam.setExamMaxPoints(null);
         examRepository.save(exam);
         gradingScaleRepository.save(examGradingScale);
         gradeSteps = database.generateGradeStepSet(examGradingScale, false);
@@ -340,7 +340,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         gradingScaleRepository.save(examGradingScale);
         gradeSteps = database.generateGradeStepSet(examGradingScale, true);
         examGradingScale.setGradeSteps(gradeSteps);
-        exam.setMaxPoints(null);
+        exam.setExamMaxPoints(null);
         examRepository.save(exam);
 
         GradingScale savedGradingScale = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale", examGradingScale,
@@ -434,7 +434,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetAllGradingScalesInInstructorGroupOnPageWithAdmin() throws Exception {
-        String url = "/api/grading-scales?pageSize=100&page=1&sortingOrder=DESCENDING&searchTerm=&sortedColumn=ID";
+        String url = "/api/grading-scales?pageSize=100&page=1&sortingOrder=DESCENDING&searchTerm=abcdefghijklmnop&sortedColumn=ID";
         var result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
         assertThat(result.getResultsOnPage()).isEmpty();
 

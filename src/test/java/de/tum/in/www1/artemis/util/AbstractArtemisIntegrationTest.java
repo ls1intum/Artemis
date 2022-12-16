@@ -130,6 +130,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         quizScheduleService.stopSchedule();
         quizScheduleService.clearAllQuizData();
     }
+
     // TOOD: Check how to unify these
     @AfterEach
     void stopRunningTasks() {

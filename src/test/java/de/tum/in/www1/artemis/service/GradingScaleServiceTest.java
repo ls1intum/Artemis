@@ -197,7 +197,7 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         gradingScale.setGradeSteps(gradeSteps);
         course = database.addEmptyCourse();
         exam = database.addExam(course);
-        exam.setMaxPoints(null);
+        exam.setExamMaxPoints(null);
         gradingScale.setExam(exam);
         examRepository.save(exam);
 

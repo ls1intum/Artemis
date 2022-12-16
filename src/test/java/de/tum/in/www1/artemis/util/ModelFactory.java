@@ -696,7 +696,7 @@ public class ModelFactory {
         exam.setEndText("End Text");
         exam.setConfirmationStartText("Confirmation Start Text");
         exam.setConfirmationEndText("Confirmation End Text");
-        exam.setMaxPoints(90);
+        exam.setExamMaxPoints(90);
         exam.setNumberOfExercisesInExam(1);
         exam.setRandomizeExerciseOrder(false);
         exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
