@@ -50,8 +50,11 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private ExerciseGroup exerciseGroup1;
 
+    private int countExamsBeforeTests;
+
     @BeforeEach
     void init() {
+        countExamsBeforeTests = examRepository.findAllCurrentAndUpcomingExams().size();
         Course course1 = database.addEmptyCourse();
         exam1 = database.addExamWithExerciseGroup(course1, true);
         examInThePast = database.addExam(course1, ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(2), ZonedDateTime.now().minusDays(1));
@@ -104,7 +107,7 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCanGetCurrentAndUpcomingExams() {
         List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams();
-        assertThat(exams).hasSize(2).contains(exam1, examInTheFuture).doesNotContain(examInThePast);
+        assertThat(exams).hasSize(countExamsBeforeTests + 2).contains(exam1, examInTheFuture).doesNotContain(examInThePast);
     }
 
     @Test

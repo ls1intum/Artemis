@@ -59,6 +59,8 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         // always use the lecture and course with the smallest ID, otherwise tests below related to search might fail (in a flaky way)
         course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).get().getId());
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).get();
+        lecture.setTitle("LectureServiceTestSpecialTitle");
+        lecture = lectureRepository.save(lecture);
 
         // Add a custom attachment for filtering tests
         testAttachment = ModelFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
