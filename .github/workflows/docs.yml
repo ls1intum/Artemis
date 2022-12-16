@@ -39,5 +39,5 @@ jobs:
         user_name: 'artemis-bot'
         user_email: 'artemis-bot@users.noreply.github.com'
         full_commit_message: ${{ github.event.head_commit.message }}
-        cname: docs.artemis.ase.in.tum.de
+        cname: docs.artemis.cit.tum.de
       if: github.ref == 'refs/heads/develop'
