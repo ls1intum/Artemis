@@ -44,7 +44,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     protected final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService, UrlService urlService,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+                                         ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.applicationContext = applicationContext;
         this.gitService = gitService;
         this.urlService = urlService;
@@ -55,19 +55,19 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     /**
      * Adds a webhook for the specified repository to the given notification URL.
      *
-     * @param repositoryUrl The repository to which the webhook should get added to
+     * @param repositoryUrl   The repository to which the webhook should get added to
      * @param notificationUrl The URL the hook should notify
-     * @param webHookName Any arbitrary name for the webhook
+     * @param webHookName     Any arbitrary name for the webhook
      */
     protected abstract void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName);
 
     /**
      * Adds an authenticated webhook for the specified repository to the given notification URL.
      *
-     * @param repositoryUrl The repository to which the webhook should get added to
+     * @param repositoryUrl   The repository to which the webhook should get added to
      * @param notificationUrl The URL the hook should notify
-     * @param webHookName Any arbitrary name for the webhook
-     * @param secretToken A secret token that authenticates the webhook against the system behind the notification URL
+     * @param webHookName     Any arbitrary name for the webhook
+     * @param secretToken     A secret token that authenticates the webhook against the system behind the notification URL
      */
     protected abstract void addAuthenticatedWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName, String secretToken);
 
@@ -97,37 +97,34 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
-            throws VersionControlException {
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceCourseShortName, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetCourseShortName, String targetRepositoryName)
+        throws VersionControlException {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
         final String targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
         // get the remote url of the source repo
-        final var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceRepositoryName);
+        final var sourceRepoUrl = getCloneRepositoryUrl(sourceProjectKey, sourceCourseShortName, sourceRepositoryName);
         // get the remote url of the target repo
-        final var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetRepoSlug);
+        final var targetRepoUrl = getCloneRepositoryUrl(targetProjectKey, targetCourseShortName, targetRepoSlug);
         Repository targetRepo = null;
         try {
             // create the new target repo
-            createRepository(targetProjectKey, targetRepoSlug, null);
+            createRepository(targetProjectKey, targetCourseShortName, targetRepoSlug, null);
             // clone the source repo to the target directory
             targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUrl, targetRepoUrl, true);
             // copy by pushing the source's content to the target's repo
             gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl, sourceBranch);
-        }
-        catch (GitAPIException e) {
+        } catch (GitAPIException e) {
             Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUrl);
             try {
                 if (targetRepo != null) {
                     // delete the target repo if an error occurs
                     gitService.deleteLocalRepository(targetRepo);
-                }
-                else {
+                } else {
                     // or delete the folder if it exists
                     FileUtils.deleteDirectory(localPath.toFile());
                 }
-            }
-            catch (IOException ex) {
+            } catch (IOException ex) {
                 // ignore
                 log.error("Could not delete directory of the failed cloned repository in: {}", localPath);
             }
@@ -141,8 +138,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     public String getOrRetrieveBranchOfParticipation(ProgrammingExerciseParticipation participation) {
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             return getOrRetrieveBranchOfStudentParticipation(studentParticipation);
-        }
-        else {
+        } else {
             return getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
         }
     }

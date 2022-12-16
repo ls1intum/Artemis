@@ -15,9 +15,9 @@ public interface VersionControlService {
     /**
      * Configure the repository for the student(s), this mainly includes setting permissions for the passed users
      *
-     * @param exercise the programming exercise for which the repository should be configured
+     * @param exercise      the programming exercise for which the repository should be configured
      * @param participation the programming participation corresponding to the repository in the exercise
-     * @param allowAccess this determines if the users should get access to the repository directly. You normally want this to be true.
+     * @param allowAccess   this determines if the users should get access to the repository directly. You normally want this to be true.
      */
     void configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean allowAccess);
 
@@ -53,11 +53,12 @@ public interface VersionControlService {
     /**
      * Get the clone URL used for cloning
      *
-     * @param projectKey     The project key
-     * @param repositorySlug The repository slug
+     * @param projectKey      The project key
+     * @param courseShortName The short name of the course the repository's exercise belongs to.
+     * @param repositorySlug  The repository slug
      * @return The clone URL
      */
-    VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug);
+    VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String courseShortName, String repositorySlug);
 
     /**
      * Check if the given repository url is valid and accessible.
@@ -80,8 +81,8 @@ public interface VersionControlService {
      * Retrieves the date at which the push event was received by the VCS instance.
      *
      * @param participation The participation we need the date for
-     * @param commitHash The commit hash we want to find the event for
-     * @param eventObject The object provided by the VCS on a push event. null if not available
+     * @param commitHash    The commit hash we want to find the event for
+     * @param eventObject   The object provided by the VCS on a push event. null if not available
      * @return The build queue date
      */
     ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject);
@@ -97,17 +98,18 @@ public interface VersionControlService {
     /**
      * Creates a repository on the VCS.
      *
-     * @param repoName         The name of repository
      * @param projectKey       The key of the project that contains the repository (must exist)
+     * @param courseShortName  The name of the course the repository belongs to (also contained in the projectKey but needed for local VC URLs to quickly find the course).
+     * @param repoName         The name of repository
      * @param parentProjectKey The key of parent project (for sub-groups in Gitlab), null if not applicable
      * @throws VersionControlException if the repository could not be created
      */
-    void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException;
+    void createRepository(String projectKey, String courseShortName, String repoName, String parentProjectKey) throws VersionControlException;
 
     /**
      * Checks if the project with the given projectKey already exists
      *
-     * @param projectKey to check if a project with this unique key already exists
+     * @param projectKey  to check if a project with this unique key already exists
      * @param projectName to check if a project with the same name already exists
      * @return true if the project exists, false otherwise
      */
@@ -116,40 +118,42 @@ public interface VersionControlService {
     /**
      * Copies a repository from one project to another one. The project can be the same.
      *
-     * @param sourceProjectKey     The key of the template project (normally based on the course and exercise short name)
-     * @param sourceRepositoryName The name of the repository which should be copied
-     * @param sourceBranch  The default branch of the source repository
-     * @param targetProjectKey     The key of the target project to which to copy the new plan to
-     * @param targetRepositoryName The desired name of the target repository
+     * @param sourceProjectKey      The key of the template project (normally based on the course and exercise short name)
+     * @param sourceCourseShortName The short name of the course the repository belongs to
+     * @param sourceRepositoryName  The name of the repository which should be copied
+     * @param sourceBranch          The default branch of the source repository
+     * @param targetProjectKey      The key of the target project to which to copy the new repository to
+     * @param targetCourseShortName The short name of the course to which to copy the new repository to
+     * @param targetRepositoryName  The desired name of the target repository
      * @return The URL for cloning the repository
      * @throws VersionControlException if the repository could not be copied on the VCS server (e.g. because the source repo does not exist)
      */
-    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
-            throws VersionControlException;
+    VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceCourseShortName, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetCourseShortName, String targetRepositoryName)
+        throws VersionControlException;
 
     /**
      * Add the user to the repository
      *
-     * @param repositoryUrl     The repository url of the repository to which to add the user. It contains the project key & the repository name.
-     * @param user              User which to add to the repository
+     * @param repositoryUrl The repository url of the repository to which to add the user. It contains the project key & the repository name.
+     * @param user          User which to add to the repository
      */
     void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user);
 
     /**
      * Remove the user from the repository
      *
-     * @param repositoryUrl     The repository url of the repository from which to remove the user. It contains the project key & the repository name.
-     * @param user              User which to remove from the repository
+     * @param repositoryUrl The repository url of the repository from which to remove the user. It contains the project key & the repository name.
+     * @param user          User which to remove from the repository
      */
     void removeMemberFromRepository(VcsRepositoryUrl repositoryUrl, User user);
 
     /**
      * Removes the user's write permissions for a repository.
      *
-     * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
-     * @param projectKey        The projectKey that the repo is part of in the VCS.
-     * @param users             Set of users for which to change permissions
-     * @throws VersionControlException        If the communication with the VCS fails.
+     * @param repositoryUrl The repository url of the repository to update. It contains the project key & the repository name.
+     * @param projectKey    The projectKey that the repo is part of in the VCS.
+     * @param users         Set of users for which to change permissions
+     * @throws VersionControlException If the communication with the VCS fails.
      */
     void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws VersionControlException;
 
@@ -164,20 +168,20 @@ public interface VersionControlService {
     /**
      * Get the default branch of the repository
      *
-     * @param projectKey The project key to which the repository slug belongs
+     * @param projectKey     The project key to which the repository slug belongs
      * @param repositorySlug The repository slug of the repository for which the default branch shall be retrieved
      * @return the name of the default branch, e.g. 'main'
      */
-    default String getDefaultBranchOfRepository(String projectKey, String repositorySlug) throws VersionControlException {
-        return getDefaultBranchOfRepository(getCloneRepositoryUrl(projectKey, repositorySlug));
+    default String getDefaultBranchOfRepository(String projectKey, String courseShortName, String repositorySlug) throws VersionControlException {
+        return getDefaultBranchOfRepository(getCloneRepositoryUrl(projectKey, courseShortName, repositorySlug));
     }
 
     /**
      * Unprotects a branch from the repository, so that the history can be changed (important for combine template commits).
      *
-     * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
-     * @param branch            The name of the branch to unprotect (e.g "main")
-     * @throws VersionControlException      If the communication with the VCS fails.
+     * @param repositoryUrl The repository url of the repository to update. It contains the project key & the repository name.
+     * @param branch        The name of the branch to unprotect (e.g "main")
+     * @throws VersionControlException If the communication with the VCS fails.
      */
     void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException;
 
@@ -191,6 +195,7 @@ public interface VersionControlService {
 
     /**
      * Get the default branch used in the participation or retrieves it from the VCS if not present in the database
+     *
      * @param participation The participation to get the default branch from
      * @return The default branch used by this participation
      */
@@ -198,6 +203,7 @@ public interface VersionControlService {
 
     /**
      * Get the default branch used in the student participation or retrieves it from the VCS if not present in the database
+     *
      * @param participation The student participation to get the default branch from
      * @return The default branch used by this student participation
      */
@@ -205,6 +211,7 @@ public interface VersionControlService {
 
     /**
      * Get the default branch used in the programmingExercise or retrieves it from the VCS if not present in the database
+     *
      * @param programmingExercise The participation to get the default branch from
      * @return The default branch used by this programmingExercise
      */

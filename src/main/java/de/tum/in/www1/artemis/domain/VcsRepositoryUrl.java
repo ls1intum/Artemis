@@ -56,8 +56,7 @@ public class VcsRepositoryUrl {
     public String toString() {
         if (this.uri != null) {
             return this.uri.toString();
-        }
-        else {
+        } else {
             return "VcsRepositoryUrl: empty";
         }
     }
@@ -66,13 +65,13 @@ public class VcsRepositoryUrl {
      * Generates the unique local folder name for a given file or remote repository URI.
      * For file URIs, we take the last element of the path, which should be unique
      * For URLs pointing to remote git repositories, we use the whole path
-     *
+     * <p>
      * Examples:
      * https://bitbucket.ase.in.tum.de/scm/eist20l06e03/eist20l06e03-ab123cd.git --> eist20l06e03/eist20l06e03-ab123cd
      * ssh://git@bitbucket.ase.in.tum.de:7999/eist20l06e03/eist20l06e03-ab123cd.git --> eist20l06e03/eist20l06e03-ab123cd
      * file:C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950 --> studentOriginRepo1644180397872264950
      * file:/var/folders/vc/sk85td_s54v7w9tjq07b0_q80000gn/T/studentTeamOriginRepo420037178325056205/ -->  studentTeamOriginRepo420037178325056205
-     * https://localhost:8080/git/EXAMPLECOURSE1TESTEX1/examplecourse1testex1-exercise --> EXAMPLECOURSE1TESTEX1/examplecourse1testex1-exercise
+     * https://localhost:8080/git/EXAMPLECOURSE1/TESTEX1/examplecourse1testex1-exercise --> EXAMPLECOURSE1/TESTEX1/examplecourse1testex1-exercise
      *
      * @return the folderName as a string.
      */
@@ -81,8 +80,7 @@ public class VcsRepositoryUrl {
             // Take the last element of the path
             final var segments = uri.getPath().split("/");
             return segments[segments.length - 1];
-        }
-        else { // e.g. http(s) or ssh
+        } else { // e.g. http(s) or ssh
             String path = getURI().getPath();
             path = path.replaceAll(".git$", "");
             path = path.replaceAll("/$", "");

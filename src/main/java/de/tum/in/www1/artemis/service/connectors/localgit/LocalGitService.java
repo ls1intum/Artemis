@@ -54,8 +54,6 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
-import de.tum.in.www1.artemis.service.connectors.localgit.dto.LocalGitProjectDTO;
 
 @Service
 @Profile("localgit")
@@ -185,18 +183,8 @@ public class LocalGitService extends AbstractVersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
-        return new LocalGitRepositoryUrl(projectKey, repositorySlug);
-    }
-
-    private LocalGitProjectDTO getLocalGitProject(String projectKey, String projectName) throws LocalGitException {
-
-        // Try to find the folder in the file system. If it is not found, throw an exception.
-        if (new File(localGitPath + "/" + projectKey).exists()) {
-            return new LocalGitProjectDTO(projectKey, projectName);
-        } else {
-            throw new LocalGitException("Could not find local git project.");
-        }
+    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String courseShortName, String repositorySlug) {
+        return new LocalGitRepositoryUrl(projectKey, courseShortName, repositorySlug);
     }
 
     /**
@@ -459,18 +447,23 @@ public class LocalGitService extends AbstractVersionControlService {
 //        }
     }
 
+    /**
+     * Check if a project already exists in the file system to make sure the new projectKey is unique.
+     *
+     * @param projectKey  to check if a project with this unique key already exists
+     * @param projectName to check if a project with the same name already exists
+     * @return true or false depending
+     */
     @Override
     public boolean checkIfProjectExists(String projectKey, String projectName) {
-        // Check if the folder already exists in the file system to make sure the new project key is unique.
-
-        try {
-            var project = getLocalGitProject(projectKey, projectName);
-            log.warn("Local git project with key {} already exists: {}", projectKey, project.name());
+        // Try to find the folder in the file system. If it is not found, return false.
+        if (new File(localGitPath + "/" + projectKey).exists()) {
+            log.warn("Local git project with key {} already exists: {}", projectKey, projectName);
             return true;
-        } catch (LocalGitException e) {
-            log.debug("Local git project {} does not exist", projectKey);
-            return false;
         }
+
+        log.debug("Local git project {} does not exist", projectKey);
+        return false;
     }
 
     /**
@@ -482,27 +475,28 @@ public class LocalGitService extends AbstractVersionControlService {
      */
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws LocalGitException {
-        String projectKey = programmingExercise.getProjectKey();
-        String projectName = programmingExercise.getProjectName();
-        // String folderName = (projectKey + projectName).replaceAll("\\s", "");
+        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
+        String courseShortName = course.getShortName();
 
-        log.debug("Creating folder for local git project with key {}", projectKey);
+        String projectKey = programmingExercise.getProjectKey();
+
+        log.debug("Creating folder for local git project at {}", localGitPath + File.separator + courseShortName + File.separator + projectKey);
 
         try {
             // Instead of defining a project like would be done for GitLab or Bitbucket,
             // just define a directory that will contain all repositories.
             // Ich probiere es erstmal hiermit und habe die Dateien so lokal bei mir und
             // kann sie dort anschauen.
-            // Langfristig wird es wahrscheinlich eher sowas wie das hier:
+            // TODO: Langfristig wird es wahrscheinlich eher sowas wie das hier:
             // https://spring.io/guides/gs/uploading-files/
             // Nachschauen wie langfristig die Dateien damit gespeichert sind!
-            File localPath = new File(localGitPath + File.separator + projectKey);
+            File localPath = new File(localGitPath + File.separator + courseShortName + File.separator + projectKey);
 
             if (!localPath.mkdirs()) {
-                throw new IOException("Could not create directory " + localPath);
+                throw new IOException("Could not create directory " + localPath.getPath());
             }
         } catch (Exception e) {
-            log.error("Could not create local git project {} with key {}", projectName, projectKey, e);
+            log.error("Could not create local git project for key {} in course {}", projectKey, courseShortName, e);
             throw new LocalGitException("Error while creating local git project.");
         }
     }
@@ -525,18 +519,22 @@ public class LocalGitService extends AbstractVersionControlService {
     /**
      * Create a new repo
      *
-     * @param repoName   The name for the new repository
-     * @param projectKey The project key of the parent project
+     * @param projectKey     The project key of the parent project
+     * @param repositorySlug The name for the new repository
      * @throws LocalGitException if the repo could not be created
      */
-    private void createRepository(String projectKey, String repoName) throws LocalGitException {
-        log.debug("Creating local git repo {} with parent key {}", repoName, projectKey);
+    private void createRepository(String projectKey, String courseShortName, String repositorySlug) throws LocalGitException {
+
+        LocalGitRepositoryUrl localGitUrl = new LocalGitRepositoryUrl(projectKey, courseShortName, repositorySlug);
+        // TODO: Save Url in db.
+
+        log.debug("Creating local git repo {} in folder {}", repositorySlug, getLocalFilePath(localGitUrl));
 
         try {
-            File remoteDir = new File(localGitPath + "/" + projectKey + "/" + repoName + ".git");
+            File remoteDir = new File(getLocalFilePath(localGitUrl));
 
             if (!remoteDir.mkdirs()) {
-                throw new IOException("Could not create directory " + remoteDir);
+                throw new IOException("Could not create directory " + remoteDir.getPath());
             }
 
             // Create a bare local repository with JGit
@@ -553,7 +551,7 @@ public class LocalGitService extends AbstractVersionControlService {
 
             git.close();
         } catch (GitAPIException | IOException e) {
-            log.error("Could not create local git repo {} with project key {}", repoName, projectKey, e);
+            log.error("Could not create local git repo {} at location {}", repositorySlug, getLocalFilePath(localGitUrl), e);
             throw new LocalGitException("Error while creating local git project.");
         }
     }
@@ -722,36 +720,17 @@ public class LocalGitService extends AbstractVersionControlService {
     }
 
     @Override
-    public void createRepository(String entityName, String topLevelEntity, String parentEntity) {
-        createRepository(entityName, topLevelEntity);
+    public void createRepository(String projectKey, String courseShortName, String repositorySlug, String parentProjectKey) {
+        createRepository(projectKey, courseShortName, repositorySlug);
     }
 
-    public final class LocalGitRepositoryUrl extends VcsRepositoryUrl {
-
-        public LocalGitRepositoryUrl(String projectKey, String repositorySlug) {
-            final var urlString = localGitServerUrl + buildRepositoryPath(projectKey, repositorySlug);
-            try {
-                this.uri = new URI(urlString);
-            } catch (URISyntaxException e) {
-                throw new LocalGitException("Could not create local git Repository URL", e);
-            }
-        }
-
-        private LocalGitRepositoryUrl(String urlString) {
-            try {
-                this.uri = new URI(urlString);
-            } catch (URISyntaxException e) {
-                throw new LocalGitException("Could not create local git Repository URL", e);
-            }
-        }
-
-        /*
-         * @Override public VcsRepositoryUrl withUser(String username) { this.username = username; return new BitbucketRepositoryUrl(uri.toString().replaceAll("(https?://)(.*)",
-         * "$1" + username + "@$2")); }
-         */
-
-        private String buildRepositoryPath(String projectKey, String repositorySlug) {
-            return "/" + projectKey + "/" + repositorySlug;
-        }
+    public String buildRepositoryUrl(LocalGitRepositoryUrl localGitRepositoryUrl) {
+        return localGitServerUrl + "/git/" + localGitRepositoryUrl.getCourseShortName() + "/" + localGitRepositoryUrl.getProjectKey() + "/" + localGitRepositoryUrl.getRepositorySlug() + ".git";
     }
+
+    public String getLocalFilePath(LocalGitRepositoryUrl localGitRepositoryUrl) {
+        return localGitPath + File.separator + localGitRepositoryUrl.getCourseShortName() + File.separator + localGitRepositoryUrl.getProjectKey() + File.separator + localGitRepositoryUrl.getRepositorySlug();
+    }
+
+
 }

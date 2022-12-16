@@ -4,9 +4,9 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.jgitServlet.JGitFetchFilter;
+import de.tum.in.www1.artemis.security.jgitServlet.JGitFilterUtilService;
 import de.tum.in.www1.artemis.security.jgitServlet.JGitPushFilter;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.lib.Repository;
@@ -48,15 +48,15 @@ public class JGitServletConfiguration {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final JGitFilterUtilService jGitFilterUtilService;
 
-    public JGitServletConfiguration(UserRepository userRepository, UserDetailsService userDetailsService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository, AuthenticationManagerBuilder authenticationManagerBuilder) {
+    public JGitServletConfiguration(JGitFilterUtilService jGitFilterUtilService, UserRepository userRepository, UserDetailsService userDetailsService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository) {
+        this.jGitFilterUtilService = jGitFilterUtilService;
         this.userRepository = userRepository;
         this.userDetailsService = userDetailsService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseRepository = exerciseRepository;
-        this.authenticationManagerBuilder = authenticationManagerBuilder;
     }
 
     @Bean
@@ -70,7 +70,7 @@ public class JGitServletConfiguration {
                 // Returns the opened repository instance, never null.
 
                 // Find the local repository depending on the name and return an opened instance. Must be closed later on.
-                File gitDir = new File(localGitPath + File.separator + name + ".git");
+                File gitDir = new File(localGitPath + File.separator + name);
 
                 log.debug("Path to resolve repository from: {}", gitDir.getPath());
                 if (!gitDir.exists()) {
@@ -96,11 +96,11 @@ public class JGitServletConfiguration {
 
                 repository.getConfig().setBoolean("http", null, "receivepack", true);
 
-                repository.incrementOpen(); // hier nochmal checken ob ein close() notwendig ist.
+                repository.incrementOpen(); // TODO: hier nochmal checken ob ein close() notwendig ist oder ob ich diese Zeile einfach komplett weglassen kann?
                 return repository;
             });
 
-            gs.addUploadPackFilter(new JGitFetchFilter(userRepository, userDetailsService, courseRepository, authorizationCheckService, exerciseRepository, authenticationManagerBuilder));
+            gs.addUploadPackFilter(new JGitFetchFilter(jGitFilterUtilService));
             gs.addReceivePackFilter(new JGitPushFilter(userRepository, authorizationCheckService));
 
             log.info("Registering GitServlet");
