@@ -40,7 +40,7 @@ public class ProgrammingLanguageConfiguration {
         final var languageSpecificBuildImages = loadImages(buildImages);
         checkImageForAllProgrammingLanguagesDefined(languageSpecificBuildImages);
         images = languageSpecificBuildImages;
-        log.info("Load docker image configuration: " + images);
+        log.info("Loaded docker image configuration: " + images);
     }
 
     /**
