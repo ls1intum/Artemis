@@ -899,7 +899,9 @@ public class UserTestService {
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
             User admin = userRepository.getUserByLoginElseThrow("admin");
             user1.setActivated(true);
+            user1.setRegistrationNumber(null);
             user2.setActivated(false);
+            user2.setRegistrationNumber(null);
             userRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
             assertThat(result).contains(user1, admin).doesNotContain(user2);
@@ -946,7 +948,9 @@ public class UserTestService {
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
             User admin = userRepository.getUserByLoginElseThrow("admin");
             user1.setInternal(true);
+            user1.setRegistrationNumber(null);
             user2.setInternal(false);
+            user2.setRegistrationNumber(null);
             userRepository.saveAll(List.of(user1, user2, admin));
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
             assertThat(result).contains(user1, admin).doesNotContain(user2);
