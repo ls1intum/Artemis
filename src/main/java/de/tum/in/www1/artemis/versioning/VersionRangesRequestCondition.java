@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.exception.ApiVersionRangeNotValidException;
 public class VersionRangesRequestCondition implements RequestCondition<VersionRangesRequestCondition> {
 
     // Expect optional leading slash, "api/", optional numerical version with a "v" prefix and some path afterwards
-    private static final Pattern PATH_PATTERN = Pattern.compile("^/?api(/v(\\d*))?/.+$");
+    private static final Pattern PATH_PATTERN = Pattern.compile("^/?api(/v(\\d+))?/.+$");
 
     private final Logger log = LoggerFactory.getLogger(VersionRangesRequestCondition.class);
 
