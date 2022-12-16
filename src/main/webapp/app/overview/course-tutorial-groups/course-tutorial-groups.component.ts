@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Subject, finalize } from 'rxjs';
 import { BarControlConfiguration } from 'app/overview/tab-bar/tab-bar';
 import { Course } from 'app/entities/course.model';
@@ -7,7 +7,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { map } from 'rxjs/operators';
+import { map, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
@@ -19,7 +19,9 @@ type filter = 'all' | 'registered';
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
 })
-export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
+export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnDestroy {
+    ngUnsubscribe = new Subject<void>();
+
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
@@ -42,12 +44,17 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
         private alertService: AlertService,
     ) {}
 
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
+
     get registeredTutorialGroups() {
         return this.tutorialGroups.filter((tutorialGroup) => tutorialGroup.isUserRegistered);
     }
 
     ngOnInit(): void {
-        this.activatedRoute.parent?.parent?.paramMap.subscribe((parentParams) => {
+        this.activatedRoute.parent?.parent?.paramMap.pipe(takeUntil(this.ngUnsubscribe)).subscribe((parentParams) => {
             this.courseId = Number(parentParams.get('courseId'));
             if (this.courseId) {
                 this.setCourse();
@@ -64,7 +71,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
     }
 
     subscribeToQueryParameter() {
-        this.activatedRoute.queryParams.subscribe((queryParams) => {
+        this.activatedRoute.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
             if (queryParams.filter) {
                 this.selectedFilter = queryParams.filter as filter;
             }
@@ -72,11 +79,14 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
     }
 
     subscribeToCourseUpdates() {
-        this.courseManagementService.getCourseUpdates(this.courseId).subscribe((course) => {
-            this.course = course;
-            this.setFreeDays();
-            this.setTutorialGroups();
-        });
+        this.courseManagementService
+            .getCourseUpdates(this.courseId)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((course) => {
+                this.course = course;
+                this.setFreeDays();
+                this.setTutorialGroups();
+            });
     }
 
     private setFreeDays() {
@@ -139,6 +149,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
                 finalize(() => {
                     this.isLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroups: TutorialGroup[]) => {
@@ -158,6 +169,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
                 finalize(() => {
                     this.isLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (course: Course) => {
