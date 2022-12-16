@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -77,10 +77,11 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
             .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
     }
 
-    convertToPdf(model: string, filename: string): Observable<any> {
+    convertToPdf(model: string, filename: string): Observable<HttpResponse<Blob>> {
         return this.http
             .post(`${SERVER_API_URL}api/apollon-convert/pdf`, { model }, { observe: 'response', responseType: 'blob' })
-            .pipe(map((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)));
+            .pipe(tap((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)))
+            .pipe(tap((foo) => foo));
     }
 
     /**

@@ -107,8 +107,10 @@ describe('ModelingExercise Service', () => {
     it('should convert model to pdf', fakeAsync(() => {
         jest.spyOn(helper, 'downloadStream').mockReturnValue();
         const blob = new Blob(['test'], { type: 'text/html' }) as File;
-        service.convertToPdf('model1', 'filename').subscribe((resp) => expect(resp).toResolve());
 
+        // We use a fake async and don't need to await the promise
+        // eslint-disable-next-line jest/valid-expect
+        expect(lastValueFrom(service.convertToPdf('model1', 'filename'))).resolves.toContainEntry(['body', blob]);
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(blob);
         tick();
