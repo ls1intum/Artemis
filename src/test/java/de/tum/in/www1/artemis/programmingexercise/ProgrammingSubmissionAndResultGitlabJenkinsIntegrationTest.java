@@ -239,8 +239,8 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldExtractBuildLogAnalytics_unsupportedProgrammingLanguage() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = TEST_PREFIX + "student1";
-        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON);
+        var exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         database.createProgrammingSubmission(participation, false);
 

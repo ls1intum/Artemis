@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -57,7 +56,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         var programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
@@ -75,17 +74,13 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
         database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         buildLogEntryRepository.deleteAll();
 
-        var participation = studentParticipationRepository.findAll().get(0);
-
-        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) submission.getParticipation();
-
         var jobWithDetails = mock(JobWithDetails.class);
         jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), programmingExerciseParticipation.getBuildPlanId(), jobWithDetails, false);
         var lastBuild = mock(Build.class);
         doReturn(lastBuild).when(jobWithDetails).getLastBuild();
         doThrow(IOException.class).when(lastBuild).details();
 
-        var url = "/api/repository/" + participation.getId() + "/buildlogs";
+        var url = "/api/repository/" + programmingExerciseParticipation.getId() + "/buildlogs";
         request.getList(url, HttpStatus.INTERNAL_SERVER_ERROR, BuildLogEntry.class);
     }
 }
