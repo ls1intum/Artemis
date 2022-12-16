@@ -19,11 +19,6 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
     styleUrls: ['./course-exercise-row.scss'],
 })
 export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges {
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
-    readonly TEXT = ExerciseType.TEXT;
-    readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
     @HostBinding('class') classes = 'exercise-row';
