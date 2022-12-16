@@ -160,48 +160,43 @@ There is a growing community of university instructors who are using Artemis.
 
 We communicate using GitHub issues and pull requests. Additionally, you can join us on Slack to ask questions and get support. If you are interested, please send an email to [Stephan Krusche](mailto:krusche@in.tum.de).
 
-#### Universities with Artemis in Use
+#### Universities / Schools with Artemis in Use
 
 The following universities are actively using Artemis or are currently evaluating Artemis.
 
-##### Technical University of Munich
-
-* https://artemis.cit.tum.de 
-* Main contact person: [Stephan Krusche](mailto:krusche@in.tum.de)
-
-##### LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt, TU Wien
-
-* https://artemis.codeability.uibk.ac.at
-* [codeAbility project](https://codeability.uibk.ac.at)
-* Main contact person: [Michael Breu](mailto:Michael.Breu@uibk.ac.at)
-
-##### University of Stuttgart
-
-* https://artemis.sqa.ddnss.org
-* Main contact person: [Steffen Becker](mailto:steffen.becker@informatik.uni-stuttgart.de)
-
-##### Universität Passau
-
-* https://artemis.fim.uni-passau.de
-* Main contact person: [Benedikt Fein](mailto:fein@fim.uni-passau.de)
-
-##### Karlsruhe Institute of Technology
-
-* https://artemis.praktomat.cs.kit.edu
-* Main contact person: [Dominik Fuchß](mailto:dominik.fuchss@kit.edu)
-
-##### Hochschule München
-
-* https://artemis.cs.hm.edu
-* Main contact person: [Michael Eggers](mailto:michael.eggers@hm.edu)
-
-##### TU Dresden
-
-* Main contact person: [Martin Morgenstern](mailto:martin.morgenstern1@tu-dresden.de)
-
-##### Hochschule Heilbronn
-
-* Main contact person: [Jörg Winckler](mailto:joerg.winckler@hs-heilbronn.de)
+* **Technical University of Munich**  
+  https://artemis.cit.tum.de  
+  Main contact person: [Stephan Krusche](mailto:krusche@in.tum.de)  
+  
+* **LFU Innsbruck, Uni Salzburg, JKU Linz, AAU Klagenfurt, TU Wien**  
+  https://artemis.codeability.uibk.ac.at  
+  [codeAbility project](https://codeability.uibk.ac.at)  
+  Main contact person: [Michael Breu](mailto:Michael.Breu@uibk.ac.at)  
+  
+* **University of Stuttgart**  
+  https://artemis.sqa.ddnss.org  
+  Main contact person: [Steffen Becker](mailto:steffen.becker@informatik.uni-stuttgart.de)  
+  
+* **Universität Passau**  
+  https://artemis.fim.uni-passau.de  
+  Main contact person: [Benedikt Fein](mailto:fein@fim.uni-passau.de)  
+  
+* **Karlsruhe Institute of Technology**  
+  https://artemis.praktomat.cs.kit.edu  
+  Main contact person: [Dominik Fuchß](mailto:dominik.fuchss@kit.edu)  
+  
+* **Hochschule München**  
+  https://artemis.cs.hm.edu  
+  Main contact person: [Michael Eggers](mailto:michael.eggers@hm.edu)  
+  
+* **TU Dresden**  
+  Main contact person: [Martin Morgenstern](mailto:martin.morgenstern1@tu-dresden.de)  
+  
+* **Hochschule Heilbronn**  
+  Main contact person: [Jörg Winckler](mailto:joerg.winckler@hs-heilbronn.de)  
+  
+* **Maria-Theresia-Gymnasium München**  
+  
 
 ##### Interested universities
 
