@@ -26,6 +26,10 @@ artemis:
     continuous-integration:
     # Defines the used docker images for certain programming languages
         build:
+            default-docker-flags:
+                cpus: 2
+                memory: 2g
+                pids-limit: 1000
             images:
                 # java intentionally uppercase to make sure both variants are
                 # accepted
