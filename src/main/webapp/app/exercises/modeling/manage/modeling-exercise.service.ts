@@ -119,8 +119,8 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * Delete the clusters used in Compass
      * @param modelingExerciseId id of the exercise to delete the clusters of
      */
-    deleteClusters(modelingExerciseId: number): Observable<{}> {
-        return this.http.delete(`${this.adminResourceUrl}/${modelingExerciseId}/clusters`, { observe: 'response' });
+    deleteClusters(modelingExerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.adminResourceUrl}/${modelingExerciseId}/clusters`, { observe: 'response' });
     }
 
     /**

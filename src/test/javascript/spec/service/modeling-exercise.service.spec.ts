@@ -14,6 +14,7 @@ import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/Plagiar
 import * as helper from 'app/shared/util/download.util';
 import { Router } from '@angular/router';
 import { MockRouter } from '../helpers/mocks/mock-router';
+import { lastValueFrom } from 'rxjs';
 
 describe('ModelingExercise Service', () => {
     let service: ModelingExerciseService;
@@ -209,9 +210,12 @@ describe('ModelingExercise Service', () => {
 
     it('should delete clusters', fakeAsync(() => {
         elemDefault.id = 756;
-        service.deleteClusters(elemDefault.id).subscribe((resp) => expect(resp).toResolve());
+
+        // We use a fake async and don't need to await the promise
+        // eslint-disable-next-line jest/valid-expect
+        expect(lastValueFrom(service.deleteClusters(elemDefault.id))).toResolve();
         const req = httpMock.expectOne({ method: 'DELETE', url: `${service.adminResourceUrl}/${elemDefault.id}/clusters` });
-        req.flush({});
+        req.flush(null);
         tick();
     }));
 
