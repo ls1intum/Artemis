@@ -30,7 +30,7 @@ export class ProgrammingExerciseInstructionService {
      * @param latestResult
      */
     public testStatusForTask = (tests: string[], latestResult?: Result): TaskResult => {
-        if (latestResult && latestResult.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length)) {
+        if (latestResult && latestResult.successful && (!latestResult.feedbacks || !latestResult.feedbacks.length) && tests) {
             // Case 1: Submission fulfills all test cases and there are no feedbacks (legacy case), no further checking needed.
             return { testCaseState: TestCaseState.SUCCESS, detailed: { successfulTests: tests, failedTests: [], notExecutedTests: [] } };
         } else if (latestResult && latestResult.feedbacks && latestResult.feedbacks.length) {
@@ -59,7 +59,7 @@ export class ProgrammingExerciseInstructionService {
             );
 
             // Exercise is done if none of the tests failed
-            const testCaseState = failed.length > 0 ? TestCaseState.FAIL : notExecuted.length > 0 ? TestCaseState.NOT_EXECUTED : TestCaseState.SUCCESS;
+            const testCaseState = failed.length > 0 ? TestCaseState.FAIL : notExecuted.length > 0 || tests.length === 0 ? TestCaseState.NOT_EXECUTED : TestCaseState.SUCCESS;
             return { testCaseState, detailed: { successfulTests: successful, failedTests: failed, notExecutedTests: notExecuted } };
         } else {
             // Case 3: There are no results

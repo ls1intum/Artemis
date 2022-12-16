@@ -99,6 +99,7 @@
             },
             "testStatusLabels": {
                 "noResult": "Keine Ergebnisse",
+                "noTests": "Keine Tests",
                 "testPassing": "Test bestanden",
                 "totalTestsPassing": "{{passedTests}} von {{totalTests}} Tests bestanden"
             },
