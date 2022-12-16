@@ -33,9 +33,13 @@ jobs:
       with:
         docs-folder: "docs/"
         build-command: make html dirhtml
+    - uses: actions/upload-artifact@v3
+      with:
+        name: Documentation
+        path: docs/_build/html/
     - uses: actions/upload-pages-artifact@v1
       with:
-        path: docs/_build/html/
+        path: docs/_build/dirhtml/
       
   # Deployment job
   deploy:
