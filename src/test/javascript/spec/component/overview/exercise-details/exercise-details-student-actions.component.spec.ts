@@ -217,11 +217,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(comp.exercise.studentParticipations).toEqual([activeParticipation, practiceParticipation]);
     });
 
-    it('should not allow to publish a build plan for text exercises', () => {
-        comp.exercise = teamExerciseWithoutTeamAssigned;
-        expect(comp.publishBuildPlanUrl()).toBeUndefined();
-    });
-
     it('should disable the feedback request button', () => {
         const result: Result = { score: 50, rated: true };
         const participation: StudentParticipation = {

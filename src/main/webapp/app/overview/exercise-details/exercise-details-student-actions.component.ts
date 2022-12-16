@@ -4,7 +4,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { HttpClient } from '@angular/common/http';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
-import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { isResumeExerciseAvailable, isStartExerciseAvailable, isStartPracticeAvailable } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
@@ -12,7 +12,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { finalize } from 'rxjs/operators';
-import { faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers } from '@fortawesome/free-solid-svg-icons';
+import { faComment, faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
@@ -56,7 +56,6 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
     faUsers = faUsers;
     faEye = faEye;
     faPlayCircle = faPlayCircle;
-    faSignal = faSignal;
     faRedo = faRedo;
     faExternalLinkAlt = faExternalLinkAlt;
 
@@ -221,25 +220,7 @@ export class ExerciseDetailsStudentActionsComponent implements OnInit, OnChanges
         return participations?.length ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
     }
 
-    repositoryUrl(participation: Participation) {
-        const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
-        return programmingParticipation.repositoryUrl;
-    }
-
-    publishBuildPlanUrl() {
-        return this.programmingExercise?.publishBuildPlanUrl;
-    }
-
     buildPlanUrl(participation: StudentParticipation) {
         return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
-    }
-
-    buildPlanActive() {
-        return (
-            !!this.exercise &&
-            this.exercise.studentParticipations &&
-            this.exercise.studentParticipations.length > 0 &&
-            this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
-        );
     }
 }
