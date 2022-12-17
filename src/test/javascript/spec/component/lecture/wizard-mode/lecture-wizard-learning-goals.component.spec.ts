@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -18,6 +18,7 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('LectureWizardLearningGoalsComponent', () => {
     let wizardLearningGoalsComponentFixture: ComponentFixture<LectureUpdateWizardLearningGoalsComponent>;
@@ -26,7 +27,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [LectureUpdateWizardLearningGoalsComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [LectureUpdateWizardLearningGoalsComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(LectureService),
