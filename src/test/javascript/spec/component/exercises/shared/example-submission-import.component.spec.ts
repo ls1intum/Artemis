@@ -20,6 +20,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ExampleSubmissionImportComponent', () => {
     let component: ExampleSubmissionImportComponent;
@@ -37,7 +38,7 @@ describe('ExampleSubmissionImportComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockComponent(NgbPagination)],
             declarations: [
                 ExampleSubmissionImportComponent,
                 MockComponent(ButtonComponent),
