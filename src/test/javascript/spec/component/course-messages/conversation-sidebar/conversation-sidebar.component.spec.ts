@@ -46,14 +46,13 @@ describe('ConversationSidebarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, NgxDatatableModule],
+            imports: [HttpClientTestingModule, NgxDatatableModule, MockModule(NgbTooltipModule)],
             declarations: [
                 ConversationSidebarComponent,
                 MockComponent(FaIconComponent),
                 MockComponent(DataTableComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(UnreadMessagesPipe),
-                MockModule(NgbTooltipModule),
             ],
             providers: [
                 FormBuilder,
