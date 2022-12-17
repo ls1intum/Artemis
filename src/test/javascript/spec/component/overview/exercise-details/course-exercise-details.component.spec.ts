@@ -61,6 +61,9 @@ import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/Plagia
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
+import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-button-overlay.component';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
+import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -108,6 +111,9 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ResultHistoryComponent),
                 MockComponent(ResultComponent),
                 MockComponent(ComplaintsStudentViewComponent),
+                MockComponent(ExerciseHintButtonOverlayComponent),
+                MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
+                MockComponent(ResetRepoButtonComponent),
                 MockComponent(RatingComponent),
                 MockRouterLinkDirective,
                 MockComponent(ExerciseDetailsStudentActionsComponent),

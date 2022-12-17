@@ -15,6 +15,7 @@ import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-transl
 import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
 import { ExamExerciseUpdateHighlighterComponent } from 'app/exam/participate/exercises/exam-exercise-update-highlighter/exam-exercise-update-highlighter.component';
+import { NgbTooltipMocksModule } from '../../../../helpers/mocks/directive/ngbTooltipMocks.module';
 
 describe('ModelingExamSubmissionComponent', () => {
     let fixture: ComponentFixture<ModelingExamSubmissionComponent>;
@@ -37,7 +38,7 @@ describe('ModelingExamSubmissionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, NgbTooltipMocksModule],
             declarations: [
                 ModelingExamSubmissionComponent,
                 MockComponent(ModelingEditorComponent),
