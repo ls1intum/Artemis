@@ -10,6 +10,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Subject } from 'rxjs';
+import { CourseStorageService } from 'app/course/manage/course-storage.service';
 
 @Component({
     selector: 'jhi-create-tutorial-groups-configuration',
