@@ -5,13 +5,14 @@ import { ProgrammingExerciseImportComponent, TableColumn } from 'app/exercises/p
 import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { of } from 'rxjs';
 import { FormsModule } from '@angular/forms';
+import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseImportComponent', () => {
     let fixture: ComponentFixture<ProgrammingExerciseImportComponent>;
@@ -25,7 +26,7 @@ describe('ProgrammingExerciseImportComponent', () => {
     let programmingExercise: ProgrammingExercise;
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [ArtemisTestModule, FormsModule, MockModule(NgbPaginationModule)],
             declarations: [
                 ProgrammingExerciseImportComponent,
                 MockPipe(ExerciseCourseTitlePipe),

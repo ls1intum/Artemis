@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { PostComponent } from 'app/shared/metis/post/post.component';
@@ -15,6 +15,7 @@ import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-transl
 import { metisExercise, metisLecture, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport } from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { RouterTestingModule } from '@angular/router/testing';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -27,7 +28,7 @@ describe('PostComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule],
+            imports: [RouterTestingModule, MockDirective(NgbTooltip)],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostComponent,
