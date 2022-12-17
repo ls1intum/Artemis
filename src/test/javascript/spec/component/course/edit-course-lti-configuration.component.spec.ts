@@ -1,6 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { of } from 'rxjs';
 import { NgbNavModule } from '@ng-bootstrap/ng-bootstrap';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
@@ -56,6 +57,7 @@ describe('Edit Course LTI Configuration Component', () => {
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
                 MockComponent(FaIconComponent),
+                MockComponent(HelpIconComponent),
             ],
             providers: [
                 MockProvider(CourseManagementService),

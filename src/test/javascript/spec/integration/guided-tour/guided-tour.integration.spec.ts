@@ -16,6 +16,8 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { NavbarComponent } from 'app/shared/layouts/navbar/navbar.component';
 import { ActiveMenuDirective } from 'app/shared/layouts/navbar/active-menu.directive';
 import { NotificationSidebarComponent } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
+import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
+import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
 import { User } from 'app/core/user/user.model';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { CourseCardComponent } from 'app/overview/course-card.component';
@@ -39,6 +41,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { PieChartModule } from '@swimlane/ngx-charts';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
 
 describe('Guided tour integration', () => {
     const user = { id: 1 } as User;
@@ -64,6 +68,9 @@ describe('Guided tour integration', () => {
                     },
                 ]),
                 MockModule(PieChartModule),
+                MockDirective(NgbTooltip),
+                MockDirective(NgbCollapse),
+                NgbDropdownMocksModule,
             ],
             declarations: [
                 CourseCardComponent,
@@ -78,6 +85,8 @@ describe('Guided tour integration', () => {
                 MockComponent(LoadingNotificationComponent),
                 MockComponent(CoursesComponent),
                 MockComponent(SecuredImageComponent),
+                MockComponent(SystemNotificationComponent),
+                MockComponent(ThemeSwitchComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
