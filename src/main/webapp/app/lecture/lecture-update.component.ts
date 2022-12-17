@@ -58,7 +58,7 @@ export class LectureUpdateComponent implements OnInit {
     @ViewChild('fileInput', { static: false })
     fileInput: ElementRef;
     file: File;
-    fileName?: string;
+    fileName: string;
     fileInputTouched = false;
 
     toggleModeFunction = () => this.toggleWizardMode();
@@ -175,7 +175,7 @@ export class LectureUpdateComponent implements OnInit {
             this.isSaving = false;
             this.isProcessing = false;
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
-                state: { file: this.file },
+                state: { file: this.file, fileName: this.fileName },
             });
         } else {
             this.isSaving = false;

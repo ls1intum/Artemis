@@ -17,23 +17,17 @@
             <tbody class="markdown-preview" id="lecture-preview">
                 <tr *ngFor="let unit of units; let i = index" id="unit-row-{{ i }}">
                     <td>
-                        <a [routerLink]="[unit.id]">Nmaee</a>
+                        {{ unit.attachmentName }}
                     </td>
-                    <td>release</td>
-                    <td>asd</td>
-                    <td>asdf</td>
+                    <td>{{ unit.releaseDate }}</td>
+                    <td>{{ unit.startPage }}</td>
+                    <td>{{ unit.endPage }}</td>
                 </tr>
             </tbody>
         </table>
-        <div class="row">
-            <div class="col-12">
-                <button id="submitButton" class="btn btn-primary" type="submit">
-                    <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
-                </button>
-                <button (click)="previousState()" class="btn btn-default">
-                    <span jhiTranslate="entity.action.cancel">Cancel</span>
-                </button>
-            </div>
-        </div>
+        <button (click)="createAttachmentUnits()" class="btn btn-primary">
+            <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+        </button>
+        <button (click)="previousState()" class="btn btn-default"><fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span></button>
     </div>
 </jhi-lecture-unit-layout>
