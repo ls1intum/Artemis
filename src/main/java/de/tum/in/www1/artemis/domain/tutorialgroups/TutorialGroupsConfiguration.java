@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601DateString;
-
 import java.util.HashSet;
 import java.util.Set;
 
@@ -68,12 +66,7 @@ public class TutorialGroupsConfiguration extends DomainObject {
      * @param tutorialPeriodStartInclusive the start date of the tutorial period of the course
      */
     public void setTutorialPeriodStartInclusive(String tutorialPeriodStartInclusive) {
-        if (isIso8601DateString(tutorialPeriodStartInclusive)) {
-            this.tutorialPeriodStartInclusive = tutorialPeriodStartInclusive;
-        }
-        else {
-            throw new IllegalArgumentException("tutorialPeriodStartInclusive must be in ISO 8601 format (yyyy-MM-dd)");
-        }
+        this.tutorialPeriodStartInclusive = tutorialPeriodStartInclusive;
     }
 
     /**
@@ -91,12 +84,7 @@ public class TutorialGroupsConfiguration extends DomainObject {
      * @param tutorialPeriodEndInclusive the end date of the tutorial period of the course
      */
     public void setTutorialPeriodEndInclusive(String tutorialPeriodEndInclusive) {
-        if (isIso8601DateString(tutorialPeriodEndInclusive)) {
-            this.tutorialPeriodEndInclusive = tutorialPeriodEndInclusive;
-        }
-        else {
-            throw new IllegalArgumentException("tutorialPeriodEndInclusive must be in ISO 8601 format (yyyy-MM-dd)");
-        }
+        this.tutorialPeriodEndInclusive = tutorialPeriodEndInclusive;
     }
 
     public Set<TutorialGroupFreePeriod> getTutorialGroupFreePeriods() {
