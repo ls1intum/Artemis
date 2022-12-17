@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
@@ -36,8 +37,8 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         SecurityUtils.setAuthorizationObject();
 
         database.addUsers(TEST_PREFIX, 3, 2, 0, 2);
-        database.addCourseWithOneModelingExercise();
-        exercise = exerciseRepository.findAll().get(0);
+        final Course course = database.addCourseWithOneModelingExercise();
+        exercise = database.getFirstExerciseWithType(course, ModelingExercise.class);
 
         for (int i = 1; i <= 3; ++i) {
             var submission = ModelFactory.generateModelingSubmission(String.format("model%d", i), true);
@@ -58,7 +59,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         exercise = exerciseRepository.save(exercise);
 
         // in a real scenario individual due dates should never exist if the exercise has no due date
-        final var participation = exercise.getStudentParticipations().stream().findAny().get();
+        final var participation = exercise.getStudentParticipations().stream().findAny().orElseThrow();
         participation.setIndividualDueDate(ZonedDateTime.now().plusHours(2));
         participationRepository.save(participation);
 
@@ -72,7 +73,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         exercise.setDueDate(dueDate);
         exercise = exerciseRepository.save(exercise);
 
-        assertThat(exerciseDateService.getLatestIndividualDueDate(exercise).get()).isEqualToIgnoringNanos(dueDate);
+        assertThat(exerciseDateService.getLatestIndividualDueDate(exercise).orElseThrow()).isEqualToIgnoringNanos(dueDate);
         assertThat(exerciseDateService.isBeforeLatestDueDate(exercise)).isTrue();
         assertThat(exerciseDateService.isAfterLatestDueDate(exercise)).isFalse();
     }
@@ -83,11 +84,11 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         exercise.setDueDate(now.plusHours(4));
         exercise = exerciseRepository.save(exercise);
 
-        var participation = exercise.getStudentParticipations().stream().findAny().get();
+        var participation = exercise.getStudentParticipations().stream().findAny().orElseThrow();
         participation.setIndividualDueDate(now.plusHours(20));
         participationRepository.save(participation);
 
-        assertThat(exerciseDateService.getLatestIndividualDueDate(exercise).get()).isEqualToIgnoringNanos(now.plusHours(20));
+        assertThat(exerciseDateService.getLatestIndividualDueDate(exercise).orElseThrow()).isEqualToIgnoringNanos(now.plusHours(20));
     }
 
     @Test
@@ -96,8 +97,8 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         exercise.setDueDate(now.plusHours(4));
         exercise = exerciseRepository.save(exercise);
 
-        final var participation = exercise.getStudentParticipations().stream().findAny().get();
-        assertThat(ExerciseDateService.getDueDate(participation).get()).isEqualToIgnoringNanos(now.plusHours(4));
+        final var participation = exercise.getStudentParticipations().stream().findAny().orElseThrow();
+        assertThat(ExerciseDateService.getDueDate(participation).orElseThrow()).isEqualToIgnoringNanos(now.plusHours(4));
     }
 
     @Test
@@ -106,17 +107,17 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         exercise.setDueDate(now.plusHours(4));
         exercise = exerciseRepository.save(exercise);
 
-        var participation = exercise.getStudentParticipations().stream().findAny().get();
+        var participation = exercise.getStudentParticipations().stream().findAny().orElseThrow();
         participation.setIndividualDueDate(now.plusHours(20));
         participation = participationRepository.save(participation);
 
-        assertThat(ExerciseDateService.getDueDate(participation).get()).isEqualToIgnoringNanos(now.plusHours(20));
+        assertThat(ExerciseDateService.getDueDate(participation).orElseThrow()).isEqualToIgnoringNanos(now.plusHours(20));
     }
 
     @Test
     void nowShouldBeBeforeADueDateInTheFuture() {
         final var now = ZonedDateTime.now();
-        var participation = exercise.getStudentParticipations().stream().findAny().get();
+        var participation = exercise.getStudentParticipations().stream().findAny().orElseThrow();
         participation.setIndividualDueDate(now.plusHours(20));
         participation = participationRepository.save(participation);
 
@@ -128,7 +129,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     void itShouldAlwaysBeBeforeANonExistingDueDate() {
         exercise.setDueDate(null);
         exercise = exerciseRepository.save(exercise);
-        var participation = exercise.getStudentParticipations().stream().findAny().get();
+        var participation = exercise.getStudentParticipations().stream().findAny().orElseThrow();
 
         assertThat(participation.getIndividualDueDate()).isNull();
         assertThat(exerciseDateService.isBeforeDueDate(participation)).isTrue();
