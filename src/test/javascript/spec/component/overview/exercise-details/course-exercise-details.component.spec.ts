@@ -54,6 +54,9 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
+import { ExerciseHintButtonOverlayComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-button-overlay.component';
+import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
+import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
 
 describe('CourseExerciseDetailsComponent', () => {
     let comp: CourseExerciseDetailsComponent;
@@ -118,6 +121,9 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockComponent(ResultHistoryComponent),
                 MockComponent(ResultComponent),
                 MockComponent(ComplaintsStudentViewComponent),
+                MockComponent(ExerciseHintButtonOverlayComponent),
+                MockComponent(ProgrammingExerciseExampleSolutionRepoDownloadComponent),
+                MockComponent(ResetRepoButtonComponent),
                 MockComponent(RatingComponent),
                 MockRouterLinkDirective,
                 MockComponent(ExerciseDetailsStudentActionsComponent),
