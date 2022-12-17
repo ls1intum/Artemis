@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.test;
+package de.tum.in.www1.artemis.text;
 
 import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
