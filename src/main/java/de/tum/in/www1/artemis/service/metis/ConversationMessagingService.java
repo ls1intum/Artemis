@@ -192,10 +192,8 @@ public class ConversationMessagingService extends PostingService {
         }
         else {
             var conversation = conversationService.getConversationById(existingMessagePost.getConversation().getId());
-            if (conversation instanceof Channel channel) {
-                if (channel.getIsArchived()) {
-                    throw new BadRequestAlertException("A message cannot be created in an archived channel", METIS_POST_ENTITY_NAME, "channelarchived");
-                }
+            if (conversation instanceof Channel channel && channel.getIsArchived()) {
+                throw new BadRequestAlertException("A message cannot be created in an archived channel", METIS_POST_ENTITY_NAME, "channelarchived");
             }
             return conversation;
         }
