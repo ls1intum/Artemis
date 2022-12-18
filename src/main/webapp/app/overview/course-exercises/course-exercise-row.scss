@@ -46,6 +46,10 @@
         width: unset;
         z-index: 2;
     }
+
+    .due-date {
+        z-index: 1;
+    }
 }
 
 .raised-actions {

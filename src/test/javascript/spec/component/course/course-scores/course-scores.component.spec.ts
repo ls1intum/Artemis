@@ -18,7 +18,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -36,6 +36,7 @@ import { CommonSpreadsheetCellObject } from 'app/shared/export/excel-export-row-
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -233,7 +234,7 @@ describe('CourseScoresComponent', () => {
         pointsOfStudent2.setValue(ExerciseType.TEXT, textIncludedWith10Points10BonusPoints, Number.NaN);
 
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
             declarations: [
                 CourseScoresComponent,
                 MockComponent(ParticipantScoresDistributionComponent),
