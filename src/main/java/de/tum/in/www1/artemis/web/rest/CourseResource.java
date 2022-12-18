@@ -878,7 +878,7 @@ public class CourseResource {
     /**
      * Post /courses/:courseId/students/:studentLogin : Add the given user to the students of the course so that the student can access the course
      *
-     * @param courseId     the id of the course f
+     * @param courseId     the id of the course
      * @param studentLogin the login of the user who should get student access
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found)
      */
