@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository
 import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDuplicateException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
@@ -46,14 +47,18 @@ public class ChannelService {
     }
 
     /**
-     * Gets the channel with the given id or throws a not found exception
+     * Gets the channel with the given id
      *
      * @param channelId the id of the channel
      * @return the channel with the given id
      */
-    public Channel getChannelOrThrow(Long channelId) {
-        return channelRepository.findById(channelId)
-                .orElseThrow(() -> new BadRequestAlertException("Channel with id " + channelId + " does not exist", CHANNEL_ENTITY_NAME, "idnotfound"));
+    public Channel getChannel(Long channelId) {
+        try {
+            return channelRepository.findByIdElseThrow(channelId);
+        }
+        catch (EntityNotFoundException e) {
+            throw new BadRequestAlertException("Channel with id " + channelId + " does not exist", CHANNEL_ENTITY_NAME, "idnotfound");
+        }
     }
 
     /**
@@ -107,7 +112,7 @@ public class ChannelService {
      * @return the updated channel
      */
     public Channel updateChannel(Long channelId, Long courseId, ChannelDTO channelDTO) {
-        var channel = getChannelOrThrow(channelId);
+        var channel = getChannel(channelId);
         if (channelDTO.getName() != null && !channelDTO.getName().equals(channel.getName())) {
             channel.setName(channelDTO.getName().trim().isBlank() ? "" : channelDTO.getName().trim());
         }
@@ -188,7 +193,7 @@ public class ChannelService {
      * @param channelId the id of the channel to archive
      */
     public void archiveChannel(Long channelId) {
-        var channel = getChannelOrThrow(channelId);
+        var channel = getChannel(channelId);
         if (channel.getIsArchived()) {
             return;
         }
@@ -203,7 +208,7 @@ public class ChannelService {
      * @param channelId the id of the archived channel to unarchive
      */
     public void unarchiveChannel(Long channelId) {
-        var channel = getChannelOrThrow(channelId);
+        var channel = getChannel(channelId);
         if (!channel.getIsArchived()) {
             return;
         }

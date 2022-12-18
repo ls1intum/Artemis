@@ -120,7 +120,7 @@ public class ChannelResource {
     public ResponseEntity<ChannelDTO> updateChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody ChannelDTO channelDTO) {
         log.debug("REST request to update channel {} with properties : {}", channelId, channelDTO);
 
-        var originalChannel = channelService.getChannelOrThrow(channelId);
+        var originalChannel = channelService.getChannel(channelId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         if (!originalChannel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
@@ -141,7 +141,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to delete channel {}", channelId);
-        var channel = channelService.getChannelOrThrow(channelId);
+        var channel = channelService.getChannel(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
@@ -162,7 +162,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> archiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to archive channel : {}", channelId);
-        var channelFromDatabase = this.channelService.getChannelOrThrow(channelId);
+        var channelFromDatabase = this.channelService.getChannel(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
         channelAuthorizationService.isAllowedToArchiveChannel(channelFromDatabase, userRepository.getUserWithGroupsAndAuthorities());
         channelService.archiveChannel(channelId);
@@ -180,7 +180,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> unArchiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to unarchive channel : {}", channelId);
-        var channelFromDatabase = this.channelService.getChannelOrThrow(channelId);
+        var channelFromDatabase = this.channelService.getChannel(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
         channelAuthorizationService.isAllowedToUnArchiveChannel(channelFromDatabase, userRepository.getUserWithGroupsAndAuthorities());
         channelService.unarchiveChannel(channelId);
@@ -199,7 +199,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> grantChannelAdmin(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to grant channel admin rights to users {} in channel {}", userLogins.toString(), channelId);
-        var channel = channelService.getChannelOrThrow(channelId);
+        var channel = channelService.getChannel(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
@@ -221,7 +221,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> revokeChannelAdmin(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to revoke channel admin rights from users {} in channel {}", userLogins.toString(), channelId);
-        var channel = channelService.getChannelOrThrow(channelId);
+        var channel = channelService.getChannel(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
@@ -266,7 +266,7 @@ public class ChannelResource {
             log.debug("REST request to register {} to channel : {}", registerAllString, channelId);
         }
         var course = courseRepository.findByIdElseThrow(courseId);
-        var channelFromDatabase = this.channelService.getChannelOrThrow(channelId);
+        var channelFromDatabase = this.channelService.getChannel(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToRegisterUsersToChannel(channelFromDatabase, usersLoginsToRegister, requestingUser);
@@ -295,7 +295,7 @@ public class ChannelResource {
         log.debug("REST request to deregister {} users from the channel : {}", userLogins.size(), channelId);
         var course = courseRepository.findByIdElseThrow(courseId);
 
-        var channelFromDatabase = this.channelService.getChannelOrThrow(channelId);
+        var channelFromDatabase = this.channelService.getChannel(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
