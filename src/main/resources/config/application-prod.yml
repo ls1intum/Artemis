@@ -115,8 +115,8 @@ jhipster:
 # Properties to be exposed on the /info management endpoint
 info:
     guided-tour:
-        courseShortName: 'artemistutorial'
-        course-group-students: 'artemis-artemistutorial-students'
+        courseShortName: 'iltc'
+        course-group-students: 'artemis-test-students'
         tours:
             - cancel_tour: ''
             - code_editor_tour: 'tutorial'
