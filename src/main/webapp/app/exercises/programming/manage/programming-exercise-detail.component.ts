@@ -145,8 +145,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
             }
 
             this.programmingExerciseService.findWithTemplateAndSolutionParticipation(programmingExercise.id!, true).subscribe((updatedProgrammingExercise) => {
-                this.programmingExercise = updatedProgrammingExercise.body!;
-
                 // get the latest results for further processing
                 if (this.programmingExercise.templateParticipation) {
                     const latestTemplateResult = this.getLatestResult(this.programmingExercise.templateParticipation.submissions);
