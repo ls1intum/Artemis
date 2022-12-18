@@ -478,7 +478,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         });
     }));
 
-    it('foo (non legacy case)', fakeAsync(() => {
+    it('should create the steps task icons for the tasks in problem statement markdown with no inserted tests (non legacy case)', fakeAsync(() => {
         const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
