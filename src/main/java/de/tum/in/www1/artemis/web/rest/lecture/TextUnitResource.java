@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,9 +12,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
+import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -38,10 +42,17 @@ public class TextUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, AuthorizationCheckService authorizationCheckService) {
+    private final LectureUnitRepository lectureUnitRepository;
+
+    private final LearningGoalRepository learningGoalRepository;
+
+    public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, AuthorizationCheckService authorizationCheckService,
+            LectureUnitRepository lectureUnitRepository, LearningGoalRepository learningGoalRepository) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.lectureUnitRepository = lectureUnitRepository;
+        this.learningGoalRepository = learningGoalRepository;
     }
 
     /**
@@ -55,7 +66,7 @@ public class TextUnitResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<TextUnit> getTextUnit(@PathVariable Long textUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get TextUnit : {}", textUnitId);
-        Optional<TextUnit> optionalTextUnit = textUnitRepository.findById(textUnitId);
+        Optional<TextUnit> optionalTextUnit = textUnitRepository.findByIdWithLearningGoals(textUnitId);
         if (optionalTextUnit.isEmpty()) {
             throw new EntityNotFoundException("TextUnit");
         }
@@ -71,22 +82,44 @@ public class TextUnitResource {
      * PUT /lectures/:lectureId/text-units : Updates an existing text unit
      *
      * @param lectureId      the id of the lecture to which the text unit belongs to update
-     * @param textUnit the text unit to update
+     * @param textUnitForm the text unit to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated textUnit
      */
     @PutMapping("/lectures/{lectureId}/text-units")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<TextUnit> updateTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnit) {
-        log.debug("REST request to update an text unit : {}", textUnit);
-        if (textUnit.getId() == null) {
+    public ResponseEntity<TextUnit> updateTextUnit(@PathVariable Long lectureId, @RequestBody TextUnit textUnitForm) {
+        log.debug("REST request to update an text unit : {}", textUnitForm);
+        if (textUnitForm.getId() == null) {
             throw new BadRequestAlertException("A text unit must have an ID to be updated", ENTITY_NAME, "idNull");
         }
+
+        var textUnit = textUnitRepository.findByIdWithLearningGoalsBidirectional(textUnitForm.getId()).orElseThrow();
+
         if (textUnit.getLecture() == null || textUnit.getLecture().getCourse() == null || !textUnit.getLecture().getId().equals(lectureId)) {
             throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
 
-        TextUnit result = textUnitRepository.save(textUnit);
+        // Unlink all current learning goals
+        var learningGoals = textUnit.getLearningGoals().stream().map(learningGoal -> {
+            learningGoal.getLectureUnits().remove(textUnit);
+            return learningGoal;
+        }).collect(Collectors.toList());
+
+        // Link the text unit to newly added learning goals
+        // (we have to do it this way because we don't want to use a transactional context)
+        learningGoals.addAll(textUnitForm.getLearningGoals().stream().map(LearningGoal::getId).map(learningGoalId -> {
+            var learningGoal = learningGoalRepository.findByIdWithLectureUnits(learningGoalId).get();
+            learningGoal.getLectureUnits().add(textUnit);
+            return learningGoal;
+        }).toList());
+
+        learningGoalRepository.saveAll(learningGoals);
+
+        textUnit.setReleaseDate(textUnitForm.getReleaseDate());
+        textUnit.setContent(textUnitForm.getContent());
+
+        TextUnit result = textUnitRepository.save(textUnitForm);
         return ResponseEntity.ok(result);
     }
 

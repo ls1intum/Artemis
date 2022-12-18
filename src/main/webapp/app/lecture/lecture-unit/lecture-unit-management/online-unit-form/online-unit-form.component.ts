@@ -6,12 +6,14 @@ import { map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
+import { LearningGoal } from 'app/entities/learningGoal.model';
 
 export interface OnlineUnitFormData {
     name?: string;
     description?: string;
     releaseDate?: dayjs.Dayjs;
     source?: string;
+    learningGoals?: LearningGoal[];
 }
 
 function urlValidator(control: AbstractControl) {
@@ -91,6 +93,7 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
             description: [undefined, [Validators.maxLength(1000)]],
             releaseDate: [undefined],
             source: [undefined, [Validators.required, this.urlValidator]],
+            learningGoals: [undefined as LearningGoal[] | undefined],
         });
     }
 
