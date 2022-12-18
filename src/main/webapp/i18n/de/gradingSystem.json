@@ -99,7 +99,9 @@
         "gradingScale": {
             "created": "Notenschlüssel wurde erstellt",
             "updated": "Notenschlüssel wurde aktualisiert",
-            "deleted": "Notenschlüssel wurde gelöscht"
+            "deleted": "Notenschlüssel wurde gelöscht",
+            "plagiarismGrade": "Plagiatsnote",
+            "noParticipationGrade": "Keine Teilnahme Note"
         }
     }
 }

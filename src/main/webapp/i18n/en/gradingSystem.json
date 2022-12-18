@@ -99,7 +99,9 @@
         "gradingScale": {
             "created": "Grading key has been created",
             "updated": "Grading key has been updated",
-            "deleted": "Grading key has been deleted"
+            "deleted": "Grading key has been deleted",
+            "plagiarismGrade": "Plagiarism Grade",
+            "noParticipationGrade": "No-participation Grade"
         }
     }
 }
