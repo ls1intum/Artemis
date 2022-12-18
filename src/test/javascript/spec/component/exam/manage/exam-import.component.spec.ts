@@ -22,6 +22,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
@@ -44,7 +45,7 @@ describe('Exam Import Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule)],
+            imports: [ArtemisTestModule, MockModule(FormsModule), MockComponent(NgbPagination)],
             declarations: [
                 ExamImportComponent,
                 ExamExerciseImportComponent,
