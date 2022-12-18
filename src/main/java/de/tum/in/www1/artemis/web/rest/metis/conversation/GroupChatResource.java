@@ -98,7 +98,7 @@ public class GroupChatResource {
     public ResponseEntity<GroupChatDTO> updateGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody GroupChatDTO groupChatDTO) {
         log.debug("REST request to update groupChat {} with properties : {}", groupChatId, groupChatDTO);
 
-        var originalGroupChat = groupChatService.getGroupChatOrThrow(groupChatId);
+        var originalGroupChat = groupChatService.getGroupChat(groupChatId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         if (!originalGroupChat.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The group chat does not belong to the course", GROUP_CHAT_ENTITY_NAME, "groupChat.course.mismatch");
@@ -124,7 +124,7 @@ public class GroupChatResource {
         }
         log.debug("REST request to register {} users to group chat: {}", userLogins.size(), groupChatId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var groupChatFromDatabase = this.groupChatService.getGroupChatOrThrow(groupChatId);
+        var groupChatFromDatabase = this.groupChatService.getGroupChat(groupChatId);
         checkEntityIdMatchesPathIds(groupChatFromDatabase, Optional.of(courseId), Optional.of(groupChatId));
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         groupChatAuthorizationService.isAllowedToAddUsersToGroupChat(groupChatFromDatabase, requestingUser);
@@ -150,7 +150,7 @@ public class GroupChatResource {
         log.debug("REST request to deregister {} users from the group chat : {}", userLogins.size(), groupChatId);
         var course = courseRepository.findByIdElseThrow(courseId);
 
-        var groupChatFromDatabase = this.groupChatService.getGroupChatOrThrow(groupChatId);
+        var groupChatFromDatabase = this.groupChatService.getGroupChat(groupChatId);
         checkEntityIdMatchesPathIds(groupChatFromDatabase, Optional.of(courseId), Optional.of(groupChatId));
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
 

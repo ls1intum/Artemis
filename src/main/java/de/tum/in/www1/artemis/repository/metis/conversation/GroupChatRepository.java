@@ -11,13 +11,14 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository
 public interface GroupChatRepository extends JpaRepository<GroupChat, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
-                 SELECT DISTINCT groupChat
+                     SELECT DISTINCT groupChat
                  FROM GroupChat groupChat
                  LEFT JOIN groupChat.conversationParticipants conversationParticipant
                  LEFT JOIN FETCH groupChat.conversationParticipants
@@ -28,5 +29,9 @@ public interface GroupChatRepository extends JpaRepository<GroupChat, Long> {
     List<GroupChat> findGroupChatsOfUserWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     Integer countByCreatorIdAndCourseId(Long creatorId, Long courseId);
+
+    default GroupChat findByIdElseThrow(long groupChatId) {
+        return this.findById(groupChatId).orElseThrow(() -> new EntityNotFoundException("GroupChat", groupChatId));
+    }
 
 }
