@@ -1,11 +1,9 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
-import static javax.validation.Validation.buildDefaultValidatorFactory;
-
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.ConstraintViolationException;
+import javax.validation.Valid;
 
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -163,16 +161,8 @@ public class ChannelService {
      * @param courseId the id of the course
      * @param channel  the channel to check
      */
-    public void channelIsValidOrThrow(Long courseId, Channel channel) {
-        var validator = buildDefaultValidatorFactory().getValidator();
-        var violations = validator.validate(channel);
-        if (!violations.isEmpty()) {
-            throw new ConstraintViolationException(violations);
-        }
-        if (!StringUtils.hasText(channel.getName())) {
-            throw new BadRequestAlertException("A channel needs to have a name", CHANNEL_ENTITY_NAME, "nameMissing");
-        }
-        if (!channel.getName().matches(CHANNEL_NAME_REGEX)) {
+    public void channelIsValidOrThrow(Long courseId, @Valid Channel channel) {
+        if (channel.getName() != null && !channel.getName().matches(CHANNEL_NAME_REGEX)) {
             throw new BadRequestAlertException("Channel names can only contain lowercase letters, numbers, and dashes.", CHANNEL_ENTITY_NAME, "namePatternInvalid");
         }
         Optional<Channel> channelWithSameName;

@@ -4,6 +4,7 @@ import javax.annotation.Nullable;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -19,7 +20,7 @@ public class Channel extends Conversation {
      */
     @Column(name = "name")
     @Size(min = 1, max = 20)
-    @NotNull
+    @NotBlank
     private String name;
 
     /**

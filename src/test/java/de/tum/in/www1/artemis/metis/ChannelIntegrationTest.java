@@ -94,6 +94,31 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void createChannel_descriptionInvalid_shouldReturnBadRequest(boolean isPublicChannel) throws Exception {
+        // given
+        createChannel(isPublicChannel);
+
+        var channelDTO = new ChannelDTO();
+        channelDTO.setIsPublic(isPublicChannel);
+        channelDTO.setIsAnnouncementChannel(false);
+        channelDTO.setName("newname");
+        // set description to one above 250 chars. Generate via loop
+        var description = new StringBuilder();
+        for (int i = 0; i < 251; i++) {
+            description.append("a");
+        }
+        channelDTO.setDescription(description.toString());
+
+        // when
+        expectCreateBadRequest(channelDTO);
+
+        // then
+        verifyNoParticipantTopicWebsocketSent();
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "student1", roles = "USER")
     void createChannel_asNonCourseInstructorOrTutororEditor_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
