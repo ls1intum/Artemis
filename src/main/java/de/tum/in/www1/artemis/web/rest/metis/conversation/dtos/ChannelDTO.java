@@ -18,7 +18,7 @@ public class ChannelDTO extends ConversationDTO {
 
     // property not taken from entity
     /**
-     * Am course instructor has channel admin rights but is not necessarily a member or admin of the channel
+     * A course instructor has channel admin rights but is not necessarily a member or admin of the channel
      */
     private Boolean hasChannelAdminRights;
 
