@@ -3,7 +3,9 @@ import { Directive, EventEmitter, Input, NgModule, Output } from '@angular/core'
 @Directive({
     selector: '[ngbDropdownItem]',
 })
-class NgbDropdownItemMock {}
+class NgbDropdownItemMock {
+    @Input() disabled: boolean;
+}
 
 @Directive({
     selector: '[ngbDropdownMenu]',
