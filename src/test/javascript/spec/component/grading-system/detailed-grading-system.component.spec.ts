@@ -20,6 +20,7 @@ import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExportToCsv } from 'export-to-csv';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 const generateCsv = jest.fn();
 
@@ -78,6 +79,7 @@ describe('Detailed Grading System Component', () => {
                 MockDirective(NgSelectOption),
                 DetailedGradingSystemComponent,
                 MockComponent(GradingSystemInfoModalComponent),
+                MockComponent(HelpIconComponent),
                 MockDirective(DeleteButtonDirective),
                 MockPipe(ArtemisTranslatePipe),
             ],
