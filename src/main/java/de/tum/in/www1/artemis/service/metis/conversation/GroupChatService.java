@@ -1,10 +1,8 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
-import static javax.validation.Validation.buildDefaultValidatorFactory;
-
 import java.util.Set;
 
-import javax.validation.ConstraintViolationException;
+import javax.validation.Valid;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
@@ -111,13 +109,8 @@ public class GroupChatService {
      *
      * @param groupChat the group chat to check
      */
-    public void groupChatIsValidOrThrow(GroupChat groupChat) {
-        var validator = buildDefaultValidatorFactory().getValidator();
-        var violations = validator.validate(groupChat);
-        if (!violations.isEmpty()) {
-            throw new ConstraintViolationException(violations);
-        }
-        if (!groupChat.getName().matches(GROUP_NAME_REGEX)) {
+    public void groupChatIsValidOrThrow(@Valid GroupChat groupChat) {
+        if (groupChat.getName() != null && !groupChat.getName().matches(GROUP_NAME_REGEX)) {
             throw new BadRequestAlertException("Group names can only contain lowercase letters, numbers, and dashes.", GROUP_CHAT_ENTITY_NAME, "namePatternInvalid");
         }
     }
