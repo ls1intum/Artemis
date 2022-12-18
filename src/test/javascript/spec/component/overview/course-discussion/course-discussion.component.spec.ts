@@ -41,6 +41,7 @@ import {
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
 import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -62,7 +63,7 @@ describe('CourseDiscussionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule)],
             declarations: [
                 CourseDiscussionComponent,
                 MockComponent(VirtualScrollComponent),
