@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { DebugElement } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
-import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { getElement, getElements } from '../../../../../helpers/utils/general.utils';
 import { PostReactionsBarComponent } from 'app/shared/metis/posting-reactions-bar/post-reactions-bar/post-reactions-bar.component';
 import { OverlayModule } from '@angular/cdk/overlay';
@@ -26,6 +26,7 @@ import { By } from '@angular/platform-browser';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { metisCourse, metisPostExerciseUser1, metisUser1, sortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
@@ -44,7 +45,7 @@ describe('PostReactionsBarComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule)],
+            imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule), MockDirective(NgbTooltip)],
             declarations: [PostReactionsBarComponent, TranslatePipeMock, MockPipe(ReactingUsersOnPostingPipe), MockComponent(FaIconComponent), EmojiComponent],
             providers: [
                 MockProvider(SessionStorageService),

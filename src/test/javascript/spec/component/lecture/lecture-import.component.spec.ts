@@ -11,6 +11,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { Lecture } from 'app/entities/lecture.model';
 import { LecturePagingService } from 'app/lecture/lecture-paging.service';
 import { LectureImportComponent, TableColumn } from 'app/lecture/lecture-import.component';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 
 describe('LectureImportComponent', () => {
     let fixture: ComponentFixture<LectureImportComponent>;
@@ -24,7 +25,7 @@ describe('LectureImportComponent', () => {
     let lecture: Lecture;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
             declarations: [LectureImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
         })
             .compileComponents()

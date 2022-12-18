@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { Subject } from 'rxjs';
 import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
@@ -23,6 +23,7 @@ import { ProgrammingExerciseEditableInstructionComponent } from 'app/exercises/p
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseEditableInstructionComponent', () => {
     let comp: ProgrammingExerciseEditableInstructionComponent;
@@ -48,7 +49,7 @@ describe('ProgrammingExerciseEditableInstructionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [
                 ProgrammingExerciseEditableInstructionComponent,
                 MockComponent(ProgrammingExerciseInstructionAnalysisComponent),

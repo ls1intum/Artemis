@@ -8,9 +8,9 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { getElement } from '../../../../../helpers/utils/general.utils';
 import { AnswerPostHeaderComponent } from 'app/shared/metis/posting-header/answer-post-header/answer-post-header.component';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';
-import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { MockViewContainerRef } from '../../../../../helpers/mocks/service/mock-view-container-ref.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -33,7 +33,7 @@ describe('AnswerPostHeaderComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip)],
             providers: [
                 FormBuilder,
                 { provide: MetisService, useClass: MockMetisService },
