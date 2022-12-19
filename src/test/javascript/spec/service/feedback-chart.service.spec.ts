@@ -70,4 +70,17 @@ describe('FeedbackChartService', () => {
 
         expect(service.create(feedbackNodes, exercise).results[0].series).toEqual(expected);
     });
+
+    it('should not show more than max credits', () => {
+        const exercise = getExercise();
+        const feedbackNodes: FeedbackNode[] = [
+            { credits: -3, maxCredits: -2 } as FeedbackNode,
+            { credits: 3, maxCredits: 2 } as FeedbackNode,
+            { credits: 5, maxCredits: -7 } as FeedbackNode,
+            { credits: -5, maxCredits: 7 } as FeedbackNode,
+        ];
+        const expected = [{ value: 0 }, { value: 0 }, { value: 3 }, { value: 5 }];
+
+        expect(service.create(feedbackNodes, exercise).results[0].series).toEqual(expected);
+    });
 });
