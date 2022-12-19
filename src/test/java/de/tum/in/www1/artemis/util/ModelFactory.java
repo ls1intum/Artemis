@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.*;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.*;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 
 public class ModelFactory {
@@ -1056,7 +1056,7 @@ public class ModelFactory {
      * Creates a dummy DTO with custom feedbacks used by Jenkins, which notifies about new programming exercise results.
      * Uses {@link #generateTestResultDTO(String, String, ZonedDateTime, ProgrammingLanguage, boolean, List, List, List, List, TestSuiteDTO)} as basis.
      * Then adds a new {@link TestSuiteDTO} with name "CustomFeedbacks" to it.
-     * This Testsuite has four {@link de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO TestCaseDTOs}:
+     * This Testsuite has four {@link TestCaseDTO TestCaseDTOs}:
      * <ul>
      *     <li>CustomSuccessMessage: successful test with a message</li>
      *     <li>CustomSuccessNoMessage: successful test without message</li>

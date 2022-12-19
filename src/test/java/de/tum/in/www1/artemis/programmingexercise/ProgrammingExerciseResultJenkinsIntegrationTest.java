@@ -22,7 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.CommitDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TestConstants;
 

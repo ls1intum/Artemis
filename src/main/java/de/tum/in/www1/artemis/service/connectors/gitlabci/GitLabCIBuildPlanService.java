@@ -14,13 +14,12 @@ import org.springframework.util.StreamUtils;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
-import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsBuildPlanCreator;
 
 @Service
 @Profile("gitlabci")
 public class GitLabCIBuildPlanService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JenkinsBuildPlanCreator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GitLabCIBuildPlanService.class);
 
     private static final String FILE_NAME = ".gitlab-ci.yml";
 

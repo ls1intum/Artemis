@@ -4,7 +4,6 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.ProjectApi;
@@ -35,8 +34,7 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestCaseDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
@@ -84,8 +82,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
-    private final TestwiseCoverageService testwiseCoverageService;
-
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
 
@@ -108,14 +104,14 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository,
             BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate);
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate,
+                testwiseCoverageService);
         this.gitlab = gitlab;
         this.urlService = urlService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.buildPlanRepository = buildPlanRepository;
         this.buildPlanService = buildPlanService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
-        this.testwiseCoverageService = testwiseCoverageService;
     }
 
     @Override
@@ -396,81 +392,5 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         // We need this workaround (&file-extension=.yml) since GitLab only accepts URLs ending with .yml.
         // See https://gitlab.com/gitlab-org/gitlab/-/issues/27526
         return String.format("%s/api/programming-exercises/%s/build-plan?secret=%s&file-extension=.yml", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
-    }
-
-    @Override
-    protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
-        final var testResults = ((TestResultsDTO) buildResult);
-        final var jobs = testResults.getResults();
-        final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
-        final var programmingLanguage = programmingExercise.getProgrammingLanguage();
-        final var projectType = programmingExercise.getProjectType();
-
-        // Extract test case feedback
-        for (final var job : jobs) {
-            for (final var testCase : job.testCases()) {
-                var feedbackMessages = extractMessageFromTestCase(testCase).map(List::of).orElse(List.of());
-                var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.name(), feedbackMessages, testCase.isSuccessful(), programmingLanguage, projectType);
-                result.addFeedback(feedback);
-            }
-
-            int passedTestCasesAmount = (int) job.testCases().stream().filter(TestCaseDTO::isSuccessful).count();
-            result.setTestCaseCount(result.getTestCaseCount() + job.tests());
-            result.setPassedTestCaseCount(result.getPassedTestCaseCount() + passedTestCasesAmount);
-        }
-
-        // Extract static code analysis feedback if option was enabled
-        final var staticCodeAnalysisReports = testResults.getStaticCodeAnalysisReports();
-        if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
-            var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
-            result.addFeedbacks(scaFeedbackList);
-            result.setCodeIssueCount(scaFeedbackList.size());
-        }
-
-        final var testwiseCoverageReport = testResults.getTestwiseCoverageReport();
-        if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()) && testwiseCoverageReport != null && !testwiseCoverageReport.isEmpty()) {
-            // since the test cases are not saved to the database yet, the test case is null for the entries
-            var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(testwiseCoverageReport);
-            result.setCoverageFileReportsByTestCaseName(coverageFileReportsWithoutTestsByTestCaseName);
-        }
-
-        // Relevant feedback is negative, or positive with a message
-        result.setHasFeedback(result.getFeedbacks().stream().anyMatch(feedback -> !feedback.isPositive() || feedback.getDetailText() != null));
-    }
-
-    /**
-     * Extracts the most helpful message from the given test case.
-     * @param testCase the test case information as received from Jenkins.
-     * @return the most helpful message that can be added to an automatic {@link Feedback}.
-     */
-    private Optional<String> extractMessageFromTestCase(final TestCaseDTO testCase) {
-        var hasErrors = !CollectionUtils.isEmpty(testCase.errors());
-        var hasFailures = !CollectionUtils.isEmpty(testCase.failures());
-        var hasSuccessInfos = !CollectionUtils.isEmpty(testCase.successInfos());
-        boolean successful = testCase.isSuccessful();
-
-        if (successful && hasSuccessInfos && testCase.successInfos().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(testCase.successInfos().get(0).getMostInformativeMessage());
-        }
-        else if (hasErrors && testCase.errors().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(testCase.errors().get(0).getMostInformativeMessage());
-        }
-        else if (hasFailures && testCase.failures().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(testCase.failures().get(0).getMostInformativeMessage());
-        }
-        else if (hasErrors && testCase.errors().get(0).type() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.errors().get(0).type()));
-        }
-        else if (hasFailures && testCase.failures().get(0).type() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.failures().get(0).type()));
-        }
-        else if (!successful) {
-            // this is an edge case which typically does not happen
-            return Optional.of("Unsuccessful due to an unknown error. Please contact your instructor!");
-        }
-        else {
-            // successful and no message available => do not generate one
-            return Optional.empty();
-        }
     }
 }

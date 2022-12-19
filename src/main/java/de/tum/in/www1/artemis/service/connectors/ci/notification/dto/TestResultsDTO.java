@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
+package de.tum.in.www1.artemis.service.connectors.ci.notification.dto;
 
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
-import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsBuildLogParseUtils;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.BuildLogParseUtils;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
@@ -165,7 +165,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     @Override
     public boolean hasArtifact() {
-        // TODO: this is not available in Jenkins yet
+        // TODO: this is not available in Jenkins or GitLab CI yet
         return false;
     }
 
@@ -176,7 +176,7 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     @Override
     public List<BuildLogEntry> extractBuildLogs(ProgrammingLanguage programmingLanguage) {
-        var buildLogs = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(getLogs());
+        var buildLogs = BuildLogParseUtils.parseBuildLogsFromLogs(getLogs());
         return filterBuildLogs(buildLogs);
     }
 
