@@ -57,39 +57,6 @@ services:
             artemis-mysql:
                 condition: service_healthy
 
-#    artemis-app-new:
-#        image: ghcr.io/ls1intum/artemis:develop-deployment-wg
-#        volumes:
-#            - artemis-data:/opt/artemis/data
-#        # TODO: sort out non-necessary configs and go through application.yml from old container
-#        environment:
-#            _JAVA_OPTIONS: "-Xmx5120m -Xms2560m"
-#            spring.profiles.active: "prod,bamboo,bitbucket,jira,artemis,docker"
-#            spring.datasource.url: "${DATASOURCE_URL}"
-#            spring.datasource.username: root
-#            spring.datasource.password: ""
-#            artemis.user-management.internal-admin.username: "${ADMIN_USERNAME}"
-#            artemis.user-management.internal-admin.password: "${ADMIN_PASSWORD}"
-#            artemis.user-management.external.url: "${UM_URL}"
-#            artemis.user-management.external.user: "${UM_USER}"
-#            artemis.user-management.external.password: "${UM_PASSWORD}"
-#            artemis.version-control.url: "${SCM_URL}"
-#            artemis.version-control.user: "${SCM_USER}"
-#            artemis.version-control.password: "${SCM_PASSWORD}"
-#            artemis.continuous-integration.url: "${CI_URL}"
-#            artemis.continuous-integration.user: "${CI_USER}"
-#            artemis.continuous-integration.password: "${CI_PASSWORD}"
-#            artemis.continuous-integration.token: "${CI_TOKEN}"
-#            artemis.continuous-integration.artemis-authentication-token-value: "${CI_AUTH_TOKEN}"
-#            server.url: "${SERVER_URL}"
-#        ports:
-#            - 8080:8080
-#        networks:
-#            - artemis
-#        depends_on:
-#            artemis-mysql:
-#                condition: service_healthy
-
     artemis-nginx:
         # nginx setup based on artemis prod ansible repository
         # TODO: merge KIT settings for the proxy
@@ -156,7 +123,3 @@ services:
 networks:
     artemis:
         driver: "bridge"
-
-#volumes:
-#    artemis-data:
-#        name: artemis-data
