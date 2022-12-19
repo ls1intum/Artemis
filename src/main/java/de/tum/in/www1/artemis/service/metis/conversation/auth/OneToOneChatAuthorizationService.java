@@ -36,7 +36,7 @@ public class OneToOneChatAuthorizationService extends ConversationAuthorizationS
         var userToCheck = getUserIfNecessary(user);
         var createdOneToOneChats = oneToOneChatRepository.countByCreatorIdAndCourseId(userToCheck.getId(), course.getId());
         if (createdOneToOneChats >= MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE) {
-            throw new AccessForbiddenException("You can only create " + MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE + "one to one chats per course");
+            throw new AccessForbiddenException("You can only create " + MAX_ONE_TO_ONE_CHATS_PER_USER_PER_COURSE + " one to one chats per course");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, userToCheck);
     }
