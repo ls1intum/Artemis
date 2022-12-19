@@ -193,7 +193,7 @@
                 "titlePrivateChannel": "Create a private",
                 "titleAnnouncementChannel": "announcement channel",
                 "titleRegularChannel": "channel",
-                "description": "A channel is a way to group people together around a project, a topic, or just for fun. You can create as many channels as you want.",
+                "description": "A channel is a way to group people together around a project, a topic, or just for fun. You can create as many channels as you want. You will become the first channel moderator. You will not be able to leave the channel.",
                 "channelForm": {
                     "nameInput": {
                         "label": "Name",
@@ -209,7 +209,7 @@
                     },
                     "isPublicInput": {
                         "label": "Private Channel / Public Channel",
-                        "explanation": "People will need an invitation to join a private channel. Everybody can join a public channel.",
+                        "explanation": "Every user except instructors will need an invitation to join a private channel. Everybody can join a public channel.",
                         "public": "Public",
                         "private": "Private"
                     },

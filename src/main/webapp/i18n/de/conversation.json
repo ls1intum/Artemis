@@ -194,7 +194,7 @@
                 "titlePrivateChannel": "Erstelle einen privaten",
                 "titleAnnouncementChannel": "Ankündigungskanal",
                 "titleRegularChannel": "Kanal",
-                "description": "Ein Kanal ist eine Möglichkeit, Menschen für ein Projekt, ein Thema oder nur zum Spaß zusammenzubringen. Du kannst so viele Kanäle erstellen, wie du möchtest.",
+                "description": "Ein Kanal ist eine Möglichkeit, Menschen für ein Projekt, ein Thema oder nur zum Spaß zusammenzubringen. Du kannst so viele Kanäle erstellen, wie du möchtest. Du wirst der / die erste Kanalmoderator:in werden. Du wirst den Kanal nicht verlassen können.",
                 "channelForm": {
                     "nameInput": {
                         "label": "Name",
@@ -210,7 +210,7 @@
                     },
                     "isPublicInput": {
                         "label": "Privatkanal / öffentlicher Kanal",
-                        "explanation": "Die Nutzer:innen brauchen eine Einladung um sich einem privaten Kanal anzuschließen. Jeder/Jede Nutzer:in kann einem öffentlichen Kanal beitreten.",
+                        "explanation": "Alle Nutzer:innen, ausser Lehrende, brauchen eine Einladung um sich einem privaten Kanal anzuschließen. Jeder/Jede Nutzer:in kann einem öffentlichen Kanal beitreten.",
                         "public": "Öffentlich",
                         "private": "Privat"
                     },
