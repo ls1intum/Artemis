@@ -105,7 +105,7 @@ public class ConversationService {
         conversations.addAll(oneToOneChatsOfUser);
         conversations.addAll(channelsOfUser);
         conversations.addAll(groupChatsOfUser);
-        return conversations.stream().map(conversation -> conversationDTOService.convertToDTO(conversation, requestingUser)).collect(Collectors.toList());
+        return conversations.stream().map(conversation -> conversationDTOService.convertToDTO(conversation, requestingUser)).toList();
     }
 
     /**
