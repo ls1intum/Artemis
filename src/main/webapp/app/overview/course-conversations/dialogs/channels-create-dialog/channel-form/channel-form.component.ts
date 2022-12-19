@@ -62,6 +62,7 @@ export class ChannelFormComponent implements OnInit, OnChanges, OnDestroy {
         this.ngUnsubscribe.next();
         this.ngUnsubscribe.complete();
     }
+    
     ngOnChanges(): void {
         this.initializeForm();
     }
