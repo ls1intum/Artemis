@@ -54,6 +54,7 @@ import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -209,7 +210,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule)],
+            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule), MockModule(NgbTooltipModule)],
             declarations: [
                 ProgrammingExerciseConfigureGradingComponent,
                 ProgrammingExerciseConfigureGradingStatusComponent,

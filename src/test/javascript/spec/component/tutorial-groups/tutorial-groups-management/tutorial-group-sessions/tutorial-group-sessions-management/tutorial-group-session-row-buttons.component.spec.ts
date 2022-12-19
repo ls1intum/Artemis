@@ -92,7 +92,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
         const modalService = TestBed.inject(NgbModal);
         const mockModalRef = {
             componentInstance: { tutorialGroupSession: undefined, course: undefined, tutorialGroupId: undefined },
-            result: { then: () => undefined },
+            result: { then: () => Promise.resolve() },
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
 

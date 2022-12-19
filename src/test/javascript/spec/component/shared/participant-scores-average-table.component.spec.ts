@@ -3,7 +3,7 @@ import { ParticipantScoresAverageTableComponent } from 'app/shared/participant-s
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockDirective, MockPipe } from 'ng-mocks';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ArtemisTestModule } from '../../test.module';
@@ -20,7 +20,7 @@ describe('ParticipantScoresAverageTable', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, NgbTooltipModule, TranslateModule.forRoot()],
+            imports: [ArtemisTestModule, NgxDatatableModule, NgbTooltipModule, TranslateModule.forRoot(), MockDirective(NgbTypeahead)],
             declarations: [ParticipantScoresAverageTableComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), DataTableComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
