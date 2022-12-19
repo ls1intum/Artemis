@@ -43,7 +43,7 @@ GitLab
 
 4. Generate an access token
     Go to ``http://gitlab/-/profile/personal_access_tokens`` and generate an access token with all scopes.
-    This token is used in the Artemis configuration as `artemis.version-control.token`.
+    This token is used in the Artemis configuration as ``artemis.version-control.token``.
 
 GitLab Runner
 """""""""""""
