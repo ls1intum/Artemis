@@ -1,5 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ActivatedRoute, Data } from '@angular/router';
+import { HeaderCourseComponent } from 'app/overview/header-course.component';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
@@ -78,6 +80,8 @@ describe('Course Management Detail Component', () => {
                 MockComponent(CourseDetailDoughnutChartComponent),
                 MockComponent(CourseDetailLineChartComponent),
                 MockComponent(FullscreenComponent),
+                MockComponent(HeaderCourseComponent),
+                MockDirective(FeatureToggleLinkDirective),
             ],
             providers: [
                 {
