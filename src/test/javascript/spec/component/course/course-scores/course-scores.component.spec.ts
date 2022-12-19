@@ -37,6 +37,7 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -213,6 +214,19 @@ describe('CourseScoresComponent', () => {
     ];
     const pointsOfStudent1 = new ExerciseTypeStatisticsMap();
     const pointsOfStudent2 = new ExerciseTypeStatisticsMap();
+
+    const gradeStep: GradeStep = {
+        gradeName: 'A',
+        lowerBoundInclusive: true,
+        lowerBoundPercentage: 0,
+        upperBoundInclusive: true,
+        upperBoundPercentage: 100,
+        isPassingGrade: true,
+    };
+    const gradingScale: GradingScale = {
+        gradeType: GradeType.GRADE,
+        gradeSteps: [gradeStep],
+    };
 
     beforeEach(() => {
         exerciseMaxPointsPerType.setValue(ExerciseType.QUIZ, quizIncludedWith10Points0BonusPoints, 10);
@@ -403,6 +417,45 @@ describe('CourseScoresComponent', () => {
         expect(component.exportReady).toBeTrue();
     });
 
+    it('should omit student statistics with no participations', () => {
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of([]));
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(of(new HttpResponse<PlagiarismCase[]>({ body: [] })));
+
+        fixture.detectChanges();
+
+        expect(component.students).toBeEmpty();
+    });
+
+    it('should assign plagiarism grade if there is a PLAGIARISM verdict', () => {
+        jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
+        jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
+        jest.spyOn(gradingSystemService, 'findGradingScaleForCourse').mockReturnValue(of(new HttpResponse<GradingScale>({ body: { ...gradingScale } })));
+        jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue(gradingScale.gradeSteps);
+        const matchingGradeStep = gradingScale.gradeSteps[0];
+        jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(matchingGradeStep);
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(
+            of(
+                new HttpResponse<PlagiarismCase[]>({
+                    body: [
+                        {
+                            id: 10,
+                            exercise: participation1.exercise,
+                            student: participation1.student,
+                            verdict: PlagiarismVerdict.PLAGIARISM,
+                        },
+                    ],
+                }),
+            ),
+        );
+
+        fixture.detectChanges();
+
+        expect(component.students[0].gradeStep?.gradeName).toEqual(GradingScale.DEFAULT_PLAGIARISM_GRADE);
+        expect(component.students[1].gradeStep?.gradeName).toEqual(matchingGradeStep.gradeName);
+        expect(component.averageGrade).toEqual(matchingGradeStep.gradeName);
+    });
+
     it('should generate excel row correctly', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
@@ -489,18 +542,6 @@ describe('CourseScoresComponent', () => {
     });
 
     it('should set grading scale properties correctly', () => {
-        const gradeStep: GradeStep = {
-            gradeName: 'A',
-            lowerBoundInclusive: true,
-            lowerBoundPercentage: 0,
-            upperBoundInclusive: true,
-            upperBoundPercentage: 100,
-            isPassingGrade: true,
-        };
-        const gradingScale: GradingScale = {
-            gradeType: GradeType.GRADE,
-            gradeSteps: [gradeStep],
-        };
         jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep]);
         jest.spyOn(gradingSystemService, 'maxGrade').mockReturnValue('A');
         jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradeStep);
