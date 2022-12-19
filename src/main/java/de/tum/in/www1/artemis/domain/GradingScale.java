@@ -26,9 +26,9 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 public class GradingScale extends DomainObject {
 
     /** "U" stands for "Unterschleif" */
-    public static final String DEFAULT_PLAGIARISM_GRADE = "U";  // This should be the same as the same named constant in grading-scale.model.ts
+    public static final String DEFAULT_PLAGIARISM_GRADE = "U";  // This should be the same as the named constant in grading-scale.model.ts
 
-    public static final String DEFAULT_NO_PARTICIPATION_GRADE = "X";  // This should be the same as the same named constant in grading-scale.model.ts
+    public static final String DEFAULT_NO_PARTICIPATION_GRADE = "X";  // This should be the same as the named constant in grading-scale.model.ts
 
     private static final int MAX_SPECIAL_GRADE_SIZE = 100;
 
@@ -183,7 +183,7 @@ public class GradingScale extends DomainObject {
     @JsonIgnore
     @Nonnull
     public String getPlagiarismGradeOrDefault() {
-        return plagiarismGrade != null ? plagiarismGrade : DEFAULT_PLAGIARISM_GRADE;
+        return Objects.requireNonNullElse(plagiarismGrade, DEFAULT_PLAGIARISM_GRADE);
     }
 
     public String getNoParticipationGrade() {
