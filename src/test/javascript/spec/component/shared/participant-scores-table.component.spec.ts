@@ -11,6 +11,7 @@ import { ParticipantScoresTableComponent } from 'app/shared/participant-scores/p
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ParticipantScoresTable', () => {
     let fixture: ComponentFixture<ParticipantScoresTableComponent>;
@@ -18,7 +19,7 @@ describe('ParticipantScoresTable', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot()],
+            imports: [ArtemisTestModule, NgxDatatableModule, TranslateModule.forRoot(), MockDirective(NgbTypeahead)],
             declarations: [ParticipantScoresTableComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), DataTableComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
