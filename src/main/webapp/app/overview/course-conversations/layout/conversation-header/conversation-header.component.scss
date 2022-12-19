@@ -5,16 +5,12 @@
 
 .conversation-header {
     .conversation-name {
-        border-radius: 0.5rem;
+        margin: 0.2rem;
+        border-radius: 0.25rem;
 
         &:hover {
             background-color: var(--slightly-darker-body-bg);
             cursor: pointer;
         }
-    }
-
-    .bold-line {
-        height: 2px;
-        background: #353d47;
     }
 }
