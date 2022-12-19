@@ -4,9 +4,9 @@ services:
         image: jhipster/jhipster-registry:v6.1.2
         pull_policy: always
         volumes:
-            - ./central-server-config:/central-config
+            - ./registry:/central-config
         # When run with the "dev" Spring profile, the JHipster Registry will
-        # read the config from the local filesystem (central-server-config directory)
+        # read the config from the local filesystem (registry directory)
         # When run with the "prod" Spring profile, it will read the configuration from a Git repository
         # See https://www.jhipster.tech/jhipster-registry/#spring-cloud-config
         environment:

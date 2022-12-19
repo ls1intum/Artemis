@@ -583,7 +583,7 @@ Other Docker Compose Setups
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The easiest way to configure a local deployment via Docker is a deployment with a *docker compose* file.
-In the directory ``src/main/docker/`` you can find the following *docker compose* files for different setups:
+In the directory ``src/main/docker/`` you can find the following *docker compose* files for different **setups**:
 
 * ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
 * ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the production build of Artemis and a MySQL DB
@@ -622,18 +622,27 @@ is defined in the following files:
 
 For testing mails or SAML logins you can append the following services to any setup with an artemis container:
 
-* ``mailhog/mailhog.yml``: **Mailhog Service** (email testing tool)
+* ``mailhog.yml``: **Mailhog Service** (email testing tool)
 * ``saml-test/saml-test.yaml``: **Saml-Test Service** (SAML Test Identity Provider for testing SAML features)
 
 An example command to run such an extended setup:
 
 .. code:: bash
 
-  docker compose -f src/main/docker/artemis-dev-mysql.yml -f src/main/docker/mailhog/mailhog.yml up
+  docker compose -f src/main/docker/artemis-dev-mysql.yml -f src/main/docker/mailhog.yml up
 
 .. warning::
   If you want to run multiple *docker compose* setups in parallel on one host you might have to modify
   volume, container and network names!
+
+Folder structure
+""""""""""""""""
+
+| **Base services** (compose file with just one service) without any additional files and **setups**
+  (compose files with multiple services) should be located directly in ``src/main/docker/``.
+| **Base services** with additional files like configuration files, Dockerfile, ...
+  should be in a subdirectory with the service name (``src/main/docker/<service name>/``).
+  Additional files for **setups** should also be stored in a subdirectory with the setup name.
 
 Debugging with Docker
 ^^^^^^^^^^^^^^^^^^^^^
