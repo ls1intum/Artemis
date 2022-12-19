@@ -238,19 +238,14 @@ under ``localhost:7990``.
    and add it to bamboo. Go to Bamboo → Manage apps → Upload app → select
    the downloaded .jar file → Upload
 
-    ..
-        TODO: remove this section if agent works and edit agent part, warum capabilities rausloeschen?
+#. Authorize the Bamboo agent. Bamboo Administration → Agents → Remote agents → Agent authentication
 
-#. Add Maven and JDK:
+   Approve the agent and edit the IP address in a development setup to ``*.*.*.*`` as the Docker container doesn't
+   have a static IP address.
 
-   -  Go to Bamboo → Server capabilities → Add capabilities menu →
-      Capability type ``Executable`` → select type ``Maven 3.x`` → insert
-      ``Maven 3`` as executable label → insert ``/artemis`` as path.
-
-   -  Add capabilities menu → Capability type ``JDK`` → insert ``JDK17``
-      as JDK label → insert ``/usr/lib/jvm/java-17-oracle`` as Java home.
-
-#. Create a Bamboo agent. Configure → Agents → Add local agent
+   .. figure:: setup/bamboo-bitbucket-jira/bamboo_agent_configuration.png
+      :target: ../../_images/bamboo_agent_configuration.png
+      :align: center
 
 #. Generate a personal access token
 

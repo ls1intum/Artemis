@@ -47,7 +47,6 @@ services:
         networks:
             - artemis
 
-# TODO: either add ip addresses or use wildcard for agent to survive restarts and write this in docs
     bamboo-build-agent:
         container_name: artemis-bamboo-build-agent
         hostname: bamboo-build-agent
