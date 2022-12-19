@@ -299,7 +299,7 @@ public class ProgrammingExerciseParticipationService {
     public void checkCorrectBranchElseThrow(ProgrammingExerciseParticipation participation, String branchName) {
         String participationDefaultBranch = null;
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
-            participationDefaultBranch = studentParticipation.getBranch();
+            participationDefaultBranch = versionControlService.get().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
         }
         if (Strings.isNullOrEmpty(participationDefaultBranch)) {
             participationDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());

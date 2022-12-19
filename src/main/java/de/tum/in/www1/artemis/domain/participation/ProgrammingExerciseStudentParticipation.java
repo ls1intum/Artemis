@@ -53,6 +53,11 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
         this.buildPlanId = buildPlanId;
     }
 
+    /**
+     * Returns the branch of the participation, if the information is loaded.
+     * Prefer {@link de.tum.in.www1.artemis.service.connectors.VersionControlService#getOrRetrieveBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation)}
+     * to load the branch information.
+     */
     public String getBranch() {
         return branch;
     }
