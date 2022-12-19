@@ -434,6 +434,11 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetAllGradingScalesInInstructorGroupOnPageWithAdmin() throws Exception {
+        course.setTitle("abcdefghijklmnop");
+        courseRepository.save(course);
+        exam.setTitle("abcdefghijklmnop");
+        examRepository.save(exam);
+
         String url = "/api/grading-scales?pageSize=100&page=1&sortingOrder=DESCENDING&searchTerm=abcdefghijklmnop&sortedColumn=ID";
         var result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
         assertThat(result.getResultsOnPage()).isEmpty();
