@@ -68,12 +68,10 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
     public void isAllowedToCreateNewPostInChannel(@NotNull Channel channel, @NotNull User user) {
         var isAnnouncementChannel = !Objects.isNull(channel.getIsAnnouncementChannel()) && channel.getIsAnnouncementChannel();
         var isArchivedChannel = !Objects.isNull(channel.getIsArchived()) && channel.getIsArchived();
-        var userToCheck = getUserIfNecessary(user);
-
         if (isArchivedChannel) {
             throw new AccessForbiddenException("You are not allowed to create a new post in an archived channel.");
         }
-
+        var userToCheck = getUserIfNecessary(user);
         if (isAnnouncementChannel) {
             if (!hasChannelModerationRights(channel.getId(), userToCheck)) {
                 throw new AccessForbiddenException("You are not allowed to post in this channel");
