@@ -52,7 +52,7 @@ public class TutorialGroupNotificationService {
      * @param tutorialGroup the deleted tutorial group
      */
     public void notifyAboutTutorialGroupDeletion(TutorialGroup tutorialGroup) {
-        saveAndSend(createTutorialGroupNotification(tutorialGroup, TUTORIAL_GROUP_DELETED), true);
+        saveAndSend(createTutorialGroupNotification(TutorialGroup.preventCircularJsonConversion(tutorialGroup), TUTORIAL_GROUP_DELETED), true);
     }
 
     /**
@@ -63,7 +63,7 @@ public class TutorialGroupNotificationService {
      * @param notificationText the notification text
      */
     public void notifyAboutTutorialGroupUpdate(TutorialGroup tutorialGroup, boolean notifyTutor, String notificationText) {
-        saveAndSend(createTutorialGroupNotification(tutorialGroup, TUTORIAL_GROUP_UPDATED, notificationText), notifyTutor);
+        saveAndSend(createTutorialGroupNotification(TutorialGroup.preventCircularJsonConversion(tutorialGroup), TUTORIAL_GROUP_UPDATED, notificationText), notifyTutor);
     }
 
     private void saveAndSend(TutorialGroupNotification notification, boolean notifyTutor) {

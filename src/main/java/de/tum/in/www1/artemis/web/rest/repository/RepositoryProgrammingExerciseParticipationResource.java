@@ -118,7 +118,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
             else if (!isStudent && !isOwner) {
                 // Check if a tutor is allowed to reset during the assessment
                 // Check for a regular course exercise
-                if (!programmingExercise.isExamExercise() && !programmingParticipation.isLocked()) {
+                if (programmingExercise.isCourseExercise() && !programmingParticipation.isLocked()) {
                     // TODO: change to AccessForbiddenException
                     throw new IllegalAccessException();
                 }

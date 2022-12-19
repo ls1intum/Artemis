@@ -48,7 +48,7 @@ import { animate, group, style, transition, trigger } from '@angular/animations'
 export class AlertOverlayComponent implements OnInit, OnDestroy {
     alerts: Alert[] = [];
 
-    constructor(private alertService: AlertService) {}
+    constructor(public alertService: AlertService) {}
 
     times = faTimes;
 

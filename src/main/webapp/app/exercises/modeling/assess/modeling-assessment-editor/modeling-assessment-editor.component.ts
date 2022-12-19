@@ -142,6 +142,11 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private loadRandomSubmission(exerciseId: number): void {
         this.modelingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound).subscribe({
             next: (submission: ModelingSubmission) => {
+                if (!submission) {
+                    // there are no unassessed submission, nothing we have to worry about
+                    return;
+                }
+
                 this.handleReceivedSubmission(submission);
 
                 // Update the url with the new id, without reloading the page, to make the history consistent
@@ -279,11 +284,6 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     private handleErrorResponse(error: HttpErrorResponse): void {
         this.loadingInitialSubmission = false;
         this.submission = undefined;
-
-        // there is no submission waiting for assessment at the moment
-        if (error.status === 404) {
-            return;
-        }
 
         this.isLoading = false;
         if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
@@ -427,7 +427,12 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.isLoading = true;
         this.nextSubmissionBusy = true;
         this.modelingSubmissionService.getSubmissionWithoutAssessment(this.modelingExercise!.id!, true, this.correctionRound).subscribe({
-            next: (unassessedSubmission: ModelingSubmission) => {
+            next: (submission: ModelingSubmission) => {
+                if (!submission) {
+                    // there are no unassessed submission, nothing we have to worry about
+                    return;
+                }
+
                 this.nextSubmissionBusy = false;
                 this.isLoading = false;
 
@@ -435,15 +440,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
                 this.router.onSameUrlNavigation = 'reload';
 
                 // navigate to root and then to new assessment page to trigger re-initialization of the components
-                const url = getLinkToSubmissionAssessment(
-                    ExerciseType.MODELING,
-                    this.courseId,
-                    this.exerciseId,
-                    undefined,
-                    unassessedSubmission.id!,
-                    this.examId,
-                    this.exerciseGroupId,
-                );
+                const url = getLinkToSubmissionAssessment(ExerciseType.MODELING, this.courseId, this.exerciseId, undefined, submission.id!, this.examId, this.exerciseGroupId);
                 this.router.navigateByUrl('/', { skipLocationChange: true }).then(() => this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } }));
             },
             error: (error: HttpErrorResponse) => {

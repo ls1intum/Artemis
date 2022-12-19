@@ -32,21 +32,18 @@ public abstract class SubmissionExportService {
     @Value("${artemis.submission-export-path}")
     private String submissionExportPath;
 
-    private final static int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
+    private static final int EXPORTED_SUBMISSIONS_DELETION_DELAY_IN_MINUTES = 30;
 
     private final Logger log = LoggerFactory.getLogger(SubmissionExportService.class);
 
     private final ExerciseRepository exerciseRepository;
 
-    private final ExerciseDateService exerciseDateService;
-
     private final ZipFileService zipFileService;
 
     private final FileService fileService;
 
-    public SubmissionExportService(ExerciseRepository exerciseRepository, ExerciseDateService exerciseDateService, ZipFileService zipFileService, FileService fileService) {
+    public SubmissionExportService(ExerciseRepository exerciseRepository, ZipFileService zipFileService, FileService fileService) {
         this.exerciseRepository = exerciseRepository;
-        this.exerciseDateService = exerciseDateService;
         this.zipFileService = zipFileService;
         this.fileService = fileService;
     }
@@ -246,7 +243,7 @@ public abstract class SubmissionExportService {
                 continue;
             }
             // filter late submissions
-            boolean isSubmittedBeforeDueDate = exerciseDateService.getDueDate(participation).map(dueDate -> submission.getSubmissionDate().isBefore(dueDate)).orElse(true);
+            boolean isSubmittedBeforeDueDate = ExerciseDateService.getDueDate(participation).map(dueDate -> submission.getSubmissionDate().isBefore(dueDate)).orElse(true);
             if ((enableFilterAfterDueDate && isSubmittedBeforeDueDate) || lateSubmissionFilter == null || submission.getSubmissionDate().isBefore(lateSubmissionFilter)) {
                 if (latestSubmission == null || submission.getSubmissionDate().isAfter(latestSubmission.getSubmissionDate())) {
                     latestSubmission = submission;

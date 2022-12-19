@@ -36,6 +36,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     examCourseId?: number;
     isExamMode: boolean;
     isImport = false;
+    goBackAfterSaving = false;
     EditorMode = EditorMode;
     AssessmentType = AssessmentType;
 
@@ -140,6 +141,13 @@ export class TextExerciseUpdateComponent implements OnInit {
                 }),
             )
             .subscribe();
+
+        this.activatedRoute.queryParams.subscribe((params) => {
+            if (params.shouldHaveBackButtonToWizard) {
+                this.goBackAfterSaving = true;
+            }
+        });
+
         this.isSaving = false;
         this.notificationText = undefined;
     }
@@ -170,7 +178,7 @@ export class TextExerciseUpdateComponent implements OnInit {
         this.isSaving = true;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.textExerciseService, this.backupExercise, this.editType, this.alertService)
-            .save(this.textExercise, this.notificationText)
+            .save(this.textExercise, this.isExamMode, this.notificationText)
             .subscribe({
                 next: (exercise: TextExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),
@@ -183,6 +191,13 @@ export class TextExerciseUpdateComponent implements OnInit {
     private onSaveSuccess(exercise: TextExercise) {
         this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
         this.isSaving = false;
+
+        if (this.goBackAfterSaving) {
+            this.navigationUtilService.navigateBack();
+
+            return;
+        }
+
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 

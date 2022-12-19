@@ -30,6 +30,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     fileUploadExercise: FileUploadExercise;
     backupExercise: FileUploadExercise;
     isSaving: boolean;
+    goBackAfterSaving = false;
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
     EditorMode = EditorMode;
@@ -89,6 +90,12 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
             this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType, this.alertService);
         });
+
+        this.activatedRoute.queryParams.subscribe((params) => {
+            if (params.shouldHaveBackButtonToWizard) {
+                this.goBackAfterSaving = true;
+            }
+        });
     }
 
     /**
@@ -101,7 +108,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     save() {
         this.isSaving = true;
 
-        this.saveCommand.save(this.fileUploadExercise, this.notificationText).subscribe({
+        this.saveCommand.save(this.fileUploadExercise, this.isExamMode, this.notificationText).subscribe({
             next: (exercise: Exercise) => this.onSaveSuccess(exercise),
             error: (res: HttpErrorResponse) => this.onSaveError(res),
             complete: () => {
@@ -126,6 +133,13 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     private onSaveSuccess(exercise: Exercise) {
         this.isSaving = false;
+
+        if (this.goBackAfterSaving) {
+            this.navigationUtilService.navigateBack();
+
+            return;
+        }
+
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 

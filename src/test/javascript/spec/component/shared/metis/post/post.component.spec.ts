@@ -10,12 +10,12 @@ import { PostingContentComponent } from 'app/shared/metis/posting-content/postin
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { metisExercise, metisLecture, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport } from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
 import { RouterTestingModule } from '@angular/router/testing';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -24,21 +24,19 @@ describe('PostComponent', () => {
     let metisService: MetisService;
     let metisServiceGetLinkSpy: jest.SpyInstance;
     let metisServiceGetQueryParamsSpy: jest.SpyInstance;
-    let metisServiceIsPostResolvedStub: jest.SpyInstance;
     let metisServiceGetPageTypeStub: jest.SpyInstance;
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule],
+            imports: [RouterTestingModule, MockDirective(NgbTooltip)],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostComponent,
+                FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockPipe(HtmlForMarkdownPipe),
-                MockDirective(NgbTooltip),
                 MockComponent(PostHeaderComponent),
                 MockComponent(PostingContentComponent),
                 MockComponent(PostFooterComponent),
-                MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
                 MockQueryParamsDirective,
                 TranslatePipeMock,
@@ -50,7 +48,6 @@ describe('PostComponent', () => {
                 metisService = TestBed.inject(MetisService);
                 component = fixture.componentInstance;
                 debugElement = fixture.debugElement;
-                metisServiceIsPostResolvedStub = jest.spyOn(metisService, 'isPostResolved');
                 metisServiceGetPageTypeStub = jest.spyOn(metisService, 'getPageType');
             });
     });
@@ -59,21 +56,25 @@ describe('PostComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should be initialized correctly', () => {
-        metisServiceIsPostResolvedStub.mockReturnValue(false);
+    it('should display resolved icon on resolved post header', () => {
         component.posting = metisPostExerciseUser1;
+        component.posting.resolved = true;
+
         component.ngOnInit();
-        expect(component.postIsResolved).toBeFalse();
+        fixture.detectChanges();
+
+        expect(getElement(debugElement, '.resolved')).not.toBeNull();
     });
 
-    it('should be re-evaluated on changes', () => {
+    it('should not display resolved icon on unresolved post header', () => {
         // per default not resolved
         component.posting = metisPostExerciseUser1;
-        metisServiceIsPostResolvedStub.mockReturnValue(false);
+        component.posting.resolved = false;
+
         component.ngOnInit();
-        metisServiceIsPostResolvedStub.mockReturnValue(true);
-        component.ngOnChanges();
-        expect(component.postIsResolved).toBeTrue();
+        fixture.detectChanges();
+
+        expect(getElement(debugElement, '.resolved')).toBeNull();
     });
 
     it('should contain a post header', () => {

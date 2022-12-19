@@ -1,6 +1,9 @@
 {
     "artemisApp": {
         "lti": {
+            "home": {
+                "title": "LTI Configuration"
+            },
             "initializationError": "Your user initialization process was started but your LTI account was possible created with issues. Please ask your instructor for help if you didn't receive your Artemis password yet.",
             "initialization": {
                 "header": "LTI User Initialization",
@@ -9,27 +12,67 @@
                     "passwordLabel": "Your password",
                     "passwordHint": "Make sure to remember your password as you will need it to log in manually or connect with our services for programming exercises.<br>If you forget your password or want to change it, you can reset it on the login page. You can also change your password now:",
                     "passwordChange": "Change password",
+                    "readAndUnderstood": "I have read the information above and understand that I should save the password displayed above.",
                     "confirm": "Confirm"
                 }
             },
+            "version10": "LTI 1.0",
+            "version13": "LTI 1.3",
+            "dynamicRegistrationUrl": "Dynamic Registration URL",
+            "deepLinkingUrl": "Deep Linking URL",
+            "keysetUrl": "Keyset URL",
+            "generalConfiguration": "General Configuration",
+            "userPrefix": "User Prefix",
+            "registrationId": "Registration ID",
+            "clientId": "Client ID",
+            "authorizationUri": "Authorization URI",
+            "tokenUri": "Token URI",
+            "jwkSetUri": "JWKSet URI",
             "startExercise": "<strong>Welcome to Artemis!</strong> Click the button <i>Start Exercise</i>!",
             "ltiSuccessLoginRequired": "Successfully launched LTI exercise. Please login as user {{user}}.",
+            "exercises": "Exercises",
             "lti": "LTI",
-            "configurationForExercise": "LTI configuration for exercise {{ title }}",
+            "configurationForCourse": "LTI Configuration for course {{ title }}",
             "ltiKey": "LTI Key",
             "ltiSecret": "LTI Secret",
-            "ltiLaunchUrl": "LTI Launch URL",
+            "lti10LaunchUrl": "LTI 1.0 Launch URL",
+            "lti13LaunchUrl": "LTI 1.3 Launch URL",
             "ltiLaunchTarget": "LTI Launch Target",
             "scored": "Scored",
             "requestUsername": "Request user's username",
             "requestEmail": "Request user's email",
-            "customParameters": "Custom Parameters",
             "requireExistingUser": "Require existing user",
-            "lookupByEmail": "Lookup user by email",
+            "dynamicRegistrationTooltip": "You can use this URL to automatically register an LTI 1.3 Platform with this course.",
             "launchTargetTooltip": "The recommended launch target is 'New Window' for the best user experience",
             "requestUserEmailTooltip": "The user's email must be sent as it is required by Artemis to create or find the user",
-            "requireExistingUserTooltip": "If selected, launching the exercise requires an existing user on Artemis. If deselected, a user will be created on first launch if it does not yet exist",
-            "lookupUserByEmailTooltip": "If selected, Artemis will try to find an existing user with the provided email"
+            "edit": {
+                "configurationForCourse": "Edit LTI Configuration for course {{ title }}",
+                "userPrefixTooltip": "Prefix used for the new users created for this course. It is recommended to use a value that clearly identifies users as part of this course.",
+                "requireExistingUserTooltip": "If selected, launching the exercise requires an existing user on Artemis. If deselected, a user will be created on first launch if it does not yet exist",
+                "ltiKeyTooltip": "Key used for LTI 1.0. You can freely change this value, but it is recommended to use the auto-generated value.",
+                "ltiSecretTooltip": "Secret used for LTI 1.0. You can freely change this value, but it is recommended to use the auto-generated value.",
+                "registrationIdTooltip": "ID used to identify the registration of the learning platform. This must be unique across all courses. You can freely change this value, but it is recommended to use the auto-generated value.",
+                "clientIdTooltip": "It is possible to configure this field and the URI fields below manually, but it is highly recommended to use the Dynamic Registration Service to configure them automatically.",
+                "form": {
+                    "userPrefix": {
+                        "forbidden": "User prefix cannot contain special characters."
+                    }
+                }
+            }
+        },
+        "lti13": {
+            "launch": {
+                "title": "Launch exercise",
+                "launching": "Launching...",
+                "launchFailed": "Could not launch exercise. Please try again later or contact the administrator."
+            },
+            "dynamicRegistration": {
+                "title": "Dynamic Registration",
+                "registering": "Registering",
+                "registeredSuccessfully": "Registered course successfully",
+                "registerFailed": "Error during dynamic registration"
+            },
+            "missingConfigurationWarning": "Missing values in the LTI1.3 configuration. Launches will not work."
         }
     }
 }

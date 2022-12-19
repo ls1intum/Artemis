@@ -1,14 +1,13 @@
 import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { Subscription } from 'rxjs';
-import { catchError, mergeMap, map, tap } from 'rxjs/operators';
+import { Observable, Subscription, of } from 'rxjs';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { ProgrammingExerciseParticipationService } from 'app/exercises/programming/manage/services/programming-exercise-participation.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { codeEditorTour } from 'app/guided-tour/tours/code-editor-tour';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { DomainService } from 'app/exercises/programming/shared/code-editor/service/code-editor-domain.service';
-import { ExerciseType, getCourseFromExercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExerciseType, IncludedInOverallScore, getCourseFromExercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Result } from 'app/entities/result.model';
 import { Feedback, FeedbackType, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
@@ -29,6 +28,7 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-code-editor-student',
@@ -89,10 +89,8 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
                         this.domainService.setDomain([DomainType.PARTICIPATION, participationWithResults]);
                         this.participation = participationWithResults;
                         this.exercise = this.participation.exercise as ProgrammingExercise;
-                        // We lock the repository when the buildAndTestAfterDueDate is set and the due date has passed or if they require manual assessment.
-                        // (this should match ProgrammingExerciseParticipation.isLocked on the server-side)
                         const dueDateHasPassed = hasExerciseDueDatePassed(this.exercise, this.participation);
-                        this.repositoryIsLocked = !this.participation.testRun && !!this.exercise.dueDate && dueDateHasPassed;
+                        this.determineRepoLockedState(dueDateHasPassed);
                         this.latestResult = this.participation.results ? this.participation.results[0] : undefined;
                         this.isIllegalSubmission = this.latestResult?.submission?.type === SubmissionType.ILLEGAL;
                         this.checkForTutorAssessment(dueDateHasPassed);
@@ -207,5 +205,15 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     onHintActivated(exerciseHint: ExerciseHint) {
         this.availableExerciseHints = this.availableExerciseHints?.filter((hint) => hint.id !== exerciseHint.id);
         this.activatedExerciseHints?.push(exerciseHint);
+    }
+
+    /**
+     * The repository is locked if the due date is over or the student may not start yet (before start/release date)
+     * @param dueDateHasPassed flag indicating that the (individual) due date is passed
+     */
+    determineRepoLockedState(dueDateHasPassed: boolean) {
+        const participationStartDate = this.exercise.startDate ?? this.exercise.releaseDate;
+        const beforeParticipationStart = participationStartDate && dayjs().isBefore(participationStartDate);
+        this.repositoryIsLocked = ((!this.exercise.isAtLeastTutor && beforeParticipationStart) || dueDateHasPassed) && !this.participation.testRun;
     }
 }

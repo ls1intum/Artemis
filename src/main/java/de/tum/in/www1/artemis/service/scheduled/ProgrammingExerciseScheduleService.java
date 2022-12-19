@@ -483,7 +483,6 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     /**
      * Returns a runnable that, once executed, will (1) lock all student repositories and (2) stash all student changes in the online editor for manual assessments
-     *
      * NOTE: this will not immediately lock the repositories as only a Runnable is returned!
      *
      * @param exercise The exercise for which the repositories should be locked
@@ -491,7 +490,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
      * @return a Runnable that will lock the repositories once it is executed
      */
     @NotNull
-    private Runnable lockStudentRepositories(ProgrammingExercise exercise, Predicate<ProgrammingExerciseStudentParticipation> condition) {
+    public Runnable lockStudentRepositories(ProgrammingExercise exercise, Predicate<ProgrammingExerciseStudentParticipation> condition) {
         Long programmingExerciseId = exercise.getId();
         return () -> {
             SecurityUtils.setAuthorizationObject();
@@ -556,16 +555,16 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
     }
 
     /**
-     * Returns a runnable that, once executed, will unlock all student repositories and will schedule all repository lock tasks.
+     * Returns a runnable that, once executed, will unlock all student repositories that fulfill the condition and will schedule all repository lock tasks.
      * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
-     *
      * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
      *
      * @param exercise The exercise for which the repositories should be unlocked
+     * @param condition a condition that determines whether the operation will be executed for a specific participation
      * @return a Runnable that will unlock the repositories once it is executed
      */
     @NotNull
-    public Runnable unlockAllStudentRepositories(ProgrammingExercise exercise) {
+    public Runnable unlockStudentRepositories(ProgrammingExercise exercise, Predicate<ProgrammingExerciseStudentParticipation> condition) {
         Long programmingExerciseId = exercise.getId();
         return () -> {
             SecurityUtils.setAuthorizationObject();
@@ -581,7 +580,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                     programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
                 };
                 List<ProgrammingExerciseStudentParticipation> failedUnlockOperations = invokeOperationOnAllParticipationsThatSatisfy(programmingExerciseId,
-                        unlockAndCollectOperation, participation -> true, "add write permissions to all student repositories");
+                        unlockAndCollectOperation, condition, "add write permissions to all student repositories");
 
                 // We sent a notification to the instructor about the success of the repository unlocking operation.
                 long numberOfFailedUnlockOperations = failedUnlockOperations.size();
@@ -592,21 +591,31 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 else {
                     groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_UNLOCK_OPERATION_NOTIFICATION);
                 }
-
-                if (exercise.needsLockOperation()) {
-                    // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
-                    // Note: this only makes sense before the due date of a course exercise or before the end date of an exam, because for individual dates in the past
-                    // the scheduler would execute the lock operation immediately, making to unlock obsolete, therefore we filter out all individual due dates in the past
-                    // one use case is to unlock all operation is invoked directly after exam start
-                    Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> futureIndividualDueDates = individualDueDates.stream()
-                            .filter(tuple -> tuple.x() != null && ZonedDateTime.now().isBefore(tuple.x())).collect(Collectors.toSet());
-                    scheduleIndividualRepositoryLockTasks(exercise, futureIndividualDueDates);
-                }
+                // Schedule the lock operations here, this is also done here because the working times might change often before the exam start
+                // Note: this only makes sense before the due date of a course exercise or before the end date of an exam, because for individual dates in the past
+                // the scheduler would execute the lock operation immediately, making to unlock obsolete, therefore we filter out all individual due dates in the past
+                // one use case is to unlock all operation is invoked directly after exam start
+                Set<Tuple<ZonedDateTime, ProgrammingExerciseStudentParticipation>> futureIndividualDueDates = individualDueDates.stream()
+                        .filter(tuple -> tuple.x() != null && ZonedDateTime.now().isBefore(tuple.x())).collect(Collectors.toSet());
+                scheduleIndividualRepositoryLockTasks(exercise, futureIndividualDueDates);
             }
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", programmingExerciseId);
             }
         };
+    }
+
+    /**
+     * Returns a runnable that, once executed, will unlock all student repositories and will schedule all repository lock tasks.
+     * Tasks to unlock will be grouped so that for every existing due date (which is the exam start date + the different working times), one task will be scheduled.
+     * NOTE: this will not immediately unlock the repositories as only a Runnable is returned!
+     *
+     * @param exercise The exercise for which the repositories should be unlocked
+     * @return a Runnable that will unlock the repositories once it is executed
+     */
+    @NotNull
+    public Runnable unlockAllStudentRepositories(ProgrammingExercise exercise) {
+        return unlockStudentRepositories(exercise, participation -> true);
     }
 
     /**

@@ -1,8 +1,8 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ModelingExerciseService } from 'app/exercises/modeling/manage/modeling-exercise.service';
-import { UMLDiagramType, ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
@@ -14,6 +14,7 @@ import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/Plagiar
 import * as helper from 'app/shared/util/download.util';
 import { Router } from '@angular/router';
 import { MockRouter } from '../helpers/mocks/mock-router';
+import { lastValueFrom } from 'rxjs';
 
 describe('ModelingExercise Service', () => {
     let service: ModelingExerciseService;
@@ -106,8 +107,10 @@ describe('ModelingExercise Service', () => {
     it('should convert model to pdf', fakeAsync(() => {
         jest.spyOn(helper, 'downloadStream').mockReturnValue();
         const blob = new Blob(['test'], { type: 'text/html' }) as File;
-        service.convertToPdf('model1', 'filename').subscribe((resp) => expect(resp).toResolve());
 
+        // We use a fake async and don't need to await the promise
+        // eslint-disable-next-line jest/valid-expect
+        expect(lastValueFrom(service.convertToPdf('model1', 'filename'))).resolves.toContainEntry(['body', blob]);
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(blob);
         tick();
@@ -190,7 +193,7 @@ describe('ModelingExercise Service', () => {
             .getNumberOfClusters(elemDefault.id)
             .pipe(take(1))
             .subscribe((resp) => expect(resp.body).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/${elemDefault.id}/check-clusters` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.adminResourceUrl}/${elemDefault.id}/check-clusters` });
         req.flush(expected);
         tick();
     }));
@@ -202,16 +205,19 @@ describe('ModelingExercise Service', () => {
             .buildClusters(elemDefault.id)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual(expected));
-        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${elemDefault.id}/trigger-automatic-assessment` });
+        const req = httpMock.expectOne({ method: 'POST', url: `${service.adminResourceUrl}/${elemDefault.id}/trigger-automatic-assessment` });
         req.flush(expected);
         tick();
     }));
 
     it('should delete clusters', fakeAsync(() => {
         elemDefault.id = 756;
-        service.deleteClusters(elemDefault.id).subscribe((resp) => expect(resp).toResolve());
-        const req = httpMock.expectOne({ method: 'DELETE', url: `${service.resourceUrl}/${elemDefault.id}/clusters` });
-        req.flush({});
+
+        // We use a fake async and don't need to await the promise
+        // eslint-disable-next-line jest/valid-expect
+        expect(lastValueFrom(service.deleteClusters(elemDefault.id))).toResolve();
+        const req = httpMock.expectOne({ method: 'DELETE', url: `${service.adminResourceUrl}/${elemDefault.id}/clusters` });
+        req.flush(null);
         tick();
     }));
 

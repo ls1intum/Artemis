@@ -1,6 +1,6 @@
 import { ElementRef } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { acequire, Range } from 'brace';
+import { Range, acequire } from 'brace';
 
 // Work around to update the range
 const RangeCtor = acequire('ace/range').Range as typeof Range;

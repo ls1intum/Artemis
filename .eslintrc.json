@@ -52,6 +52,9 @@
         "@typescript-eslint/no-floating-promises": "off",
         "@typescript-eslint/no-unsafe-assignment": "off",
         "@angular-eslint/no-output-on-prefix": "off",
+        "sort-imports": ["error",  {
+            "ignoreDeclarationSort": true
+        }],
         "deprecation/deprecation": "warn" // or "error" to have stricter rule
     },
     "overrides": [

@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { RouterTestingModule } from '@angular/router/testing';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { AccountService } from 'app/core/auth/account.service';
@@ -21,7 +21,7 @@ import { FileUploadAssessmentService } from 'app/exercises/file-upload/assess/fi
 import { ComplaintsForTutorComponent } from 'app/complaints/complaints-for-tutor/complaints-for-tutor.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { FileUploadSubmission } from 'app/entities/file-upload-submission.model';
-import { getFirstResult, setLatestSubmissionResult, SubmissionExerciseType, SubmissionType } from 'app/entities/submission.model';
+import { SubmissionExerciseType, SubmissionType, getFirstResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Result } from 'app/entities/result.model';
@@ -205,12 +205,12 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.busy).toBeFalse();
         });
 
-        it('should get 404 error when loading optimal submission', () => {
+        it('should get null submission when loading optimal submission', () => {
             navigateByUrlStub.mockReturnValue(Promise.resolve(true));
             const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
             activatedRoute.params = of(params2);
             TestBed.inject(ActivatedRoute);
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ status: 404 })));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(null));
             fixture.detectChanges();
             expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
             expect(comp.busy).toBeTrue();
@@ -242,7 +242,6 @@ describe('FileUploadAssessmentComponent', () => {
     it('should load correct feedbacks and update general feedback', () => {
         const submission = createSubmission(exercise);
         const result = createResult(submission);
-        result.hasFeedback = true;
         const feedback1 = new Feedback();
         feedback1.type = FeedbackType.MANUAL_UNREFERENCED;
         feedback1.credits = 5;
@@ -313,7 +312,6 @@ describe('FileUploadAssessmentComponent', () => {
             feedback.type = FeedbackType.MANUAL;
             const changedResult = cloneDeep(initResult);
             changedResult.feedbacks = [feedback];
-            changedResult.hasFeedback = true;
             jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of({ body: submission } as EntityResponseType));
             jest.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(of(changedResult));
             comp.submission = submission;
@@ -339,7 +337,6 @@ describe('FileUploadAssessmentComponent', () => {
             feedback.type = FeedbackType.AUTOMATIC;
             const changedResult = cloneDeep(initResult);
             changedResult.feedbacks = [feedback];
-            changedResult.hasFeedback = true;
             jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of({ body: submission } as EntityResponseType));
             jest.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(throwError(() => errorResponse));
             comp.submission = submission;
@@ -361,7 +358,6 @@ describe('FileUploadAssessmentComponent', () => {
         // initial result
         const initResult = createResult(submission);
         initResult.assessmentType = AssessmentType.MANUAL;
-        initResult.hasFeedback = true;
         initResult.feedbacks = [feedback];
         // changed result
         const changedResult = cloneDeep(initResult);
@@ -389,7 +385,6 @@ describe('FileUploadAssessmentComponent', () => {
             // initial result
             const initResult = createResult(submission);
             initResult.assessmentType = AssessmentType.MANUAL;
-            initResult.hasFeedback = true;
             initResult.feedbacks = [feedback];
             // changed result
             const changedResult = cloneDeep(initResult);
@@ -425,7 +420,6 @@ describe('FileUploadAssessmentComponent', () => {
             // initial result
             const initResult = createResult(submission);
             initResult.assessmentType = AssessmentType.MANUAL;
-            initResult.hasFeedback = true;
             initResult.feedbacks = [feedback];
             // changed result
             const changedResult = cloneDeep(initResult);
@@ -460,7 +454,6 @@ describe('FileUploadAssessmentComponent', () => {
             // initial result
             const initResult = createResult(submission);
             feedback.type = FeedbackType.MANUAL_UNREFERENCED;
-            initResult.hasFeedback = true;
             initResult.feedbacks = [feedback];
             // changed result
             const changedResult = cloneDeep(initResult);
@@ -519,8 +512,7 @@ describe('FileUploadAssessmentComponent', () => {
 
         it('should not alert when no next result is found', () => {
             const alertServiceSpy = jest.spyOn(alertService, 'error');
-            const errorResponse = new HttpErrorResponse({ error: 'Not Found', status: 404 });
-            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => errorResponse));
+            getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(null));
 
             comp.assessNext();
 
@@ -630,7 +622,6 @@ const createResult = (submission: FileUploadSubmission) => {
     result.successful = false;
     result.score = 1;
     result.rated = true;
-    result.hasFeedback = false;
     result.submission = submission;
     result.participation = undefined;
     result.assessmentType = AssessmentType.MANUAL;

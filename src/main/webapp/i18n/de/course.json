@@ -12,7 +12,8 @@
             "deleted": "Kurs gelöscht mit Titel {{ param }}",
             "delete": {
                 "question": "Soll der Kurs <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente, inklusive der Klausuren, Aufgaben sowie Repositories und Build-Pläne werden gelöscht. Diese Aktion kann NICHT rückgängig gemacht werden!",
-                "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein."
+                "typeNameToConfirm": "Bitte gib den Namen des Kurses zur Bestätigung ein.",
+                "icon": "Kursicon löschen"
             },
             "showActive": "Nur aktive Kurse anzeigen",
             "totalScore": "Gesamtergebnis:",
@@ -84,18 +85,7 @@
             "accessGroups": "Zugriffsrechte",
             "onlineCourse": {
                 "title": "Onlinekurs",
-                "description": "Aktiviere diese Checkbox für externe Onlinekurse (z.B. auf edX), damit Studierende diesen Artemis-Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Kontoerstellung, sofern dies vom Artemis Systemadministrator eingestellt ist."
-            },
-            "onlineCourseConfiguration": {
-                "title": "Onlinekurs-Konfiguration",
-                "ltiKey": "LTI-Key",
-                "ltiSecret": "LTI-Geheimnis",
-                "userPrefix": "Nutzer-Präfix",
-                "form": {
-                    "userPrefix": {
-                        "forbidden": "Nutzer Präfix darf keine Sonderzeichen beinhalten."
-                    }
-                }
+                "description": "Aktiviere diese Checkbox für externe Onlinekurse (z.B. auf edX/Moodle), damit Studierende diesen Artemis-Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Kontoerstellung, sofern dies vom Artemis Systemadministrator eingestellt ist. Du kannst dies auf der Seite LTI-Konfiguration weiter konfigurieren."
             },
             "registrationEnabled": {
                 "title": "Kursregistrierung für Studierende aktiviert",

@@ -6,8 +6,6 @@
         "ratingList": {
             "exercise": "Übung",
             "exerciseType": "Aufgabentyp",
-            "assessorLogin": "Bewertet von (Login)",
-            "assessorName": "Bewertet von (Name)",
             "rating": "Rating",
             "actions": "Aktionen",
             "assessmentType": "Bewertungstyp",

@@ -1,4 +1,4 @@
-import { round, roundValueSpecifiedByCourseSettings, roundScorePercentSpecifiedByCourseSettings, stringifyIgnoringFields, average } from 'app/shared/util/utils';
+import { average, round, roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings, stringifyIgnoringFields } from 'app/shared/util/utils';
 
 describe('Round', () => {
     it('Decimal length', () => {

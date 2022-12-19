@@ -1,11 +1,11 @@
-import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { NgModel } from '@angular/forms';
 import { NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
-import { BehaviorSubject, of, Subject } from 'rxjs';
+import { BehaviorSubject, Subject, of } from 'rxjs';
 import * as ace from 'brace';
 import { ArtemisTestModule } from '../../test.module';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
@@ -91,7 +91,7 @@ describe('CodeEditorContainerIntegration', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, AceEditorModule],
+            imports: [ArtemisTestModule, AceEditorModule, MockDirective(NgbDropdown)],
             declarations: [
                 CodeEditorContainerComponent,
                 MockComponent(CodeEditorGridComponent),
@@ -99,7 +99,6 @@ describe('CodeEditorContainerIntegration', () => {
                 KeysPipe,
                 MockDirective(FeatureToggleDirective),
                 MockDirective(FeatureToggleLinkDirective),
-                MockDirective(NgbDropdown),
                 MockDirective(NgModel),
                 MockPipe(ArtemisTranslatePipe),
                 CodeEditorActionsComponent,

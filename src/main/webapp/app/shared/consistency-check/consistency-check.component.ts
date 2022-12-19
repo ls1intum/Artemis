@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConsistencyCheckService } from 'app/shared/consistency-check/consistency-check.service';
 import { AlertService } from 'app/core/util/alert.service';

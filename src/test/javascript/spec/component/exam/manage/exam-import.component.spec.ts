@@ -1,10 +1,10 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { of, Subject, throwError } from 'rxjs';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { Subject, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -22,6 +22,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
@@ -44,11 +45,10 @@ describe('Exam Import Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule)],
+            imports: [ArtemisTestModule, MockModule(FormsModule), MockComponent(NgbPagination)],
             declarations: [
                 ExamImportComponent,
                 ExamExerciseImportComponent,
-                MockComponent(NgbPagination),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),

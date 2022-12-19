@@ -1,6 +1,6 @@
 import dayjs from 'dayjs/esm';
 import { of } from 'rxjs';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { SystemNotificationComponent, WEBSOCKET_CHANNEL } from 'app/shared/notification/system-notification/system-notification.component';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';

@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { CourseExerciseCardComponent } from 'app/course/manage/course-exercise-card.component';
 import { CourseManagementExercisesComponent } from 'app/course/manage/course-management-exercises.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -27,7 +26,7 @@ describe('Course Management Exercises Component', () => {
     const parentRoute = {
         data: of({ course }),
     } as any as ActivatedRoute;
-    const route = { parent: parentRoute } as any as ActivatedRoute;
+    const route = { parent: parentRoute, queryParams: of({}) } as any as ActivatedRoute;
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -35,7 +34,6 @@ describe('Course Management Exercises Component', () => {
                 CourseManagementExercisesComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(CourseExerciseCardComponent),
-                MockDirective(NgbCollapse),
                 MockDirective(TranslateDirective),
                 MockDirective(ExtensionPointDirective),
                 MockComponent(ProgrammingExerciseComponent),

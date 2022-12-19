@@ -1,7 +1,7 @@
 import { Directive, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Params } from '@angular/router';
 import { CourseWideContext, PageType, PostContextFilter, PostSortCriterion, SortDirection } from 'app/shared/metis/metis.util';
-import { combineLatest, Subscription } from 'rxjs';
+import { Subscription, combineLatest } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Lecture } from 'app/entities/lecture.model';
@@ -33,7 +33,7 @@ export abstract class PostOverviewDirective implements OnInit, OnDestroy {
     conversation?: Conversation;
     formGroup: FormGroup;
     createdPost: Post;
-    posts: Post[];
+    posts: Post[] = [];
     isLoading = true;
     totalItems = 0;
     pagingEnabled = true;

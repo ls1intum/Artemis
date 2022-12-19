@@ -1,6 +1,7 @@
 import { DomainMultiOptionCommand } from 'app/shared/markdown-editor/domainCommands/domainMultiOptionCommand';
 import { getStringSegmentPositions } from 'app/shared/util/global.utils';
 import { removeTextRange } from 'app/shared/util/markdown.util';
+
 /**
  * Allows the insertion of values within a comma separated list.
  * Will e.g. remove duplicates and append new items to the list.

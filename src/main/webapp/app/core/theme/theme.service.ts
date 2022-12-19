@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { faMoon, faSun, IconDefinition } from '@fortawesome/free-solid-svg-icons';
+import { IconDefinition, faMoon, faSun } from '@fortawesome/free-solid-svg-icons';
 import { LocalStorageService } from 'ngx-webstorage';
 import { BehaviorSubject, Observable } from 'rxjs';
 

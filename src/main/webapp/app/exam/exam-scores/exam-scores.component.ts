@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { forkJoin, of, Subscription } from 'rxjs';
+import { Subscription, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ActivatedRoute } from '@angular/router';
@@ -41,24 +41,24 @@ import { ExportRow, ExportRowBuilder } from 'app/shared/export/export-row-builde
 import * as XLSX from 'xlsx';
 import { VERSION } from 'app/app.constants';
 import {
+    BONUS_GRADE_KEY,
     BONUS_KEY,
     EMAIL_KEY,
     EXAM_ACHIEVED_POINTS,
     EXAM_ACHIEVED_SCORE,
     EXAM_ASSIGNED_EXERCISE,
-    EXAM_PASSED,
-    EXAM_SUBMITTED,
-    GRADE_KEY,
-    NAME_KEY,
     EXAM_OVERALL_POINTS_KEY,
     EXAM_OVERALL_SCORE_KEY,
+    EXAM_PASSED,
+    EXAM_SUBMITTED,
+    FINAL_GRADE_KEY,
+    GRADE_KEY,
+    NAME_KEY,
+    PLAGIARISM_VERDICT_IN_BONUS_SOURCE_KEY,
+    PLAGIARISM_VERDICT_KEY,
+    PRESENTATION_SCORE_IN_BONUS_SOURCE_KEY,
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
-    BONUS_GRADE_KEY,
-    FINAL_GRADE_KEY,
-    PLAGIARISM_VERDICT_KEY,
-    PLAGIARISM_VERDICT_IN_BONUS_SOURCE_KEY,
-    PRESENTATION_SCORE_IN_BONUS_SOURCE_KEY,
 } from 'app/shared/export/export-constants';
 
 export enum MedianType {

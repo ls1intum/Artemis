@@ -28,6 +28,7 @@ import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWrite
 import org.springframework.web.filter.CorsFilter;
 import org.zalando.problem.spring.web.advice.security.SecurityProblemSupport;
 
+import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -60,7 +61,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     private Optional<String> monitoringIpAddress;
 
     public SecurityConfiguration(AuthenticationManagerBuilder authenticationManagerBuilder, UserDetailsService userDetailsService, TokenProvider tokenProvider,
-            CorsFilter corsFilter, SecurityProblemSupport problemSupport, PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
+                                 CorsFilter corsFilter, SecurityProblemSupport problemSupport, PasswordService passwordService, Optional<AuthenticationProvider> remoteUserAuthenticationProvider) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userDetailsService = userDetailsService;
         this.tokenProvider = tokenProvider;
@@ -117,7 +118,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/content/**")
             .antMatchers("/api-docs/**")
             .antMatchers("/api.html")
-            .antMatchers("/test/**");
+            .antMatchers("/test/**")
+            .antMatchers(CustomLti13Configurer.JWKS_PATH);
         web.ignoring()
             .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
         web.ignoring()
@@ -138,28 +140,28 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .csrf()
             .disable()
             .addFilterBefore(corsFilter, UsernamePasswordAuthenticationFilter.class)
-                .exceptionHandling().authenticationEntryPoint(problemSupport)
-                .accessDeniedHandler(problemSupport)
-        .and()
+            .exceptionHandling().authenticationEntryPoint(problemSupport)
+            .accessDeniedHandler(problemSupport)
+            .and()
             .headers()
             .contentSecurityPolicy("script-src 'self' 'unsafe-inline' 'unsafe-eval'")
             // TODO: investigate exactly whether the following works in our setup or not
             // .contentSecurityPolicy("default-src 'self'; connect-src: 'self' 'https://sentry.io' 'ws:' 'wss:'; frame-src * data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src * data:; font-src 'self' data:")
-        .and()
+            .and()
             .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
-        .and()
+            .and()
             .permissionsPolicy().policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")
-        .and()
+            .and()
             .frameOptions()
             .deny()
-        .and()
+            .and()
             .headers()
             .httpStrictTransportSecurity()
             .disable() // this is already configured using nginx
-        .and()
+            .and()
             .sessionManagement()
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        .and()
+            .and()
             .authorizeRequests()
             .antMatchers("/api/register").permitAll()
             .antMatchers("/api/activate").permitAll()
@@ -167,11 +169,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/account/reset-password/init").permitAll()
             .antMatchers("/api/account/reset-password/finish").permitAll()
             .antMatchers("/api/lti/launch/*").permitAll()
-            .antMatchers("/api/files/attachments/lecture/**").permitAll()
-            .antMatchers("/api/files/attachments/attachment-unit/**").permitAll()
             .antMatchers("/api/programming-exercises/*/build-plan").permitAll()
-            .antMatchers("/api/files/file-upload-exercises/**").permitAll()
-            .antMatchers("/api/files/markdown/**").permitAll()
+            .antMatchers("/api/lti13/auth-callback").permitAll()
             .antMatchers("/api/**").authenticated()
             .antMatchers("/websocket/tracker").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/websocket/**").permitAll()
@@ -181,8 +180,11 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
             .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/time").permitAll()
-        .and()
+            .and()
             .apply(securityConfigurerAdapter());
+
+        http.apply(new CustomLti13Configurer());
+
         // @formatter:on
     }
 

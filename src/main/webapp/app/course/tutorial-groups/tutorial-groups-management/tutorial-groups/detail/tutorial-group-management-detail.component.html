@@ -1,0 +1,24 @@
+<jhi-loading-indicator-container [isLoading]="isLoading">
+    <div class="row justify-content-center">
+        <div *ngIf="tutorialGroup" class="col-12">
+            <jhi-tutorial-group-detail
+                [tutorialGroup]="tutorialGroup"
+                [timeZone]="course.timeZone"
+                [courseClickHandler]="onCourseClicked"
+                [registrationClickHandler]="onRegistrationsClicked"
+            >
+                <ng-template let-tutorialGroup>
+                    <td>
+                        <jhi-tutorial-group-row-buttons
+                            [course]="course"
+                            [isAtLeastInstructor]="isAtLeastInstructor"
+                            [tutorialGroup]="tutorialGroup"
+                            (tutorialGroupDeleted)="onTutorialGroupDeleted()"
+                        >
+                        </jhi-tutorial-group-row-buttons>
+                    </td>
+                </ng-template>
+            </jhi-tutorial-group-detail>
+        </div>
+    </div>
+</jhi-loading-indicator-container>

@@ -1,5 +1,5 @@
 import { ArtemisTestModule } from '../../test.module';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { StructuredGradingInstructionsAssessmentLayoutComponent } from 'app/assessment/structured-grading-instructions-assessment-layout/structured-grading-instructions-assessment-layout.component';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
@@ -18,15 +18,13 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
             declarations: [
                 StructuredGradingInstructionsAssessmentLayoutComponent,
                 MockComponent(HelpIconComponent),
                 ExpandableSectionComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(HtmlForMarkdownPipe),
-                MockDirective(NgbTooltip),
-                MockDirective(NgbCollapse),
             ],
             providers: [{ provide: LocalStorageService, useClass: MockLocalStorageService }],
         })

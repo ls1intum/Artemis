@@ -58,7 +58,8 @@ import { ArtemisCoursesModule } from 'app/overview/courses.module';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
 import { CourseGroupMembershipComponent } from './course-group-membership/course-group-membership.component';
 import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
-import { ArtemisTutorialGroupsInstructorViewModule } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-instructor-view.module';
+import { CourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/course-lti-configuration.component';
+import { EditCourseLtiConfigurationComponent } from 'app/course/manage/course-lti-configuration/edit-course-lti-configuration.component';
 
 @NgModule({
     imports: [
@@ -107,7 +108,6 @@ import { ArtemisTutorialGroupsInstructorViewModule } from 'app/course/tutorial-g
         ArtemisCoursesModule,
         ArtemisCourseGroupModule,
         FeatureToggleModule,
-        ArtemisTutorialGroupsInstructorViewModule,
     ],
     declarations: [
         CourseManagementComponent,
@@ -124,6 +124,8 @@ import { ArtemisTutorialGroupsInstructorViewModule } from 'app/course/tutorial-g
         CourseDetailLineChartComponent,
         CourseManagementExercisesSearchComponent,
         CourseGroupMembershipComponent,
+        CourseLtiConfigurationComponent,
+        EditCourseLtiConfigurationComponent,
     ],
 })
 export class ArtemisCourseManagementModule {}

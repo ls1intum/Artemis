@@ -1,5 +1,5 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -122,7 +122,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                         id: 2374,
                         score: 8,
                         rated: true,
-                        hasFeedback: true,
                         hasComplaint: true,
                         feedbacks: [
                             {
@@ -214,7 +213,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             id: 2374,
             score: 8,
             rated: true,
-            hasFeedback: true,
             hasComplaint: false,
         } as unknown as Result;
 
@@ -260,7 +258,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 id: 2374,
                 score: 8,
                 rated: true,
-                hasFeedback: true,
                 hasComplaint: false,
             } as unknown as Result,
         ];
@@ -309,7 +306,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             id: 2374,
             score: 8,
             rated: true,
-            hasFeedback: true,
             hasComplaint: false,
             participation: {
                 type: ParticipationType.SOLUTION,

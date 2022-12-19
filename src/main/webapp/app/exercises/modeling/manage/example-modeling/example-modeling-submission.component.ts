@@ -1,4 +1,4 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -26,6 +26,7 @@ import { faChalkboardTeacher, faCheck, faCircle, faCodeBranch, faExclamation, fa
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { forkJoin } from 'rxjs';
 import { filterInvalidFeedback } from 'app/exercises/modeling/assess/modeling-assessment.util';
+import { Theme, ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-example-modeling-submission',
@@ -95,6 +96,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         return [...this.referencedFeedback, ...this.unreferencedFeedback];
     }
 
+    highlightedElements = new Map<string, string>();
+    referencedExampleFeedback: Feedback[] = [];
+    highlightColor = 'lightblue';
+
     // Icons
     faSave = faSave;
     faCircle = faCircle;
@@ -112,6 +117,8 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         private route: ActivatedRoute,
         private router: Router,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private changeDetector: ChangeDetectorRef,
+        private themeService: ThemeService,
     ) {}
 
     ngOnInit(): void {
@@ -134,6 +141,20 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             this.assessmentMode = true;
         }
         this.loadAll();
+
+        this.themeService.getPreferenceObservable().subscribe((themeOrUndefined) => {
+            if (themeOrUndefined === Theme.DARK) {
+                this.highlightColor = 'darkblue';
+            } else {
+                this.highlightColor = 'lightblue';
+            }
+
+            const updatedHighlights = new Map<string, string>();
+            this.highlightedElements.forEach((value, key) => {
+                updatedHighlights.set(key, this.highlightColor);
+            });
+            this.highlightedElements = updatedHighlights;
+        });
     }
 
     private loadAll(): void {
@@ -163,16 +184,16 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
 
                     this.assessmentExplanation = this.exampleSubmission.assessmentExplanation!;
 
-                    // Do not load the results when we have to assess the submission. The API will not provide it anyway
-                    // if we are not instructors
                     if (this.toComplete) {
-                        return;
+                        this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id!).subscribe((result) => {
+                            this.updateExampleAssessmentSolution(result);
+                        });
+                    } else {
+                        this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id!).subscribe((result) => {
+                            this.updateAssessment(result);
+                            this.checkScoreBoundaries();
+                        });
                     }
-
-                    this.modelingAssessmentService.getExampleAssessment(this.exerciseId, this.modelingSubmission.id!).subscribe((result) => {
-                        this.updateAssessment(result);
-                        this.checkScoreBoundaries();
-                    });
                 }),
             );
 
@@ -454,6 +475,18 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             }
         });
         this.assessmentEditor.resultFeedbacks = this.referencedFeedback;
+        this.highlightMissedFeedback();
+    }
+
+    highlightMissedFeedback() {
+        const missedReferencedExampleFeedbacks = this.referencedExampleFeedback.filter(
+            (feedback) => !this.referencedFeedback.some((referencedFeedback) => referencedFeedback.reference === feedback.reference),
+        );
+        this.highlightedElements = new Map<string, string>();
+        for (const feedback of missedReferencedExampleFeedbacks) {
+            this.highlightedElements.set(feedback.referenceId!, this.highlightColor);
+        }
+        this.changeDetector.detectChanges();
     }
 
     readAndUnderstood() {
@@ -461,6 +494,12 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             this.alertService.success('artemisApp.exampleSubmission.readSuccessfully');
             this.back();
         });
+    }
+
+    private updateExampleAssessmentSolution(result: Result) {
+        if (result) {
+            this.referencedExampleFeedback = result.feedbacks?.filter((feedback) => feedback.type !== FeedbackType.MANUAL_UNREFERENCED) || [];
+        }
     }
 
     private updateAssessment(result: Result) {

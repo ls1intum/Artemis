@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { Observable, Subject } from 'rxjs';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { notificationSettingsStructure, NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
+import { NotificationSetting, notificationSettingsStructure } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Setting, SettingGroup, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 

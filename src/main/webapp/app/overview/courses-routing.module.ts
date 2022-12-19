@@ -66,6 +66,10 @@ const routes: Routes = [
                 loadChildren: () => import('./course-messages/course-messages.module').then((m) => m.CourseMessagesModule),
             },
             {
+                path: 'tutorial-groups',
+                loadChildren: () => import('./course-tutorial-groups/course-tutorial-groups.module').then((m) => m.CourseTutorialGroupsModule),
+            },
+            {
                 path: 'exams',
                 component: CourseExamsComponent,
                 data: {

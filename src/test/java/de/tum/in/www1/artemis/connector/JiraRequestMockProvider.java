@@ -86,10 +86,10 @@ public class JiraRequestMockProvider {
         mockServer.expect(ExpectedCount.twice(), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(status));
     }
 
-    public void mockGetUsernameForEmail(String email, String usernameToBeReturned) throws IOException {
+    public void mockGetUsernameForEmail(String email, String emailToReturn, String usernameToBeReturned) throws IOException {
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/user/search\\?username=" + URLEncoder.encode(email, StandardCharsets.UTF_8));
         JiraUserDTO userDTO = new JiraUserDTO(usernameToBeReturned);
-        userDTO.setEmailAddress(email);
+        userDTO.setEmailAddress(emailToReturn);
         final var response = List.of(userDTO);
         mockServer.expect(requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(response)));

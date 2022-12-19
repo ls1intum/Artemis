@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
 import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute } from '@angular/router';
@@ -19,6 +19,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { NgModel } from '@angular/forms';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('LectureAttachmentsComponent', () => {
     let comp: LectureAttachmentsComponent;
@@ -81,7 +82,7 @@ describe('LectureAttachmentsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
             declarations: [
                 LectureAttachmentsComponent,
                 MockComponent(FormDateTimePickerComponent),

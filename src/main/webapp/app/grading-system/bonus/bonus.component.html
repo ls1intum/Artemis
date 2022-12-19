@@ -1,6 +1,6 @@
 <ng-template #helpTextTemplate let-translationKey="translationKey">
     <ng-template #tipContent><span [innerHTML]="translationKey | artemisTranslate | safeHtml"></span></ng-template>
-    <fa-icon *ngIf="bonus.id" [icon]="faQuestionCircle" class="text-secondary" placement="right" [ngbTooltip]="tipContent"></fa-icon>
+    <fa-icon *ngIf="bonus.id" [icon]="faQuestionCircle" class="text-secondary" placement="right auto" [ngbTooltip]="tipContent"></fa-icon>
     <label *ngIf="!bonus.id" [innerHTML]="translationKey | artemisTranslate | safeHtml" class="d-block py-1"></label>
 </ng-template>
 <h2>{{ 'artemisApp.bonus.title' | artemisTranslate }}</h2>
@@ -47,10 +47,10 @@
                 <tr *ngFor="let gradeStep of bonus.sourceGradingScale?.gradeSteps; let i = index; let last = last">
                     <td>{{ gradeStep.gradeName }}</td>
                     <td>
-                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE:last | safeHtml"></span>
+                        <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.PERCENTAGE : last | safeHtml"></span>
                     </td>
                     <td *ngIf="hasPointsSet()">
-                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS:last | safeHtml"></span>
+                        <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.POINTS : last | safeHtml"></span>
                     </td>
                 </tr>
             </tbody>
@@ -81,7 +81,7 @@
             {{ 'artemisApp.bonus.formula.finalGradeFromPoints' | artemisTranslate }}
         </div>
         <div class="row fs-5 ps-2">
-            {{ 'artemisApp.bonus.formula.finalGradeLimit' | artemisTranslate: { maxPossibleGrade: maxPossibleGrade() } }}
+            {{ 'artemisApp.bonus.formula.finalGradeLimit' | artemisTranslate : { maxPossibleGrade: maxPossibleGrade() } }}
         </div>
     </div>
     <div *ngIf="hasBonusStrategyWeightMismatch" class="alert alert-warning" jhiTranslate="artemisApp.bonus.warnStrategyWeightMismatch">sadsgd gfhfgh</div>
@@ -113,7 +113,6 @@
                             *ngIf="example.exceedsMax"
                             [icon]="faExclamationTriangle"
                             class="text-warning"
-                            placement="top"
                             [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
                         ></fa-icon>
                     </td>
@@ -126,7 +125,6 @@
                             *ngIf="bonus.bonusStrategy !== BonusStrategy.POINTS && example.exceedsMax"
                             [icon]="faExclamationTriangle"
                             class="text-warning"
-                            placement="top"
                             [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
                         ></fa-icon>
                     </td>
@@ -143,7 +141,6 @@
                                 *ngIf="dynamicExample.exceedsMax"
                                 [icon]="faExclamationTriangle"
                                 class="text-warning"
-                                placement="top"
                                 [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
                             ></fa-icon>
                         </ng-container>
@@ -157,7 +154,6 @@
                             *ngIf="bonus.bonusStrategy !== BonusStrategy.POINTS && dynamicExample.exceedsMax"
                             [icon]="faExclamationTriangle"
                             class="text-warning"
-                            placement="top"
                             [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
                         ></fa-icon>
                     </td>

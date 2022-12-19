@@ -12,7 +12,7 @@
             <div>
                 <div class="text-start">
                     <span>{{ 'artemisApp.exampleSubmission.assessmentTraining' | artemisTranslate }}</span>
-                    <jhi-help-icon placement="auto" [text]="'artemisApp.exampleSubmission.selectModelExplanation'"></jhi-help-icon>
+                    <jhi-help-icon [text]="'artemisApp.exampleSubmission.selectModelExplanation'"></jhi-help-icon>
                 </div>
                 <div class="btn-group" role="group">
                     <input
@@ -113,6 +113,11 @@
     <div class="col-12">
         <div class="row flex-nowrap">
             <div class="col editor-container-outer">
+                <div *ngIf="highlightedElements && highlightedElements.size > 0" class="col">
+                    <div [style.background-color]="highlightColor" class="my-2 text-center">
+                        <span>{{ 'artemisApp.exampleSubmission.modelElementHint' | artemisTranslate }}</span>
+                    </div>
+                </div>
                 <div class="row editor-container-inner">
                     <jhi-modeling-editor
                         class="col-12"
@@ -138,6 +143,7 @@
                         [readOnly]="readOnly"
                         [course]="course"
                         [explanation]="explanationText"
+                        [highlightedElements]="highlightedElements"
                         (feedbackChanged)="onReferencedFeedbackChanged($event)"
                     >
                     </jhi-modeling-assessment>

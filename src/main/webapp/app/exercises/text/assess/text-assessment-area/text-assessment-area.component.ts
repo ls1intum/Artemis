@@ -27,6 +27,7 @@ export class TextAssessmentAreaComponent implements OnChanges {
     @Input() feedbackConflicts: FeedbackConflict[];
     @Input() highlightDifferences: boolean;
     @Input() criteria?: GradingCriterion[];
+    @Input() allowManualBlockSelection = true;
 
     // outputs
     @Output() textBlockRefsChange = new EventEmitter<TextBlockRef[]>();
@@ -65,6 +66,9 @@ export class TextAssessmentAreaComponent implements OnChanges {
     @HostListener('document:keydown.alt', ['$event', 'false'])
     @HostListener('document:keyup.alt', ['$event', 'true'])
     onAltToggle(event: KeyboardEvent, toggleValue: boolean) {
+        if (!this.allowManualBlockSelection) {
+            return;
+        }
         this.autoTextBlockAssessment = toggleValue;
     }
 

@@ -7,12 +7,19 @@ import { filter, tap } from 'rxjs/operators';
 @Component({
     selector: 'jhi-footer',
     templateUrl: './footer.component.html',
+    styleUrls: ['./footer.scss'],
 })
 export class FooterComponent implements OnInit {
     readonly releaseNotesUrl = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
     readonly requestChangeUrl = 'https://github.com/ls1intum/Artemis/issues/new/choose';
 
     email: string;
+    gitBranch: string;
+    gitCommitId: string;
+    gitTimestamp: string;
+    gitCommitUser: string;
+    testServer: boolean;
+    inProduction: boolean;
 
     constructor(private profileService: ProfileService) {}
 
@@ -23,6 +30,12 @@ export class FooterComponent implements OnInit {
                 filter(Boolean),
                 tap((info: ProfileInfo) => {
                     this.contact = info.contact;
+                    this.gitBranch = info.git.branch;
+                    this.gitCommitId = info.git.commit.id.abbrev;
+                    this.gitTimestamp = new Date(info.git.commit.time).toUTCString();
+                    this.gitCommitUser = info.git.commit.user.name;
+                    this.testServer = info.testServer ?? false;
+                    this.inProduction = info.inProduction;
                 }),
             )
             .subscribe();

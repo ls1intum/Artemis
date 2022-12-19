@@ -1,5 +1,5 @@
-import { Component, Input, OnChanges, OnInit, OnDestroy } from '@angular/core';
-import { faArrowRight, faCheckCircle, faTimes, faTimesCircle, faDotCircle, faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
+import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { faArrowRight, faCheckCircle, faCircleExclamation, faDotCircle, faTimes, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';

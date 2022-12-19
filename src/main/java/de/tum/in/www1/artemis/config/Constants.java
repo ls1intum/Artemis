@@ -16,7 +16,7 @@ public final class Constants {
 
     public static final int PASSWORD_MAX_LENGTH = 50;
 
-    public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 1440; // 24h
+    public static int COMPLAINT_LOCK_DURATION_IN_MINUTES = 24 * 60; // 24h; Same as in artemisApp.locks.acquired
 
     public static int SECONDS_BEFORE_RELEASE_DATE_FOR_COMBINING_TEMPLATE_COMMITS = 15;
 
@@ -97,9 +97,9 @@ public final class Constants {
     public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
 
     // Note: The values in input.constants.ts (client) need to be the same
-    public static final int MAX_SUBMISSION_TEXT_LENGTH = 30 * 1000; // 30.000 characters
+    public static final int MAX_SUBMISSION_TEXT_LENGTH = 30_000; // 30.000 characters
 
-    public static final int MAX_SUBMISSION_MODEL_LENGTH = 100 * 1000; // 100.000 characters
+    public static final int MAX_SUBMISSION_MODEL_LENGTH = 100_000; // 100.000 characters
 
     public static final int MAX_QUIZ_SHORT_ANSWER_TEXT_LENGTH = 255; // Must be consistent with database column definition
 
