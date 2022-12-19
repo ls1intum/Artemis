@@ -132,7 +132,7 @@ public class UnitProcessingService {
                     outlineMap.put(previousOutlineCount, new Tuple<>(previousStart, index - 1));
                 }
             }
-            pd.close();
+            // pd.close();
             index++;
         }
 

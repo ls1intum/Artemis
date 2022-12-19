@@ -99,9 +99,8 @@ export class AttachmentUnitsComponent implements OnInit {
         // const { description, name, releaseDate } = attachmentUnitFormData.formProperties;
         // const { file, fileName } = attachmentUnitFormData.fileProperties;
 
-        this.units.map((unit, index) => {
+        this.units.forEach((unit) => {
             // === Setting attachment ===
-
             console.log(unit);
             const { attachmentName: name, description, releaseDate, file: unitFile } = unit;
 
@@ -111,6 +110,7 @@ export class AttachmentUnitsComponent implements OnInit {
             if (name) {
                 this.attachmentToCreate.name = name;
             }
+
             if (releaseDate) {
                 this.attachmentToCreate.releaseDate = releaseDate;
             }
@@ -130,7 +130,6 @@ export class AttachmentUnitsComponent implements OnInit {
             formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnitToCreate));
             this.attachmentUnitService
                 .create(formData, this.lectureId)
-                .pipe(delay(3000))
                 .subscribe({
                     next: () => {},
                     error: (res: HttpErrorResponse) => {
@@ -144,6 +143,7 @@ export class AttachmentUnitsComponent implements OnInit {
                 })
                 .add();
         });
+        this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
         this.isLoading = false;
     }
 
