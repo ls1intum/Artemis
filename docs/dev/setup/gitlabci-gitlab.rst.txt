@@ -17,9 +17,9 @@ based on GitLab CI and GitLab.
 GitLab
 ^^^^^^
 
-This section describes how to setup a development environment for Artemis with GitLab and GitLab CI.
-For a production setup of GitLab, see `TODO <Link To Other Doc Page>`.
-The same basic steps as for a GitLab+Jenkins setup apply, but the steps that describe generating tokens for Jenkins can be skipped.
+This section describes how to set up a development environment for Artemis with GitLab and GitLab CI.
+The same basic steps as for a `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__ setup apply, but the steps that describe generating tokens for Jenkins can be skipped.
+For a production setup of GitLab, also see the documentation of the GitLab and Jenkins setup.
 
 GitLab
 """"""
@@ -78,7 +78,7 @@ GitLab Runner
     Adding a runner in a production setup works the same way.
     The GitLab administration page also contains alternative ways of setting up GitLab runners.
     All variants should allow the passing of the configuration options ``tag-list``, ``run-untagged``, ``locked``, and ``access-level`` similarly as in the Docker command above.
-    If forgotten, Artemis will not use this runner to run the tests for exercise submissions.
+    If forgotten, Artemis might not use this runner to run the tests for exercise submissions.
 
 
 Artemis
@@ -90,7 +90,7 @@ Artemis
     This should be used in place of ``notification-plugin-token`` value in the example config below.
 2. Configure Artemis
     For local development, copy the following configuration into the ``application-local.yml`` file and adapt it with the values from the previous steps.
-    Please make sure, that the GitLab Runner can access Artemis via the URL specified.
+    Please make sure, that the GitLab Runner can access Artemis via the URL specified under ``artemis.server.url``.
 
     .. code:: yaml
 

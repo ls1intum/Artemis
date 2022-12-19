@@ -41,7 +41,7 @@ following dependencies/tools on your machine:
    There are multiple stacks available for the integration with Artemis:
 
    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
-   * GitLab and GitLab CI (under development, not yet production ready)
+   * `GitLab and GitLab CI (experimental, not yet production ready) <#gitlab-ci-and-gitlab-setup>`__
    * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__)
 
 ------------------------------------------------------------------------------------------------------------------------
