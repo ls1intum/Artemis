@@ -493,6 +493,7 @@ do either do it manually or using the following command:
    As there is currently an `open issue with the presets for Jenkins in Development environments <https://github.com/ls1intum/Artemis/issues/5973>`__,
    follow the steps described in
    `Gitlab to Jenkins push notification token <#gitlab-to-jenkins-push-notification-token>`__ to generate the token.
+   In a production setup, you should use a random ``master.key`` in the file ``gitlab-jenkins-mysql.yml``.
 
 4. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
 
