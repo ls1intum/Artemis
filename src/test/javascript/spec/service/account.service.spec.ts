@@ -382,7 +382,7 @@ describe('AccountService', () => {
         });
     });
 
-    describe('test isChannelModerator', () => {
+    describe('test isAdmin', () => {
         it('should return false if user is not admin', () => {
             accountService.userIdentity = user2;
 

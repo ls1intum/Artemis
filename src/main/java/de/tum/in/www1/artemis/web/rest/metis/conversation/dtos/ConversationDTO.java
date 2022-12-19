@@ -44,8 +44,6 @@ public class ConversationDTO {
     // property not taken from entity
     private Integer numberOfMembers;
 
-    // ToDo: Maybe add property hasUnreadMessages and unreadMessagesCount?? How does slack do it?
-
     protected ConversationDTO(Conversation conversation, String type) {
         this.id = conversation.getId();
         this.creationDate = conversation.getCreationDate();

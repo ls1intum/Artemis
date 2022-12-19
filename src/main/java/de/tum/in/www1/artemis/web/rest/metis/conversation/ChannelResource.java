@@ -306,7 +306,7 @@ public class ChannelResource {
 
         channelAuthorizationService.isAllowedToDeregisterUsersFromChannel(channelFromDatabase, userLogins, requestingUser);
         var usersToDeRegister = conversationService.findUsersInDatabase(userLogins);
-        // you are not allowed to deregister the creator of a channel{
+        // you are not allowed to deregister the creator of a channel
         var creator = channelFromDatabase.getCreator();
         if (usersToDeRegister.contains(creator)) {
             throw new BadRequestAlertException("You are not allowed to deregister the creator of a channel", "conversation", "creatorDeregistration");

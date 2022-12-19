@@ -50,7 +50,7 @@ export class User extends Account {
     }
 }
 /**
- * A DTO representing a user with the minimal information allowed to be seen by other users in a cousrse
+ * A DTO representing a user with the minimal information allowed to be seen by other users in a course
  */
 export class UserPublicInfoDTO {
     public id?: number;
@@ -59,8 +59,8 @@ export class UserPublicInfoDTO {
     public name?: string;
     public firstName?: string;
     public lastName?: string;
-    isInstructor?: boolean;
-    isEditor?: boolean;
-    isTeachingAssistant?: boolean;
-    isStudent?: boolean;
+    public isInstructor?: boolean;
+    public isEditor?: boolean;
+    public isTeachingAssistant?: boolean;
+    public isStudent?: boolean;
 }
