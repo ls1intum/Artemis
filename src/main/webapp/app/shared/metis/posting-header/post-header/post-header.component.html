@@ -17,6 +17,7 @@
                 !previewMode &&
                 !readOnlyMode &&
                 ((!isCourseMessagesPage && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT))) ||
+                    (isCourseMessagesPage && hasChannelModerationRights) ||
                     isAuthorOfPosting)
             "
             size="xs"
@@ -36,6 +37,7 @@
                 !previewMode &&
                 !readOnlyMode &&
                 ((!isCourseMessagesPage && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT))) ||
+                    (isCourseMessagesPage && hasChannelModerationRights) ||
                     isAuthorOfPosting)
             "
             iconSize="xs"

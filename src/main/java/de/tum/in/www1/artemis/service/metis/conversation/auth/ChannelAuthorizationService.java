@@ -101,6 +101,18 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
     }
 
     /**
+     * Checks if a user is allowed to edit or delete messages of other users in a channel
+     *
+     * @param channel the channel that should be edited
+     * @param user    the user that wants to edit or delete messages
+     * @return true if the user is allowed to edit or delete messages in the channel, false otherwise
+     */
+    public boolean isAllowedToEditOrDeleteMessagesOfOtherUsers(@NotNull Channel channel, @NotNull User user) {
+        var userToCheck = getUserIfNecessary(user);
+        return hasChannelModerationRights(channel.getId(), userToCheck);
+    }
+
+    /**
      * Checks if a user is allowed to delete a channel or throws an exception if not
      *
      * @param channel the channel that should be deleted

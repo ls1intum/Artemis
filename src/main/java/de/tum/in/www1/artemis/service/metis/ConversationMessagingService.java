@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -153,6 +156,10 @@ public class ConversationMessagingService extends PostingService {
         Post existingMessage = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
 
+        // ToDo: find a cleaner way to do this instead of making the string here in the server
+        var editedByText = "(edited by " + user.getName() + " on " + ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")) + " [UTC])";
+        messagePost.setContent(messagePost.getContent() + "\n" + editedByText);
+
         // update: allow overwriting of values only for depicted fields
         existingMessage.setContent(messagePost.getContent());
 
@@ -186,16 +193,20 @@ public class ConversationMessagingService extends PostingService {
     }
 
     private Conversation mayUpdateOrDeleteMessageElseThrow(Post existingMessagePost, User user) {
-        // non-message posts should not be manipulated from this endpoint and only the author of a message post should edit or delete the entity
-        if (existingMessagePost.getConversation() == null || !existingMessagePost.getAuthor().getId().equals(user.getId())) {
-            throw new AccessForbiddenException("Post", existingMessagePost.getId());
+        if (existingMessagePost.getConversation() == null) {
+            throw new BadRequestAlertException("The post does not belong to a conversation", METIS_POST_ENTITY_NAME, "conversationnotset");
         }
-        else {
-            var conversation = conversationService.getConversationById(existingMessagePost.getConversation().getId());
+
+        var conversation = conversationService.getConversationById(existingMessagePost.getConversation().getId());
+        if (existingMessagePost.getAuthor().getId().equals(user.getId())
+                || (conversation instanceof Channel channel && channelAuthorizationService.isAllowedToEditOrDeleteMessagesOfOtherUsers(channel, user))) {
             if (conversation instanceof Channel channel && channel.getIsArchived()) {
                 throw new BadRequestAlertException("A message cannot be created in an archived channel", METIS_POST_ENTITY_NAME, "channelarchived");
             }
             return conversation;
+        }
+        else {
+            throw new AccessForbiddenException("You are not allowed to edit or delete this message");
         }
     }
 
