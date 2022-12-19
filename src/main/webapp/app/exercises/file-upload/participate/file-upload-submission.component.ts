@@ -23,12 +23,11 @@ import { Result } from 'app/entities/result.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { getFirstResultWithComplaint, getLatestSubmissionResult } from 'app/entities/submission.model';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { onError } from 'app/shared/util/global.utils';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { checkSubsequentFeedbackInAssessment } from 'app/exercises/shared/feedback/feedback.util';
 
 @Component({
     templateUrl: './file-upload-submission.component.html',

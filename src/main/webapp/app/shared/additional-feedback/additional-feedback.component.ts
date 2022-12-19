@@ -1,12 +1,11 @@
 import { Component, Input } from '@angular/core';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 import { faCommentDots } from '@fortawesome/free-regular-svg-icons';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { TranslateService } from '@ngx-translate/core';
-import { buildFeedbackTextForReview } from 'app/exercises/shared/feedback/feedback.util';
 
 @Component({
     selector: 'jhi-additional-feedback',

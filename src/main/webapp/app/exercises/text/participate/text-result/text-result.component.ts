@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { Result } from 'app/entities/result.model';
 import { TextResultBlock } from './text-result-block';
@@ -8,7 +8,6 @@ import { TextBlock } from 'app/entities/text-block.model';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { Course } from 'app/entities/course.model';
-import { buildFeedbackTextForReview, checkSubsequentFeedbackInAssessment } from 'app/exercises/shared/feedback/feedback.util';
 
 @Component({
     selector: 'jhi-text-result',
