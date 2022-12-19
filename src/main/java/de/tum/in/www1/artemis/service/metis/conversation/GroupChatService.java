@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.GroupChatDTO;
 
 @Service
@@ -39,21 +38,6 @@ public class GroupChatService {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.conversationService = conversationService;
         this.groupChatRepository = groupChatRepository;
-    }
-
-    /**
-     * Gets a group chat by its id from the database
-     *
-     * @param groupChatId the id of the group chat
-     * @return the group chat
-     */
-    public GroupChat getGroupChat(Long groupChatId) {
-        try {
-            return groupChatRepository.findByIdElseThrow(groupChatId);
-        }
-        catch (EntityNotFoundException e) {
-            throw new BadRequestAlertException("GroupChat with id " + groupChatId + " does not exist", GROUP_CHAT_ENTITY_NAME, "idnotfound");
-        }
     }
 
     /**
@@ -94,7 +78,7 @@ public class GroupChatService {
      * @return the updated group chat
      */
     public GroupChat updateGroupChat(Long groupChatId, GroupChatDTO groupChatDTO) {
-        var groupChat = getGroupChat(groupChatId);
+        var groupChat = groupChatRepository.findByIdElseThrow(groupChatId);
         if (groupChatDTO.getName() != null && !groupChatDTO.getName().equals(groupChat.getName())) {
             groupChat.setName(groupChatDTO.getName().trim().isBlank() ? "" : groupChatDTO.getName().trim());
         }

@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.metis.conversation.GroupChat;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationDTOService;
 import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.GroupChatService;
@@ -42,15 +43,18 @@ public class GroupChatResource {
 
     private final GroupChatService groupChatService;
 
+    private final GroupChatRepository groupChatRepository;
+
     private final ConversationDTOService conversationDTOService;
 
     public GroupChatResource(UserRepository userRepository, CourseRepository courseRepository, GroupChatAuthorizationService groupChatAuthorizationService,
-            ConversationService conversationService, GroupChatService groupChatService, ConversationDTOService conversationDTOService) {
+            ConversationService conversationService, GroupChatService groupChatService, GroupChatRepository groupChatRepository, ConversationDTOService conversationDTOService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.groupChatAuthorizationService = groupChatAuthorizationService;
         this.conversationService = conversationService;
         this.groupChatService = groupChatService;
+        this.groupChatRepository = groupChatRepository;
         this.conversationDTOService = conversationDTOService;
     }
 
@@ -98,7 +102,7 @@ public class GroupChatResource {
     public ResponseEntity<GroupChatDTO> updateGroupChat(@PathVariable Long courseId, @PathVariable Long groupChatId, @RequestBody GroupChatDTO groupChatDTO) {
         log.debug("REST request to update groupChat {} with properties : {}", groupChatId, groupChatDTO);
 
-        var originalGroupChat = groupChatService.getGroupChat(groupChatId);
+        var originalGroupChat = groupChatRepository.findByIdElseThrow(groupChatId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         if (!originalGroupChat.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The group chat does not belong to the course", GROUP_CHAT_ENTITY_NAME, "groupChat.course.mismatch");
@@ -124,7 +128,7 @@ public class GroupChatResource {
         }
         log.debug("REST request to register {} users to group chat: {}", userLogins.size(), groupChatId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        var groupChatFromDatabase = this.groupChatService.getGroupChat(groupChatId);
+        var groupChatFromDatabase = groupChatRepository.findByIdElseThrow(groupChatId);
         checkEntityIdMatchesPathIds(groupChatFromDatabase, Optional.of(courseId), Optional.of(groupChatId));
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         groupChatAuthorizationService.isAllowedToAddUsersToGroupChat(groupChatFromDatabase, requestingUser);
@@ -150,7 +154,7 @@ public class GroupChatResource {
         log.debug("REST request to deregister {} users from the group chat : {}", userLogins.size(), groupChatId);
         var course = courseRepository.findByIdElseThrow(courseId);
 
-        var groupChatFromDatabase = this.groupChatService.getGroupChat(groupChatId);
+        var groupChatFromDatabase = groupChatRepository.findByIdElseThrow(groupChatId);
         checkEntityIdMatchesPathIds(groupChatFromDatabase, Optional.of(courseId), Optional.of(groupChatId));
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
 

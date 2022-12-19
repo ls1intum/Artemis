@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
@@ -17,8 +16,6 @@ import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatReposito
 @Service
 public class OneToOneChatService {
 
-    public static final String ONE_TO_ONE_CHAT_ENTITY_NAME = "messages.oneToOneChat";
-
     private final ConversationParticipantRepository conversationParticipantRepository;
 
     private final OneToOneChatRepository oneToOneChatRepository;
@@ -29,18 +26,6 @@ public class OneToOneChatService {
         this.conversationParticipantRepository = conversationParticipantRepository;
         this.oneToOneChatRepository = oneToOneChatRepository;
         this.userRepository = userRepository;
-    }
-
-    /**
-     * Tries to find a OneToOneChat between two users
-     *
-     * @param courseId the course the OneToOneChat is in
-     * @param userAId  the id of the first user
-     * @param userBId  the id of the second user
-     * @return the OneToOneChat if it exists, otherwise empty optional
-     */
-    public Optional<OneToOneChat> findOneToOneChatWithSameMembers(Long courseId, Long userAId, Long userBId) {
-        return oneToOneChatRepository.findBetweenUsersWithParticipantsAndUserGroups(courseId, userAId, userBId);
     }
 
     /**
@@ -55,7 +40,7 @@ public class OneToOneChatService {
      */
     public OneToOneChat startOneToOneChat(Course course, User userA, User userB) {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
-        var existingChatBetweenUsers = findOneToOneChatWithSameMembers(course.getId(), userA.getId(), userB.getId());
+        var existingChatBetweenUsers = oneToOneChatRepository.findBetweenUsersWithParticipantsAndUserGroups(course.getId(), userA.getId(), userB.getId());
         if (existingChatBetweenUsers.isPresent()) {
             return existingChatBetweenUsers.get();
         }

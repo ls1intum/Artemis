@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.metis.conversation.ChannelService;
@@ -34,6 +35,8 @@ public class ChannelResource {
 
     private final ChannelService channelService;
 
+    private final ChannelRepository channelRepository;
+
     private final ChannelAuthorizationService channelAuthorizationService;
 
     private final AuthorizationCheckService authorizationCheckService;
@@ -46,9 +49,11 @@ public class ChannelResource {
 
     private final ConversationService conversationService;
 
-    public ChannelResource(ChannelService channelService, ChannelAuthorizationService channelAuthorizationService, AuthorizationCheckService authorizationCheckService,
-            ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository, ConversationService conversationService) {
+    public ChannelResource(ChannelService channelService, ChannelRepository channelRepository, ChannelAuthorizationService channelAuthorizationService,
+            AuthorizationCheckService authorizationCheckService, ConversationDTOService conversationDTOService, CourseRepository courseRepository, UserRepository userRepository,
+            ConversationService conversationService) {
         this.channelService = channelService;
+        this.channelRepository = channelRepository;
         this.channelAuthorizationService = channelAuthorizationService;
         this.authorizationCheckService = authorizationCheckService;
         this.conversationDTOService = conversationDTOService;
@@ -70,7 +75,7 @@ public class ChannelResource {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(courseRepository.findByIdElseThrow(courseId), requestingUser);
-        var result = channelService.getChannels(courseId).stream().map(channel -> conversationDTOService.convertChannelToDto(requestingUser, channel));
+        var result = channelRepository.findChannelsByCourseId(courseId).stream().map(channel -> conversationDTOService.convertChannelToDto(requestingUser, channel));
         var filteredStream = result;
         // only instructors / system admins can see all channels
         if (!isAtLeastInstructor) {
@@ -120,7 +125,7 @@ public class ChannelResource {
     public ResponseEntity<ChannelDTO> updateChannel(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody ChannelDTO channelDTO) {
         log.debug("REST request to update channel {} with properties : {}", channelId, channelDTO);
 
-        var originalChannel = channelService.getChannel(channelId);
+        var originalChannel = channelRepository.findByIdElseThrow(channelId);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         if (!originalChannel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
@@ -141,13 +146,13 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> deleteChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to delete channel {}", channelId);
-        var channel = channelService.getChannel(channelId);
+        var channel = channelRepository.findByIdElseThrow(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToDeleteChannel(channel, requestingUser);
-        channelService.deleteChannel(channel);
+        conversationService.deleteConversation(channel);
         return ResponseEntity.ok().build();
     }
 
@@ -162,7 +167,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> archiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to archive channel : {}", channelId);
-        var channelFromDatabase = this.channelService.getChannel(channelId);
+        var channelFromDatabase = channelRepository.findByIdElseThrow(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
         channelAuthorizationService.isAllowedToArchiveChannel(channelFromDatabase, userRepository.getUserWithGroupsAndAuthorities());
         channelService.archiveChannel(channelId);
@@ -180,7 +185,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> unArchiveChannel(@PathVariable Long courseId, @PathVariable Long channelId) {
         log.debug("REST request to unarchive channel : {}", channelId);
-        var channelFromDatabase = this.channelService.getChannel(channelId);
+        var channelFromDatabase = channelRepository.findByIdElseThrow(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
         channelAuthorizationService.isAllowedToUnArchiveChannel(channelFromDatabase, userRepository.getUserWithGroupsAndAuthorities());
         channelService.unarchiveChannel(channelId);
@@ -199,7 +204,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> grantChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to grant channel moderator role to users {} in channel {}", userLogins.toString(), channelId);
-        var channel = channelService.getChannel(channelId);
+        var channel = channelRepository.findByIdElseThrow(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
@@ -221,7 +226,7 @@ public class ChannelResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Void> revokeChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
         log.debug("REST request to revoke channel moderator role from users {} in channel {}", userLogins.toString(), channelId);
-        var channel = channelService.getChannel(channelId);
+        var channel = channelRepository.findByIdElseThrow(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
@@ -265,7 +270,7 @@ public class ChannelResource {
             log.debug("REST request to register {} to channel : {}", registerAllString, channelId);
         }
         var course = courseRepository.findByIdElseThrow(courseId);
-        var channelFromDatabase = this.channelService.getChannel(channelId);
+        var channelFromDatabase = channelRepository.findByIdElseThrow(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         channelAuthorizationService.isAllowedToRegisterUsersToChannel(channelFromDatabase, usersLoginsToRegister, requestingUser);
@@ -294,7 +299,7 @@ public class ChannelResource {
         log.debug("REST request to deregister {} users from the channel : {}", userLogins.size(), channelId);
         var course = courseRepository.findByIdElseThrow(courseId);
 
-        var channelFromDatabase = this.channelService.getChannel(channelId);
+        var channelFromDatabase = channelRepository.findByIdElseThrow(channelId);
         checkEntityIdMatchesPathIds(channelFromDatabase, Optional.of(courseId), Optional.of(channelId));
 
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
