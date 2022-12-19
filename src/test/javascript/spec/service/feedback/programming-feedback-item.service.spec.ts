@@ -2,7 +2,7 @@ import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/it
 import { Feedback, FeedbackType, STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER, SUBMISSION_POLICY_FEEDBACK_IDENTIFIER } from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
-import { StaticCodeAnalysisIssue } from 'app/entities/static-code-analysis-issue.model';
+import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
 
 describe('ProgrammingFeedbackItemService', () => {
     let service: ProgrammingFeedbackItemService;
@@ -13,17 +13,18 @@ describe('ProgrammingFeedbackItemService', () => {
     });
 
     it('should create submission policy feedback item', () => {
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.AUTOMATIC;
-        feedback.text = SUBMISSION_POLICY_FEEDBACK_IDENTIFIER;
+        const feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: SUBMISSION_POLICY_FEEDBACK_IDENTIFIER,
+        };
 
-        const expected = new FeedbackItem();
-        expected.color = 'primary';
-        expected.type = 'Submission Policy';
-        expected.name = 'artemisApp.programmingExercise.submissionPolicy.title';
-        expected.credits = 0;
-        expected.positive = false;
-        expected.title = '';
+        const expected = {
+            color: 'primary',
+            type: 'Submission Policy',
+            name: 'artemisApp.programmingExercise.submissionPolicy.title',
+            positive: false,
+            title: '',
+        };
 
         expect(service.create([feedback], false)).toEqual([expected]);
     });
@@ -31,13 +32,14 @@ describe('ProgrammingFeedbackItemService', () => {
     it('should create SCA feedback item', () => {
         const feedback = createSCAFeedback();
 
-        const expected = new FeedbackItem();
-        expected.credits = -10;
-        expected.name = 'artemisApp.result.detail.codeIssue.name';
-        expected.positive = false;
-        expected.text = 'message';
-        expected.title = 'artemisApp.result.detail.codeIssue.title';
-        expected.type = 'Static Code Analysis';
+        const expected = {
+            credits: -10,
+            name: 'artemisApp.result.detail.codeIssue.name',
+            positive: false,
+            text: 'message',
+            title: 'artemisApp.result.detail.codeIssue.title',
+            type: 'Static Code Analysis',
+        };
 
         expect(service.create([feedback], false)).toEqual([expected]);
     });
@@ -45,82 +47,127 @@ describe('ProgrammingFeedbackItemService', () => {
     it('should create SCA feedback item with details', () => {
         const feedback = createSCAFeedback();
 
-        const expected = new FeedbackItem();
-        expected.credits = -10;
-        expected.name = 'artemisApp.result.detail.codeIssue.name';
-        expected.text = 'rule: message';
-        expected.positive = false;
-        expected.title = 'artemisApp.result.detail.codeIssue.title';
-        expected.type = 'Static Code Analysis';
+        const expected = {
+            credits: -10,
+            name: 'artemisApp.result.detail.codeIssue.name',
+            text: 'rule: message',
+            positive: false,
+            title: 'artemisApp.result.detail.codeIssue.title',
+            type: 'Static Code Analysis',
+        };
 
         expect(service.create([feedback], true)).toEqual([expected]);
     });
 
     it('should create automatic feedback item', () => {
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.AUTOMATIC;
+        const feedback = {
+            type: FeedbackType.AUTOMATIC,
+        };
 
-        const expected = new FeedbackItem();
-        expected.credits = 0;
-        expected.name = 'artemisApp.result.detail.test.name';
-        expected.type = 'Test';
+        const expected = {
+            name: 'artemisApp.result.detail.test.name',
+            type: 'Test',
+        };
 
         expect(service.create([feedback], false)).toEqual([expected]);
     });
 
-    it('should show a replacement title if automatic feedback is neither positive nor negative', () => {
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.AUTOMATIC;
-        feedback.text = 'automaticTestCase1';
-        feedback.positive = undefined;
-        feedback.credits = 0.3;
+    it('should create grading instruction feedback item', () => {
+        const gradingInstruction = {
+            feedback: 'gradingInstruction.feedback',
+            detailText: 'gradingInstruction.detailText',
+        } as Partial<GradingInstruction>;
 
-        const expected = new FeedbackItem();
-        expected.name = 'artemisApp.result.detail.test.name';
-        expected.credits = 0.3;
-        expected.title = 'artemisApp.result.detail.test.noInfo';
-        expected.type = 'Test';
-        expected.text = undefined;
+        const feedback = {
+            type: FeedbackType.MANUAL,
+            gradingInstruction,
+        } as Feedback;
+
+        const expected = {
+            type: 'Feedback',
+            name: 'artemisApp.course.tutor',
+            text: 'gradingInstruction.feedback',
+        } as FeedbackItem;
+
+        expect(service.create([feedback], true)).toEqual([expected]);
+    });
+
+    it('should set automatic feedback item title according to positive', () => {
+        const feedback = {
+            type: FeedbackType.AUTOMATIC,
+            positive: undefined,
+        } as Feedback;
+
+        const expected = {
+            title: 'artemisApp.result.detail.test.noInfo',
+            name: 'artemisApp.result.detail.test.name',
+            type: 'Test',
+        } as FeedbackItem;
+
+        expect(service.create([feedback], true)).toEqual([expected]);
+
+        {
+            feedback.positive = true;
+
+            expected.positive = true;
+            expected.title = 'artemisApp.result.detail.test.passed';
+
+            expect(service.create([feedback], true)).toEqual([expected]);
+        }
+
+        {
+            feedback.positive = false;
+
+            expected.positive = false;
+            expected.title = 'artemisApp.result.detail.test.failed';
+            expect(service.create([feedback], true)).toEqual([expected]);
+        }
+    });
+
+    it('should show a replacement title if automatic feedback is neither positive nor negative', () => {
+        const feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: 'automaticTestCase1',
+            positive: undefined,
+            credits: 0.3,
+        };
+
+        const expected = {
+            name: 'artemisApp.result.detail.test.name',
+            credits: 0.3,
+            title: 'artemisApp.result.detail.test.noInfo',
+            type: 'Test',
+            text: undefined,
+        };
 
         expect(service.create([feedback], true)).toEqual([expected]);
     });
 
     it('should create automatic feedback item with details', () => {
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.AUTOMATIC;
+        const feedback = {
+            type: FeedbackType.AUTOMATIC,
+        };
 
-        const expected = new FeedbackItem();
-        expected.credits = 0;
-        expected.type = 'Test';
-        expected.name = 'artemisApp.result.detail.test.name';
-        expected.title = 'artemisApp.result.detail.test.noInfo';
+        const expected = {
+            type: 'Test',
+            name: 'artemisApp.result.detail.test.name',
+            title: 'artemisApp.result.detail.test.noInfo',
+        };
 
         expect(service.create([feedback], true)).toEqual([expected]);
     });
 
-    it('should create grading instruction feedback item', () => {
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.MANUAL;
+    const createSCAFeedback = (): Feedback => {
+        const scaIssue = {
+            rule: 'rule',
+            message: 'message',
+            penalty: 10,
+        };
 
-        const expected = new FeedbackItem();
-        expected.credits = 0;
-        expected.name = 'artemisApp.result.detail.feedback';
-        expected.type = 'Reviewer';
-
-        expect(service.create([feedback], false)).toEqual([expected]);
-    });
-
-    const createSCAFeedback = () => {
-        const scaIssue = new StaticCodeAnalysisIssue();
-        scaIssue.rule = 'rule';
-        scaIssue.message = 'message';
-        scaIssue.penalty = 10;
-
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.AUTOMATIC;
-        feedback.text = STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER;
-        feedback.detailText = JSON.stringify(scaIssue);
-
-        return feedback;
+        return {
+            type: FeedbackType.AUTOMATIC,
+            text: STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER,
+            detailText: JSON.stringify(scaIssue),
+        };
     };
 });
