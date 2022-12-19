@@ -763,7 +763,6 @@ public class CourseResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<UserPublicInfoDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName,
             @RequestParam("roles") List<String> roles) {
-        // ToDo: Discuss what information should be hidden as this is a public endpoint
         log.debug("REST request to search users in course : {} with login or name : {}", courseId, loginOrName);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
