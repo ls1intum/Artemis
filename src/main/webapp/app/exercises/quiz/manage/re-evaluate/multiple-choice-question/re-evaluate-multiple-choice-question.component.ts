@@ -29,7 +29,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
     // Create Backup Question for resets
     @Input() backupQuestion: MultipleChoiceQuestion;
 
-    /** Status boolean for collapse status **/
     isQuestionCollapsed: boolean;
 
     // Icons
