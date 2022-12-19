@@ -60,7 +60,7 @@
                             [course]="course"
                         >
                             <ng-template>
-                                <div ngbDropdown class="d-inline-block">
+                                <div ngbDropdown container="body" class="d-inline-block">
                                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" ngbDropdownToggle>
                                         <fa-icon [icon]="faPlus" size="xs"></fa-icon>
                                     </button>
@@ -124,11 +124,6 @@
                             </ng-template>
                         </jhi-conversation-sidebar-section>
                     </div>
-                </div>
-                <!-- no conversations -->
-                <div class="conversation-empty" *ngIf="allConversations === undefined || allConversations.length === 0">
-                    <fa-icon size="3x" [icon]="faConversation"></fa-icon>
-                    <h5 class="mb-3 font-weight-bold">{{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.notFound' | artemisTranslate }}</h5>
                 </div>
             </div>
         </div>
