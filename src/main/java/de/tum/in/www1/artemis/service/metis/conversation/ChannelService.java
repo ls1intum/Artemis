@@ -121,7 +121,7 @@ public class ChannelService {
         var conversationParticipantOfRequestingUser = new ConversationParticipant();
         conversationParticipantOfRequestingUser.setUser(user);
         conversationParticipantOfRequestingUser.setConversation(savedChannel);
-        // creator is of moderator. Special case, because creator is the only moderator that can not be revoked the role
+        // Creator is a moderator. Special case, because creator is the only moderator that can not be revoked the role
         conversationParticipantOfRequestingUser.setIsModerator(true);
         conversationParticipantOfRequestingUser = conversationParticipantRepository.save(conversationParticipantOfRequestingUser);
         savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
