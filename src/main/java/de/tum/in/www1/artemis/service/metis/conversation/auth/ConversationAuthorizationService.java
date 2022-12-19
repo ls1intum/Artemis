@@ -27,6 +27,13 @@ public class ConversationAuthorizationService {
         this.authorizationCheckService = authorizationCheckService;
     }
 
+    /**
+     * Returns a {@link User} object with authorities and groups loaded.
+     *
+     * @param user the {@link User} object to check for loaded authorities and groups
+     * @return the {@link User} object, potentially after loading the authorities and groups
+     * @throws IllegalArgumentException if the user parameter is null
+     */
     protected User getUserIfNecessary(User user) {
         if (Objects.isNull(user)) {
             throw new IllegalArgumentException("User must not be null");
