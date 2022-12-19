@@ -1,6 +1,6 @@
 <mat-form-field class="category-chip-list" appearance="outline">
     <mat-chip-grid #chipList aria-label="Category selection">
-        <mat-chip *ngFor="let category of categories" (removed)="onItemRemove(category)" class="category-chip">
+        <mat-chip-row *ngFor="let category of categories" (removed)="onItemRemove(category)" class="category-chip">
             <div class="custom-tag" [ngStyle]="{ backgroundColor: category.color }">
                 <span class="category-name" (click)="openColorSelector($event, category)">
                     {{ category.category }}
@@ -9,10 +9,10 @@
                     <fa-icon [icon]="faTimes" class="category-chip-remove"></fa-icon>
                 </button>
             </div>
-        </mat-chip>
+        </mat-chip-row>
         <input
             id="field_categories"
-            *ngIf="categories && categories.length < 2"
+            [hidden]="categories && categories.length >= 2"
             class="category-chip-input"
             #categoryInput
             [placeholder]="'artemisApp.exercise.tagPlaceholder' | artemisTranslate"

@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { Subject, of } from 'rxjs';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ExerciseMode, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
@@ -29,6 +29,8 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import dayjs from 'dayjs/esm';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -59,11 +61,12 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
             declarations: [
                 ExerciseDetailsStudentActionsComponent,
                 MockComponent(ExerciseActionButtonComponent),
                 MockComponent(CloneRepoButtonComponent),
+                MockComponent(StartPracticeModeButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 ExtensionPointDirective,
                 MockRouterLinkDirective,
