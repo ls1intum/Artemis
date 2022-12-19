@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from './quiz-exercise.service';
