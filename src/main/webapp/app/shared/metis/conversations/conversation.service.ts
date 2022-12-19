@@ -28,7 +28,7 @@ export enum ConversationMemberSearchFilter {
     EDITOR,
     TUTOR,
     STUDENT,
-    CHANNEL_ADMIN, // this is a special role that is only used for channels
+    CHANNEL_MODERATOR, // this is a special role that is only used for channels
 }
 @Injectable({ providedIn: 'root' })
 export class ConversationService {

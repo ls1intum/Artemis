@@ -33,8 +33,8 @@ public class ConversationParticipant extends DomainObject {
     /**
      * Currently only used for {@link de.tum.in.www1.artemis.domain.metis.conversation.Channel}
      */
-    @Column(name = "is_admin")
-    private Boolean isAdmin;
+    @Column(name = "is_moderator")
+    private Boolean isModerator;
 
     @Column(name = "is_favorite")
     private Boolean isFavorite;
@@ -73,20 +73,12 @@ public class ConversationParticipant extends DomainObject {
         setLastRead(null);
     }
 
-    public Boolean getIsAdmin() {
-        return isAdmin;
+    public Boolean getIsModerator() {
+        return isModerator;
     }
 
-    public void setIsAdmin(Boolean isAdmin) {
-        this.isAdmin = isAdmin;
-    }
-
-    public Boolean getAdmin() {
-        return isAdmin;
-    }
-
-    public void setAdmin(Boolean admin) {
-        isAdmin = admin;
+    public void setIsModerator(Boolean isModerator) {
+        this.isModerator = isModerator;
     }
 
     public Boolean getIsFavorite() {

@@ -6,7 +6,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Observable, Subject, from, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { canGrantChannelAdminRights, canRemoveUsersFromConversation, canRevokeChannelAdminRights } from 'app/shared/metis/conversations/conversation-permissions.utils';
+import { canGrantChannelModeratorRole, canRemoveUsersFromConversation, canRevokeChannelModeratorRole } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { defaultSecondLayerDialogOptions, getUserLabel } from 'app/overview/course-conversations/other/conversation.util';
 import { ConversationUserDTO } from 'app/entities/metis/conversation/conversation-user-dto.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
@@ -49,9 +49,9 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     canBeRemovedFromConversation = false;
 
-    canBeGrantedChannelAdminRights = false;
+    canBeGrantedChannelModeratorRole = false;
 
-    canBeRevokedChannelAdminRights = false;
+    canBeRevokedChannelModeratorRole = false;
 
     userLabel: string;
     // icons
@@ -63,8 +63,8 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
 
     isChannel = isChannelDto;
 
-    canGrantChannelAdminRights = canGrantChannelAdminRights;
-    canRevokeChannelAdminRights = canRevokeChannelAdminRights;
+    canGrantChannelModeratorRole = canGrantChannelModeratorRole;
+    canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
     canRemoveUsersFromConversation = canRemoveUsersFromConversation;
     constructor(
         private accountService: AccountService,
@@ -93,9 +93,10 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
                 if (isChannelDto(this.activeConversation)) {
                     // the creator of a channel can not be removed from the channel
                     this.canBeRemovedFromConversation = this.canBeRemovedFromConversation && !this.isCreator;
-                    this.canBeGrantedChannelAdminRights = this.canGrantChannelAdminRights(this.activeConversation) && !this.conversationMember.isChannelAdmin;
-                    // the creator of a channel cannot be revoked channel admin rights
-                    this.canBeRevokedChannelAdminRights = this.canRevokeChannelAdminRights(this.activeConversation) && !this.isCreator && !!this.conversationMember.isChannelAdmin;
+                    this.canBeGrantedChannelModeratorRole = this.canGrantChannelModeratorRole(this.activeConversation) && !this.conversationMember.isChannelModerator;
+                    // the creator of a channel cannot be revoked the channel moderator role
+                    this.canBeRevokedChannelModeratorRole =
+                        this.canRevokeChannelModeratorRole(this.activeConversation) && !this.isCreator && !!this.conversationMember.isChannelModerator;
                 }
             });
         }
@@ -106,43 +107,43 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
         this.ngUnsubscribe.complete();
     }
 
-    openGrantChannelAdminRightsDialog(event: MouseEvent) {
+    openGrantChannelModeratorRoleDialog(event: MouseEvent) {
         event.stopPropagation();
         const channel = getAsChannelDto(this.activeConversation);
         if (!channel) {
             return;
         }
         const translationKeys = {
-            titleKey: 'artemisApp.dialogs.grantChannelAdmin.title',
-            questionKey: 'artemisApp.dialogs.grantChannelAdmin.question',
-            descriptionKey: 'artemisApp.dialogs.grantChannelAdmin.description',
-            confirmButtonKey: 'artemisApp.dialogs.grantChannelAdmin.confirmButton',
+            titleKey: 'artemisApp.dialogs.grantChannelModerator.title',
+            questionKey: 'artemisApp.dialogs.grantChannelModerator.question',
+            descriptionKey: 'artemisApp.dialogs.grantChannelModerator.description',
+            confirmButtonKey: 'artemisApp.dialogs.grantChannelModerator.confirmButton',
         };
         const translationParams = {
             channelName: channel.name!,
             userName: this.userLabel,
         };
-        const confirmedCallback = () => this.channelService.grantChannelAdminRights(this.course?.id!, channel.id!, [this.conversationMember.login!]);
+        const confirmedCallback = () => this.channelService.grantChannelModeratorRole(this.course?.id!, channel.id!, [this.conversationMember.login!]);
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
-    openRevokeChannelAdminRightsDialog(event: MouseEvent) {
+    openRevokeChannelModeratorRoleDialog(event: MouseEvent) {
         event.stopPropagation();
         const channel = getAsChannelDto(this.activeConversation);
         if (!channel) {
             return;
         }
         const translationKeys = {
-            titleKey: 'artemisApp.dialogs.revokeChannelAdmin.title',
-            questionKey: 'artemisApp.dialogs.revokeChannelAdmin.question',
-            descriptionKey: 'artemisApp.dialogs.revokeChannelAdmin.description',
-            confirmButtonKey: 'artemisApp.dialogs.revokeChannelAdmin.confirmButton',
+            titleKey: 'artemisApp.dialogs.revokeChannelModerator.title',
+            questionKey: 'artemisApp.dialogs.revokeChannelModerator.question',
+            descriptionKey: 'artemisApp.dialogs.revokeChannelModerator.description',
+            confirmButtonKey: 'artemisApp.dialogs.revokeChannelModerator.confirmButton',
         };
         const translationParams = {
             channelName: channel.name!,
             userName: this.userLabel,
         };
-        const confirmedCallback = () => this.channelService.revokeChannelAdminRights(this.course?.id!, channel.id!, [this.conversationMember.login!]);
+        const confirmedCallback = () => this.channelService.revokeChannelModeratorRole(this.course?.id!, channel.id!, [this.conversationMember.login!]);
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 

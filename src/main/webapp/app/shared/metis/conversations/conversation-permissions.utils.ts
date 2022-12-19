@@ -9,7 +9,7 @@ export function canAddUsersToConversation(conversation: ConversationDto): boolea
         return false;
     }
     const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
-    const channelCheck = (channel: ChannelDTO): boolean => hasChannelAdminRightsCheck(channel);
+    const channelCheck = (channel: ChannelDTO): boolean => hasChannelModerationRights(channel);
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);
@@ -31,7 +31,7 @@ export function canCreateNewMessageInConversation(conversation: ConversationDto)
         return !!oneToOneChat.isMember;
     };
     const channelCheck = (channel: ChannelDTO): boolean =>
-        !!channel.isMember && !channel.isArchived && (!channel.isAnnouncementChannel || (channel.isAnnouncementChannel && !!channel.hasChannelAdminRights));
+        !!channel.isMember && !channel.isArchived && (!channel.isAnnouncementChannel || (channel.isAnnouncementChannel && !!channel.hasChannelModerationRights));
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);
@@ -44,12 +44,12 @@ export function canCreateNewMessageInConversation(conversation: ConversationDto)
     }
 }
 
-export function canGrantChannelAdminRights(channel: ChannelDTO): boolean {
-    return hasChannelAdminRightsCheck(channel);
+export function canGrantChannelModeratorRole(channel: ChannelDTO): boolean {
+    return hasChannelModerationRights(channel);
 }
 
-export function canRevokeChannelAdminRights(channel: ChannelDTO): boolean {
-    return hasChannelAdminRightsCheck(channel);
+export function canRevokeChannelModeratorRole(channel: ChannelDTO): boolean {
+    return hasChannelModerationRights(channel);
 }
 
 export function canRemoveUsersFromConversation(conversation: ConversationDto): boolean {
@@ -57,7 +57,7 @@ export function canRemoveUsersFromConversation(conversation: ConversationDto): b
         return false;
     }
     const groupChatCheck = (groupChat: GroupChatDto): boolean => !!groupChat.isMember;
-    const channelCheck = (channel: ChannelDTO): boolean => !!channel.hasChannelAdminRights;
+    const channelCheck = (channel: ChannelDTO): boolean => !!channel.hasChannelModerationRights;
 
     if (isChannelDto(conversation)) {
         return channelCheck(conversation);
@@ -96,23 +96,23 @@ export function canJoinChannel(channel: ChannelDTO): boolean {
     if (channel.isMember) {
         return false;
     }
-    // private channels only be self-joined by instructors which are the only non members who have channel admin rights
-    if (hasChannelAdminRightsCheck(channel)) {
+    // private channels only be self-joined by instructors which are the only non members who have channel moderation rights
+    if (hasChannelModerationRights(channel)) {
         return true;
     }
     return !!channel.isPublic;
 }
 
 export function canChangeChannelArchivalState(channel: ChannelDTO): boolean {
-    return hasChannelAdminRightsCheck(channel);
+    return hasChannelModerationRights(channel);
 }
 
 export function canDeleteChannel(course: Course, channelDTO: ChannelDTO): boolean {
     const isCreator = channelDTO.isCreator;
     const isInstructor = course.isAtLeastInstructor;
-    const isChannelAdmin = channelDTO.isAdmin;
+    const isChannelModerator = channelDTO.isChannelModerator;
 
-    return !!isInstructor || !!(isChannelAdmin && isCreator);
+    return !!isInstructor || !!(isChannelModerator && isCreator);
 }
 
 export function canCreateChannel(course: Course): boolean {
@@ -123,7 +123,7 @@ export function canChangeChannelProperties(channel: ChannelDTO): boolean {
     if (!channel) {
         return false;
     }
-    return !!channel.hasChannelAdminRights;
+    return !!channel.hasChannelModerationRights;
 }
 
 export function canChangeGroupChatProperties(groupChat: GroupChatDto): boolean {
@@ -133,9 +133,9 @@ export function canChangeGroupChatProperties(groupChat: GroupChatDto): boolean {
     return !!groupChat.isMember;
 }
 
-const hasChannelAdminRightsCheck = (channel: ChannelDTO) => {
+const hasChannelModerationRights = (channel: ChannelDTO) => {
     if (!channel) {
         return false;
     }
-    return !!channel.hasChannelAdminRights;
+    return !!channel.hasChannelModerationRights;
 };

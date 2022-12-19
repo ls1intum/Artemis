@@ -7,11 +7,11 @@ import {
     canCreateChannel,
     canCreateNewMessageInConversation,
     canDeleteChannel,
-    canGrantChannelAdminRights,
+    canGrantChannelModeratorRole,
     canJoinChannel,
     canLeaveConversation,
     canRemoveUsersFromConversation,
-    canRevokeChannelAdminRights,
+    canRevokeChannelModeratorRole,
 } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { Course } from 'app/entities/course.model';
 import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
@@ -33,17 +33,19 @@ describe('ConversationPermissionUtils', () => {
                 expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isArchived: true }))).toBeFalse();
             });
 
-            it('can not create new message in a an announcement channel where user is not admin', () => {
+            it('can not create new message in a an announcement channel where user is not moderator', () => {
                 expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: false, isAnnouncementChannel: true }))).toBeFalse();
             });
 
-            it('can create new message in a an announcement channel where user is admin', () => {
-                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: true, isAnnouncementChannel: true, isAdmin: true }))).toBeTrue();
+            it('can create new message in a an announcement channel where user is moderator', () => {
+                expect(canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: true, isAnnouncementChannel: true, isChannelModerator: true }))).toBeTrue();
             });
 
-            it('can create a new message in an announcement channel where user is not admin but has admin rights', () => {
+            it('can create a new message in an announcement channel where user is not moderator but has moderation rights', () => {
                 expect(
-                    canCreateNewMessageInConversation(generateExampleChannelDTO({ isMember: true, isAnnouncementChannel: true, isAdmin: false, hasChannelAdminRights: true })),
+                    canCreateNewMessageInConversation(
+                        generateExampleChannelDTO({ isMember: true, isAnnouncementChannel: true, isChannelModerator: false, hasChannelModerationRights: true }),
+                    ),
                 ).toBeTrue();
             });
         });
@@ -64,18 +66,20 @@ describe('ConversationPermissionUtils', () => {
         });
 
         describe('addUsersToConversation', () => {
-            const channelWhereUsersCanBeAdded = generateExampleChannelDTO({ hasChannelAdminRights: true, isArchived: false });
+            const channelWhereUsersCanBeAdded = generateExampleChannelDTO({ hasChannelModerationRights: true, isArchived: false });
 
             it('can add users to channel', () => {
                 expect(canAddUsersToConversation(channelWhereUsersCanBeAdded)).toBeTrue();
             });
 
-            it('should return false if the user is not a channel admin and channel is public', () => {
-                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, hasChannelAdminRights: false, isAdmin: false } as ChannelDTO)).toBeFalse();
+            it('should return false if the user is not a channel moderator and channel is public', () => {
+                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, hasChannelModerationRights: false, isChannelModerator: false } as ChannelDTO)).toBeFalse();
             });
 
-            it('should return false if the user is not a channel admin and channel is private', () => {
-                expect(canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, hasChannelAdminRights: false, isPublic: false, isAdmin: false } as ChannelDTO)).toBeFalse();
+            it('should return false if the user is not a channel moderator and channel is private', () => {
+                expect(
+                    canAddUsersToConversation({ ...channelWhereUsersCanBeAdded, hasChannelModerationRights: false, isPublic: false, isChannelModerator: false } as ChannelDTO),
+                ).toBeFalse();
             });
 
             it('should return true if the channel is archived', () => {
@@ -84,14 +88,14 @@ describe('ConversationPermissionUtils', () => {
         });
 
         describe('removeUsersFromConversation', () => {
-            const channelsWhereUsersCanBeRemoved = generateExampleChannelDTO({ hasChannelAdminRights: true, isArchived: false, isPublic: false });
+            const channelsWhereUsersCanBeRemoved = generateExampleChannelDTO({ hasChannelModerationRights: true, isArchived: false, isPublic: false });
 
             it('can remove users to channel', () => {
                 expect(canRemoveUsersFromConversation(channelsWhereUsersCanBeRemoved)).toBeTrue();
             });
 
-            it('should return false if the user is not a channel admin', () => {
-                expect(canRemoveUsersFromConversation({ ...channelsWhereUsersCanBeRemoved, hasChannelAdminRights: false } as ChannelDTO)).toBeFalse();
+            it('should return false if the user is not a channel moderator', () => {
+                expect(canRemoveUsersFromConversation({ ...channelsWhereUsersCanBeRemoved, hasChannelModerationRights: false } as ChannelDTO)).toBeFalse();
             });
 
             it('should return true if the channel is archived', () => {
@@ -116,67 +120,67 @@ describe('ConversationPermissionUtils', () => {
         });
         describe('canDeleteChannel', () => {
             const courseWithCorrectRights = { isAtLeastInstructor: true } as Course;
-            const channelWhereNoAdmin = generateExampleChannelDTO({ hasChannelAdminRights: false, isAdmin: false, isCreator: false });
+            const channelWhereNoModerator = generateExampleChannelDTO({ hasChannelModerationRights: false, isChannelModerator: false, isCreator: false });
 
             it('can delete any channel as instructor', () => {
-                expect(canDeleteChannel(courseWithCorrectRights, channelWhereNoAdmin)).toBeTrue();
+                expect(canDeleteChannel(courseWithCorrectRights, channelWhereNoModerator)).toBeTrue();
             });
 
             it('can not delete any channel as tutor', () => {
-                expect(canDeleteChannel({ isAtLeastInstructor: false, isAtLeastTutor: true } as Course, channelWhereNoAdmin)).toBeFalse();
+                expect(canDeleteChannel({ isAtLeastInstructor: false, isAtLeastTutor: true } as Course, channelWhereNoModerator)).toBeFalse();
             });
 
-            const channelWhereAdmin = generateExampleChannelDTO({ hasChannelAdminRights: true, isAdmin: true, isCreator: true });
+            const channelWhereModerator = generateExampleChannelDTO({ hasChannelModerationRights: true, isChannelModerator: true, isCreator: true });
             it('can delete self created channel as tutor', () => {
-                expect(canDeleteChannel({ isAtLeastInstructor: false, isAtLeastTutor: true } as Course, channelWhereAdmin)).toBeTrue();
+                expect(canDeleteChannel({ isAtLeastInstructor: false, isAtLeastTutor: true } as Course, channelWhereModerator)).toBeTrue();
             });
         });
 
-        describe('can grant channel admin rights', () => {
-            const channelWhereRightsCanBeGranted = generateExampleChannelDTO({ hasChannelAdminRights: true });
+        describe('can grant channel moderator role', () => {
+            const channelWhereRoleCanBeGranted = generateExampleChannelDTO({ hasChannelModerationRights: true });
 
-            it('can grant admin rights', () => {
-                expect(canGrantChannelAdminRights(channelWhereRightsCanBeGranted)).toBeTrue();
+            it('can grant moderator role', () => {
+                expect(canGrantChannelModeratorRole(channelWhereRoleCanBeGranted)).toBeTrue();
             });
 
-            it('cannot grant admin rights without admin rights', () => {
-                expect(canGrantChannelAdminRights({ ...channelWhereRightsCanBeGranted, hasChannelAdminRights: false })).toBeFalse();
+            it('cannot grant moderator role without moderation rights', () => {
+                expect(canGrantChannelModeratorRole({ ...channelWhereRoleCanBeGranted, hasChannelModerationRights: false })).toBeFalse();
             });
         });
 
-        describe('can revoke channel admin rights', () => {
-            const channelWhereRightsCanBeRevoked = generateExampleChannelDTO({ hasChannelAdminRights: true });
+        describe('can revoke channel moderator role', () => {
+            const channelWhereRoleCanBeRevoked = generateExampleChannelDTO({ hasChannelModerationRights: true });
 
-            it('can revoke admin rights', () => {
-                expect(canRevokeChannelAdminRights(channelWhereRightsCanBeRevoked)).toBeTrue();
+            it('can revoke moderator role', () => {
+                expect(canRevokeChannelModeratorRole(channelWhereRoleCanBeRevoked)).toBeTrue();
             });
 
-            it('cannot revoke admin rights without admin rights', () => {
-                expect(canRevokeChannelAdminRights({ ...channelWhereRightsCanBeRevoked, hasChannelAdminRights: false })).toBeFalse();
+            it('cannot revoke moderator role without moderation rights', () => {
+                expect(canRevokeChannelModeratorRole({ ...channelWhereRoleCanBeRevoked, hasChannelModerationRights: false })).toBeFalse();
             });
         });
 
         describe('can change channel archival state', () => {
-            const channelThatCanBeArchived = generateExampleChannelDTO({ hasChannelAdminRights: true });
+            const channelThatCanBeArchived = generateExampleChannelDTO({ hasChannelModerationRights: true });
 
             it('can archive channel', () => {
                 expect(canChangeChannelArchivalState(channelThatCanBeArchived)).toBeTrue();
             });
 
-            it('cannot archive channel without admin rights', () => {
-                expect(canChangeChannelArchivalState({ ...channelThatCanBeArchived, hasChannelAdminRights: false })).toBeFalse();
+            it('cannot archive channel without moderation rights', () => {
+                expect(canChangeChannelArchivalState({ ...channelThatCanBeArchived, hasChannelModerationRights: false })).toBeFalse();
             });
         });
 
         describe('can change channel properties', () => {
-            const channelThatCanBeChanged = generateExampleChannelDTO({ hasChannelAdminRights: true, isArchived: false });
+            const channelThatCanBeChanged = generateExampleChannelDTO({ hasChannelModerationRights: true, isArchived: false });
 
             it('can change channel properties', () => {
                 expect(canChangeChannelProperties(channelThatCanBeChanged)).toBeTrue();
             });
 
-            it('cannot change channel properties without admin rights', () => {
-                expect(canChangeChannelProperties({ ...channelThatCanBeChanged, hasChannelAdminRights: false })).toBeFalse();
+            it('cannot change channel properties without moderation rights', () => {
+                expect(canChangeChannelProperties({ ...channelThatCanBeChanged, hasChannelModerationRights: false })).toBeFalse();
             });
 
             it('can change channel properties of channel that is already archived', () => {
@@ -185,7 +189,13 @@ describe('ConversationPermissionUtils', () => {
         });
 
         describe('canJoinChannel', () => {
-            const channelThatCanBeJoined = generateExampleChannelDTO({ isMember: false, isPublic: true, isArchived: false, hasChannelAdminRights: false, isAdmin: false });
+            const channelThatCanBeJoined = generateExampleChannelDTO({
+                isMember: false,
+                isPublic: true,
+                isArchived: false,
+                hasChannelModerationRights: false,
+                isChannelModerator: false,
+            });
 
             it('can join channel', () => {
                 expect(canJoinChannel(channelThatCanBeJoined)).toBeTrue();
@@ -195,16 +205,16 @@ describe('ConversationPermissionUtils', () => {
                 expect(canJoinChannel({ ...channelThatCanBeJoined, isMember: true })).toBeFalse();
             });
 
-            it('can not join a private channel without admin rights', () => {
+            it('can not join a private channel without moderation rights', () => {
                 expect(canJoinChannel({ ...channelThatCanBeJoined, isPublic: false })).toBeFalse();
             });
 
-            it('can join an archived public channel without admin rights', () => {
+            it('can join an archived public channel without moderation rights', () => {
                 expect(canJoinChannel({ ...channelThatCanBeJoined, isArchived: true })).toBeTrue();
             });
 
-            it('can join a private channel with admin rights', () => {
-                expect(canJoinChannel({ ...channelThatCanBeJoined, isPublic: false, hasChannelAdminRights: true })).toBeTrue();
+            it('can join a private channel with moderation rights', () => {
+                expect(canJoinChannel({ ...channelThatCanBeJoined, isPublic: false, hasChannelModerationRights: true })).toBeTrue();
             });
         });
     });

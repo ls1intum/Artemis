@@ -59,17 +59,17 @@
                 "question": "Möchtest du wirklich den Kanal mit Namen '{{ title }}' löschen? Das ist eine permanente Aktion und kann nicht rückgängig gemacht werden.",
                 "confirm": "Bitte gib den Namen des Kanals ein, um zu die Löschung zu bestätigen."
             },
-            "grantChannelAdmin": {
-                "title": "{{ userName }} zu einem/einer Administrator:in von {{ channelName }} machen?",
-                "question": "Möchtest du wirklich {{ userName }} zu einem/einer Administrator:in von {{ channelName }} machen?",
+            "grantChannelModerator": {
+                "title": "{{ userName }} zu einem/einer Moderator:in von {{ channelName }} machen?",
+                "question": "Möchtest du wirklich {{ userName }} zu einem/einer Moderator:in von {{ channelName }} machen?",
                 "description": "Dies ermöglicht es {{ userName }}, den Kanal und seine Mitglieder:innen zu verwalten.",
-                "confirmButton": "Zum/Zur Administrator:in machen"
+                "confirmButton": "Zum/Zur Moderator:in machen"
             },
-            "revokeChannelAdmin": {
-                "title": "{{ userName }} als Administrator:in von {{ channelName }} entfernen?",
-                "question": "Möchtest du wirklich {{ userName }} als Administrator:in von {{ channelName }} entfernen?",
-                "description": "Du kannst den/die Nutzer:in jederzeit wieder zum/zur Administrator:in machen.",
-                "confirmButton": "Als Administrator:in entfernen"
+            "revokeChannelModerator": {
+                "title": "{{ userName }} als Moderator:in von {{ channelName }} entfernen?",
+                "question": "Möchtest du wirklich {{ userName }} als Moderator:in von {{ channelName }} entfernen?",
+                "description": "Du kannst den/die Nutzer:in jederzeit wieder zum/zur Moderator:in machen.",
+                "confirmButton": "Als Moderator:in entfernen"
             },
             "removeUserPrivateChannel": {
                 "title": "Nutzer:in aus privaten Kanal entfernen?",
@@ -112,12 +112,12 @@
                     "editorFilter": "Editor:innen",
                     "tutorFilter": "Tutor:innen",
                     "studentFilter": "Studierende",
-                    "channelAdminFilter": "Kanaladministrator:innen",
+                    "channelModeratorFilter": "Kanalmoderator:innen",
                     "memberRow": {
-                        "channelAdminTooltip": "Kanaladministrator:in, der/die den Kanal und seine Mitglieder:innen verwalten kann",
+                        "channelModeratorTooltip": "Moderator:in, der/die den Kanal und seine Mitglieder:innen verwalten kann",
                         "removeUser": "Nutzer:in entfernen",
-                        "grantAdminRights": "Zum/Zur Administrator:in machen",
-                        "revokeAdminRights": "Als Administrator:in entfernen"
+                        "grantModeratorRole": "Zum/Zur Moderator:in machen",
+                        "revokeModeratorRole": "Als Moderator:in entfernen"
                     }
                 },
                 "infoTab": {
@@ -211,7 +211,7 @@
                     },
                     "isAnnouncementChannelInput": {
                         "label": "Ankündigungskanal",
-                        "explanation": "Nur Lehrende und Kanaladministrator:innen können neue Nachrichten in einem Ankündigungskanal erstellen. Studierende können die Nachrichten nur lesen und darauf antworten.",
+                        "explanation": "Nur Lehrende und Kanalmoderator:innen können neue Nachrichten in einem Ankündigungskanal erstellen. Studierende können die Nachrichten nur lesen und darauf antworten.",
                         "true": "Ankündigungskanal",
                         "false": "Uneingeschränkter Kanal"
                     },

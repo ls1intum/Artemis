@@ -57,7 +57,7 @@ export class ConversationMembersComponent implements OnInit, OnDestroy {
     // note: tutors searches for Editors and Tutors
     TUTOR_FILTER_OPTION = ConversationMemberSearchFilter.TUTOR;
     STUDENT_FILTER_OPTION = ConversationMemberSearchFilter.STUDENT;
-    CHANNEL_ADMIN_FILTER_OPTION = ConversationMemberSearchFilter.CHANNEL_ADMIN;
+    CHANNEL_MODERATOR_FILTER_OPTION = ConversationMemberSearchFilter.CHANNEL_MODERATOR;
 
     constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal, private cdr: ChangeDetectorRef) {}
 

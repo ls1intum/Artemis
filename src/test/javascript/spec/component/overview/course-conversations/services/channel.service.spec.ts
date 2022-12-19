@@ -131,9 +131,9 @@ describe('ChannelService', () => {
         tick();
     }));
 
-    it('grantChannelAdminRights', fakeAsync(() => {
+    it('grantChannelModeratorRole', fakeAsync(() => {
         service
-            .grantChannelAdminRights(1, 1, ['login'])
+            .grantChannelModeratorRole(1, 1, ['login'])
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
 
@@ -142,9 +142,9 @@ describe('ChannelService', () => {
         tick();
     }));
 
-    it('revokeChannelAdminRights', fakeAsync(() => {
+    it('revokeChannelModeratorRole', fakeAsync(() => {
         service
-            .revokeChannelAdminRights(1, 1, ['login'])
+            .revokeChannelModeratorRole(1, 1, ['login'])
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
 

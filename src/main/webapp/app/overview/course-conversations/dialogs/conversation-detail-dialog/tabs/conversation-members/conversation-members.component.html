@@ -32,8 +32,8 @@
                     </option>
                     <option id="tutorFilter" [value]="TUTOR_FILTER_OPTION">{{ 'artemisApp.dialogs.conversationDetail.memberTab.tutorFilter' | artemisTranslate }}</option>
                     <option id="studentFilter" [value]="STUDENT_FILTER_OPTION">{{ 'artemisApp.dialogs.conversationDetail.memberTab.studentFilter' | artemisTranslate }}</option>
-                    <option *ngIf="isChannel(activeConversation)" [value]="CHANNEL_ADMIN_FILTER_OPTION">
-                        {{ 'artemisApp.dialogs.conversationDetail.memberTab.channelAdminFilter' | artemisTranslate }}
+                    <option *ngIf="isChannel(activeConversation)" [value]="CHANNEL_MODERATOR_FILTER_OPTION">
+                        {{ 'artemisApp.dialogs.conversationDetail.memberTab.channelModeratorFilter' | artemisTranslate }}
                     </option>
                 </select>
             </div>

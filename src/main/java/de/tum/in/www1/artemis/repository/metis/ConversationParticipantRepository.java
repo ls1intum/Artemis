@@ -42,9 +42,9 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
             FROM ConversationParticipant conversationParticipant
             WHERE conversationParticipant.conversation.id = :#{#conversationId}
             AND conversationParticipant.user.id = :#{#userId}
-            AND conversationParticipant.isAdmin = true
+            AND conversationParticipant.isModerator = true
             """)
-    Optional<ConversationParticipant> findAdminConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
+    Optional<ConversationParticipant> findModeratorConversationParticipantByConversationIdAndUserId(Long conversationId, Long userId);
 
     Integer countByConversationId(Long conversationId);
 

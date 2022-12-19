@@ -207,9 +207,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
             WHERE conversation.id = :#{#conversationId}
             AND (:#{#loginOrName} = '' OR (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%))
-            AND  conversationParticipant.isAdmin = true
+            AND  conversationParticipant.isModerator = true
                """)
-    Page<User> searchChannelAdminsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId);
+    Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId);
 
     /**
      * Search for all users by login or name in a group and convert them to {@link UserDTO}

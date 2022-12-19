@@ -18,15 +18,15 @@ public class ChannelDTO extends ConversationDTO {
 
     // property not taken from entity
     /**
-     * Am course instructor has channel admin rights but is not necessarily a member or admin of the channel
+     * A course instructor has channel moderation rights but is not necessarily a moderator of the channel
      */
-    private Boolean hasChannelAdminRights;
+    private Boolean hasChannelModerationRights;
 
     // property not taken from entity
     /**
-     * Member of the channel that is also an admin of the channel
+     * Member of the channel that is also a moderator of the channel
      */
-    private Boolean isChannelAdmin;
+    private Boolean isChannelModerator;
 
     public ChannelDTO(Channel channel) {
         super(channel, "channel");
@@ -90,26 +90,26 @@ public class ChannelDTO extends ConversationDTO {
         isArchived = archived;
     }
 
-    public Boolean getHasChannelAdminRights() {
-        return hasChannelAdminRights;
+    public Boolean getHasChannelModerationRights() {
+        return hasChannelModerationRights;
     }
 
-    public void setHasChannelAdminRights(Boolean hasChannelAdminRights) {
-        this.hasChannelAdminRights = hasChannelAdminRights;
+    public void setHasChannelModerationRights(Boolean hasChannelModerationRights) {
+        this.hasChannelModerationRights = hasChannelModerationRights;
     }
 
-    public Boolean getIsChannelAdmin() {
-        return isChannelAdmin;
+    public Boolean getIsChannelModerator() {
+        return isChannelModerator;
     }
 
-    public void setIsChannelAdmin(Boolean isChannelAdmin) {
-        this.isChannelAdmin = isChannelAdmin;
+    public void setIsChannelModerator(Boolean isChannelModerator) {
+        this.isChannelModerator = isChannelModerator;
     }
 
     @Override
     public String toString() {
         return "ChannelDTO{" + "name='" + name + '\'' + ", description='" + description + '\'' + ", topic='" + topic + '\'' + ", isPublic=" + isPublic + ", isAnnouncementChannel="
-                + isAnnouncementChannel + ", isArchived=" + isArchived + ", isChannelAdmin=" + isChannelAdmin + ", hasChannelAdminRights=" + hasChannelAdminRights + "}"
-                + super.toString();
+                + isAnnouncementChannel + ", isArchived=" + isArchived + ", isChannelModerator=" + isChannelModerator + ", hasChannelModerationRights=" + hasChannelModerationRights
+                + "}" + super.toString();
     }
 }

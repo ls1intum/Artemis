@@ -55,8 +55,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         // then
         this.assertChannelProperties(chat.getId(), channelDTO.getName(), null, channelDTO.getDescription(), channelDTO.getIsPublic(), false);
         var participants = assertParticipants(chat.getId(), 1, loginName);
-        // creator is automatically added as channel admin
-        assertThat(participants.stream().findFirst().get().getIsAdmin()).isTrue();
+        // creator is automatically added as channel moderator
+        assertThat(participants.stream().findFirst().get().getIsModerator()).isTrue();
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), loginName);
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE);
     }
@@ -175,7 +175,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     void deleteChannel_asNonCourseInstructor_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
-        addUserAsChannelAdmin(channel, "tutor2");
+        addUserAsChannelModerators(channel, "tutor2");
 
         // then
         database.changeUser("student1");
@@ -195,17 +195,17 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void updateChannel_asUserWithChannelAdminRights_shouldUpdateChannel(boolean isPublicChannel) throws Exception {
+    void updateChannel_asUserWithChannelModerationRights_shouldUpdateChannel(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
         var updateDTO = new ChannelDTO();
         updateDTO.setName("newname");
         updateDTO.setDescription("new description");
         updateDTO.setTopic("new topic");
-        addUserAsChannelAdmin(channel, "tutor1");
+        addUserAsChannelModerators(channel, "tutor1");
 
         // then
-        // every instructor automatically has admin rights for every channel
+        // every instructor automatically has moderation rights for every channel
         database.changeUser("instructor2");
         request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.OK);
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, false);
@@ -213,7 +213,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
         resetWebsocketMock();
 
-        // channel admins can also update the channel
+        // channel moderators can also update the channel
         updateDTO.setName("newname2");
         updateDTO.setDescription("new description2");
         updateDTO.setTopic("new topic2");
@@ -236,7 +236,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         updateDTO.setName("newname");
         updateDTO.setDescription("new description");
         updateDTO.setTopic("new topic");
-        addUserAsChannelAdmin(channel, "tutor1");
+        addUserAsChannelModerators(channel, "tutor1");
 
         // then
         database.changeUser("instructor2");
@@ -249,7 +249,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void updateChannel_asUserWithoutChannelAdminRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
+    void updateChannel_asUserWithoutChannelModerationRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
         var updateDTO = new ChannelDTO();
@@ -273,7 +273,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void archiveAndUnarchiveChannel_asUserWithoutChannelAdminRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
+    void archiveAndUnarchiveChannel_asUserWithoutChannelModerationRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
 
@@ -297,18 +297,18 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void archiveAndUnarchiveChannel_asUserWithChannelAdminRights_shouldArchiveChannel(boolean isPublicChannel) throws Exception {
+    void archiveAndUnarchiveChannel_asUserWithChannelModerationRights_shouldArchiveChannel(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
-        addUserAsChannelAdmin(channel, "tutor1");
+        addUserAsChannelModerators(channel, "tutor1");
 
         // then
-        // every instructor automatically has admin rights for every channel
+        // every instructor automatically has moderation rights for every channel
         database.changeUser("instructor2");
         testArchivalChangeWorks(channel, isPublicChannel, true);
         testArchivalChangeWorks(channel, isPublicChannel, false);
 
-        // channel admins can also update the channel
+        // channel moderators can also update the channel
         database.changeUser("tutor1");
         testArchivalChangeWorks(channel, isPublicChannel, true);
         testArchivalChangeWorks(channel, isPublicChannel, false);
@@ -317,68 +317,68 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void grantRevokeChannelAdminRights_asUserWithChannelAdminRights_shouldGrantRevokeChannelAdmin(boolean isPublicChannel) throws Exception {
+    void grantRevokeChannelModeratorRole_asUserWithChannelModerationRights_shouldGrantRevokeChannelModeratorRole(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
-        addUserAsChannelAdmin(channel, "tutor1");
+        addUserAsChannelModerators(channel, "tutor1");
         addUsersToConversation(channel.getId(), "student1");
         addUsersToConversation(channel.getId(), "student2");
 
         // then
-        // every instructor automatically has admin rights for every channel
+        // every instructor automatically has moderation rights for every channel
         database.changeUser("instructor2");
-        testGrantRevokeChannelAdminRightsWorks(channel, true);
-        testGrantRevokeChannelAdminRightsWorks(channel, false);
+        testGrantRevokeChannelModeratorRoleWorks(channel, true);
+        testGrantRevokeChannelModeratorRoleWorks(channel, false);
 
-        // channel admins can also grand and revoke channel admin rights
+        // channel moderators can also grand and revoke channel moderation rights
         database.changeUser("tutor1");
-        testGrantRevokeChannelAdminRightsWorks(channel, true);
-        testGrantRevokeChannelAdminRightsWorks(channel, false);
+        testGrantRevokeChannelModeratorRoleWorks(channel, true);
+        testGrantRevokeChannelModeratorRoleWorks(channel, false);
 
-        // note: you can NOT revoke channel admin rights of the creator to guarantee that there is always at least one channel admin
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/revoke-channel-admin", List.of("instructor1"),
+        // note: you can NOT revoke the channel moderator role of the creator to guarantee that there is always at least one channel moderator
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/revoke-channel-moderator", List.of("instructor1"),
                 HttpStatus.BAD_REQUEST);
-        assertUsersAreChannelAdmin(channel.getId(), "instructor1");
+        assertUsersAreChannelModerators(channel.getId(), "instructor1");
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void grantRevokeChannelAdminRights_asUserWithoutChannelAdminRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
+    void grantRevokeChannelModeratorRole_asUserWithoutChannelModerationRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
 
         // then
         database.changeUser("student1");
-        expectGrantRevokeChannelAdminRightsForbidden(channel, true);
-        expectGrantRevokeChannelAdminRightsForbidden(channel, false);
+        expectGrantRevokeChannelModeratorRoleForbidden(channel, true);
+        expectGrantRevokeChannelModeratorRoleForbidden(channel, false);
         database.changeUser("tutor1");
-        expectGrantRevokeChannelAdminRightsForbidden(channel, true);
-        expectGrantRevokeChannelAdminRightsForbidden(channel, false);
+        expectGrantRevokeChannelModeratorRoleForbidden(channel, true);
+        expectGrantRevokeChannelModeratorRoleForbidden(channel, false);
         database.changeUser("editor1");
-        expectGrantRevokeChannelAdminRightsForbidden(channel, true);
-        expectGrantRevokeChannelAdminRightsForbidden(channel, false);
+        expectGrantRevokeChannelModeratorRoleForbidden(channel, true);
+        expectGrantRevokeChannelModeratorRoleForbidden(channel, false);
         database.changeUser("instructor42");
-        expectGrantRevokeChannelAdminRightsForbidden(channel, true);
-        expectGrantRevokeChannelAdminRightsForbidden(channel, false);
+        expectGrantRevokeChannelModeratorRoleForbidden(channel, true);
+        expectGrantRevokeChannelModeratorRoleForbidden(channel, false);
         verifyNoParticipantTopicWebsocketSent();
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void registerUsersToChannel_asUserWithChannelAdminRights_shouldRegisterUsersToChannel(boolean isPublicChannel) throws Exception {
+    void registerUsersToChannel_asUserWithChannelModerationRights_shouldRegisterUsersToChannel(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
-        addUserAsChannelAdmin(channel, "tutor1");
+        addUserAsChannelModerators(channel, "tutor1");
 
         // then
-        // every instructor automatically has admin rights for every channel
+        // every instructor automatically has moderation rights for every channel
         database.changeUser("instructor2");
         testRegisterAndDeregisterUserWorks(channel, true);
         testRegisterAndDeregisterUserWorks(channel, false);
 
-        // channel admins can also grant and revoke channel admin rights
+        // channel moderators can also grant and revoke channel moderator role
         database.changeUser("tutor1");
         testRegisterAndDeregisterUserWorks(channel, true);
         testRegisterAndDeregisterUserWorks(channel, false);
@@ -407,7 +407,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void registerUsersToChannel_asUserWithoutChannelAdminRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
+    void registerUsersToChannel_asUserWithoutChannelModerationRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
 
@@ -578,24 +578,24 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         resetWebsocketMock();
     }
 
-    private void testGrantRevokeChannelAdminRightsWorks(ChannelDTO channel, boolean shouldGrant) throws Exception {
+    private void testGrantRevokeChannelModeratorRoleWorks(ChannelDTO channel, boolean shouldGrant) throws Exception {
         // prepare channel in db
         if (shouldGrant) {
-            this.revokeChannelAdminRights(channel.getId(), "student1");
-            this.revokeChannelAdminRights(channel.getId(), "student1");
+            this.revokeChannelModeratorRole(channel.getId(), "student1");
+            this.revokeChannelModeratorRole(channel.getId(), "student1");
         }
         else {
-            this.grantChannelAdminRights(channel.getId(), "student1");
-            this.grantChannelAdminRights(channel.getId(), "student1");
+            this.grantChannelModeratorRole(channel.getId(), "student1");
+            this.grantChannelModeratorRole(channel.getId(), "student1");
         }
-        var postfix = shouldGrant ? "/grant-channel-admin" : "/revoke-channel-admin";
+        var postfix = shouldGrant ? "/grant-channel-moderator" : "/revoke-channel-moderator";
 
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of("student1", "student2"), HttpStatus.OK);
         if (shouldGrant) {
-            assertUsersAreChannelAdmin(channel.getId(), "student1", "student2");
+            assertUsersAreChannelModerators(channel.getId(), "student1", "student2");
         }
         else {
-            assertUserAreNotChannelAdmin(channel.getId(), "student1", "student2");
+            assertUserAreNotChannelModerators(channel.getId(), "student1", "student2");
         }
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
@@ -617,9 +617,9 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         resetWebsocketMock();
     }
 
-    private void expectGrantRevokeChannelAdminRightsForbidden(ChannelDTO channel, boolean shouldGrant) throws Exception {
+    private void expectGrantRevokeChannelModeratorRoleForbidden(ChannelDTO channel, boolean shouldGrant) throws Exception {
         // prepare channel in db
-        var postfix = shouldGrant ? "/grant-channel-admin" : "/revoke-channel-admin";
+        var postfix = shouldGrant ? "/grant-channel-moderator" : "/revoke-channel-moderator";
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of("student1", "student2"), HttpStatus.FORBIDDEN);
     }
 

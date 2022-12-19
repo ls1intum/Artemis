@@ -92,8 +92,8 @@ public class ConversationDTOService {
     @NotNull
     public ChannelDTO convertChannelToDto(User requestingUser, Channel channel) {
         var channelDTO = new ChannelDTO(channel);
-        channelDTO.setIsChannelAdmin(channelAuthorizationService.isChannelAdmin(channel.getId(), requestingUser.getId()));
-        channelDTO.setHasChannelAdminRights(channelAuthorizationService.hasChannelAdminRights(channel.getId(), requestingUser));
+        channelDTO.setIsChannelModerator(channelAuthorizationService.isChannelModerator(channel.getId(), requestingUser.getId()));
+        channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel.getId(), requestingUser));
         var participantOptional = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), requestingUser.getId());
         channelDTO.setIsMember(participantOptional.isPresent());
         participantOptional.ifPresent(conversationParticipant -> channelDTO.setLastReadDate(conversationParticipant.getLastRead()));
@@ -191,7 +191,7 @@ public class ConversationDTOService {
         return conversationParticipants.stream().map(ConversationParticipant::getUser).map(user -> {
             var userDTO = new ConversationUserDTO(user);
             userDTO.setIsRequestingUser(user.getId().equals(requestingUser.getId()));
-            userDTO.setIsChannelAdmin(null); // not needed for one to one chats
+            userDTO.setIsChannelModerator(null); // not needed for one to one chats
             var userWithGroups = user;
             var groupsInitialized = Persistence.getPersistenceUtil().isLoaded(user, "groups") && user.getGroups() != null;
             if (!groupsInitialized) {

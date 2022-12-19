@@ -27,7 +27,7 @@ const memberTemplate = {
     login: 'login',
     firstName: 'Kaddl',
     lastName: 'Garching',
-    isChannelAdmin: true,
+    isChannelModerator: true,
     isStudent: false,
     isEditor: false,
     isTeachingAssistant: false,
@@ -46,8 +46,8 @@ examples.forEach((activeConversation) => {
         let conversationMember: ConversationUserDTO;
         let conversationCreator: ConversationUserDTO;
         let loggedInUser: User;
-        const canGrantChannelAdminRights = jest.fn();
-        const canRevokeChannelAdminRights = jest.fn();
+        const canGrantChannelModeratorRole = jest.fn();
+        const canRevokeChannelModeratorRole = jest.fn();
         const canRemoveUsersFromConversation = jest.fn();
 
         beforeEach(waitForAsync(() => {
@@ -74,16 +74,16 @@ examples.forEach((activeConversation) => {
             const accountService = TestBed.inject(AccountService);
             jest.spyOn(accountService, 'identity').mockReturnValue(Promise.resolve(loggedInUser));
             canRemoveUsersFromConversation.mockReturnValue(true);
-            canGrantChannelAdminRights.mockReturnValue(true);
-            canRevokeChannelAdminRights.mockReturnValue(true);
+            canGrantChannelModeratorRole.mockReturnValue(true);
+            canRevokeChannelModeratorRole.mockReturnValue(true);
 
             fixture = TestBed.createComponent(ConversationMemberRowComponent);
             component = fixture.componentInstance;
             component.activeConversation = activeConversation;
             component.course = course;
             component.conversationMember = conversationMember;
-            component.canRevokeChannelAdminRights = canRevokeChannelAdminRights;
-            component.canGrantChannelAdminRights = canGrantChannelAdminRights;
+            component.canRevokeChannelModeratorRole = canRevokeChannelModeratorRole;
+            component.canGrantChannelModeratorRole = canGrantChannelModeratorRole;
             component.canRemoveUsersFromConversation = canRemoveUsersFromConversation;
         });
 
@@ -99,8 +99,8 @@ examples.forEach((activeConversation) => {
             expect(component.canBeRemovedFromConversation).toBeTrue();
 
             if (isChannelDto(activeConversation)) {
-                expect(component.canBeGrantedChannelAdminRights).toBeFalse(); // is already admin
-                expect(component.canBeRevokedChannelAdminRights).toBeTrue();
+                expect(component.canBeGrantedChannelModeratorRole).toBeFalse(); // is already moderator
+                expect(component.canBeRevokedChannelModeratorRole).toBeTrue();
             }
         }));
 
@@ -125,47 +125,47 @@ examples.forEach((activeConversation) => {
             }
         }));
 
-        it('should show revoke admin button if user is already admin', fakeAsync(() => {
+        it('should show revoke moderator button if user is already moderator', fakeAsync(() => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
             if (isChannelDto(activeConversation)) {
-                expect(component.canBeGrantedChannelAdminRights).toBeFalse(); // is already admin
-                expect(component.canBeRevokedChannelAdminRights).toBeTrue();
-                checkRevokeAdminButton(true);
-                checkGrantAdminButton(false);
+                expect(component.canBeGrantedChannelModeratorRole).toBeFalse(); // is already moderator
+                expect(component.canBeRevokedChannelModeratorRole).toBeTrue();
+                checkRevokeModeratorButton(true);
+                checkGrantModeratorButton(false);
             }
         }));
 
-        it('should show grant admin button if user is not yet admin', fakeAsync(() => {
+        it('should show grant moderator button if user is not yet moderator', fakeAsync(() => {
             if (isChannelDto(activeConversation)) {
-                component.conversationMember.isChannelAdmin = false;
+                component.conversationMember.isChannelModerator = false;
                 fixture.detectChanges();
                 tick();
                 fixture.detectChanges();
 
-                expect(component.canBeGrantedChannelAdminRights).toBeTrue();
-                expect(component.canBeRevokedChannelAdminRights).toBeFalse();
-                checkRevokeAdminButton(false);
-                checkGrantAdminButton(true);
+                expect(component.canBeGrantedChannelModeratorRole).toBeTrue();
+                expect(component.canBeRevokedChannelModeratorRole).toBeFalse();
+                checkRevokeModeratorButton(false);
+                checkGrantModeratorButton(true);
             }
         }));
 
-        function checkGrantAdminButton(shouldExist: boolean) {
-            const grantAdminRightsButton = fixture.debugElement.query(By.css('.grant-admin'));
+        function checkGrantModeratorButton(shouldExist: boolean) {
+            const grantModeratorRoleButton = fixture.debugElement.query(By.css('.grant-moderator'));
             if (shouldExist) {
-                expect(grantAdminRightsButton).toBeTruthy();
+                expect(grantModeratorRoleButton).toBeTruthy();
             } else {
-                expect(grantAdminRightsButton).toBeFalsy();
+                expect(grantModeratorRoleButton).toBeFalsy();
             }
         }
 
-        function checkRevokeAdminButton(shouldExist: boolean) {
-            const revokeAdminRightsButton = fixture.debugElement.query(By.css('.revoke-admin'));
+        function checkRevokeModeratorButton(shouldExist: boolean) {
+            const revokeModeratorRoleButton = fixture.debugElement.query(By.css('.revoke-moderator'));
             if (shouldExist) {
-                expect(revokeAdminRightsButton).toBeTruthy();
+                expect(revokeModeratorRoleButton).toBeTruthy();
             } else {
-                expect(revokeAdminRightsButton).toBeFalsy();
+                expect(revokeModeratorRoleButton).toBeFalsy();
             }
         }
 
@@ -178,36 +178,36 @@ examples.forEach((activeConversation) => {
             }
         }
 
-        it('should open the grant channel admin rights dialog', fakeAsync(() => {
+        it('should open the grant channel moderator role dialog', fakeAsync(() => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
             if (isChannelDto(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const changesPerformedSpy = jest.spyOn(component.changePerformed, 'emit');
-                const grantChannelAdminRightsSpy = jest
-                    .spyOn(channelService, 'grantChannelAdminRights')
+                const grantChannelModeratorRoleSpy = jest
+                    .spyOn(channelService, 'grantChannelModeratorRole')
                     .mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
-                genericConfirmationDialogTest(component.openGrantChannelAdminRightsDialog.bind(component));
-                expect(grantChannelAdminRightsSpy).toHaveBeenCalledOnce();
-                expect(grantChannelAdminRightsSpy).toHaveBeenCalledWith(course.id!, activeConversation.id!, [conversationMember.login]);
+                genericConfirmationDialogTest(component.openGrantChannelModeratorRoleDialog.bind(component));
+                expect(grantChannelModeratorRoleSpy).toHaveBeenCalledOnce();
+                expect(grantChannelModeratorRoleSpy).toHaveBeenCalledWith(course.id!, activeConversation.id!, [conversationMember.login]);
                 expect(changesPerformedSpy).toHaveBeenCalledOnce();
             }
         }));
 
-        it('should open the revoke channel admin rights dialog', fakeAsync(() => {
+        it('should open the revoke channel moderator role dialog', fakeAsync(() => {
             fixture.detectChanges();
             tick();
             fixture.detectChanges();
             if (isChannelDto(activeConversation)) {
                 const channelService = TestBed.inject(ChannelService);
                 const changesPerformedSpy = jest.spyOn(component.changePerformed, 'emit');
-                const revokeChannelAdminRightsSpy = jest
-                    .spyOn(channelService, 'revokeChannelAdminRights')
+                const revokeChannelModeratorRoleSpy = jest
+                    .spyOn(channelService, 'revokeChannelModeratorRole')
                     .mockReturnValue(of(new HttpResponse({ status: 200 }) as HttpResponse<void>));
-                genericConfirmationDialogTest(component.openRevokeChannelAdminRightsDialog.bind(component));
-                expect(revokeChannelAdminRightsSpy).toHaveBeenCalledOnce();
-                expect(revokeChannelAdminRightsSpy).toHaveBeenCalledWith(course.id!, activeConversation.id!, [conversationMember.login]);
+                genericConfirmationDialogTest(component.openRevokeChannelModeratorRoleDialog.bind(component));
+                expect(revokeChannelModeratorRoleSpy).toHaveBeenCalledOnce();
+                expect(revokeChannelModeratorRoleSpy).toHaveBeenCalledWith(course.id!, activeConversation.id!, [conversationMember.login]);
                 expect(changesPerformedSpy).toHaveBeenCalledOnce();
             }
         }));

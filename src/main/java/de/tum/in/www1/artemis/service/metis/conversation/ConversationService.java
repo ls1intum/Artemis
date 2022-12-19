@@ -142,7 +142,7 @@ public class ConversationService {
             ConversationParticipant conversationParticipant = new ConversationParticipant();
             conversationParticipant.setUser(user);
             conversationParticipant.setConversation(conversation);
-            conversationParticipant.setIsAdmin(false);
+            conversationParticipant.setIsModerator(false);
             conversationParticipant.setIsHidden(false);
             conversationParticipant.setIsFavorite(false);
             newConversationParticipants.add(conversationParticipant);
@@ -303,9 +303,9 @@ public class ConversationService {
                 case STUDENT -> {
                     return userRepository.searchAllByLoginOrNameInConversationWithCourseGroup(pageable, searchTerm, conversation.getId(), course.getStudentGroupName());
                 }
-                case CHANNEL_ADMIN -> {
-                    assert conversation instanceof Channel : "The filter CHANNEL_ADMIN is only allowed for channels!";
-                    return userRepository.searchChannelAdminsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
+                case CHANNEL_MODERATOR -> {
+                    assert conversation instanceof Channel : "The filter CHANNEL_MODERATOR is only allowed for channels!";
+                    return userRepository.searchChannelModeratorsByLoginOrNameInConversation(pageable, searchTerm, conversation.getId());
                 }
                 default -> throw new IllegalArgumentException("The filter is not supported.");
             }
@@ -345,7 +345,7 @@ public class ConversationService {
      * The user can select one of these roles to filter the conversation members by role
      */
     public enum ConversationMemberSearchFilters {
-        INSTRUCTOR, EDITOR, TUTOR, STUDENT, CHANNEL_ADMIN // this is a special role that is only used for channels
+        INSTRUCTOR, EDITOR, TUTOR, STUDENT, CHANNEL_MODERATOR // this is a special role that is only used for channels
     }
 
     /**

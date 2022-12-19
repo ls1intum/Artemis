@@ -59,17 +59,17 @@
                 "question": "Are you sure to delete the channel with name '{{ title }}'? This is a permanent action and cannot be undone.",
                 "confirm": "Please enter the title of the channel to confirm."
             },
-            "grantChannelAdmin": {
-                "title": "Make {{ userName }} an admin of {{ channelName }} ?",
-                "question": "Do you really want to make {{ userName }} an admin of {{ channelName }} ?",
+            "grantChannelModerator": {
+                "title": "Make {{ userName }} an moderator of {{ channelName }} ?",
+                "question": "Do you really want to make {{ userName }} an moderator of {{ channelName }} ?",
                 "description": "This will allow {{ userName }} to manage the channel and its members.",
-                "confirmButton": "Grant Admin Rights"
+                "confirmButton": "Grant Moderator Role"
             },
-            "revokeChannelAdmin": {
-                "title": "Revoke admin rights of {{ userName }} in {{ channelName }} ?",
-                "question": "Do you really want to revoke the admin rights of {{ userName }} in {{ channelName }} ?",
-                "description": "This will revoke the admin rights of {{ userName }} in {{ channelName }}. You can grant the admin rights again at any time.",
-                "confirmButton": "Revoke Admin Rights"
+            "revokeChannelModerator": {
+                "title": "Revoke moderator role of {{ userName }} in {{ channelName }} ?",
+                "question": "Do you really want to revoke the moderator role of {{ userName }} in {{ channelName }} ?",
+                "description": "This will revoke the moderator role of {{ userName }} in {{ channelName }}. You can grant the moderator role again at any time.",
+                "confirmButton": "Revoke Moderator Role"
             },
             "removeUserPrivateChannel": {
                 "title": "Remove user from private channel?",
@@ -112,12 +112,12 @@
                     "editorFilter": "Course Editors",
                     "tutorFilter": "Course Tutors",
                     "studentFilter": "Course Students",
-                    "channelAdminFilter": "Channel Admins",
+                    "channelModeratorFilter": "Channel Moderators",
                     "memberRow": {
-                        "channelAdminTooltip": "Channel Admin that can manage the channel and its members",
+                        "channelModeratorTooltip": "Channel Moderator that can manage the channel and its members",
                         "removeUser": "Remove user",
-                        "grantAdminRights": "Grant admin rights",
-                        "revokeAdminRights": "Revoke admin rights"
+                        "grantModeratorRole": "Grant Moderator Role",
+                        "revokeModeratorRole": "Revoke Moderator Role"
                     }
                 },
                 "infoTab": {
@@ -210,7 +210,7 @@
                     },
                     "isAnnouncementChannelInput": {
                         "label": "Announcement Channel",
-                        "explanation": "Only instructors and channel administrators can create new messages in an announcement channel. Students can only read the messages and answer to them.",
+                        "explanation": "Only instructors and channel moderators can create new messages in an announcement channel. Students can only read the messages and answer to them.",
                         "true": "Announcement Channel",
                         "false": "Unrestricted Channel"
                     },

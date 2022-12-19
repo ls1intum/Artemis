@@ -446,7 +446,7 @@ public class AuthorizationCheckService {
 
     /**
      * NOTE: this method should only be used in a REST Call context, when the SecurityContext is correctly setup.
-     * Preferably use the method isAdmin(user) below
+     * Preferably use the method isChannelModerator(user) below
      * <p>
      * Checks if the currently logged-in user is an admin user
      *

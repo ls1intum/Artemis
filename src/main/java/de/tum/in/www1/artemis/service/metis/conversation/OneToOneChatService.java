@@ -75,7 +75,7 @@ public class OneToOneChatService {
         var participant = new ConversationParticipant();
         participant.setUser(user);
         participant.setConversation(oneToOneChat);
-        participant.setIsAdmin(false);
+        participant.setIsModerator(false);
         participant.setIsHidden(false);
         participant.setIsFavorite(false);
         return participant;

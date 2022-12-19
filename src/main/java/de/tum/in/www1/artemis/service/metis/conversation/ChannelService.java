@@ -60,32 +60,32 @@ public class ChannelService {
     }
 
     /**
-     * Grans the channel admin role to the given user for the given channel
+     * Grans the channel moderator role to the given user for the given channel
      *
-     * @param channel                  the channel
-     * @param usersToGrantChannelAdmin the users to grant channel admin
+     * @param channel      the channel
+     * @param usersToGrant the users to grant the channel moderator role
      */
-    public void grantChannelAdmin(Channel channel, Set<User> usersToGrantChannelAdmin) {
+    public void grantChannelModeratorRole(Channel channel, Set<User> usersToGrant) {
         var matchingParticipants = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(channel.getId(),
-                usersToGrantChannelAdmin.stream().map(User::getId).collect(Collectors.toSet()));
+                usersToGrant.stream().map(User::getId).collect(Collectors.toSet()));
         for (ConversationParticipant conversationParticipant : matchingParticipants) {
-            conversationParticipant.setIsAdmin(true);
+            conversationParticipant.setIsModerator(true);
         }
         conversationParticipantRepository.saveAll(matchingParticipants);
         conversationService.notifyAllConversationMembersAboutUpdate(channel);
     }
 
     /**
-     * Removes the channel admin role from a user for the given channel
+     * Revokes the channel moderator role from a user for the given channel
      *
-     * @param channel                   the channel to remove the channel admin role from
-     * @param usersToRevokeChannelAdmin the users to revoke channel admin
+     * @param channel       the channel
+     * @param usersToRevoke the users to revoke channel moderator role from
      */
-    public void revokeChannelAdmin(Channel channel, Set<User> usersToRevokeChannelAdmin) {
+    public void revokeChannelModeratorRole(Channel channel, Set<User> usersToRevoke) {
         var matchingParticipants = conversationParticipantRepository.findConversationParticipantsByConversationIdAndUserIds(channel.getId(),
-                usersToRevokeChannelAdmin.stream().map(User::getId).collect(Collectors.toSet()));
+                usersToRevoke.stream().map(User::getId).collect(Collectors.toSet()));
         for (ConversationParticipant conversationParticipant : matchingParticipants) {
-            conversationParticipant.setIsAdmin(false);
+            conversationParticipant.setIsModerator(false);
         }
         conversationParticipantRepository.saveAll(matchingParticipants);
         conversationService.notifyAllConversationMembersAboutUpdate(channel);
@@ -147,7 +147,8 @@ public class ChannelService {
         var conversationParticipantOfRequestingUser = new ConversationParticipant();
         conversationParticipantOfRequestingUser.setUser(user);
         conversationParticipantOfRequestingUser.setConversation(savedChannel);
-        conversationParticipantOfRequestingUser.setIsAdmin(true); // creator is of course admin. Special case, because creator is the only admin that can not be removed
+        conversationParticipantOfRequestingUser.setIsModerator(true); // creator is of moderator. Special case, because creator is the only moderator that can not be revoked the
+                                                                      // role
         conversationParticipantOfRequestingUser = conversationParticipantRepository.save(conversationParticipantOfRequestingUser);
         savedChannel.getConversationParticipants().add(conversationParticipantOfRequestingUser);
         savedChannel = channelRepository.save(savedChannel);

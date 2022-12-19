@@ -8,7 +8,7 @@ import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
  */
 public class ConversationUserDTO extends UserPublicInfoDTO {
 
-    private Boolean isChannelAdmin;
+    private Boolean isChannelModerator;
 
     private Boolean isRequestingUser;
 
@@ -20,12 +20,12 @@ public class ConversationUserDTO extends UserPublicInfoDTO {
         // Empty constructor needed for Jackson.
     }
 
-    public Boolean getIsChannelAdmin() {
-        return isChannelAdmin;
+    public Boolean getIsChannelModerator() {
+        return isChannelModerator;
     }
 
-    public void setIsChannelAdmin(Boolean channelAdmin) {
-        isChannelAdmin = channelAdmin;
+    public void setIsChannelModerator(Boolean isChannelModerator) {
+        this.isChannelModerator = isChannelModerator;
     }
 
     public Boolean getIsRequestingUser() {

@@ -47,7 +47,7 @@ public class Channel extends Conversation {
     private Boolean isPublic;
 
     /**
-     * An announcement channel is a special type of channel where only channel admins and instructors can start new posts.
+     * An announcement channel is a special type of channel where only channel moderators and instructors can start new posts.
      * Answer posts are still possible so that students can ask questions concerning the announcement.
      */
     @Column(name = "is_announcement")

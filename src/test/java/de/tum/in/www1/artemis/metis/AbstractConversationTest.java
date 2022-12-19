@@ -204,7 +204,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
             }
             var participant = new ConversationParticipant();
             participant.setConversation(conversationRepository.findByIdElseThrow(conversationId));
-            participant.setIsAdmin(false);
+            participant.setIsModerator(false);
             participant.setUser(user);
             conversationParticipantRepository.save(participant);
         }
@@ -228,17 +228,17 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
         });
     }
 
-    void revokeChannelAdminRights(Long channelId, String userLogin) {
+    void revokeChannelModeratorRole(Long channelId, String userLogin) {
         var user = userRepository.findOneByLogin(userLogin).get();
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId()).get();
-        participant.setIsAdmin(false);
+        participant.setIsModerator(false);
         conversationParticipantRepository.save(participant);
     }
 
-    void grantChannelAdminRights(Long channelId, String userLogin) {
+    void grantChannelModeratorRole(Long channelId, String userLogin) {
         var user = userRepository.findOneByLogin(userLogin).get();
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId()).get();
-        participant.setIsAdmin(true);
+        participant.setIsModerator(true);
         conversationParticipantRepository.save(participant);
     }
 
@@ -254,23 +254,23 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
         channelRepository.save(dbChannel);
     }
 
-    void assertUsersAreChannelAdmin(Long channelId, String... userLogin) {
-        var channelAdmins = getParticipants(channelId).stream().filter(ConversationParticipant::getIsAdmin).map(ConversationParticipant::getUser);
-        assertThat(channelAdmins).extracting(User::getLogin).contains(userLogin);
+    void assertUsersAreChannelModerators(Long channelId, String... userLogin) {
+        var channelModerators = getParticipants(channelId).stream().filter(ConversationParticipant::getIsModerator).map(ConversationParticipant::getUser);
+        assertThat(channelModerators).extracting(User::getLogin).contains(userLogin);
     }
 
-    void assertUserAreNotChannelAdmin(Long channelId, String... userLogin) {
-        var channelAdmins = getParticipants(channelId).stream().filter(ConversationParticipant::getIsAdmin).map(ConversationParticipant::getUser);
-        assertThat(channelAdmins).extracting(User::getLogin).doesNotContain(userLogin);
+    void assertUserAreNotChannelModerators(Long channelId, String... userLogin) {
+        var channelModerators = getParticipants(channelId).stream().filter(ConversationParticipant::getIsModerator).map(ConversationParticipant::getUser);
+        assertThat(channelModerators).extracting(User::getLogin).doesNotContain(userLogin);
     }
 
-    void addUserAsChannelAdmin(ChannelDTO channel, String login) {
-        var newAdmin = userRepository.findOneByLogin(login).get();
-        var adminParticipant = new ConversationParticipant();
-        adminParticipant.setIsAdmin(true);
-        adminParticipant.setUser(newAdmin);
-        adminParticipant.setConversation(this.channelRepository.findById(channel.getId()).get());
-        conversationParticipantRepository.save(adminParticipant);
+    void addUserAsChannelModerators(ChannelDTO channel, String login) {
+        var newModerator = userRepository.findOneByLogin(login).get();
+        var moderatorParticipant = new ConversationParticipant();
+        moderatorParticipant.setIsModerator(true);
+        moderatorParticipant.setUser(newModerator);
+        moderatorParticipant.setConversation(this.channelRepository.findById(channel.getId()).get());
+        conversationParticipantRepository.save(moderatorParticipant);
     }
 
     void resetWebsocketMock() {

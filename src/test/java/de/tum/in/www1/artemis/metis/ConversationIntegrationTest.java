@@ -45,10 +45,10 @@ class ConversationIntegrationTest extends AbstractConversationTest {
             }
             assertConversationDTOTransientProperties(conv, false, true, false, false);
         }
-        grantChannelAdminRights(channel.getId(), "tutor1");
+        grantChannelModeratorRole(channel.getId(), "tutor1");
         convOfUsers = request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
-        // check that the channel admin rights are correctly set
-        convOfUsers.stream().filter(conv -> conv.getId().equals(channel.getId())).findFirst().ifPresent(conv -> assertThat(((ChannelDTO) conv).getIsChannelAdmin()).isTrue());
+        // check that the channel moderator role is correctly set
+        convOfUsers.stream().filter(conv -> conv.getId().equals(channel.getId())).findFirst().ifPresent(conv -> assertThat(((ChannelDTO) conv).getIsChannelModerator()).isTrue());
         // check that creator is correctly set
         database.changeUser("instructor1");
         var convOfInstructor = request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
@@ -109,12 +109,12 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         // add editor1
         addUsersToConversation(channel.getId(), "editor1");
         addUsersToConversation(channel.getId(), "tutor1");
-        grantChannelAdminRights(channel.getId(), "tutor1");
+        grantChannelModeratorRole(channel.getId(), "tutor1");
 
         // search for students
         database.changeUser("tutor1");
         // <server>/api/courses/:courseId/conversations/:conversationId/members/search?loginOrName=:searchTerm&sort=firstName,asc&sort=lastName,asc&page=0&size=10
-        // optional filter attribute to further : filter=INSTRUCTOR or EDITOR or TUTOR or STUDENT or CHANNEL_ADMIN
+        // optional filter attribute to further : filter=INSTRUCTOR or EDITOR or TUTOR or STUDENT or CHANNEL_MODERATOR
         var params = new LinkedMultiValueMap<String, String>();
         params.add("loginOrName", "");
         params.add("sort", "firstName,asc");
@@ -147,21 +147,21 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
         assertThat(members).hasSize(1);
         assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("instructor1");
-        // same request but now we only search for channel admins
-        params.set("filter", "CHANNEL_ADMIN");
+        // same request but now we only search for channel moderators
+        params.set("filter", "CHANNEL_MODERATOR");
         members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
         assertThat(members).hasSize(2);
         assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("tutor1", "instructor1");
     }
 
-    private void assertConversationDTOTransientProperties(ConversationDTO conversationDTO, Boolean isCreator, Boolean isMember, Boolean hasChannelAdminRights,
-            Boolean isChannelAdmin) {
+    private void assertConversationDTOTransientProperties(ConversationDTO conversationDTO, Boolean isCreator, Boolean isMember, Boolean hasChannelModerationRights,
+            Boolean isChannelModerator) {
         assertThat(conversationDTO.getIsCreator()).isEqualTo(isCreator);
         assertThat(conversationDTO.getIsMember()).isEqualTo(isMember);
 
         if (conversationDTO instanceof ChannelDTO) {
-            assertThat(((ChannelDTO) conversationDTO).getHasChannelAdminRights()).isEqualTo(hasChannelAdminRights);
-            assertThat(((ChannelDTO) conversationDTO).getIsChannelAdmin()).isEqualTo(isChannelAdmin);
+            assertThat(((ChannelDTO) conversationDTO).getHasChannelModerationRights()).isEqualTo(hasChannelModerationRights);
+            assertThat(((ChannelDTO) conversationDTO).getIsChannelModerator()).isEqualTo(isChannelModerator);
         }
     }
 

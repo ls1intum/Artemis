@@ -6,4 +6,10 @@
             </column>
         </addColumn>
     </changeSet>
+    <changeSet author="swaldhauser" id="20221207000000-2">
+        <renameColumn tableName="conversation_participant" oldColumnName="is_admin" newColumnName="is_moderator" columnDataType="BIT(1)"/>
+    </changeSet>
+    <changeSet author="swaldhauser" id="20221207000000-3">
+        <addDefaultValue tableName="conversation_participant" columnName="is_moderator" defaultValueBoolean="false"/>
+    </changeSet>
 </databaseChangeLog>

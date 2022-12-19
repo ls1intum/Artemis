@@ -142,7 +142,7 @@ public class ConversationResource {
             var dto = new ConversationUserDTO(user);
             UserPublicInfoDTO.assignRoleProperties(course, user, dto);
             if (conversationFromDatabase instanceof Channel channel) {
-                dto.setIsChannelAdmin(channelAuthorizationService.isChannelAdmin(channel.getId(), user.getId()));
+                dto.setIsChannelModerator(channelAuthorizationService.isChannelModerator(channel.getId(), user.getId()));
             }
             resultDTO.add(dto);
         }

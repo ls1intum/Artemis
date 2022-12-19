@@ -72,7 +72,7 @@ public class ChannelResource {
         var isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(courseRepository.findByIdElseThrow(courseId), requestingUser);
         var result = channelService.getChannels(courseId).stream().map(channel -> conversationDTOService.convertChannelToDto(requestingUser, channel));
         var filteredStream = result;
-        // only instructors / admins can see all channels
+        // only instructors / system admins can see all channels
         if (!isAtLeastInstructor) {
             filteredStream = result
                     // we only want to show public channels and in addition private channels that the requestingUser is a member of
@@ -188,51 +188,50 @@ public class ChannelResource {
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/grant-channel-admin : Grants members of a channel the channel admin role
+     * POST /api/courses/:courseId/channels/:channelId/grant-channel-moderator : Grants members of a channel the channel moderator role
      *
      * @param courseId   the id of the course
      * @param channelId  the id of the channel
-     * @param userLogins the logins of the channel members to be granted the channel admin role
+     * @param userLogins the logins of the channel members to be granted the channel moderator role
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("/{courseId}/channels/{channelId}/grant-channel-admin")
+    @PostMapping("/{courseId}/channels/{channelId}/grant-channel-moderator")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> grantChannelAdmin(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
-        log.debug("REST request to grant channel admin rights to users {} in channel {}", userLogins.toString(), channelId);
+    public ResponseEntity<Void> grantChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
+        log.debug("REST request to grant channel moderator role to users {} in channel {}", userLogins.toString(), channelId);
         var channel = channelService.getChannel(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
-        channelAuthorizationService.isAllowedToGrantChannelAdmin(channel, userRepository.getUserWithGroupsAndAuthorities());
-        var usersToGrantChannelAdmin = conversationService.findUsersInDatabase(userLogins);
-        channelService.grantChannelAdmin(channel, usersToGrantChannelAdmin);
+        channelAuthorizationService.isAllowedToGrantChannelModeratorRole(channel, userRepository.getUserWithGroupsAndAuthorities());
+        var usersToGrant = conversationService.findUsersInDatabase(userLogins);
+        channelService.grantChannelModeratorRole(channel, usersToGrant);
         return ResponseEntity.ok().build();
     }
 
     /**
-     * POST /api/courses/:courseId/channels/:channelId/revoke-channel-admin : Revokes members of a channel the channel admin role
+     * POST /api/courses/:courseId/channels/:channelId/revoke-channel-moderator : Revokes the channel moderator role
      *
      * @param courseId   the id of the course
      * @param channelId  the id of the channel
-     * @param userLogins the logins of the channel members to be revokes the channel admin role
+     * @param userLogins the logins of the channel members to be revoked the channel moderator role
      * @return ResponseEntity with status 200 (Ok)
      */
-    @PostMapping("/{courseId}/channels/{channelId}/revoke-channel-admin")
+    @PostMapping("/{courseId}/channels/{channelId}/revoke-channel-moderator")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> revokeChannelAdmin(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
-        log.debug("REST request to revoke channel admin rights from users {} in channel {}", userLogins.toString(), channelId);
+    public ResponseEntity<Void> revokeChannelModeratorRole(@PathVariable Long courseId, @PathVariable Long channelId, @RequestBody List<String> userLogins) {
+        log.debug("REST request to revoke channel moderator role from users {} in channel {}", userLogins.toString(), channelId);
         var channel = channelService.getChannel(channelId);
         if (!channel.getCourse().getId().equals(courseId)) {
             throw new BadRequestAlertException("The channel does not belong to the course", CHANNEL_ENTITY_NAME, "channel.course.mismatch");
         }
-        channelAuthorizationService.isAllowedToRevokeChannelAdmin(channel, userRepository.getUserWithGroupsAndAuthorities());
-        var usersToGrantChannelAdmin = conversationService.findUsersInDatabase(userLogins);
-        // nobody is allowed to revoke admin rights from the creator of the channel throw bad request
-        if (usersToGrantChannelAdmin.contains(channel.getCreator())) {
-            throw new BadRequestAlertException("The creator of the channel cannot be revoked from the channel admin role", CHANNEL_ENTITY_NAME, "channel.creator.revoke");
+        channelAuthorizationService.isAllowedToRevokeChannelModeratorRole(channel, userRepository.getUserWithGroupsAndAuthorities());
+        var usersToGrantChannelModeratorRole = conversationService.findUsersInDatabase(userLogins);
+        if (usersToGrantChannelModeratorRole.contains(channel.getCreator())) {
+            throw new BadRequestAlertException("The creator of the channel cannot lose the channel moderator role", CHANNEL_ENTITY_NAME, "channel.creator.revoke");
         }
 
-        channelService.revokeChannelAdmin(channel, usersToGrantChannelAdmin);
+        channelService.revokeChannelModeratorRole(channel, usersToGrantChannelModeratorRole);
         return ResponseEntity.ok().build();
     }
 

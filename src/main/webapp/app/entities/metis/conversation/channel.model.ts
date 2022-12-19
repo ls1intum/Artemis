@@ -26,8 +26,8 @@ export class ChannelDTO extends ConversationDto {
     public isPublic?: boolean;
     public isAnnouncementChannel?: boolean;
     public isArchived?: boolean;
-    public isAdmin?: boolean;
-    public hasChannelAdminRights?: boolean;
+    public isChannelModerator?: boolean;
+    public hasChannelModerationRights?: boolean;
 
     constructor() {
         super(ConversationType.CHANNEL);

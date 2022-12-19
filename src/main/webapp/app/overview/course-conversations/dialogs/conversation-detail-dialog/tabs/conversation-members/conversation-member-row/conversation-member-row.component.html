@@ -6,9 +6,9 @@
     <span class="d-inline-block">
         <fa-icon [icon]="userIcon" [ngbTooltip]="userTooltip"></fa-icon>
         <fa-icon
-            *ngIf="isChannel(activeConversation) && conversationMember?.isChannelAdmin"
+            *ngIf="isChannel(activeConversation) && conversationMember?.isChannelModerator"
             [icon]="faUserGear"
-            [ngbTooltip]="'artemisApp.dialogs.conversationDetail.memberTab.memberRow.channelAdminTooltip' | artemisTranslate"
+            [ngbTooltip]="'artemisApp.dialogs.conversationDetail.memberTab.memberRow.channelModeratorTooltip' | artemisTranslate"
         ></fa-icon>
         {{ userLabel }}
     </span>
@@ -17,7 +17,7 @@
             class="btn btn-outline-secondary dropdown-toggle interaction"
             type="button"
             ngbDropdownToggle
-            *ngIf="canBeRemovedFromConversation || canBeGrantedChannelAdminRights || canBeRevokedChannelAdminRights"
+            *ngIf="canBeRemovedFromConversation || canBeGrantedChannelModeratorRole || canBeRevokedChannelModeratorRole"
         >
             <fa-icon [icon]="faEllipsis" size="xs"></fa-icon>
         </button>
@@ -25,11 +25,11 @@
             <button ngbDropdownItem *ngIf="canBeRemovedFromConversation" class="text-danger remove-member" (click)="openRemoveFromConversationDialog($event)">
                 {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.removeUser' | artemisTranslate }}
             </button>
-            <button ngbDropdownItem *ngIf="canBeGrantedChannelAdminRights" class="text-danger grant-admin" (click)="openGrantChannelAdminRightsDialog($event)">
-                {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.grantAdminRights' | artemisTranslate }}
+            <button ngbDropdownItem *ngIf="canBeGrantedChannelModeratorRole" class="text-danger grant-moderator" (click)="openGrantChannelModeratorRoleDialog($event)">
+                {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.grantModeratorRole' | artemisTranslate }}
             </button>
-            <button ngbDropdownItem *ngIf="canBeRevokedChannelAdminRights" class="text-danger revoke-admin" (click)="openRevokeChannelAdminRightsDialog($event)">
-                {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.revokeAdminRights' | artemisTranslate }}
+            <button ngbDropdownItem *ngIf="canBeRevokedChannelModeratorRole" class="text-danger revoke-moderator" (click)="openRevokeChannelModeratorRoleDialog($event)">
+                {{ 'artemisApp.dialogs.conversationDetail.memberTab.memberRow.revokeModeratorRole' | artemisTranslate }}
             </button>
         </div>
     </div>

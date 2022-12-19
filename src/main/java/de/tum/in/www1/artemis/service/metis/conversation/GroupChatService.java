@@ -80,7 +80,7 @@ public class GroupChatService {
         participant.setUser(user);
         participant.setConversation(groupChat);
         // makes no sense for group chats
-        participant.setIsAdmin(false);
+        participant.setIsModerator(false);
         participant.setIsFavorite(false);
         participant.setIsHidden(false);
         return participant;

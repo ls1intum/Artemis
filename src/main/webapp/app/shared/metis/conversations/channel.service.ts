@@ -70,15 +70,15 @@ export class ChannelService {
         return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/register`, userLogins, { observe: 'response', params });
     }
 
-    grantChannelAdminRights(courseId: number, channelId: number, logins?: string[]): Observable<HttpResponse<void>> {
-        // if no explicit login is give we assume trying to grant admin rights to self
+    grantChannelModeratorRole(courseId: number, channelId: number, logins?: string[]): Observable<HttpResponse<void>> {
+        // if no explicit login is give we assume trying to grant channel moderator role to self
         const userLogins = logins ? logins : [this.accountService.userIdentity?.login];
-        return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/grant-channel-admin`, userLogins, { observe: 'response' });
+        return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/grant-channel-moderator`, userLogins, { observe: 'response' });
     }
 
-    revokeChannelAdminRights(courseId: number, channelId: number, logins?: string[]): Observable<HttpResponse<void>> {
-        // if no explicit login is give we assume trying to revoke admin rights from self
+    revokeChannelModeratorRole(courseId: number, channelId: number, logins?: string[]): Observable<HttpResponse<void>> {
+        // if no explicit login is give we assume trying to revoke channel moderator role from self
         const userLogins = logins ? logins : [this.accountService.userIdentity?.login];
-        return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/revoke-channel-admin`, userLogins, { observe: 'response' });
+        return this.http.post<void>(`${this.resourceUrl}${courseId}/channels/${channelId}/revoke-channel-moderator`, userLogins, { observe: 'response' });
     }
 }
