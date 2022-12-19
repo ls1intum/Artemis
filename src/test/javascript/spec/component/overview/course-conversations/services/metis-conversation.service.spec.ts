@@ -28,8 +28,6 @@ describe('MetisConversationService', () => {
     let oneToOneChatService: OneToOneChatService;
     let channelService: ChannelService;
     let websocketService: JhiWebsocketService;
-    let accountService: AccountService;
-    let alertService: AlertService;
     let courseManagementService: CourseManagementService;
 
     const course = { id: 1 } as Course;
@@ -61,8 +59,6 @@ describe('MetisConversationService', () => {
         oneToOneChatService = TestBed.inject(OneToOneChatService);
         channelService = TestBed.inject(ChannelService);
         websocketService = TestBed.inject(JhiWebsocketService);
-        accountService = TestBed.inject(AccountService);
-        alertService = TestBed.inject(AlertService);
         courseManagementService = TestBed.inject(CourseManagementService);
         conversationService = TestBed.inject(ConversationService);
 
