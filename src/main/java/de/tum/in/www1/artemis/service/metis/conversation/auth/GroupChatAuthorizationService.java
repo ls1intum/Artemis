@@ -48,7 +48,7 @@ public class GroupChatAuthorizationService extends ConversationAuthorizationServ
         var userToCheck = getUserIfNecessary(user);
         var createdGroupChats = groupChatRepository.countByCreatorIdAndCourseId(userToCheck.getId(), course.getId());
         if (createdGroupChats >= MAX_GROUP_CHATS_PER_USER_PER_COURSE) {
-            throw new IllegalArgumentException("You can only create " + MAX_GROUP_CHATS_PER_USER_PER_COURSE + "group chats per course");
+            throw new IllegalArgumentException("You can only create " + MAX_GROUP_CHATS_PER_USER_PER_COURSE + " group chats per course");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, userToCheck);
     }
