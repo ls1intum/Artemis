@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.text;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +19,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.TextAssessmentEventResource;
 
 class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "textexerciseanalytics";
 
     @Autowired
     private UserRepository userRepository;
@@ -51,11 +52,12 @@ class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBamb
      */
     @BeforeEach
     void initTestCase() {
-        course = database.createCourseWithTutor("tutor1");
-        tutor = userRepository.getUserByLoginElseThrow("tutor1");
+        database.addUsers(TEST_PREFIX, 0, 0, 1, 1);
+        course = database.createCourseWithTutor(TEST_PREFIX + "tutor1");
+        tutor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "tutor1");
         exercise = course.getExercises().iterator().next();
-        studentParticipation = studentParticipationRepository.findAll().get(0);
-        textSubmission = textSubmissionRepository.findAll().get(0);
+        studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().iterator().next();
+        textSubmission = textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).get(0);
     }
 
     @AfterEach
@@ -67,7 +69,7 @@ class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBamb
      * Tests adding multiple different combinations of events
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAddMultipleCompleteAssessmentEvents() {
         List<TextAssessmentEvent> events = ModelFactory.generateMultipleTextAssessmentEvents(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(),
                 textSubmission.getId());
@@ -81,7 +83,7 @@ class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBamb
      * Tests addition of a single assessment event
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAddSingleCompleteAssessmentEvent() {
         expectEventAddedWithResponse(HttpStatus.OK, tutor.getId());
     }
@@ -90,7 +92,7 @@ class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBamb
      * Tests addition of a single event with a tutor that is not part of the course
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAddSingleCompleteAssessmentEvent_withTutorNotInCourse() {
         // Tutor with tutor1 id incremented is not part of the course, therefore forbidden to access this resource
         expectEventAddedWithResponse(HttpStatus.BAD_REQUEST, tutor.getId() + 1);
@@ -112,7 +114,7 @@ class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBamb
      * that is why we treat incoming events with an already generated id as badly formed requests
      */
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAddSingleCompleteAssessmentEvent_withNotNullEventId() {
         TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(), textSubmission.getId());
         event.setId(1L);
@@ -121,7 +123,7 @@ class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAddSingleCompleteAssessmentEvent_withExampleSubmission() {
         textSubmission.setExampleSubmission(true);
         textSubmissionRepository.saveAndFlush(textSubmission);
@@ -136,10 +138,7 @@ class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetAllEventsByCourseId() {
-        User user = new User();
-        user.setLogin("admin");
-        user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
-        userRepository.save(user);
+        User user = database.getUserByLogin("admin");
         TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), user.getId(), exercise.getId(), studentParticipation.getId(), textSubmission.getId());
         ResponseEntity<Void> responseAddEvent = textAssessmentEventResource.addAssessmentEvent(event);
         assertThat(responseAddEvent.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -153,12 +152,9 @@ class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBamb
      * Tests the get events endpoint with admin role
      */
     @Test
-    @WithMockUser(username = "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId() throws Exception {
-        User user = new User();
-        user.setLogin("instructor");
-        user.setGroups(Set.of(course.getInstructorGroupName()));
-        userRepository.save(user);
+        User user = database.getUserByLogin(TEST_PREFIX + "instructor1");
 
         TextAssessmentEvent event1 = database.createSingleTextAssessmentEvent(course.getId(), 0L, exercise.getId(), studentParticipation.getId(), textSubmission.getId());
         TextAssessmentEvent event2 = database.createSingleTextAssessmentEvent(course.getId(), 1L, exercise.getId(), studentParticipation.getId(), textSubmission.getId());
