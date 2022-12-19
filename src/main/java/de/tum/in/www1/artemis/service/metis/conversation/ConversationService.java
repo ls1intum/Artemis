@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationWebsocketDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
@@ -268,8 +267,8 @@ public class ConversationService {
      */
     public ZonedDateTime auditConversationReadTimeOfUser(Conversation conversation, User user) {
         // update the last time user has read the conversation
-        ConversationParticipant readingParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversation.getId(), user.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Conversation participant not found!"));
+        ConversationParticipant readingParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversation.getId(),
+                user.getId());
         readingParticipant.setLastRead(ZonedDateTime.now());
         conversationParticipantRepository.save(readingParticipant);
         return readingParticipant.getLastRead();
@@ -321,8 +320,7 @@ public class ConversationService {
      * @param isFavorite     the new favorite status
      */
     public void switchFavoriteStatus(Long conversationId, User requestingUser, Boolean isFavorite) {
-        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Conversation participant not found!"));
+        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversationId, requestingUser.getId());
         participation.setIsFavorite(isFavorite);
         conversationParticipantRepository.save(participation);
     }
@@ -335,8 +333,7 @@ public class ConversationService {
      * @param hiddenStatus   the new hidden status
      */
     public void switchHiddenStatus(Long conversationId, User requestingUser, Boolean hiddenStatus) {
-        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(conversationId, requestingUser.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Conversation participant not found!"));
+        var participation = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversationId, requestingUser.getId());
         participation.setIsHidden(hiddenStatus);
         conversationParticipantRepository.save(participation);
     }
