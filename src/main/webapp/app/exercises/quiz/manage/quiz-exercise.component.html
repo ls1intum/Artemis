@@ -234,7 +234,7 @@
                                 <a
                                     *ngIf="quizExercise.isAtLeastEditor"
                                     [hidden]="quizIsOver(quizExercise)"
-                                    [class.disabled]="!isQuizEditable(quizExercise)"
+                                    [class.disabled]="!quizExercise.isEditable"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
                                     class="btn btn-warning btn-sm me-1 mb-1"
                                     style="display: flex; justify-content: center; align-items: center"

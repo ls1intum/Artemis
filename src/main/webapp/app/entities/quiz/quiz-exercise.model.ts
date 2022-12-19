@@ -51,6 +51,7 @@ export class QuizExercise extends Exercise {
 
     public isActiveQuiz?: boolean;
     public isPracticeModeAvailable?: boolean;
+    public isEditable?: boolean;
 
     constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
         super(ExerciseType.QUIZ);
