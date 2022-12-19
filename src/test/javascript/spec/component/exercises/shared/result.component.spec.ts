@@ -1,8 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ResultComponent, ResultTemplateStatus } from 'app/exercises/shared/result/result.component';
+import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { Result } from 'app/entities/result.model';
 import { ArtemisTestModule } from '../../../test.module';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -20,6 +19,8 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ParticipationType } from 'app/entities/participation/participation.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { ResultTemplateStatus } from 'app/exercises/shared/result/result.utils';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ResultComponent', () => {
     let fixture: ComponentFixture<ResultComponent>;
@@ -46,8 +47,8 @@ describe('ResultComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
-            declarations: [ResultComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe), MockPipe(ArtemisDatePipe)],
+            imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
+            declarations: [ResultComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisTimeAgoPipe), MockPipe(ArtemisDatePipe)],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -85,7 +86,6 @@ describe('ResultComponent', () => {
         expect(component.result!.participation).toEqual(participation1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-secondary');
-        expect(component.hasFeedback).toBeFalse();
         expect(component.resultIconClass).toEqual(faQuestionCircle);
         expect(component.resultString).toBe('artemisApp.result.resultString.programming (artemisApp.result.preliminary)');
     });
@@ -104,7 +104,6 @@ describe('ResultComponent', () => {
         expect(component.result!.participation).toEqual(participation1);
         expect(component.submission).toEqual(submission1);
         expect(component.textColorClass).toBe('text-danger');
-        expect(component.hasFeedback).toBeFalse();
         expect(component.resultIconClass).toEqual(faCheckCircle);
         expect(component.resultString).toBe('artemisApp.result.resultString.nonProgramming');
         expect(component.templateStatus).toBe(ResultTemplateStatus.HAS_RESULT);

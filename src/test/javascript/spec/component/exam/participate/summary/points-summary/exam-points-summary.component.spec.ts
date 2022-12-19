@@ -201,8 +201,9 @@ describe('ExamPointsSummaryComponent', () => {
         expect(component.getAchievedPoints(programmingExercise)).toBe(0);
 
         expect(component.getAchievedPointsSum()).toBe(35.33);
-        expect(component.getMaxPointsSum()).toBe(40);
+        expect(component.getMaxNormalPointsSum()).toBe(40);
         expect(component.getMaxBonusPointsSum()).toBe(20);
+        expect(component.getMaxNormalAndBonusPointsSum()).toBe(60);
     });
 
     it('should display 0 if no exercises are present', () => {
@@ -214,6 +215,8 @@ describe('ExamPointsSummaryComponent', () => {
         expect(fixture).not.toBeNull();
 
         expect(component.getAchievedPointsSum()).toBe(0);
-        expect(component.getMaxPointsSum()).toBe(0);
+        expect(component.getMaxNormalPointsSum()).toBe(0);
+        expect(component.getMaxBonusPointsSum()).toBe(20);
+        expect(component.getMaxNormalAndBonusPointsSum()).toBe(20);
     });
 });

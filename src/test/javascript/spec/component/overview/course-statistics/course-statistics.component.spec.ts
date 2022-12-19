@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { ArtemisTestModule } from '../../../test.module';
 import { ActivatedRoute } from '@angular/router';
 import { By } from '@angular/platform-browser';
@@ -15,7 +15,6 @@ import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exe
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { of } from 'rxjs';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { RouterTestingModule } from '@angular/router/testing';
 import { BarChartModule, PieChartModule } from '@swimlane/ngx-charts';
 import { MockTranslateValuesDirective } from '../../../helpers/mocks/directive/mock-translate-values.directive';
@@ -26,6 +25,7 @@ import { TreeviewModule } from 'app/exercises/programming/shared/code-editor/tre
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ChartCategoryFilter } from 'app/shared/chart/chart-category-filter';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CourseStatisticsComponent', () => {
     let comp: CourseStatisticsComponent;
@@ -131,7 +131,6 @@ describe('CourseStatisticsComponent', () => {
                             successful: false,
                             score: 92,
                             rated: true,
-                            hasFeedback: false,
                             assessmentType: 'MANUAL',
                             hasComplaint: false,
                         },
@@ -171,7 +170,6 @@ describe('CourseStatisticsComponent', () => {
                             successful: false,
                             score: 75,
                             rated: true,
-                            hasFeedback: false,
                             assessmentType: 'MANUAL',
                             hasComplaint: false,
                         },
@@ -214,7 +212,6 @@ describe('CourseStatisticsComponent', () => {
                         successful: false,
                         score: 75,
                         rated: true,
-                        hasFeedback: false,
                         assessmentType: 'MANUAL',
                         hasComplaint: false,
                     },
@@ -253,7 +250,6 @@ describe('CourseStatisticsComponent', () => {
                         successful: false,
                         score: 33,
                         rated: true,
-                        hasFeedback: false,
                         assessmentType: 'MANUAL',
                         hasComplaint: false,
                     },
@@ -294,7 +290,6 @@ describe('CourseStatisticsComponent', () => {
                         successful: false,
                         score: 100,
                         rated: true,
-                        hasFeedback: false,
                         assessmentType: 'MANUAL',
                         hasComplaint: false,
                     },
@@ -329,14 +324,13 @@ describe('CourseStatisticsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, TreeviewModule.forRoot(), MockModule(PieChartModule), MockModule(BarChartModule)],
+            imports: [ArtemisTestModule, RouterTestingModule, TreeviewModule.forRoot(), MockModule(PieChartModule), MockModule(BarChartModule), MockModule(NgbTooltipModule)],
             declarations: [
                 CourseStatisticsComponent,
                 MockComponent(CourseLearningGoalsComponent),
                 MockComponent(ExerciseScoresChartComponent),
                 MockTranslateValuesDirective,
                 ArtemisTranslatePipe,
-                MockDirective(NgbTooltip),
             ],
             providers: [MockProvider(ArtemisNavigationUtilService), MockProvider(ChartCategoryFilter), { provide: ActivatedRoute, useValue: { parent: { params: of(1) } } }],
         })
@@ -459,7 +453,6 @@ describe('CourseStatisticsComponent', () => {
                                 successful: false,
                                 score: 55,
                                 rated: true,
-                                hasFeedback: false,
                                 assessmentType: 'MANUAL',
                                 hasComplaint: false,
                             },

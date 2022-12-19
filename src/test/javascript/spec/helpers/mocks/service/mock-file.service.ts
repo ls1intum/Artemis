@@ -1,11 +1,11 @@
 import { of } from 'rxjs';
 
 export class MockFileService {
-    downloadMergedFileWithAccessToken = () => {
+    downloadMergedFile = () => {
         return { subscribe: (fn: (value: any) => void) => fn({ body: new Window() }) };
     };
 
-    downloadFileWithAccessToken = () => {
+    downloadFile = () => {
         return { subscribe: (fn: (value: any) => void) => fn({ body: new Window() }) };
     };
 

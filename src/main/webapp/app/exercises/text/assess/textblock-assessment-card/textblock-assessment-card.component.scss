@@ -8,9 +8,16 @@ span {
     white-space: pre-wrap;
 
     &:hover {
-        background: var(--textblock-assessment-span-hover-background);
-        padding: 2px 4px;
-        border-radius: 4px;
+        &.clickable {
+            background: var(--textblock-assessment-span-hover-background);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+    }
+
+    &.highlighted {
+        color: var(--textblock-assessment-text-feedback-highlighted-color);
+        background-color: var(--textblock-assessment-text-feedback-highlighted-background);
     }
 
     &.text-with-feedback {
@@ -64,7 +71,7 @@ span {
 }
 
 jhi-textblock-feedback-editor {
-    margin-top: 1em;
+    margin-top: 1rem;
     border-width: 0;
 
     &.active {

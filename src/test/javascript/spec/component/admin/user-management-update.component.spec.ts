@@ -1,14 +1,14 @@
-import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, inject, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
-import { of, Subject } from 'rxjs';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { Subject, of } from 'rxjs';
 import { FormBuilder, NgForm, NgModel } from '@angular/forms';
-
 import { ArtemisTestModule } from '../../test.module';
 import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { UserService } from 'app/core/user/user.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -24,13 +24,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
 import * as Sentry from '@sentry/browser';
-
 import { LANGUAGES } from 'app/core/language/language.constants';
+import { AdminUserService } from 'app/core/user/admin-user.service';
 
 describe('User Management Update Component', () => {
     let comp: UserManagementUpdateComponent;
     let fixture: ComponentFixture<UserManagementUpdateComponent>;
-    let service: UserService;
+    let service: AdminUserService;
     let titleService: Title;
 
     const parentRoute = {
@@ -63,7 +63,7 @@ describe('User Management Update Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(UserManagementUpdateComponent);
                 comp = fixture.componentInstance;
-                service = TestBed.inject(UserService);
+                service = TestBed.inject(AdminUserService);
                 modalService = TestBed.inject(NgbModal);
                 titleService = TestBed.inject(Title);
                 translateService = TestBed.inject(TranslateService);
@@ -87,6 +87,9 @@ describe('User Management Update Component', () => {
                 jest.spyOn(service, 'authorities').mockReturnValue(of(['USER']));
                 const getAllSpy = jest.spyOn(languageHelper, 'getAll').mockReturnValue([]);
 
+                const profileInfoStub = jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo');
+                profileInfoStub.mockReturnValue(of({ activeProfiles: ['bamboo'] } as ProfileInfo));
+
                 // WHEN
                 comp.ngOnInit();
 
@@ -94,6 +97,7 @@ describe('User Management Update Component', () => {
                 expect(service.authorities).toHaveBeenCalledOnce();
                 expect(comp.authorities).toEqual(['USER']);
                 expect(getAllSpy).toHaveBeenCalledOnce();
+                expect(profileInfoStub).toHaveBeenCalledOnce();
             }),
         ));
 
@@ -102,6 +106,8 @@ describe('User Management Update Component', () => {
             fakeAsync((languageHelper: JhiLanguageHelper) => {
                 // GIVEN
                 const getAllSpy = jest.spyOn(languageHelper, 'getAll');
+                const profileInfoStub = jest.spyOn(TestBed.inject(ProfileService), 'getProfileInfo');
+                profileInfoStub.mockReturnValue(of({ activeProfiles: ['bamboo'] } as ProfileInfo));
 
                 // WHEN
                 comp.ngOnInit();
@@ -109,6 +115,7 @@ describe('User Management Update Component', () => {
                 // THEN
                 expect(getAllSpy).toHaveBeenCalledOnce();
                 expect(comp.languages).toEqual(LANGUAGES);
+                expect(profileInfoStub).toHaveBeenCalledOnce();
             }),
         ));
 

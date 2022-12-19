@@ -6,7 +6,7 @@ import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-ques
 import { Result } from 'app/entities/result.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { faExclamationCircle, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { faCheckSquare, faSquare, faDotCircle, faCircle } from '@fortawesome/free-regular-svg-icons';
+import { faCheckSquare, faCircle, faDotCircle, faSquare } from '@fortawesome/free-regular-svg-icons';
 
 @Component({
     selector: 'jhi-multiple-choice-question',

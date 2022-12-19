@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, HostBinding, Input, HostListener } from '@angular/core';
+import { AfterViewInit, Component, HostBinding, HostListener, Input } from '@angular/core';
 import { faChevronLeft, faChevronRight, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 import interact from 'interactjs';
 

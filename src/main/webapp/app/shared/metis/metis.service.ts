@@ -1,6 +1,6 @@
 import { Post } from 'app/entities/metis/post.model';
 import { PostService } from 'app/shared/metis/post.service';
-import { BehaviorSubject, map, Observable, ReplaySubject } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
@@ -330,19 +330,6 @@ export class MetisService implements OnDestroy {
             emptyPost.courseWideContext = CourseWideContext.TECH_SUPPORT as CourseWideContext;
         }
         return emptyPost;
-    }
-
-    /**
-     * determines if the post is resolved by searching for resolving answer posts
-     * @param {Post} post of which the state is determined
-     * @return {boolean} flag that indicates if the post is resolved
-     */
-    isPostResolved(post: Post): boolean {
-        if (post.answers && post.answers.length > 0) {
-            return !!post.answers.find((answerPosts: AnswerPost) => answerPosts.resolvesPost);
-        } else {
-            return false;
-        }
     }
 
     /**

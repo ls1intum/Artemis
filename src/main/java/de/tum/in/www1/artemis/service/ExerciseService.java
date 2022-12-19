@@ -686,7 +686,7 @@ public class ExerciseService {
                     dueDate = Optional.empty();
                 }
                 else {
-                    dueDate = exerciseDateService.getDueDate(result.getParticipation());
+                    dueDate = ExerciseDateService.getDueDate(result.getParticipation());
                 }
                 resultRepository.submitResult(result, exercise, dueDate);
             }

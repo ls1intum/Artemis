@@ -135,6 +135,9 @@ export class ParticipationService {
         if (participation) {
             participation.initializationDate = convertDateFromServer(participation.initializationDate);
             participation.individualDueDate = convertDateFromServer(participation.individualDueDate);
+            if (participation.exercise) {
+                participation.exercise = ExerciseService.convertExerciseDatesFromServer(participation.exercise);
+            }
         }
         return participation;
     }
@@ -186,6 +189,7 @@ export class ParticipationService {
         if (participations?.length) {
             combinedParticipation.repositoryUrl = participations[0].repositoryUrl;
             combinedParticipation.buildPlanId = participations[0].buildPlanId;
+            combinedParticipation.buildPlanUrl = participations[0].buildPlanUrl;
             this.mergeResultsAndSubmissions(combinedParticipation, participations);
         }
         return combinedParticipation;

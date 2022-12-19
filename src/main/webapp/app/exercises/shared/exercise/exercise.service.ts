@@ -2,19 +2,22 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
-import { Exercise, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
 import { map } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
-import { LtiConfiguration } from 'app/entities/lti-configuration.model';
 import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { User } from 'app/core/user/user.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -32,6 +35,7 @@ export interface ExerciseServicable<T extends Exercise> {
 @Injectable({ providedIn: 'root' })
 export class ExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
+    public adminResourceUrl = SERVER_API_URL + 'api/admin/exercises';
 
     constructor(
         private http: HttpClient,
@@ -39,6 +43,7 @@ export class ExerciseService {
         private accountService: AccountService,
         private translateService: TranslateService,
         private entityTitleService: EntityTitleService,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -67,14 +72,20 @@ export class ExerciseService {
      */
     validateDate(exercise: Exercise) {
         exercise.dueDateError = this.hasDueDateError(exercise);
+        exercise.startDateError = this.hasStartDateError(exercise);
         exercise.assessmentDueDateError = this.hasAssessmentDueDateError(exercise);
 
         exercise.exampleSolutionPublicationDateError = this.hasExampleSolutionPublicationDateError(exercise);
         exercise.exampleSolutionPublicationDateWarning = this.hasExampleSolutionPublicationDateWarning(exercise);
     }
 
+    hasStartDateError(exercise: Exercise) {
+        return exercise.startDate && exercise.releaseDate && dayjs(exercise.startDate).isBefore(exercise.releaseDate);
+    }
+
     hasDueDateError(exercise: Exercise) {
-        return exercise.releaseDate && exercise.dueDate ? dayjs(exercise.dueDate).isBefore(exercise.releaseDate) : false;
+        const relevantDateBefore = exercise.startDate ?? exercise.releaseDate;
+        return relevantDateBefore && exercise.dueDate && dayjs(exercise.dueDate).isBefore(relevantDateBefore);
     }
 
     private hasAssessmentDueDateError(exercise: Exercise) {
@@ -99,8 +110,8 @@ export class ExerciseService {
     hasExampleSolutionPublicationDateError(exercise: Exercise) {
         if (exercise.exampleSolutionPublicationDate) {
             return (
-                dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.releaseDate || null) ||
-                (dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate || null) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
+                dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.startDate ?? exercise.releaseDate) ||
+                (dayjs(exercise.exampleSolutionPublicationDate).isBefore(exercise.dueDate) && exercise.includedInOverallScore !== IncludedInOverallScore.NOT_INCLUDED)
             );
         }
         return false;
@@ -165,7 +176,7 @@ export class ExerciseService {
 
     getUpcomingExercises(): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Exercise[]>(`${this.resourceUrl}/upcoming`, { observe: 'response' })
+            .get<Exercise[]>(`${this.adminResourceUrl}/upcoming`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processExerciseEntityArrayResponse(res)));
     }
 
@@ -240,6 +251,7 @@ export class ExerciseService {
     static convertExerciseDatesFromServer(exercise?: Exercise) {
         if (exercise) {
             exercise.releaseDate = convertDateFromServer(exercise.releaseDate);
+            exercise.startDate = convertDateFromServer(exercise.startDate);
             exercise.dueDate = convertDateFromServer(exercise.dueDate);
             exercise.assessmentDueDate = convertDateFromServer(exercise.assessmentDueDate);
             exercise.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(exercise.studentParticipations);
@@ -272,6 +284,7 @@ export class ExerciseService {
     static convertExerciseDatesFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
             releaseDate: convertDateFromClient(exercise.releaseDate),
+            startDate: convertDateFromClient(exercise.startDate),
             dueDate: convertDateFromClient(exercise.dueDate),
             assessmentDueDate: convertDateFromClient(exercise.assessmentDueDate),
             exampleSolutionPublicationDate: convertDateFromClient(exercise.exampleSolutionPublicationDate),
@@ -285,6 +298,7 @@ export class ExerciseService {
     static convertExerciseResponseDatesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         if (res.body) {
             res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
+            res.body.startDate = convertDateFromServer(res.body.startDate);
             res.body.dueDate = convertDateFromServer(res.body.dueDate);
             res.body.assessmentDueDate = convertDateFromServer(res.body.assessmentDueDate);
             res.body.exampleSolutionPublicationDate = convertDateFromServer(res.body.exampleSolutionPublicationDate);
@@ -426,6 +440,7 @@ export class ExerciseService {
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.setAccessRightsExerciseEntityResponseType(exerciseRes);
         this.sendExerciseTitleToTitleService(exerciseRes?.body);
+        this.setBuildPlanUrlToParticipations(exerciseRes?.body);
         return exerciseRes;
     }
 
@@ -437,7 +452,10 @@ export class ExerciseService {
         ExerciseService.convertExerciseArrayDatesFromServer(exerciseResArray);
         ExerciseService.convertExerciseCategoryArrayFromServer(exerciseResArray);
         this.setAccessRightsExerciseEntityArrayResponseType(exerciseResArray);
-        exerciseResArray?.body?.forEach(this.sendExerciseTitleToTitleService.bind(this));
+        exerciseResArray?.body?.forEach((exercise) => {
+            this.sendExerciseTitleToTitleService(exercise);
+            this.setBuildPlanUrlToParticipations(exercise);
+        });
         return exerciseResArray;
     }
 
@@ -464,24 +482,18 @@ export class ExerciseService {
         }
     }
 
+    private setBuildPlanUrlToParticipations(exercise: Exercise | undefined | null) {
+        if (exercise?.type === ExerciseType.PROGRAMMING && (exercise as ProgrammingExercise).publishBuildPlanUrl) {
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                const programmingParticipations = exercise?.studentParticipations as ProgrammingExerciseStudentParticipation[];
+                setBuildPlanUrlForProgrammingParticipations(profileInfo, programmingParticipations, (exercise as ProgrammingExercise).projectKey);
+            });
+        }
+    }
+
     public getLatestDueDate(exerciseId: number): Observable<dayjs.Dayjs | undefined> {
         return this.http
             .get<dayjs.Dayjs>(`${this.resourceUrl}/${exerciseId}/latest-due-date`, { observe: 'response' })
             .pipe(map((res: HttpResponse<dayjs.Dayjs>) => (res.body ? dayjs(res.body) : undefined)));
-    }
-}
-
-@Injectable({ providedIn: 'root' })
-export class ExerciseLtiConfigurationService {
-    private resourceUrl = SERVER_API_URL + 'api/lti/configuration';
-
-    constructor(private http: HttpClient) {}
-
-    /**
-     * Load exercise with exerciseId from server
-     * @param { number } exerciseId - Id of exercise that is loaded
-     */
-    find(exerciseId: number): Observable<HttpResponse<LtiConfiguration>> {
-        return this.http.get<LtiConfiguration>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' });
     }
 }

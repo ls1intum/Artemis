@@ -4,15 +4,14 @@ import { ParticipationWebsocketService } from 'app/overview/participation-websoc
 import dayjs from 'dayjs/esm';
 import { Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { Exercise, ExerciseType, getIcon, getIconTooltip, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType, IncludedInOverallScore, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { getExerciseDueDate, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { HttpResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-course-exercise-row',
@@ -20,11 +19,6 @@ import { HttpResponse } from '@angular/common/http';
     styleUrls: ['./course-exercise-row.scss'],
 })
 export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges {
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
-    readonly TEXT = ExerciseType.TEXT;
-    readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
     @HostBinding('class') classes = 'exercise-row';
@@ -42,6 +36,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     isAfterAssessmentDueDate: boolean;
     dueDate?: dayjs.Dayjs;
     gradedStudentParticipation?: StudentParticipation;
+
+    routerLink: string[];
 
     participationUpdateListener: Subscription;
 
@@ -78,6 +74,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
                 this.dueDate = getExerciseDueDate(this.exercise, this.gradedStudentParticipation);
             }
         });
+
+        this.routerLink = ['/courses', this.course.id!.toString(), 'exercises', this.exercise.id!.toString()];
     }
 
     ngOnChanges(): void {

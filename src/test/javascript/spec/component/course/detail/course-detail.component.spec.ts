@@ -1,5 +1,7 @@
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { ActivatedRoute, Data } from '@angular/router';
+import { HeaderCourseComponent } from 'app/overview/header-course.component';
+import { FeatureToggleLinkDirective } from 'app/shared/feature-toggle/feature-toggle-link.directive';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { CourseDetailComponent } from 'app/course/manage/detail/course-detail.component';
@@ -21,11 +23,13 @@ import { UsersImportButtonComponent } from 'app/shared/import/users-import-butto
 import { EventManager } from 'app/core/util/event-manager.service';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { Course } from 'app/entities/course.model';
+import { CourseAdminService } from 'app/course/manage/course-admin.service';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
     let fixture: ComponentFixture<CourseDetailComponent>;
-    let courseService: CourseManagementService;
+    let courseManagementService: CourseManagementService;
+    let courseAdminService: CourseAdminService;
     let eventManager: EventManager;
 
     const course: Course = {
@@ -76,6 +80,8 @@ describe('Course Management Detail Component', () => {
                 MockComponent(CourseDetailDoughnutChartComponent),
                 MockComponent(CourseDetailLineChartComponent),
                 MockComponent(FullscreenComponent),
+                MockComponent(HeaderCourseComponent),
+                MockDirective(FeatureToggleLinkDirective),
             ],
             providers: [
                 {
@@ -95,12 +101,13 @@ describe('Course Management Detail Component', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
         component = fixture.componentInstance;
-        courseService = fixture.debugElement.injector.get(CourseManagementService);
+        courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
+        courseAdminService = fixture.debugElement.injector.get(CourseAdminService);
         eventManager = fixture.debugElement.injector.get(EventManager);
     });
 
     beforeEach(fakeAsync(() => {
-        const statsStub = jest.spyOn(courseService, 'getCourseStatisticsForDetailView');
+        const statsStub = jest.spyOn(courseManagementService, 'getCourseStatisticsForDetailView');
         statsStub.mockReturnValue(of(new HttpResponse({ body: dtoMock })));
     }));
 
@@ -126,7 +133,7 @@ describe('Course Management Detail Component', () => {
 
     it('should broadcast course modification on delete', () => {
         const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
-        const deleteStub = jest.spyOn(courseService, 'delete');
+        const deleteStub = jest.spyOn(courseAdminService, 'delete');
         deleteStub.mockReturnValue(of(new HttpResponse<void>()));
 
         const courseId = 444;

@@ -5,7 +5,7 @@ import { TextAssessmentEvent, TextAssessmentEventType } from 'app/entities/text-
 import { AccountService } from 'app/core/auth/account.service';
 import { FeedbackType } from 'app/entities/feedback.model';
 import { TextBlockType } from 'app/entities/text-block.model';
-import { tap, filter } from 'rxjs/operators';
+import { filter, tap } from 'rxjs/operators';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { Location } from '@angular/common';

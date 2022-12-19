@@ -50,11 +50,13 @@ public abstract class Participation extends DomainObject implements Participatio
     @Column(name = "individual_due_date")
     private ZonedDateTime individualDueDate;
 
-    // information whether this participation belongs to a test run exam, not relevant for course exercises
+    /**
+     * Whether this participation belongs to an exam test run or practice mode.
+     */
     @Column(name = "test_run")
     private Boolean testRun = false;
 
-    // NOTE: Keep default of FetchType.EAGER because most of the times we want
+    // NOTE: Keep default of FetchType.EAGER because most of the time we want
     // to get a student participation, we also need the exercise. Dealing with Proxy
     // objects would cause more issues (Subclasses don't work properly for Proxy objects)
     // and the gain from fetching lazy here is minimal
@@ -92,15 +94,14 @@ public abstract class Participation extends DomainObject implements Participatio
      * the exercise view.
      */
     @Transient
-    @JsonProperty
-    private Integer submissionCount;
+    private Integer submissionCountTransient;
 
     public Integer getSubmissionCount() {
-        return submissionCount;
+        return submissionCountTransient;
     }
 
     public void setSubmissionCount(Integer submissionCount) {
-        this.submissionCount = submissionCount;
+        this.submissionCountTransient = submissionCount;
     }
 
     public InitializationState getInitializationState() {
@@ -288,7 +289,7 @@ public abstract class Participation extends DomainObject implements Participatio
     @Override
     public String toString() {
         return getClass().getSimpleName() + "{" + "id=" + getId() + ", initializationState=" + initializationState + ", initializationDate=" + initializationDate + ", results="
-                + results + ", submissions=" + submissions + ", submissionCount=" + submissionCount + "}";
+                + results + ", submissions=" + submissions + ", submissionCount=" + submissionCountTransient + "}";
     }
 
     /**

@@ -1,12 +1,12 @@
 import * as ace from 'brace';
-import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, flush, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { ArtemisTestModule } from '../../test.module';
 import { TeamUpdateDialogComponent } from 'app/exercises/shared/team/team-update-dialog/team-update-dialog.component';
 import { By } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, MockTeamService, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
+import { MockTeamService, mockEmptyTeam, mockExercise, mockNonTeamStudents, mockTeam, mockTeamStudents } from '../../helpers/mocks/service/mock-team.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';

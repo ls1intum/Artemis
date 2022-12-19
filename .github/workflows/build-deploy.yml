@@ -51,13 +51,11 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
-        distribution: 'zulu'
+        distribution: 'temurin'
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Production Build
       run: ./gradlew -Pprod -Pwar clean bootWar
-      env:
-        NODE_OPTIONS: --max_old_space_size=6144
     - name: Upload Artifact
       uses: actions/upload-artifact@v3
       with:

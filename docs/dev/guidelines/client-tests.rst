@@ -268,7 +268,7 @@ Some guidelines:
         expect(course).toBeUndefined();
         expect(courseList).toHaveLength(4);
 
-10. If you have minimized :code:`expect`, use the verification function that provides the most meaningful error message in case the verification fails. You can use verification functions from core Jest <https://jestjs.io/docs/expect> or from Jest Extended <https://github.com/jest-community/jest-extended#api>.
+10. If you have minimized :code:`expect`, use the verification function that provides the most meaningful error message in case the verification fails. You can use verification functions from core `Jest <https://jestjs.io/docs/expect>`_ or from `Jest Extended <https://jest-extended.jestcommunity.dev/docs/matchers>`_.
 
 11. For situations described below, only use the uniform solution to keep the codebase as consistent as possible.
 

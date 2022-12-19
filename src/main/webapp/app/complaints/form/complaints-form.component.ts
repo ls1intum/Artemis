@@ -3,11 +3,10 @@ import { ComplaintService } from 'app/complaints/complaint.service';
 import { Result } from 'app/entities/result.model';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { Exercise } from 'app/entities/exercise.model';
+import { Exercise, getCourseFromExercise } from 'app/entities/exercise.model';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { faInfoCircle } from '@fortawesome/free-solid-svg-icons';
-import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
 
 @Component({

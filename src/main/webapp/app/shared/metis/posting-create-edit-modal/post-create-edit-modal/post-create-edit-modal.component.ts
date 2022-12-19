@@ -10,7 +10,7 @@ import { Course } from 'app/entities/course.model';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
-import { CourseWideContext, PageType, PostContentValidationPattern, PostingEditType, PostTitleValidationPattern } from 'app/shared/metis/metis.util';
+import { CourseWideContext, PageType, PostContentValidationPattern, PostTitleValidationPattern, PostingEditType } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 const TITLE_MAX_LENGTH = 200;

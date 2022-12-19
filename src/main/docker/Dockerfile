@@ -1,4 +1,4 @@
-FROM openjdk:17-jdk-slim-bullseye
+FROM docker.io/library/eclipse-temurin:17-jdk
 
 ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
     JHIPSTER_SLEEP=0 \

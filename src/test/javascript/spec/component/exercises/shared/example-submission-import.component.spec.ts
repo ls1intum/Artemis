@@ -7,7 +7,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
-import { NgbPagination, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SortService } from 'app/shared/service/sort.service';
@@ -21,6 +20,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { ExampleSubmissionService } from 'app/exercises/shared/example-submission/example-submission.service';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ExampleSubmissionImportComponent', () => {
     let component: ExampleSubmissionImportComponent;
@@ -38,18 +38,16 @@ describe('ExampleSubmissionImportComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockComponent(NgbPagination)],
             declarations: [
                 ExampleSubmissionImportComponent,
                 MockComponent(ButtonComponent),
                 MockComponent(ResultComponent),
-                MockComponent(NgbPagination),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
                 MockDirective(NgModel),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
             ],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })

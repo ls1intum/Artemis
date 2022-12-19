@@ -1,11 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subscription } from 'rxjs';
+import { Subject, Subscription } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course-management.service';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Subject } from 'rxjs';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { CourseManagementDetailViewDto } from 'app/course/manage/course-management-detail-view-dto.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -21,13 +20,14 @@ import {
     faGraduationCap,
     faHeartBroken,
     faListAlt,
+    faPersonChalkboard,
     faTable,
     faTimes,
     faUserCheck,
     faWrench,
-    faPersonChalkboard,
 } from '@fortawesome/free-solid-svg-icons';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
+import { CourseAdminService } from 'app/course/manage/course-admin.service';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -79,7 +79,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     constructor(
         private eventManager: EventManager,
-        private courseService: CourseManagementService,
+        private courseManagementService: CourseManagementService,
+        private courseAdminService: CourseAdminService,
         private route: ActivatedRoute,
         private router: Router,
         private alertService: AlertService,
@@ -108,7 +109,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      */
     registerChangeInCourses(courseId: number) {
         this.eventSubscriber = this.eventManager.subscribe('courseListModification', () => {
-            this.courseService.find(courseId).subscribe((courseResponse) => {
+            this.courseManagementService.find(courseId).subscribe((courseResponse) => {
                 this.course = courseResponse.body!;
             });
             this.fetchCourseStatistics(courseId);
@@ -129,7 +130,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * fetch the course specific statistics separately because it takes quite long for larger courses
      */
     private fetchCourseStatistics(courseId: number) {
-        this.courseService.getCourseStatisticsForDetailView(courseId).subscribe({
+        this.courseManagementService.getCourseStatisticsForDetailView(courseId).subscribe({
             next: (courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
                 this.courseDTO = courseResponse.body!;
                 this.activeStudents = courseResponse.body!.activeStudents;
@@ -143,7 +144,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * @param courseId id the course that will be deleted
      */
     deleteCourse(courseId: number) {
-        this.courseService.delete(courseId).subscribe({
+        this.courseAdminService.delete(courseId).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'courseListModification',

@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.LtiService;
+import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -29,7 +29,7 @@ public class ResultService {
 
     private final ResultRepository resultRepository;
 
-    private final LtiService ltiService;
+    private final LtiNewResultService ltiNewResultService;
 
     private final WebsocketMessagingService websocketMessagingService;
 
@@ -49,13 +49,13 @@ public class ResultService {
 
     private final ExerciseDateService exerciseDateService;
 
-    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiService ltiService, FeedbackRepository feedbackRepository,
+    public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiNewResultService ltiNewResultService, FeedbackRepository feedbackRepository,
             WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
             ComplaintRepository complaintRepository, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository,
             AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
-        this.ltiService = ltiService;
+        this.ltiNewResultService = ltiNewResultService;
         this.websocketMessagingService = websocketMessagingService;
         this.feedbackRepository = feedbackRepository;
         this.complaintResponseRepository = complaintResponseRepository;
@@ -77,10 +77,6 @@ public class ResultService {
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
     public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback, boolean ratedResult) {
-        if (!result.getFeedbacks().isEmpty()) {
-            result.setHasFeedback(isProgrammingExerciseWithFeedback);
-        }
-
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         result.setAssessmentType(AssessmentType.MANUAL);
@@ -101,7 +97,7 @@ public class ResultService {
         if (Boolean.FALSE.equals(savedResult.isExampleResult()) || savedResult.isExampleResult() == null) {
 
             if (savedResult.getParticipation() instanceof ProgrammingExerciseStudentParticipation) {
-                ltiService.onNewResult((StudentParticipation) savedResult.getParticipation());
+                ltiNewResultService.onNewResult((StudentParticipation) savedResult.getParticipation());
             }
 
             websocketMessagingService.broadcastNewResult(savedResult.getParticipation(), savedResult);
@@ -114,7 +110,6 @@ public class ResultService {
     }
 
     /**
-     * NOTE: As we use delete methods with underscores, we need a transactional context here!
      * Deletes result with corresponding complaint and complaint response
      *
      * @param result                      the result to delete
@@ -122,13 +117,25 @@ public class ResultService {
      */
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
-        complaintResponseRepository.deleteByComplaint_Result_Id(result.getId());
-        complaintRepository.deleteByResult_Id(result.getId());
-        ratingRepository.deleteByResult_Id(result.getId());
-        if (shouldClearParticipantScore) {
-            participantScoreRepository.clearAllByResultId(result.getId());
-        }
+        deleteResultReferences(result.getId(), shouldClearParticipantScore);
         resultRepository.delete(result);
+    }
+
+    /**
+     * NOTE: this method DOES NOT delete the result itself (e.g. because this will be done automatically when the submission is deleted)
+     * Deletes result with corresponding complaint and complaint response
+     *
+     * @param resultId                    the id of the result for which all references should be deleted
+     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value should be false
+     */
+    public void deleteResultReferences(Long resultId, boolean shouldClearParticipantScore) {
+        log.debug("Delete result references {}", resultId);
+        complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
+        complaintRepository.deleteByResult_Id(resultId);
+        ratingRepository.deleteByResult_Id(resultId);
+        if (shouldClearParticipantScore) {
+            participantScoreRepository.clearAllByResultId(resultId);
+        }
     }
 
     /**

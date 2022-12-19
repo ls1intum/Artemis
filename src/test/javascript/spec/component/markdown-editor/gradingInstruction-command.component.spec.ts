@@ -11,7 +11,7 @@ import { FeedbackCommand } from 'app/shared/markdown-editor/domainCommands/feedb
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { GradingCriterionCommand } from 'app/shared/markdown-editor/domainCommands/gradingCriterionCommand';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe, MockDirective } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { NgModel } from '@angular/forms';
 
 describe('Grading Instruction Command', () => {

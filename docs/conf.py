@@ -32,7 +32,8 @@ master_doc = "index"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinx_rtd_theme"
+    "sphinx_rtd_theme",
+    "sphinxcontrib.bibtex"
 ]
 
 # List of patterns, relative to source directory, that match files and
@@ -40,6 +41,10 @@ extensions = [
 # This pattern also affects html_static_path and html_extra_path.
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
+# -- Publications ------------------------------------------------------------
+bibtex_bibfiles = ['research/publications.bib']
+bibtex_default_style = 'unsrtalpha'
+bibtex_reference_style = 'label'
 
 # -- Options for HTML output -------------------------------------------------
 

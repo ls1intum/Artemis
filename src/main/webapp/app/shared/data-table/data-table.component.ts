@@ -1,12 +1,12 @@
-import { Component, ContentChild, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewEncapsulation, ViewChild, ElementRef } from '@angular/core';
+import { Component, ContentChild, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 import { ColumnMode, SortType } from '@flaviosantoro92/ngx-datatable';
-import { get, isNumber, flatten } from 'lodash-es';
+import { flatten, get, isNumber } from 'lodash-es';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
-import { faSort, faSortUp, faSortDown, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Enum for ascending and descending order.

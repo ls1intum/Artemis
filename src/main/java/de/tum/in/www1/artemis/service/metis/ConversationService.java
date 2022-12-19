@@ -74,9 +74,8 @@ public class ConversationService {
         final Course course = checkUserAndCourse(user, courseId);
 
         List<Conversation> existingConversations = conversationRepository.findConversationsOfUserWithConversationParticipants(course.getId(), user.getId());
-        Optional<Conversation> existingConversation = existingConversations.stream().filter((conversation1) -> conversation1.getConversationParticipants().stream()
-                .anyMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(
-                        conversation.getConversationParticipants().toArray(new ConversationParticipant[conversation.getConversationParticipants().size()])[0].getUser().getId())))
+        Optional<Conversation> existingConversation = existingConversations.stream().filter((conversation1) -> conversation1.getConversationParticipants().stream().anyMatch(
+                conversationParticipant -> conversationParticipant.getUser().getId().equals(conversation.getConversationParticipants().iterator().next().getUser().getId())))
                 .findAny();
 
         if (!existingConversation.isPresent()) {

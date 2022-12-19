@@ -16,9 +16,8 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 @Service
 public class FileUploadSubmissionExportService extends SubmissionExportService {
 
-    public FileUploadSubmissionExportService(ExerciseRepository exerciseRepository, ExerciseDateService exerciseDateService, ZipFileService zipFileService,
-            FileService fileService) {
-        super(exerciseRepository, exerciseDateService, zipFileService, fileService);
+    public FileUploadSubmissionExportService(ExerciseRepository exerciseRepository, ZipFileService zipFileService, FileService fileService) {
+        super(exerciseRepository, zipFileService, fileService);
     }
 
     @Override

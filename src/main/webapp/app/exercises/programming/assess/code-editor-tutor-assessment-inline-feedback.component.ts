@@ -1,11 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { buildFeedbackTextForReview, Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType, buildFeedbackTextForReview } from 'app/entities/feedback.model';
 import { cloneDeep } from 'lodash-es';
 import { TranslateService } from '@ngx-translate/core';
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Course } from 'app/entities/course.model';
-import { faBan, faPencilAlt, faQuestionCircle, faSave, faTrashAlt, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faExclamationTriangle, faPencilAlt, faQuestionCircle, faSave, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment-inline-feedback',

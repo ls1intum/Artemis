@@ -1,10 +1,9 @@
-<fa-icon *ngIf="!showConfirm" [icon]="linkIcon" [ngbTooltip]="setTooltip(instruction!)" container="body" (click)="toggle()"></fa-icon>
+<fa-icon *ngIf="!showConfirm" [icon]="linkIcon" [ngbTooltip]="setTooltip(instruction!)" (click)="toggle()"></fa-icon>
 <fa-icon
     *ngIf="showConfirm"
     [ngClass]="'text-danger'"
     [icon]="confirmIcon"
     [ngbTooltip]="'artemisApp.assessment.messages.removeAssessmentInstructionLink' | artemisTranslate"
-    container="body"
     (mouseleave)="toggle()"
     (click)="removeLink()"
 ></fa-icon>

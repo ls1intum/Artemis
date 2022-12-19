@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';

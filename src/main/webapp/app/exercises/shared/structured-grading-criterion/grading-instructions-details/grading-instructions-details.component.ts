@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, ViewChildren, ViewChild, QueryList, ChangeDetectorRef, AfterContentInit } from '@angular/core';
+import { AfterContentInit, ChangeDetectorRef, Component, Input, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { UsageCountCommand } from 'app/shared/markdown-editor/domainCommands/usageCount.command';
 import { CreditsCommand } from 'app/shared/markdown-editor/domainCommands/credits.command';

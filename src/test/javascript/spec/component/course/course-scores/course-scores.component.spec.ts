@@ -18,7 +18,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { roundScorePercentSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -29,12 +29,12 @@ import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ParticipantScoresDistributionComponent } from 'app/shared/participant-scores/participant-scores-distribution/participant-scores-distribution.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-type-statistics-map';
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
 import { CommonSpreadsheetCellObject } from 'app/shared/export/excel-export-row-builder';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -231,7 +231,7 @@ describe('CourseScoresComponent', () => {
         pointsOfStudent2.setValue(ExerciseType.TEXT, textIncludedWith10Points10BonusPoints, Number.NaN);
 
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
             declarations: [
                 CourseScoresComponent,
                 MockComponent(ParticipantScoresDistributionComponent),
@@ -243,7 +243,6 @@ describe('CourseScoresComponent', () => {
                 MockDirective(SortDirective),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(TranslateDirective),
-                MockDirective(NgbTooltip),
                 MockTranslateValuesDirective,
             ],
             providers: [

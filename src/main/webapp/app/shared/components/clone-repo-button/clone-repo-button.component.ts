@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,7 +16,7 @@ import { ParticipationService } from 'app/exercises/shared/participation/partici
     templateUrl: './clone-repo-button.component.html',
     styleUrls: ['./clone-repo-button.component.scss'],
 })
-export class CloneRepoButtonComponent implements OnInit {
+export class CloneRepoButtonComponent implements OnInit, OnChanges {
     readonly FeatureToggle = FeatureToggle;
 
     @Input()
@@ -72,7 +72,14 @@ export class CloneRepoButtonComponent implements OnInit {
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
+    }
 
+    public setUseSSH(useSsh: boolean) {
+        this.useSsh = useSsh;
+        this.localStorage.store('useSsh', this.useSsh);
+    }
+
+    ngOnChanges() {
         if (this.participations?.length) {
             this.isTeamParticipation = !!this.participations.first()?.team;
             this.activeParticipation = this.participationService.getSpecificStudentParticipation(this.participations, true) ?? this.participations[0];
@@ -80,11 +87,6 @@ export class CloneRepoButtonComponent implements OnInit {
         } else if (this.repositoryUrl) {
             this.cloneHeadline = 'artemisApp.exerciseActions.cloneExerciseRepository';
         }
-    }
-
-    public setUseSSH(useSsh: boolean) {
-        this.useSsh = useSsh;
-        this.localStorage.store('useSsh', this.useSsh);
     }
 
     private getRepositoryUrl() {
@@ -97,37 +99,31 @@ export class CloneRepoButtonComponent implements OnInit {
         }
 
         if (this.isTeamParticipation) {
-            return this.addAccessTokenToHttpUrl(this.repositoryUrlForTeam(this.getRepositoryUrl()), insertPlaceholder);
+            return this.addCredentialsToHttpUrl(this.repositoryUrlForTeam(this.getRepositoryUrl()), insertPlaceholder);
         }
 
-        return this.addAccessTokenToHttpUrl(this.getRepositoryUrl(), insertPlaceholder);
+        return this.addCredentialsToHttpUrl(this.getRepositoryUrl(), insertPlaceholder);
     }
 
     /**
-     * Add the access token to the http url, if possible.
+     * Add the credentials to the http url, if possible.
      * The token will be added if
      * - the token is required (based on the profile information), and
      * - the token is present (based on the user model).
      *
-     * It will only be added if a username is present in the given url and will be added after the username and before the host name.
-     * @param url the url to which the token should be added
+     * @param url the url to which the credentials should be added
      * @param insertPlaceholder if true, instead of the actual token, '**********' is used (e.g. to prevent leaking the token during a screen-share)
      */
-    private addAccessTokenToHttpUrl(url: string, insertPlaceholder = false): string {
-        const vcsAccessToken = this.user.vcsAccessToken;
-        // If the token is not present or not required, don't include it
-        if (!this.versionControlAccessTokenRequired || !vcsAccessToken || !url) {
-            return url;
-        }
-
-        const token = insertPlaceholder ? '**********' : vcsAccessToken;
-        const urlUserInfoPart = `://${this.user.login}:${token}@`;
+    private addCredentialsToHttpUrl(url: string, insertPlaceholder = false): string {
+        const includeToken = this.versionControlAccessTokenRequired && this.user.vcsAccessToken;
+        const token = insertPlaceholder ? '**********' : this.user.vcsAccessToken;
+        const credentials = `://${this.user.login}${includeToken ? `:${token}` : ''}@`;
         if (!url.includes('@')) {
             // the url has the format https://vcs-server.com
-            return url.replace('://', urlUserInfoPart);
+            return url.replace('://', credentials);
         } else {
             // the url has the format https://username@vcs-server.com -> replace ://username@
-            return url.replace(/:\/\/.*@/, urlUserInfoPart);
+            return url.replace(/:\/\/.*@/, credentials);
         }
     }
 

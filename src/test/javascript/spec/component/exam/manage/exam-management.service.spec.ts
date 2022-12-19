@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTestModule } from '../../../test.module';
@@ -231,7 +231,7 @@ describe('Exam Management Service Tests', () => {
         service.findAllCurrentAndUpcomingExams().subscribe((res) => expect(res.body).toEqual([mockExamPopulated]));
 
         // THEN
-        const req = httpMock.expectOne({ method: 'GET', url: `${service.resourceUrl}/upcoming-exams` });
+        const req = httpMock.expectOne({ method: 'GET', url: `${service.adminResourceUrl}/upcoming-exams` });
         req.flush(mockExamResponse);
         tick();
     }));
