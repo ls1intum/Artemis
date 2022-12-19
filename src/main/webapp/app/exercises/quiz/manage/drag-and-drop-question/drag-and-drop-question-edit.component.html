@@ -407,16 +407,14 @@
                     placeholder="Upload file..."
                 />
             </div>
-            <ng-container>
-                <div class="question-options">
-                    <div class="col">
-                        <button class="btn btn-outline-secondary" id="add-text-drag-item" (click)="addTextDragItem()">
-                            <fa-icon [icon]="faPlus"></fa-icon>
-                            <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
-                        </button>
-                    </div>
+            <div class="question-options">
+                <div class="col">
+                    <button class="btn btn-outline-secondary" id="add-text-drag-item" (click)="addTextDragItem()">
+                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <span jhiTranslate="artemisApp.dragAndDropQuestion.addDragItemText"></span>
+                    </button>
                 </div>
-            </ng-container>
+            </div>
         </div>
         <ng-container *ngIf="!reEvaluationInProgress">
             <hr />
