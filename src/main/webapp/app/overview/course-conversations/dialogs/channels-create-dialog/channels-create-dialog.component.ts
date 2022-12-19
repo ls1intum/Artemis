@@ -11,6 +11,7 @@ import { AbstractDialogComponent } from 'app/overview/course-conversations/dialo
 export class ChannelsCreateDialogComponent extends AbstractDialogComponent {
     @Input()
     course: Course;
+
     initialize() {
         super.initialize(['course']);
     }
