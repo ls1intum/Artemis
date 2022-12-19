@@ -1,6 +1,5 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DebugElement } from '@angular/core';
 import { TaskCommand } from 'app/shared/markdown-editor/domainCommands/programming-exercise/task.command';
 import { triggerChanges } from '../../helpers/utils/general.utils';
@@ -10,6 +9,7 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockProgrammingExerciseInstructionAnalysisService } from '../../helpers/mocks/service/mock-programming-exericse-instruction-analysis.service';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
     let comp: ProgrammingExerciseInstructionAnalysisComponent;
@@ -33,8 +33,8 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
 
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [],
-                declarations: [ProgrammingExerciseInstructionAnalysisComponent, MockDirective(NgbTooltip), MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+                imports: [MockDirective(NgbTooltip)],
+                declarations: [ProgrammingExerciseInstructionAnalysisComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
                 providers: [{ provide: ProgrammingExerciseInstructionAnalysisService, useClass: MockProgrammingExerciseInstructionAnalysisService }],
             })
                 .compileComponents()
@@ -73,6 +73,11 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             comp.exerciseTestCases = testCases;
 
             comp.ngOnInit();
+            tick(500);
+
+            // check first analysis
+            expect(comp.missingTestCases).toEqual(missingTestCases);
+            expect(comp.invalidTestCases).toEqual(invalidTestCases);
 
             triggerChanges(comp, { property: 'problemStatement', currentValue: problemStatement, previousValue: 'dolet amat', firstChange: false });
             tick(500); // Update is debounced, otherwise we would send updates on every change.
@@ -83,7 +88,8 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             expect(comp.invalidTestCases).toEqual(invalidTestCases);
 
             // Check that an event with the updated analysis is emitted.
-            expect(emitAnalysisSpy).toHaveBeenCalledOnce();
+            // We expect two calls, once in ngOnInit and once in ngOnChanges
+            expect(emitAnalysisSpy).toHaveBeenCalledTimes(2);
             expect(emitAnalysisSpy).toHaveBeenCalledWith(completeAnalysis);
 
             // Check rendered html.
@@ -93,6 +99,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             // Test cases are not ok according to the analysis.
             expect(testCaseOk).toBeNull();
             expect(testCaseIssues).not.toBeNull();
+            tick(500);
         }));
 
         describe('Analysis service integration test', () => {

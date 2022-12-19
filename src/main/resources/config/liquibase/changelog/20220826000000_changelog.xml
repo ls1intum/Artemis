@@ -1,0 +1,119 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.8.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="stefanwaldhauser" id="20220826000000-1">
+        <addColumn tableName="course">
+            <column name="time_zone" type="VARCHAR(255)"/>
+            <!-- Add the foreign key on the course to support lazy loading of configuration with @OneToOne -->
+            <column name="tutorial_groups_configuration_id" type="BIGINT"/>
+        </addColumn>
+        <createTable tableName="tutorial_group_schedule">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_schedule_PK"/>
+            </column>
+            <column name="day_of_week" type="SMALLINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="TIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="TIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="location" type="LONGTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repetition_frequency" type="SMALLINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valid_from_inclusive" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valid_to_inclusive" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tutorial_group_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="tutorial_group_session">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_session_PK"/>
+            </column>
+            <column name="start" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="location" type="LONGTEXT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="status_explanation" type="VARCHAR(255)">
+            </column>
+            <column name="tutorial_group_schedule_id" type="BIGINT">
+            </column>
+            <column name="tutorial_group_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tutorial_group_free_period_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <createTable tableName="tutorial_groups_configuration">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_schedule_PK"/>
+            </column>
+            <column name="tutorial_period_start_inclusive" type="DATE">
+            </column>
+            <column name="tutorial_period_end_inclusive" type="DATE">
+            </column>
+        </createTable>
+        <createTable tableName="tutorial_group_free_period">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_free_period_PK"/>
+            </column>
+            <column name="tutorial_groups_configuration_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="VARCHAR(255)">
+            </column>
+        </createTable>
+        <!-- fks for tutorial_group_schedule table -->
+        <addForeignKeyConstraint baseColumnNames="tutorial_group_id" baseTableName="tutorial_group_schedule"
+                                 constraintName="fk_tutorial_group_schedule_tutorial_group_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group"
+                                 validate="true"/>
+        <!-- fks for tutorial_group_session table -->
+        <addForeignKeyConstraint baseColumnNames="tutorial_group_id" baseTableName="tutorial_group_session"
+                                 constraintName="fk_tutorial_group_session_tutorial_group_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group"
+                                 validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="tutorial_group_schedule_id" baseTableName="tutorial_group_session"
+                                 constraintName="fk_tutorial_group_session_tutorial_group_schedule_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group_schedule"
+                                 validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="tutorial_group_free_period_id" baseTableName="tutorial_group_session"
+                                 constraintName="fk_tutorial_group_session_tutorial_group_free_period_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group_free_period"
+                                 validate="true"/>
+        <!-- fks for tutorial_groups_configuration table -->
+        <addForeignKeyConstraint baseColumnNames="tutorial_groups_configuration_id" baseTableName="course"
+                                 constraintName="fk_course_tutorial_groups_configuration_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_groups_configuration"
+                                 validate="true"/>
+        <!-- fks for tutorial_group_free_period table -->
+        <addForeignKeyConstraint baseColumnNames="tutorial_groups_configuration_id" baseTableName="tutorial_group_free_period"
+                                 constraintName="fk_tutorial_group_free_period_tutorial_groups_configuration_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_groups_configuration"
+                                 validate="true"/>
+    </changeSet>
+</databaseChangeLog>

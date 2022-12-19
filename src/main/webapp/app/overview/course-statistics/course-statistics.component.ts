@@ -417,6 +417,7 @@ export class CourseStatisticsComponent implements OnInit, OnDestroy, AfterViewIn
         absoluteScores[ExerciseType.TEXT] = textExerciseTotalScore;
         absoluteScores[ExerciseType.FILE_UPLOAD] = fileUploadExerciseTotalScore;
         this.overallPointsPerExercise = absoluteScores;
+        this.ngxDoughnutData = [];
         scores.forEach((score, index) => {
             if (score > 0) {
                 this.ngxDoughnutData.push({

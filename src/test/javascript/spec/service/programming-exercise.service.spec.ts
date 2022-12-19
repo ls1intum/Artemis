@@ -1,4 +1,4 @@
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { take } from 'rxjs/operators';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
@@ -19,10 +19,11 @@ import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programmin
 describe('ProgrammingExercise Service', () => {
     let service: ProgrammingExerciseService;
     let httpMock: HttpTestingController;
+
     let defaultProgrammingExercise: ProgrammingExercise;
     const resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 
-    beforeAll(() => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, HttpClientTestingModule],
             providers: [

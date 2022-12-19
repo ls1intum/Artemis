@@ -11,6 +11,8 @@
     [class.negative-feedback]="textBlockRef.feedback?.credits! < 0 && !conflictMode"
     [class.neutral-feedback]="!conflictMode ? textBlockRef.feedback?.credits === 0 : !isConflictingFeedback"
     [class.conflicting-feedback]="isConflictingFeedback"
+    [class.clickable]="textBlockRef.selectable"
+    [class.highlighted]="textBlockRef.highlighted"
 ></span>
 <!-- Display Feedback Editor -->
 <jhi-textblock-feedback-editor

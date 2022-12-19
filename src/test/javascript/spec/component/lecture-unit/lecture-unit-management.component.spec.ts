@@ -30,6 +30,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({ selector: 'jhi-learning-goals-popover', template: '' })
 class LearningGoalsPopoverStubComponent {
@@ -58,7 +59,7 @@ describe('LectureUnitManagementComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [],
+            imports: [MockDirective(NgbTooltip)],
             declarations: [
                 LectureUnitManagementComponent,
                 MockComponent(UnitCreationCardComponent),
@@ -144,7 +145,7 @@ describe('LectureUnitManagementComponent', () => {
             button.nativeElement.click();
         }
         lectureUnitManagementComponentFixture.detectChanges();
-        expect(editButtonClickedSpy).toHaveBeenCalledTimes(buttons.length * 2); // 3 units with edit button, each method is invoked twice
+        expect(editButtonClickedSpy).toHaveBeenCalledTimes(buttons.length);
     });
 
     it('should give the correct delete question translation key', () => {

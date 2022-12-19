@@ -6,9 +6,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { Exercise } from 'app/entities/exercise.model';
-import { MockComponent, MockPipe, MockDirective, MockModule } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import dayjs from 'dayjs/esm';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -38,7 +37,6 @@ describe('CourseCardComponent', () => {
                 MockPipe(ArtemisTimeAgoPipe),
                 MockRouterLinkDirective,
                 MockComponent(SecuredImageComponent),
-                MockDirective(NgbTooltip),
                 MockDirective(TranslateDirective),
             ],
         })

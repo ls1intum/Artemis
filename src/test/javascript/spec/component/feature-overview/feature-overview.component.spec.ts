@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { ArtemisTestModule } from '../../test.module';
 import { FeatureOverviewComponent, TargetAudience } from 'app/feature-overview/feature-overview.component';

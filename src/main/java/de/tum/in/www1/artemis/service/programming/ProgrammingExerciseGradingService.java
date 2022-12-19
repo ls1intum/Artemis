@@ -146,7 +146,7 @@ public class ProgrammingExerciseGradingService {
 
                 continuousIntegrationService.get().extractAndPersistBuildLogStatistics(latestSubmission, programmingLanguage, projectType, buildLogs);
 
-                if (!buildResult.isBuildSuccessful()) {
+                if (latestSubmission.isBuildFailed()) {
                     buildLogs = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogs, programmingLanguage);
                     var savedBuildLogs = buildLogService.saveBuildLogs(buildLogs, latestSubmission);
 
@@ -157,7 +157,7 @@ public class ProgrammingExerciseGradingService {
 
             // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
             newResult.setSubmission(latestSubmission);
-            newResult.setRatedIfNotExceeded(exerciseDateService.getDueDate(participation).orElse(null), latestSubmission, (Participation) participation);
+            newResult.setRatedIfNotExceeded(ExerciseDateService.getDueDate(participation).orElse(null), latestSubmission, (Participation) participation);
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
@@ -667,12 +667,6 @@ public class ProgrammingExerciseGradingService {
         // Remove automatic feedbacks not associated with test cases
         result.getFeedbacks().removeIf(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()
                 && testCases.stream().noneMatch(test -> test.getTestName().equalsIgnoreCase(feedback.getText())));
-
-        // If there are no feedbacks left after filtering those not valid, also setHasFeedback to false.
-        if (result.getFeedbacks().stream().noneMatch(feedback -> Boolean.FALSE.equals(feedback.isPositive())
-                || feedback.getType() != null && (feedback.getType().equals(FeedbackType.MANUAL) || feedback.getType().equals(FeedbackType.MANUAL_UNREFERENCED)))) {
-            result.setHasFeedback(false);
-        }
     }
 
     /**
@@ -721,8 +715,6 @@ public class ProgrammingExerciseGradingService {
                     .toList();
             result.addFeedbacks(feedbacksForDuplicateTestCases);
 
-            // Enables to view the result details in case all test cases are positive
-            result.setHasFeedback(true);
             String notificationText = TEST_CASES_DUPLICATE_NOTIFICATION + String.join(", ", duplicateFeedbackNames);
             groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, notificationText);
 
@@ -968,7 +960,6 @@ public class ProgrammingExerciseGradingService {
      */
     private void removeAllTestCaseFeedbackAndSetScoreToZero(Result result, List<Feedback> staticCodeAnalysisFeedback) {
         result.setFeedbacks(staticCodeAnalysisFeedback);
-        result.hasFeedback(!staticCodeAnalysisFeedback.isEmpty());
         result.setScore(0D);
         result.setTestCaseCount(0);
         result.setPassedTestCaseCount(0);

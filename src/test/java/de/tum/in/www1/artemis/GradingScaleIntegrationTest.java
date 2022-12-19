@@ -64,8 +64,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test get request for non-existing grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -75,8 +73,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test get request for grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -91,8 +87,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test get request for non-existing grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -102,8 +96,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test get request for grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -118,8 +110,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test post request for existing grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -131,8 +121,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test post request for grading scale without set grade steps
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -144,8 +132,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test post request for existing grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -157,8 +143,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test post request for grading scale without set grade steps
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -170,8 +154,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test post request with invalid grade steps
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -184,8 +166,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test post request for grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -203,8 +183,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test post request with invalid grade steps
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -219,8 +197,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test post request for grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -240,8 +216,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test put request for non-existing grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -251,8 +225,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test put request with invalid grade steps
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -266,8 +238,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test put request for grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -285,8 +255,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test put request for non-existing grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -296,8 +264,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test put request with invalid grade steps
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -313,8 +279,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test put request for grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -335,8 +299,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test delete request for non-existing grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -346,8 +308,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test delete request for grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -359,8 +319,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test delete request for non-existing grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -370,8 +328,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test delete request for grading scale
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -383,15 +339,13 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test delete request for course should delete the grading scale of that course as well
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourseDeletesGradingScale() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
 
-        request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByCourseId(course.getId());
         assertThat(foundGradingScale).isEmpty();
@@ -399,8 +353,6 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     /**
      * Test delete request for exam should delete the grading scale of that exam as well
-     *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")

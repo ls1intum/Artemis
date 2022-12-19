@@ -1,7 +1,7 @@
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
@@ -49,7 +49,6 @@ import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programmi
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
 import { MockHasAnyAuthorityDirective } from '../../helpers/mocks/directive/mock-has-any-authority.directive';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -233,7 +232,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         MockDirective(ExtensionPointDirective),
         MockHasAnyAuthorityDirective,
         MockTranslateValuesDirective,
-        MockDirective(NgbTooltip),
         MockComponent(AssessmentWarningComponent),
         MockPipe(ArtemisDatePipe),
         MockPipe(ArtemisTranslatePipe),

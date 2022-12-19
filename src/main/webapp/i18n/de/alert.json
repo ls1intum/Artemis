@@ -2,6 +2,9 @@
     "artemisApp": {
         "disconnectedAlert": "Du bist nicht mehr mit dem Artemis Server verbunden. Bitte überprüfe deine Internetverbindung.",
         "outdatedAlert": "<b>Du verwendest eine veraltete Version von Artemis.</b> Bitte aktualisiere Artemis auf die neueste Version.",
-        "outdatedAction": "Update"
+        "outdatedAction": "Update",
+        "alerts": {
+            "dismissAll": "Alle verwerfen"
+        }
     }
 }

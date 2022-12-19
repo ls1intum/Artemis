@@ -1,6 +1,6 @@
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
-import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ChangeDetectorRef, NgZone } from '@angular/core';
 import dayjs from 'dayjs/esm';

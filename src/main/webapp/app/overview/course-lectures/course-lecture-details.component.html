@@ -15,7 +15,7 @@
                 <h4>
                     <span class="me-2" *ngIf="lecture!.startDate && lecture!.endDate">
                         {{ 'artemisApp.courseOverview.lectureDetails.date' | artemisTranslate }} {{ lecture!.startDate | artemisDate }} -
-                        {{ lecture!.endDate | artemisDate: 'time' }}
+                        {{ lecture!.endDate | artemisDate : 'time' }}
                     </span>
                 </h4>
             </div>
@@ -95,7 +95,7 @@
             </div>
         </div>
         <!-- LECTURE END -->
-        <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
+        <div class="col d-flex flex-grow-1 justify-end" style="max-width: min-content">
             <router-outlet *ngIf="lecture && lecture.course?.postsEnabled" class="ms-3" (activate)="onChildActivate($event)"></router-outlet>
         </div>
     </div>

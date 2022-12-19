@@ -139,7 +139,6 @@ export abstract class QuizExerciseValidationDirective {
         return (
             isGenerallyValid &&
             areAllQuestionsValid === true &&
-            this.isEmpty(this.invalidFlaggedQuestions) &&
             maxPointsReachableInQuiz !== undefined &&
             maxPointsReachableInQuiz > 0 &&
             !this.testRunExistsAndShouldNotBeIgnored()

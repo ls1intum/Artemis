@@ -1,5 +1,5 @@
-import { Component, EventEmitter, Output, ElementRef, Input, forwardRef, OnInit, OnDestroy, NgZone } from '@angular/core';
-import { NG_VALUE_ACCESSOR, ControlValueAccessor } from '@angular/forms';
+import { Component, ElementRef, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, forwardRef } from '@angular/core';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import 'brace';
 import 'brace/theme/monokai';
 import 'brace/theme/chrome';

@@ -8,7 +8,7 @@ import { finalize, switchMap, take } from 'rxjs/operators';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/lecture.service';
-import { forkJoin, combineLatest } from 'rxjs';
+import { combineLatest, forkJoin } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
 
 @Component({

@@ -13,7 +13,7 @@ import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { ExamInformationDTO } from 'app/entities/exam-information.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
-import { reconnectSubmissions, Submission } from 'app/entities/submission.model';
+import { Submission, reconnectSubmissions } from 'app/entities/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
@@ -25,6 +25,7 @@ type EntityArrayResponseType = HttpResponse<Exam[]>;
 @Injectable({ providedIn: 'root' })
 export class ExamManagementService {
     public resourceUrl = SERVER_API_URL + 'api/courses';
+    public adminResourceUrl = SERVER_API_URL + 'api/admin/courses';
 
     constructor(private router: Router, private http: HttpClient, private accountService: AccountService, private entityTitleService: EntityTitleService) {}
 
@@ -148,7 +149,7 @@ export class ExamManagementService {
      */
     findAllCurrentAndUpcomingExams(): Observable<EntityArrayResponseType> {
         return this.http
-            .get<Exam[]>(`${this.resourceUrl}/upcoming-exams`, { observe: 'response' })
+            .get<Exam[]>(`${this.adminResourceUrl}/upcoming-exams`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.processExamArrayResponseFromServer(res)));
     }
 

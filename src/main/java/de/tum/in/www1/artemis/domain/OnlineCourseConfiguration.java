@@ -1,17 +1,15 @@
 package de.tum.in.www1.artemis.domain;
 
-import static de.tum.in.www1.artemis.config.Constants.LOGIN_REGEX;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
-import javax.persistence.*;
-
-import org.apache.commons.lang.StringUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Entity
 @Table(name = "online_course_configuration")
@@ -34,8 +32,26 @@ public class OnlineCourseConfiguration extends DomainObject {
     @Column(name = "user_prefix", nullable = false)
     private String userPrefix;
 
+    @Column(name = "require_existing_user")
+    private boolean requireExistingUser;
+
     @Column(name = "original_url")
     private String originalUrl;
+
+    @Column(name = "registration_id")
+    private String registrationId;
+
+    @Column(name = "client_id")
+    private String clientId;
+
+    @Column(name = "authorization_uri")
+    private String authorizationUri;
+
+    @Column(name = "jkw_set_uri")
+    private String jwkSetUri;
+
+    @Column(name = "token_uri")
+    private String tokenUri;
 
     public Course getCourse() {
         return course;
@@ -69,6 +85,14 @@ public class OnlineCourseConfiguration extends DomainObject {
         this.userPrefix = userPrefix;
     }
 
+    public boolean isRequireExistingUser() {
+        return requireExistingUser;
+    }
+
+    public void setRequireExistingUser(boolean requireExistingUser) {
+        this.requireExistingUser = requireExistingUser;
+    }
+
     public String getOriginalUrl() {
         return originalUrl;
     }
@@ -77,15 +101,43 @@ public class OnlineCourseConfiguration extends DomainObject {
         this.originalUrl = originalUrl;
     }
 
-    /**
-     * Validates the online course configuration
-     */
-    public void validate() {
-        if (StringUtils.isBlank(ltiKey) || StringUtils.isBlank(ltiSecret)) {
-            throw new BadRequestAlertException("Invalid online course configuration", ENTITY_NAME, "invalidOnlineCourseConfiguration");
-        }
-        if (StringUtils.isBlank(userPrefix) || !userPrefix.matches(LOGIN_REGEX)) {
-            throw new BadRequestAlertException("Invalid user prefix, must match login regex defined in Constants.java", ENTITY_NAME, "invalidUserPrefix");
-        }
+    public String getRegistrationId() {
+        return registrationId;
+    }
+
+    public void setRegistrationId(String registrationId) {
+        this.registrationId = registrationId;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getAuthorizationUri() {
+        return authorizationUri;
+    }
+
+    public void setAuthorizationUri(String authorizationUri) {
+        this.authorizationUri = authorizationUri;
+    }
+
+    public String getJwkSetUri() {
+        return jwkSetUri;
+    }
+
+    public void setJwkSetUri(String jwkSetUri) {
+        this.jwkSetUri = jwkSetUri;
+    }
+
+    public String getTokenUri() {
+        return tokenUri;
+    }
+
+    public void setTokenUri(String tokenUri) {
+        this.tokenUri = tokenUri;
     }
 }

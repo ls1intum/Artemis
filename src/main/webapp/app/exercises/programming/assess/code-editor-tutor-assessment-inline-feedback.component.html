@@ -12,7 +12,7 @@
             <div class="form-group col-8 m-0">
                 <label class="d-inline" jhiTranslate="artemisApp.assessment.detail.feedback"></label>
                 <div class="d-inline" *ngIf="feedback.gradingInstruction!">
-                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate" container="body"></fa-icon>
+                    <fa-icon [icon]="faQuestionCircle" class="text-secondary" [ngbTooltip]="'artemisApp.assessment.feedbackHint' | artemisTranslate"></fa-icon>
                     <span>{{ feedback.gradingInstruction!.feedback }}</span>
                 </div>
             </div>

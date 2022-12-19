@@ -2,9 +2,8 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-question.component';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
-import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { SafeHtml } from '@angular/platform-browser';
@@ -19,13 +18,7 @@ describe('MultipleChoiceQuestionComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [
-                MultipleChoiceQuestionComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbPopover),
-                MockDirective(NgbTooltip),
-                MockComponent(QuizScoringInfoStudentModalComponent),
-            ],
+            declarations: [MultipleChoiceQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent)],
             providers: [ArtemisMarkdownService],
         }).compileComponents();
         fixture = TestBed.createComponent(MultipleChoiceQuestionComponent);

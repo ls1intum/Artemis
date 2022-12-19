@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain.participation;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 
 public interface ProgrammingExerciseParticipation extends ParticipationInterface {
 
@@ -80,8 +82,8 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
      * This is the case when the participation is a ProgrammingExerciseStudentParticipation,
      * the buildAndTestAfterDueDate of the exercise is set and the due date has passed,
      * or if manual correction is involved and the due date has passed.
-     *
-     * Locked means that the student can't make any changes to their repository anymore.
+     * <p>
+     * Locked means that the student can't make any changes to their repository any more.
      * While we can control this easily in the remote VCS, we need to check this manually
      * for the local repository on the Artemis server.
      *
@@ -95,15 +97,9 @@ public interface ProgrammingExerciseParticipation extends ParticipationInterface
 
         final ProgrammingExercise programmingExercise = getProgrammingExercise();
         final ZonedDateTime now = ZonedDateTime.now();
+        boolean isAfterDueDate = ExerciseDateService.getDueDate(studentParticipation).map(now::isAfter).orElse(false);
+        boolean isBeforeStartDate = Optional.ofNullable(programmingExercise.getParticipationStartDate()).map(now::isBefore).orElse(false);
 
-        boolean isAfterDueDate = false;
-        if (getIndividualDueDate() != null) {
-            isAfterDueDate = now.isAfter(getIndividualDueDate());
-        }
-        else if (programmingExercise.getDueDate() != null) {
-            isAfterDueDate = now.isAfter(programmingExercise.getDueDate());
-        }
-
-        return isAfterDueDate && !studentParticipation.isTestRun();
+        return (isBeforeStartDate || isAfterDueDate) && !studentParticipation.isTestRun();
     }
 }

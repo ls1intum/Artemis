@@ -46,7 +46,7 @@ export class AttachmentUnitComponent {
     downloadAttachment(event: Event) {
         event.stopPropagation();
         if (this.attachmentUnit?.attachment?.link) {
-            this.fileService.downloadFileWithAccessToken(this.attachmentUnit?.attachment?.link);
+            this.fileService.downloadFile(this.attachmentUnit?.attachment?.link);
             this.onCompletion.emit({ lectureUnit: this.attachmentUnit, completed: true });
         }
     }

@@ -16,9 +16,11 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.PostSortCriterion;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 
 class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -82,37 +84,30 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateAnswerPostInLecture() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
-
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdAnswerPost);
-        // should not be automatically post resolving
-        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
-        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
+        testAnswerPostCreation(answerPostToSave);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateAnswerPostInExercise() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
-
-        AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
-        database.assertSensitiveInformationHidden(createdAnswerPost);
-        // should not be automatically post resolving
-        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
-        checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
-        assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
+        testAnswerPostCreation(answerPostToSave);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateAnswerPostCourseWide() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
+        testAnswerPostCreation(answerPostToSave);
+    }
 
+    private void testAnswerPostCreation(AnswerPost answerPostToSave) throws Exception {
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdAnswerPost);
         // should not be automatically post resolving
         assertThat(createdAnswerPost.doesResolvePost()).isFalse();
+        // should increment answer count
+        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -124,6 +119,8 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdAnswerPost);
+        // should increment answer count
+        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -135,6 +132,8 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdAnswerPost);
+        // should increment answer count
+        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -146,6 +145,8 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdAnswerPost);
+        // should increment answer count
+        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(existingAnswerPosts.size() + 1).isEqualTo(answerPostRepository.count());
     }
@@ -156,6 +157,9 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         AnswerPost existingAnswerPostToSave = existingAnswerPosts.get(0);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", existingAnswerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
+        // should not increment answer count
+        assertThat(database.postRepository.findPostByIdElseThrow(existingAnswerPostToSave.getPost().getId()).getAnswerCount())
+                .isEqualTo(existingAnswerPostToSave.getPost().getAnswerCount());
         assertThat(existingAnswerPosts.size()).isEqualTo(answerPostRepository.count());
     }
 
@@ -170,12 +174,12 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
         // get posts of current user and compare
-        List<Post> resolvedPosts = existingPostsWithAnswers.stream()
+        List<Post> unresolvedPosts = existingPostsWithAnswers.stream()
                 .filter(post -> post.getCourseWideContext() == null || !post.getCourseWideContext().equals(CourseWideContext.ANNOUNCEMENT)
                         && post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost())))
                 .toList();
 
-        assertThat(returnedPosts).isEqualTo(resolvedPosts);
+        assertThat(returnedPosts).isEqualTo(unresolvedPosts);
     }
 
     @Test
@@ -270,59 +274,47 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetPostsForCourse_OrderByAnswerCountDESC() throws Exception {
-        // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
-        // TODO: https://github.com/h2database/h2database/issues/408
+        var params = new LinkedMultiValueMap<String, String>();
 
-        // PostSortCriterion sortCriterion = PostSortCriterion.ANSWER_COUNT;
-        // SortingOrder sortingOrder = SortingOrder.DESCENDING;
-        //
-        // var params = new LinkedMultiValueMap<String, String>();
-        //
-        // // ordering only available in course discussions page, where paging is enabled
-        // params.add("pagingEnabled", "true");
-        // params.add("page", "0");
-        // params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
-        //
-        // params.add("postSortCriterion", sortCriterion.toString());
-        // params.add("sortingOrder", sortingOrder.toString());
-        //
-        // List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        // database.assertSensitiveInformationHidden(returnedPosts);
-        //
-        // int numberOfMaxAnswersSeenOnAnyPost = Integer.MAX_VALUE;
-        // for (int i = 0; i < returnedPosts.size(); i++) {
-        // assertThat(returnedPosts.get(i).getAnswers().size()).isLessThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
-        // numberOfMaxAnswersSeenOnAnyPost = returnedPosts.get(i).getAnswers().size();
-        // }
+        // ordering only available in course discussions page, where paging is enabled
+        params.add("pagingEnabled", "true");
+        params.add("page", "0");
+        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
+
+        params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
+        params.add("sortingOrder", SortingOrder.DESCENDING.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
+
+        int numberOfMaxAnswersSeenOnAnyPost = Integer.MAX_VALUE;
+        for (Post post : returnedPosts) {
+            assertThat(post.getAnswers().size()).isLessThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
+            numberOfMaxAnswersSeenOnAnyPost = post.getAnswers().size();
+        }
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetPostsForCourse_OrderByAnswerCountASC() throws Exception {
-        // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
-        // TODO: https://github.com/h2database/h2database/issues/408
+        var params = new LinkedMultiValueMap<String, String>();
 
-        // PostSortCriterion sortCriterion = PostSortCriterion.ANSWER_COUNT;
-        // SortingOrder sortingOrder = SortingOrder.ASCENDING;
-        //
-        // var params = new LinkedMultiValueMap<String, String>();
-        //
-        // // ordering only available in course discussions page, where paging is enabled
-        // params.add("pagingEnabled", "true");
-        // params.add("page", "0");
-        // params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
-        //
-        // params.add("postSortCriterion", sortCriterion.toString());
-        // params.add("sortingOrder", sortingOrder.toString());
-        //
-        // List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        // database.assertSensitiveInformationHidden(returnedPosts);
-        //
-        // int numberOfMaxAnswersSeenOnAnyPost = 0;
-        // for (int i = 0; i < returnedPosts.size(); i++) {
-        // assertThat(returnedPosts.get(i).getAnswers().size()).isGreaterThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
-        // numberOfMaxAnswersSeenOnAnyPost = returnedPosts.get(i).getAnswers().size();
-        // }
+        // ordering only available in course discussions page, where paging is enabled
+        params.add("pagingEnabled", "true");
+        params.add("page", "0");
+        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
+
+        params.add("postSortCriterion", PostSortCriterion.ANSWER_COUNT.toString());
+        params.add("sortingOrder", SortingOrder.ASCENDING.toString());
+
+        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
+        database.assertSensitiveInformationHidden(returnedPosts);
+
+        int numberOfMaxAnswersSeenOnAnyPost = 0;
+        for (Post post : returnedPosts) {
+            assertThat(post.getAnswers().size()).isGreaterThanOrEqualTo(numberOfMaxAnswersSeenOnAnyPost);
+            numberOfMaxAnswersSeenOnAnyPost = post.getAnswers().size();
+        }
     }
 
     @Test
@@ -541,19 +533,35 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void testToggleResolvesPost() throws Exception {
-        AnswerPost answerPost = existingAnswerPosts.get(0);
+        AnswerPost answerPost = existingAnswerPosts.get(1);
+        AnswerPost answerPost2 = existingAnswerPosts.get(2);
 
         // confirm that answer post resolves the original post
         answerPost.setResolvesPost(true);
         AnswerPost resolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
                 HttpStatus.OK);
         assertThat(resolvingAnswerPost).isEqualTo(answerPost);
+        // confirm that the post is marked as resolved when it has a resolving answer
+        assertThat(database.postRepository.findPostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isTrue();
+
+        answerPost2.setResolvesPost(true);
+        request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPost2.getId(), answerPost2, AnswerPost.class, HttpStatus.OK);
 
         // revoke that answer post resolves the original post
         answerPost.setResolvesPost(false);
         AnswerPost notResolvingAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPost.getId(), answerPost, AnswerPost.class,
                 HttpStatus.OK);
         assertThat(notResolvingAnswerPost).isEqualTo(answerPost);
+
+        // confirm that the post is still marked as resolved since it still has a resolving answer
+        assertThat(database.postRepository.findPostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isTrue();
+
+        // revoke that answer post2 resolves the original post
+        answerPost2.setResolvesPost(false);
+        request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPost2.getId(), answerPost2, AnswerPost.class, HttpStatus.OK);
+
+        // confirm that the post is marked as unresolved when it no longer has a resolving answer
+        assertThat(database.postRepository.findPostByIdElseThrow(resolvingAnswerPost.getPost().getId()).isResolved()).isFalse();
     }
 
     @Test
@@ -604,6 +612,9 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
+        // should decrement answerCount
+        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToDelete.getPost().getId()).getAnswerCount())
+                .isEqualTo(answerPostToDelete.getPost().getAnswerCount() - 1);
     }
 
     @Test
@@ -614,6 +625,9 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.FORBIDDEN);
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
+        // should not decrement answerCount
+        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToNotDelete.getPost().getId()).getAnswerCount())
+                .isEqualTo(answerPostToNotDelete.getPost().getAnswerCount());
     }
 
     @Test
@@ -624,6 +638,9 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
+        // should decrement answerCount
+        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToDelete.getPost().getId()).getAnswerCount())
+                .isEqualTo(answerPostToDelete.getPost().getAnswerCount() - 1);
     }
 
     @Test
@@ -633,6 +650,23 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
     }
 
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testDeleteResolvingAnswerPost_asTutor() throws Exception {
+        AnswerPost answerPostToDeleteWhichResolves = existingAnswerPosts.get(3);
+
+        request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDeleteWhichResolves.getId(), HttpStatus.OK);
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
+
+        Post persistedPost = database.postRepository.findPostByIdElseThrow(answerPostToDeleteWhichResolves.getPost().getId());
+
+        // should update post resolved status to false
+        assertThat(persistedPost.isResolved()).isFalse();
+
+        // should decrement answerCount
+        assertThat(persistedPost.getAnswerCount()).isEqualTo(answerPostToDeleteWhichResolves.getPost().getAnswerCount() - 1);
+    }
+
     // HELPER METHODS
 
     private AnswerPost createAnswerPost(Post post) {
@@ -640,6 +674,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         answerPost.setContent("Content Answer Post");
         answerPost.setPost(post);
         post.addAnswerPost(answerPost);
+        post.setAnswerCount(post.getAnswerCount() + 1);
         return answerPost;
     }
 

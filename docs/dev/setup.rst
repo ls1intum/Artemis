@@ -34,7 +34,8 @@ following dependencies/tools on your machine:
 4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=8.1.0) to
    manage client side dependencies. Npm is typically bundled with Node.js,
    but can also be installed separately.
-5. ( `Graphviz <https://www.graphviz.org/download/>`__: We use Graphviz to generate graphs within exercise task descriptions.
+5. ( `Graphviz <https://www.graphviz.org/download/>`__: We use Graphviz to generate graphs within exercise task
+   descriptions.
    It's not necessary for a successful build,
    but it's necessary for production setups as otherwise errors will show up during runtime. )
 6. ( A **version control** and **build** system is necessary for the **programming exercise** feature of Artemis.
@@ -287,14 +288,20 @@ You can find the latest Artemis Dockerfile at ``src/main/docker/Dockerfile``.
 
 * The Dockerfile defines three Docker volumes
 
-    * ``/opt/artemis/config``: This will be used to store the configuration of Artemis in YAML files. If this directory is empty, the default configuration of Artemis will be copied upon container start.
+    * ``/opt/artemis/config``: This will be used to store the configuration of Artemis in YAML files.
+      If this directory is empty, the default configuration of Artemis will be copied upon container start.
 
       .. tip::
-        Instead of mounting this config directory, you can also use environment variables for the configuration as defined by the `Spring relaxed binding <https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#environment-variables>`__.
-        You can either place those environment variables directly in the ``environment`` section, or create an `.env-file <https://docs.docker.com/compose/environment-variables/#the-env-file>`__.
-        When starting an Artemis container directly with the Docker-CLI, an .env-file can also be given via the ``--env-file`` option.
+        Instead of mounting this config directory, you can also use environment variables for the configuration as
+        defined by the
+        `Spring relaxed binding <https://github.com/spring-projects/spring-boot/wiki/Relaxed-Binding-2.0#environment-variables>`__.
+        You can either place those environment variables directly in the ``environment`` section,
+        or create an `.env-file <https://docs.docker.com/compose/environment-variables/#the-env-file>`__.
+        When starting an Artemis container directly with the Docker-CLI, an .env-file can also be given via the
+        ``--env-file`` option.
 
-        To ease the transition of an existing set of YAML configuration files into the environment variable style, a `helper script <https://github.com/b-fein/spring-yaml-to-env>`__ can be used.
+        To ease the transition of an existing set of YAML configuration files into the environment variable style, a
+        `helper script <https://github.com/b-fein/spring-yaml-to-env>`__ can be used.
 
     * ``/opt/artemis/data``: This directory should be used for any data (e.g., local clone of repositories).
       Therefore, configure Artemis to store this files into this directory. In order to do that, you have to change
@@ -326,7 +333,8 @@ module replacement in the client.
 
 * **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
 * **Artemis (Client):** Will execute ``npm install`` and ``npm run serve``. The client will be available at
-  `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <#client-setup>`__).
+  `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see
+  `Client Setup <#client-setup>`__).
 
 Other run / debug configurations
 """"""""""""""""""""""""""""""""
@@ -459,30 +467,23 @@ replacement feature in Webpack (i.e. whenever you change a TypeScript
 file and save, the client is automatically reloaded with the new code)
 and will start the client application in your browser on
 ``http://localhost:9000``. If you have activated the JIRA profile (see
-above in Server Setup) and if you have configured
+above in `Server Setup <#server-setup>`__) and if you have configured
 ``application-artemis.yml`` correctly, then you should be able to login
 with your TUM Online account.
 
-In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run serve`` or any other
-scripts from ``package.json``,
-you can add a memory limit parameter (``--max_old_space_size=5120``) in the script.
-You can do it by changing the **start** script in ``package.json`` from:
+.. HINT::
+   In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run serve`` or
+   any other scripts from ``package.json``, you can adjust a
+   `memory limit parameter <https://nodejs.org/docs/latest-v16.x/api/cli.html#--max-old-space-sizesize-in-megabytes>`__
+   (``node-options=--max-old-space-size=6144``) which is set by default in the project-wide `.npmrc` file.
 
-::
+   If you still face the issue, you can try to set a lower/higher value than 6144 MB.
+   Recommended values are 3072 (3GB), 4096 (4GB), 5120 (5GB) , 6144 (6GB), 7168 (7GB), and 8192 (8GB).
 
-   "start": "ng serve --hmr",
+   You can override the project-wide `.npmrc` file by
+   `using a per-user config file (~/.npmrc) <https://docs.npmjs.com/cli/v8/configuring-npm/npmrc>`__.
 
-to
-
-::
-
-   "start": "node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng serve --hmr",
-
-If you still face the issue, you can try to set a higher value than 5120. Possible values are 6144, 7168, and 8192.
-
-The same change could be applied to each **ng** command as in the example above.
-
-Make sure to **not commit this change** in ``package.json``.
+   Make sure to **not commit changes** in the project-wide ``.npmrc`` unless the Github build also needs these settings.
 
 
 For more information, review `Working with
@@ -507,15 +508,15 @@ instead of the TUM defaults:
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/programming-exercises.rst.txt
+.. include:: setup/programming-exercises.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/bamboo-bitbucket-jira.rst.txt
+.. include:: setup/bamboo-bitbucket-jira.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/jenkins-gitlab.rst.txt
+.. include:: setup/jenkins-gitlab.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -573,7 +574,7 @@ Enable the ``apollon`` Spring profile:
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Apollon conversion service is running on a dedicated machine and is adressed via
+The Apollon conversion service is running on a dedicated machine and is addressed via
 HTTP. We need to extend the configuration in the file
 ``src/main/resources/config/application-artemis.yml`` like so:
 
@@ -587,11 +588,11 @@ HTTP. We need to extend the configuration in the file
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/common-problems.rst.txt
+.. include:: setup/common-problems.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/distributed.rst.txt
+.. include:: setup/distributed.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -633,4 +634,4 @@ Other useful commands
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/kubernetes.rst.txt
+.. include:: setup/kubernetes.rst

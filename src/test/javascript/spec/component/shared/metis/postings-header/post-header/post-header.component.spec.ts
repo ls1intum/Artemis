@@ -9,13 +9,13 @@ import { PostHeaderComponent } from 'app/shared/metis/posting-header/post-header
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmIconComponent } from 'app/shared/confirm-icon/confirm-icon.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { metisAnnouncement, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
 import { UserRole } from 'app/shared/metis/metis.util';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('PostHeaderComponent', () => {
     let component: PostHeaderComponent;
@@ -27,7 +27,7 @@ describe('PostHeaderComponent', () => {
     let metisServiceDeletePostMock: jest.SpyInstance;
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [MockModule(FormsModule), MockModule(ReactiveFormsModule), MockDirective(NgbTooltip)],
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostHeaderComponent,
@@ -35,7 +35,6 @@ describe('PostHeaderComponent', () => {
                 MockComponent(PostCreateEditModalComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockDirective(NgbTooltip),
                 MockComponent(PostingMarkdownEditorComponent),
                 MockComponent(PostingButtonComponent),
                 MockComponent(ConfirmIconComponent),

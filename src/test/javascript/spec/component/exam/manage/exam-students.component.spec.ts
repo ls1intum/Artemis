@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute, convertToParamMap, UrlSegment } from '@angular/router';
+import { ActivatedRoute, UrlSegment, convertToParamMap } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';

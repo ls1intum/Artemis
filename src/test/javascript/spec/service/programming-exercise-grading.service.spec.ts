@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { of, Subject } from 'rxjs';
+import { Subject, of } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { MockWebsocketService } from '../helpers/mocks/service/mock-websocket.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';

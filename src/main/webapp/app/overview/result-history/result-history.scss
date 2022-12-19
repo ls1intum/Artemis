@@ -18,20 +18,7 @@ $result-icon-size: 25px;
                 width: $result-icon-size;
                 height: $result-icon-size;
                 border-radius: $result-icon-size;
-                background-color: #0f6ab4;
-                color: white;
-
-                &.success {
-                    background-color: var(--success);
-                }
-
-                &.warning {
-                    background-color: var(--warning);
-                }
-
-                &.danger {
-                    background-color: var(--danger);
-                }
+                background-color: transparent;
             }
 
             .result-score-info {
@@ -40,7 +27,6 @@ $result-icon-size: 25px;
                 align-items: center;
                 margin-left: -39px;
                 margin-right: -39px;
-                margin-top: 5px;
                 gap: 4px;
             }
         }

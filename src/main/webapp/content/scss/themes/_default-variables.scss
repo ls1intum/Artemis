@@ -33,7 +33,9 @@ $danger: $red;
 $light: $gray-100;
 $dark: $gray-900;
 
-$body-bg: #e4e5e6;
+$body-color: $gray-900;
+$text-muted: $gray-600;
+$body-bg: $gray-100;
 
 $navbar-dark-color: rgba($white, 0.6);
 $navbar-dark-hover-color: $white;
@@ -358,8 +360,6 @@ $exam-students-dropdown-item-already-registered-background-hover-color: #daf2e0;
 $exam-students-datatable-row-newly-registered-background-color: #c4e7cc;
 
 // Data table
-$data-table-icon-right: black;
-$data-table-icon-down: black;
 $data-table-transitioning-container-active-background-color: rgba(255, 255, 255, 0.5);
 $data-table-dropdown-item-selected-background-color: $primary;
 
@@ -409,6 +409,8 @@ $textblock-assessment-text-feedback-negative-active-decoration: $danger;
 $textblock-assessment-text-feedback-neutral-color: $gray-900;
 $textblock-assessment-text-feedback-neutral-background: $gray-100;
 $textblock-assessment-text-feedback-neutral-active-decoration: $gray-900;
+$textblock-assessment-text-feedback-highlighted-color: $gray-900;
+$textblock-assessment-text-feedback-highlighted-background: lightblue;
 $textblock-assessment-text-feedback-conflicting-color: $gray-900;
 $textblock-assessment-text-feedback-conflicting-background: $warning;
 $textblock-assessment-text-feedback-conflicting-active-decoration: $gray-900;
@@ -458,6 +460,7 @@ $artemis-alert-success-border: #3eb058;
 $artemis-alert-neutral-color: black;
 $artemis-alert-neutral-background: $gray-300;
 $artemis-alert-neutral-border: $gray-500;
+$artemis-alerts-shadow: rgba($black, 0.55);
 
 $close-circle-color: black;
 $close-circle-background: white;

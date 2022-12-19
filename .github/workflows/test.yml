@@ -46,7 +46,7 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
-        distribution: 'zulu'
+        distribution: 'temurin'
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
@@ -64,6 +64,12 @@ jobs:
         access-token: ${{ secrets.GITHUB_TOKEN }}
         path: build/test-results/test/*.xml
         numFailures: 99
+    - name: Upload Code Coverage
+      uses: codecov/codecov-action@v3
+      with:
+        files: build/reports/jacoco/test/jacocoTestReport.xml
+        name: artemis-server
+        flags: server
 
   server-style:
     runs-on: ubuntu-latest
@@ -73,7 +79,7 @@ jobs:
     - name: Setup Java
       uses: actions/setup-java@v3
       with:
-        distribution: 'zulu'
+        distribution: 'temurin'
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Code Style
@@ -87,6 +93,10 @@ jobs:
     timeout-minutes: 30
     steps:
         - uses: actions/checkout@v3
+        # It seems like there is some memory issue with these tests with the project-wide default node option
+        # `--max-old-space-size` set in the .npmrc, therefore we delete it for this test as a workaround
+        - name: remove project-wide node options set in .npmrc just for this test
+          run: rm .npmrc || true
         - name: Setup Node.js
           uses: actions/setup-node@v3
           with:
@@ -105,6 +115,12 @@ jobs:
               access-token: ${{ secrets.GITHUB_TOKEN }}
               path: junit.xml
               numFailures: 99
+        - name: Upload Code Coverage
+          uses: codecov/codecov-action@v3
+          with:
+            files: build/test-results/clover.xml
+            name: artemis-client
+            flags: client
 
   client-tests-selected:
       runs-on: ubuntu-latest
@@ -128,8 +144,6 @@ jobs:
   client-style:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-        NODE_OPTIONS: '--max_old_space_size=3072'
     steps:
     - uses: actions/checkout@v3
     - name: Setup Node.js

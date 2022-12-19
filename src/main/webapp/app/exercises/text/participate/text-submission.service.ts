@@ -73,9 +73,13 @@ export class TextSubmissionService {
             map((response) => {
                 const submission = response.body!;
                 setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                submission.participation!.submissions = [submission];
-                submission.participation!.results = [submission.latestResult!];
-                submission.atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
+
+                if (submission) {
+                    submission.participation!.submissions = [submission];
+                    submission.participation!.results = [submission.latestResult!];
+                    submission.atheneTextAssessmentTrackingToken = response.headers.get('x-athene-tracking-authorization') || undefined;
+                }
+
                 return submission;
             }),
         );

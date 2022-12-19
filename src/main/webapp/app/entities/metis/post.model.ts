@@ -19,6 +19,7 @@ export class Post extends Posting {
     public conversation?: Conversation;
     public courseWideContext?: CourseWideContext;
     public displayPriority?: DisplayPriority;
+    public resolved?: boolean;
 
     constructor() {
         super();

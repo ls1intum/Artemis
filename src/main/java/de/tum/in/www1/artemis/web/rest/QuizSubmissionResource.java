@@ -155,9 +155,10 @@ public class QuizSubmissionResource {
         }
 
         quizExercise.setQuizPointStatistic(null);
-        quizExercise.setCourse(null);
 
         messagingService.broadcastNewResult(result.getParticipation(), result);
+
+        quizExercise.setCourse(null);
         // return result with quizSubmission, participation and quiz exercise (including the solution)
         return ResponseEntity.ok(result);
     }

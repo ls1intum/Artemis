@@ -12,7 +12,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { Exercise, IncludedInOverallScore, resetDates, ValidationReason } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore, ValidationReason, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
@@ -53,6 +53,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     programmingExercise: ProgrammingExercise;
     backupExercise: ProgrammingExercise;
     isSaving: boolean;
+    goBackAfterSaving = false;
     problemStatementLoaded = false;
     templateParticipationResultLoaded = true;
     notificationText?: string;
@@ -384,6 +385,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 }),
             )
             .subscribe();
+
+        this.activatedRoute.queryParams.subscribe((params) => {
+            if (params.shouldHaveBackButtonToWizard) {
+                this.goBackAfterSaving = true;
+            }
+        });
+
         // If an exercise is created, load our readme template so the problemStatement is not empty
         this.selectedProgrammingLanguage = this.programmingExercise.programmingLanguage!;
         if (this.programmingExercise.id) {
@@ -467,24 +475,20 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     save() {
-        if (this.programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC && this.programmingExercise.gradingInstructionFeedbackUsed) {
-            const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise);
-            if (!this.modalService.hasOpenModals()) {
-                this.saveExercise();
-            } else {
-                ref.then((reference) => {
-                    reference.componentInstance.confirmed.subscribe(() => {
-                        this.saveExercise();
-                    });
-                    reference.componentInstance.reEvaluated.subscribe(() => {
-                        const requestOptions = {} as any;
-                        requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
-                        this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
-                    });
-                });
-            }
-        } else {
+        const ref = this.popupService.checkExerciseBeforeUpdate(this.programmingExercise, this.backupExercise, this.isExamMode);
+        if (!this.modalService.hasOpenModals()) {
             this.saveExercise();
+        } else {
+            ref.then((reference) => {
+                reference.componentInstance.confirmed.subscribe(() => {
+                    this.saveExercise();
+                });
+                reference.componentInstance.reEvaluated.subscribe(() => {
+                    const requestOptions = {} as any;
+                    requestOptions.deleteFeedback = reference.componentInstance.deleteFeedback;
+                    this.subscribeToSaveResponse(this.programmingExerciseService.reevaluateAndUpdate(this.programmingExercise, requestOptions));
+                });
+            });
         }
     }
 
@@ -492,14 +496,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
      * Saves the programming exercise with the provided input
      */
     saveExercise() {
-        // If no release date is set, we warn the user.
-        if (!this.programmingExercise.releaseDate && !this.isExamMode) {
-            const confirmNoReleaseDate = this.translateService.instant(this.translationBasePath + 'noReleaseDateWarning');
-            if (!window.confirm(confirmNoReleaseDate)) {
-                return;
-            }
-        }
-
         // If the programming exercise has a submission policy with a NONE type, the policy is removed altogether
         if (this.programmingExercise.submissionPolicy && this.programmingExercise.submissionPolicy.type === SubmissionPolicyType.NONE) {
             this.programmingExercise.submissionPolicy = undefined;
@@ -552,6 +548,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private onSaveSuccess(exercise: ProgrammingExercise) {
         this.isSaving = false;
+
+        if (this.goBackAfterSaving) {
+            this.navigationUtilService.navigateBack();
+
+            return;
+        }
+
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 

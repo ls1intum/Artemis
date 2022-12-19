@@ -93,7 +93,29 @@ Don't do one of these or any other combination of whitespaces:
 
 Ignoring this will lead to inconsistent spacing between icons and text.
 
-10. Code Style
+10. Labels
+==========
+
+Use labels to caption inputs like text fields and checkboxes.
+Associated labels help screen readers to read out the text of the label when the input is focused.
+Additionally they allow the label to act as an input itself (e.g. the label also activates the checkbox).
+Make sure to associate them by putting the input inside the label component or by adding the for attribute in the label referencing the id of the input.
+
+Do one of these:
+
+.. code-block:: html+ng2
+
+    <label class="form-check-label">
+        <input class="form-check-input" type="checkbox" (click)="foo()" />
+        {{ 'artemisApp.labelText' | artemisTranslate }}
+    </label>
+
+    <input id="inputId" class="form-check-input" type="checkbox" (click)="foo()" />
+    <label class="form-check-label" for="inputId">
+        {{ 'artemisApp.labelText' | artemisTranslate }}
+    </label>
+
+11. Code Style
 ==============
 
 1. Use arrow functions over anonymous function expressions.
@@ -120,7 +142,7 @@ Ignoring this will lead to inconsistent spacing between icons and text.
 We use ``prettier`` to style code automatically and ``eslint`` to find additional issues.
 You can find the corresponding commands to invoke those tools in ``package.json``.
 
-11. Preventing Memory Leaks
+12. Preventing Memory Leaks
 ===========================
 
 It is crucial that you try to prevent memory leaks in both your components and your tests.
@@ -196,7 +218,7 @@ or
    jest --detectLeaks
 
 
-12. Defining Routes and Breadcrumbs
+13. Defining Routes and Breadcrumbs
 ===================================
 
 The ideal schema for routes is that every variable in a path is preceded by a unique path segment: ``\entityA\:entityIDA\entityB\:entityIDB``
@@ -231,7 +253,7 @@ When creating a completely new route you will have to register the new paths in 
         }
     }
 
-13. Strict Template Check
+14. Strict Template Check
 =========================
 
 To prevent errors for strict template rule in TypeScript, Artemis uses following approaches.
@@ -248,7 +270,7 @@ Do not use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate |
 
 Use ``<span [ngbTooltip]="submittedDate | artemisDate">{{ submittedDate | artemisTimeAgo }}</span>``
 
-14. Chart Instantiation
+15. Chart Instantiation
 =======================
 
 We are using the framework `ngx-charts <https://github.com/swimlane/ngx-charts>`_ in order to instantiate charts and diagrams in Artemis.
@@ -347,12 +369,12 @@ Here are a few tips when using this framework:
 
 Some parts of these guidelines are adapted from https://github.com/microsoft/TypeScript-wiki/blob/main/Coding-guidelines.md
 
-15. Responsive Layout
+16. Responsive Layout
 =====================
 
 Ensure that the layout of your page or component shrinks accordingly and adapts to all display sizes (responsive design).
 
-Prefer using the ``.container`` class (https://getbootstrap.com/docs/5.2/layout/containers/) when you want limit the page width on extra-large screens.
+Prefer using the ``.container`` class (https://getbootstrap.com/docs/5.2/layout/containers/) when you want to limit the page width on extra-large screens.
 Do not use the following for this purpose if it can be avoided:
 
 .. code-block:: html

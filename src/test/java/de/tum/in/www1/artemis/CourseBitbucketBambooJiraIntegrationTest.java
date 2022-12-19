@@ -133,24 +133,6 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourseWithWrongShortName() throws Exception {
-        courseTestService.testUpdateCourseWithWrongShortName();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testUpdateCourseWithoutId() throws Exception {
-        courseTestService.testUpdateCourseWithoutId();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testUpdateCourseWithoutIdAsInstructor() throws Exception {
-        courseTestService.testUpdateCourseWithoutIdAsInstructor();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourseIsEmpty() throws Exception {
         courseTestService.testUpdateCourseIsEmpty();
     }
@@ -177,6 +159,30 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         bitbucketRequestMockProvider.mockRevokeGroupPermissionFromAnyProject("tutor");
         bitbucketRequestMockProvider.mockGrantGroupPermissionToAnyProject("new-ta-group", BitbucketPermission.PROJECT_READ);
         courseTestService.testUpdateCourseGroups();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateAndUpdateCourseWithCourseImage() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithCourseImage();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithPersistentCourseImageOnUpdate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithRemoveCourseImageOnUpdate();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCreateAndUpdateCourseWithSetNewImageDespiteRemoval() throws Exception {
+        courseTestService.testCreateAndUpdateCourseWithSetNewImageDespiteRemoval();
     }
 
     @Test
@@ -695,12 +701,6 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testCreateCourseWithValidStartAndEndDate() throws Exception {
-        courseTestService.testCreateCourseWithValidStartAndEndDate();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateInvalidOnlineCourse() throws Exception {
         courseTestService.testCreateInvalidOnlineCourse();
     }
@@ -709,6 +709,12 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCreateValidOnlineCourse() throws Exception {
         courseTestService.testCreateValidOnlineCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateToOnlineCourse() throws Exception {
+        courseTestService.testUpdateToOnlineCourse();
     }
 
     @Test
@@ -733,5 +739,47 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
         courseTestService.testDeleteCourseDeletesOnlineConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateInvalidOnlineCourseConfiguration() throws Exception {
+        courseTestService.testUpdateInvalidOnlineCourseConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testInvalidOnlineCourseConfigurationNonUniqueRegistrationId() throws Exception {
+        courseTestService.testInvalidOnlineCourseConfigurationNonUniqueRegistrationId();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfigurationAsStudent_forbidden();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateValidOnlineCourseConfigurationNotOnlineCourse() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfigurationNotOnlineCourse();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateValidOnlineCourseConfiguration_IdMismatch() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfiguration_IdMismatch();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testUpdateValidOnlineCourseConfiguration() throws Exception {
+        courseTestService.testUpdateValidOnlineCourseConfiguration();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testEditCourseRemoveExistingIcon() throws Exception {
+        courseTestService.testEditCourseRemoveExistingIcon();
     }
 }
