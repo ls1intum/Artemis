@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.Nonnull;
@@ -197,7 +198,7 @@ public class GradingScale extends DomainObject {
     @JsonIgnore
     @Nonnull
     public String getNoParticipationGradeOrDefault() {
-        return noParticipationGrade != null ? noParticipationGrade : DEFAULT_NO_PARTICIPATION_GRADE;
+        return Objects.requireNonNullElse(noParticipationGrade, DEFAULT_NO_PARTICIPATION_GRADE);
     }
 
     /**
