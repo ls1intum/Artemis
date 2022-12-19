@@ -67,7 +67,7 @@
             "grantChannelModerator": {
                 "title": "{{ userName }} zu einem/einer Moderator:in von {{ channelName }} machen?",
                 "question": "Möchtest du wirklich {{ userName }} zu einem/einer Moderator:in von {{ channelName }} machen?",
-                "description": "Dies ermöglicht es {{ userName }}, den Kanal und seine Mitglieder:innen zu verwalten.",
+                "description": "Dies ermöglicht es {{ userName }}, den Kanal und seine Mitglieder:innen zu verwalten. Er oder sie kann auch Nachrichten bearbeiten oder löschen.",
                 "confirmButton": "Zum/Zur Moderator:in machen"
             },
             "revokeChannelModerator": {

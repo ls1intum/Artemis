@@ -67,7 +67,7 @@
             "grantChannelModerator": {
                 "title": "Make {{ userName }} an moderator of {{ channelName }} ?",
                 "question": "Do you really want to make {{ userName }} an moderator of {{ channelName }} ?",
-                "description": "This will allow {{ userName }} to manage the channel and its members.",
+                "description": "This will allow {{ userName }} to manage the channel and its members. He or she can also edit and delete messages in the channel.",
                 "confirmButton": "Grant Moderator Role"
             },
             "revokeChannelModerator": {
