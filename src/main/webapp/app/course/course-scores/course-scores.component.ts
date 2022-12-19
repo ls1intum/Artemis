@@ -265,7 +265,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
 
                 // if grading scale exists set properties
                 if (gradingScaleResponse.body) {
-                    this.calculateGradingScaleInformation(gradingScaleResponse.body, plagiarismCases.body || undefined);
+                    this.calculateGradingScaleInformation(gradingScaleResponse.body, plagiarismCases.body ?? undefined);
                 }
 
                 // comparing with calculation from course scores (using new participation score table)
