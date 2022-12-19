@@ -95,6 +95,7 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
     void testForNullIndexColumnError() {
         Exam examResult = examRepository.findByIdElseThrow(exam1.getId());
         assertThat(examResult).isEqualTo(exam1);
