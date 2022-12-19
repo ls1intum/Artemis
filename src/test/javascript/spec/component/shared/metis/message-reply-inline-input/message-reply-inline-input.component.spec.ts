@@ -8,6 +8,8 @@ import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MessageReplyInlineInputComponent } from 'app/shared/metis/message/message-reply-inline-input/message-reply-inline-input.component';
 import { throwError } from 'rxjs';
+import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 describe('MessageReplyInlineInputComponent', () => {
     let component: MessageReplyInlineInputComponent;
@@ -20,7 +22,7 @@ describe('MessageReplyInlineInputComponent', () => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             declarations: [MessageReplyInlineInputComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: LocalStorageService, useClass: MockSyncStorage }],
         })
             .compileComponents()
             .then(() => {
