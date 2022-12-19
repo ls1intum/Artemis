@@ -17,6 +17,10 @@ based on GitLab CI and GitLab.
 GitLab
 ^^^^^^
 
+This section describes how to setup a development environment for Artemis with GitLab and GitLab CI.
+For a production setup of GitLab, see `TODO <Link To Other Doc Page>`.
+The same basic steps as for a GitLab+Jenkins setup apply, but the steps that describe generating tokens for Jenkins can be skipped.
+
 GitLab
 """"""
 
@@ -38,7 +42,8 @@ GitLab
         docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
 
 4. Generate an access token
-    Go to ``http://gitlab/-/profile/personal_access_tokens`` and generate an access token with all scopes
+    Go to ``http://gitlab/-/profile/personal_access_tokens`` and generate an access token with all scopes.
+    This token is used in the Artemis configuration as `artemis.version-control.token`.
 
 GitLab Runner
 """""""""""""
@@ -64,16 +69,25 @@ GitLab Runner
         --locked="false" \
         --access-level="not_protected"
 
-    **Note:** For local development, you might add ``--clone-url http://gateway.docker.internal:80`` or ``--clone-url http://172.17.0.1:80`` to the command above.
+    .. note::
+        For local development, you might add ``--clone-url http://gateway.docker.internal:80`` or ``--clone-url http://172.17.0.1:80`` to the command above.
 
     You should now find the runner in the list of runners (``http://gitlab/admin/runners``)
+
+.. note::
+    Adding a runner in a production setup works the same way.
+    The GitLab administration page also contains alternative ways of setting up GitLab runners.
+    All variants should allow the passing of the configuration options ``tag-list``, ``run-untagged``, ``locked``, and ``access-level`` similarly as in the Docker command above.
+    If forgotten, Artemis will not use this runner to run the tests for exercise submissions.
+
 
 Artemis
 ^^^^^^^
 
 1. Generate authentication token
     The notification plugin has to authenticate to upload the test results.
-    Therefore, a random token has to be generated.
+    Therefore, a random string has to be generated, e.g., via a password generator.
+    This should be used in place of ``notification-plugin-token`` value in the example config below.
 2. Configure Artemis
     For local development, copy the following configuration into the ``application-local.yml`` file and adapt it with the values from the previous steps.
     Please make sure, that the GitLab Runner can access Artemis via the URL specified.
