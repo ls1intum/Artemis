@@ -201,10 +201,8 @@ export class MetisConversationService implements OnDestroy {
      * Via this Topic, users are informed about changes to which conversations they are a part of
      *
      * Users will be notified via this topic about the following events:
-     * - GroupChats and OneToOne Chats: When the creator of a group chat
-     * / one to one chat starts the conversation by sending the first message
-     * (group chats / one to one chats shows up when first message is sent)
-     * - Channels: When the user is added to the channel (channel shows up when user is added)
+     * - OneToOneChats: When the creator of the one to one chat starts the conversation by sending the first message
+     * - Channels/GroupChats: When the user is added to the channel or group chat (channel or group chat shows up when user is added)
      */
     private getConversationMembershipTopic(courseId: number, userId: number) {
         const courseTopicName = '/user' + MetisWebsocketChannelPrefix + 'courses/' + courseId;
@@ -248,41 +246,22 @@ export class MetisConversationService implements OnDestroy {
     }
 
     private handleCreateConversation(createdConversation: ConversationDto) {
-        const conversationsCopy = [...this._conversationsOfUser];
-        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === createdConversation.id);
-        if (indexOfCachedConversation === -1) {
-            conversationsCopy.push(createdConversation);
-        } else {
-            console.error('Conversation with id ' + createdConversation.id + " already exists in cache, but was sent as 'CREATE' action");
-            conversationsCopy[indexOfCachedConversation] = createdConversation;
-        }
-        this._conversationsOfUser = conversationsCopy;
-    }
-
-    private handleDeleteConversation(deletedConversation: ConversationDto) {
-        const conversationsCopy = [...this._conversationsOfUser];
-        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === deletedConversation.id);
-        if (indexOfCachedConversation !== -1) {
-            conversationsCopy.splice(indexOfCachedConversation, 1);
-        } else {
-            console.error('Conversation with id ' + deletedConversation.id + " doesn't exist in cache, but was sent as 'DELETE' action");
-        }
-        this._conversationsOfUser = conversationsCopy;
-
-        if (this._activeConversation?.id === deletedConversation.id) {
-            this._activeConversation = undefined;
-            this._activeConversation$.next(this._activeConversation);
-        }
+        this.handleUpdateOrCreate(createdConversation);
     }
 
     private handleUpdateConversation(updatedConversation: ConversationDto) {
+        this.handleUpdateOrCreate(updatedConversation);
+    }
+
+    private handleUpdateOrCreate(updatedOrNewConversation: ConversationDto) {
         const conversationsCopy = [...this._conversationsOfUser];
-        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === updatedConversation.id);
+        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === updatedOrNewConversation.id);
         if (indexOfCachedConversation === -1) {
-            console.error('Conversation with id ' + updatedConversation.id + " doesn't exist in cache, but was sent as 'UPDATE' action");
-            conversationsCopy.push(updatedConversation);
+            // conversation is not yet cached -> add it
+            conversationsCopy.push(updatedOrNewConversation);
         } else {
-            conversationsCopy[indexOfCachedConversation] = updatedConversation;
+            // conversation is already cached -> update it
+            conversationsCopy[indexOfCachedConversation] = updatedOrNewConversation;
         }
         this._conversationsOfUser = conversationsCopy;
 
@@ -292,12 +271,25 @@ export class MetisConversationService implements OnDestroy {
         // Therefore we live with a small inconsistency until the users opens the conversation again.
     }
 
+    private handleDeleteConversation(deletedConversation: ConversationDto) {
+        const conversationsCopy = [...this._conversationsOfUser];
+        const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === deletedConversation.id);
+        if (indexOfCachedConversation !== -1) {
+            // conversation is cached -> remove it
+            conversationsCopy.splice(indexOfCachedConversation, 1);
+        }
+        this._conversationsOfUser = conversationsCopy;
+
+        if (this._activeConversation?.id === deletedConversation.id) {
+            this._activeConversation = undefined;
+            this._activeConversation$.next(this._activeConversation);
+        }
+    }
+
     private handleNewMessage(conversationWithNewMessage: ConversationDto) {
         const conversationsCopy = [...this._conversationsOfUser];
         const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === conversationWithNewMessage.id);
-        if (indexOfCachedConversation === -1) {
-            console.error('Conversation with id ' + conversationWithNewMessage.id + " doesn't exist in cache, but was sent as 'NEW_MESSAGE' action");
-        } else {
+        if (indexOfCachedConversation !== -1) {
             // we update just the last message date as the dto here is minimal to save extra db calls and does not contain all the information
             conversationsCopy[indexOfCachedConversation].lastMessageDate = conversationWithNewMessage.lastMessageDate;
         }
