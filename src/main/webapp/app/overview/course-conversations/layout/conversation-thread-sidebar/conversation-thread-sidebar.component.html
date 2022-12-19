@@ -32,8 +32,10 @@
                         [lastReadDate]="activeConversation?.lastReadDate"
                     >
                     </jhi-post>
-                    <jhi-message-reply-inline-input *ngIf="!readOnlyMode" [posting]="createdAnswerPost" (onCreate)="createdAnswerPost = createEmptyAnswerPost()">
-                    </jhi-message-reply-inline-input>
+                    <div class="message-input">
+                        <jhi-message-reply-inline-input *ngIf="!readOnlyMode" [posting]="createdAnswerPost" (onCreate)="createdAnswerPost = createEmptyAnswerPost()">
+                        </jhi-message-reply-inline-input>
+                    </div>
                 </div>
             </div>
         </div>

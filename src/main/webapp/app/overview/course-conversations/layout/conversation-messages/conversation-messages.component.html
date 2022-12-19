@@ -51,6 +51,7 @@
                 </jhi-posting-thread>
             </div>
             <jhi-message-inline-input
+                class="message-input"
                 *ngIf="_activeConversation && newPost && canCreateNewMessageInConversation(_activeConversation)"
                 [posting]="newPost"
                 (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"

@@ -37,7 +37,7 @@ export class ConversationMessagesComponent implements OnInit, AfterViewInit, OnD
 
     previousScrollDistanceFromTop: number;
     // as set for the css class '.posting-infinite-scroll-container'
-    messagesContainerHeight = 350;
+    messagesContainerHeight = 700;
     postDisplayedInThread: Post;
 
     currentPostContextFilter?: PostContextFilter;
