@@ -145,9 +145,9 @@
         <div class="col-12">
             <jhi-virtual-scroll
                 #virtualScrollContainer
+                [scrollPaddingTop]="750"
                 [items]="posts"
                 [minItemHeight]="126.7"
-                [containerHeight]="'500px'"
                 [collapsableHtmlClassNames]="['.answer-post', '.new-reply-inline-input']"
                 [endOfListReachedItemThreshold]="5"
                 [(forceReload)]="forceReload"
