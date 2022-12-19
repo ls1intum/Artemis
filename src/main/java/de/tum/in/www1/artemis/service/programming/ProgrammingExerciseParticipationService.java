@@ -294,9 +294,23 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param participation The programming exercise participation in which the submission was made (including a reference to the programming exercise)
      * @param branchName    The branch received from the CI system.
-     * @throws IllegalStateException Thrown if the result does not belong to the default branch of the exercise.
+     * @throws IllegalArgumentException Thrown if the result does not belong to the default branch of the exercise.
      */
-    public void checkCorrectBranchElseThrow(ProgrammingExerciseParticipation participation, String branchName) {
+    public void checkCorrectParticipationBranchElseThrow(ProgrammingExerciseParticipation participation, String branchName) {
+        if (!checkCorrectParticipationBranch(participation, branchName)) {
+            throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
+        }
+    }
+
+    /**
+     * Checks that the result belongs to the default branch of the student participation (in case it has a branch).
+     * For all other cases (template/solution or student participation without a branch) it falls back to check the default branch of the programming exercise.
+     *
+     * @param participation The programming exercise participation in which the submission was made (including a reference to the programming exercise)
+     * @param branchName    The branch received from the CI system.
+     * @return true if the result belongs to the default branch of the exercise, false otherwise
+     */
+    public boolean checkCorrectParticipationBranch(ProgrammingExerciseParticipation participation, String branchName) {
         String participationDefaultBranch = null;
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             participationDefaultBranch = versionControlService.get().getOrRetrieveBranchOfStudentParticipation(studentParticipation);
@@ -304,9 +318,6 @@ public class ProgrammingExerciseParticipationService {
         if (Strings.isNullOrEmpty(participationDefaultBranch)) {
             participationDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
         }
-
-        if (!Objects.equals(branchName, participationDefaultBranch)) {
-            throw new IllegalStateException("Result was produced for a different branch than the default branch");
-        }
+        return Objects.equals(branchName, participationDefaultBranch);
     }
 }

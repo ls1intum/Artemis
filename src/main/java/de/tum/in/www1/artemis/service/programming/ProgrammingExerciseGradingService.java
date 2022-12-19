@@ -133,7 +133,7 @@ public class ProgrammingExerciseGradingService {
             var branchInformation = buildResult.getBranchNameFromAssignmentRepo();
             // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
             if (branchInformation.isPresent()) {
-                programmingExerciseParticipationService.checkCorrectBranchElseThrow(participation, branchInformation.get());
+                programmingExerciseParticipationService.checkCorrectParticipationBranchElseThrow(participation, branchInformation.get());
             }
 
             newResult = continuousIntegrationService.get().createResultFromBuildResult(buildResult, participation);

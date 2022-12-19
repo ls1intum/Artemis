@@ -364,7 +364,7 @@ public class ProgrammingExerciseResultTestService {
     public void shouldIgnoreResultIfNotOnDefaultBranch(Object resultNotification) {
         solutionParticipation.setProgrammingExercise(programmingExercise);
 
-        assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification)).isInstanceOf(IllegalStateException.class)
+        assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification)).isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("different branch");
     }
 
@@ -384,7 +384,7 @@ public class ProgrammingExerciseResultTestService {
         programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
 
         assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification))
-                .isInstanceOf(IllegalStateException.class).hasMessageContaining("different branch");
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("different branch");
     }
 
     // Test
