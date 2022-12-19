@@ -1,5 +1,6 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ComplaintService, EntityResponseType } from 'app/complaints/complaint.service';
+import { TextareaCounterComponent } from 'app/shared/textarea/textarea-counter.component';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
 import { ComplaintsFormComponent } from 'app/complaints/form/complaints-form.component';
 import { ArtemisTestModule } from '../../test.module';
@@ -32,7 +33,14 @@ describe('ComplaintsFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [ComplaintsFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), MockDirective(NgModel), MockDirective(TranslateDirective)],
+            declarations: [
+                ComplaintsFormComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockDirective(NgModel),
+                MockDirective(TranslateDirective),
+                MockComponent(TextareaCounterComponent),
+            ],
             providers: [
                 MockProvider(AlertService),
                 {

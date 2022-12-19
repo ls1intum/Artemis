@@ -10,6 +10,7 @@ import dayjs from 'dayjs/esm';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
@@ -54,6 +55,7 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [NgbCollapseMocksModule],
             declarations: [
                 TutorialGroupSessionsTableComponent,
                 TutorialGroupSessionRowStubComponent,
@@ -110,6 +112,7 @@ describe('TutorialGroupSessionTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [NgbCollapseMocksModule],
             declarations: [TutorialGroupSessionsTableComponent, TutorialGroupSessionRowStubComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
         })
             .compileComponents()

@@ -14,12 +14,13 @@ import { MockHttpService } from '../../../../helpers/mocks/service/mock-http.ser
 import { HttpClient } from '@angular/common/http';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { MonitoringCardComponent } from 'app/exam/monitoring/subpages/monitoring-card.component';
 import { TotalActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/total-actions-chart.component';
 import { AverageActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/average-actions-chart.component';
 import { CategoryActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/category-actions-chart.component';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
+import { ActionsChartComponent } from 'app/exam/monitoring/charts/activity-log/actions-chart.component';
 
 describe('Monitoring Activity Log Component', () => {
     // Course
@@ -47,6 +48,7 @@ describe('Monitoring Activity Log Component', () => {
                 CategoryActionsChartComponent,
                 DataTableComponent,
                 MockPipe(ArtemisTranslatePipe),
+                MockComponent(ActionsChartComponent),
             ],
             providers: [
                 { provide: ActivatedRoute, useValue: route },
