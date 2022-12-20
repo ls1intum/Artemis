@@ -174,8 +174,13 @@ public class QuizBatchService {
      */
     public Optional<QuizBatch> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
         var batchIdOptional = quizScheduleService.getQuizBatchForStudentByLogin(quizExercise, login);
-        if (batchIdOptional.isEmpty() && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
-            return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
+        if (batchIdOptional.isEmpty()) {
+            if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+                return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
+            }
+            else if (quizExercise.getQuizMode() == QuizMode.BATCHED) {
+                return quizBatchRepository.findAllByQuizExerciseAndStudentLogin(quizExercise, login).stream().findFirst();
+            }
         }
         if (quizExercise.getQuizBatches() != null && batchIdOptional.isPresent()) {
             final Long batchId = batchIdOptional.get();
