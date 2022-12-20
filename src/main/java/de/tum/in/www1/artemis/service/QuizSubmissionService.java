@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
@@ -230,5 +232,18 @@ public class QuizSubmissionService {
 
         log.debug("submit exam quiz finished: {}", quizSubmission);
         return quizSubmission;
+    }
+
+    /**
+     * Returns true if student has submitted at least once for the given quiz batch
+     *
+     * @param quizBatch the quiz batch of interest to check if submission exists
+     * @param login the student of interest to check if submission exists
+     * @return boolean the submission status of student for the given quiz batch
+     */
+    public boolean isSubmitted(QuizBatch quizBatch, String login) {
+        Set<QuizSubmission> submissions = quizSubmissionRepository.findAllByQuizBatchAndStudentLogin(quizBatch, login);
+        Optional<QuizSubmission> submission = submissions.stream().findFirst();
+        return submission.map(QuizSubmission::isSubmitted).orElse(false);
     }
 }

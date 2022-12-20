@@ -54,12 +54,16 @@ class TextClusterResourceIntegrationTest extends AbstractSpringIntegrationBamboo
      */
     @BeforeEach
     void initTestCase() throws Error {
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         Course course = database.createCourseWithInstructorAndTextExercise(TEST_PREFIX);
 
         exercise = database.getFirstExerciseWithType(course, TextExercise.class);
         StudentParticipation studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().iterator().next();
+        studentParticipation.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
+        studentParticipationRepository.save(studentParticipation);
 
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
+        textSubmission.setParticipation(studentParticipation);
         textSubmissionRepository.save(textSubmission);
 
         database.addResultToSubmission(textSubmission, AssessmentType.AUTOMATIC);
@@ -77,7 +81,6 @@ class TextClusterResourceIntegrationTest extends AbstractSpringIntegrationBamboo
             block.computeId();
         });
 
-        textSubmission.setParticipation(studentParticipation);
         textSubmissionRepository.save(textSubmission);
         textClusterRepository.saveAll(clusters);
         textBlockRepository.saveAll(textBlocks);
@@ -155,7 +158,7 @@ class TextClusterResourceIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testToggleClusterDisabledPredicate_withDisabledAndEnabledCluster() throws Exception {
-        TextCluster cluster = textClusterRepository.findAll().get(0);
+        TextCluster cluster = textClusterRepository.findAllByExercise(exercise).get(0);
         // set predicate to false
         request.patch("/api/text-exercises/" + exercise.getId() + "/text-clusters/" + cluster.getId() + "?disabled=false", "{}", HttpStatus.OK);
 

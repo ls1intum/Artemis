@@ -5,10 +5,6 @@ buildscript {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url "https://repo.spring.io/plugins-release" }
-    }
-    dependencies {
-        classpath "io.spring.gradle:propdeps-plugin:0.0.10.RELEASE"
     }
 }
 
@@ -33,7 +29,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.12.6"
+version = "5.12.8"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17

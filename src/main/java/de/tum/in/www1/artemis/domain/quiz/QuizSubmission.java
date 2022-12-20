@@ -29,6 +29,7 @@ public class QuizSubmission extends Submission {
     @JsonView(QuizView.After.class)
     private Double scoreInPoints;
 
+    // The use of id here is on purpose because @ManyToOne relation cannot be lazily fetched and typically, QuizBatch is not needed when loading QuizSubmission
     @Column(name = "quiz_batch")
     private Long quizBatch;
 
