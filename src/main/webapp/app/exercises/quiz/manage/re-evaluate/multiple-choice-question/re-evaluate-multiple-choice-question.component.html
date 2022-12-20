@@ -173,7 +173,7 @@
                     <div class="col-9 col-lg-7 option-text">
                         <!-- TODO: Fix file upload -->
                         <jhi-markdown-editor
-                            [markdown]="generateAnswerMarkdown(answer)"
+                            [markdown]="markdownMap.get(answer.id!)"
                             [editorMode]="editorMode"
                             [metaCommands]="[]"
                             [defaultCommands]="[]"
