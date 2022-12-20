@@ -94,7 +94,7 @@
                     <fa-icon [icon]="faArrowsAltV" size="2x"></fa-icon>
                 </span>
                 <jhi-markdown-editor
-                    [markdown]="generateAnswerMarkdown(answer)"
+                    [markdown]="markdownMap.get(answer.id!)"
                     [editorMode]="editorMode"
                     [metaCommands]="[]"
                     [defaultCommands]="[]"
