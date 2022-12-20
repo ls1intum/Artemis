@@ -1,5 +1,5 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { Observable, Subject, debounceTime, distinctUntilChanged, finalize, from, map, takeUntil } from 'rxjs';
+import { EMPTY, Observable, Subject, debounceTime, distinctUntilChanged, finalize, from, map, takeUntil } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
@@ -12,6 +12,7 @@ import { ChannelsCreateDialogComponent } from 'app/overview/course-conversations
 import { canCreateChannel } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { AbstractDialogComponent } from 'app/overview/course-conversations/dialogs/abstract-dialog.component';
 import { defaultSecondLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { catchError } from 'rxjs/operators';
 
 export type ChannelActionType = 'register' | 'deregister' | 'view' | 'create';
 export type ChannelAction = {
@@ -148,7 +149,10 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe((channel: ChannelDTO) => {
                 this.channelActions$.next({ action: 'create', channel });
             });

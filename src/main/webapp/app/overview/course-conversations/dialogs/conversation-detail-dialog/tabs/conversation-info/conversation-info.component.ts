@@ -10,7 +10,7 @@ import {
     GenericUpdateTextPropertyDialogComponent,
     GenericUpdateTextPropertyTranslationKeys,
 } from 'app/overview/course-conversations/dialogs/generic-update-text-property-dialog/generic-update-text-property-dialog.component';
-import { Subject, from, map, takeUntil } from 'rxjs';
+import { EMPTY, Subject, from, map, takeUntil } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -18,6 +18,7 @@ import { channelRegex } from 'app/overview/course-conversations/dialogs/channels
 import { canChangeChannelProperties, canChangeGroupChatProperties } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { GroupChatDto, getAsGroupChatDto, isGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
+import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-conversation-info',
@@ -144,7 +145,10 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         }
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe((newValue: string) => {
                 let updateValue = null;
                 if (newValue && newValue.trim().length > 0) {

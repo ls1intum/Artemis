@@ -2,7 +2,7 @@ import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, QueryLi
 import interact from 'interactjs';
 import { faChevronLeft, faChevronRight, faComments, faCompress, faExpand, faGripLinesVertical, faMagnifyingGlass, faPlus } from '@fortawesome/free-solid-svg-icons';
 
-import { Subject, delay, from, map, startWith, takeUntil } from 'rxjs';
+import { EMPTY, Subject, delay, from, map, startWith, takeUntil } from 'rxjs';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
 import { Course } from 'app/entities/course.model';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
@@ -17,7 +17,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { OneToOneChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/one-to-one-chat-create-dialog/one-to-one-chat-create-dialog.component';
 import { OneToOneChatDTO, isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChatCreateDialogComponent } from 'app/overview/course-conversations/dialogs/group-chat-create-dialog/group-chat-create-dialog.component';
-import { debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
+import { catchError, debounceTime, distinctUntilChanged, tap } from 'rxjs/operators';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { ConversationSidebarSectionComponent } from 'app/overview/course-conversations/layout/conversation-selection-sidebar/conversation-sidebar-section/conversation-sidebar-section.component';
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
@@ -261,7 +261,10 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe((channelToCreate: ChannelDTO) => {
                 this.metisConversationService.createChannel(channelToCreate).subscribe({
                     complete: () => {
@@ -278,7 +281,10 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe((chatPartners: UserPublicInfoDTO[]) => {
                 this.metisConversationService.createGroupChat(chatPartners?.map((partner) => partner.login!)).subscribe({
                     complete: () => {
@@ -295,7 +301,10 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe((chatPartner: UserPublicInfoDTO) => {
                 if (chatPartner?.login) {
                     this.metisConversationService.createOneToOneChat(chatPartner.login).subscribe({
@@ -316,7 +325,10 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
         modalRef.componentInstance.createChannelFn = this.metisConversationService.createChannel;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe((newActiveConversation: ConversationDto) => {
                 this.metisConversationService.forceRefresh().subscribe({
                     complete: () => {

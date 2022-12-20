@@ -3,7 +3,7 @@ import { ConversationDto } from 'app/entities/metis/conversation/conversation.mo
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { faEllipsis, faMessage } from '@fortawesome/free-solid-svg-icons';
-import { Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
+import { EMPTY, Subject, debounceTime, distinctUntilChanged, from, takeUntil } from 'rxjs';
 import { Course } from 'app/entities/course.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -16,6 +16,7 @@ import {
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { isOneToOneChatDto } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: '[jhi-conversation-sidebar-entry]',
@@ -80,7 +81,10 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
         modalRef.componentInstance.selectedTab = ConversationDetailTabs.SETTINGS;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe(() => {
                 this.settingsChanged.emit();
             });

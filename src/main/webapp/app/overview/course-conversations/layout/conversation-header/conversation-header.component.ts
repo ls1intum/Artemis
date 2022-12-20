@@ -10,11 +10,12 @@ import {
 } from 'app/overview/course-conversations/dialogs/conversation-detail-dialog/conversation-detail-dialog.component';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
-import { Subject, from, takeUntil } from 'rxjs';
+import { EMPTY, Subject, from, takeUntil } from 'rxjs';
 import { ConversationService } from 'app/shared/metis/conversations/conversation.service';
 import { canAddUsersToConversation } from 'app/shared/metis/conversations/conversation-permissions.utils';
 import { getAsGroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversations/other/conversation.util';
+import { catchError } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-conversation-header',
@@ -70,7 +71,10 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         modalRef.componentInstance.activeConversation = this.activeConversation;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe(() => {
                 this.metisConversationService.forceRefresh().subscribe({
                     complete: () => {},
@@ -86,7 +90,10 @@ export class ConversationHeaderComponent implements OnInit, OnDestroy {
         modalRef.componentInstance.selectedTab = tab;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe(() => {
                 this.metisConversationService.forceRefresh().subscribe({
                     complete: () => {},
