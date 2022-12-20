@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.net.URL;
 
 import org.gitlab4j.api.GitLabApiException;
@@ -53,7 +52,7 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    void testHealth() throws Exception {
+    void testHealth() {
         var health = continuousIntegrationService.health();
         assertThat(health.isUp()).isTrue();
         assertThat(health.getAdditionalInfo()).containsEntry("cf.", "Version Control Server").containsEntry("url", gitlabServerUrl);
@@ -105,7 +104,7 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    void testTriggerBuildSuccess() throws GitLabApiException, URISyntaxException {
+    void testTriggerBuildSuccess() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         exercise.setBranch("main");
         programmingExerciseRepository.save(exercise);
@@ -156,7 +155,7 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    void testCreateBuildPlanForExercise() throws GitLabApiException, URISyntaxException {
+    void testCreateBuildPlanForExercise() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
@@ -185,9 +184,7 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
         continuousIntegrationService.performEmptySetupCommit(null);
         assertThat(continuousIntegrationService.checkIfProjectExists(null, null)).isNull();
         assertThat(continuousIntegrationService.checkIfBuildPlanExists(null, null)).isFalse();
-        assertThat(continuousIntegrationService.getPlanKey(null)).isNull();
         assertThat(continuousIntegrationService.copyBuildPlan(null, null, null, null, null, false)).isNull();
-        assertThat(continuousIntegrationService.convertBuildResult(null)).isNull();
         assertThat(continuousIntegrationService.getLatestBuildLogs(null)).isNull();
         assertThat(continuousIntegrationService.retrieveLatestArtifact(null)).isNull();
     }
