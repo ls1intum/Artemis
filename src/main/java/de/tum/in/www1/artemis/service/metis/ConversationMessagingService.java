@@ -157,7 +157,13 @@ public class ConversationMessagingService extends PostingService {
         Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
 
         // ToDo: find a cleaner way to do this instead of making the string here in the server
-        var editedByText = "(edited by " + user.getName() + " on " + ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")) + " [UTC])";
+
+        var nameOfEditor = user.getName();
+        // use login as fallback
+        if (nameOfEditor == null || nameOfEditor.isBlank()) {
+            nameOfEditor = user.getLogin();
+        }
+        var editedByText = "(edited by " + nameOfEditor + " on " + ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")) + " [UTC])";
         messagePost.setContent(messagePost.getContent() + "\n" + editedByText);
 
         // update: allow overwriting of values only for depicted fields
