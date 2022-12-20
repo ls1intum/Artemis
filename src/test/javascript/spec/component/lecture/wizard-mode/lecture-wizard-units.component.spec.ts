@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { VideoUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/video-unit-form/video-unit-form.component';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { VideoUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/videoUnit.service';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -26,6 +26,7 @@ import { AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-ma
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { objectToJsonBlob } from 'app/utils/blob-util';
+import { CreateExerciseUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-exercise-unit/create-exercise-unit.component';
 
 @Component({ selector: 'jhi-video-unit-form', template: '' })
 class VideoUnitFormStubComponent {
@@ -46,7 +47,13 @@ describe('LectureWizardUnitComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [VideoUnitFormStubComponent, UnitCreationCardStubComponent, LectureUpdateWizardUnitsComponent],
+            declarations: [
+                VideoUnitFormStubComponent,
+                UnitCreationCardStubComponent,
+                LectureUpdateWizardUnitsComponent,
+                MockComponent(CreateExerciseUnitComponent),
+                MockComponent(LectureUnitManagementComponent),
+            ],
             providers: [
                 MockProvider(VideoUnitService),
                 MockProvider(AlertService),

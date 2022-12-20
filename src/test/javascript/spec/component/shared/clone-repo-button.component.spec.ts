@@ -263,6 +263,7 @@ describe('JhiCloneRepoButtonComponent', () => {
 
         participation.repositoryUrl = `https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
         component.participations = [participation];
+        component.activeParticipation = participation;
         component.sshEnabled = true;
 
         fixture.detectChanges();
