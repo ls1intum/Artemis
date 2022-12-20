@@ -19,9 +19,13 @@ public class TutorialGroupDateUtil {
      * Check if a string follows the ISO 8601 format for date
      *
      * @param dateString the string to check
-     * @return true if the string follows the ISO 8601 format for date
+     * @return true if the string follows the ISO 8601 format for date or if null
      */
     public static boolean isIso8601DateString(String dateString) {
+        if (dateString == null) {
+            return true;
+        }
+
         try {
             LocalDate.parse(dateString);
             return true;
@@ -35,9 +39,13 @@ public class TutorialGroupDateUtil {
      * Check if a string follows the ISO 8601 format for time
      *
      * @param timeString the string to check
-     * @return true if the string follows the ISO 8601 format for time
+     * @return true if the string follows the ISO 8601 format for time or if null
      */
     public static boolean isIso8601TimeString(String timeString) {
+        if (timeString == null) {
+            return true;
+        }
+
         try {
             LocalTime.parse(timeString);
             return true;
