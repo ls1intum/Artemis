@@ -4,6 +4,7 @@ import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/t
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 @Component({
+    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-session-row]',
     templateUrl: './tutorial-group-session-row.component.html',
     styleUrls: ['./tutorial-group-session-row.component.scss'],
