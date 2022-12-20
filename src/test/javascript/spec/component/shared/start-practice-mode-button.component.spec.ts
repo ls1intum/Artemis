@@ -18,6 +18,7 @@ import { Subject } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 describe('JhiStartPracticeModeButtonComponent', () => {
     let comp: StartPracticeModeButtonComponent;
@@ -30,7 +31,7 @@ describe('JhiStartPracticeModeButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockDirective(NgbPopover)],
             declarations: [StartPracticeModeButtonComponent, MockComponent(ExerciseActionButtonComponent), MockPipe(ArtemisTranslatePipe), MockDirective(FeatureToggleDirective)],
             providers: [
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },

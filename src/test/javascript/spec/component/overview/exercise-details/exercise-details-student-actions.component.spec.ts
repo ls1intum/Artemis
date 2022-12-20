@@ -5,6 +5,8 @@ import { By } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Exercise, ExerciseMode, ExerciseType } from 'app/entities/exercise.model';
+import { Subject, of } from 'rxjs';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { InitializationState } from 'app/entities/participation/participation.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -31,6 +33,8 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../../test.module';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -61,11 +65,12 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
             declarations: [
                 ExerciseDetailsStudentActionsComponent,
                 MockComponent(ExerciseActionButtonComponent),
                 MockComponent(CloneRepoButtonComponent),
+                MockComponent(StartPracticeModeButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
                 ExtensionPointDirective,
                 MockRouterLinkDirective,

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 
 @Component({
@@ -9,7 +9,7 @@ import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 export class Lti13ExerciseLaunchComponent implements OnInit {
     isLaunching: boolean;
 
-    constructor(private route: ActivatedRoute, private http: HttpClient) {
+    constructor(private route: ActivatedRoute, private http: HttpClient, private router: Router) {
         this.isLaunching = true;
     }
 
@@ -48,7 +48,7 @@ export class Lti13ExerciseLaunchComponent implements OnInit {
                     window.sessionStorage.removeItem('state');
 
                     if (targetLinkUri) {
-                        window.location.href = targetLinkUri;
+                        this.router.navigateByUrl(targetLinkUri);
                         return;
                     }
 
