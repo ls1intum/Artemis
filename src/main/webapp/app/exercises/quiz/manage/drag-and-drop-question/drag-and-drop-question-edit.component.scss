@@ -159,19 +159,19 @@
         .form-group > * {
             margin: 0 4px;
         }
-    }
 
-    .invalid-button {
-        width: 100%;
-        text-overflow: ellipsis;
-        overflow: hidden;
-    }
+        .invalid-button {
+            width: 100%;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
 
-    .delete-button {
-        cursor: pointer;
-    }
+        .delete-button {
+            cursor: pointer;
+        }
 
-    .delete-button:hover {
-        color: red;
+        .delete-button:hover {
+            color: red;
+        }
     }
 }

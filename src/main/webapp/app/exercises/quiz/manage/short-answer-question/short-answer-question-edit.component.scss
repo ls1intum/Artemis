@@ -105,5 +105,13 @@
             text-overflow: ellipsis;
             overflow: hidden;
         }
+
+        .delete-button {
+            cursor: pointer;
+        }
+
+        .delete-button:hover {
+            color: red;
+        }
     }
 }
