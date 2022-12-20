@@ -6,15 +6,10 @@ export const courseExerciseOverviewTour: GuidedTour = {
     settingsKey: 'course_exercise_overview_tour',
     resetParticipation: ResetParticipation.EXERCISE_PARTICIPATION,
     steps: [
-        new TextTourStep({
+        new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.content',
-            hintTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.hint',
-        }),
-        new VideoTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.content',
-            videoUrl: 'tour.courseExerciseOverview.installPrerequisites.sourceTreeSetup.videoUrl',
+            videoUrl: 'tour.courseExerciseOverview.installPrerequisites.videoUrl',
         }),
         new TextTourStep({
             highlightSelector: '.tab-item.exercises',
@@ -100,27 +95,13 @@ export const courseExerciseOverviewTour: GuidedTour = {
         new VideoTourStep({
             headlineTranslateKey: 'tour.courseExerciseOverview.cloneRepository.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.cloneRepository.content',
+            hintTranslateKey: 'tour.courseExerciseOverview.cloneRepository.hint',
             videoUrl: 'tour.courseExerciseOverview.cloneRepository.videoUrl',
         }),
         new VideoTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.inspectSourceTree.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.inspectSourceTree.content',
-            videoUrl: 'tour.courseExerciseOverview.inspectSourceTree.videoUrl',
-        }),
-        new VideoTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.importEclipse.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.importEclipse.content',
-            videoUrl: 'tour.courseExerciseOverview.importEclipse.videoUrl',
-        }),
-        new VideoTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.inspectProject.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.inspectProject.content',
-            videoUrl: 'tour.courseExerciseOverview.inspectProject.videoUrl',
-        }),
-        new VideoTourStep({
-            headlineTranslateKey: 'tour.courseExerciseOverview.commitAndPush.headline',
-            contentTranslateKey: 'tour.courseExerciseOverview.commitAndPush.content',
-            videoUrl: 'tour.courseExerciseOverview.commitAndPush.videoUrl',
+            headlineTranslateKey: 'tour.courseExerciseOverview.solveExercise.headline',
+            contentTranslateKey: 'tour.courseExerciseOverview.solveExercise.content',
+            videoUrl: 'tour.courseExerciseOverview.solveExercise.videoUrl',
         }),
         new TextTourStep({
             highlightSelector: '.row.guided-tour',
