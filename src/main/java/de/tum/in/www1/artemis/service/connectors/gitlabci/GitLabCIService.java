@@ -342,7 +342,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
         log.error("Unsupported action: GitLabCIService.getWebHookUrl()");
-        // TODO
         return Optional.empty();
     }
 

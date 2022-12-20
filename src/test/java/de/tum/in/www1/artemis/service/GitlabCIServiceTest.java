@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Optional;
 
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.models.PipelineStatus;
@@ -56,14 +57,6 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
         var health = continuousIntegrationService.health();
         assertThat(health.isUp()).isTrue();
         assertThat(health.getAdditionalInfo()).containsEntry("cf.", "Version Control Server").containsEntry("url", gitlabServerUrl);
-    }
-
-    @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    void testGetWebHookUrl() {
-        // TODO: adapt when actual implementation has been added
-        var result = continuousIntegrationService.getWebHookUrl(null, null);
-        assertThat(result).isNotPresent();
     }
 
     @Test
@@ -172,19 +165,33 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    void testCopyBuildPlan() {
+        final String targetProjectKey = "TARGETPROJECTKEY";
+        final String targetPlanName1 = "TARGETPLANNAME1";
+        final String targetPlanName2 = "target-plan-name-#2";
+
+        final String expectedBuildPlanKey1 = "TARGETPROJECTKEY-TARGETPLANNAME1";
+        final String expectedBuildPlanKey2 = "TARGETPROJECTKEY-TARGETPLANNAME2";
+
+        assertThat(continuousIntegrationService.copyBuildPlan(null, null, targetProjectKey, null, targetPlanName1, false)).isEqualTo(expectedBuildPlanKey1);
+        assertThat(continuousIntegrationService.copyBuildPlan(null, null, targetProjectKey, null, targetPlanName2, false)).isEqualTo(expectedBuildPlanKey2);
+    }
+
+    @Test
+    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
     void testUnsupportedMethods() {
         continuousIntegrationService.createProjectForExercise(null);
         continuousIntegrationService.removeAllDefaultProjectPermissions(null);
         continuousIntegrationService.givePlanPermissions(null, null);
         continuousIntegrationService.giveProjectPermissions(null, null, null);
-        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null, null);
+        continuousIntegrationService.updatePlanRepository(null, null, null, null, null, null, null, Optional.empty());
         continuousIntegrationService.enablePlan(null, null);
         continuousIntegrationService.deleteBuildPlan(null, null);
         continuousIntegrationService.deleteProject(null);
         continuousIntegrationService.performEmptySetupCommit(null);
+        assertThat(continuousIntegrationService.getWebHookUrl(null, null)).isNotPresent();
         assertThat(continuousIntegrationService.checkIfProjectExists(null, null)).isNull();
         assertThat(continuousIntegrationService.checkIfBuildPlanExists(null, null)).isFalse();
-        assertThat(continuousIntegrationService.copyBuildPlan(null, null, null, null, null, false)).isNull();
         assertThat(continuousIntegrationService.getLatestBuildLogs(null)).isNull();
         assertThat(continuousIntegrationService.retrieveLatestArtifact(null)).isNull();
     }
