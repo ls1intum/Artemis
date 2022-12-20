@@ -62,7 +62,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "progexbitbucketbamboo";
+    private static final String TEST_PREFIX = "studexam";
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;

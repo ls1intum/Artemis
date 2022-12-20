@@ -45,7 +45,7 @@ import net.sourceforge.plantuml.Log;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "progexbitbucketbamboo";
+    private static final String TEST_PREFIX = "progextemplate";
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;

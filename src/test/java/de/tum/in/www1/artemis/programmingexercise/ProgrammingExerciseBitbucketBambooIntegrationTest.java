@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -166,9 +167,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
     void startProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
-        for (int i = 1; i <= 12; i++) {
-            bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
-        }
+        mockUsers(numberOfStudents, "student");
         programmingExerciseTestService.startProgrammingExercise_correctInitializationState(exerciseMode);
     }
 
@@ -234,36 +233,28 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
     void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
-        for (int i = 1; i <= 12; i++) {
-            bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
-        }
+        mockUsers(numberOfStudents, "student");
         programmingExerciseTestService.startProgrammingExerciseStudentSubmissionFailedWithBuildlog();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
     void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
-        for (int i = 1; i <= 12; i++) {
-            bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
-        }
+        mockUsers(numberOfStudents, "student");
         programmingExerciseTestService.startProgrammingExerciseStudentRetrieveEmptyArtifactPage();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void repositoryAccessIsAdded_whenStudentIsAddedToTeam() throws Exception {
-        for (int i = 1; i <= 12; i++) {
-            bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
-        }
+        mockUsers(numberOfStudents, "student");
         programmingExerciseTestService.repositoryAccessIsAdded_whenStudentIsAddedToTeam();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam() throws Exception {
-        for (int i = 1; i <= 12; i++) {
-            bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
-        }
+        mockUsers(numberOfStudents, "student");
         programmingExerciseTestService.repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam();
     }
 
@@ -289,9 +280,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void copyRepository_testConflictError() throws Exception {
-        for (int i = 1; i <= numberOfStudents; i++) {
-            bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
-        }
+        mockUsers(numberOfStudents, "student");
         programmingExerciseTestService.copyRepository_testConflictError();
     }
 
@@ -304,9 +293,7 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void configureRepository_testBadRequestError() throws Exception {
-        for (int i = 1; i <= 12; i++) {
-            bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
-        }
+        mockUsers(numberOfStudents, "student");
         programmingExerciseTestService.configureRepository_testBadRequestError();
     }
 
@@ -442,6 +429,12 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testBuildLogStatistics() throws Exception {
         programmingExerciseTestService.buildLogStatistics();
+    }
+
+    private void mockUsers(int amount, String name) throws URISyntaxException {
+        for (int i = 1; i <= amount; i++) {
+            bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + name + i);
+        }
     }
 
 }
