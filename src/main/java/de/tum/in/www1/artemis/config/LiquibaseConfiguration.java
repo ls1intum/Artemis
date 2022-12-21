@@ -166,6 +166,10 @@ public class LiquibaseConfiguration {
         return connection.createStatement();
     }
 
+    /**
+     * stores the current version in the database
+     * @param event used to retrieve the application context and the used profiles
+     */
     @EventListener()
     public void storeCurrentVersionToDatabase(ApplicationReadyEvent event) {
         if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {

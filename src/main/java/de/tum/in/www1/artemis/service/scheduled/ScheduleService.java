@@ -101,10 +101,11 @@ public class ScheduleService {
 
     /**
      * Cancel possible schedules tasks for a provided exercise.
-     *
+     * <p>
      * Additionally, cancels the tasks for participations of that exercise for the corresponding {@link ParticipationLifecycle}.
      *
-     * @param exerciseId if of the exercise for which a potential scheduled task is canceled
+     * @param exerciseId id of the exercise for which a potentially scheduled task is canceled
+     * @param lifecycle the lifecycle (e.g. release, due date) for which the schedule should be canceled
      */
     public void cancelScheduledTaskForLifecycle(Long exerciseId, ExerciseLifecycle lifecycle) {
         Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exerciseId, lifecycle);
@@ -134,7 +135,9 @@ public class ScheduleService {
     /**
      * Cancel possible schedules tasks for a provided participation.
      *
+     * @param exerciseId id of the exercise for which a potentially scheduled task is canceled
      * @param participationId of the participation for which a potential scheduled task is cancelled.
+     * @param lifecycle the lifecycle (e.g. release, due date) for which the schedule should be canceled
      */
     public void cancelScheduledTaskForParticipationLifecycle(Long exerciseId, Long participationId, ParticipationLifecycle lifecycle) {
         Triple<Long, Long, ParticipationLifecycle> taskId = Triple.of(exerciseId, participationId, lifecycle);
