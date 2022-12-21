@@ -216,7 +216,7 @@ public class DatabaseUtilService {
     private TutorParticipationRepository tutorParticipationRepo;
 
     @Autowired
-    public PostRepository postRepository;
+    private PostRepository postRepository;
 
     @Autowired
     private AnswerPostRepository answerPostRepository;
