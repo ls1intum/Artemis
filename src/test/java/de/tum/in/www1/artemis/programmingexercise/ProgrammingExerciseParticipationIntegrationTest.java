@@ -387,18 +387,18 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_noAccess_forbidden() throws Exception {
-        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
 
         request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_noAccessToGradedParticipation_forbidden() throws Exception {
-        var gradedParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        var practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        var gradedParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var practiceParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
         practiceParticipation.setTestRun(true);
         participationRepository.save(practiceParticipation);
 
@@ -407,9 +407,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_afterDueDateGradedParticipation_forbidden() throws Exception {
-        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExerciseRepository.save(programmingExercise);
 
@@ -417,10 +417,10 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkResetRepository_exam_forbidden() throws Exception {
         programmingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         request.put("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/reset-repository", null, HttpStatus.FORBIDDEN);
     }
