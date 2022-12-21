@@ -22,10 +22,10 @@ credentials:
               apiToken: jenkins-gitlab-token # Access token generated in Gitlab with the "api" and "read_repository" permissions.
               description: 'Gitlab Api Token for Artemis'
           - string:
-              id: artemis_notification_plugin_token # Value of the "artemis-authentication-token-key" defined key in application-jenkins.yml
+              id: artemis_notification_plugin_token # Value of the "artemis-authentication-token-key" defined key in application-artemis.yml
               description: 'Access token for Artemis Test Notification Plugin'
               scope: GLOBAL
-              secret: artemis_admin  # Value of the "artemis-authentication-token-value" key defined in application-local.yml or your ENVs
+              secret: artemis_admin  # Value of the "artemis-authentication-token-value" key defined in application-artemis.yml
           - usernamePassword:
               id: artemis_gitlab_admin_credentials
               scope: GLOBAL

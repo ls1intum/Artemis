@@ -24,38 +24,81 @@ GitLab,** ``8082`` **for Jenkins,** ``8080`` **for Artemis)**
     :local:
     :depth: 3
 
-.. _Configure Artemis for Jenkins GitLab:
+Artemis
+^^^^^^^
 
-Configure Artemis
-^^^^^^^^^^^^^^^^^
+In order to use Artemis with Jenkins as **Continuous Integration**
+Server and Gitlab as **Version Control** Server, you have to configure
+the file ``application-prod.yml`` (Production Server) or
+``application-artemis.yml`` (Local Development) accordingly. Please note
+that all values in ``<..>`` have to be configured properly. These values
+will be explained below in the corresponding sections. If you want to set up a local environment, copy the values
+below into your ``application-artemis.yml`` or ``application-local.yml`` file (the latter is recommended), and follow
+the `Gitlab Server Quickstart <#gitlab-server-quickstart>`__ guide.
 
-For **development purposes** copy the contents of ``src/main/resources/config/application-local.yml.sample``
-to ``src/main/resources/config/application-local.yml``.
-Then uncomment the **Jenkins / GitLab Stack** section and the **Server** section as also described inline.
+.. code:: yaml
 
-In addition, you have to start Artemis with the profiles ``jenkins`` and ``gitlab`` to activate
-the correct adapters.
-You also have to load the profile ``local`` to activate the override configuration file
-``src/main/resources/config/application-local.yml``.
-Resulting in:
+   artemis:
+    course-archives-path: ./exports/courses
+    repo-clone-path: ./repos
+    repo-download-clone-path: ./repos-download
+    encryption-password: artemis_admin           # LEGACY: arbitrary password for encrypting database values
+    bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
+                            # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
+    user-management:
+        use-external: false
+        internal-admin:
+            username: artemis_admin
+            password: artemis_admin
+        accept-terms: false
+        login:
+            account-name: TUM
+    version-control:
+        url: http://localhost:8081
+        user: root
+        password: artemis_admin # created in Gitlab Server Quickstart step 2
+        token: artemis-gitlab-token # generated in Gitlab Server Quickstart steps 4 and 5
+        ci-token: jenkins-secret-token # pre-generated or replaced in Automated Jenkins Server step 3
+    continuous-integration:
+        user: artemis_admin
+        password: artemis_admin
+        url: http://localhost:8082
+        empty-commit-necessary: true
+        secret-push-token: AQAAABAAAAAg/aKNFWpF9m2Ust7VHDKJJJvLkntkaap2Ka3ZBhy5XjRd8s16vZhBz4fxzd4TH8Su # pre-generated or replaced in Automated Jenkins Server step 3
+        vcs-credentials: artemis_gitlab_admin_credentials
+        artemis-authentication-token-key: artemis_notification_plugin_token
+        artemis-authentication-token-value: artemis_admin
+        build-timeout: 30
+    git:
+        name: Artemis
+        email: artemis.in@tum.de
+   jenkins:
+       internal-urls:
+           ci-url: http://jenkins:8080
+           vcs-url: http://gitlab:80
+       use-crumb: false
+   server:
+        port: 8080
+        url: http://172.17.0.1:8080 # `http://host.docker.internal:8080` for Windows
+
+In addition, you have to start Artemis with the profiles ``gitlab`` and
+``jenkins`` so that the correct adapters will be used, e.g.:
 
 ::
 
-   --spring.profiles.active=artemis,scheduling,jenkins,gitlab,dev,local
+   --spring.profiles.active=dev,jenkins,gitlab,artemis,scheduling
 
-Make sure to change the ``server.url`` value in ``application-local.yml`` accordingly.
-This value will be used for the communication hooks from GitLab to Artemis and from Jenkins to Artemis.
-In case you use a different port than 80 (http) or 443 (https) for the communication,
-you have to append it to the ``server.url`` value, e.g. \ ``127.0.0.1:8080``.
+Please read :ref:`Server Setup` for more details.
 
-Then it's recommended to follow the `Gitlab Server Quickstart Guide <#gitlab-server-quickstart>`__.
+For a local setup on Windows you can use `http://host.docker.internal` appended
+by the chosen ports as the version-control and continuous-integration url.
 
-Please read :ref:`Server Setup` for more details about the Artemis configuration.
-
-.. include:: setup/configuration-override-hint.rst.txt
-
-Artemis User Init Problems
-""""""""""""""""""""""""""
+Make sure to change the ``server.url`` value in ``application-dev.yml``
+or ``application-prod.yml`` accordingly. This value will be used for the
+communication hooks from GitLab to Artemis and from Jenkins to Artemis.
+In case you use a different port than 80 (http) or 443 (https) for the
+communication, you have to append it to the ``server.url`` value,
+e.g. \ ``127.0.0.1:8080``.
 
 When you start Artemis for the first time, it will automatically create
 an admin user.
@@ -226,7 +269,7 @@ Start GitLab
    the user, click on the image on the top right and select ``Settings``.
    Now select ``Account`` on the left and change the username. Use the
    same password in the Artemis configuration file
-   ``application-local.yml``
+   ``application-artemis.yml``
 
    .. code:: yaml
 
@@ -289,7 +332,7 @@ GitLab Access Token
       :align: center
 
 11. Copy the generated token and insert it into the Artemis
-    configuration file *application-local.yml*
+    configuration file *application-artemis.yml*
 
     .. code:: yaml
 
@@ -364,9 +407,6 @@ GitLab Access Token
 
     It is recommended to use a password to secure the private key, but it is not mandatory.
 
-    ..
-        ssh-keygen -t rsa -b 4096 -C "artemis_admin@artemis.example" -f <ssh-private-key-folder-path>/id_rsa
-
     Please note that the private key file **must** be named ``ìd_rsa``, ``id_dsa``, ``id_ecdsa`` or ``id_ed25519``,
     depending on the ciphers used.
 
@@ -376,7 +416,7 @@ GitLab Access Token
 
     Navigate to ``GITLAB-URL/-/profile/keys`` and add the SSH key by pasting the content of the public key.
 
-    ``<ssh-private-key-folder-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename). It will
+    ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename). It will
     be used in the configuration of Artemis to specify where Artemis should look for the key and store
     the ``known_hosts`` file.
 
@@ -449,12 +489,44 @@ do either do it manually or using the following command:
    In a production setup, you should use a random ``master.key``, then you have to follow the steps described in
    `Gitlab to Jenkins push notification token <#gitlab-to-jenkins-push-notification-token>`__ to generate the token.
 
-4. The ``application-local.yml`` must be adapted with the values configured in ``jenkins-casc-config.yml``:
-   If you used the preset ``master.key`` and are running a development setup, you can just copy the
-   ``application-local.yml.sample`` and uncomment the **Jenkins / GitLab Stack** section and the **Server** section
-   as also described inline.
+4. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
+   If you used the preset ``master.key`` and are running a development setup, the secrets can be found in the
+   `artemis configuration template posted at the beginning of this page <#artemis>`__.
 
-5. You're done. You can now run Artemis with the Jenkins/GitLab environment.
+.. code:: yaml
+
+    artemis:
+        user-management:
+            use-external: false
+            internal-admin:
+                username: artemis_admin
+                password: artemis_admin
+        version-control:
+            url: http://localhost:8081
+            user: artemis_admin
+            password: artemis_admin
+            ci-token: # pre-generated or replaced in Automated Jenkins Server step 3
+        continuous-integration:
+            user: artemis_admin
+            password: artemis_admin
+            url: http://localhost:8082
+            secret-push-token: # pre-generated or replaced in Automated Jenkins Server step 3
+            vcs-credentials: artemis_gitlab_admin_credentials
+            artemis-authentication-token-key: artemis_notification_plugin_token
+            artemis-authentication-token-value: artemis_admin
+
+5. Open the ``src/main/resources/config/application-jenkins.yml`` and change the following:
+   Again, if you are using a development setup, the template in the beginning of this page already contains the
+   correct values.
+
+.. code:: yaml
+
+    jenkins:
+        internal-urls:
+            ci-url: http://jenkins:8080
+            vcs-url: http://gitlab:80
+
+6. You're done. You can now run Artemis with the GitLab/Jenkins environment.
 
 Manual Jenkins Server Setup
 """""""""""""""""""""""""""
@@ -612,7 +684,7 @@ Start Jenkins
        docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword
 
 10. Set the chosen credentials in the Artemis configuration
-    *application-local.yml*
+    *application-artemis.yml*
 
     .. code:: yaml
 
@@ -751,7 +823,7 @@ Server Notification Token
    5. The description is up to you
 
 2. Copy the generated ID of the new credentials and put it into the
-   Artemis configuration *application-local.yml*
+   Artemis configuration *application-artemis.yml*
 
    .. code:: yaml
 
@@ -760,7 +832,7 @@ Server Notification Token
                artemis-authentication-token-key: the.id.of.the.notification.token.credential
 
 3. Copy the actual value you chose for the token and put it into the
-   Artemis configuration *application-local.yml*
+   Artemis configuration *application-artemis.yml*
 
    .. code:: yaml
 
@@ -783,7 +855,7 @@ GitLab Repository Access
 
 2. Copy the generated ID (e.g. ``ea0e3c08-4110-4g2f-9c83-fb2cdf6345fa``)
    of the new credentials and put it into the Artemis configuration file
-   *application-local.yml*
+   *application-artemis.yml*
 
    .. code:: yaml
 
@@ -852,7 +924,7 @@ the following steps:
     you generated in step 5.
 
 11. Now, you can delete this test project and input the following values
-    into your Artemis configuration *application-local.yml* (replace
+    into your Artemis configuration *application-artemis.yml* (replace
     the placeholders with the actual values you wrote down)
 
     .. code:: yaml

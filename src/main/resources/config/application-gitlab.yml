@@ -3,36 +3,6 @@
 #
 # This configuration overrides the application.yml file.
 # ===================================================================
-artemis:
-    version-control:
-        url: http://localhost:8081
-        # user: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-        # password: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-        # token: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-        # ci-token: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-        # TODO: this is only in the ansible template also not used in the code? delete it?
-        # health-api-token: PLEASE CHANGE THIS SECRET IN YOUR application-local.yml or ENV
-
-        # SSH for Git
-        # SSH can be activated by setting <ssh-private-key-folder-path>
-
-        # Url Stem for cloning via ssh
-        ssh-template-clone-url: ssh://git@localhost:2222/
-        # Url Path to access a users ssh keys
-        ssh-keys-url-path: /-/profile/keys
-        # the path to the folder in which the private ssh key file (e.g. id_rsa) is stored
-        # that can be used to clone git repos on the version control server
-        # ssh-private-key-folder-path: IF NECESSARY CHANGE THIS VALUE IN YOUR application-local.yml or ENV
-
-        # the password for the private ssh key
-        # ssh-private-key-password: IF NECESSARY CHANGE THIS VALUE IN YOUR application-local.yml or ENV
-
-        # The branch that should be used as default branch for all newly created repositories.
-        # This does NOT have to be equal to the default branch of the VCS
-        default-branch: main
-        # only for Gitlab setups: a Gitlab-API token can be generated for each user and
-        # used as part of the Git clone URL shown to students to allow for password-less Git operations via HTTP
-        versionControlAccessToken: true
 
 gitlab:
     # The following (optional) parameter allows to enable the use of pseudonyms.

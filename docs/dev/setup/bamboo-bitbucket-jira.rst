@@ -55,30 +55,6 @@ Make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Settings -
 In case you want to enable Swift or C programming exercises, refer to the readme in
 ``src/main/docker``
 
-.. _Configure Artemis for Bamboo Bitbucket Jira:
-
-Configure Artemis
-^^^^^^^^^^^^^^^^^
-
-For **development purposes** copy the contents of ``src/main/resources/config/application-local.yml.sample``
-to ``src/main/resources/config/application-local.yml``.
-Then uncomment the **Atlassian Stack** section and the **Server** section as also described inline.
-In the next documentation section you will setup and configure Bamboo, Bitbucket and Jira and customize some
-values inside ``src/main/resources/config/application-local.yml``.
-
-In addition, you have to start Artemis with the profiles ``bamboo``, ``bitbucket`` and ``jira`` to activate
-the correct adapters.
-You also have to load the profile ``local`` to activate the override configuration file
-``src/main/resources/config/application-local.yml``.
-Resulting in:
-
-::
-
-   --spring.profiles.active=artemis,scheduling,bamboo,bitbucket,jira,dev,local
-
-.. include:: setup/configuration-override-hint.rst.txt
-
-Please read :ref:`Server Setup` for more details about the Artemis configuration.
 
 Configure Bamboo, Bitbucket and Jira
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -229,7 +205,7 @@ under ``localhost:7990``.
 #. In Bamboo create a global variable named
    SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
    as the secret. The value of this variable should be then stored in
-   ``src/main/resources/config/application-local.yml`` as the value of
+   ``src/main/resources/config/application-artemis.yml`` as the value of
    ``artemis-authentication-token-value``.
    You can create a global variable from settings on Bamboo.
 
@@ -260,7 +236,7 @@ under ``localhost:7990``.
           .. figure:: setup/bamboo-bitbucket-jira/bamboo-create-token.png
              :align: center
 
-      - Insert the generated token into the file ``application-local.yml`` in the section ``continuous-integration``:
+      - Insert the generated token into the file ``application-artemis.yml`` in the section ``continuous-integration``:
 
       .. code:: yaml
 
@@ -278,7 +254,7 @@ under ``localhost:7990``.
           .. figure:: setup/bamboo-bitbucket-jira/bitbucket-create-token.png
              :align: center
 
-      - Insert the generated token into the file ``application-local.yml`` in the section ``version-control``:
+      - Insert the generated token into the file ``application-artemis.yml`` in the section ``version-control``:
 
       .. code:: yaml
 
@@ -303,9 +279,6 @@ under ``localhost:7990``.
 
     It is recommended to use a password to secure the private key, but it is not mandatory.
 
-    ..
-        ssh-keygen -t rsa -b 4096 -C "artemis_admin@artemis.example" -f <ssh-private-key-folder-path>/id_rsa
-
     Please note that the private key file **must** be named ``id_rsa``, ``id_dsa``, ``id_ecdsa`` or ``id_ed25519``,
     depending on the ciphers used.
 
@@ -316,13 +289,71 @@ under ``localhost:7990``.
     Navigate to ``BITBUCKET-URL/plugins/servlet/ssh/account/keys`` and add the SSH key by pasting the content of
     the public key.
 
-    ``<ssh-private-key-folder-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename).
+    ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename).
     It will be used in the configuration of Artemis to specify where Artemis should look for the key and
     store the ``known_hosts`` file.
 
     ``<ssh-private-key-password>`` is the password used to secure the private key.
     It is also needed for the configuration of Artemis, but can be omitted if no password was set
     (e.g. for development environments).
+
+Configure Artemis
+^^^^^^^^^^^^^^^^^
+
+#. Modify ``src/main/resources/config/application-artemis.yml``
+
+   .. code:: yaml
+
+           repo-clone-path: ./repos/
+           repo-download-clone-path: ./repos-download/
+           encryption-password: artemis-encrypt         # LEGACY: arbitrary password for encrypting database values
+           bcrypt-salt-rounds: 11   # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
+                                    # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
+           user-management:
+               use-external: true
+               external:
+                   url: http://localhost:8081
+                   user:  <jira-admin-user>
+                   password: <jira-admin-password>
+                   admin-group-name: instructors
+               internal-admin:
+                   username: artemis_admin
+                   password: artemis_admin
+           version-control:
+               url: http://localhost:7990
+               user:  <bitbucket-admin-user>
+               password: <bitbucket-admin-password>
+               token: <bitbucket-admin-token>   # step 10.2
+               ssh-private-key-folder-path: <ssh-private-key-folder-path>
+               ssh-private-key-password: <ssh-private-key-password>
+           continuous-integration:
+               url: http://localhost:8085
+               user:  <bamboo-admin-user>
+               password: <bamboo-admin-password>
+               token: <bamboo-admin-token>   # step 10.1
+               vcs-application-link-name: LS1 Bitbucket Server
+               empty-commit-necessary: true
+               artemis-authentication-token-value: <artemis-authentication-token-value>   # step 7
+
+#. Modify the application-dev.yml
+
+   .. code:: yaml
+
+      server:
+          port: 8080                                         # The port of artemis
+          url: http://172.20.0.1:8080                        # needs to be an ip
+          // url: http://docker.for.mac.host.internal:8080   # If the above one does not work for mac try this one
+          // url: http://host.docker.internal:8080           # If the above one does not work for windows try this one
+
+In addition, you have to start Artemis with the profiles ``bamboo``,
+``bitbucket`` and ``jira`` so that the correct adapters will be used,
+e.g.:
+
+::
+
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling
+
+Please read :ref:`Server Setup` for more details.
 
 How to verify the connection works?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
