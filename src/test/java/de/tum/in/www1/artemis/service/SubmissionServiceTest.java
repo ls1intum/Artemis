@@ -46,9 +46,6 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Autowired
     private ComplaintRepository complaintRepository;
 
-    @Autowired
-    private MigrationChangeRepository migrationChangeRepository;
-
     private User student1;
 
     private User tutor1;
@@ -122,7 +119,6 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         if (submissionListTutor2CorrectionRound1 != null) {
             submissionListTutor2CorrectionRound1.clear();
         }
-        migrationChangeRepository.deleteAllInBatch();
     }
 
     @Test
