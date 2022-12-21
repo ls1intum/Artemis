@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.awaitility.Durations;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,9 +57,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private StudentExamRepository studentExamRepository;
 
-    @Autowired
-    private MigrationChangeRepository migrationChangeRepository;
-
     private QuizExercise quizExercise;
 
     private Course course;
@@ -89,11 +85,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         if (!database.userExistsWithLogin(TEST_PREFIX + "instructor6")) {
             database.createAndSaveUser(TEST_PREFIX + "instructor6");
         }
-    }
-
-    @AfterEach
-    void tearDown() {
-        migrationChangeRepository.deleteAllInBatch();
     }
 
     @Test

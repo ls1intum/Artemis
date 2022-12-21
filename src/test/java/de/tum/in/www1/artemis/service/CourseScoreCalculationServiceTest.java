@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -36,15 +35,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private MigrationChangeRepository migrationChangeRepository;
-
     private Course course;
-
-    @AfterEach
-    void tearDown() {
-        migrationChangeRepository.deleteAllInBatch();
-    }
 
     @BeforeEach
     void init() {

@@ -53,7 +53,7 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
      */
     @BeforeEach
     void initTestCase() {
-        course = database.createCourseWithTutor(TEST_PREFIX + "tutor1");
+        course = database.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).stream().iterator().next();
         textSubmission = textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).get(0);

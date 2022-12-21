@@ -108,7 +108,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         checkCreatedReaction(reactionToSaveOnPost, createdReaction);
         assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
         // should increase post's vote count
-        assertThat(database.postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount() + 1);
+        assertThat(postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount() + 1);
     }
 
     @Test
@@ -349,7 +349,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
         // should increase post's vote count
-        assertThat(database.postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount() + 1);
+        assertThat(postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount() + 1);
 
         // student 1 deletes their reaction on this post
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
@@ -357,7 +357,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(postReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(postReactedOn.getId()));
         assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
         // should decrease post's vote count
-        assertThat(database.postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount());
+        assertThat(postRepository.findPostByIdElseThrow(postReactedOn.getId()).getVoteCount()).isEqualTo(postReactedOn.getVoteCount());
     }
 
     @Test
