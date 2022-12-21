@@ -30,7 +30,7 @@ on:
 # Keep in sync with build.yml and test.yml
 env:
   CI: true
-  node: 16.x
+  node: 18
   java: 17
 
 
