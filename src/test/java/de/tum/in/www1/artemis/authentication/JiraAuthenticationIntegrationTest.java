@@ -119,6 +119,9 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
     @ValueSource(strings = { LTI_USER_EMAIL, LTI_USER_EMAIL_UPPER_CASE })
     @WithAnonymousUser
     void launchLtiRequest_authViaEmail_success(String launchEmail) throws Exception {
+        ltiUserIdRepository.deleteAll();
+        ltiOutcomeUrlRepository.deleteAll();
+
         final var username = "mrrobot";
         userRepository.findOneByLogin(username).ifPresent(userRepository::delete);
         final var firstName = "Elliot";
@@ -132,7 +135,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
 
         request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
         final var user = userRepository.findOneByLogin(username).orElseThrow();
-        final var ltiUser = ltiUserIdRepository.findByLtiUserId(username).get();
+        final var ltiUser = ltiUserIdRepository.findByUser(user).get();
         final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).get();
         assertThat(ltiUser.getUser()).isEqualTo(user);
         assertThat(ltiUser.getLtiUserId()).isEqualTo(ltiLaunchRequest.getUser_id());
