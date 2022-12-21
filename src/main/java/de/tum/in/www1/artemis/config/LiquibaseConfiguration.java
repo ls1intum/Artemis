@@ -94,11 +94,11 @@ public class LiquibaseConfiguration {
         return liquibase;
     }
 
-    String migrationPathVersion5_10_3_String = "5.10.3";
+    String migrationPathVersion5_12_8_String = "5.12.8";
 
     private void checkMigrationPath() {
         var currentVersion = new Semver(currentVersionString);
-        var migrationPathVersion = new Semver(migrationPathVersion5_10_3_String);
+        var migrationPathVersion = new Semver(migrationPathVersion5_12_8_String);
         var version600 = new Semver("6.0.0");
         var version700 = new Semver("7.0.0");
         if (currentVersion.isLowerThan(version600)) {
@@ -113,7 +113,7 @@ public class LiquibaseConfiguration {
             }
             var previousVersion = new Semver(previousVersionString);
             if (previousVersion.isLowerThan(migrationPathVersion)) {
-                log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_10_3_String);
+                log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_12_8_String);
             }
             else if (previousVersion.isEqualTo(migrationPathVersion)) {
                 // this means this is the first start after the mandatory previous update, we need to set the checksum of the initial schema to null
@@ -125,7 +125,7 @@ public class LiquibaseConfiguration {
     }
 
     private String getPreviousVersionElseThrow() {
-        String error = "Cannot start Artemis because version table does not exist, but a migration path is necessary! Please start the release " + migrationPathVersion5_10_3_String
+        String error = "Cannot start Artemis because version table does not exist, but a migration path is necessary! Please start the release " + migrationPathVersion5_12_8_String
                 + " first, otherwise the migration will fail";
         try (var statement = createStatement()) {
             statement.executeQuery("SELECT * FROM DATABASECHANGELOG;");

@@ -1526,8 +1526,8 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey columnNames="organization_id, course_id" constraintName="PRIMARY" tableName="course_organization"/>
-        <addPrimaryKey columnNames="organization_id, user_id" constraintName="PRIMARY" tableName="user_organization"/>
+        <addPrimaryKey columnNames="organization_id, course_id" constraintName="PK_organization_id_course_id" tableName="course_organization"/>
+        <addPrimaryKey columnNames="organization_id, user_id" constraintName="PK_user_id_organization_id" tableName="user_organization"/>
         <createIndex indexName="FK11jgyics37wyibhhpp866exa8" tableName="quiz_statistic_counter">
             <column name="drag_and_drop_question_statistic_id"/>
         </createIndex>
@@ -2151,10 +2151,10 @@
             <column name="quiz_id"/>
             <column name="password"/>
         </createIndex>
-        <createIndex indexName="reference" tableName="model_cluster">
+        <createIndex indexName="model_cluster_reference" tableName="model_cluster">
             <column name="model_element_type"/>
         </createIndex>
-        <createIndex indexName="reference" tableName="model_element">
+        <createIndex indexName="model_element_reference" tableName="model_element">
             <column name="model_element_type"/>
         </createIndex>
         <createIndex indexName="repository_url" tableName="participation">
