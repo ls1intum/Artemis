@@ -4390,7 +4390,7 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
-    public Course createCourseWithTutor(String login) {
+    public Course createCourseWithTextExerciseAndTutor(String login) {
         Course course = this.createCourse();
         TextExercise textExercise = createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         StudentParticipation participation = ModelFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);

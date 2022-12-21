@@ -56,11 +56,12 @@ class AssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @BeforeEach
     void initTestCase() {
         database.addUsers(TEST_PREFIX, 0, 1, 1, 1);
-        course = database.createCourseWithTutor(TEST_PREFIX + "tutor1");
+        course = database.createCourseWithTextExerciseAndTutor(TEST_PREFIX + "tutor1");
         tutor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "tutor1");
+        // we exactly create 1 exercise, 1 participation and 1 submission (which was submitted), so the following code should be fine
         exercise = course.getExercises().iterator().next();
-        studentParticipation = studentParticipationRepository.findAll().get(0);
-        textSubmission = textSubmissionRepository.findAll().get(0);
+        studentParticipation = studentParticipationRepository.findByExerciseId(exercise.getId()).iterator().next();
+        textSubmission = textSubmissionRepository.findByParticipation_ExerciseIdAndSubmittedIsTrue(exercise.getId()).iterator().next();
     }
 
     @AfterEach
