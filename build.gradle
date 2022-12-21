@@ -441,4 +441,4 @@ pitest {
 // 11) Run PIT Mutation Tests:                      ./gradlew pitest -x webapp
 // 12) Check for vulnerabilities in dependencies    ./gradlew dependencyCheckAnalyze
 // 13) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
-// 13) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
+// 14) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
