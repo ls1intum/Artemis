@@ -42,9 +42,9 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
 
     /**
      * padding from the top in pixels for which we defer the virtual scrolling process
-     * this approach is needed to prevent items near the top of the window from being removed out of the DOM tree
+     * this approach is needed to prevent items near the top of the window from being
+     * removed out of the DOM tree when scrolling down
      */
-
     @Input() scrollPaddingTop: number;
 
     // all items being listed
@@ -119,7 +119,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
         this.scrollUnListener = this.renderer.listen(window, 'scroll', this.onScroll.bind(this));
         this.router.events.forEach((event) => {
             if (event instanceof NavigationStart) {
-                // scroll to the top of items in case user clicks to an item reference to solely display that item within the same page
+                // invalidate item height cache in case user clicks to an item reference to solely display that item within the same page
                 this.forceReloadChange.emit(true);
             }
         });
@@ -171,7 +171,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
      * prevents automatic scrolling to other items when user clicks the text area of ace editor component
      */
     onFocusIn() {
-        requestAnimationFrame(() => window.scrollTo(0, this.windowScrollTop));
+        window.scrollTo(0, this.windowScrollTop);
     }
 
     /**
@@ -183,7 +183,8 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
         this.scrollIsUp = window.scrollY < this.windowScrollTop;
 
         this.windowScrollTop = window.scrollY;
-        this.currentScroll = Math.max(window.scrollY - this.scrollPaddingTop, 0);
+        // delays virtualScrolling due to page elements above items such as page title, menu, filter elements, etc.
+        this.currentScroll = Math.max(window.scrollY - this.scrollPaddingTop * 2, 0);
         this.prepareDataItems();
     }
 
@@ -275,7 +276,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     prepareDataVirtualScroll() {
         const dimensions = this.getDimensions();
 
-        this.contentHeight = dimensions.contentHeight;
+        this.contentHeight = this.originalItems!.length !== 0 ? Math.max(dimensions.contentHeight, this.screenHeight - this.scrollPaddingTop) : 0;
         this.paddingTop = dimensions.paddingTop;
 
         if (dimensions.itemsThatAreGone > this.startIndex) {

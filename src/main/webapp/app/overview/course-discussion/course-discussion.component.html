@@ -145,7 +145,7 @@
         <div class="col-12">
             <jhi-virtual-scroll
                 #virtualScrollContainer
-                [scrollPaddingTop]="750"
+                [scrollPaddingTop]="325"
                 [items]="posts"
                 [minItemHeight]="126.7"
                 [collapsableHtmlClassNames]="['.answer-post', '.new-reply-inline-input']"
@@ -153,11 +153,8 @@
                 [(forceReload)]="forceReload"
                 (onEndOfOriginalItemsReached)="fetchNextPage()"
             >
-                <jhi-posting-thread
-                    *ngFor="let post of virtualScrollContainer.domTreeItems; trackBy: postsTrackByFn"
-                    [post]="post"
-                    [showAnswers]="posts.length === 1"
-                ></jhi-posting-thread>
+                <jhi-posting-thread *ngFor="let post of virtualScrollContainer.domTreeItems; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1">
+                </jhi-posting-thread>
                 <!-- spinner while loading posts -->
                 <div class="text-center">
                     <div *ngIf="isLoading" class="spinner-border mt-3" role="status"></div>
