@@ -1,6 +1,5 @@
 services:
     mysql:
-        # TODO: fix this
         extends:
             file: ../mysql.yml
             service: mysql

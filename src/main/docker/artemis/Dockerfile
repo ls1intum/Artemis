@@ -14,8 +14,7 @@
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
-# TODO: just use eclipse-temurin as gradle installs node, used image below to match bamboo build pipeline for prod
-FROM ghcr.io/ls1intum/docker-jdk-node-yarn:java17node16-3 as builder
+FROM eclipse-temurin:17-jdk as builder
 
 WORKDIR /opt/artemis
 # so far just using the .dockerignore to define what isn't necessary here
@@ -27,14 +26,6 @@ RUN ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
 # runtime stage
 #-----------------------------------------------------------------------------------------------------------------------
 FROM eclipse-temurin:17-jre as runtime
-
-# TODO: do we need all of these? If so why? Or should we maybe declare them somewhere else?
-ENV SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
-    JHIPSTER_SLEEP=0 \
-    JAVA_OPTS=""
-
-# Specify profiles for Spring Boot
-ENV spring.profiles.active ""
 
 # Docker Compose: wget (healthcheck docker compose)
 # Artemis: graphviz, locales
