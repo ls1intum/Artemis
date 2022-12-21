@@ -40,33 +40,24 @@ public class JGitServletConfiguration {
 
     private final UserRepository userRepository;
 
-    private final UserDetailsService userDetailsService;
-
-    private final CourseRepository courseRepository;
-
     private final AuthorizationCheckService authorizationCheckService;
-
-    private final ExerciseRepository exerciseRepository;
 
     private final JGitFilterUtilService jGitFilterUtilService;
 
-    public JGitServletConfiguration(JGitFilterUtilService jGitFilterUtilService, UserRepository userRepository, UserDetailsService userDetailsService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository) {
+    public JGitServletConfiguration(JGitFilterUtilService jGitFilterUtilService, UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
         this.jGitFilterUtilService = jGitFilterUtilService;
         this.userRepository = userRepository;
-        this.userDetailsService = userDetailsService;
-        this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.exerciseRepository = exerciseRepository;
     }
 
     @Bean
-    public ServletRegistrationBean<GitServlet> jgitServlet(ApplicationContext applicationContext) {
+    public ServletRegistrationBean<GitServlet> jgitServlet() {
 
         try {
-            GitServlet gs = new GitServlet();
-            gs.setRepositoryResolver((req, name) -> {
+            GitServlet gitServlet = new GitServlet();
+            gitServlet.setRepositoryResolver((req, name) -> {
                 // req – the current request, may be used to inspect session state including cookies or user authentication.
-                // name – name of the repository, as parsed out of the URL.
+                // name – name of the repository, as parsed out of the URL (everything after /git).
                 // Returns the opened repository instance, never null.
 
                 // Find the local repository depending on the name and return an opened instance. Must be closed later on.
@@ -94,18 +85,19 @@ public class JGitServletConfiguration {
                     }
                 }
 
+                // Enable pushing without credentials, authentication is handled by the JGitPushFilter.
                 repository.getConfig().setBoolean("http", null, "receivepack", true);
 
-                repository.incrementOpen(); // TODO: hier nochmal checken ob ein close() notwendig ist oder ob ich diese Zeile einfach komplett weglassen kann?
+                // TODO: Check whether closing the repository via close() is necessary here or if I need to open it at all before returning.
+                repository.incrementOpen();
                 return repository;
             });
 
-            gs.addUploadPackFilter(new JGitFetchFilter(jGitFilterUtilService));
-            gs.addReceivePackFilter(new JGitPushFilter(userRepository, authorizationCheckService));
+            gitServlet.addUploadPackFilter(new JGitFetchFilter(jGitFilterUtilService));
+            gitServlet.addReceivePackFilter(new JGitPushFilter(jGitFilterUtilService));
 
             log.info("Registering GitServlet");
-            return new ServletRegistrationBean<GitServlet>(gs, "/git/*");
-
+            return new ServletRegistrationBean<GitServlet>(gitServlet, "/git/*");
         } catch (Exception e) {
             log.error("Something went wrong creating the JGit Servlet.");
         }

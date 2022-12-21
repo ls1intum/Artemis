@@ -4,34 +4,29 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Objects;
 
-// TODO: we might want to rename this class to VcsRepositoryUri
-public class VcsRepositoryUrl {
+public abstract class VcsRepositoryUri {
 
     protected String username;
 
-    protected URI uri;
+    protected String projectKey;
 
-    protected VcsRepositoryUrl() {
+    protected String repositorySlug;
+
+    protected VcsRepositoryUri() {
         // NOTE: this constructor should not be used and only exists to prevent compile errors
     }
 
     // Create the url from a uriSpecString, e.g. https://ab123cd@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab123cd
-    public VcsRepositoryUrl(String uriSpecString) throws URISyntaxException {
-        this.uri = new URI(uriSpecString);
-    }
+    public abstract VcsRepositoryUri getVcsRepositoryUriFromSpecString(String uriSpecString);
 
-    // Create the url from a file reference, e.g. C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950
-    public VcsRepositoryUrl(java.io.File file) {
+    // Create the uri from a file reference, e.g. C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950
+    public VcsRepositoryUri getVcsRepositoryUriFromFileReference(java.io.File file) {
         this.uri = file.toURI();
     }
 
-    public VcsRepositoryUrl withUser(final String username) {
+    public VcsRepositoryUri withUser(final String username) {
         this.username = username;
         return this;
-    }
-
-    public URI getURI() {
-        return this.uri;
     }
 
     @Override
@@ -41,25 +36,18 @@ public class VcsRepositoryUrl {
         }
         // we explicitly allow subclasses (i.e. obj is a subclass of this) here (to avoid issues when comparing subclasses with the same url)
         // Note that this also includes the null check
-        if (!(obj instanceof VcsRepositoryUrl that)) {
+        if (!(obj instanceof VcsRepositoryUri that)) {
             return false;
         }
-        return Objects.equals(username, that.username) && Objects.equals(uri, that.uri);
+        return Objects.equals(username, that.username) && Objects.equals(projectKey, that.projectKey) && Objects.equals(repositorySlug, that.repositorySlug);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(username, uri);
+        return Objects.hash(username, projectKey, repositorySlug);
     }
 
-    @Override
-    public String toString() {
-        if (this.uri != null) {
-            return this.uri.toString();
-        } else {
-            return "VcsRepositoryUrl: empty";
-        }
-    }
+    public abstract String getRepositoryUrl(String gitServerUrl);
 
     /**
      * Generates the unique local folder name for a given file or remote repository URI.

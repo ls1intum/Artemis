@@ -21,8 +21,6 @@ public class JGitFetchFilter extends OncePerRequestFilter {
 
     private final Logger log = LoggerFactory.getLogger(JGitFetchFilter.class);
 
-    public static final String AUTHORIZATION_HEADER = "Authorization";
-
     private final JGitFilterUtilService jGitFilterUtilService;
 
 
@@ -37,65 +35,21 @@ public class JGitFetchFilter extends OncePerRequestFilter {
 
         servletResponse.setHeader("WWW-Authenticate", "Basic");
 
-        String basicAuthCredentials;
         try {
-            basicAuthCredentials = jGitFilterUtilService.checkAuthorizationHeader(servletRequest.getHeader(AUTHORIZATION_HEADER));
-        } catch (LocalGitAuthException ex) {
-            servletResponse.setStatus(401);
-            return;
-        }
-
-        String username = basicAuthCredentials.split(":")[0];
-        String password = basicAuthCredentials.split(":")[1];
-
-        User user;
-        try {
-            user = jGitFilterUtilService.authenticateUser(username, password);
-        } catch (LocalGitAuthException ex) {
-            servletResponse.setStatus(401);
-            return;
-        }
-
-
-        String uri = servletRequest.getRequestURI();
-        LocalGitRepositoryUrl localGitUrl;
-        try {
-            localGitUrl = jGitFilterUtilService.validateRepositoryUrl(uri);
-        } catch (LocalGitException e) {
-            servletResponse.setStatus(400);
-            return;
-        }
-
-        String projectKey = localGitUrl.getProjectKey();
-        String courseShortName = localGitUrl.getCourseShortName();
-        String repositoryTypeOrUserName = localGitUrl.getRepositoryTypeOrUserName();
-
-        Course course;
-
-        try {
-            course = jGitFilterUtilService.findCourseForRepository(courseShortName);
-        } catch (LocalGitException e) {
-            servletResponse.setStatus(404);
-            return;
-        }
-
-        ProgrammingExercise exercise;
-
-        try {
-            exercise = jGitFilterUtilService.findExerciseForRepository(projectKey);
-        } catch (LocalGitException e) {
-            servletResponse.setStatus(404);
-            return;
-        }
-
-        try {
-            jGitFilterUtilService.authorizeUser(repositoryTypeOrUserName, course, exercise, user);
+            jGitFilterUtilService.authenticateAndAuthorizeGitRequest(servletRequest, false);
         } catch (LocalGitAuthException e) {
             servletResponse.setStatus(401);
             return;
+        } catch (LocalGitBadRequestException e) {
+            servletResponse.setStatus(400);
+            return;
+        } catch (LocalGitNotFoundException e) {
+            servletResponse.setStatus(404);
+            return;
+        } catch (LocalGitInternalException e) {
+            servletResponse.setStatus(500);
+            return;
         }
-
-        // Get exercise with participations (ProgrammingExerciseRepository or ParticipationRepository?)
 
         filterChain.doFilter(servletRequest, servletResponse);
     }

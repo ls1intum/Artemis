@@ -1,8 +1,12 @@
 package de.tum.in.www1.artemis.security.jgitServlet;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.exception.LocalGitException;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.connectors.localgit.LocalGitRepositoryUrl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -23,65 +27,34 @@ public class JGitPushFilter extends OncePerRequestFilter {
 
     private final Logger log = LoggerFactory.getLogger(JGitPushFilter.class);
 
-    public static final String AUTHORIZATION_HEADER = "Authorization";
+    private final JGitFilterUtilService jGitFilterUtilService;
 
-    private final UserRepository userRepository;
-
-    private final AuthorizationCheckService authorizationCheckService;
-
-    public JGitPushFilter(UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
-        this.userRepository = userRepository;
-        this.authorizationCheckService = authorizationCheckService;
+    public JGitPushFilter(JGitFilterUtilService jGitFilterUtilService) {
+        this.jGitFilterUtilService = jGitFilterUtilService;
     }
 
-
+    @Override
     public void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 
         log.debug("Trying to push to repository {}", servletRequest.getRequestURI());
 
         servletResponse.setHeader("WWW-Authenticate", "Basic");
 
-        if (servletRequest.getHeader(AUTHORIZATION_HEADER) == null) {
+        try {
+            jGitFilterUtilService.authenticateAndAuthorizeGitRequest(servletRequest, true);
+        } catch (LocalGitAuthException e) {
             servletResponse.setStatus(401);
             return;
-        }
-
-        String[] basicAuthCredentialsEncoded = servletRequest.getHeader(AUTHORIZATION_HEADER).split(" ");
-        if (!basicAuthCredentialsEncoded[0].equals("Basic")) {
-            servletResponse.setStatus(401);
+        } catch (LocalGitBadRequestException e) {
+            servletResponse.setStatus(400);
+            return;
+        } catch (LocalGitNotFoundException e) {
+            servletResponse.setStatus(404);
+            return;
+        } catch (LocalGitInternalException e) {
+            servletResponse.setStatus(500);
             return;
         }
-
-        String basicAuthCredentials = new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
-        String login = basicAuthCredentials.split(":")[0];
-        String password = basicAuthCredentials.split(":")[1];
-
-        // TODO: Remove!
-        log.debug("Found user with login {} and password {} in push request.", login, password);
-
-        User user = userRepository.findOneByLogin(login).orElse(null);
-
-        // Check that the user exists
-        if (user == null) {
-            servletResponse.setStatus(401);
-            return;
-        }
-
-        // Check that the user's password is correct.
-
-        // ---- Requesting one of the base repositories ("exercise", "tests", or "solution") ----
-        // Check that the user is at least an instructor in the course the repository belongs to.
-
-        // ---- Requesting one of the participant repositories ----
-        // Retrieve the repository owner's username from the Request URL.
-        // Check that the user is at least a student in the course.
-        // Check that the user participates in the exercise the repository belongs to.
-        // Check that the exercise's Release Date is either not set or is in the past.
-        // Check that the exercise's Due Date is either not set or is in the future.
-
-        // TODO: Add Webhooks -> notifies Artemis on Push
-
-        // TODO: Add branch protection (prevent rewriting the history (force-push) and deletion of branches). + no renaming of the repository.
 
         filterChain.doFilter(servletRequest, servletResponse);
 

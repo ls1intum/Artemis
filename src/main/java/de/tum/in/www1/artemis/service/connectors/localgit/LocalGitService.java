@@ -184,7 +184,11 @@ public class LocalGitService extends AbstractVersionControlService {
 
     @Override
     public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String courseShortName, String repositorySlug) {
-        return new LocalGitRepositoryUrl(projectKey, courseShortName, repositorySlug);
+        // Empty implementation. Never called. The class LocalGitRepositoryUrl is detached from the VcsRepositoryUrl that is used as
+        // the parent for BitbucketRepositoryUrl and GitLabRepositoryUrl.
+        // This choice was made so the LocalGitRepository can be instantiated without depending on the environment variables
+        // local-git-server-path (folder in which the repositories are stored locally) and version-control.url.
+        return null;
     }
 
     /**
@@ -485,11 +489,6 @@ public class LocalGitService extends AbstractVersionControlService {
         try {
             // Instead of defining a project like would be done for GitLab or Bitbucket,
             // just define a directory that will contain all repositories.
-            // Ich probiere es erstmal hiermit und habe die Dateien so lokal bei mir und
-            // kann sie dort anschauen.
-            // TODO: Langfristig wird es wahrscheinlich eher sowas wie das hier:
-            // https://spring.io/guides/gs/uploading-files/
-            // Nachschauen wie langfristig die Dateien damit gespeichert sind!
             File localPath = new File(localGitPath + File.separator + courseShortName + File.separator + projectKey);
 
             if (!localPath.mkdirs()) {
@@ -519,8 +518,9 @@ public class LocalGitService extends AbstractVersionControlService {
     /**
      * Create a new repo
      *
-     * @param projectKey     The project key of the parent project
-     * @param repositorySlug The name for the new repository
+     * @param projectKey      The project key of the parent project
+     * @param courseShortName The short name of the course the repository belongs to
+     * @param repositorySlug  The name for the new repository
      * @throws LocalGitException if the repo could not be created
      */
     private void createRepository(String projectKey, String courseShortName, String repositorySlug) throws LocalGitException {
@@ -528,10 +528,12 @@ public class LocalGitService extends AbstractVersionControlService {
         LocalGitRepositoryUrl localGitUrl = new LocalGitRepositoryUrl(projectKey, courseShortName, repositorySlug);
         // TODO: Save Url in db.
 
-        log.debug("Creating local git repo {} in folder {}", repositorySlug, getLocalFilePath(localGitUrl));
+        String localFilePath = getLocalFilePathFromLocalGitUrl(localGitUrl);
+
+        log.debug("Creating local git repo {} in folder {}", repositorySlug, localFilePath);
 
         try {
-            File remoteDir = new File(getLocalFilePath(localGitUrl));
+            File remoteDir = new File(localFilePath);
 
             if (!remoteDir.mkdirs()) {
                 throw new IOException("Could not create directory " + remoteDir.getPath());
@@ -544,14 +546,13 @@ public class LocalGitService extends AbstractVersionControlService {
             refUpdate.setForceUpdate(true);
             refUpdate.link("refs/heads/" + defaultBranch);
 
+            // TODO: Check if I can configure the repository here instead of in the repositoryResolver in the JGitServletConfiguration.
             // Enable pushing without credentials, authentication is handled by the JGitPushFilter.
-            // Wäre eigentlich schön, wenn man das hier direkt einstellen kann aber klappt nicht, findet stattdessen für jedes
-            // gefundene Repository in der JGitServletConfiguration statt.
             // repository.getConfig().setBoolean("http", null, "receivepack", true);
 
             git.close();
         } catch (GitAPIException | IOException e) {
-            log.error("Could not create local git repo {} at location {}", repositorySlug, getLocalFilePath(localGitUrl), e);
+            log.error("Could not create local git repo {} at location {}", repositorySlug, localFilePath, e);
             throw new LocalGitException("Error while creating local git project.");
         }
     }
@@ -728,8 +729,8 @@ public class LocalGitService extends AbstractVersionControlService {
         return localGitServerUrl + "/git/" + localGitRepositoryUrl.getCourseShortName() + "/" + localGitRepositoryUrl.getProjectKey() + "/" + localGitRepositoryUrl.getRepositorySlug() + ".git";
     }
 
-    public String getLocalFilePath(LocalGitRepositoryUrl localGitRepositoryUrl) {
-        return localGitPath + File.separator + localGitRepositoryUrl.getCourseShortName() + File.separator + localGitRepositoryUrl.getProjectKey() + File.separator + localGitRepositoryUrl.getRepositorySlug();
+    private String getLocalFilePathFromLocalGitUrl(LocalGitRepositoryUrl localGitRepositoryUrl) {
+        return localGitPath + File.separator + localGitRepositoryUrl.getCourseShortName() + File.separator + localGitRepositoryUrl.getProjectKey() + File.separator + localGitRepositoryUrl.getRepositorySlug() + ".git";
     }
 
 
