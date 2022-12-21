@@ -195,7 +195,8 @@
                 "questionExplanationLength": "Frage {{index}}: Die beigefügte Erklärung ist zu lang. Bitte kürze sie auf {{threshold}} Zeichen!",
                 "questionHintLength": "Frage {{index}}: Der beigefügte Hinweis ist zu lang. Bitte kürze ihn auf {{threshold}} Zeichen!",
                 "answerExplanationLength": "Frage {{index}}: Die Erklärung mindestens einer Antwortmöglichkeit ist zu lang. Bitte kürze sie auf {{threshold}} Zeichen!",
-                "answerHintLength": "Frage {{index}}: Der Hinweis mindestens einer Antwortmöglichkeit ist zu lang. Bitte kürze ihn auf {{threshold}} Zeichen!"
+                "answerHintLength": "Frage {{index}}: Der Hinweis mindestens einer Antwortmöglichkeit ist zu lang. Bitte kürze ihn auf {{threshold}} Zeichen!",
+                "multipleChoiceQuestionAnswerOptionInvalid": "Frage {{index}}: Mindestens eine Antwortmöglichkeit ist ungültig."
             },
             "scoringType": {
                 "all_or_nothing": "Alles-oder-Nichts",
