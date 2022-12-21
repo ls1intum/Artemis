@@ -28,13 +28,13 @@ public class TutorialGroupFreePeriod extends DomainObject {
     /**
      * NOTE: Stored in UTC in the database
      */
-    @Column(name = "start")
+    @Column(name = "period_start")
     private ZonedDateTime start;
 
     /**
      * NOTE: Stored in UTC in the database
      */
-    @Column(name = "end")
+    @Column(name = "period_end")
     private ZonedDateTime end;
 
     @Column(name = "reason")
