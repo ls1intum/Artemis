@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import static org.mockito.Mockito.*;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -27,9 +28,11 @@ class LtiNewResultServiceTest {
 
     private Course course;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void init() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
         ltiNewResultService = new LtiNewResultService(lti10Service, lti13Service);
 
@@ -38,6 +41,14 @@ class LtiNewResultServiceTest {
         participation.setExercise(exercise);
         course = new Course();
         exercise.setCourse(course);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
+        reset(lti10Service, lti13Service);
     }
 
     @Test

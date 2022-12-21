@@ -27,6 +27,8 @@ import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource.Tuto
 
 class TutorialGroupIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
+    private static final String TEST_PREFIX = "tutorialGroupIntegration";
+
     @Override
     void testJustForInstructorEndpoints() throws Exception {
         request.postWithResponseBody(getTutorialGroupsPath(), buildTutorialGroupWithoutSchedule(), TutorialGroup.class, HttpStatus.FORBIDDEN);

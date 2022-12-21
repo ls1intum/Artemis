@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -45,9 +46,11 @@ class LtiDynamicRegistrationServiceTest {
 
     private Lti13ClientRegistration clientRegistrationResponse;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void init() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
         ltiDynamicRegistrationService = new LtiDynamicRegistrationService(onlineCourseConfigurationRepository, oAuth2JWKSService, restTemplate);
         ReflectionTestUtils.setField(ltiDynamicRegistrationService, "artemisServerUrl", "http://artemis.com");
@@ -66,6 +69,14 @@ class LtiDynamicRegistrationServiceTest {
         platformConfiguration.setJwksUri("jwks");
 
         clientRegistrationResponse = new Lti13ClientRegistration();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
+        reset(oAuth2JWKSService, onlineCourseConfigurationRepository, restTemplate);
     }
 
     @Test

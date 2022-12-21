@@ -71,8 +71,10 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
         student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
         tutorialGroup = createAndSaveTutorialGroup(course.getId(), "ExampleTitle1", "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
-                userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get(), Set.of(userRepository.findOneByLogin(TEST_PREFIX + "student1").get(), userRepository.findOneByLogin(TEST_PREFIX + "student2").get(),
-                        userRepository.findOneByLogin(TEST_PREFIX + "student3").get(), userRepository.findOneByLogin(TEST_PREFIX + "student4").get(), userRepository.findOneByLogin(TEST_PREFIX + "student5").get()));
+                userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get(),
+                Set.of(userRepository.findOneByLogin(TEST_PREFIX + "student1").get(), userRepository.findOneByLogin(TEST_PREFIX + "student2").get(),
+                        userRepository.findOneByLogin(TEST_PREFIX + "student3").get(), userRepository.findOneByLogin(TEST_PREFIX + "student4").get(),
+                        userRepository.findOneByLogin(TEST_PREFIX + "student5").get()));
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
 

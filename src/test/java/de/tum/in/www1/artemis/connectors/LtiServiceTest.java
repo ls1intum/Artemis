@@ -10,7 +10,6 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -28,6 +27,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
+import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 
 class LtiServiceTest {
@@ -58,6 +58,8 @@ class LtiServiceTest {
     private LtiUserId ltiUserId;
 
     private final String courseStudentGroupName = "courseStudentGroupName";
+
+    private AutoCloseable closeable;
 
     @BeforeEach
     void init() {

@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -63,9 +64,11 @@ class Lti10ServiceTest {
 
     private LtiOutcomeUrl ltiOutcomeUrl;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void init() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
         lti10Service = new Lti10Service(userRepository, ltiOutcomeUrlRepository, resultRepository, courseRepository, ltiService);
         ReflectionTestUtils.setField(lti10Service, "client", client);
@@ -88,6 +91,14 @@ class Lti10ServiceTest {
         user.setGroups(new HashSet<>(Collections.singleton(LtiService.LTI_GROUP_NAME)));
         ltiOutcomeUrl = new LtiOutcomeUrl();
         ltiOutcomeUrl.setUrl("http://testUrl.com");
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
+        reset(userRepository, courseRepository, ltiOutcomeUrlRepository, resultRepository, client, ltiService);
     }
 
     @Test

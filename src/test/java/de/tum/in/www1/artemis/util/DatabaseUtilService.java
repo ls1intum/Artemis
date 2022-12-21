@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.util;
 
 import static com.google.gson.JsonParser.parseString;
 import static de.tum.in.www1.artemis.util.ModelFactory.DEFAULT_BRANCH;
+import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -332,16 +333,7 @@ public class DatabaseUtilService {
      * This should be as fast as possible to avoid that the test time increases significantly, therefore we only delete the most important entities
      */
     public void resetDatabase() {
-        // The following code might be helpful, but is too slow and would add 500ms execution time to each test case
-        // long start = System.currentTimeMillis();
-        // var courses = courseRepo.findAll();
-        // for (var simpleCourse : courses) {
-        // Course course = courseRepo.findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(simpleCourse.getId());
-        // courseService.delete(course);
-        // }
-        // userRepo.deleteAll();
-        // long duration = System.currentTimeMillis() - start;
-        // log.info("Reset database took " + duration + " ms");
+        // TODO: remove
     }
 
     // TODO: this should probably be moved into another service

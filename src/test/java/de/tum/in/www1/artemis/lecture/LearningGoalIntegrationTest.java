@@ -110,6 +110,8 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private Exercise teamTextExercise;
 
+    private Exercise textExercise;
+
     private Long idOfTeamTextExercise;
 
     private List<Team> teams;
