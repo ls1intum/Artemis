@@ -24,9 +24,9 @@ import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-class TextExerciseAssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AssessmentEventIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "textexerciseassessmentevent";
+    private static final String TEST_PREFIX = "assessmentevent";
 
     @Autowired
     private UserRepository userRepository;
@@ -55,9 +55,9 @@ class TextExerciseAssessmentEventIntegrationTest extends AbstractSpringIntegrati
      */
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 0, 0, 1, 1);
-        course = database.createCourseWithTutor("tutor1");
-        tutor = userRepository.getUserByLoginElseThrow("tutor1");
+        database.addUsers(TEST_PREFIX, 0, 1, 1, 1);
+        course = database.createCourseWithTutor(TEST_PREFIX + "tutor1");
+        tutor = userRepository.getUserByLoginElseThrow(TEST_PREFIX + "tutor1");
         exercise = course.getExercises().iterator().next();
         studentParticipation = studentParticipationRepository.findAll().get(0);
         textSubmission = textSubmissionRepository.findAll().get(0);
@@ -158,7 +158,7 @@ class TextExerciseAssessmentEventIntegrationTest extends AbstractSpringIntegrati
      * Tests the get events endpoint with admin role
      */
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetNumberOfTutorsInvolvedInAssessingByExerciseAndCourseId() throws Exception {
         TextAssessmentEvent event1 = database.createSingleTextAssessmentEvent(course.getId(), 0L, exercise.getId(), studentParticipation.getId(), textSubmission.getId());
         TextAssessmentEvent event2 = database.createSingleTextAssessmentEvent(course.getId(), 1L, exercise.getId(), studentParticipation.getId(), textSubmission.getId());
