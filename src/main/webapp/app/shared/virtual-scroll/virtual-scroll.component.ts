@@ -226,7 +226,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
             if (collapsableHeight > 0) {
                 // scroll upwards by the height of collapsed nested components of the removed item to prevent unintentional automatic scrolling to other items
                 // @ts-ignore behavior 'instant'; this is needed to avoid a scrolling animation back and forth while we prevent automatic and unwanted scrolling to other items
-                requestAnimationFrame(() => window.scrollTo({ left: 0, top: window.scrollY - collapsableHeight, behavior: 'instant' }));
+                window.scrollTo({ left: 0, top: window.scrollY - collapsableHeight, behavior: 'instant' });
             }
         }
     }
@@ -276,7 +276,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     prepareDataVirtualScroll() {
         const dimensions = this.getDimensions();
 
-        this.contentHeight = this.originalItems!.length !== 0 ? Math.max(dimensions.contentHeight, this.screenHeight - this.scrollPaddingTop) : 0;
+        this.contentHeight = this.originalItems!.length !== 0 ? Math.max(dimensions.contentHeight, this.screenHeight - this.scrollPaddingTop) : this.screenHeight / 2;
         this.paddingTop = dimensions.paddingTop;
 
         if (dimensions.itemsThatAreGone > this.startIndex) {
