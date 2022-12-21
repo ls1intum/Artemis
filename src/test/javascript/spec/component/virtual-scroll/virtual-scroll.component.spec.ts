@@ -17,7 +17,6 @@ class MockRouter {
 describe('VirtualScrollComponent', () => {
     let comp: VirtualScrollComponent<Post>;
     let fixture: ComponentFixture<VirtualScrollComponent<Post>>;
-    let debugElement: DebugElement;
 
     let originalWindow: any;
     let windowSpy: jest.SpyInstance;
@@ -39,8 +38,6 @@ describe('VirtualScrollComponent', () => {
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(VirtualScrollComponent);
-                debugElement = fixture.debugElement;
-
                 comp = fixture.componentInstance;
 
                 windowSpy = jest.spyOn(global, 'window', 'get');
@@ -153,7 +150,7 @@ describe('VirtualScrollComponent', () => {
         global.window.dispatchEvent(new Event('focusin'));
 
         expect(windowScrollToSpy).toHaveBeenCalledOnce();
-        expect(windowScrollToSpy).toBeCalledWith(0, comp.windowScrollTop);
+        expect(windowScrollToSpy).toHaveBeenCalledWith(0, comp.windowScrollTop);
     }));
 
     it('should perform virtual scroll on scroll event and update the DOM tree', fakeAsync(() => {
