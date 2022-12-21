@@ -25,16 +25,15 @@ import { CourseForDashboardDTO } from 'app/course/manage/course-for-dashboard-dt
 import { CourseScoresDTO } from 'app/course/course-scores-dto';
 import { ScoresStorageService } from 'app/course/course-scores/scores-storage.service';
 import { CourseStorageService } from 'app/course/manage/course-storage.service';
-import { ParticipationType } from 'app/entities/participation/participation.model';
 import { Result } from 'app/entities/result.model';
 
 describe('Course Management Service', () => {
     let courseManagementService: CourseManagementService;
-    let courseStorageService: CourseStorageService;
-    let scoresStorageService: ScoresStorageService;
+    let httpMock: HttpTestingController;
     let accountService: AccountService;
     let lectureService: LectureService;
-    let httpMock: HttpTestingController;
+    let courseStorageService: CourseStorageService;
+    let scoresStorageService: ScoresStorageService;
     let isAtLeastTutorInCourseSpy: jest.SpyInstance;
     let isAtLeastEditorInCourseSpy: jest.SpyInstance;
     let isAtLeastInstructorInCourseSpy: jest.SpyInstance;
@@ -63,17 +62,18 @@ describe('Course Management Service', () => {
             ],
         });
         courseManagementService = TestBed.inject(CourseManagementService);
-        courseStorageService = TestBed.inject(CourseStorageService);
-        scoresStorageService = TestBed.inject(ScoresStorageService);
         httpMock = TestBed.inject(HttpTestingController);
         accountService = TestBed.inject(AccountService);
         lectureService = TestBed.inject(LectureService);
+        courseStorageService = TestBed.inject(CourseStorageService);
+        scoresStorageService = TestBed.inject(ScoresStorageService);
 
         isAtLeastTutorInCourseSpy = jest.spyOn(accountService, 'isAtLeastTutorInCourse').mockReturnValue(false);
         isAtLeastEditorInCourseSpy = jest.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
         isAtLeastInstructorInCourseSpy = jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
         syncGroupsSpy = jest.spyOn(accountService, 'syncGroups').mockImplementation();
         convertDatesForLecturesFromServerSpy = jest.spyOn(lectureService, 'convertLectureArrayDatesFromServer');
+        // TODO: Spy on courseStorageService and scoresStorageService methods
         course = new Course();
         course.id = 1234;
         course.title = 'testTitle';
@@ -183,7 +183,7 @@ describe('Course Management Service', () => {
     }));
 
     it('should find all courses for dashboard', fakeAsync(() => {
-        returnedFromService = [{ ...course }];
+        returnedFromService = [{ ...courseForDashboard }];
         courseManagementService
             .findAllForDashboard()
             .pipe(take(1))
@@ -208,6 +208,7 @@ describe('Course Management Service', () => {
     }));
 
     it('should set the scoresPerExerciseType and participantScores in the scoresStorageService', () => {
+        // TODO: Mock service and test the service separately.
         courseManagementService
             .findOneForDashboard(course.id!)
             .pipe(take(1))
