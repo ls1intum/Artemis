@@ -107,6 +107,34 @@ of the Cypress test suite, since the new Artemis executable first has to be buil
 (requires access to this GitHub repository) **not** for external ones.
 In case you need access rights, please contact the maintainer `Stephan Krusche <https://github.com/krusche>`__.
 
+Automatic flaky test detection based on changed code
+----------------------------------------------------
+In addition to the regular cypress execution we also run a spacial experimental build plan that tries to detect flaky
+tests based on the changed code. For this, we have some special docker configurations that are specific to this build plan.
+
+1. Docker image extensions
+
+  The Docker image for the Artemis container is created from the already existing
+  `Dockerfile <./src/main/docker/Dockerfile>`__.
+  For the flaky test detection build plan we need to change the Artemis startup and the :code:`unzip` dependency. For
+  this we have a special Dockerfile that extends the original one and adds the changes. The Dockerfile can be found
+  `here <./src/main/docker/cypress/Coverage-Dockerfile>`__. Additionally, for the flaky test detection, we need Java
+  in the cypress container so we have a special Dockerfile for the cypress container that extends the original one and
+  adds the Java installation. The Dockerfile can be found
+  `here <./src/main/docker/cypress/Cypress-Dockerfile>`__.
+
+2. Docker compose changes
+
+  The Docker compose file for the flaky test detection is located
+  `here <./src/main/docker/cypress/docker-compose.coverage.yml>`__. This file includes some overrides for the regular
+  docker compose file. The main difference is that we use the extended Dockerfiles for the Artemis and Cypress containers
+  and we also change the cypress startup command to include our coverage analysis. The overrides can be used by
+  running the following command: :code:`docker-compose -f docker-compose.yml -f docker-compose.coverage.yml up`.
+
+This setup allows us to run the flaky test detection build plan in parallel to the regular cypress build plan and label
+plan executions with the :code:`suspected-flaky` label if there is no overlap between the changed code and the files covered
+by failed tests.
+
 Artemis Deployment in Test Environment
 --------------------------------------
 There is another build plan on Bamboo which executes the Cypress test suite.
