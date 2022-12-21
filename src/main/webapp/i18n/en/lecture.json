@@ -3,6 +3,13 @@
         "lecture": {
             "lectureFileToolTip": "Please click to proceed with automatic separation of lecture units",
             "processUnit": "Automatic unit processing",
+            "split": {
+                "unit": "Units",
+                "unitName": "Unit Name",
+                "releaseDate": "Release Date",
+                "startPage": "Start Page",
+                "endPage": "End Page"
+            },
             "home": {
                 "title": "Lectures",
                 "createLabel": "Create Lecture",
