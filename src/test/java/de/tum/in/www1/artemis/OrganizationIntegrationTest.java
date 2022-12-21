@@ -149,9 +149,9 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
 
-        request.postWithoutLocation("/api/organizations/" + organization.getId() + "/courses/" + course1.getId(), null, HttpStatus.OK, null);
+        request.postWithoutLocation("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), null, HttpStatus.OK, null);
 
-        Organization updatedOrganization = request.get("/api/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
         assertThat(updatedOrganization.getCourses()).contains(course1);
     }
 
@@ -173,8 +173,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         assertThat(organization.getCourses()).contains(course1);
 
-        request.delete("/api/organizations/course/" + course1.getId() + "/organization/" + organization.getId(), HttpStatus.OK);
-        Organization updatedOrganization = request.get("/api/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        request.delete("/api/admin/organizations/course/" + course1.getId() + "/organization/" + organization.getId(), HttpStatus.OK);
+        Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
 
         assertThat(updatedOrganization.getCourses()).doesNotContain(course1);
     }
@@ -192,8 +192,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         organization = organizationRepo.save(organization);
         User student = database.createAndSaveUser(UUID.randomUUID().toString().replace("-", ""));
 
-        request.postWithoutLocation("/api/organizations/" + organization.getId() + "/users/" + student.getLogin(), null, HttpStatus.OK, null);
-        Organization updatedOrganization = request.get("/api/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        request.postWithoutLocation("/api/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), null, HttpStatus.OK, null);
+        Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
         assertThat(updatedOrganization.getUsers()).contains(student);
     }
 
@@ -214,7 +214,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         assertThat(organization.getUsers()).contains(student);
 
-        request.delete("/api/organizations/" + organization.getId() + "/users/" + student.getLogin(), HttpStatus.OK);
+        request.delete("/api/admin/organizations/" + organization.getId() + "/users/" + student.getLogin(), HttpStatus.OK);
         Organization updatedOrganization = request.get("/api/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
 
         assertThat(updatedOrganization.getUsers()).doesNotContain(student);
@@ -234,8 +234,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         Organization organization = database.createOrganization();
 
-        Organization updatedOrganization = request.postWithResponseBody("/api/organizations", organization, Organization.class, HttpStatus.OK);
-        Organization updatedOrganization2 = request.get("/api/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
+        Organization updatedOrganization = request.postWithResponseBody("/api/admin/organizations", organization, Organization.class, HttpStatus.OK);
+        Organization updatedOrganization2 = request.get("/api/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
         assertThat(updatedOrganization2).isNotNull();
         assertThat(updatedOrganization.getId()).isNotNull();
     }
@@ -252,7 +252,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Organization organization = database.createOrganization();
         organization.setName("UpdatedName");
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
+        Organization updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
         assertThat(updatedOrganization.getName()).isEqualTo("UpdatedName");
     }
 
@@ -270,7 +270,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         organizationRepo.save(initialOrganization);
         initialOrganization.setId(null);
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/organizations/" + initialOrganizationId, initialOrganization, Organization.class,
+        Organization updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + initialOrganizationId, initialOrganization, Organization.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(updatedOrganization).isNull();
     }
@@ -290,7 +290,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         organization.setName("UpdatedName");
         long randomId = 1337420;
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/organizations/" + randomId, organization, Organization.class, HttpStatus.BAD_REQUEST);
+        Organization updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + randomId, organization, Organization.class, HttpStatus.BAD_REQUEST);
         organization.setName(initialName);
         assertThat(updatedOrganization).isNull();
     }
@@ -310,8 +310,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         courseRepo.addOrganizationToCourse(course1.getId(), organization);
 
-        request.delete("/api/organizations/" + organization.getId(), HttpStatus.OK);
-        request.get("/api/organizations/" + organization.getId(), HttpStatus.NOT_FOUND, Organization.class);
+        request.delete("/api/admin/organizations/" + organization.getId(), HttpStatus.OK);
+        request.get("/api/admin/organizations/" + organization.getId(), HttpStatus.NOT_FOUND, Organization.class);
     }
 
     /**
@@ -326,7 +326,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         organization = organizationRepo.save(organization);
         organization2 = organizationRepo.save(organization2);
 
-        List<Organization> result = request.getList("/api/organizations", HttpStatus.OK, Organization.class);
+        List<Organization> result = request.getList("/api/admin/organizations", HttpStatus.OK, Organization.class);
         assertThat(result).contains(organization, organization2);
     }
 
@@ -348,7 +348,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         userRepo.addOrganizationToUser(student.getId(), organization);
 
-        List<OrganizationCountDTO> result = request.getList("/api/organizations/count-all", HttpStatus.OK, OrganizationCountDTO.class);
+        List<OrganizationCountDTO> result = request.getList("/api/admin/organizations/count-all", HttpStatus.OK, OrganizationCountDTO.class);
 
         assertThat(result).hasSize(1);
 
@@ -374,7 +374,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         userRepo.addOrganizationToUser(student.getId(), organization);
 
-        OrganizationCountDTO result = request.get("/api/organizations/" + organization.getId() + "/count", HttpStatus.OK, OrganizationCountDTO.class);
+        OrganizationCountDTO result = request.get("/api/admin/organizations/" + organization.getId() + "/count", HttpStatus.OK, OrganizationCountDTO.class);
 
         assertThat(result.numberOfUsers()).isEqualTo(1);
         assertThat(result.numberOfCourses()).isEqualTo(1);
@@ -403,8 +403,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         userRepo.removeOrganizationFromUser(student.getId(), organization);
         userRepo.addOrganizationToUser(student.getId(), organization);
 
-        Organization result = request.get("/api/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
-        Organization resultWithCoursesAndUsers = request.get("/api/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        Organization result = request.get("/api/admin/organizations/" + organization.getId(), HttpStatus.OK, Organization.class);
+        Organization resultWithCoursesAndUsers = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
 
         assertThat(result.getId()).isEqualTo(organization.getId());
         assertThat(result.getName()).isEqualTo(organization.getName());
@@ -450,7 +450,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         userRepo.addOrganizationToUser(student.getId(), organization);
 
-        List<Organization> result = request.getList("/api/organizations/users/" + student.getId(), HttpStatus.OK, Organization.class);
+        List<Organization> result = request.getList("/api/admin/organizations/users/" + student.getId(), HttpStatus.OK, Organization.class);
 
         assertThat(result).contains(organization);
     }
@@ -472,8 +472,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         organization.setEmailPattern("^" + student.getEmail() + "$");
 
-        Organization updatedOrganization = request.putWithResponseBody("/api/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
-        updatedOrganization = request.get("/api/organizations/" + updatedOrganization.getId() + "/full", HttpStatus.OK, Organization.class);
+        Organization updatedOrganization = request.putWithResponseBody("/api/admin/organizations/" + organization.getId(), organization, Organization.class, HttpStatus.OK);
+        updatedOrganization = request.get("/api/admin/organizations/" + updatedOrganization.getId() + "/full", HttpStatus.OK, Organization.class);
 
         assertThat(updatedOrganization.getUsers()).hasSize(1);
         assertThat(updatedOrganization.getUsers()).contains(student);
@@ -489,7 +489,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         organization.setName("Test Organization");
         organization = organizationRepo.save(organization);
 
-        final var title = request.get("/api/organizations/" + organization.getId() + "/title", HttpStatus.OK, String.class);
+        final var title = request.get("/api/admin/organizations/" + organization.getId() + "/title", HttpStatus.OK, String.class);
         assertThat(title).isEqualTo(organization.getName());
     }
 }

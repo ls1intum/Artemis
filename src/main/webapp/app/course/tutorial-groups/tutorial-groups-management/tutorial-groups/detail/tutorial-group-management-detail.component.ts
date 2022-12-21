@@ -1,20 +1,24 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
-import { combineLatest, finalize, switchMap, take } from 'rxjs';
+import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Course } from 'app/entities/course.model';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-tutorial-group-management-detail',
     templateUrl: './tutorial-group-management-detail.component.html',
 })
-export class TutorialGroupManagementDetailComponent implements OnInit {
+export class TutorialGroupManagementDetailComponent implements OnInit, OnDestroy {
+    ngUnsubscribe = new Subject<void>();
+
     isLoading = false;
     tutorialGroup: TutorialGroup;
-    courseId: number;
+    course: Course;
     tutorialGroupId: number;
     isAtLeastInstructor = false;
 
@@ -28,12 +32,13 @@ export class TutorialGroupManagementDetailComponent implements OnInit {
                 switchMap(([params, { course }]) => {
                     this.tutorialGroupId = Number(params.get('tutorialGroupId'));
                     if (course) {
-                        this.courseId = course.id;
+                        this.course = course;
                         this.isAtLeastInstructor = course.isAtLeastInstructor;
                     }
-                    return this.tutorialGroupService.getOneOfCourse(this.courseId, this.tutorialGroupId);
+                    return this.tutorialGroupService.getOneOfCourse(this.course.id!, this.tutorialGroupId);
                 }),
                 finalize(() => (this.isLoading = false)),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroupResult) => {
@@ -44,14 +49,19 @@ export class TutorialGroupManagementDetailComponent implements OnInit {
     }
 
     onCourseClicked = () => {
-        this.router.navigate(['/course-management', this.courseId]);
+        this.router.navigate(['/course-management', this.course.id!]);
     };
 
     onRegistrationsClicked = () => {
-        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups', this.tutorialGroupId, 'registered-students']);
+        this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups', this.tutorialGroupId, 'registered-students']);
     };
 
     onTutorialGroupDeleted = () => {
-        this.router.navigate(['/course-management', this.courseId, 'tutorial-groups']);
+        this.router.navigate(['/course-management', this.course.id!, 'tutorial-groups']);
     };
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
 }

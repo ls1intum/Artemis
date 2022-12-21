@@ -2,26 +2,21 @@
     <div class="d-flex justify-content-center flex-wrap gap-1 align-items-center">
         <div class="text-center text-primary me-2">{{ 'artemisApp.lectureUnit.unitCreationCard.title' | artemisTranslate }}:</div>
         <div class="d-flex justify-content-center flex-wrap gap-1 align-items-center">
-            <a id="createTextUnitButton" class="btn btn-sm btn-primary" [routerLink]="['text-units', 'create']">
-                <fa-icon [icon]="faScroll"></fa-icon>
-                <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.text">text</span>
-            </a>
-            <a id="createExerciseUnitButton" class="btn btn-sm btn-primary" [routerLink]="['exercise-units', 'create']">
-                <fa-icon [icon]="faCheck"></fa-icon>
-                <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.exercise">Exercise</span>
-            </a>
-            <a id="createVideoUnitButton" class="btn btn-sm btn-primary" [routerLink]="['video-units', 'create']">
-                <fa-icon [icon]="faVideo"></fa-icon>
-                <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.video">Video</span>
-            </a>
-            <a id="createOnlineUnitButton" class="btn btn-sm btn-primary" [routerLink]="['online-units', 'create']">
-                <fa-icon [icon]="faLink"></fa-icon>
-                <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.online">Online</span>
-            </a>
-            <a id="createAttachmentUnitButton" class="btn btn-sm btn-primary" [routerLink]="['attachment-units', 'create']">
-                <fa-icon [icon]="faFileUpload"></fa-icon>
-                <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.attachment">File</span>
-            </a>
+            <button type="button" id="createTextUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.TEXT)">
+                <fa-icon [icon]="faScroll"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.text">text</span>
+            </button>
+            <button type="button" id="createExerciseUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.EXERCISE)">
+                <fa-icon [icon]="faCheck"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.exercise">Exercise</span>
+            </button>
+            <button type="button" id="createVideoUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.VIDEO)">
+                <fa-icon [icon]="faVideo"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.video">Video</span>
+            </button>
+            <button type="button" id="createOnlineUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.ONLINE)">
+                <fa-icon [icon]="faLink"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.online">Online</span>
+            </button>
+            <button type="button" id="createAttachmentUnitButton" class="btn btn-sm btn-primary ms-1" (click)="onButtonClicked(unitType.ATTACHMENT)">
+                <fa-icon [icon]="faFileUpload"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.lectureUnit.unitCreationCard.attachment">File</span>
+            </button>
         </div>
     </div>
 </div>

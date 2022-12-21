@@ -254,7 +254,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetUpcomingExercises() throws Exception {
         var now = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS);
-        List<Exercise> exercises = request.getList("/api/exercises/upcoming", HttpStatus.OK, Exercise.class);
+        List<Exercise> exercises = request.getList("/api/admin/exercises/upcoming", HttpStatus.OK, Exercise.class);
         for (var exercise : exercises) {
             assertThat(exercise.getDueDate()).isAfterOrEqualTo(now);
         }
@@ -264,26 +264,26 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         Course course = database.addCourseWithOneProgrammingExercise();
         var exercise = course.getExercises().iterator().next();
         assertThat(exercise.getDueDate()).isAfterOrEqualTo(now);
-        exercises = request.getList("/api/exercises/upcoming", HttpStatus.OK, Exercise.class);
+        exercises = request.getList("/api/admin/exercises/upcoming", HttpStatus.OK, Exercise.class);
         assertThat(exercises).hasSize(size + 1).contains(exercise);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student11", roles = "USER")
     void testGetUpcomingExercisesAsStudentForbidden() throws Exception {
-        request.getList("/api/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
+        request.getList("/api/admin/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetUpcomingExercisesAsInstructorForbidden() throws Exception {
-        request.getList("/api/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
+        request.getList("/api/admin/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor6", roles = "TA")
     void testGetUpcomingExercisesAsTutorForbidden() throws Exception {
-        request.getList("/api/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
+        request.getList("/api/admin/exercises/upcoming", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test

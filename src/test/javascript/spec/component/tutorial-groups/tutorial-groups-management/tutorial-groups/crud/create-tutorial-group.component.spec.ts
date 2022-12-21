@@ -19,7 +19,7 @@ import { mockedActivatedRoute } from '../../../../../helpers/mocks/activated-rou
 describe('CreateTutorialGroupComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupComponent>;
     let component: CreateTutorialGroupComponent;
-    const course = { id: 1, title: 'Example', isAtLeastInstructor: true };
+    const course = { id: 1, title: 'Example' };
     let tutorialGroupService: TutorialGroupsService;
 
     const router = new MockRouter();
@@ -28,12 +28,7 @@ describe('CreateTutorialGroupComponent', () => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [CreateTutorialGroupComponent, LoadingIndicatorContainerStubComponent, TutorialGroupFormStubComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [
-                MockProvider(TutorialGroupsService),
-                MockProvider(AlertService),
-                { provide: Router, useValue: router },
-                mockedActivatedRoute({}, {}, { course }, { courseId: course.id }),
-            ],
+            providers: [MockProvider(TutorialGroupsService), MockProvider(AlertService), { provide: Router, useValue: router }, mockedActivatedRoute({}, {}, { course }, {})],
         })
             .compileComponents()
             .then(() => {
@@ -57,10 +52,12 @@ describe('CreateTutorialGroupComponent', () => {
         const exampleTutorialGroup = generateExampleTutorialGroup({});
         delete exampleTutorialGroup.id;
         delete exampleTutorialGroup.isUserRegistered;
+        delete exampleTutorialGroup.isUserTutor;
         delete exampleTutorialGroup.course;
         delete exampleTutorialGroup.numberOfRegisteredUsers;
         delete exampleTutorialGroup.courseTitle;
         delete exampleTutorialGroup.teachingAssistantName;
+        delete exampleTutorialGroup.tutorialGroupSchedule!.id;
 
         const createResponse: HttpResponse<TutorialGroup> = new HttpResponse({
             body: exampleTutorialGroup,

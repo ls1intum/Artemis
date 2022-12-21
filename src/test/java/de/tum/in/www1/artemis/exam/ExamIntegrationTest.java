@@ -1097,26 +1097,26 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "admin", roles = "ADMIN")
     void testGetCurrentAndUpcomingExams() throws Exception {
-        request.getList("/api/courses/upcoming-exams", HttpStatus.OK, Exam.class);
+        request.getList("/api/admin/courses/upcoming-exams", HttpStatus.OK, Exam.class);
         // TODO: add assert statement
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "user", roles = "USER")
     void testGetCurrentAndUpcomingExamsForbiddenForUser() throws Exception {
-        request.getList("/api/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+        request.getList("/api/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetCurrentAndUpcomingExamsForbiddenForInstructor() throws Exception {
-        request.getList("/api/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+        request.getList("/api/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetCurrentAndUpcomingExamsForbiddenForTutor() throws Exception {
-        request.getList("/api/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
+        request.getList("/api/admin/courses/upcoming-exams", HttpStatus.FORBIDDEN, Exam.class);
     }
 
     @Test

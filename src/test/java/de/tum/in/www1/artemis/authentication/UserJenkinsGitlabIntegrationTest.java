@@ -98,13 +98,13 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateUser_asInstructor_forbidden() throws Exception {
-        request.put("/api/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
+        request.put("/api/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateUser_asTutor_forbidden() throws Exception {
-        request.put("/api/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
+        request.put("/api/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -229,7 +229,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     void deleteUser_failToGetUserIdInGitlab() throws Exception {
         User student = userTestService.student;
         gitlabRequestMockProvider.mockDeleteVcsUserFailToGetUserId(student.getLogin());
-        request.delete("/api/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -360,7 +360,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
         gitlabRequestMockProvider.mockAddUserToGroupsUserExists(newUser, programmingExercise.getProjectKey());
         jenkinsRequestMockProvider.mockCreateUser(newUser, false, false, false);
-        request.post("/api/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
+        request.post("/api/admin/users", new ManagedUserVM(newUser), HttpStatus.CREATED);
     }
 
     @Test
@@ -376,7 +376,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         newUser.setGroups(Set.of("tutor", "instructor2"));
 
         gitlabRequestMockProvider.mockAddUserToGroupsFails(newUser, programmingExercise.getProjectKey());
-        request.post("/api/users", new ManagedUserVM(newUser), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.post("/api/admin/users", new ManagedUserVM(newUser), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -402,7 +402,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
         gitlabRequestMockProvider.mockUpdateVcsUserFailToActivate(oldLogin, user);
-        request.put("/api/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/admin/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -430,7 +430,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
 
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
         gitlabRequestMockProvider.mockUpdateVcsUserFailToActivate(oldLogin, user);
-        request.put("/api/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/admin/users", new ManagedUserVM(user, "some-new-password"), HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @Test
@@ -447,7 +447,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         jenkinsRequestMockProvider.mockUpdateUserAndGroups(oldLogin, user, user.getGroups(), Set.of(), true);
         gitlabRequestMockProvider.mockUpdateVcsUser(oldLogin, user, Set.of(), user.getGroups(), true);
 
-        request.put("/api/users", new ManagedUserVM(user, password), HttpStatus.OK);
+        request.put("/api/admin/users", new ManagedUserVM(user, password), HttpStatus.OK);
 
         UserRepository userRepository = userTestService.getUserRepository();
         final var userInDB = userRepository.findById(user.getId());

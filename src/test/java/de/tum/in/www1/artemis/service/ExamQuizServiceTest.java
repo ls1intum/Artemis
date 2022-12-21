@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -171,6 +173,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         database.changeUser(TEST_PREFIX + "instructor1");
         // All exams should be over before evaluation
@@ -181,6 +184,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
@@ -232,6 +236,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
@@ -275,6 +280,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             quizSubmission2.setParticipation(studentParticipation);
             quizSubmissionRepository.save(quizSubmission2);
         }
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         database.changeUser(TEST_PREFIX + "instructor1");
         // All exams should be over before evaluation
@@ -285,6 +291,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
@@ -322,6 +329,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         database.changeUser(TEST_PREFIX + "instructor1");
         // All exams should be over before evaluation
@@ -332,12 +340,14 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
         // Evaluate quiz twice
         numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
+        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 

@@ -1,13 +1,17 @@
 package de.tum.in.www1.artemis.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.forwardedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.File;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Function;
 
 import javax.annotation.Nullable;
@@ -17,6 +21,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.test.context.TestSecurityContextHolder;
@@ -96,13 +101,24 @@ public class RequestUtilService {
         return new URI(res.getResponse().getHeader("location"));
     }
 
-    public void postForm(String path, Object body, HttpStatus expectedStatus) throws Exception {
+    public URI postForm(String path, Object body, HttpStatus expectedStatus) throws Exception {
         final var mapper = new ObjectMapper();
         final var jsonMap = mapper.convertValue(body, new TypeReference<Map<String, String>>() {
         });
         final var content = new LinkedMultiValueMap<String, String>();
         content.setAll(jsonMap);
-        final var res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(content)).andExpect(status().is(expectedStatus.value())).andReturn();
+        MvcResult result = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(content)).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+        return new URI(result.getResponse().getHeader("location"));
+    }
+
+    public void postFormWithoutLocation(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        final var mapper = new ObjectMapper();
+        final var jsonMap = mapper.convertValue(body, new TypeReference<Map<String, String>>() {
+        });
+        final var content = new LinkedMultiValueMap<String, String>();
+        content.setAll(jsonMap);
+        mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(content)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
     }
 
@@ -130,9 +146,35 @@ public class RequestUtilService {
         restoreSecurityContext();
     }
 
-    public void postWithoutResponseBody(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
-        mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+    public MockHttpServletResponse postWithoutResponseBody(String path, HttpStatus expectedStatus, MultiValueMap<String, String> params) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.post(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
         restoreSecurityContext();
+        return res.getResponse();
+    }
+
+    public void postWithoutResponseBody(String path, Object body, HttpStatus expectedStatus) throws Exception {
+        postWithoutResponseBody(path, body, expectedStatus, null, null);
+    }
+
+    public MockHttpServletResponse postWithoutResponseBody(String path, Object body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {
+        return postWithoutResponseBody(path, body, expectedStatus, httpHeaders, null);
+    }
+
+    public MockHttpServletResponse postWithoutResponseBody(String path, Object body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
+            @Nullable Map<String, String> expectedResponseHeaders) throws Exception {
+        String jsonBody = mapper.writeValueAsString(body);
+        var request = MockMvcRequestBuilders.post(new URI(path)).contentType(MediaType.APPLICATION_JSON).content(jsonBody);
+        if (httpHeaders != null) {
+            request.headers(httpHeaders);
+        }
+        MvcResult res = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        if (expectedResponseHeaders != null) {
+            for (String headerKey : expectedResponseHeaders.keySet()) {
+                assertThat(res.getResponse().getHeaderValues(headerKey).get(0)).isEqualTo(expectedResponseHeaders.get(headerKey));
+            }
+        }
+        restoreSecurityContext();
+        return res.getResponse();
     }
 
     public <T, R> R postWithResponseBody(String path, T body, Class<R> responseType, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {

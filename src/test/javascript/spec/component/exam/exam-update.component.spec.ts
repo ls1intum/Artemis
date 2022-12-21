@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -85,6 +86,7 @@ describe('Exam Update Component', () => {
                     MockComponent(HelpIconComponent),
                     MockDirective(CustomMinDirective),
                     MockDirective(CustomMaxDirective),
+                    MockDirective(FeatureToggleDirective),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -462,6 +464,7 @@ describe('Exam Update Component', () => {
                     MockComponent(ButtonComponent),
                     MockComponent(HelpIconComponent),
                     MockComponent(DifficultyBadgeComponent),
+                    MockDirective(FeatureToggleDirective),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },

@@ -15,15 +15,20 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
 
     /**
      * Convert seconds to a human-readable duration format:
-     * If short is true: "xx unit yy unit", where only the two highest units are shown. If the time is between 10 minutes and one hour, only the minutes are shown
-     * Otherwise: "1d 11h 7min 6s", where the days and hours are left out if their value and all higher values are zero
-     * @param short? {boolean} allows the format to be shortened
-     * @param seconds {number}
+     * If short is true: "xx unit yy unit", where the two highest units are shown.
+     * If the time is between 10 minutes and one hour, only the minutes are shown.
+     *
+     * Otherwise: "1d 11h 7min 6s", where the zero-valued parts are left out,
+     * except in case of `seconds=0`, which will be shown as "0s".
+     *
+     * Only positive durations are supported.
+     * Negative ones will be shown as zero seconds.
+     *
+     * @param seconds the number of seconds that are turned into a human-readable format
+     * @param short allows the format to be shortened
      */
     transform(seconds: number, short = false): string {
-        if (!seconds || seconds <= 0) {
-            return '0min 0s';
-        }
+        seconds = Math.max(0, seconds ?? 0);
 
         const duration = this.secondsToDuration(seconds);
 
@@ -83,12 +88,21 @@ export class ArtemisDurationFromSecondsPipe implements PipeTransform {
      * @private
      */
     private static handleLongFormat(duration: Duration): string {
+        const result = [];
+
         if (duration.days > 0) {
-            return `${duration.days}d ${duration.hours}h ${duration.minutes}min ${duration.seconds}s`;
-        } else if (duration.hours > 0) {
-            return `${duration.hours}h ${duration.minutes}min ${duration.seconds}s`;
-        } else {
-            return `${duration.minutes}min ${duration.seconds}s`;
+            result.push(`${duration.days}d`);
         }
+        if (duration.hours > 0) {
+            result.push(`${duration.hours}h`);
+        }
+        if (duration.minutes > 0) {
+            result.push(`${duration.minutes}min`);
+        }
+        if (duration.seconds > 0 || result.length === 0) {
+            result.push(`${duration.seconds}s`);
+        }
+
+        return result.join(' ');
     }
 }

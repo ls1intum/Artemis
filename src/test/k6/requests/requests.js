@@ -47,6 +47,9 @@ const request = function (method, endpoint, authToken, body, params, formData) {
                     TE: 'Trailers',
                 },
                 tags: { name: url },
+                cookies: {
+                    jwt: authToken,
+                },
             },
         },
     ];
@@ -85,7 +88,7 @@ export function login(username, password) {
     if (res[0].status !== 200) {
         fail('FAILTEST: failed to login as user ' + username + ' (' + res[0].status + ')! Response was + ' + res[0].body);
     }
-    const authToken = JSON.parse(res[0].body).id_token;
+    const authToken = res[0].cookies.jwt[0].value;
     // console.log('GOT authToken ' + authToken + ' for user ' + username);
 
     // The user requests it own information of the account
@@ -101,11 +104,13 @@ export function login(username, password) {
                     'Accept-Language': acceptLanguage,
                     'Accept-Encoding': acceptEncoding,
                     Referer: baseUrl + '/',
-                    Authorization: 'Bearer ' + authToken,
                     Connection: 'keep-alive',
                     TE: 'Trailers',
                 },
                 tags: { name: baseUrl + '/api/account' },
+                cookies: {
+                    jwt: authToken,
+                },
             },
         },
     ];
@@ -132,9 +137,11 @@ export function Artemis(authToken) {
     };
     this.websocket = function (doOnSocket) {
         const websocketEndpoint = websocketProtocol + '://' + host + '/websocket/tracker/websocket';
-        const websocketUrl = websocketEndpoint + '?access_token=' + authToken;
 
-        ws.connect(websocketUrl, { tags: { name: websocketEndpoint } }, function (socket) {
+        const jar = new http.CookieJar();
+        jar.set(baseUrl, 'jwt', authToken);
+
+        ws.connect(websocketEndpoint, { tags: { name: websocketEndpoint }, jar }, function (socket) {
             socket.on('open', function open() {
                 socket.send('CONNECT\naccept-version:1.2\nheart-beat:10000,10000\n\n\u0000');
                 socket.setInterval(function timeout() {

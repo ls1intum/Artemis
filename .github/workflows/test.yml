@@ -33,7 +33,7 @@ on:
 # Keep in sync with codeql-analysis.yml and build-deploy.yml
 env:
   CI: true
-  node: 16.x
+  node: 18
   java: 17
 
 jobs:
@@ -93,6 +93,10 @@ jobs:
     timeout-minutes: 30
     steps:
         - uses: actions/checkout@v3
+        # It seems like there is some memory issue with these tests with the project-wide default node option
+        # `--max-old-space-size` set in the .npmrc, therefore we delete it for this test as a workaround
+        - name: remove project-wide node options set in .npmrc just for this test
+          run: rm .npmrc || true
         - name: Setup Node.js
           uses: actions/setup-node@v3
           with:
@@ -140,8 +144,6 @@ jobs:
   client-style:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-        NODE_OPTIONS: '--max_old_space_size=3072'
     steps:
     - uses: actions/checkout@v3
     - name: Setup Node.js

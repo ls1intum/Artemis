@@ -181,6 +181,14 @@ describe('TutorialGroupsRegistrationImportDialog', () => {
         await validationTest([generateImportDTO('')], 'artemisApp.tutorialGroupImportDialog.errorMessages.withoutTitle');
     });
 
+    it('should fail when title contains invalid character', async () => {
+        await validationTest([generateImportDTO('$title')], 'artemisApp.tutorialGroupImportDialog.errorMessages.invalidTitle');
+    });
+
+    it('should fail when title too long', async () => {
+        await validationTest([generateImportDTO('this is a very long title that should not be accepted')], 'artemisApp.tutorialGroupImportDialog.errorMessages.invalidTitle');
+    });
+
     it('should fail when no identifier information', async () => {
         const invalidStudentDto = generateStudentDTO('', 'ipsum', 'lorem', '');
         await validationTest([generateImportDTO('Title', invalidStudentDto)], 'artemisApp.tutorialGroupImportDialog.errorMessages.noIdentificationInformation');

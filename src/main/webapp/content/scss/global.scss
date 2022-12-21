@@ -6,8 +6,8 @@
 @import 'node_modules/bootstrap/scss/bootstrap';
 @import 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
 // Needed for mathematical formulas in markdown editor
-@import '~katex/dist/katex.css';
-@import '~@flaviosantoro92/ngx-datatable/themes/bootstrap.css';
+@import 'node_modules/katex/dist/katex.min.css';
+@import 'node_modules/@flaviosantoro92/ngx-datatable/themes/bootstrap';
 // Needed for emojis in metis reactions
 @import 'node_modules/@ctrl/ngx-emoji-mart/picker';
 
@@ -421,7 +421,7 @@ ui bootstrap tweaks
         max-width: 100%;
     }
 
-    padding: 1.25rem 1.25rem;
+    padding: 1rem 1rem;
 }
 
 .header-container {
@@ -690,8 +690,8 @@ Course Info Bar
 ========================================================================== */
 .course-info-bar {
     background-color: $artemis-dark;
-    padding: 1em 1em;
-    margin: -1.25rem -1.25rem 0 -1.25rem;
+    padding: 1rem 1rem;
+    margin: -1rem -1rem 0 -1rem;
     display: flex;
     color: $white;
     flex-direction: column;
@@ -714,7 +714,7 @@ Course Info Bar
     }
 
     blockquote {
-        padding: 0 1em;
+        padding: 0 1rem;
         color: $markdown-preview-blockquote;
         border-left: 0.25em solid $markdown-preview-blockquote-border;
     }
@@ -929,7 +929,7 @@ Course Info Bar
 }
 
 .mat-form-field-outline {
-    top: -0.1em !important;
+    top: -0.1rem !important;
     color: $mat-form-field-outline;
 }
 

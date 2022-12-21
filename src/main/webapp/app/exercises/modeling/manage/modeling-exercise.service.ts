@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -15,6 +15,7 @@ export type EntityArrayResponseType = HttpResponse<ModelingExercise[]>;
 @Injectable({ providedIn: 'root' })
 export class ModelingExerciseService implements ExerciseServicable<ModelingExercise> {
     public resourceUrl = SERVER_API_URL + 'api/modeling-exercises';
+    public adminResourceUrl = SERVER_API_URL + 'api/admin/modeling-exercises';
 
     constructor(private http: HttpClient, private exerciseService: ExerciseService) {
         this.exerciseService = exerciseService;
@@ -76,10 +77,10 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
             .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
     }
 
-    convertToPdf(model: string, filename: string): Observable<any> {
+    convertToPdf(model: string, filename: string): Observable<HttpResponse<Blob>> {
         return this.http
             .post(`${SERVER_API_URL}api/apollon-convert/pdf`, { model }, { observe: 'response', responseType: 'blob' })
-            .pipe(map((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)));
+            .pipe(tap((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)));
     }
 
     /**
@@ -101,7 +102,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * @param exerciseId
      */
     getNumberOfClusters(exerciseId: number): Observable<HttpResponse<number>> {
-        return this.http.get<number>(`${this.resourceUrl}/${exerciseId}/check-clusters`, {
+        return this.http.get<number>(`${this.adminResourceUrl}/${exerciseId}/check-clusters`, {
             observe: 'response',
         });
     }
@@ -111,15 +112,15 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * @param modelingExerciseId id of the exercise to build the clusters for
      */
     buildClusters(modelingExerciseId: number): Observable<{}> {
-        return this.http.post(`${this.resourceUrl}/${modelingExerciseId}/trigger-automatic-assessment`, { observe: 'response' });
+        return this.http.post(`${this.adminResourceUrl}/${modelingExerciseId}/trigger-automatic-assessment`, { observe: 'response' });
     }
 
     /**
      * Delete the clusters used in Compass
      * @param modelingExerciseId id of the exercise to delete the clusters of
      */
-    deleteClusters(modelingExerciseId: number): Observable<{}> {
-        return this.http.delete(`${this.resourceUrl}/${modelingExerciseId}/clusters`, { observe: 'response' });
+    deleteClusters(modelingExerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.adminResourceUrl}/${modelingExerciseId}/clusters`, { observe: 'response' });
     }
 
     /**

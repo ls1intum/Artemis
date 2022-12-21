@@ -42,7 +42,7 @@ a:not(.btn):hover {
 .jh-navbar {
     background-color: var(--artemis-dark);
     white-space: nowrap;
-    padding: 0.2em 1em;
+    padding: 0.2em 1rem;
     color: var(--navbar-dark-color);
 
     .profile-image {
@@ -122,7 +122,12 @@ a:not(.btn):hover {
             .navbar-version {
                 padding-top: 3px;
                 font-size: 10px;
+                font-weight: 700;
                 color: var(--navbar-foreground);
+            }
+
+            .navbar-title {
+                font-weight: 700;
             }
 
             &:hover {

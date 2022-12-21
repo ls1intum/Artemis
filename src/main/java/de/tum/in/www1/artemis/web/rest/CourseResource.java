@@ -5,8 +5,6 @@ import static java.time.ZonedDateTime.now;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -18,8 +16,6 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.actuate.audit.AuditEvent;
-import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -39,6 +35,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.security.OAuth2JWKSService;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
@@ -47,6 +44,7 @@ import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -59,7 +57,6 @@ import tech.jhipster.web.util.PaginationUtil;
  */
 @RestController
 @RequestMapping("api/")
-@PreAuthorize("hasRole('ADMIN')")
 public class CourseResource {
 
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
@@ -79,6 +76,10 @@ public class CourseResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final OnlineCourseConfigurationService onlineCourseConfigurationService;
+
+    private final OAuth2JWKSService oAuth2JWKSService;
+
     private final CourseRepository courseRepository;
 
     private final ExerciseService exerciseService;
@@ -93,74 +94,32 @@ public class CourseResource {
 
     private final Optional<CIUserManagementService> optionalCiUserManagementService;
 
-    private final AuditEventRepository auditEventRepository;
-
     private final ExerciseRepository exerciseRepository;
 
     private final FileService fileService;
 
+    private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
+
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService,
-            AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService,
-            ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService, FileService fileService) {
+            OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
+            TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
+            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
+            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
+        this.oAuth2JWKSService = oAuth2JWKSService;
+        this.onlineCourseConfigurationService = onlineCourseConfigurationService;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.submissionService = submissionService;
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCiUserManagementService = optionalCiUserManagementService;
-        this.auditEventRepository = auditEventRepository;
         this.assessmentDashboardService = assessmentDashboardService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
         this.fileService = fileService;
-    }
-
-    /**
-     * POST /courses : create a new course.
-     *
-     * @param course the course to create
-     * @param file the optional course icon file
-     * @return the ResponseEntity with status 201 (Created) and with body the new course, or with status 400 (Bad Request) if the course has already an ID
-     * @throws URISyntaxException if the Location URI syntax is incorrect
-     */
-    @PostMapping(value = "courses", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Course> createCourse(@RequestPart Course course, @RequestPart(required = false) MultipartFile file) throws URISyntaxException {
-        log.debug("REST request to save Course : {}", course);
-        if (course.getId() != null) {
-            throw new BadRequestAlertException("A new course cannot already have an ID", Course.ENTITY_NAME, "idExists");
-        }
-
-        course.validateShortName();
-
-        List<Course> coursesWithSameShortName = courseRepository.findAllByShortName(course.getShortName());
-        if (!coursesWithSameShortName.isEmpty()) {
-            return ResponseEntity.badRequest().headers(
-                    HeaderUtil.createAlert(applicationName, "A course with the same short name already exists. Please choose a different short name.", "shortnameAlreadyExists"))
-                    .body(null);
-        }
-
-        course.validateRegistrationConfirmationMessage();
-        course.validateComplaintsAndRequestMoreFeedbackConfig();
-        course.validateOnlineCourseAndRegistrationEnabled();
-        course.validateOnlineCourseConfiguration();
-        course.validateAccuracyOfScores();
-        if (!course.isValidStartAndEndDate()) {
-            throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
-        }
-
-        courseService.createOrValidateGroups(course);
-
-        if (file != null) {
-            String pathString = fileService.handleSaveFile(file, false, false);
-            course.setCourseIcon(pathString);
-        }
-
-        Course result = courseRepository.save(course);
-        return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
+        this.tutorialGroupsConfigurationService = tutorialGroupsConfigurationService;
     }
 
     /**
@@ -177,7 +136,14 @@ public class CourseResource {
         log.debug("REST request to update Course : {}", courseUpdate);
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(courseId);
+        var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsAndOnlineConfigurationElseThrow(courseUpdate.getId());
+
+        if (existingCourse.getTimeZone() != null && courseUpdate.getTimeZone() == null) {
+            throw new IllegalArgumentException("You can not remove the time zone of a course");
+        }
+
+        var timeZoneChanged = (existingCourse.getTimeZone() != null && courseUpdate.getTimeZone() != null && !existingCourse.getTimeZone().equals(courseUpdate.getTimeZone()));
+
         if (!Objects.equals(existingCourse.getShortName(), courseUpdate.getShortName())) {
             throw new BadRequestAlertException("The course short name cannot be changed", Course.ENTITY_NAME, "shortNameCannotChange", true);
         }
@@ -212,12 +178,14 @@ public class CourseResource {
         }
 
         // Make sure to preserve associations in updated entity
+        courseUpdate.setId(courseId);
         courseUpdate.setPrerequisites(existingCourse.getPrerequisites());
+        courseUpdate.setTutorialGroupsConfiguration(existingCourse.getTutorialGroupsConfiguration());
+        courseUpdate.setOnlineCourseConfiguration(existingCourse.getOnlineCourseConfiguration());
 
         courseUpdate.validateRegistrationConfirmationMessage();
         courseUpdate.validateComplaintsAndRequestMoreFeedbackConfig();
         courseUpdate.validateOnlineCourseAndRegistrationEnabled();
-        courseUpdate.validateOnlineCourseConfiguration();
         courseUpdate.validateShortName();
         courseUpdate.validateAccuracyOfScores();
         if (!courseUpdate.isValidStartAndEndDate()) {
@@ -229,6 +197,15 @@ public class CourseResource {
             courseUpdate.setCourseIcon(pathString);
         }
 
+        if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
+            if (courseUpdate.isOnlineCourse()) {
+                onlineCourseConfigurationService.createOnlineCourseConfiguration(courseUpdate);
+            }
+            else {
+                courseUpdate.setOnlineCourseConfiguration(null);
+            }
+        }
+
         courseUpdate.setId(courseId); // Don't persist a wrong ID
         Course result = courseRepository.save(courseUpdate);
 
@@ -238,11 +215,50 @@ public class CourseResource {
         final var oldInstructorGroup = existingCourse.getInstructorGroupName();
         final var oldEditorGroup = existingCourse.getEditorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
+
         optionalVcsUserManagementService
                 .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
                 .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
+        if (timeZoneChanged) {
+            tutorialGroupsConfigurationService.onTimeZoneUpdate(result);
+        }
         return ResponseEntity.ok(result);
+    }
+
+    /**
+     * PUT courses/:courseId/onlineCourseConfiguration : Updates the onlineCourseConfiguration for the given cours.
+     *
+     * @param courseId the id of the course to update
+     * @param onlineCourseConfiguration the online course configuration to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated online course configuration
+     */
+    @PutMapping("courses/{courseId}/onlineCourseConfiguration")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
+            @RequestBody OnlineCourseConfiguration onlineCourseConfiguration) {
+        log.debug("REST request to update the online course configuration for Course : {}", courseId);
+
+        Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        if (!course.isOnlineCourse()) {
+            throw new BadRequestAlertException("Course must be online course", Course.ENTITY_NAME, "courseMustBeOnline");
+        }
+
+        if (!course.getOnlineCourseConfiguration().getId().equals(onlineCourseConfiguration.getId())) {
+            throw new BadRequestAlertException("The onlineCourseConfigurationId does not match the id of the course's onlineCourseConfiguration",
+                    OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
+        }
+
+        onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+
+        courseRepository.save(course);
+
+        oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
+
+        return ResponseEntity.ok(onlineCourseConfiguration);
     }
 
     /**
@@ -485,8 +501,12 @@ public class CourseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
-            course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
+            course = courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId);
         }
+        else if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
+        }
+
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             course.setNumberOfInstructors(userRepository.countUserInGroup(course.getInstructorGroupName()));
             course.setNumberOfTeachingAssistants(userRepository.countUserInGroup(course.getTeachingAssistantGroupName()));
@@ -599,29 +619,6 @@ public class CourseResource {
         }
 
         return ResponseEntity.ok(courseDTOs);
-    }
-
-    /**
-     * DELETE /courses/:courseId : delete the "id" course.
-     *
-     * @param courseId the id of the course to delete
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping("courses/{courseId}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
-        log.info("REST request to delete Course : {}", courseId);
-        Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(courseId);
-        if (course == null) {
-            throw new EntityNotFoundException("Course", courseId);
-        }
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        var auditEvent = new AuditEvent(user.getLogin(), Constants.DELETE_COURSE, "course=" + course.getTitle());
-        auditEventRepository.add(auditEvent);
-        log.info("User {} has requested to delete the course {}", user.getLogin(), course.getTitle());
-
-        courseService.delete(course);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, Course.ENTITY_NAME, course.getTitle())).build();
     }
 
     /**

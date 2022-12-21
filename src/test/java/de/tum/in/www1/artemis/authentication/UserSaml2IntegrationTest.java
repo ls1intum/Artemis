@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.authentication;
 
-import static org.assertj.core.api.AssertionsForClassTypes.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +22,6 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationSaml2Test;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
@@ -37,9 +37,6 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
     private static final String STUDENT_PASSWORD = "test1234";
 
     private static final String STUDENT_REGISTRATION_NUMBER = "12345678";
-
-    @Autowired
-    private TokenProvider tokenProvider;
 
     @Autowired
     private UserRepository userRepository;
@@ -60,7 +57,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
     @Test
     void testAuthenticationRedirect() throws Exception {
-        request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.UNAUTHORIZED);
+        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
         final String redirectTarget = request.getRedirectTarget("/saml2/authenticate", HttpStatus.FOUND);
         assertThat(redirectTarget).endsWith("/login");
     }
@@ -158,7 +155,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
         // Create user
         mockSAMLAuthentication();
-        request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.OK);
         assertStudentExists();
 
         // Change Password
@@ -171,9 +168,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        // Test whether authorize generates a valid token
-        UserJWTController.JWTToken result = request.postWithResponseBody("/api/authenticate", createLoginVM(), UserJWTController.JWTToken.class, HttpStatus.OK, httpHeaders);
-        assertValidToken(result);
+        request.postWithoutResponseBody("/api/authenticate", createLoginVM(), HttpStatus.OK, httpHeaders);
 
         // Check SAML Login afterwards ..
 
@@ -181,8 +176,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
         // Mock existing SAML2 Auth
         mockSAMLAuthentication();
         // Test whether authorizeSAML2 generates a valid token
-        result = request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
-        assertValidToken(result);
+        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.OK);
     }
 
     /**
@@ -200,8 +194,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
     private void authenticate(Saml2AuthenticatedPrincipal principal) throws Exception {
         mockSAMLAuthentication(principal);
-        UserJWTController.JWTToken result = request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
-        assertValidToken(result);
+        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.OK);
     }
 
     private void mockSAMLAuthentication() {
@@ -251,9 +244,5 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
     private void assertRegistrationNumber(String registrationNumber) {
         assertThat(this.database.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isEqualTo(registrationNumber);
-    }
-
-    private void assertValidToken(UserJWTController.JWTToken token) {
-        assertThat(this.tokenProvider.validateTokenForAuthority(token.getIdToken())).as("JWT Token is Valid").isTrue();
     }
 }

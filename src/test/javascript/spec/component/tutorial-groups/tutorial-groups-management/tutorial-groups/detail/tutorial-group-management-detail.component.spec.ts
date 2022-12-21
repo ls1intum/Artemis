@@ -70,7 +70,7 @@ describe('TutorialGroupManagementDetailComponent', () => {
         fixture.detectChanges();
         expect(component.tutorialGroup).toEqual(tutorialGroupOfResponse);
         expect(component.tutorialGroupId).toBe(1);
-        expect(component.courseId).toBe(2);
+        expect(component.course.id).toBe(2);
         expect(findByIdStub).toHaveBeenCalledWith(2, 1);
         expect(findByIdStub).toHaveBeenCalledOnce();
     });

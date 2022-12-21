@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { BonusService, EntityResponseType } from 'app/grading-system/bonus/bonus.service';
@@ -16,9 +16,10 @@ import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { HttpResponse } from '@angular/common/http';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
-import { NgModel } from '@angular/forms';
+import { FormsModule, NgModel, ReactiveFormsModule } from '@angular/forms';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 describe('BonusComponent', () => {
     let component: BonusComponent;
@@ -244,16 +245,16 @@ describe('BonusComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, MockModule(NgbTooltipModule)],
             declarations: [
                 BonusComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(SafeHtmlPipe),
                 MockComponent(ModePickerComponent),
                 MockPipe(GradeStepBoundsPipe),
-                MockDirective(NgbTooltip),
                 MockComponent(DeleteDialogComponent),
                 MockDirective(NgModel),
+                MockDirective(DeleteButtonDirective),
             ],
             providers: [
                 {

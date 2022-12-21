@@ -1,30 +1,40 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { combineLatest } from 'rxjs';
-import { finalize, switchMap, take, tap } from 'rxjs/operators';
+import { finalize, takeUntil, tap } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Subject } from 'rxjs';
 
 @Component({
     selector: 'jhi-registered-students',
     templateUrl: './registered-students.component.html',
 })
-export class RegisteredStudentsComponent implements OnInit {
-    isLoading = false;
-    tutorialGroup: TutorialGroup;
-    registeredStudents: User[] = [];
+export class RegisteredStudentsComponent implements OnDestroy {
+    @Input()
     course: Course;
+
+    @Input()
+    tutorialGroupId: number;
+
+    tutorialGroup: TutorialGroup;
+    isLoading = false;
+    registeredStudents: User[] = [];
     courseGroup = CourseGroup.STUDENTS;
     isAdmin = false;
     filteredUsersSize = 0;
     numberOfRegistrations = 0;
+
+    registrationsChanged = false;
+
+    isInitialized = false;
+    ngUnsubscribe = new Subject<void>();
 
     get capacityReached(): boolean {
         if (!this.tutorialGroup) {
@@ -38,16 +48,25 @@ export class RegisteredStudentsComponent implements OnInit {
     }
 
     constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
+        private activeModal: NgbActiveModal,
         private tutorialGroupService: TutorialGroupsService,
         private alertService: AlertService,
         private accountService: AccountService,
         private courseService: CourseManagementService,
     ) {}
 
-    ngOnInit(): void {
-        this.loadAll();
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
+
+    initialize() {
+        if (!this.tutorialGroupId || !this.course) {
+            console.error('Error: Component not fully configured');
+        } else {
+            this.isInitialized = true;
+            this.loadAll();
+        }
     }
 
     handleUsersSizeChange = (filteredUsersSize: number) => (this.filteredUsersSize = filteredUsersSize);
@@ -55,14 +74,20 @@ export class RegisteredStudentsComponent implements OnInit {
     addToGroup = (login: string) =>
         this.tutorialGroupService.registerStudent(this.course.id!, this.tutorialGroup.id!, login).pipe(
             tap({
-                next: () => this.numberOfRegistrations++,
+                next: () => {
+                    this.registrationsChanged = true;
+                    this.numberOfRegistrations++;
+                },
             }),
         );
 
     removeFromGroup = (login: string) =>
         this.tutorialGroupService.deregisterStudent(this.course.id!, this.tutorialGroup.id!, login).pipe(
             tap({
-                next: () => this.numberOfRegistrations--,
+                next: () => {
+                    this.registrationsChanged = true;
+                    this.numberOfRegistrations--;
+                },
             }),
         );
 
@@ -77,17 +102,11 @@ export class RegisteredStudentsComponent implements OnInit {
     }
 
     loadAll = () => {
-        this.isLoading = true;
-        this.isAdmin = this.accountService.isAdmin();
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
+        this.tutorialGroupService
+            .getOneOfCourse(this.course.id!, this.tutorialGroupId)
             .pipe(
-                take(1),
-                switchMap(([params, data]) => {
-                    const tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    this.course = data.course;
-                    return this.tutorialGroupService.getOneOfCourse(this.course.id!, tutorialGroupId);
-                }),
                 finalize(() => (this.isLoading = false)),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroupResult) => {
@@ -104,4 +123,12 @@ export class RegisteredStudentsComponent implements OnInit {
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     };
+
+    clear() {
+        if (this.registrationsChanged) {
+            this.activeModal.close();
+        } else {
+            this.activeModal.dismiss();
+        }
+    }
 }

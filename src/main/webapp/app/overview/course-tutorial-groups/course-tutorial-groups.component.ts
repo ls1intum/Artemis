@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Subject, finalize } from 'rxjs';
 import { BarControlConfiguration } from 'app/overview/tab-bar/tab-bar';
 import { Course } from 'app/entities/course.model';
@@ -7,10 +7,11 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
-import { map } from 'rxjs/operators';
+import { map, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
+import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 
 type filter = 'all' | 'registered';
 
@@ -18,7 +19,9 @@ type filter = 'all' | 'registered';
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
 })
-export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
+export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnDestroy {
+    ngUnsubscribe = new Subject<void>();
+
     @ViewChild('controls', { static: false }) private controls: TemplateRef<any>;
     public readonly controlConfiguration: BarControlConfiguration = {
         subject: new Subject<TemplateRef<any>>(),
@@ -28,6 +31,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
     courseId: number;
     course: Course;
     isLoading = false;
+    tutorialGroupFreeDays: TutorialGroupFreePeriod[] = [];
 
     selectedFilter: filter = 'registered';
 
@@ -40,14 +44,20 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
         private alertService: AlertService,
     ) {}
 
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+    }
+
     get registeredTutorialGroups() {
         return this.tutorialGroups.filter((tutorialGroup) => tutorialGroup.isUserRegistered);
     }
 
     ngOnInit(): void {
-        this.activatedRoute.parent?.parent?.paramMap.subscribe((parentParams) => {
+        this.activatedRoute.parent?.parent?.paramMap.pipe(takeUntil(this.ngUnsubscribe)).subscribe((parentParams) => {
             this.courseId = Number(parentParams.get('courseId'));
             if (this.courseId) {
+                this.setCourse();
                 this.setTutorialGroups();
                 this.subscribeToCourseUpdates();
             }
@@ -61,7 +71,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
     }
 
     subscribeToQueryParameter() {
-        this.activatedRoute.queryParams.subscribe((queryParams) => {
+        this.activatedRoute.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
             if (queryParams.filter) {
                 this.selectedFilter = queryParams.filter as filter;
             }
@@ -69,15 +79,46 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
     }
 
     subscribeToCourseUpdates() {
-        this.courseManagementService.getCourseUpdates(this.courseId).subscribe(() => {
-            this.setTutorialGroups();
-        });
+        this.courseManagementService
+            .getCourseUpdates(this.courseId)
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((course) => {
+                this.course = course;
+                this.setFreeDays();
+                this.setTutorialGroups();
+            });
+    }
+
+    private setFreeDays() {
+        if (this.course?.tutorialGroupsConfiguration?.tutorialGroupFreePeriods) {
+            this.tutorialGroupFreeDays = this.course.tutorialGroupsConfiguration.tutorialGroupFreePeriods;
+        } else {
+            this.tutorialGroupFreeDays = [];
+        }
     }
 
     setTutorialGroups() {
         const tutorialGroupsLoadedFromCache = this.loadTutorialGroupsFromCache();
         if (!tutorialGroupsLoadedFromCache) {
             this.loadTutorialGroupsFromServer();
+        }
+    }
+
+    setCourse() {
+        const courseLoadedFromCache = this.loadCourseFromCache();
+        if (!courseLoadedFromCache) {
+            this.loadCourseFromServer();
+        }
+    }
+
+    loadCourseFromCache() {
+        const cachedCourse = this.courseCalculationService.getCourse(this.courseId);
+        if (cachedCourse === undefined) {
+            return false;
+        } else {
+            this.course = cachedCourse;
+            this.setFreeDays();
+            return true;
         }
     }
 
@@ -108,6 +149,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
                 finalize(() => {
                     this.isLoading = false;
                 }),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroups: TutorialGroup[]) => {
@@ -117,6 +159,27 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit {
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
     }
+
+    loadCourseFromServer() {
+        this.isLoading = true;
+        this.courseManagementService
+            .find(this.courseId)
+            .pipe(
+                map((res: HttpResponse<Course>) => res.body),
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe({
+                next: (course: Course) => {
+                    this.course = course;
+                    this.setFreeDays();
+                },
+                error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
+            });
+    }
+
     renderTopBarControls() {
         if (this.controls) {
             this.controlConfiguration.subject!.next(this.controls);

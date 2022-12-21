@@ -64,3 +64,10 @@ All these exercises are supposed to be run either live in the lecture with insta
    admin/accessRights
    admin/troubleshooting
    admin/knownIssues
+
+.. toctree::
+   :caption: Research
+   :includehidden:
+   :maxdepth: 3
+
+   research/publications

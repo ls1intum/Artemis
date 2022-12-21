@@ -1,6 +1,8 @@
 {
     "artemisApp": {
         "tutorialGroupImportDialog": {
+            "warning": "Warning",
+            "finishedWarning": "Artemis has finished importing the tutorial group. Be aware that the tutorial groups were created without schedule and default settings such as assigning yourself as tutor. You can change these settings and add a schedule by editing the respective groups.",
             "importButton": "Import Tutorial Groups",
             "dialogTitle": "Import Tutorial Group Registrations",
             "explanations": {
@@ -21,6 +23,7 @@
             "errorMessages": {
                 "genericErrorMessage": "Import of tutorial groups failed!",
                 "withoutTitle": "The following rows miss a tutorial group title: ",
+                "invalidTitle": "The following rows have an invalid tutorial group title (Titles may only contain letters, numbers, spaces and hyphens and max 19 characters): ",
                 "noIdentificationInformation": "The following rows specify a user but do not contain a login or matriculation number: ",
                 "duplicatedLogins": "The following logins are assigned to multiple tutorial groups: ",
                 "duplicatedRegistrationNumbers": "The following matriculation numbers are assigned to multiple tutorial groups: "

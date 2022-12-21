@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -27,6 +27,8 @@ import { Organization } from 'app/entities/organization.model';
 import dayjs from 'dayjs/esm';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -38,10 +40,12 @@ class MarkdownEditorStubComponent {
 describe('Course Management Update Component', () => {
     let comp: CourseUpdateComponent;
     let fixture: ComponentFixture<CourseUpdateComponent>;
-    let service: CourseManagementService;
+    let courseManagementService: CourseManagementService;
+    let courseAdminService: CourseAdminService;
     let profileService: ProfileService;
     let organizationService: OrganizationManagementService;
     let course: Course;
+    const validTimeZone = 'Europe/Berlin';
 
     beforeEach(() => {
         course = new Course();
@@ -69,13 +73,14 @@ describe('Course Management Update Component', () => {
         course.presentationScore = 16;
         course.color = 'testColor';
         course.courseIcon = 'testCourseIcon';
+        course.timeZone = 'Europe/London';
 
         const parentRoute = {
             data: of({ course }),
         } as any as ActivatedRoute;
         const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), ImageCropperModule],
+            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), ImageCropperModule, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
                 {
                     provide: ActivatedRoute,
@@ -89,7 +94,6 @@ describe('Course Management Update Component', () => {
                 CourseUpdateComponent,
                 MarkdownEditorStubComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
                 MockComponent(SecuredImageComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(ColorSelectorComponent),
@@ -100,9 +104,11 @@ describe('Course Management Update Component', () => {
         })
             .compileComponents()
             .then(() => {
+                (Intl as any).supportedValuesOf = () => [validTimeZone];
                 fixture = TestBed.createComponent(CourseUpdateComponent);
                 comp = fixture.componentInstance;
-                service = TestBed.inject(CourseManagementService);
+                courseManagementService = TestBed.inject(CourseManagementService);
+                courseAdminService = TestBed.inject(CourseAdminService);
                 profileService = TestBed.inject(ProfileService);
                 organizationService = TestBed.inject(OrganizationManagementService);
             });
@@ -110,6 +116,7 @@ describe('Course Management Update Component', () => {
 
     afterEach(() => {
         jest.restoreAllMocks();
+        (Intl as any).supportedValuesOf = undefined;
     });
 
     describe('ngOnInit', () => {
@@ -168,7 +175,7 @@ describe('Course Management Update Component', () => {
             // GIVEN
             const entity = new Course();
             entity.id = 123;
-            const updateStub = jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+            const updateStub = jest.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 id: new FormControl(entity.id),
@@ -195,14 +202,14 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(updateStub).toHaveBeenCalledOnce();
-            expect(updateStub).toHaveBeenCalledWith(entity.id, { ...entity, onlineCourseConfiguration: null }, undefined);
+            expect(updateStub).toHaveBeenCalledWith(entity.id, entity, undefined);
             expect(comp.isSaving).toBeFalse();
         }));
 
         it('should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new Course();
-            const createStub = jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+            const createStub = jest.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),
@@ -228,7 +235,7 @@ describe('Course Management Update Component', () => {
 
             // THEN
             expect(createStub).toHaveBeenCalledOnce();
-            expect(createStub).toHaveBeenCalledWith({ ...entity, onlineCourseConfiguration: null }, undefined);
+            expect(createStub).toHaveBeenCalledWith(entity, undefined);
             expect(comp.isSaving).toBeFalse();
         }));
     });

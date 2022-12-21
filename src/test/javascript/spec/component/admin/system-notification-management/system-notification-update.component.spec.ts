@@ -5,18 +5,18 @@ import { ActivatedRoute } from '@angular/router';
 import { SystemNotificationManagementUpdateComponent } from 'app/admin/system-notification-management/system-notification-management-update.component';
 import { SystemNotification, SystemNotificationType } from 'app/entities/system-notification.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import dayjs from 'dayjs/esm';
+import { AdminSystemNotificationService } from 'app/shared/notification/system-notification/admin-system-notification.service';
 
 describe('SystemNotificationManagementUpdateComponent', () => {
     let updateComponentFixture: ComponentFixture<SystemNotificationManagementUpdateComponent>;
     let updateComponent: SystemNotificationManagementUpdateComponent;
-    let service: SystemNotificationService;
+    let adminService: AdminSystemNotificationService;
 
     const route = {
         parent: {
@@ -34,7 +34,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
             .then(() => {
                 updateComponentFixture = TestBed.createComponent(SystemNotificationManagementUpdateComponent);
                 updateComponent = updateComponentFixture.componentInstance;
-                service = TestBed.inject(SystemNotificationService);
+                adminService = TestBed.inject(AdminSystemNotificationService);
             });
     });
 
@@ -60,7 +60,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
 
     it('should update / create if save is clicked', fakeAsync(() => {
         const saveSpy = jest.spyOn(updateComponent, 'save');
-        jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse<SystemNotification>()));
+        jest.spyOn(adminService, 'update').mockReturnValue(of(new HttpResponse<SystemNotification>()));
         updateComponentFixture.detectChanges();
 
         const button = updateComponentFixture.debugElement.nativeElement.querySelector('#saveButton');

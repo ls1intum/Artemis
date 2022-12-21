@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
@@ -40,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /** REST controller for managing ModelingExercise. */
 @RestController
-@RequestMapping(ModelingExerciseResource.Endpoints.ROOT)
+@RequestMapping("api/")
 public class ModelingExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ModelingExerciseResource.class);
@@ -80,10 +79,6 @@ public class ModelingExerciseResource {
 
     private final ModelingPlagiarismDetectionService modelingPlagiarismDetectionService;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
-    private final ModelClusterRepository modelClusterRepository;
-
     private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
@@ -91,8 +86,7 @@ public class ModelingExerciseResource {
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
             ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
             GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
-            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, InstanceMessageSendService instanceMessageSendService,
-            ModelClusterRepository modelClusterRepository, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -108,8 +102,6 @@ public class ModelingExerciseResource {
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
-        this.instanceMessageSendService = instanceMessageSendService;
-        this.modelClusterRepository = modelClusterRepository;
         this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
     }
 
@@ -224,7 +216,7 @@ public class ModelingExerciseResource {
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the list of modelingExercises in body
      */
-    @GetMapping(value = "/courses/{courseId}/modeling-exercises")
+    @GetMapping("courses/{courseId}/modeling-exercises")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<ModelingExercise>> getModelingExercisesForCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all ModelingExercises for the course with id : {}", courseId);
@@ -279,57 +271,6 @@ public class ModelingExerciseResource {
         exerciseService.logDeletion(modelingExercise, modelingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseDeletionService.delete(exerciseId, false, false);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
-    }
-
-    /**
-     * DELETE modeling-exercises/:id/clusters : delete the clusters and elements of "id" modelingExercise.
-     *
-     * @param exerciseId the id of the modelingExercise to delete clusters and elements
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @GetMapping("modeling-exercises/{exerciseId}/check-clusters")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Integer> checkClusters(@PathVariable Long exerciseId) {
-        log.info("REST request to check clusters of ModelingExercise : {}", exerciseId);
-        var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-        int clusterCount = modelClusterRepository.countByExerciseIdWithEagerElements(exerciseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.ADMIN, modelingExercise, user);
-        return ResponseEntity.ok().body(clusterCount);
-    }
-
-    /**
-     * DELETE modeling-exercises/:id/clusters : delete the clusters and elements of "id" modelingExercise.
-     *
-     * @param exerciseId the id of the modelingExercise to delete clusters and elements
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @DeleteMapping("modeling-exercises/{exerciseId}/clusters")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deleteModelingExerciseClustersAndElements(@PathVariable Long exerciseId) {
-        log.info("REST request to delete ModelingExercise : {}", exerciseId);
-        var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
-
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.ADMIN, modelingExercise, user);
-        modelingExerciseService.deleteClustersAndElements(modelingExercise);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, modelingExercise.getTitle())).build();
-    }
-
-    /**
-     * POST modeling-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment
-     * (clustering task) for given exercise id As the clustering can be performed on a different
-     * node, this will always return 200, despite an error could occur on the other node.
-     *
-     * @param exerciseId id of the exercised that for which the automatic assessment should be
-     *                   triggered
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @PostMapping("modeling-exercises/{exerciseId}/trigger-automatic-assessment")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> triggerAutomaticAssessment(@PathVariable Long exerciseId) {
-        instanceMessageSendService.sendModelingExerciseInstantClustering(exerciseId);
-        return ResponseEntity.ok().build();
     }
 
     /**
@@ -460,7 +401,7 @@ public class ModelingExerciseResource {
      * Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
+    @PutMapping("modeling-exercises/{exerciseId}/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody ModelingExercise modelingExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
@@ -478,19 +419,5 @@ public class ModelingExerciseResource {
         exerciseService.reEvaluateExercise(modelingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateModelingExercise(modelingExercise, null);
-    }
-
-    public static final class Endpoints {
-
-        public static final String ROOT = "api";
-
-        public static final String MODELING_EXERCISES = "modeling-exercises";
-
-        public static final String MODELING_EXERCISE = MODELING_EXERCISES + "/{exerciseId}";
-
-        public static final String REEVALUATE_EXERCISE = MODELING_EXERCISE + "/re-evaluate";
-
-        private Endpoints() {
-        }
     }
 }

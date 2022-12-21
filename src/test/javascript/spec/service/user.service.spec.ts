@@ -3,9 +3,11 @@ import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Authority } from 'app/shared/constants/authority.constants';
+import { AdminUserService } from 'app/core/user/admin-user.service';
 
 describe('User Service', () => {
     let service: UserService;
+    let adminService: AdminUserService;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
@@ -14,6 +16,7 @@ describe('User Service', () => {
         });
 
         service = TestBed.inject(UserService);
+        adminService = TestBed.inject(AdminUserService);
         httpMock = TestBed.inject(HttpTestingController);
     });
 
@@ -39,7 +42,7 @@ describe('User Service', () => {
         });
 
         it('should return Authorities', () => {
-            service.authorities().subscribe((_authorities) => {
+            adminService.authorities().subscribe((_authorities) => {
                 expect(_authorities).toEqual([Authority.USER, Authority.ADMIN]);
             });
             const req = httpMock.expectOne({ method: 'GET' });

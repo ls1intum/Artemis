@@ -110,7 +110,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // should not be automatically post resolving
         assertThat(createdAnswerPost.doesResolvePost()).isFalse();
         // should increment answer count
-        assertThat(createdAnswerPost.doesResolvePost()).isFalse();
+        assertThat(database.postRepository.findPostByIdElseThrow(answerPostToSave.getPost().getId()).getAnswerCount()).isEqualTo(answerPostToSave.getPost().getAnswerCount());
         checkCreatedAnswerPost(answerPostToSave, createdAnswerPost);
         assertThat(countBefore + 1).isEqualTo(answerPostRepository.count());
     }
@@ -162,10 +162,10 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var countBefore = answerPostRepository.count();
 
         request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", existingAnswerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
-        assertThat(answerPostRepository.count()).isEqualTo(countBefore);
         // should not increment answer count
         assertThat(database.postRepository.findPostByIdElseThrow(existingAnswerPostToSave.getPost().getId()).getAnswerCount())
                 .isEqualTo(existingAnswerPostToSave.getPost().getAnswerCount());
+        assertThat(existingAnswerPosts.size()).isEqualTo(answerPostRepository.count());
     }
 
     // GET
@@ -616,7 +616,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
-        assertThat(answerPostRepository.findById(answerPostToDelete.getId())).isEmpty();
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
         // should decrement answerCount
         assertThat(database.postRepository.findPostByIdElseThrow(answerPostToDelete.getPost().getId()).getAnswerCount())
                 .isEqualTo(answerPostToDelete.getPost().getAnswerCount() - 1);
@@ -629,7 +629,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         AnswerPost answerPostToNotDelete = existingAnswerPosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToNotDelete.getId(), HttpStatus.FORBIDDEN);
-        assertThat(answerPostRepository.findById(answerPostToNotDelete.getId())).isPresent();
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
         // should not decrement answerCount
         assertThat(database.postRepository.findPostByIdElseThrow(answerPostToNotDelete.getPost().getId()).getAnswerCount())
                 .isEqualTo(answerPostToNotDelete.getPost().getAnswerCount());
@@ -642,7 +642,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDelete.getId(), HttpStatus.OK);
-        assertThat(answerPostRepository.findById(answerPostToDelete.getId())).isEmpty();
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
         // should decrement answerCount
         assertThat(database.postRepository.findPostByIdElseThrow(answerPostToDelete.getPost().getId()).getAnswerCount())
                 .isEqualTo(answerPostToDelete.getPost().getAnswerCount() - 1);
@@ -664,6 +664,23 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var countBefore = answerPostRepository.count();
         request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDeleteWhichResolves.getId(), HttpStatus.OK);
         assertThat(answerPostRepository.count()).isEqualTo(countBefore - 1);
+
+        Post persistedPost = database.postRepository.findPostByIdElseThrow(answerPostToDeleteWhichResolves.getPost().getId());
+
+        // should update post resolved status to false
+        assertThat(persistedPost.isResolved()).isFalse();
+
+        // should decrement answerCount
+        assertThat(persistedPost.getAnswerCount()).isEqualTo(answerPostToDeleteWhichResolves.getPost().getAnswerCount() - 1);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testDeleteResolvingAnswerPost_asTutor() throws Exception {
+        AnswerPost answerPostToDeleteWhichResolves = existingAnswerPosts.get(3);
+
+        request.delete("/api/courses/" + courseId + "/answer-posts/" + answerPostToDeleteWhichResolves.getId(), HttpStatus.OK);
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size() - 1);
 
         Post persistedPost = database.postRepository.findPostByIdElseThrow(answerPostToDeleteWhichResolves.getPost().getId());
 

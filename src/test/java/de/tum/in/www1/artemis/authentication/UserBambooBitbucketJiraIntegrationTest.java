@@ -73,13 +73,13 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateUser_asInstructor_forbidden() throws Exception {
-        request.put("/api/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
+        request.put("/api/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateUser_asTutor_forbidden() throws Exception {
-        request.put("/api/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
+        request.put("/api/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -102,7 +102,7 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
         bitbucketRequestMockProvider.mockUpdateUserDetails(student.getLogin(), student.getEmail(), student.getName(), false);
         bitbucketRequestMockProvider.mockUpdateUserPassword(student.getLogin(), "newPassword", true, false);
 
-        request.put("/api/users", new ManagedUserVM(student, "newPassword"), HttpStatus.OK);
+        request.put("/api/admin/users", new ManagedUserVM(student, "newPassword"), HttpStatus.OK);
 
         var updatedStudent = userRepository.getUserByLoginElseThrow(student.getLogin());
 
@@ -166,7 +166,7 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     void deleteUser_withExternalUserManagement_vcsManagementHasNotBeenCalled() throws Exception {
         bitbucketRequestMockProvider.mockDeleteUser(userTestService.getStudent().getLogin(), false);
         bitbucketRequestMockProvider.mockEraseDeletedUser(userTestService.getStudent().getLogin());
-        request.delete("/api/users/" + userTestService.getStudent().getLogin(), HttpStatus.OK);
+        request.delete("/api/admin/users/" + userTestService.getStudent().getLogin(), HttpStatus.OK);
     }
 
     @Test
