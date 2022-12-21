@@ -1,4 +1,4 @@
-<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.6.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
@@ -84,11 +84,11 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="programming_submission_id" type="BIGINT"/>
-            <column name="agent_setup_duration" type="SMALLINT"/>
-            <column name="test_duration" type="SMALLINT"/>
-            <column name="sca_duration" type="SMALLINT"/>
-            <column name="total_job_duration" type="SMALLINT"/>
-            <column name="dependencies_downloaded_count" type="SMALLINT"/>
+            <column name="agent_setup_duration" type="SMALLINT UNSIGNED"/>
+            <column name="test_duration" type="SMALLINT UNSIGNED"/>
+            <column name="sca_duration" type="SMALLINT UNSIGNED"/>
+            <column name="total_job_duration" type="SMALLINT UNSIGNED"/>
+            <column name="dependencies_downloaded_count" type="SMALLINT UNSIGNED"/>
         </createTable>
         <createTable tableName="complaint">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -98,9 +98,7 @@
             <column name="complaint_text" type="TEXT"/>
             <column name="result_before_complaint" type="LONGTEXT"/>
             <column name="submitted_time" type="datetime"/>
-            <column name="result_id" type="BIGINT">
-                <constraints unique="true"/>
-            </column>
+            <column name="result_id" type="BIGINT"/>
             <column name="student_id" type="BIGINT"/>
             <column name="team_id" type="BIGINT"/>
             <column name="complaint_type" type="VARCHAR(15)">
@@ -113,9 +111,7 @@
             </column>
             <column name="response_text" type="TEXT"/>
             <column name="submitted_time" type="datetime"/>
-            <column name="complaint_id" type="BIGINT">
-                <constraints unique="true"/>
-            </column>
+            <column name="complaint_id" type="BIGINT"/>
             <column name="reviewer_id" type="BIGINT"/>
             <column name="created_by" type="VARCHAR(45)"/>
             <column name="created_date" type="timestamp"/>
@@ -213,7 +209,7 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="submission_id" type="BIGINT">
-                <constraints nullable="false" unique="true"/>
+                <constraints nullable="false"/>
             </column>
             <column name="covered_line_ratio" type="DOUBLE"/>
         </createTable>
@@ -314,9 +310,7 @@
             </column>
             <column name="used_for_tutorial" type="boolean"/>
             <column name="exercise_id" type="BIGINT"/>
-            <column name="submission_id" type="BIGINT">
-                <constraints unique="true"/>
-            </column>
+            <column name="submission_id" type="BIGINT"/>
             <column name="assessment_explanation" type="VARCHAR(2000)"/>
         </createTable>
         <createTable tableName="exercise">
@@ -337,9 +331,7 @@
             <column name="is_visible_before_start" type="boolean"/>
             <column name="allowed_number_of_attempts" type="INT"/>
             <column name="randomize_question_order" type="boolean"/>
-            <column name="quiz_point_statistic_id" type="BIGINT">
-                <constraints unique="true"/>
-            </column>
+            <column name="quiz_point_statistic_id" type="BIGINT"/>
             <column name="max_points" type="DOUBLE"/>
             <column name="diagram_type" type="VARCHAR(255)"/>
             <column name="difficulty" type="VARCHAR(255)"/>
@@ -357,12 +349,8 @@
             <column name="package_name" type="VARCHAR(255)"/>
             <column name="programming_language" type="VARCHAR(255)"/>
             <column name="assessment_due_date" type="datetime"/>
-            <column name="solution_participation_id" type="BIGINT">
-                <constraints unique="true"/>
-            </column>
-            <column name="template_participation_id" type="BIGINT">
-                <constraints unique="true"/>
-            </column>
+            <column name="solution_participation_id" type="BIGINT"/>
+            <column name="template_participation_id" type="BIGINT"/>
             <column name="sequential_test_runs" type="boolean"/>
             <column name="assessment_type" type="VARCHAR(25)"/>
             <column name="presentation_score_enabled" type="boolean"/>
@@ -378,16 +366,14 @@
                 <constraints nullable="false"/>
             </column>
             <column defaultValueBoolean="false" name="allow_complaints_for_automatic_assessments" type="boolean"/>
-            <column name="submission_policy_id" type="BIGINT">
-                <constraints unique="true"/>
-            </column>
+            <column name="submission_policy_id" type="BIGINT"/>
             <column name="example_solution_publication_date" type="datetime"/>
             <column defaultValue="SYNCHRONIZED" name="quiz_mode" type="VARCHAR(63)">
                 <constraints nullable="false"/>
             </column>
             <column name="allowed_per_tutor_batch_count" type="INT"/>
-            <column name="allow_manual_feedback_requests" type="boolean" defaultValueBoolean="false"/>
-            <column name="start_date" type="TIMESTAMP"/>
+            <column defaultValueBoolean="false" name="allow_manual_feedback_requests" type="boolean"/>
+            <column name="start_date" type="timestamp"/>
         </createTable>
         <createTable tableName="exercise_categories">
             <column name="exercise_id" type="BIGINT">
@@ -713,9 +699,7 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="lti_user_id" type="VARCHAR(255)"/>
-            <column name="user_id" type="BIGINT">
-                <constraints unique="true"/>
-            </column>
+            <column name="user_id" type="BIGINT"/>
         </createTable>
         <createTable tableName="migration_changelog">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -823,6 +807,21 @@
             <column name="user_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
+        </createTable>
+        <createTable tableName="online_course_configuration">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="lti_key" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lti_secret" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="user_prefix" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="original_url" type="VARCHAR(255)"/>
         </createTable>
         <createTable tableName="organization">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -986,8 +985,8 @@
             <column name="plagiarism_case_id" type="BIGINT"/>
             <column name="conversation_id" type="BIGINT"/>
             <column name="resolved" type="boolean"/>
-            <column name="answer_count" type="integer"/>
-            <column name="vote_count" type="integer"/>
+            <column name="answer_count" type="INT"/>
+            <column name="vote_count" type="INT"/>
         </createTable>
         <createTable tableName="post_tag">
             <column name="post_id" type="BIGINT">
@@ -1087,7 +1086,7 @@
                 <constraints nullable="false"/>
             </column>
             <column defaultValueNumeric="1.0" name="weight" type="DOUBLE"/>
-            <column defaultValueBoolean="false" name="active" type="boolean">
+            <column name="active" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="exercise_id" type="BIGINT"/>
@@ -1126,9 +1125,7 @@
             <column name="scoring_type" type="VARCHAR(255)"/>
             <column name="exercise_id" type="BIGINT"/>
             <column name="quiz_questions_order" type="BIGINT"/>
-            <column name="quiz_question_statistic_id" type="BIGINT">
-                <constraints unique="true"/>
-            </column>
+            <column name="quiz_question_statistic_id" type="BIGINT"/>
             <column name="invalid" type="boolean"/>
             <column defaultValueNumeric="85" name="similarity_value" type="INT">
                 <constraints nullable="false"/>
@@ -1163,18 +1160,12 @@
             <column name="un_rated_counter" type="INT"/>
             <column name="points" type="DOUBLE"/>
             <column name="drag_and_drop_question_statistic_id" type="BIGINT"/>
-            <column name="drop_location_id" type="BIGINT">
-                <constraints unique="true"/>
-            </column>
+            <column name="drop_location_id" type="BIGINT"/>
             <column name="quiz_point_statistic_id" type="BIGINT"/>
-            <column name="answer_id" type="BIGINT">
-                <constraints unique="true"/>
-            </column>
+            <column name="answer_id" type="BIGINT"/>
             <column name="multiple_choice_question_statistic_id" type="BIGINT"/>
             <column name="short_answer_question_statistic_id" type="BIGINT"/>
-            <column name="spot_id" type="BIGINT">
-                <constraints unique="true"/>
-            </column>
+            <column name="spot_id" type="BIGINT"/>
         </createTable>
         <createTable tableName="reaction">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -1202,9 +1193,9 @@
             <column name="example_result" type="boolean"/>
             <column name="has_complaint" type="boolean"/>
             <column defaultValueNumeric="0" name="results_order" type="INT"/>
-            <column defaultValueNumeric="0" name="test_case_count" type="TINYINT"/>
-            <column defaultValueNumeric="0" name="passed_test_case_count" type="TINYINT"/>
-            <column defaultValueNumeric="0" name="code_issue_count" type="TINYINT"/>
+            <column defaultValueNumeric="0" name="test_case_count" type="TINYINT UNSIGNED"/>
+            <column defaultValueNumeric="0" name="passed_test_case_count" type="TINYINT UNSIGNED"/>
+            <column defaultValueNumeric="0" name="code_issue_count" type="TINYINT UNSIGNED"/>
             <column name="last_modified_date" type="timestamp"/>
         </createTable>
         <createTable tableName="result_rating">
@@ -1213,7 +1204,7 @@
             </column>
             <column name="rating" type="TINYINT"/>
             <column name="result_id" type="BIGINT">
-                <constraints nullable="false" unique="true"/>
+                <constraints nullable="false"/>
             </column>
         </createTable>
         <createTable tableName="short_answer_mapping">
@@ -1391,9 +1382,7 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="exercise_id" type="BIGINT">
-                <constraints unique="true"/>
-            </column>
+            <column name="exercise_id" type="BIGINT"/>
             <column defaultValueNumeric="1" name="min_team_size" type="INT">
                 <constraints nullable="false"/>
             </column>
@@ -1537,41 +1526,8 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <createTable tableName="online_course_configuration">
-            <column autoIncrement="true" name="id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
-            <column name="lti_key" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="lti_secret" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="user_prefix" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="original_url" type="varchar(255)">
-                <constraints nullable="true"/>
-            </column>
-        </createTable>
-        <addPrimaryKey columnNames="organization_id, course_id" constraintName="fk_organization_course" tableName="course_organization"/>
-        <addPrimaryKey columnNames="organization_id, user_id" constraintName="fk_organization_user" tableName="user_organization"/>
-        <addUniqueConstraint columnNames="team_id, exercise_id, initialization_state" constraintName="UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS"
-                             tableName="participation"/>
-        <addUniqueConstraint columnNames="tutor_id, assessed_exercise_id" constraintName="UK6sioc0zhvp2bxcl4fi5labvpa" tableName="tutor_participation"/>
-        <addUniqueConstraint columnNames="student_id, exercise_id, initialization_state" constraintName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation"/>
-        <addUniqueConstraint columnNames="user_id, setting_id" constraintName="UKNotificationSettingTableUserIdSettingId" tableName="notification_setting"/>
-        <addUniqueConstraint columnNames="head_learning_goal_id, tail_learning_goal_id, type" constraintName="UQymvhyta1mtg5mmu2n2fjmjc4m2y0mtniymy4odjh"
-                             tableName="learning_goal_relation"/>
-        <addUniqueConstraint columnNames="test_name, exercise_id" constraintName="exercise_test_case" tableName="programming_exercise_test_case"/>
-        <addUniqueConstraint columnNames="quiz_id, password" constraintName="quiz_id" tableName="quiz_batch"/>
-        <addUniqueConstraint columnNames="user_id, team_id, exercise_id" constraintName="uc_participant_score" tableName="participant_score"/>
-        <addUniqueConstraint columnNames="exercise_id, short_name" constraintName="uc_team_exercise_id_and_short_name" tableName="team"/>
-        <addUniqueConstraint columnNames="emoji_id, user_id, answer_post_id" constraintName="unique_answer_post_reaction" tableName="reaction"/>
-        <addUniqueConstraint columnNames="emoji_id, user_id, post_id" constraintName="unique_post_reaction" tableName="reaction"/>
-        <addUniqueConstraint columnNames="source_grading_scale_id, bonus_to_grading_scale_id" constraintName="uq_bonus_source_grading_scale_bonus_to_grading_scale"
-                             tableName="bonus"/>
-        <addUniqueConstraint columnNames="user_id, exercise_hint_id" constraintName="uq_exercise_hint_activation" tableName="exercise_hint_activation"/>
+        <addPrimaryKey columnNames="organization_id, course_id" constraintName="PRIMARY" tableName="course_organization"/>
+        <addPrimaryKey columnNames="organization_id, user_id" constraintName="PRIMARY" tableName="user_organization"/>
         <createIndex indexName="FK11jgyics37wyibhhpp866exa8" tableName="quiz_statistic_counter">
             <column name="drag_and_drop_question_statistic_id"/>
         </createIndex>
@@ -1725,6 +1681,9 @@
         <createIndex indexName="FKiub3uexsbasdas24v9ns656n" tableName="grading_scale">
             <column name="course_id"/>
         </createIndex>
+        <createIndex indexName="FKjkn43f39191eamelk94a9837" tableName="course">
+            <column name="online_course_configuration_id"/>
+        </createIndex>
         <createIndex indexName="FKjoc9yetfohpygdvx5wv385vwb" tableName="lecture">
             <column name="course_id"/>
         </createIndex>
@@ -1766,6 +1725,65 @@
         </createIndex>
         <createIndex indexName="FKsqyvk8gb9eiknlgrj6xld1nel" tableName="student_exam">
             <column name="user_id"/>
+        </createIndex>
+        <createIndex indexName="UC_COMPLAINTRESULT_ID_COL" tableName="complaint" unique="true">
+            <column name="result_id"/>
+        </createIndex>
+        <createIndex indexName="UC_COMPLAINT_RESPONSECOMPLAINT_ID_COL" tableName="complaint_response" unique="true">
+            <column name="complaint_id"/>
+        </createIndex>
+        <createIndex indexName="UC_EXAMPLE_SUBMISSIONSUBMISSION_ID_COL" tableName="example_submission" unique="true">
+            <column name="submission_id"/>
+        </createIndex>
+        <createIndex indexName="UC_EXERCISEQUIZ_POINT_STATISTIC_ID_COL" tableName="exercise" unique="true">
+            <column name="quiz_point_statistic_id"/>
+        </createIndex>
+        <createIndex indexName="UC_EXERCISESOLUTION_PARTICIPATION_ID_COL" tableName="exercise" unique="true">
+            <column name="solution_participation_id"/>
+        </createIndex>
+        <createIndex indexName="UC_EXERCISETEMPLATE_PARTICIPATION_ID_COL" tableName="exercise" unique="true">
+            <column name="template_participation_id"/>
+        </createIndex>
+        <createIndex indexName="UC_EXERCISEUBMISSION_POLICY_ID_COL" tableName="exercise" unique="true">
+            <column name="submission_policy_id"/>
+        </createIndex>
+        <createIndex indexName="UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS" tableName="participation" unique="true">
+            <column name="team_id"/>
+            <column name="exercise_id"/>
+            <column name="initialization_state"/>
+        </createIndex>
+        <createIndex indexName="UC_QUESTIONQUESTION_STATISTIC_ID_COL" tableName="quiz_question" unique="true">
+            <column name="quiz_question_statistic_id"/>
+        </createIndex>
+        <createIndex indexName="UC_STATISTIC_COUNTERANSWER_ID_COL" tableName="quiz_statistic_counter" unique="true">
+            <column name="answer_id"/>
+        </createIndex>
+        <createIndex indexName="UC_STATISTIC_COUNTERDROP_LOCATION_ID_COL" tableName="quiz_statistic_counter" unique="true">
+            <column name="drop_location_id"/>
+        </createIndex>
+        <createIndex indexName="UC_STATISTIC_COUNTERSPOT_ID_COL" tableName="quiz_statistic_counter" unique="true">
+            <column name="spot_id"/>
+        </createIndex>
+        <createIndex indexName="UC_TEAM_ASSIGNMENT_CONFIG_EXERCISE_ID_COL" tableName="team_assignment_config" unique="true">
+            <column name="exercise_id"/>
+        </createIndex>
+        <createIndex indexName="UK6sioc0zhvp2bxcl4fi5labvpa" tableName="tutor_participation" unique="true">
+            <column name="tutor_id"/>
+            <column name="assessed_exercise_id"/>
+        </createIndex>
+        <createIndex indexName="UK6skuc03gvp2gw5lyji5lu0v0v" tableName="participation" unique="true">
+            <column name="student_id"/>
+            <column name="exercise_id"/>
+            <column name="initialization_state"/>
+        </createIndex>
+        <createIndex indexName="UKNotificationSettingTableUserIdSettingId" tableName="notification_setting" unique="true">
+            <column name="user_id"/>
+            <column name="setting_id"/>
+        </createIndex>
+        <createIndex indexName="UQymvhyta1mtg5mmu2n2fjmjc4m2y0mtniymy4odjh" tableName="learning_goal_relation" unique="true">
+            <column name="head_learning_goal_id"/>
+            <column name="tail_learning_goal_id"/>
+            <column name="type"/>
         </createIndex>
         <createIndex indexName="build_plan_id" tableName="participation">
             <column name="build_plan_id"/>
@@ -1817,6 +1835,10 @@
         </createIndex>
         <createIndex indexName="exercise_start_date" tableName="exercise">
             <column name="start_date"/>
+        </createIndex>
+        <createIndex indexName="exercise_test_case" tableName="programming_exercise_test_case" unique="true">
+            <column name="test_name"/>
+            <column name="exercise_id"/>
         </createIndex>
         <createIndex indexName="feedback_type" tableName="feedback">
             <column name="type"/>
@@ -2004,6 +2026,9 @@
         <createIndex indexName="fk_result_participation_id" tableName="result">
             <column name="participation_id"/>
         </createIndex>
+        <createIndex indexName="fk_result_rating_result_id" tableName="result_rating">
+            <column name="result_id"/>
+        </createIndex>
         <createIndex indexName="fk_result_submission_id" tableName="result">
             <column name="submission_id"/>
         </createIndex>
@@ -2057,6 +2082,9 @@
         </createIndex>
         <createIndex indexName="fk_tutorial_course_id" tableName="tutorial_group">
             <column name="course_id"/>
+        </createIndex>
+        <createIndex indexName="fk_tutorial_group_notification_tutorial_group" tableName="notification">
+            <column name="tutorial_group_id"/>
         </createIndex>
         <createIndex indexName="fk_tutorial_group_registration_student_id" tableName="tutorial_group_registration">
             <column name="student_id"/>
@@ -2119,10 +2147,14 @@
         <createIndex indexName="programming_exercise_details_due_date" tableName="programming_exercise_details">
             <column name="build_and_test_student_submissions_after_due_date"/>
         </createIndex>
-        <createIndex indexName="model_cluster_reference" tableName="model_cluster">
+        <createIndex indexName="quiz_id" tableName="quiz_batch" unique="true">
+            <column name="quiz_id"/>
+            <column name="password"/>
+        </createIndex>
+        <createIndex indexName="reference" tableName="model_cluster">
             <column name="model_element_type"/>
         </createIndex>
-        <createIndex indexName="model_element_reference" tableName="model_element">
+        <createIndex indexName="reference" tableName="model_element">
             <column name="model_element_type"/>
         </createIndex>
         <createIndex indexName="repository_url" tableName="participation">
@@ -2161,8 +2193,41 @@
         <createIndex indexName="submission_discriminator" tableName="submission">
             <column name="discriminator"/>
         </createIndex>
+        <createIndex indexName="submission_id" tableName="coverage_report" unique="true">
+            <column name="submission_id"/>
+        </createIndex>
+        <createIndex indexName="uc_participant_score" tableName="participant_score" unique="true">
+            <column name="user_id"/>
+            <column name="team_id"/>
+            <column name="exercise_id"/>
+        </createIndex>
+        <createIndex indexName="uc_team_exercise_id_and_short_name" tableName="team" unique="true">
+            <column name="exercise_id"/>
+            <column name="short_name"/>
+        </createIndex>
+        <createIndex indexName="unique_answer_post_reaction" tableName="reaction" unique="true">
+            <column name="emoji_id"/>
+            <column name="user_id"/>
+            <column name="answer_post_id"/>
+        </createIndex>
+        <createIndex indexName="unique_post_reaction" tableName="reaction" unique="true">
+            <column name="emoji_id"/>
+            <column name="user_id"/>
+            <column name="post_id"/>
+        </createIndex>
+        <createIndex indexName="uq_bonus_source_grading_scale_bonus_to_grading_scale" tableName="bonus" unique="true">
+            <column name="source_grading_scale_id"/>
+            <column name="bonus_to_grading_scale_id"/>
+        </createIndex>
+        <createIndex indexName="uq_exercise_hint_activation" tableName="exercise_hint_activation" unique="true">
+            <column name="user_id"/>
+            <column name="exercise_hint_id"/>
+        </createIndex>
         <createIndex indexName="user_groups_groups" tableName="user_groups">
             <column name="groups"/>
+        </createIndex>
+        <createIndex indexName="user_id" tableName="lti_user_id" unique="true">
+            <column name="user_id"/>
         </createIndex>
         <addForeignKeyConstraint baseColumnNames="drag_and_drop_question_statistic_id" baseTableName="quiz_statistic_counter" constraintName="FK11jgyics37wyibhhpp866exa8"
                                  deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id"
@@ -2305,6 +2370,9 @@
                                  onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="grading_scale" constraintName="FKiub3uexsbasdas24v9ns656n" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="online_course_configuration_id" baseTableName="course" constraintName="FKjkn43f39191eamelk94a9837" deferrable="false"
+                                 initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="online_course_configuration"
+                                 validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="lecture" constraintName="FKjoc9yetfohpygdvx5wv385vwb" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="author_id" baseTableName="post" constraintName="FKjpgnpph3i2h0n8xekqiytaers" deferrable="false" initiallyDeferred="false"
@@ -2572,6 +2640,8 @@
                                  initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="tutorial_group" constraintName="fk_tutorial_course_id" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="course" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="tutorial_group_id" baseTableName="notification" constraintName="fk_tutorial_group_notification_tutorial_group" deferrable="false"
+                                 initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="tutorial_group" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="tutorial_group_registration" constraintName="fk_tutorial_group_registration_student_id"
                                  deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user"
                                  validate="true"/>
@@ -2582,10 +2652,6 @@
                                  initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="jhi_user_authority" constraintName="fk_user_id" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="online_course_configuration_id" baseTableName="course" constraintName="FKjkn43f39191eamelk94a9837" deferrable="false"
-                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="online_course_configuration" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="tutorial_group_id" baseTableName="notification" constraintName="fk_tutorial_group_notification_tutorial_group" deferrable="false"
-                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group"/>
         <loadData encoding="UTF-8"
                   file="config/liquibase/authorities.csv"
                   separator=";"
