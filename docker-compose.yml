@@ -1,8 +1,8 @@
 # ----------------------------------------------------------------------------------------------------------------------
-# Artemis-Dev-MySQL Setup
+# Artemis-Prod-MySQL Setup
 # ----------------------------------------------------------------------------------------------------------------------
 
-# this links to /src/main/docker/artemis-prod-mysql.yml which is the default artemis development docker compose setup
+# this links to /src/main/docker/artemis-prod-mysql.yml which is the default artemis production docker compose setup
 # just using a symlink doesn't work because of the relative paths ;)
 
 services:
