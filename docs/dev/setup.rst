@@ -668,7 +668,7 @@ The easiest way to configure a local deployment via Docker is a deployment with 
 In the directory ``src/main/docker/`` you can find the following *docker compose* files for different **setups**:
 
 * ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
-* ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the production build of Artemis and a MySQL DB
+* ``artemis-prod-mysql.yml``: **Artemis-Prod-MySQL** Setup containing the production build of Artemis and a MySQL DB
 * ``artemis-server-client-mysql.yml``: **(not maintained at the moment)** **Artemis-Server-Client-MySQL** Setup containing a separate client and server
   container which mount the code as volumes and are therefore just suited for development purposes.
   As Npm is used with its live reload mode to build and run the client, any change in the client’s codebase will trigger
@@ -725,6 +725,19 @@ Folder structure
 | **Base services** with additional files like configuration files, Dockerfile, ...
   should be in a subdirectory with the service name (``src/main/docker/<service name>/``).
   Additional files for **setups** should also be stored in a subdirectory with the setup name.
+
+Artemis Base Service
+^^^^^^^^^^^^^^^^^^^^
+
+Everything related to the Docker Image of Artemis (built by the Dockerfile) can be found
+`in the Server Setup section <#run-the-server-via-docker>`__.
+All Artemis related settings changed in Docker compose files are described here.
+
+| The ``artemis.yml`` **base service** (e.g. in the ``artemis-prod-mysql.yml`` setup) defaults to the latest
+  Artemis Docker Image tag in your local docker registry.
+| If you want to build the checked out version run ``docker compose build artemis-app`` before starting Artemis.
+| If you want a specific version from the GitHub container registry change the ``image:`` value to the desired image
+  for the ``artemis-app`` service and run ``docker compose pull artemis-app``.
 
 Debugging with Docker
 ^^^^^^^^^^^^^^^^^^^^^

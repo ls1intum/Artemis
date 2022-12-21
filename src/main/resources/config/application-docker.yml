@@ -1,5 +1,4 @@
-# this profile contains the default variables for the docker compose setups
-# TODO: check if this can be solved different without having to load the docker profile
+# this profile contains the default variables for the docker setups
 artemis:
     course-archives-path: /opt/artemis/data/courses
     repo-clone-path: /opt/artemis/data/repos
