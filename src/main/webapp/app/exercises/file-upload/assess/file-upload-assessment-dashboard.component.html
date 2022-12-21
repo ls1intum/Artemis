@@ -104,8 +104,7 @@
                         </ng-container>
                     </td>
                     <td>
-                        {{ submission.durationInMinutes }}
-                        {{ 'artemisApp.assessment.dashboard.minutes' | artemisTranslate }}
+                        {{ (submission.durationInMinutes ?? 0) * 60 | artemisDurationFromSeconds }}
                     </td>
                     <td>
                         <div *ngIf="submission?.results?.length && submission.results!.length! > 1 && submission!.results![0]?.assessor">
