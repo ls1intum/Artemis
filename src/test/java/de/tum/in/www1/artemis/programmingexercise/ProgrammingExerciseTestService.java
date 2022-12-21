@@ -201,9 +201,9 @@ public class ProgrammingExerciseTestService {
 
     private String userPrefix;
 
-    public List<User> setupTestUsers(String userPrefix, int additionalStudents, int additionalTutors, int additionalEditors, int additionalInstructors) {
+    public void setupTestUsers(String userPrefix, int additionalStudents, int additionalTutors, int additionalEditors, int additionalInstructors) {
         this.userPrefix = userPrefix;
-        return database.addUsers(userPrefix, numberOfStudents + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
+        database.addUsers(userPrefix, numberOfStudents + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
     }
 
     public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
@@ -447,10 +447,6 @@ public class ProgrammingExerciseTestService {
         assertThat(exerciseGroup.getExercises()).doesNotContain(examExercise);
     }
 
-    private void commonImportSetup(ProgrammingExercise sourceExercise) {
-        // TODO: make sure that the local and remote repos of the origin exercise include the correct files so that the template upgrade service is invoked correctly
-    }
-
     private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = database.addAuxiliaryRepositoryToExercise(sourceExercise);
         var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), new MockFileRepositoryUrl(sourceAuxRepo.originRepoFile).toString());
@@ -512,21 +508,6 @@ public class ProgrammingExerciseTestService {
 
         // Check that the tasks were imported correctly (see #5474)
         assertThat(programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId())).hasSameSizeAs(sourceExercise.getTasks());
-
-        // TODO: check why the assertions do not work correctly
-        // Assert correct creation of test cases
-        // var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
-        // var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
-        // assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
-        // assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
-        // .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
-        //
-        // // Assert correct creation of hints
-        // var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
-        // var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
-        // assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
-        // assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
-        // .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
     }
 
     // TEST
@@ -538,7 +519,6 @@ public class ProgrammingExerciseTestService {
         database.addTestCasesToProgrammingExercise(sourceExercise);
         database.addHintsToExercise(sourceExercise);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
-        commonImportSetup(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
         exerciseToBeImported.setStaticCodeAnalysisEnabled(staticCodeAnalysisEnabled);
         if (addAuxRepos) {
@@ -588,7 +568,6 @@ public class ProgrammingExerciseTestService {
     void importExercise_enablePlanFails() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
-        commonImportSetup(sourceExercise);
         // database.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
@@ -610,7 +589,6 @@ public class ProgrammingExerciseTestService {
     void importExercise_planDoesntExist() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
-        commonImportSetup(sourceExercise);
         // database.addTestCasesToProgrammingExercise(sourceExercise);
         sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
@@ -863,15 +841,14 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void startProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
-        final Course course = setupCourseWithProgrammingExercise(exerciseMode);
+        setupCourseWithProgrammingExercise(exerciseMode);
         var user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
         Participant participant = user;
         if (exerciseMode == TEAM) {
             participant = setupTeam(user);
         }
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
-        final var path = "/api/exercises/{exerciseId}/participations".replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
-                String.valueOf(exercise.getId()));
+        final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
@@ -889,8 +866,7 @@ public class ProgrammingExerciseTestService {
 
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
 
-        final var path = "/api/exercises/{exerciseId}/participations".replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
-                String.valueOf(exercise.getId()));
+        final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
@@ -906,7 +882,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
-        final Course course = setupCourseWithProgrammingExercise(exerciseMode);
+        setupCourseWithProgrammingExercise(exerciseMode);
         request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation/" + -1, null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.NOT_FOUND);
     }
@@ -1253,7 +1229,7 @@ public class ProgrammingExerciseTestService {
         }
     }
 
-    private Course createCourseWithProgrammingExerciseAndParticipationWithFiles() throws GitAPIException, IOException {
+    private void createCourseWithProgrammingExerciseAndParticipationWithFiles() throws GitAPIException, IOException {
         course.setEndDate(ZonedDateTime.now().minusMinutes(4));
         course.setCourseArchivePath(null);
         course.setExercises(Set.of(exercise));
@@ -1293,7 +1269,6 @@ public class ProgrammingExerciseTestService {
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
 
-        return course;
     }
 
     /**
@@ -1347,7 +1322,7 @@ public class ProgrammingExerciseTestService {
         }
     }
 
-    private ProgrammingExerciseStudentParticipation createStudentParticipationWithSubmission(ExerciseMode exerciseMode) throws Exception {
+    private ProgrammingExerciseStudentParticipation createStudentParticipationWithSubmission(ExerciseMode exerciseMode) {
         setupCourseWithProgrammingExercise(exerciseMode);
         User user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
 
@@ -1386,10 +1361,10 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
-        final var course = getCourseForExercise();
+        persistProgrammingExercise();
         User user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
-        final var participation = createUserParticipation(course);
+        final var participation = createUserParticipation();
 
         // create a submission which fails
         database.createProgrammingSubmission(participation, true);
@@ -1419,11 +1394,11 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
-        final var course = getCourseForExercise();
+        persistProgrammingExercise();
         User user = userRepo.findOneByLogin(userPrefix + studentLogin).orElseThrow();
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
 
-        final var participation = createUserParticipation(course);
+        final var participation = createUserParticipation();
 
         // create a submission
         database.createProgrammingSubmission(participation, false);
@@ -1716,17 +1691,14 @@ public class ProgrammingExerciseTestService {
         assertThat(programmingExerciseRepository.findById(exercise.getId())).isPresent();
     }
 
-    private Course getCourseForExercise() {
-        final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
+    private void persistProgrammingExercise() {
         programmingExerciseRepository.save(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);
         database.addSolutionParticipationForProgrammingExercise(exercise);
-        return course;
     }
 
-    private ProgrammingExerciseStudentParticipation createUserParticipation(Course course) throws Exception {
-        final var path = "/api/exercises/{exerciseId}/participations".replace("{courseId}", String.valueOf(course.getId())).replace("{exerciseId}",
-                String.valueOf(exercise.getId()));
+    private ProgrammingExerciseStudentParticipation createUserParticipation() throws Exception {
+        final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
         return request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
     }
 
