@@ -40,6 +40,8 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
 class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "jiraauthintegration";
+
     @Value("${artemis.user-management.external.admin-group-name}")
     private String ADMIN_GROUP_NAME;
 
@@ -73,7 +75,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     protected AuthorityRepository authorityRepository;
 
-    private static final String USERNAME = "student1";
+    private static final String USERNAME = TEST_PREFIX + "student1";
 
     protected ProgrammingExercise programmingExercise;
 
@@ -96,6 +98,9 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         final var adminAuthority = new Authority(Role.ADMIN.getAuthority());
         final var taAuthority = new Authority(Role.TEACHING_ASSISTANT.getAuthority());
         authorityRepository.saveAll(List.of(userAuthority, instructorAuthority, adminAuthority, taAuthority));
+
+        userRepository.findOneByLogin(USERNAME).ifPresent(userRepository::delete);
+
         jiraRequestMockProvider.enableMockingOfRequests();
     }
 
@@ -127,8 +132,8 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
 
         request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
         final var user = userRepository.findOneByLogin(username).orElseThrow();
-        final var ltiUser = ltiUserIdRepository.findAll().get(0);
-        final var ltiOutcome = ltiOutcomeUrlRepository.findAll().get(0);
+        final var ltiUser = ltiUserIdRepository.findByLtiUserId(username).get();
+        final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).get();
         assertThat(ltiUser.getUser()).isEqualTo(user);
         assertThat(ltiUser.getLtiUserId()).isEqualTo(ltiLaunchRequest.getUser_id());
         assertThat(ltiOutcome.getUser()).isEqualTo(user);
