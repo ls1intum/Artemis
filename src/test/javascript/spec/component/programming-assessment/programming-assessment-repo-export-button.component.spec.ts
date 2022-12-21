@@ -14,6 +14,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ProgrammingAssessmentRepoExportButtonComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-button.component';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
+import { ButtonComponent } from 'app/shared/components/button.component';
 
 describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
     let comp: ProgrammingAssessmentRepoExportButtonComponent;
@@ -36,6 +37,7 @@ describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
                 MockTranslateValuesDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
+                MockComponent(ButtonComponent),
                 MockDirective(TranslateDirective),
             ],
             providers: [

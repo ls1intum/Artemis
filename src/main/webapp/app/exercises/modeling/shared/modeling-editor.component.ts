@@ -73,7 +73,7 @@ export class ModelingEditorComponent extends ModelingComponent implements AfterV
                 mode: ApollonMode.Modelling,
                 readonly: this.readOnly,
                 type: this.diagramType || UMLDiagramType.ClassDiagram,
-                scale: 0.75,
+                scale: 0.8,
             });
 
             this.modelSubscription = this.apollonEditor.subscribeToModelChange((model: UMLModel) => {
