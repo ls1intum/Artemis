@@ -381,8 +381,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "student7", roles = "USER")
     @EnumSource(QuizMode.class)
-    void testQuizSubmitNoDatabaseRequests() throws Exception {
-        QuizMode quizMode = QuizMode.BATCHED;
+    void testQuizSubmitNoDatabaseRequests(QuizMode quizMode) throws Exception {
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);
         quizExercise.setDuration(360);
