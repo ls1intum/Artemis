@@ -2,8 +2,8 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
@@ -11,7 +11,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
@@ -75,14 +74,15 @@ public class AttachmentUnitService {
         return savedAttachmentUnit;
     }
 
-    public Set<AttachmentUnit> createAttachmentUnits(List<LectureUnitSplitDTO> lectureUnitSplitDTOs, Lecture lecture, MultipartFile file) throws IOException {
+    public List<AttachmentUnit> createAttachmentUnits(List<LectureUnitSplitDTO> lectureUnitSplitDTOs, Lecture lecture, MultipartFile file) throws IOException {
+
+        List<Long> ids = new ArrayList<>();
 
         List<LectureUnitsDTO> lectureUnitsDTO = lectureUnitProcessingService.splitUnits(lectureUnitSplitDTOs, file);
-        System.out.println(lectureUnitsDTO.size());
         lectureUnitsDTO.forEach(lectureUnit -> {
-            System.out.println(lectureUnit.getAttachment().getName());
             lectureUnit.getAttachmentUnit().setLecture(null);
             AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(lectureUnit.getAttachmentUnit());
+            ids.add(savedAttachmentUnit.getId());
             lectureUnit.getAttachmentUnit().setLecture(lecture);
             lecture.addLectureUnit(savedAttachmentUnit);
             lectureRepository.save(lecture);
@@ -97,7 +97,7 @@ public class AttachmentUnitService {
             evictCache(lectureUnit.getFile(), savedAttachmentUnit);
         });
 
-        return attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lecture.getId(), AttachmentType.FILE);
+        return attachmentUnitRepository.findAllById(ids);
     }
 
     /**

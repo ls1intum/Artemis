@@ -5,7 +5,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -157,7 +156,7 @@ public class AttachmentUnitResource {
 
     @PostMapping(value = "lectures/{lectureId}/attachment-units/split")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Set<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestPart List<LectureUnitSplitDTO> lectureUnitSplitDTOs,
+    public ResponseEntity<List<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestPart List<LectureUnitSplitDTO> lectureUnitSplitDTOs,
             @RequestPart MultipartFile file) throws IOException {
         log.debug("REST request to create AttachmentUnits {} with lectureId {}", lectureUnitSplitDTOs, lectureId);
 
@@ -166,7 +165,7 @@ public class AttachmentUnitResource {
             throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
-        Set<AttachmentUnit> savedAttachmentUnits = attachmentUnitService.createAttachmentUnits(lectureUnitSplitDTOs, lecture, file);
+        List<AttachmentUnit> savedAttachmentUnits = attachmentUnitService.createAttachmentUnits(lectureUnitSplitDTOs, lecture, file);
         return ResponseEntity.ok().body(savedAttachmentUnits);
     }
 

@@ -35,13 +35,7 @@
                         />
                     </td>
                     <td>
-                        <jhi-date-time-picker
-                            [shouldDisplayTimeZoneWarning]="false"
-                            [(ngModel)]="units[i].releaseDate"
-                            (valueChange)="onDatesValuesChanged(unit)"
-                            name="releaseDate"
-                            id="release-date"
-                        ></jhi-date-time-picker>
+                        <jhi-date-time-picker [shouldDisplayTimeZoneWarning]="false" [(ngModel)]="units[i].releaseDate" name="releaseDate" id="release-date"></jhi-date-time-picker>
                     </td>
                     <td>
                         <input

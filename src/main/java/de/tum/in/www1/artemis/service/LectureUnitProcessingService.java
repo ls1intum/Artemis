@@ -49,10 +49,8 @@ public class LectureUnitProcessingService {
             pdfSplitter.setSplitAtPage(Integer.parseInt(lectureUnit.endPage));
 
             documentUnits = pdfSplitter.split(document);
-            System.out.println(documentUnits.size());
             pdDocumentInformation.setTitle(lectureUnit.getUnitName());
             documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
-            System.out.println(documentUnits.get(0).getDocumentInformation().getTitle());
             documentUnits.get(0).save(outputStream);
 
             // setup attachmentUnit and attachment
