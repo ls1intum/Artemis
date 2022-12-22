@@ -2942,6 +2942,7 @@ public class DatabaseUtilService {
      * With this method we can generate a course. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and text
      * exercises in a cyclic manner.
      *
+     * @param suffix
      * @param numberOfExercises             number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated.
      *                                      (thats why there is the %3 check)
      * @param numberOfSubmissionPerExercise for each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8
@@ -2955,9 +2956,10 @@ public class DatabaseUtilService {
      * @param validModel                    model for the modeling submission
      * @return - the generated course
      */
-    public Course addCourseWithExercisesAndSubmissions(String userPrefix, int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments, int numberOfComplaints,
-            boolean typeComplaint, int numberComplaintResponses, String validModel) {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+    public Course addCourseWithExercisesAndSubmissions(String userPrefix, String suffix, int numberOfExercises, int numberOfSubmissionPerExercise, int numberOfAssessments,
+            int numberOfComplaints, boolean typeComplaint, int numberComplaintResponses, String validModel) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
+                userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
         var tutors = userRepo.getTutors(course);
         for (int i = 0; i < numberOfExercises; i++) {
             var currentUser = tutors.get(i % 4);
@@ -3004,7 +3006,7 @@ public class DatabaseUtilService {
                     }
                 }
             }
-            else if ((i % 3) == 2) {
+            else { // i.e. (i % 3) == 2
                 FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, pastTimestamp.plusHours(1), futureTimestamp, "png,pdf", course);
                 fileUploadExercise.setTitle("FileUpload" + i);
                 course.addExercises(fileUploadExercise);

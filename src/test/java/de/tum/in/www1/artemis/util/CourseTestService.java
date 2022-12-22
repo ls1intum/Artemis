@@ -914,7 +914,8 @@ public class CourseTestService {
     public void testGetAssessmentDashboardStats_withoutAssessments() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         // create 6 * 4 = 24 submissions
-        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, 6, 4, 0, 0, true, 0, validModel);
+        adjustUserGroupsToCustomGroups();
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 0, 0, true, 0, validModel);
 
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
 
@@ -932,7 +933,8 @@ public class CourseTestService {
     // Test
     public void testGetAssessmentDashboardStats_withAssessments() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, 6, 4, 2, 0, true, 0, validModel);
+        adjustUserGroupsToCustomGroups();
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 2, 0, true, 0, validModel);
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(4);
@@ -944,7 +946,8 @@ public class CourseTestService {
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaints() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, 6, 4, 4, 2, true, 0, validModel);
+        adjustUserGroupsToCustomGroups();
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 4, 2, true, 0, validModel);
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
@@ -966,7 +969,8 @@ public class CourseTestService {
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndFeedbackRequests() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, 6, 4, 4, 2, false, 0, validModel);
+        adjustUserGroupsToCustomGroups();
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 4, 2, false, 0, validModel);
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
@@ -988,12 +992,11 @@ public class CourseTestService {
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, 6, 4, 4, 2, true, 1, validModel);
 
-        String suffix = "assessStats";
-        adjustUserGroupsToCustomGroups(suffix);
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
-        updateCourseGroups(testCourse, suffix);
+        String suffix = "assessStatsCom";
+        adjustUserGroupsToCustomGroups(suffix);
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, true, 1, validModel);
 
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
@@ -1025,7 +1028,12 @@ public class CourseTestService {
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndFeedBackRequestsAndResponses() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, 6, 4, 4, 2, false, 1, validModel);
+
+        // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
+        String suffix = "assessStatsFR";
+        adjustUserGroupsToCustomGroups(suffix);
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, false, 1, validModel);
+
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
@@ -1056,12 +1064,10 @@ public class CourseTestService {
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses_Large() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, 9, 8, 8, 5, true, 5, validModel);
-
+        // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
         String suffix = "assessStatsLarge";
         adjustUserGroupsToCustomGroups(suffix);
-        // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
-        updateCourseGroups(testCourse, suffix);
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 9, 8, 8, 5, true, 5, validModel);
 
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 8 submissions of 3 exercises. The rest two only 8 of two exercises.
