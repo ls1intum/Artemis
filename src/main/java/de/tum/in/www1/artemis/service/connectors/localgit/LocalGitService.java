@@ -46,6 +46,7 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
+import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
 @Service
 @Profile("localgit")
@@ -452,9 +453,11 @@ public class LocalGitService extends AbstractVersionControlService {
      * @return true or false depending
      */
     @Override
-    public boolean checkIfProjectExists(String projectKey, String projectName) {
+    public boolean checkIfProjectExists(String projectKey, String courseShortName, String projectName) {
+        String projectKeyStripped = StringUtil.stripIllegalCharacters(projectKey);
+        String courseShortNameStripped = StringUtil.stripIllegalCharacters(courseShortName);
         // Try to find the folder in the file system. If it is not found, return false.
-        if (new File(localGitPath + "/" + projectKey).exists()) {
+        if (new File(localGitPath + File.separator + courseShortNameStripped + File.separator + projectKeyStripped).exists()) {
             log.warn("Local git project with key {} already exists: {}", projectKey, projectName);
             return true;
         }
@@ -473,9 +476,9 @@ public class LocalGitService extends AbstractVersionControlService {
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws LocalGitException {
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        String courseShortName = course.getShortName();
+        String courseShortName = StringUtil.stripIllegalCharacters(course.getShortName());
 
-        String projectKey = programmingExercise.getProjectKey();
+        String projectKey = StringUtil.stripIllegalCharacters(programmingExercise.getProjectKey());
 
         log.debug("Creating folder for local git project at {}", localGitPath + File.separator + courseShortName + File.separator + projectKey);
 

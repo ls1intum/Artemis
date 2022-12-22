@@ -109,11 +109,12 @@ public interface VersionControlService {
     /**
      * Checks if the project with the given projectKey already exists
      *
-     * @param projectKey  to check if a project with this unique key already exists
-     * @param projectName to check if a project with the same name already exists
+     * @param projectKey      to check if a project with this unique key already exists
+     * @param courseShortName needed only for local git checks where there exists a folder for each course
+     * @param projectName     to check if a project with the same name already exists
      * @return true if the project exists, false otherwise
      */
-    boolean checkIfProjectExists(String projectKey, String projectName);
+    boolean checkIfProjectExists(String projectKey, String courseShortName, String projectName);
 
     /**
      * Copies a repository from one project to another one. The project can be the same.

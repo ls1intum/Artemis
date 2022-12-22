@@ -408,11 +408,11 @@ public class ProgrammingExerciseService {
         final String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
         versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template
-                                                                                                                                                              // repository
+        // repository
         versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests
-                                                                                                                                                           // repository
+        // repository
         versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution
-                                                                                                                                                              // repository
+        // repository
 
         // Create auxiliary repositories
         createAndInitializeAuxiliaryRepositories(projectKey, courseShortName, programmingExercise);
@@ -1060,8 +1060,9 @@ public class ProgrammingExerciseService {
      */
     public void checkIfProjectExists(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
+        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String projectName = programmingExercise.getProjectName();
-        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, courseShortName, projectName);
         if (projectExists) {
             var errorMessageVcs = "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!";
             throw new BadRequestAlertException(errorMessageVcs, "ProgrammingExercise", "vcsProjectExists");
@@ -1089,7 +1090,7 @@ public class ProgrammingExerciseService {
         String projectName = courseShortName + " " + programmingExercise.getTitle();
         log.debug("Project Key: " + projectKey);
         log.debug("Project Name: " + projectName);
-        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, courseShortName, projectName);
         if (projectExists) {
             return true;
         }

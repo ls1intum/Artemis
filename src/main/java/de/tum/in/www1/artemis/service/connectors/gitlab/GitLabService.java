@@ -454,7 +454,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public boolean checkIfProjectExists(String projectKey, String projectName) {
+    public boolean checkIfProjectExists(String projectKey, String courseShortName, String projectName) {
         try {
             return !gitlab.getProjectApi().getProjects(projectKey).isEmpty();
         }

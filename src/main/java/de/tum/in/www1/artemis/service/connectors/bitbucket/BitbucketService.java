@@ -535,7 +535,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public boolean checkIfProjectExists(String projectKey, String projectName) {
+    public boolean checkIfProjectExists(String projectKey, String courseShortName, String projectName) {
         try {
             // first check that the project key is unique, if the project does not exist, we expect a 404 Not Found status
             var project = getBitbucketProject(projectKey);

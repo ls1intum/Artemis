@@ -7,6 +7,7 @@ import java.net.URL;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.LocalGitException;
+import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
 public class LocalGitRepositoryUrl extends VcsRepositoryUrl {
 
@@ -22,11 +23,11 @@ public class LocalGitRepositoryUrl extends VcsRepositoryUrl {
     private String repositoryTypeOrUserName;
 
     public LocalGitRepositoryUrl(URL localGitServerUrl, String projectKey, String courseShortName, String repositorySlug) {
-        this.projectKey = projectKey;
-        this.courseShortName = courseShortName;
-        this.repositorySlug = repositorySlug;
-        this.repositoryTypeOrUserName = repositorySlug.toLowerCase().replace(projectKey.toLowerCase() + "-", "");
-        final String url = localGitServerUrl.getProtocol() + "://" + localGitServerUrl.getAuthority() + buildRepositoryPath(projectKey, courseShortName, repositorySlug);
+        this.projectKey = StringUtil.stripIllegalCharacters(projectKey);
+        this.courseShortName = StringUtil.stripIllegalCharacters(courseShortName);
+        this.repositorySlug = StringUtil.stripIllegalCharacters(repositorySlug);
+        this.repositoryTypeOrUserName = this.repositorySlug.toLowerCase().replace(this.projectKey.toLowerCase() + "-", "");
+        final String url = localGitServerUrl.getProtocol() + "://" + localGitServerUrl.getAuthority() + buildRepositoryPath();
         try {
             this.uri = new URI(url);
         }
@@ -35,7 +36,7 @@ public class LocalGitRepositoryUrl extends VcsRepositoryUrl {
         }
     }
 
-    private String buildRepositoryPath(String projectKey, String courseShortName, String repositorySlug) {
+    private String buildRepositoryPath() {
         return "/git/" + courseShortName + "/" + projectKey + "/" + repositorySlug + ".git";
     }
 

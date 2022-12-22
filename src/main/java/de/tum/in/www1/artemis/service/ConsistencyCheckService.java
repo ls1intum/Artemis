@@ -48,9 +48,9 @@ public class ConsistencyCheckService {
     /**
      * Performs multiple checks for a given programming exercise and returns a list
      * of the resulting errors, if any.
-     *
+     * <p>
      * Make sure to load Template and Solution participations along with the programming exercise.
-     *
+     * <p>
      * Checks:
      * - Existence of VCS repositories and project
      * - Existence of CI build plans
@@ -76,13 +76,15 @@ public class ConsistencyCheckService {
     /**
      * Checks if a project and its repositories (TEMPLATE, TEST, SOLUTION) exists in the VCS
      * for a given programming exercise.
+     *
      * @param programmingExercise to check
      * @return List containing the resulting errors, if any.
      */
     private List<ConsistencyErrorDTO> checkVCSConsistency(ProgrammingExercise programmingExercise) {
         List<ConsistencyErrorDTO> result = new ArrayList<>();
 
-        if (!versionControlService.get().checkIfProjectExists(programmingExercise.getProjectKey(), programmingExercise.getProjectName())) {
+        if (!versionControlService.get().checkIfProjectExists(programmingExercise.getProjectKey(), programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(),
+                programmingExercise.getProjectName())) {
             result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.VCS_PROJECT_MISSING));
         }
         else {
@@ -102,6 +104,7 @@ public class ConsistencyCheckService {
     /**
      * Checks if build plans (TEMPLATE, SOLUTION) exist in the CI for a given
      * programming exercise.
+     *
      * @param programmingExercise to check
      * @return List containing the resulting errors, if any.
      */
