@@ -5,8 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
-import de.tum.in.www1.artemis.web.rest.dto.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,11 +15,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
-import uk.org.webcompere.systemstubs.stream.SystemOut;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 
 class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -82,7 +80,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(booleans = {true, false})
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreForExamBonusSourceWithMultipleResultsInParticipation(boolean withDueDate) {
 
@@ -104,17 +102,19 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
         database.createSubmissionAndResult(studentParticipation, 60, true);
 
         studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
-
+        Set<Result> results = studentParticipations.get(1).getResults();
+        resultRepository.deleteAll(results);
         // Test with null result set.
-        studentParticipations.get(1).setResults(null);
+        // studentParticipations.get(1).setResults(null);
 
         // Test with empty result set.
         studentParticipations.get(2).setResults(Collections.emptySet());
 
         // Save results and participations.
-        //resultRepository.saveAll(studentParticipations.get(1).getResults());
+
+        // resultRepository.saveAll(results);
         resultRepository.saveAll(studentParticipations.get(2).getResults());
-        studentParticipationRepository.saveAll(studentParticipations);
+        // studentParticipationRepository.saveAll(studentParticipations);
 
         CourseScoresForExamBonusSourceDTO courseResult = courseScoreCalculationService.calculateCourseScoresForExamBonusSource(course.getId(), List.of(student.getId()));
         assertThat(courseResult.studentScores()).hasSize(1);

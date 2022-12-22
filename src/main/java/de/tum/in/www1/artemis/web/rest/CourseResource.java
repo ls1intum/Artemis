@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import static java.time.ZonedDateTime.now;
-import static java.util.stream.Collectors.toSet;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,8 +13,6 @@ import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
-import de.tum.in.www1.artemis.domain.participation.Participation;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +20,6 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -111,10 +107,11 @@ public class CourseResource {
     private final ParticipantScoreService participantScoreService;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-                          OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
-                          TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
-                          AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
-                          FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService, StudentParticipationRepository studentParticipationRepository, ParticipantScoreService participantScoreService) {
+            OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
+            TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
+            AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
+            FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService, CourseScoreCalculationService courseScoreCalculationService,
+            StudentParticipationRepository studentParticipationRepository, ParticipantScoreService participantScoreService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
@@ -166,9 +163,9 @@ public class CourseResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
         Set<String> existingGroupNames = Set.of(existingCourse.getStudentGroupName(), existingCourse.getTeachingAssistantGroupName(), existingCourse.getEditorGroupName(),
-            existingCourse.getInstructorGroupName());
+                existingCourse.getInstructorGroupName());
         Set<String> newGroupNames = Set.of(courseUpdate.getStudentGroupName(), courseUpdate.getTeachingAssistantGroupName(), courseUpdate.getEditorGroupName(),
-            courseUpdate.getInstructorGroupName());
+                courseUpdate.getInstructorGroupName());
         Set<String> changedGroupNames = new HashSet<>(newGroupNames);
         changedGroupNames.removeAll(existingGroupNames);
 
@@ -176,11 +173,13 @@ public class CourseResource {
             // if an admin changes a group, we need to check that the changed group exists
             try {
                 changedGroupNames.forEach(courseService::checkIfGroupsExists);
-            } catch (ArtemisAuthenticationException ex) {
+            }
+            catch (ArtemisAuthenticationException ex) {
                 // a specified group does not exist, notify the client
                 throw new BadRequestAlertException(ex.getMessage(), Course.ENTITY_NAME, "groupNotFound", true);
             }
-        } else {
+        }
+        else {
             // this means the user must be an instructor, who has NO Admin rights.
             // instructors are not allowed to change group names, because this would lead to security problems
             if (!changedGroupNames.isEmpty()) {
@@ -211,7 +210,8 @@ public class CourseResource {
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
             if (courseUpdate.isOnlineCourse()) {
                 onlineCourseConfigurationService.createOnlineCourseConfiguration(courseUpdate);
-            } else {
+            }
+            else {
                 courseUpdate.setOnlineCourseConfiguration(null);
             }
         }
@@ -227,9 +227,9 @@ public class CourseResource {
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
 
         optionalVcsUserManagementService
-            .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
+                .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         optionalCiUserManagementService
-            .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
+                .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         if (timeZoneChanged) {
             tutorialGroupsConfigurationService.onTimeZoneUpdate(result);
         }
@@ -246,7 +246,7 @@ public class CourseResource {
     @PutMapping("courses/{courseId}/onlineCourseConfiguration")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<OnlineCourseConfiguration> updateOnlineCourseConfiguration(@PathVariable Long courseId,
-                                                                                     @RequestBody OnlineCourseConfiguration onlineCourseConfiguration) {
+            @RequestBody OnlineCourseConfiguration onlineCourseConfiguration) {
         log.debug("REST request to update the online course configuration for Course : {}", courseId);
 
         Course course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(courseId);
@@ -258,7 +258,7 @@ public class CourseResource {
 
         if (!course.getOnlineCourseConfiguration().getId().equals(onlineCourseConfiguration.getId())) {
             throw new BadRequestAlertException("The onlineCourseConfigurationId does not match the id of the course's onlineCourseConfiguration",
-                OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
+                    OnlineCourseConfiguration.ENTITY_NAME, "idMismatch");
         }
 
         onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration);
@@ -287,25 +287,25 @@ public class CourseResource {
         log.debug("REST request to register {} for Course {}", user.getName(), course.getTitle());
         if (allowedCourseRegistrationUsernamePattern.isPresent() && !allowedCourseRegistrationUsernamePattern.get().matcher(user.getLogin()).matches()) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationNotAllowed",
-                "Registration with this username is not allowed. Cannot register user")).body(null);
+                    "Registration with this username is not allowed. Cannot register user")).body(null);
         }
         if (course.getStartDate() != null && course.getStartDate().isAfter(now())) {
             return ResponseEntity.badRequest()
-                .headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
-                .body(null);
+                    .headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "courseNotStarted", "The course has not yet started. Cannot register user"))
+                    .body(null);
         }
         if (course.getEndDate() != null && course.getEndDate().isBefore(now())) {
             return ResponseEntity.badRequest().headers(
                     HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "courseAlreadyFinished", "The course has already finished. Cannot register user"))
-                .body(null);
+                    .body(null);
         }
         if (!Boolean.TRUE.equals(course.isRegistrationEnabled())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationDisabled",
-                "The course does not allow registration. Cannot register user")).body(null);
+                    "The course does not allow registration. Cannot register user")).body(null);
         }
         if (course.getOrganizations() != null && !course.getOrganizations().isEmpty() && !courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course)) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, false, Course.ENTITY_NAME, "registrationNotAllowed",
-                "User is not member of any organization of this course. Cannot register user")).body(null);
+                    "User is not member of any organization of this course. Cannot register user")).body(null);
         }
         courseService.registerUserForCourse(user, course);
         return ResponseEntity.ok(user);
@@ -324,7 +324,7 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         List<Course> courses = courseRepository.findAll();
         Stream<Course> userCourses = courses.stream().filter(course -> user.getGroups().contains(course.getTeachingAssistantGroupName())
-            || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin(user));
+                || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin(user));
         if (onlyActive) {
             // only include courses that have NOT been finished
             userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
@@ -343,7 +343,8 @@ public class CourseResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
             return courseRepository.findAllWithQuizExercisesWithEagerExercises();
-        } else {
+        }
+        else {
             var userGroups = new ArrayList<>(user.getGroups());
             return courseRepository.getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(userGroups);
         }
@@ -400,7 +401,8 @@ public class CourseResource {
             // check if user is member of at least one of them
             if (course.getOrganizations() != null && !course.getOrganizations().isEmpty()) {
                 return courseRepository.checkIfUserIsMemberOfCourseOrganizations(user, course);
-            } else {
+            }
+            else {
                 return true;
             }
         }).filter(course -> !allRegisteredCourses.contains(course)).toList();
@@ -436,7 +438,8 @@ public class CourseResource {
     @PreAuthorize("hasRole('USER')")
     public List<CourseForDashboardDTO> getAllCoursesForDashboard() {
         long start = System.currentTimeMillis();
-        log.debug("REST request to get all Courses the user has access to with exercises, participations and results + the calculated scores the user achieved in each of those courses");
+        log.debug(
+                "REST request to get all Courses the user has access to with exercises, participations and results + the calculated scores the user achieved in each of those courses");
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         // get all courses with exercises for this user
@@ -524,7 +527,8 @@ public class CourseResource {
 
         if (authCheckService.isAtLeastInstructorInCourse(course, user)) {
             course = courseRepository.findByIdWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationElseThrow(courseId);
-        } else if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+        }
+        else if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(courseId);
         }
 
@@ -926,7 +930,8 @@ public class CourseResource {
             }
             courseService.addUserToGroup(userToAddToGroup.get(), group, role);
             return ResponseEntity.ok().body(null);
-        } else {
+        }
+        else {
             throw new AccessForbiddenException();
         }
     }

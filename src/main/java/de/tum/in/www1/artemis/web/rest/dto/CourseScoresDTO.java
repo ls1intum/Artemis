@@ -7,6 +7,5 @@ import org.springframework.cloud.cloudfoundry.com.fasterxml.jackson.annotation.J
  * This includes the percentage of points reached for a course in the course-card.component and the statistics shown in the course-statistics.component.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseScoresDTO(double maxPoints, double reachablePoints,
-                              StudentScoresDTO studentScores) {
+public record CourseScoresDTO(double maxPoints, double reachablePoints, StudentScoresDTO studentScores) {
 }

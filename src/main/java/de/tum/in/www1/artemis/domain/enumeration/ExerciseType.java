@@ -20,7 +20,4 @@ public enum ExerciseType {
         return this.toString().toLowerCase().replace('_', ' ');
     }
 
-
 }
-
-
