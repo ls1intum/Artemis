@@ -4,15 +4,9 @@ import java.time.ZonedDateTime;
 
 public class LectureUnitSplitDTO {
 
-    public String attachmentName;
-
-    public String description;
-
-    public byte[] file;
+    public String unitName;
 
     public ZonedDateTime releaseDate;
-
-    public String version;
 
     public String startPage;
 
@@ -21,54 +15,27 @@ public class LectureUnitSplitDTO {
     public LectureUnitSplitDTO() {
     }
 
-    public LectureUnitSplitDTO(String attachmentName, String description, byte[] file, ZonedDateTime releaseDate, String version, String startPage, String endPage) {
-        this.attachmentName = attachmentName;
-        this.description = description;
-        this.file = file;
+    public LectureUnitSplitDTO(String unitName, ZonedDateTime releaseDate, String startPage, String endPage) {
+        this.unitName = unitName;
         this.releaseDate = releaseDate;
-        this.version = version;
         this.startPage = startPage;
         this.endPage = endPage;
-    }
-
-    public String getStartPage() {
-        return startPage;
     }
 
     public void setStartPage(String startPage) {
         this.startPage = startPage;
     }
 
-    public String getEndPage() {
-        return endPage;
-    }
-
     public void setEndPage(String endPage) {
         this.endPage = endPage;
     }
 
-    public String getAttachmentName() {
-        return attachmentName;
+    public String getUnitName() {
+        return unitName;
     }
 
-    public void setAttachmentName(String attachmentName) {
-        this.attachmentName = attachmentName;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public byte[] getFile() {
-        return file;
-    }
-
-    public void setFile(byte[] file) {
-        this.file = file;
+    public void setUnitName(String unitName) {
+        this.unitName = unitName;
     }
 
     public ZonedDateTime getReleaseDate() {
@@ -79,11 +46,4 @@ public class LectureUnitSplitDTO {
         this.releaseDate = releaseDate;
     }
 
-    public String getVersion() {
-        return version;
-    }
-
-    public void setVersion(String version) {
-        this.version = version;
-    }
 }

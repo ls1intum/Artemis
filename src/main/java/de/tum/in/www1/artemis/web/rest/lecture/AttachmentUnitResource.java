@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
+import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -19,7 +23,9 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AttachmentUnitService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.UnitProcessingService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -41,9 +47,12 @@ public class AttachmentUnitResource {
 
     private final AttachmentUnitService attachmentUnitService;
 
-    public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService,
-            GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService) {
+    private final UnitProcessingService unitProcessingService;
+
+    public AttachmentUnitResource(UnitProcessingService unitProcessingService, AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository,
+            AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
+        this.unitProcessingService = unitProcessingService;
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.groupNotificationService = groupNotificationService;
@@ -143,5 +152,19 @@ public class AttachmentUnitResource {
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, file, keepFilename);
 
         return ResponseEntity.created(new URI("/api/attachment-units/" + savedAttachmentUnit.getId())).body(savedAttachmentUnit);
+    }
+
+    @PostMapping("lecture/{lectureId}/process-units")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<Optional<List<LectureUnitSplitDTO>>> getAttachmentUnitsData(@RequestParam(value = "file") MultipartFile file, @PathVariable String lectureId)
+            throws IOException {
+        log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
+
+        Optional<List<LectureUnitSplitDTO>> attachmentUnitsData = unitProcessingService.getSplitUnitData(file, lectureId);
+        if (attachmentUnitsData.isEmpty()) {
+            log.error("Failed to retrieve split PDF lecture units data for lecture with id {}", lectureId);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+        return ResponseEntity.ok().body(attachmentUnitsData);
     }
 }

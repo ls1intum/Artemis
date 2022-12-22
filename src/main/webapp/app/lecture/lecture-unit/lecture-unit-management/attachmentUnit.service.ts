@@ -39,7 +39,11 @@ export class AttachmentUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    splitFileIntoUnits(formData: FormData): any {
-        return this.httpClient.post(`${this.resourceURL}/files/lecture/6/process-units`, formData, { observe: 'response' });
+    getSplitUnitsData(lectureId: number, formData: FormData): any {
+        return this.httpClient.post(`${this.resourceURL}/lecture/${lectureId}/process-units`, formData, { observe: 'response' });
+    }
+
+    createUnits(lectureId: number, formData: FormData): any {
+        return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/attachment-units/`, formData, { observe: 'response' });
     }
 }

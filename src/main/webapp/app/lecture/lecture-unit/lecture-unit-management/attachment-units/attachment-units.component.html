@@ -9,7 +9,13 @@
             <thead>
                 <tr>
                     <th><span jhiTranslate="artemisApp.lecture.split.unitName">Unit Name</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.split.releaseDate">Release Date</span></th>
+                    <th>
+                        <span jhiTranslate="artemisApp.lecture.split.releaseDate">Release Date</span>
+                        <fa-stack ngbTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate : { timeZone: currentTimeZone } }}" class="icon-full-size">
+                            <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-lightgrey"></fa-icon>
+                            <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary"></fa-icon>
+                        </fa-stack>
+                    </th>
                     <th><span jhiTranslate="artemisApp.lecture.split.startPage">Start Page</span></th>
                     <th><span jhiTranslate="artemisApp.lecture.split.endPage">End Page</span></th>
                 </tr>
@@ -17,11 +23,50 @@
             <tbody class="markdown-preview" id="lecture-preview">
                 <tr *ngFor="let unit of units; let i = index" id="unit-row-{{ i }}">
                     <td>
-                        {{ unit.attachmentName }}
+                        <input
+                            required
+                            type="text"
+                            class="form-control"
+                            name="unitName"
+                            placeholder="Unit Name"
+                            autocomplete="off"
+                            [defaultValue]="unit.unitName"
+                            [(ngModel)]="units[i].unitName"
+                        />
                     </td>
-                    <td>{{ unit.releaseDate }}</td>
-                    <td>{{ unit.startPage }}</td>
-                    <td>{{ unit.endPage }}</td>
+                    <td>
+                        <jhi-date-time-picker
+                            [shouldDisplayTimeZoneWarning]="false"
+                            [(ngModel)]="units[i].releaseDate"
+                            (valueChange)="onDatesValuesChanged(unit)"
+                            name="releaseDate"
+                            id="release-date"
+                        ></jhi-date-time-picker>
+                    </td>
+                    <td>
+                        <input
+                            required
+                            type="number"
+                            class="form-control"
+                            name="startPage"
+                            placeholder="Start Page"
+                            autocomplete="off"
+                            [defaultValue]="unit.startPage"
+                            [(ngModel)]="units[i].startPage"
+                        />
+                    </td>
+                    <td>
+                        <input
+                            required
+                            type="number"
+                            class="form-control"
+                            name="endPage"
+                            placeholder="End Page"
+                            autocomplete="off"
+                            [defaultValue]="unit.endPage"
+                            [(ngModel)]="units[i].endPage"
+                        />
+                    </td>
                 </tr>
             </tbody>
         </table>

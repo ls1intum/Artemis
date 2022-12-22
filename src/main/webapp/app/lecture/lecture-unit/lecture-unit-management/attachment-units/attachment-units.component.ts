@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { faBan, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faClock, faGlobe, faSave } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -13,7 +13,7 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
 import { AlertService } from 'app/core/util/alert.service';
 
 type UnitResponseType = {
-    attachmentName: string;
+    unitName: string;
     description?: string;
     file: string;
     releaseDate?: dayjs.Dayjs;
@@ -39,12 +39,11 @@ export class AttachmentUnitsComponent implements OnInit {
 
     faSave = faSave;
     faBan = faBan;
+    faGlobe = faGlobe;
+    faClock = faClock;
 
     file: File;
     fileName: string;
-
-    // formData = new FormData();
-    // this.formData.append('file', file);
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -53,7 +52,6 @@ export class AttachmentUnitsComponent implements OnInit {
         private httpClient: HttpClient,
         private alertService: AlertService,
     ) {
-        console.log(this.router.getCurrentNavigation());
         this.file = this.router.getCurrentNavigation()!.extras.state!.file;
         this.fileName = this.router.getCurrentNavigation()!.extras.state!.fileName;
         const lectureRoute = this.activatedRoute.parent!.parent!;
@@ -66,18 +64,13 @@ export class AttachmentUnitsComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = true;
+        this.isProcessingMode = true;
+
         const formData: FormData = new FormData();
-        // @ts-ignore
         formData.append('file', this.file);
 
-        console.log('test11');
-        this.units = [];
-        this.isProcessingMode = true;
-        console.log('test22');
-
-        this.attachmentUnitService.splitFileIntoUnits(formData).subscribe({
+        this.attachmentUnitService.getSplitUnitsData(this.lectureId, formData).subscribe({
             next: (res: any) => {
-                console.log(res);
                 this.units = res.body;
                 if (this.units.length > 0) {
                     this.isLoading = false;
@@ -96,13 +89,11 @@ export class AttachmentUnitsComponent implements OnInit {
 
     createAttachmentUnits(): void {
         this.isLoading = true;
-        // const { description, name, releaseDate } = attachmentUnitFormData.formProperties;
-        // const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         this.units.forEach((unit) => {
             // === Setting attachment ===
             console.log(unit);
-            const { attachmentName: name, description, releaseDate, file: unitFile } = unit;
+            const { unitName: name, description, releaseDate, file: unitFile } = unit;
 
             const fileBlob = this.base64toBlob(unitFile);
             const newUnitFile = new File([fileBlob], name, { type: 'application/pdf' });
@@ -151,6 +142,11 @@ export class AttachmentUnitsComponent implements OnInit {
         this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
     }
 
+    onDatesValuesChanged(unit: UnitResponseType) {
+        // this.lecture.endDate = this.lecture.startDate;
+        console.log(unit.releaseDate, unit.unitName);
+    }
+
     private base64toBlob(dataURI: string) {
         const byteString = window.atob(dataURI);
         const arrayBuffer = new ArrayBuffer(byteString.length);
@@ -160,5 +156,9 @@ export class AttachmentUnitsComponent implements OnInit {
         }
         const blob = new Blob([int8Array], { type: 'image/png' });
         return blob;
+    }
+
+    get currentTimeZone(): string {
+        return Intl.DateTimeFormat().resolvedOptions().timeZone;
     }
 }
