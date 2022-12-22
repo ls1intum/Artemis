@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -374,14 +375,19 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testRemoveTutorFromCourse_userNotFoundInJira_successful() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), TEST_PREFIX + "tumuser", TEST_PREFIX + "tutor", TEST_PREFIX + "editor",
+                TEST_PREFIX + "instructor");
         course = courseRepo.save(course);
         database.addProgrammingExerciseToCourse(course, false);
         course = courseRepo.save(course);
 
         User tutor = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1").get();
         jiraRequestMockProvider.mockRemoveUserFromGroup(Set.of(course.getTeachingAssistantGroupName()), tutor.getLogin(), false, true);
+        bitbucketRequestMockProvider.mockUpdateUserDetails(tutor.getLogin(), tutor.getEmail(), tutor.getName());
+        bitbucketRequestMockProvider.mockRemoveUserFromGroup(tutor.getLogin(), course.getTeachingAssistantGroupName());
         request.delete("/api/courses/" + course.getId() + "/tutors/" + tutor.getLogin(), HttpStatus.OK);
+        tutor = userRepository.findOneWithGroupsByLogin(TEST_PREFIX + "tutor1").get();
+        assertThat(tutor.getGroups()).doesNotContain(course.getTeachingAssistantGroupName());
     }
 
     @Test

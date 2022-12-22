@@ -685,6 +685,7 @@ public class CourseTestService {
 
         // Perform the request that is being tested here
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        System.err.println("Found " + courses.size() + " courses");
 
         Course activeCourse = coursesCreated.get(0);
         Course inactiveCourse = coursesCreated.get(1);
@@ -727,10 +728,12 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesWithoutActiveExercises() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
+                userPrefix + "instructor");
         course = courseRepo.save(course);
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-        Course finalCourse = course;
+        System.err.println("Found " + courses.size() + " courses");
+        final var finalCourse = course;
         Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
         assertThat(courseInList).isNotNull();
         assertThat(courseInList.getExercises()).as("Course doesn't have any exercises").isEmpty();

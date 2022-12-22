@@ -543,13 +543,14 @@ public class DatabaseUtilService {
             authorityRepository.saveAll(adminAuthorities);
         }
 
-        var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(USER_PASSWORD), new String[] { "tumuser", "testgroup" }, studentAuthorities,
-                numberOfStudents);
-        var tutors = generateActivatedUsers(prefix + "tutor", passwordService.hashPassword(USER_PASSWORD), new String[] { "tutor", "testgroup" }, tutorAuthorities, numberOfTutors);
-        var editors = generateActivatedUsers(prefix + "editor", passwordService.hashPassword(USER_PASSWORD), new String[] { "editor", "testgroup" }, editorAuthorities,
-                numberOfEditors);
-        var instructors = generateActivatedUsers(prefix + "instructor", passwordService.hashPassword(USER_PASSWORD), new String[] { "instructor", "testgroup" },
-                instructorAuthorities, numberOfInstructors);
+        var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(USER_PASSWORD), new String[] { "tumuser", "testgroup", prefix + "tumuser" },
+                studentAuthorities, numberOfStudents);
+        var tutors = generateActivatedUsers(prefix + "tutor", passwordService.hashPassword(USER_PASSWORD), new String[] { "tutor", "testgroup", prefix + "tutor" },
+                tutorAuthorities, numberOfTutors);
+        var editors = generateActivatedUsers(prefix + "editor", passwordService.hashPassword(USER_PASSWORD), new String[] { "editor", "testgroup", prefix + "editor" },
+                editorAuthorities, numberOfEditors);
+        var instructors = generateActivatedUsers(prefix + "instructor", passwordService.hashPassword(USER_PASSWORD),
+                new String[] { "instructor", "testgroup", prefix + "instructor" }, instructorAuthorities, numberOfInstructors);
 
         List<User> usersToAdd = new ArrayList<>();
         usersToAdd.addAll(students);
@@ -893,8 +894,10 @@ public class DatabaseUtilService {
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
 
-        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        Course course2 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), prefix + "tumuser", prefix + "tutor", prefix + "editor",
+                prefix + "instructor");
+        Course course2 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), pastTimestamp, new HashSet<>(), prefix + "tumuser", prefix + "tutor",
+                prefix + "editor", prefix + "instructor");
 
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course1);
         modelingExercise.setGradingInstructions("some grading instructions");
