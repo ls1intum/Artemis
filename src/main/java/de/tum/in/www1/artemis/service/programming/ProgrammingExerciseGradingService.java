@@ -740,7 +740,8 @@ public class ProgrammingExerciseGradingService {
 
         // TODO: setting feedback credits shouldn't happen here.
         result.getFeedbacks().stream()//
-                .filter(feedback -> Objects.isNull(feedback.getCredits())).forEach(feedback -> feedback.setCredits(0D));
+                .filter(feedback -> Objects.isNull(feedback.getCredits()))//
+                .forEach(feedback -> feedback.setCredits(0D));
     }
 
     /**
@@ -783,22 +784,17 @@ public class ProgrammingExerciseGradingService {
     private double calculateSuccessfulTestPoints(final ProgrammingExercise programmingExercise, final Result result, final Set<ProgrammingExerciseTestCase> allTests) {
 
         Set<ProgrammingExerciseTestCase> successfulTestCases = allTests.stream().filter(testCase -> testCase.isSuccessful(result)).collect(Collectors.toSet());
-
         double weightSum = calculateWeightSum(allTests);
-
-        double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> {
-            double credits = calculatePointsForTestCase(result, programmingExercise, test, allTests.size(), weightSum);
-            // TODO: settings feedback credits shouldn't happen here.
-            setCreditsForTestCaseFeedback(result, test, credits);
-            return credits;
-        }).sum();
+        double successfulTestPoints = successfulTestCases.stream()//
+                .mapToDouble(test -> calculatePointsForTestCase(result, programmingExercise, test, allTests.size(), weightSum)).sum();
 
         return capPointsAtMaximum(programmingExercise, successfulTestPoints);
     }
 
     private double calculateWeightSum(final Set<ProgrammingExerciseTestCase> allTests) {
         return allTests.stream()//
-                .filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
+                .filter(testCase -> !testCase.isInvisible())//
+                .mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
     }
 
     /**
