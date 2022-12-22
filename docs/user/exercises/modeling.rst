@@ -4,6 +4,8 @@ Modeling exercise
     :local:
     :depth: 3
 
+.. note::
+   The standalone version of the modeling editor can be accessed via https://apollon.ase.in.tum.de/.
 
 Overview
 --------
