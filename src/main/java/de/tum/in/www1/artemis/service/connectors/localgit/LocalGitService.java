@@ -178,11 +178,7 @@ public class LocalGitService extends AbstractVersionControlService {
 
     @Override
     public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String courseShortName, String repositorySlug) {
-        // Empty implementation. Never called. The class LocalGitRepositoryUrl is detached from the VcsRepositoryUrl that is used as
-        // the parent for BitbucketRepositoryUrl and GitLabRepositoryUrl.
-        // This choice was made so the LocalGitRepository can be instantiated without depending on the environment variables
-        // local-git-server-path (folder in which the repositories are stored locally) and version-control.url.
-        return null;
+        return new LocalGitRepositoryUrl(localGitServerUrl, projectKey, courseShortName, repositorySlug);
     }
 
     /**
@@ -389,8 +385,10 @@ public class LocalGitService extends AbstractVersionControlService {
      */
     @Override
     public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws LocalGitException {
+        // TODO: Refactor VcsRepositoryUrl
         try {
-            Map<String, Ref> remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localGitPath + repositoryUrl.folderNameForRepositoryUrl()).callAsMap();
+            Map<String, Ref> remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localGitPath + File.separator + repositoryUrl.folderNameForRepositoryUrl() + ".git")
+                    .callAsMap();
             if (remoteRepositoryRefs.containsKey("HEAD")) {
                 return remoteRepositoryRefs.get("HEAD").getTarget().getName();
             }
@@ -521,10 +519,10 @@ public class LocalGitService extends AbstractVersionControlService {
      */
     private void createRepository(String projectKey, String courseShortName, String repositorySlug) throws LocalGitException {
 
-        LocalGitRepositoryUrl localGitUrl = new LocalGitRepositoryUrl(projectKey, courseShortName, repositorySlug);
+        LocalGitRepositoryUrl localGitUrl = new LocalGitRepositoryUrl(localGitServerUrl, projectKey, courseShortName, repositorySlug);
         // TODO: Save Url in db.
 
-        String localFilePath = getLocalFilePathFromLocalGitUrl(localGitUrl);
+        String localFilePath = localGitUrl.getLocalPath(localGitPath);
 
         log.debug("Creating local git repo {} in folder {}", repositorySlug, localFilePath);
 
@@ -728,15 +726,4 @@ public class LocalGitService extends AbstractVersionControlService {
     public void createRepository(String projectKey, String courseShortName, String repositorySlug, String parentProjectKey) {
         createRepository(projectKey, courseShortName, repositorySlug);
     }
-
-    public String buildRepositoryUrl(LocalGitRepositoryUrl localGitRepositoryUrl) {
-        return localGitServerUrl + "/git/" + localGitRepositoryUrl.getCourseShortName() + "/" + localGitRepositoryUrl.getProjectKey() + "/"
-                + localGitRepositoryUrl.getRepositorySlug() + ".git";
-    }
-
-    private String getLocalFilePathFromLocalGitUrl(LocalGitRepositoryUrl localGitRepositoryUrl) {
-        return localGitPath + File.separator + localGitRepositoryUrl.getCourseShortName() + File.separator + localGitRepositoryUrl.getProjectKey() + File.separator
-                + localGitRepositoryUrl.getRepositorySlug() + ".git";
-    }
-
 }

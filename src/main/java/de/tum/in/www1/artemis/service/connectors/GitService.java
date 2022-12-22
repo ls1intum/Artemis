@@ -263,7 +263,7 @@ public class GitService {
         // If the "localgit" profile is active the repository is cloned from the folder defined in artemis.local-git-server-path.
         if (Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
             String vcsRepositoryFolderPath = vcsRepositoryUrl.folderNameForRepositoryUrl();
-            return new URI(localGitPath + vcsRepositoryFolderPath);
+            return new URI(localGitPath + vcsRepositoryFolderPath + ".git");
         }
         return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURI();
     }

@@ -5,6 +5,8 @@ import java.net.URISyntaxException;
 import java.util.Objects;
 
 // TODO: we might want to rename this class to VcsRepositoryUri
+// TODO: Refactor, merge with UrlService and make independent from environment variables.
+// Maybe also look at LocalRepository
 public class VcsRepositoryUrl {
 
     protected String username;
@@ -72,7 +74,6 @@ public class VcsRepositoryUrl {
      * ssh://git@bitbucket.ase.in.tum.de:7999/eist20l06e03/eist20l06e03-ab123cd.git --> eist20l06e03/eist20l06e03-ab123cd
      * file:C:/Users/Admin/AppData/Local/Temp/studentOriginRepo1644180397872264950 --> studentOriginRepo1644180397872264950
      * file:/var/folders/vc/sk85td_s54v7w9tjq07b0_q80000gn/T/studentTeamOriginRepo420037178325056205/ -->  studentTeamOriginRepo420037178325056205
-     * https://localhost:8080/git/EXAMPLECOURSE1/TESTEX1/examplecourse1testex1-exercise --> EXAMPLECOURSE1/TESTEX1/examplecourse1testex1-exercise
      *
      * @return the folderName as a string.
      */

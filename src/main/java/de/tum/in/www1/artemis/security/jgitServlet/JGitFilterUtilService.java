@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.security.jgitServlet;
 
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 import java.util.List;
@@ -11,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.AuthenticationException;
@@ -35,6 +35,9 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 public class JGitFilterUtilService {
 
     private final Logger log = LoggerFactory.getLogger(JGitFilterUtilService.class);
+
+    @Value("${artemis.version-control.url}")
+    private URL localGitServerUrl;
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
@@ -126,37 +129,23 @@ public class JGitFilterUtilService {
         return user;
     }
 
-    private LocalGitRepositoryUrl validateRepositoryUrl(String url) throws LocalGitBadRequestException {
+    private LocalGitRepositoryUrl validateRepositoryUrl(String urlPath) throws LocalGitBadRequestException {
 
-        URI uri;
+        String[] pathSplit = urlPath.split("/");
 
-        try {
-            uri = new URI(url);
-        }
-        catch (URISyntaxException e) {
-            throw new LocalGitBadRequestException("Badly formed URI.", e);
-        }
-
-        if (!uri.getScheme().equals("http")) {
-            throw new LocalGitBadRequestException("Bad scheme.");
-        }
-
-        String path = uri.getPath();
-
-        String[] pathSplit = path.split("/");
-
-        // Should have 5 elements, start with '/git', and end with '.git'.
-        if (pathSplit.length != 5 || !pathSplit[1].equals("git") || !(pathSplit[4].endsWith(".git"))) {
+        // Should start with '/git', and end with '.git'.
+        if (!pathSplit[1].equals("git") || !(pathSplit[4].endsWith(".git"))) {
             throw new LocalGitBadRequestException("Invalid URL.");
         }
 
         String repositorySlug = pathSplit[4].replace(".git", "");
 
-        LocalGitRepositoryUrl localGitRepo = new LocalGitRepositoryUrl(pathSplit[3], pathSplit[2], repositorySlug);
+        // TODO: Refactor VcsRepositoryUrl and LocalGitRepositoryUrl properly so I do not have to hand an environment variable to the constructor.
+        LocalGitRepositoryUrl localGitRepo = new LocalGitRepositoryUrl(localGitServerUrl, pathSplit[3], pathSplit[2], repositorySlug);
 
         // Project key should contain the course short name.
         if (!localGitRepo.getProjectKey().toLowerCase().contains(localGitRepo.getCourseShortName().toLowerCase())) {
-            throw new LocalGitBadRequestException("Badly formed Local Git URI: " + path + " Expected the repository name to start with the lower case course short name.");
+            throw new LocalGitBadRequestException("Badly formed Local Git URI: " + urlPath + " Expected the repository name to start with the lower case course short name.");
         }
 
         return localGitRepo;

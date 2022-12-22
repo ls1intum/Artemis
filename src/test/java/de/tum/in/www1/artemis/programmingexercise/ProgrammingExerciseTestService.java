@@ -258,38 +258,40 @@ public class ProgrammingExerciseTestService {
     public void setupRepositoryMocks(ProgrammingExercise exercise, LocalRepository exerciseRepository, LocalRepository solutionRepository, LocalRepository testRepository,
             LocalRepository auxRepository) throws Exception {
         final var projectKey = exercise.getProjectKey();
+        final var courseShortName = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         final var exerciseRepoName = exercise.generateRepositoryName(RepositoryType.TEMPLATE);
         final var solutionRepoName = exercise.generateRepositoryName(RepositoryType.SOLUTION);
         final var testRepoName = exercise.generateRepositoryName(RepositoryType.TESTS);
         final var auxRepoName = exercise.generateRepositoryName("auxrepo");
-        setupRepositoryMocks(projectKey, exerciseRepository, exerciseRepoName, solutionRepository, solutionRepoName, testRepository, testRepoName, auxRepository, auxRepoName);
+        setupRepositoryMocks(projectKey, courseShortName, exerciseRepository, exerciseRepoName, solutionRepository, solutionRepoName, testRepository, testRepoName, auxRepository,
+                auxRepoName);
     }
 
     /**
      * Mocks the access and interaction with repository mocks on the local file system.
      *
-     * @param projectKey the unique short identifier of the exercise in the CI system
+     * @param projectKey         the unique short identifier of the exercise in the CI system
      * @param exerciseRepository represents exercise template code repository
-     * @param exerciseRepoName the name of the exercise repository
+     * @param exerciseRepoName   the name of the exercise repository
      * @param solutionRepository represents exercise solution code repository
-     * @param solutionRepoName the name of the solution repository
-     * @param testRepository represents exercise test code repository
-     * @param testRepoName the name of the test repository
-     * @param auxRepository represents an arbitrary template code repository
-     * @param auxRepoName the name of the auxiliary repository
+     * @param solutionRepoName   the name of the solution repository
+     * @param testRepository     represents exercise test code repository
+     * @param testRepoName       the name of the test repository
+     * @param auxRepository      represents an arbitrary template code repository
+     * @param auxRepoName        the name of the auxiliary repository
      * @throws Exception in case any repository url is malformed or the GitService fails
      */
-    public void setupRepositoryMocks(String projectKey, LocalRepository exerciseRepository, String exerciseRepoName, LocalRepository solutionRepository, String solutionRepoName,
-            LocalRepository testRepository, String testRepoName, LocalRepository auxRepository, String auxRepoName) throws Exception {
+    public void setupRepositoryMocks(String projectKey, String courseShortName, LocalRepository exerciseRepository, String exerciseRepoName, LocalRepository solutionRepository,
+            String solutionRepoName, LocalRepository testRepository, String testRepoName, LocalRepository auxRepository, String auxRepoName) throws Exception {
         var exerciseRepoTestUrl = new MockFileRepositoryUrl(exerciseRepository.originRepoFile);
         var testRepoTestUrl = new MockFileRepositoryUrl(testRepository.originRepoFile);
         var solutionRepoTestUrl = new MockFileRepositoryUrl(solutionRepository.originRepoFile);
         var auxRepoTestUrl = new MockFileRepositoryUrl(auxRepository.originRepoFile);
 
-        doReturn(exerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, exerciseRepoName);
-        doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, testRepoName);
-        doReturn(solutionRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, solutionRepoName);
-        doReturn(auxRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, auxRepoName);
+        doReturn(exerciseRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, courseShortName, exerciseRepoName);
+        doReturn(testRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, courseShortName, testRepoName);
+        doReturn(solutionRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, courseShortName, solutionRepoName);
+        doReturn(auxRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, courseShortName, auxRepoName);
 
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(exerciseRepository.localRepoFile.toPath(), null)).when(gitService)
                 .getOrCheckoutRepository(exerciseRepoTestUrl, true);
@@ -326,9 +328,10 @@ public class ProgrammingExerciseTestService {
      */
     public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo) throws Exception {
         final var projectKey = exercise.getProjectKey();
+        final var courseShortname = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String participantRepoName = projectKey.toLowerCase() + "-" + participantName;
         var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentRepo);
-        doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, participantRepoName);
+        doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, courseShortname, participantRepoName);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,
                 true);
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
@@ -448,7 +451,8 @@ public class ProgrammingExerciseTestService {
 
     private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = database.addAuxiliaryRepositoryToExercise(sourceExercise);
-        var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), new MockFileRepositoryUrl(sourceAuxRepo.originRepoFile).toString());
+        var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(),
+                new MockFileRepositoryUrl(sourceAuxRepo.originRepoFile).toString());
         repository.setRepositoryUrl(url.toString());
         auxiliaryRepositoryRepository.save(repository);
     }
@@ -489,8 +493,8 @@ public class ProgrammingExerciseTestService {
         final var solutionRepoName = urlService.getRepositorySlugFromRepositoryUrlString(sourceExercise.getSolutionParticipation().getRepositoryUrl()).toLowerCase();
         final var testRepoName = urlService.getRepositorySlugFromRepositoryUrlString(sourceExercise.getTestRepositoryUrl()).toLowerCase();
         final var auxRepoName = sourceExercise.generateRepositoryName("auxrepo");
-        setupRepositoryMocks(sourceExercise.getProjectKey(), sourceExerciseRepo, exerciseRepoName, sourceSolutionRepo, solutionRepoName, sourceTestRepo, testRepoName,
-                sourceAuxRepo, auxRepoName);
+        setupRepositoryMocks(sourceExercise.getProjectKey(), sourceExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), sourceExerciseRepo, exerciseRepoName,
+                sourceSolutionRepo, solutionRepoName, sourceTestRepo, testRepoName, sourceAuxRepo, auxRepoName);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         // Create request parameters
@@ -1309,8 +1313,8 @@ public class ProgrammingExerciseTestService {
      * without pushing it.
      *
      * @param localRepository the repository
-     * @param filename the file to create
-     * @throws IOException when the file cannot be created
+     * @param filename        the file to create
+     * @throws IOException     when the file cannot be created
      * @throws GitAPIException when git can't add or commit the file
      */
     private void createAndCommitDummyFileInLocalRepository(LocalRepository localRepository, String filename) throws IOException, GitAPIException {

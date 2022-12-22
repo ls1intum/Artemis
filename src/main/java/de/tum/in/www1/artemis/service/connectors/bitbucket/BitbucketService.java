@@ -879,7 +879,7 @@ public class BitbucketService extends AbstractVersionControlService {
                 this.uri = new URI(urlString);
             }
             catch (URISyntaxException e) {
-                throw new BitbucketException("Could not Bitbucket Repository URL", e);
+                throw new BitbucketException("Could not create Bitbucket Repository URL", e);
             }
         }
 

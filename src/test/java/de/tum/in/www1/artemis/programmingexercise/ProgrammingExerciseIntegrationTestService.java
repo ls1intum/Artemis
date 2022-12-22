@@ -194,7 +194,7 @@ class ProgrammingExerciseIntegrationTestService {
 
         // we use the temp repository as remote origin for all repositories that are created during the
         // TODO: distinguish between template, test and solution
-        doReturn(new GitUtilService.MockFileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString());
+        doReturn(new GitUtilService.MockFileRepositoryUrl(originRepoFile)).when(versionControlService).getCloneRepositoryUrl(anyString(), anyString(), anyString());
     }
 
     void tearDown() throws IOException {

@@ -35,6 +35,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     repositoryPassword: string;
     versionControlUrl: string;
     versionControlAccessTokenRequired?: boolean;
+    localGitEnabled: boolean;
     user: User;
     cloneHeadline: string;
     wasCopied = false;
@@ -68,6 +69,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
                 this.versionControlUrl = info.versionControlUrl;
             }
             this.versionControlAccessTokenRequired = info.versionControlAccessToken;
+            this.localGitEnabled = info.activeProfiles.includes('localgit');
         });
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
@@ -94,6 +96,10 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     }
 
     getHttpOrSshRepositoryUrl(insertPlaceholder = true): string {
+        if (this.localGitEnabled) {
+            // For local git repositories, the user name is requested when the user runs the command from their local git client.
+            return this.getRepositoryUrl();
+        }
         if (this.useSsh) {
             return this.getSshCloneUrl(this.getRepositoryUrl()) || this.getRepositoryUrl();
         }

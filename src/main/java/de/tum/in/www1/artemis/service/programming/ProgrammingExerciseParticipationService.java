@@ -179,7 +179,8 @@ public class ProgrammingExerciseParticipationService {
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
         newExercise.setSolutionParticipation(solutionParticipation);
         solutionParticipation.setBuildPlanId(newExercise.generateBuildPlanId(BuildPlanType.SOLUTION));
-        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), solutionRepoName).toString());
+        solutionParticipation.setRepositoryUrl(versionControlService.get()
+                .getCloneRepositoryUrl(newExercise.getProjectKey(), newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), solutionRepoName).toString());
         solutionParticipation.setProgrammingExercise(newExercise);
         solutionParticipationRepository.save(solutionParticipation);
     }
@@ -195,7 +196,8 @@ public class ProgrammingExerciseParticipationService {
         final String exerciseRepoName = newExercise.generateRepositoryName(RepositoryType.TEMPLATE);
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();
         templateParticipation.setBuildPlanId(newExercise.generateBuildPlanId(BuildPlanType.TEMPLATE));
-        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), exerciseRepoName).toString());
+        templateParticipation.setRepositoryUrl(versionControlService.get()
+                .getCloneRepositoryUrl(newExercise.getProjectKey(), newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), exerciseRepoName).toString());
         templateParticipation.setProgrammingExercise(newExercise);
         newExercise.setTemplateParticipation(templateParticipation);
         templateParticipationRepository.save(templateParticipation);
@@ -205,7 +207,7 @@ public class ProgrammingExerciseParticipationService {
      * Lock the repository associated with a programming participation
      *
      * @param programmingExercise the programming exercise
-     * @param participation the programming exercise student participation whose repository should be locked
+     * @param participation       the programming exercise student participation whose repository should be locked
      * @throws VersionControlException if locking was not successful, e.g. if the repository was already locked
      */
     public void lockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
@@ -221,7 +223,7 @@ public class ProgrammingExerciseParticipationService {
      * Unlock the repository associated with a programming participation
      *
      * @param programmingExercise the programming exercise
-     * @param participation the programming exercise student participation whose repository should be unlocked
+     * @param participation       the programming exercise student participation whose repository should be unlocked
      * @throws VersionControlException if unlocking was not successful, e.g. if the repository was already unlocked
      */
     public void unlockStudentRepository(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
@@ -238,7 +240,7 @@ public class ProgrammingExerciseParticipationService {
      * Stashes all changes, which were not submitted/committed before the due date, of a programming participation
      *
      * @param programmingExercise exercise with information about the due date
-     * @param participation student participation whose not submitted changes will be stashed
+     * @param participation       student participation whose not submitted changes will be stashed
      */
     public void stashChangesInStudentRepositoryAfterDueDateHasPassed(ProgrammingExercise programmingExercise, ProgrammingExerciseStudentParticipation participation) {
         if (participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
