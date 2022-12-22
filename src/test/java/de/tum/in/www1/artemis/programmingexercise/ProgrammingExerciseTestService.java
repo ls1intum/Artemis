@@ -111,9 +111,6 @@ public class ProgrammingExerciseTestService {
     private ParticipationService participationService;
 
     @Autowired
-    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
-
-    @Autowired
     private ParticipationRepository participationRepository;
 
     @Autowired
@@ -195,6 +192,10 @@ public class ProgrammingExerciseTestService {
 
     public LocalRepository studentTeamRepo;
 
+    // Injected in the constructor
+    private ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    // Injected in the constructor
     private VersionControlService versionControlService;
 
     private MockDelegate mockDelegate;
@@ -206,7 +207,8 @@ public class ProgrammingExerciseTestService {
         database.addUsers(userPrefix, numberOfStudents + additionalStudents, additionalTutors + 1, additionalEditors + 1, additionalInstructors + 1);
     }
 
-    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService) throws Exception {
+    public void setup(MockDelegate mockDelegate, VersionControlService versionControlService, ContinuousIntegrationService continuousIntegrationService,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository) throws Exception {
         mockDelegate.resetMockProvider();
         exerciseRepo = new LocalRepository(defaultBranch);
         testRepo = new LocalRepository(defaultBranch);
@@ -220,6 +222,7 @@ public class ProgrammingExerciseTestService {
         studentTeamRepo = new LocalRepository(defaultBranch);
         this.mockDelegate = mockDelegate;
         this.versionControlService = versionControlService;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
 
         course = database.addEmptyCourse();
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
@@ -1577,6 +1580,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void automaticCleanupBuildPlans() throws Exception {
+
         exercise = programmingExerciseRepository.save(exercise);
         examExercise = programmingExerciseRepository.save(examExercise);
 
@@ -1620,10 +1624,29 @@ public class ProgrammingExerciseTestService {
 
         programmingExerciseStudentParticipationRepository.saveAll(Set.of(participation3a, participation3b, participation5b, participation6b));
 
+        // prepare to be used in the mocks
+        participation1a = programmingExerciseStudentParticipationRepository.findWithResultsById(participation1a.getId());
+        participation1b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation1b.getId());
+        participation2a = programmingExerciseStudentParticipationRepository.findWithResultsById(participation2a.getId());
+        participation2b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation2b.getId());
+        participation3a = programmingExerciseStudentParticipationRepository.findWithResultsById(participation3a.getId());
+        participation3b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation3b.getId());
+        participation4b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation4b.getId());
+        participation5b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation5b.getId());
+        participation6b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation6b.getId());
+        participation7a = programmingExerciseStudentParticipationRepository.findWithResultsById(participation7a.getId());
+        participation7b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation7b.getId());
+        participation8b = programmingExerciseStudentParticipationRepository.findWithResultsById(participation8b.getId());
+
+        // only return the relevant participations (cleanup service would otherwise return too much
+        when(programmingExerciseStudentParticipationRepository.findAllWithBuildPlanIdWithResults()).thenReturn(Arrays.asList(participation1a, participation1b, participation2a,
+                participation2b, participation3a, participation3b, participation4b, participation5b, participation6b, participation7a, participation7b, participation8b));
+
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation1a.getParticipantIdentifier().toUpperCase(), false);
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation2a.getParticipantIdentifier().toUpperCase(), false);
         mockDelegate.mockDeleteBuildPlan(exercise.getProjectKey(), exercise.getProjectKey() + "-" + participation3a.getParticipantIdentifier().toUpperCase(), false);
         mockDelegate.mockDeleteBuildPlan(exercise3.getProjectKey(), exercise3.getProjectKey() + "-" + participation7a.getParticipantIdentifier().toUpperCase(), false);
+
         automaticProgrammingExerciseCleanupService.cleanup(); // this call won't do it, because of the missing profile, we execute it anyway to cover at least some code
         automaticProgrammingExerciseCleanupService.cleanupBuildPlansOnContinuousIntegrationServer();
 

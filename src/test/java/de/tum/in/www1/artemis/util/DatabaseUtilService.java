@@ -2551,14 +2551,19 @@ public class DatabaseUtilService {
         programmingExercise.setBranch(DEFAULT_BRANCH);
     }
 
+    public Course addEmptyCourse(String studentGroupName, String taGroupName, String editorGroupName, String instructorGroupName) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), studentGroupName, taGroupName, editorGroupName,
+                instructorGroupName);
+        courseRepo.save(course);
+        assertThat(courseRepo.findById(course.getId())).as("empty course is initialized").isPresent();
+        return course;
+    }
+
     /**
      * @return An empty course
      */
     public Course addEmptyCourse() {
-        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        courseRepo.save(course);
-        assertThat(courseRepo.findById(course.getId())).as("empty course is initialized").isPresent();
-        return course;
+        return addEmptyCourse("tumuser", "tutor", "editor", "instructor");
     }
 
     public void addTutorialCourse() {

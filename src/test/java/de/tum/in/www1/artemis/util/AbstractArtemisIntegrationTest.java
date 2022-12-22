@@ -17,6 +17,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.Lti10Service;
@@ -108,6 +109,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @SpyBean
     protected TextBlockService textBlockService;
 
+    @SpyBean
+    protected ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
     @Autowired
     protected QuizScheduleService quizScheduleService;
 
@@ -140,7 +144,8 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     public void resetSpyBeans() {
         Mockito.reset(lti10Service, gitService, groupNotificationService, tutorialGroupNotificationService, singleUserNotificationService, websocketMessagingService,
                 messagingTemplate, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
-                urlService, scheduleService, participantScoreSchedulerService, javaMailSender, programmingTriggerService, zipFileService);
+                urlService, scheduleService, participantScoreSchedulerService, javaMailSender, programmingTriggerService, zipFileService,
+                programmingExerciseStudentParticipationRepository);
     }
 
     @Override

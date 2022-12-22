@@ -175,7 +175,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.createAndSaveUser(TEST_PREFIX + "student42");
 
         // TODO: all parts using programmingExerciseTestService should also be provided for Gitlab+Jenkins
-        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);
+        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService, programmingExerciseStudentParticipationRepository);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         bambooRequestMockProvider.enableMockingOfRequests(true);
     }

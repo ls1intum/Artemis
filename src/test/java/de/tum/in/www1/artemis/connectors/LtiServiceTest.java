@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletResponse;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -80,6 +81,14 @@ class LtiServiceTest {
         ltiUserId = new LtiUserId();
         ltiUserId.setLtiUserId("ltiUserId");
         ltiUserId.setUser(user);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
+        reset(userCreationService, userRepository, artemisAuthenticationProvider, jwtCookieService, ltiUserIdRepository);
     }
 
     @Test
