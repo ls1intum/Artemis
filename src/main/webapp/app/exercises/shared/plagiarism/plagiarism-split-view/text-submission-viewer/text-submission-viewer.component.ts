@@ -175,7 +175,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 this.repositoryService.getFile(file, domain).subscribe({
                     next: ({ fileContent }) => {
                         this.loading = false;
-                        this.fileContent = this.insertMatchTokens(fileContent);
+                        this.fileContent = this.insertMatchTokens(this.sanitize(fileContent));
                     },
                     error: () => {
                         this.loading = false;
@@ -242,5 +242,16 @@ export class TextSubmissionViewerComponent implements OnChanges {
         });
 
         return rows.join('\n');
+    }
+
+    /**
+     * Replace characters in text so that the text can be displayed in html
+     *
+     * @param text Text containing characters to be replaced
+     * @return Text which characters are replaced
+     * @private
+     */
+    private sanitize(text: string): string {
+        return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 }
