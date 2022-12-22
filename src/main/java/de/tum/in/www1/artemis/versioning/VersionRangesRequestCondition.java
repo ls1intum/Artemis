@@ -23,7 +23,7 @@ import jakarta.validation.constraints.NotNull;
 public class VersionRangesRequestCondition implements RequestCondition<VersionRangesRequestCondition> {
 
     // Expect optional leading slash, "api/", optional numerical version with a "v" prefix and some path afterwards
-    private static final Pattern PATH_PATTERN = Pattern.compile("^/?api(/v(\\d+))?/.+$");
+    private static final Pattern PATH_PATTERN = Pattern.compile("^/?api(?:/v(\\d+))?/.+$");
 
     private final Logger log = LoggerFactory.getLogger(VersionRangesRequestCondition.class);
 
@@ -287,14 +287,14 @@ public class VersionRangesRequestCondition implements RequestCondition<VersionRa
         if (!matcher.matches()) {
             return false;
         }
-        if (matcher.groupCount() == 2) {
-            if (matcher.group(2) == null) {
+        if (matcher.groupCount() == 1) {
+            if (matcher.group(1) == null) {
                 // No version found, assume the latest version
                 int latestVersion = apiVersions.get(apiVersions.size() - 1);
                 return checkVersion(range, latestVersion);
             }
             else {
-                int requestedVersion = Integer.parseInt(matcher.group(2));
+                int requestedVersion = Integer.parseInt(matcher.group(1));
                 return checkVersion(range, requestedVersion);
             }
         }
