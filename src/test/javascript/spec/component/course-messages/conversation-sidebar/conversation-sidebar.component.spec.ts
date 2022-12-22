@@ -3,7 +3,7 @@ import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -18,10 +18,10 @@ import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-loc
 import { ConversationService } from 'app/shared/metis/conversation.service';
 import { MockConversationService } from '../../../helpers/mocks/service/mock-conversation.service';
 import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
-
 import { conversationBetweenUser1User2, conversationsOfUser1, metisCourse, metisUser2, metisUser3 } from '../../../helpers/sample/metis-sample-data';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { MessagingService } from 'app/shared/metis/messaging.service';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ConversationSidebarComponent', () => {
     let component: ConversationSidebarComponent;
@@ -40,7 +40,7 @@ describe('ConversationSidebarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, NgxDatatableModule],
+            imports: [HttpClientTestingModule, NgxDatatableModule, MockModule(NgbTooltipModule)],
             declarations: [ConversationSidebarComponent, MockComponent(FaIconComponent), MockComponent(DataTableComponent), MockPipe(ArtemisTranslatePipe)],
             providers: [
                 FormBuilder,

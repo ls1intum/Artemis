@@ -4,6 +4,11 @@ import 'app/shared/util/map.extension';
 import 'app/shared/util/string.extension';
 import 'app/core/config/dayjs';
 import 'jest-extended';
+import failOnConsole from 'jest-fail-on-console';
+
+failOnConsole({
+    shouldFailOnWarn: false,
+});
 
 const noop = () => {};
 

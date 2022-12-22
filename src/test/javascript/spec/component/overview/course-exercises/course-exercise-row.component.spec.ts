@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTestModule } from '../../../test.module';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
@@ -63,6 +64,7 @@ describe('CourseExerciseRowComponent', () => {
                 MockComponent(DifficultyBadgeComponent),
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockPipe(ArtemisTimeAgoPipe),
+                MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(OrionFilterDirective),
                 CourseExerciseRowComponent,
