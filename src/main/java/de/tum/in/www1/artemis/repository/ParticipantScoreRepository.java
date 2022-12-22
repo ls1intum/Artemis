@@ -116,7 +116,6 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             FROM ParticipantScore p
             WHERE p.exercise IN :exercises
             GROUP BY p.exercise.id
-
             """)
     List<ExerciseScoresAggregatedInformation> getAggregatedExerciseScoresInformation(@Param("exercises") Set<Exercise> exercises);
 

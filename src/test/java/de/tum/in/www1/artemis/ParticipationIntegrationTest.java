@@ -1054,7 +1054,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipation_submittedNotEndedQuizBatch() throws Exception {
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(10), ZonedDateTime.now().plusMinutes(10), QuizMode.BATCHED, course);
         quizExercise.addQuestions(database.createShortAnswerQuestion());
@@ -1062,7 +1062,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         quizExercise.setQuizPointStatistic(new QuizPointStatistic());
         quizExercise = exerciseRepo.save(quizExercise);
 
-        quizUtilService.prepareBatchForSubmitting(quizExercise, SecurityUtils.makeAuthorizationObject("instructor1"), SecurityContextHolder.getContext().getAuthentication());
+        quizUtilService.prepareBatchForSubmitting(quizExercise, SecurityUtils.makeAuthorizationObject(TEST_PREFIX + "instructor1"),
+                SecurityContextHolder.getContext().getAuthentication());
 
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(0);
         List<ShortAnswerSpot> spots = saQuestion.getSpots();

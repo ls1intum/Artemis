@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
-import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,7 +22,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import com.atlassian.bamboo.specs.api.exceptions.BambooSpecsPublishingException;
 import com.atlassian.bamboo.specs.util.BambooServer;
@@ -57,7 +55,6 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 @SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
         "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
 @AutoConfigureMockMvc
-@RunWith(SpringRunner.class)
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "bamboo", "bitbucket", "jira", "ldap", "scheduling", "athene", "apollon" })
