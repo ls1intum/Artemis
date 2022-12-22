@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -397,9 +398,26 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getLearningGoalsOfCourse_asStudent1_shouldReturnLearningGoals() throws Exception {
+        var lecture1 = lectureRepository.findByIdWithLectureUnits(idOfLectureOne).get();
+        TextUnit unreleasedLectureUnit = new TextUnit();
+        unreleasedLectureUnit.setName("TextUnitOfLectureOne");
+        unreleasedLectureUnit.setReleaseDate(ZonedDateTime.now().plus(5, ChronoUnit.DAYS));
+        unreleasedLectureUnit = textUnitRepository.save(unreleasedLectureUnit);
+        lecture1.addLectureUnit(unreleasedLectureUnit);
+        lectureRepository.save(lecture1);
+
+        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        LearningGoal newLearningGoal = new LearningGoal();
+        newLearningGoal.setTitle("Title");
+        newLearningGoal.setDescription("Description");
+        newLearningGoal.setCourse(course);
+        newLearningGoal.setLectureUnits(new HashSet<>(List.of(unreleasedLectureUnit)));
+        learningGoalRepository.save(newLearningGoal);
+
         List<LearningGoal> learningGoalsOfCourse = request.getList("/api/courses/" + idOfCourse + "/goals", HttpStatus.OK, LearningGoal.class);
-        assertThat(learningGoalsOfCourse).hasSize(1);
-        assertThat(learningGoalsOfCourse.get(0).getId()).isEqualTo(idOfLearningGoal);
+
+        assertThat(learningGoalsOfCourse.stream().filter(l -> l.getId().equals(idOfLearningGoal)).findFirst()).isPresent();
+        assertThat(learningGoalsOfCourse.stream().filter(l -> l.getId().equals(newLearningGoal.getId())).findFirst().get().getLectureUnits()).isEmpty();
     }
 
     @Test
@@ -573,7 +591,6 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 50, false);
 
-        // will be ignored in favor of last submission from team
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(1), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(1), 10.0, 0.0, 10, false);
 
@@ -648,7 +665,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
         assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);
 
-        // assertThatSpecificCourseLectureUnitProgressExists(courseLearningGoalProgress, 20.0, 4, 30.0);
+        assertThatSpecificCourseLectureUnitProgressExists(courseLearningGoalProgress, 20.0, 4, 30.0);
     }
 
     private void assertThatSpecificCourseLectureUnitProgressExists(CourseLearningGoalProgress courseLearningGoalProgress, double expectedParticipationRate,
