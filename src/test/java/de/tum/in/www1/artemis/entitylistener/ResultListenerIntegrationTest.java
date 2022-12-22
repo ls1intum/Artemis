@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
-import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -27,6 +26,7 @@ import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
 
 class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -65,12 +65,13 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     private ResultService resultService;
 
     @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
+    void cleanup() {
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
     }
 
     @BeforeEach
     void setupTestScenario() {
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
         ZonedDateTime pastReleaseDate = ZonedDateTime.now().minusDays(5);
         ZonedDateTime pastDueDate = ZonedDateTime.now().minusDays(3);
         ZonedDateTime pastAssessmentDueDate = ZonedDateTime.now().minusDays(2);
@@ -399,6 +400,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result persistedResult = database.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
 
         // Wait for the scheduler to execute its task
+        participantScoreSchedulerService.executeScheduledTasks();
         await().until(() -> participantScoreSchedulerService.isIdle());
 
         var savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
@@ -433,7 +435,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         var exercise = exerciseRepository.findById(idOfExercise).get();
 
         // Wait for the scheduler to execute its task
-        await().pollDelay(Durations.ONE_SECOND).until(() -> participantScoreSchedulerService.isIdle());
+        participantScoreSchedulerService.executeScheduledTasks();
+        await().until(() -> participantScoreSchedulerService.isIdle());
 
         List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScore).isNotEmpty();

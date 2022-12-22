@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.exam;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.service.exam.StudentExamAccessService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -131,7 +130,7 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUserStudentExamExists() {
-        assertThrows(EntityNotFoundException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), 55L));
+        assertThrows(EntityNotFoundException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), Long.MAX_VALUE));
     }
 
     @Test

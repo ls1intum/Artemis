@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.awaitility.Durations;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +23,7 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.exam.StudentExamService;
+import de.tum.in.www1.artemis.service.QuizExerciseService;
 
 class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -49,9 +48,6 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private QuizExerciseService quizExerciseService;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
@@ -69,6 +65,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @BeforeEach
     void init() {
+
         database.addUsers(TEST_PREFIX, numberOfParticipants, 1, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
@@ -164,7 +161,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
-        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        waitForParticipantScores();
 
         database.changeUser(TEST_PREFIX + "instructor1");
         // All exams should be over before evaluation
@@ -175,18 +172,17 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+
+        waitForParticipantScores();
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
         checkStatistics(quizExercise);
 
-        studentExamRepository.deleteAll();
+        studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
-
-        userRepository.deleteAll();
     }
 
     @Test
@@ -227,16 +223,20 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+
+        waitForParticipantScores();
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
-        studentExamRepository.deleteAll();
+        studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
 
-        userRepository.deleteAll();
+    private void waitForParticipantScores() {
+        participantScoreSchedulerService.executeScheduledTasks();
+        await().until(() -> participantScoreSchedulerService.isIdle());
     }
 
     @Test
@@ -271,7 +271,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             quizSubmission2.setParticipation(studentParticipation);
             quizSubmissionRepository.save(quizSubmission2);
         }
-        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        waitForParticipantScores();
 
         database.changeUser(TEST_PREFIX + "instructor1");
         // All exams should be over before evaluation
@@ -282,18 +282,16 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        waitForParticipantScores();
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
         checkStatistics(quizExercise);
 
-        studentExamRepository.deleteAll();
+        studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
-
-        userRepository.deleteAll();
     }
 
     @Test
@@ -320,7 +318,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i + 1, true, ZonedDateTime.now());
             request.put("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, HttpStatus.OK);
         }
-        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        waitForParticipantScores();
 
         database.changeUser(TEST_PREFIX + "instructor1");
         // All exams should be over before evaluation
@@ -331,25 +329,23 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        waitForParticipantScores();
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
         // Evaluate quiz twice
         numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
-        await().pollDelay(Durations.TWO_SECONDS).until(() -> participantScoreSchedulerService.isIdle());
+        waitForParticipantScores();
 
         assertThat(numberOfEvaluatedExercises).isEqualTo(1);
 
         checkStatistics(quizExercise);
 
-        studentExamRepository.deleteAll();
+        studentExamRepository.deleteAllInBatch(studentExamRepository.findByExamId(exam.getId()));
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
-
-        userRepository.deleteAll();
     }
 
     private void checkStatistics(QuizExercise quizExercise) {

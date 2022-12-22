@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -65,8 +67,14 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     private StudentExam studentExamForTestExam2;
 
+    @AfterEach
+    void cleanup() {
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+    }
+
     @BeforeEach
     void init() {
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
         database.addUsers(TEST_PREFIX, 2, 1, 1, 2);
         User instructor1 = database.getUserByLogin(TEST_PREFIX + "instructor1");
         User instructor2 = database.getUserByLogin(TEST_PREFIX + "instructor2");
