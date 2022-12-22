@@ -292,8 +292,10 @@ export const isManualResult = (result?: Result) => {
 };
 
 /**
- * Retrieves a list of test cases names contained in a result's feedback list
+ * Retrieves a list of test cases names contained in a result's feedback list.
+ *
  * @param results list of results to extract the test case names from
+ * @return list of extracted test case names
  * @private
  */
 export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingCriterion[]): string[] {
@@ -303,7 +305,9 @@ export function getTestCaseNamesFromResults(results: ResultWithPointsPerGradingC
             return [];
         }
         result.result.feedbacks.map((f) => {
-            testCasesNames.add(f.text ?? 'Test ' + result.result.feedbacks?.indexOf(f) + 1);
+            if (f.type && [FeedbackType.AUTOMATIC, FeedbackType.AUTOMATIC_ADAPTED].indexOf(f.type) >= 0) {
+                testCasesNames.add(f.text ?? 'Test ' + result.result.feedbacks?.indexOf(f) + 1);
+            }
         });
     });
     return Array.from(testCasesNames);
