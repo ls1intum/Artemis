@@ -545,8 +545,8 @@ public class FileService implements DisposableBean {
     public void renameDirectory(Path oldDirectoryPath, Path targetDirectoryPath) throws IOException {
         File oldDirectory = oldDirectoryPath.toFile();
         if (!oldDirectory.exists()) {
-            log.error("Directory {} should be moved but does not exist.", oldDirectoryPath);
-            throw new RuntimeException("Directory " + oldDirectoryPath + " should be moved but does not exist.");
+            log.error("Directory {} should be renamed but does not exist.", oldDirectoryPath);
+            throw new RuntimeException("Directory " + oldDirectoryPath + " should be renamed but does not exist.");
         }
 
         File targetDirectory = targetDirectoryPath.toFile();
