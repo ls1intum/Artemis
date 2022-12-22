@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { CorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/correctOptionCommand';
@@ -15,7 +15,7 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
     templateUrl: './re-evaluate-multiple-choice-question.component.html',
     styleUrls: ['./re-evaluate-multiple-choice-question.component.scss', '../../../shared/quiz.scss'],
 })
-export class ReEvaluateMultipleChoiceQuestionComponent {
+export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
     @Input() question: MultipleChoiceQuestion;
     @Input() questionIndex: number;
 
@@ -25,6 +25,7 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
     @Output() questionMoveDown = new EventEmitter<object>();
 
     editorMode = EditorMode.NONE;
+    markdownMap: Map<number, string>;
 
     // Create Backup Question for resets
     @Input() backupQuestion: MultipleChoiceQuestion;
@@ -35,6 +36,16 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
     faChevronUp = faChevronUp;
     faChevronDown = faChevronDown;
     faArrowsAltV = faArrowsAltV;
+
+    ngOnInit(): void {
+        this.markdownMap = new Map<number, string>();
+        for (const answer of this.question.answerOptions!) {
+            this.markdownMap.set(
+                answer.id!,
+                (answer.isCorrect ? CorrectOptionCommand.identifier : IncorrectOptionCommand.identifier) + ' ' + generateExerciseHintExplanation(answer),
+            );
+        }
+    }
 
     /**
      * generate the question using the markdown service
@@ -69,21 +80,6 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
     }
 
     /**
-     * Generate the Markdown text for this question
-     *
-     * The markdown is generated according to these rules:
-     *
-     * 1. First the answer text is inserted
-     * 2. If hint and/or explanation exist,
-     *      they are added after the text with a linebreak and tab in front of them
-     *
-     * @param answer {AnswerOption}  is the AnswerOption, which the Markdown-field presents
-     */
-    generateAnswerMarkdown(answer: AnswerOption): string {
-        return (answer.isCorrect ? CorrectOptionCommand.identifier : IncorrectOptionCommand.identifier) + ' ' + generateExerciseHintExplanation(answer);
-    }
-
-    /**
      * Parse the answer Markdown and apply the result to the question's data
      *
      * The markdown rules are as follows:
@@ -102,7 +98,13 @@ export class ReEvaluateMultipleChoiceQuestionComponent {
         const startOfThisPart = text.indexOf(answerOptionText);
         const box = text.substring(0, startOfThisPart);
         // Check if box says this answer option is correct or not
-        answer.isCorrect = box === CorrectOptionCommand.identifier;
+        if (box === CorrectOptionCommand.identifier) {
+            answer.isCorrect = true;
+        } else if (box === IncorrectOptionCommand.identifier) {
+            answer.isCorrect = false;
+        } else {
+            answer.isCorrect = undefined;
+        }
         parseExerciseHintExplanation(answerOptionText, answer);
     }
 
