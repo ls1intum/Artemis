@@ -5,7 +5,6 @@ import static de.tum.in.www1.artemis.domain.ProgrammingSubmission.createFallback
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -622,7 +621,8 @@ public class ProgrammingExerciseGradingService {
             }
 
             // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
-            final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(isSuccessful(result)).collect(Collectors.toSet());
+            final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(testCase -> testCase.isSuccessful(result))
+                    .collect(Collectors.toSet());
             updateScore(result, testCases, successfulTestCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
             result.setTestCaseCount(testCasesForCurrentDate.size());
             result.setPassedTestCaseCount(successfulTestCases.size());
@@ -687,8 +687,11 @@ public class ProgrammingExerciseGradingService {
      * @param allTests of the given programming exercise.
      */
     private void createFeedbackForNotExecutedTests(Result result, Set<ProgrammingExerciseTestCase> allTests) {
-        List<Feedback> feedbacksForNotExecutedTestCases = allTests.stream().filter(wasNotExecuted(result))
-                .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).toList();
+        List<Feedback> feedbacksForNotExecutedTestCases = allTests.stream().filter(testCase -> testCase.wasNotExecuted(result))//
+                .map(testCase -> new Feedback()//
+                        .type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed."))
+                .toList();
+
         result.addFeedbacks(feedbacksForNotExecutedTestCases);
     }
 
@@ -964,28 +967,6 @@ public class ProgrammingExerciseGradingService {
         result.setTestCaseCount(0);
         result.setPassedTestCaseCount(0);
         result.setCodeIssueCount(0);
-    }
-
-    /**
-     * Check if the provided test was found in the result's feedbacks with positive = true.
-     * @param result of the build run.
-     * @return true if there is a positive feedback for a given test.
-     */
-    private Predicate<ProgrammingExerciseTestCase> isSuccessful(Result result) {
-        // We need to compare testcases via lowercase, because the testcaseRepository is case-insensitive
-        return testCase -> result.getFeedbacks().stream()
-                .anyMatch(feedback -> feedback.getText() != null && feedback.getText().equalsIgnoreCase(testCase.getTestName()) && Boolean.TRUE.equals(feedback.isPositive()));
-    }
-
-    /**
-     * Check if the provided test was not found in the result's feedbacks.
-     * @param result of the build run.
-     * @return true if there is no feedback for a given test.
-     */
-    private Predicate<ProgrammingExerciseTestCase> wasNotExecuted(Result result) {
-        // We need to compare testcases via lowercase, because the testcaseRepository is case-insensitive
-        return testCase -> result.getFeedbacks().stream()
-                .noneMatch(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && feedback.getText().equalsIgnoreCase(testCase.getTestName()));
     }
 
     /**
