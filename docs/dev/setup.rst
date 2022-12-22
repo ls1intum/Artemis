@@ -763,7 +763,8 @@ Get a shell into the containers
   to a specific setup.
 
 -  app container:
-   ``docker compose exec artemis-app bash``
+   ``docker compose exec artemis-app bash`` or if the container is not yet running:
+   ``docker compose run --rm artemis-app bash``
 -  mysql container:
    ``docker compose exec mysql bash`` or directly into mysql ``docker compose exec mysql mysql``
 
