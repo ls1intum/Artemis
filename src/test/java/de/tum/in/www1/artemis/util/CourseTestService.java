@@ -727,7 +727,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesWithoutActiveExercises() throws Exception {
-        Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
         Course finalCourse = course;
@@ -778,8 +778,13 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesWithUserStats() throws Exception {
+        adjustUserGroupsToCustomGroups();
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
         Course course = testCourses.get(0);
+        course.setStudentGroupName(userPrefix + "students");
+        course.setTeachingAssistantGroupName(userPrefix + "tutors");
+        course.setInstructorGroupName(userPrefix + "instructors");
+        courseRepo.save(course);
 
         List<Course> receivedCourses = request.getList("/api/courses/with-user-stats", HttpStatus.OK, Course.class);
 
