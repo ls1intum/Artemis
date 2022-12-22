@@ -66,12 +66,12 @@ public class ParticipationService {
 
     private final TeamScoreRepository teamScoreRepository;
 
-    public ParticipationService(Environment environment, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
-                                ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
-                                ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-                                SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService, ResultService resultService,
-                                CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
-                                ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository) {
+    public ParticipationService(Environment environment, GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService,
+            Optional<VersionControlService> versionControlService, ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService, ResultService resultService,
+            CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository) {
         this.environment = environment;
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -133,7 +133,8 @@ public class ParticipationService {
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
             participation = createNewParticipationWithInitializationDate(exercise, participant, initializationDate);
-        } else {
+        }
+        else {
             // make sure participation and exercise are connected
             participation = optionalStudentParticipation.get();
             participation.setExercise(exercise);
@@ -142,9 +143,10 @@ public class ParticipationService {
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             // fetch again to get additional objects
             participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, initializationDate == null);
-        } else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
+        }
+        else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
             if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED
-                || participation.getInitializationState() == FINISHED && !(exercise instanceof QuizExercise)) {
+                    || participation.getInitializationState() == FINISHED && !(exercise instanceof QuizExercise)) {
                 // in case the participation was finished before, we set it to initialized again so that the user sees the correct button "Open modeling editor" on the client side.
                 // Only for quiz exercises, the participation status FINISHED should not be overwritten since the user must not change his submission once submitted
                 participation.setInitializationState(INITIALIZED);
@@ -179,7 +181,8 @@ public class ParticipationService {
         // create a new participation only if no participation can be found
         if (exercise instanceof ProgrammingExercise) {
             participation = new ProgrammingExerciseStudentParticipation(versionControlService.get().getDefaultBranchOfArtemis());
-        } else {
+        }
+        else {
             participation = new StudentParticipation();
         }
         participation.setInitializationState(UNINITIALIZED);
@@ -220,12 +223,13 @@ public class ParticipationService {
      * @return started participation
      */
     private StudentParticipation startPracticeMode(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate,
-                                                   Optional<StudentParticipation> optionalGradedStudentParticipation, boolean useGradedParticipation) {
+            Optional<StudentParticipation> optionalGradedStudentParticipation, boolean useGradedParticipation) {
         // Step 1a) create the student repository (based on the template repository or graded participation)
         if (useGradedParticipation && optionalGradedStudentParticipation.isPresent()
-            && optionalGradedStudentParticipation.get() instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
+                && optionalGradedStudentParticipation.get() instanceof ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation) {
             participation = copyRepository(exercise, programmingExerciseStudentParticipation.getVcsRepositoryUrl(), participation);
-        } else {
+        }
+        else {
             participation = copyRepository(exercise, exercise.getVcsTemplateRepositoryUrl(), participation);
         }
 
@@ -270,7 +274,7 @@ public class ParticipationService {
      * @return the participation connecting the given exercise and user
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation,
-                                                  boolean useGradedParticipation) {
+            boolean useGradedParticipation) {
         if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
             throw new IllegalStateException("Only programming exercises support the practice mode at the moment");
         }
@@ -289,7 +293,8 @@ public class ParticipationService {
             participation.setParticipant(participant);
             participation.setTestRun(true);
             participation = studentParticipationRepository.saveAndFlush(participation);
-        } else {
+        }
+        else {
             // make sure participation and exercise are connected
             participation = optionalStudentParticipation.get();
             participation.setExercise(exercise);
@@ -297,7 +302,7 @@ public class ParticipationService {
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
         participation = startPracticeMode(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, true, optionalGradedStudentParticipation,
-            useGradedParticipation);
+                useGradedParticipation);
 
         return studentParticipationRepository.saveAndFlush(participation);
     }
@@ -319,7 +324,8 @@ public class ParticipationService {
             // create a new participation only if no participation can be found
             if (exercise instanceof ProgrammingExercise) {
                 participation = new ProgrammingExerciseStudentParticipation(versionControlService.get().getDefaultBranchOfArtemis());
-            } else {
+            }
+            else {
                 participation = new StudentParticipation();
             }
             participation.setInitializationState(UNINITIALIZED);
@@ -328,7 +334,8 @@ public class ParticipationService {
             participation.setParticipant(participant);
 
             participation = studentParticipationRepository.saveAndFlush(participation);
-        } else {
+        }
+        else {
             participation = optionalStudentParticipation.get();
         }
 
@@ -345,14 +352,15 @@ public class ParticipationService {
             programmingParticipation = configureRepositoryWebHook(programmingParticipation);
             participation = programmingParticipation;
             if (programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null || programmingExercise.getAssessmentType() != AssessmentType.AUTOMATIC
-                || programmingExercise.getAllowComplaintsForAutomaticAssessments()) {
+                    || programmingExercise.getAllowComplaintsForAutomaticAssessments()) {
                 // restrict access for the student
                 try {
                     versionControlService.get().setRepositoryPermissionsToReadOnly(programmingParticipation.getVcsRepositoryUrl(), programmingExercise.getProjectKey(),
-                        programmingParticipation.getStudents());
-                } catch (VersionControlException e) {
+                            programmingParticipation.getStudents());
+                }
+                catch (VersionControlException e) {
                     log.error("Removing write permissions failed for programming exercise with id {} for student repository with participation id {}: {}",
-                        programmingExercise.getId(), programmingParticipation.getId(), e.getMessage());
+                            programmingExercise.getId(), programmingParticipation.getId(), e.getMessage());
                 }
             }
         }
@@ -396,7 +404,8 @@ public class ParticipationService {
         var dueDate = ExerciseDateService.getDueDate(participation);
         if (!participation.isTestRun() && dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
             participation.setInitializationState(FINISHED);
-        } else {
+        }
+        else {
             participation.setInitializationState(INITIALIZED);
         }
         participation = programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
@@ -408,7 +417,7 @@ public class ParticipationService {
     }
 
     private ProgrammingExerciseStudentParticipation copyRepository(ProgrammingExercise programmingExercise, VcsRepositoryUrl sourceURL,
-                                                                   ProgrammingExerciseStudentParticipation participation) {
+            ProgrammingExerciseStudentParticipation participation) {
         // only execute this step if it has not yet been completed yet or if the repository url is missing for some reason
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_COPIED) || participation.getVcsRepositoryUrl() == null) {
             final var projectKey = programmingExercise.getProjectKey();
@@ -427,7 +436,8 @@ public class ParticipationService {
             participation.setInitializationState(REPO_COPIED);
 
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
-        } else {
+        }
+        else {
             return participation;
         }
     }
@@ -439,7 +449,8 @@ public class ParticipationService {
             versionControlService.get().configureRepository(exercise, participation, allowAccess);
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
-        } else {
+        }
+        else {
             return participation;
         }
     }
@@ -451,14 +462,15 @@ public class ParticipationService {
             final var planName = BuildPlanType.TEMPLATE.getName();
             final var username = participation.getParticipantIdentifier();
             final var buildProjectName = participation.getExercise().getCourseViaExerciseGroupOrCourseMember().getShortName().toUpperCase() + " "
-                + participation.getExercise().getTitle();
+                    + participation.getExercise().getTitle();
             final var targetPlanName = participation.addPracticePrefixIfTestRun(username.toUpperCase());
             // the next action includes recovery, which means if the build plan has already been copied, we simply retrieve the build plan id and do not copy it again
             final var buildPlanId = continuousIntegrationService.get().copyBuildPlan(projectKey, planName, projectKey, buildProjectName, targetPlanName, true);
             participation.setBuildPlanId(buildPlanId);
             participation.setInitializationState(InitializationState.BUILD_PLAN_COPIED);
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
-        } else {
+        }
+        else {
             return participation;
         }
     }
@@ -468,7 +480,8 @@ public class ParticipationService {
             try {
                 String branch = versionControlService.get().getOrRetrieveBranchOfStudentParticipation(participation);
                 continuousIntegrationService.get().configureBuildPlan(participation, branch);
-            } catch (ContinuousIntegrationException ex) {
+            }
+            catch (ContinuousIntegrationException ex) {
                 // this means something with the configuration of the build plan is wrong.
                 // we try to recover from typical edge cases by setting the initialization state back, so that the previous action (copy build plan) is tried again, when
                 // the user again clicks on the start / resume exercise button.
@@ -479,7 +492,8 @@ public class ParticipationService {
             }
             participation.setInitializationState(InitializationState.BUILD_PLAN_CONFIGURED);
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
-        } else {
+        }
+        else {
             return participation;
         }
     }
@@ -516,9 +530,11 @@ public class ParticipationService {
     public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyState(Exercise exercise, Participant participant) {
         if (participant instanceof User user) {
             return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
-        } else if (participant instanceof Team team) {
+        }
+        else if (participant instanceof Team team) {
             return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId());
-        } else {
+        }
+        else {
             throw new Error("Unknown Participant type");
         }
     }
@@ -534,9 +550,11 @@ public class ParticipationService {
     public Optional<StudentParticipation> findOneByExerciseAndParticipantAnyStateAndTestRun(Exercise exercise, Participant participant, boolean testRun) {
         if (participant instanceof User user) {
             return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), user.getLogin(), testRun);
-        } else if (participant instanceof Team team) {
+        }
+        else if (participant instanceof Team team) {
             return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId());
-        } else {
+        }
+        else {
             throw new Error("Unknown Participant type");
         }
     }
@@ -558,7 +576,7 @@ public class ParticipationService {
 
     public StudentParticipation findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(Exercise exercise, String username) {
         return findOneByExerciseAndStudentLoginAnyStateWithEagerResults(exercise, username)
-            .orElseThrow(() -> new EntityNotFoundException("Could not find a participation to exercise " + exercise.getId() + " and username " + username + "!"));
+                .orElseThrow(() -> new EntityNotFoundException("Could not find a participation to exercise " + exercise.getId() + " and username " + username + "!"));
     }
 
     /**
@@ -617,7 +635,7 @@ public class ParticipationService {
         if (exercise.isTeamMode()) {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserId(exercise.getId(), studentId);
             return optionalTeam.map(team -> studentParticipationRepository.findByExerciseIdAndTeamIdWithEagerResultsAndLegalSubmissions(exercise.getId(), team.getId()))
-                .orElse(List.of());
+                    .orElse(List.of());
         }
         return studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerResultsAndLegalSubmissions(exercise.getId(), studentId);
     }
@@ -680,7 +698,8 @@ public class ParticipationService {
             final ZonedDateTime newIndividualDueDate;
             if (exercise.getDueDate() == null || (toBeUpdated.getIndividualDueDate() != null && toBeUpdated.getIndividualDueDate().isBefore(exercise.getDueDate()))) {
                 newIndividualDueDate = null;
-            } else {
+            }
+            else {
                 newIndividualDueDate = toBeUpdated.getIndividualDueDate();
             }
 
@@ -717,7 +736,8 @@ public class ParticipationService {
             if (deleteRepository && programmingExerciseParticipation.getRepositoryUrl() != null) {
                 try {
                     versionControlService.get().deleteRepository(repositoryUrl);
-                } catch (Exception ex) {
+                }
+                catch (Exception ex) {
                     log.error("Could not delete repository: {}", ex.getMessage());
                 }
             }
@@ -738,7 +758,7 @@ public class ParticipationService {
     public void deleteResultsAndSubmissionsOfParticipation(Long participationId, boolean deleteParticipantScores) {
         log.debug("Request to delete all results and submissions of participation with id : {}", participationId);
         var participation = participationRepository.findByIdWithResultsAndSubmissionsResults(participationId)
-            .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+                .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
 
         // delete the participant score with the combination (exerciseId, studentId) or (exerciseId, teamId)
         if (deleteParticipantScores && participation instanceof StudentParticipation studentParticipation) {

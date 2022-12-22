@@ -70,8 +70,8 @@ public class GitLabService extends AbstractVersionControlService {
     private final ScheduledExecutorService scheduler;
 
     public GitLabService(UserRepository userRepository, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService,
-                         GitLabUserManagementService gitLabUserManagementService, GitService gitService, ApplicationContext applicationContext,
-                         ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+            GitLabUserManagementService gitLabUserManagementService, GitService gitService, ApplicationContext applicationContext,
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository);
         this.userRepository = userRepository;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
@@ -113,15 +113,18 @@ public class GitLabService extends AbstractVersionControlService {
         try {
             log.info("repositoryPath: {}, userId: {}", repositoryPath, userId);
             gitlab.getProjectApi().addMember(repositoryPath, userId, DEVELOPER);
-        } catch (GitLabApiException e) {
+        }
+        catch (GitLabApiException e) {
             // A resource conflict status code is returned if the member
             // already exists in the repository
             if (e.getHttpStatus() == 409) {
                 updateMemberPermissionInRepository(repositoryUrl, user.getLogin(), DEVELOPER);
-            } else if (e.getValidationErrors() != null && e.getValidationErrors().containsKey("access_level")
-                && e.getValidationErrors().get("access_level").stream().anyMatch(s -> s.contains("should be greater than or equal to"))) {
+            }
+            else if (e.getValidationErrors() != null && e.getValidationErrors().containsKey("access_level")
+                    && e.getValidationErrors().get("access_level").stream().anyMatch(s -> s.contains("should be greater than or equal to"))) {
                 log.warn("Member already has the requested permissions! Permission stays the same");
-            } else {
+            }
+            else {
                 throw new GitLabException("Error while trying to add user to repository: " + user.getLogin() + " to repo " + repositoryUrl, e);
             }
         }
@@ -134,7 +137,8 @@ public class GitLabService extends AbstractVersionControlService {
 
         try {
             gitlab.getProjectApi().removeMember(repositoryPath, userId);
-        } catch (GitLabApiException e) {
+        }
+        catch (GitLabApiException e) {
             throw new GitLabException("Error while trying to remove user from repository: " + user.getLogin() + " from repo " + repositoryUrl, e);
         }
     }
@@ -151,7 +155,8 @@ public class GitLabService extends AbstractVersionControlService {
 
         try {
             return gitlab.getProjectApi().getProject(repositoryId).getDefaultBranch();
-        } catch (GitLabApiException e) {
+        }
+        catch (GitLabApiException e) {
             throw new GitLabException("Unable to get default branch for repository " + repositoryId, e);
         }
     }
@@ -191,7 +196,8 @@ public class GitLabService extends AbstractVersionControlService {
             try {
                 log.info("Protecting branch {} for Gitlab repository {}", branch, repositoryPath);
                 gitlab.getProtectedBranchesApi().protectBranch(repositoryPath, branch, DEVELOPER, DEVELOPER, OWNER, false);
-            } catch (GitLabApiException e) {
+            }
+            catch (GitLabApiException e) {
                 throw new GitLabException("Unable to protect branch " + branch + " for repository " + repositoryPath, e);
             }
         }, delayTime, delayTimeUnit);
@@ -217,7 +223,8 @@ public class GitLabService extends AbstractVersionControlService {
             try {
                 log.info("Unprotecting branch {} for Gitlab repository {}", branch, repositoryPath);
                 gitlab.getProtectedBranchesApi().unprotectBranch(repositoryPath, branch);
-            } catch (GitLabApiException e) {
+            }
+            catch (GitLabApiException e) {
                 throw new GitLabException("Could not unprotect branch " + branch + " for repository " + repositoryPath, e);
             }
         }, delayTime, delayTimeUnit);
@@ -247,7 +254,7 @@ public class GitLabService extends AbstractVersionControlService {
             // Webhook from the version control system to the continuous integration system
             // This allows the continuous integration system to immediately build when new commits are pushed (in contrast to pulling regularly)
             getContinuousIntegrationService().getWebHookUrl(participation.getProgrammingExercise().getProjectKey(), participation.getBuildPlanId())
-                .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getVcsRepositoryUrl(), hookUrl, "Artemis trigger to CI", ciToken));
+                    .ifPresent(hookUrl -> addAuthenticatedWebHook(participation.getVcsRepositoryUrl(), hookUrl, "Artemis trigger to CI", ciToken));
         }
     }
 
@@ -260,12 +267,13 @@ public class GitLabService extends AbstractVersionControlService {
     protected void addAuthenticatedWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false)
-            // Note: Trigger hook on push events for matching branches only (this avoids unnecessary Jenkins builds for pushes to other branches)
-            .withPushEventsBranchFilter(defaultBranch);
+                // Note: Trigger hook on push events for matching branches only (this avoids unnecessary Jenkins builds for pushes to other branches)
+                .withPushEventsBranchFilter(defaultBranch);
 
         try {
             gitlab.getProjectApi().addHook(repositoryPath, notificationUrl, hook, false, secretToken);
-        } catch (GitLabApiException e) {
+        }
+        catch (GitLabApiException e) {
             throw new GitLabException("Unable to add webhook for " + repositoryUrl, e);
         }
     }
@@ -274,7 +282,8 @@ public class GitLabService extends AbstractVersionControlService {
     public void deleteProject(String projectKey) {
         try {
             gitlab.getGroupApi().deleteGroup(projectKey);
-        } catch (GitLabApiException e) {
+        }
+        catch (GitLabApiException e) {
             // Do not throw an exception if we try to delete a non-existent repository.
             if (e.getHttpStatus() != 404) {
                 throw new GitLabException("Unable to delete group in GitLab: " + projectKey, e);
@@ -288,7 +297,8 @@ public class GitLabService extends AbstractVersionControlService {
         final var repositoryName = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         try {
             gitlab.getProjectApi().deleteProject(repositoryPath);
-        } catch (GitLabApiException e) {
+        }
+        catch (GitLabApiException e) {
             // Do not throw an exception if we try to delete a non-existent repository.
             if (e.getHttpStatus() != HttpStatus.SC_NOT_FOUND) {
                 throw new GitLabException("Error trying to delete repository on GitLab: " + repositoryName, e);
@@ -309,7 +319,8 @@ public class GitLabService extends AbstractVersionControlService {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         try {
             gitlab.getProjectApi().getProject(repositoryPath);
-        } catch (Exception emAll) {
+        }
+        catch (Exception emAll) {
             log.warn("Invalid repository VcsRepositoryUrl {}", repositoryUrl);
             return false;
         }
@@ -352,7 +363,8 @@ public class GitLabService extends AbstractVersionControlService {
             if (eventOptional.isPresent()) {
                 return eventOptional.get().getCreatedAt().toInstant().atZone(ZoneOffset.UTC);
             }
-        } catch (GitLabApiException e) {
+        }
+        catch (GitLabApiException e) {
             throw new GitLabException(e);
         }
         throw new GitLabException("Could not find build queue date for participation " + participation.getId());
@@ -391,11 +403,13 @@ public class GitLabService extends AbstractVersionControlService {
 
         try {
             gitlab.getGroupApi().addGroup(group);
-        } catch (GitLabApiException e) {
+        }
+        catch (GitLabApiException e) {
             if (e.getMessage().contains("has already been taken")) {
                 // ignore this error, because it is not really a problem
                 log.warn("Failed to add group {} due to error: {}", exerciseName, e.getMessage());
-            } else {
+            }
+            else {
                 throw new GitLabException("Unable to create new group for course " + exerciseName, e);
             }
         }
@@ -413,7 +427,8 @@ public class GitLabService extends AbstractVersionControlService {
             try {
                 final var userId = gitLabUserManagementService.getUserId(user.getLogin());
                 gitLabUserManagementService.addUserToGroupsOfExercises(userId, List.of(exercise), accessLevel);
-            } catch (GitLabException e) {
+            }
+            catch (GitLabException e) {
                 // ignore the exception and continue with the next user, one non-existing user or issue here should not
                 // prevent the creation of the whole programming exercise
                 log.warn("Skipped adding user {} to groups of exercise {}: {}", user.getLogin(), exercise, e.getMessage());
@@ -426,9 +441,10 @@ public class GitLabService extends AbstractVersionControlService {
         try {
             final var groupId = gitlab.getGroupApi().getGroup(projectKey).getId();
             final var project = new Project().withPath(repoName.toLowerCase()).withName(repoName.toLowerCase()).withNamespaceId(groupId).withVisibility(Visibility.PRIVATE)
-                .withJobsEnabled(false).withSharedRunnersEnabled(false).withContainerRegistryEnabled(false);
+                    .withJobsEnabled(false).withSharedRunnersEnabled(false).withContainerRegistryEnabled(false);
             gitlab.getProjectApi().createProject(project);
-        } catch (GitLabApiException e) {
+        }
+        catch (GitLabApiException e) {
             if (e.getValidationErrors() != null && e.getValidationErrors().containsKey("path") && e.getValidationErrors().get("path").contains("has already been taken")) {
                 log.info("Repository {} (parent {}) already exists, reusing it...", repoName, projectKey);
                 return;
@@ -441,7 +457,8 @@ public class GitLabService extends AbstractVersionControlService {
     public boolean checkIfProjectExists(String projectKey, String projectName) {
         try {
             return !gitlab.getProjectApi().getProjects(projectKey).isEmpty();
-        } catch (GitLabApiException e) {
+        }
+        catch (GitLabApiException e) {
             throw new GitLabException("Error trying to search for project " + projectName, e);
         }
     }
@@ -463,7 +480,8 @@ public class GitLabService extends AbstractVersionControlService {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         try {
             gitlab.getProjectApi().updateMember(repositoryPath, userId, accessLevel);
-        } catch (GitLabApiException e) {
+        }
+        catch (GitLabApiException e) {
             throw new GitLabException("Unable to set permissions for user " + username + ". Trying to set permission " + accessLevel, e);
         }
     }
@@ -478,7 +496,8 @@ public class GitLabService extends AbstractVersionControlService {
                 return new ConnectorHealth(false, Map.of("status", status, "url", gitlabServerUrl));
             }
             return new ConnectorHealth(true, Map.of("url", gitlabServerUrl));
-        } catch (Exception emAll) {
+        }
+        catch (Exception emAll) {
             return new ConnectorHealth(emAll);
         }
     }
@@ -486,7 +505,8 @@ public class GitLabService extends AbstractVersionControlService {
     private boolean userExists(String username) {
         try {
             return gitlab.getUserApi().getUser(username) != null;
-        } catch (GitLabApiException e) {
+        }
+        catch (GitLabApiException e) {
             throw new GitLabException("Unable to fetch user ID for " + username, e);
         }
     }
@@ -526,7 +546,8 @@ public class GitLabService extends AbstractVersionControlService {
         private void stringToURL(String urlString) {
             try {
                 this.uri = new URI(urlString);
-            } catch (URISyntaxException e) {
+            }
+            catch (URISyntaxException e) {
                 throw new GitLabException("Could not build GitLab URL", e);
             }
         }

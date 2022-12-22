@@ -769,9 +769,9 @@ public class GitService {
         try {
             var existingRemoteUrl = repo.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url");
             var newRemoteUrl = getGitUriAsString(repo.getRemoteRepositoryUrl());
-//            if (Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
-//                newRemoteUrl = repo.getRemoteRepositoryUrl().toString();
-//            }
+            // if (Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+            // newRemoteUrl = repo.getRemoteRepositoryUrl().toString();
+            // }
             if (!Objects.equals(newRemoteUrl, existingRemoteUrl)) {
                 log.info("Replace existing remote url {} with new remote url {}", existingRemoteUrl, newRemoteUrl);
                 repo.getConfig().setString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url", newRemoteUrl);

@@ -1,12 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localgit;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.exception.LocalGitException;
-import org.springframework.beans.factory.annotation.Value;
-
-import java.io.File;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 public class LocalGitRepositoryUrl extends VcsRepositoryUrl {
 

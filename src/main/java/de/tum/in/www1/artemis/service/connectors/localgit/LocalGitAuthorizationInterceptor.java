@@ -62,7 +62,7 @@ public class LocalGitAuthorizationInterceptor implements ClientHttpRequestInterc
 
     private static boolean isCreateOrEditOrDeleteUserRequest(HttpRequest request) {
         return request.getURI().toString().contains("latest/admin/users")
-            && (POST.equals(request.getMethod()) || PUT.equals(request.getMethod()) || DELETE.equals(request.getMethod()));
+                && (POST.equals(request.getMethod()) || PUT.equals(request.getMethod()) || DELETE.equals(request.getMethod()));
     }
 
     private static boolean isAddUserToGroupsRequest(HttpRequest request) {

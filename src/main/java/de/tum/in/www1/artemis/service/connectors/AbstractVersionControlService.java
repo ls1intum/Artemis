@@ -44,7 +44,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     protected final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService, UrlService urlService,
-                                         ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.applicationContext = applicationContext;
         this.gitService = gitService;
         this.urlService = urlService;
@@ -97,8 +97,8 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceCourseShortName, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetCourseShortName, String targetRepositoryName)
-        throws VersionControlException {
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceCourseShortName, String sourceRepositoryName, String sourceBranch, String targetProjectKey,
+            String targetCourseShortName, String targetRepositoryName) throws VersionControlException {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
         final String targetRepoSlug = targetProjectKey.toLowerCase() + "-" + targetRepositoryName;
@@ -114,17 +114,20 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUrl, targetRepoUrl, true);
             // copy by pushing the source's content to the target's repo
             gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl, sourceBranch);
-        } catch (GitAPIException e) {
+        }
+        catch (GitAPIException e) {
             Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUrl);
             try {
                 if (targetRepo != null) {
                     // delete the target repo if an error occurs
                     gitService.deleteLocalRepository(targetRepo);
-                } else {
+                }
+                else {
                     // or delete the folder if it exists
                     FileUtils.deleteDirectory(localPath.toFile());
                 }
-            } catch (IOException ex) {
+            }
+            catch (IOException ex) {
                 // ignore
                 log.error("Could not delete directory of the failed cloned repository in: {}", localPath);
             }
@@ -138,7 +141,8 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     public String getOrRetrieveBranchOfParticipation(ProgrammingExerciseParticipation participation) {
         if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
             return getOrRetrieveBranchOfStudentParticipation(studentParticipation);
-        } else {
+        }
+        else {
             return getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
         }
     }

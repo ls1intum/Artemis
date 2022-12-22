@@ -1,12 +1,27 @@
 package de.tum.in.www1.artemis.security.jgitServlet;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.time.ZonedDateTime;
+import java.util.Base64;
+import java.util.List;
+import java.util.Optional;
+
+import javax.servlet.http.HttpServletRequest;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.stereotype.Service;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.exception.LocalGitException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -15,23 +30,6 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.localgit.LocalGitRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.stereotype.Service;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.time.Instant;
-import java.time.ZonedDateTime;
-import java.time.chrono.ChronoZonedDateTime;
-import java.util.Base64;
-import java.util.List;
-import java.util.Optional;
 
 @Service
 public class JGitFilterUtilService {
@@ -52,7 +50,9 @@ public class JGitFilterUtilService {
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
-    public JGitFilterUtilService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, ProgrammingExerciseRepository programmingExerciseRepository, StudentParticipationRepository studentParticipationRepository) {
+    public JGitFilterUtilService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseRepository courseRepository,
+            AuthorizationCheckService authorizationCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
+            StudentParticipationRepository studentParticipationRepository) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -111,7 +111,8 @@ public class JGitFilterUtilService {
             // Try to authenticate the user.
             UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, password);
             authenticationManagerBuilder.getObject().authenticate(authenticationToken);
-        } catch (AccessForbiddenException | AuthenticationException ex) {
+        }
+        catch (AccessForbiddenException | AuthenticationException ex) {
             throw new LocalGitAuthException();
         }
 
@@ -131,7 +132,8 @@ public class JGitFilterUtilService {
 
         try {
             uri = new URI(url);
-        } catch (URISyntaxException e) {
+        }
+        catch (URISyntaxException e) {
             throw new LocalGitBadRequestException("Badly formed URI.", e);
         }
 
@@ -165,7 +167,8 @@ public class JGitFilterUtilService {
         if (courses.size() != 1) {
             if (courses.size() == 0) {
                 throw new LocalGitNotFoundException("No course found for the given short name: " + courseShortName);
-            } else {
+            }
+            else {
                 throw new LocalGitInternalException("Multiple courses found for the given short name: " + courseShortName);
             }
         }
@@ -177,7 +180,8 @@ public class JGitFilterUtilService {
         if (exercises.size() != 1) {
             if (exercises.size() == 0) {
                 throw new LocalGitNotFoundException("No exercise found for the given project key: " + projectKey);
-            } else {
+            }
+            else {
                 throw new LocalGitInternalException("Multiple exercises found for the given project key: " + projectKey);
             }
         }
@@ -211,19 +215,22 @@ public class JGitFilterUtilService {
         // Check that the user participates in the exercise the repository belongs to.
         Optional<StudentParticipation> participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
 
-        if (participation.isEmpty()) throw new LocalGitAuthException();
+        if (participation.isEmpty())
+            throw new LocalGitAuthException();
 
         // Check that the exercise's Release Date is either not set or is in the past.
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
             throw new LocalGitAuthException();
         }
-        if (!forPush) return;
+        if (!forPush)
+            return;
 
         // Additional checks for push request.
 
         // Check that the exercise's Due Date is either not set or is in the future.
         if (exercise.getDueDate() != null && exercise.getDueDate().isBefore(ZonedDateTime.now())) {
-            // Students can still commit code and receive feedback after the exercise due date, if manual review and complaints are not activated. The results for these submissions will not be rated.
+            // Students can still commit code and receive feedback after the exercise due date, if manual review and complaints are not activated. The results for these submissions
+            // will not be rated.
             if (exercise.getAssessmentType() == AssessmentType.MANUAL || exercise.getAllowComplaintsForAutomaticAssessments()) {
                 throw new LocalGitAuthException();
             }
@@ -233,7 +240,8 @@ public class JGitFilterUtilService {
 
     private boolean isRequestingBaseRepository(String requestedRepositoryType) {
         for (RepositoryType repositoryType : RepositoryType.values()) {
-            if (repositoryType.toString().equals(requestedRepositoryType)) return true;
+            if (repositoryType.toString().equals(requestedRepositoryType))
+                return true;
         }
         return false;
     }

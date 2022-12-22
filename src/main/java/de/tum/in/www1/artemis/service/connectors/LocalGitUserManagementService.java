@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -9,13 +8,10 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.service.connectors.localgit.LocalGitService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
@@ -32,7 +28,7 @@ public class LocalGitUserManagementService implements VcsUserManagementService {
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     public LocalGitUserManagementService(LocalGitService localGitService, UserRepository userRepository, PasswordService passwordService,
-                                         ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.localGitService = localGitService;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -120,5 +116,5 @@ public class LocalGitUserManagementService implements VcsUserManagementService {
     @Override
     public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
         // Not implemented.
-        }
+    }
 }

@@ -1,18 +1,14 @@
 package de.tum.in.www1.artemis.security.jgitServlet;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.exception.LocalGitException;
-import de.tum.in.www1.artemis.service.connectors.localgit.LocalGitRepositoryUrl;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.web.filter.OncePerRequestFilter;
+import java.io.IOException;
 
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
  * Filters incoming fetch requests reaching the jgitServlet at /git/*.
@@ -22,7 +18,6 @@ public class JGitFetchFilter extends OncePerRequestFilter {
     private final Logger log = LoggerFactory.getLogger(JGitFetchFilter.class);
 
     private final JGitFilterUtilService jGitFilterUtilService;
-
 
     public JGitFetchFilter(JGitFilterUtilService jGitFilterUtilService) {
         this.jGitFilterUtilService = jGitFilterUtilService;
@@ -37,16 +32,20 @@ public class JGitFetchFilter extends OncePerRequestFilter {
 
         try {
             jGitFilterUtilService.authenticateAndAuthorizeGitRequest(servletRequest, false);
-        } catch (LocalGitAuthException e) {
+        }
+        catch (LocalGitAuthException e) {
             servletResponse.setStatus(401);
             return;
-        } catch (LocalGitBadRequestException e) {
+        }
+        catch (LocalGitBadRequestException e) {
             servletResponse.setStatus(400);
             return;
-        } catch (LocalGitNotFoundException e) {
+        }
+        catch (LocalGitNotFoundException e) {
             servletResponse.setStatus(404);
             return;
-        } catch (LocalGitInternalException e) {
+        }
+        catch (LocalGitInternalException e) {
             servletResponse.setStatus(500);
             return;
         }
