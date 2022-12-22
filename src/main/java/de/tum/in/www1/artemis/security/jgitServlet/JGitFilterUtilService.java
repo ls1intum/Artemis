@@ -64,6 +64,11 @@ public class JGitFilterUtilService {
         this.studentParticipationRepository = studentParticipationRepository;
     }
 
+    /**
+     * @param servletRequest The object containing all information about the incoming request.
+     * @param forPush        Whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
+     * @throws LocalGitAuthException
+     */
     public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, boolean forPush) throws LocalGitAuthException {
 
         String basicAuthCredentials = checkAuthorizationHeader(servletRequest.getHeader(JGitFilterUtilService.AUTHORIZATION_HEADER));

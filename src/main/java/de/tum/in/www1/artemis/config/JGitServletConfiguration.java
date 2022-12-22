@@ -46,6 +46,9 @@ public class JGitServletConfiguration {
         this.authorizationCheckService = authorizationCheckService;
     }
 
+    /**
+     * @return GitServlet (Git server implementation by JGit) configured with a repository resolver and filters for fetch and push requests.
+     */
     @Bean
     public ServletRegistrationBean<GitServlet> jgitServlet() {
 

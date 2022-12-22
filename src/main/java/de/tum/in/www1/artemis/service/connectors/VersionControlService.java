@@ -168,8 +168,9 @@ public interface VersionControlService {
     /**
      * Get the default branch of the repository
      *
-     * @param projectKey     The project key to which the repository slug belongs
-     * @param repositorySlug The repository slug of the repository for which the default branch shall be retrieved
+     * @param projectKey      The project key to which the repository slug belongs
+     * @param courseShortName The short name of the course the repository belongs to
+     * @param repositorySlug  The repository slug of the repository for which the default branch shall be retrieved
      * @return the name of the default branch, e.g. 'main'
      */
     default String getDefaultBranchOfRepository(String projectKey, String courseShortName, String repositorySlug) throws VersionControlException {
