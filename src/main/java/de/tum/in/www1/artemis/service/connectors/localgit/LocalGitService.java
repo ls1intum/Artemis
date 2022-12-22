@@ -456,6 +456,7 @@ public class LocalGitService extends AbstractVersionControlService {
     public boolean checkIfProjectExists(String projectKey, String courseShortName, String projectName) {
         String projectKeyStripped = StringUtil.stripIllegalCharacters(projectKey);
         String courseShortNameStripped = StringUtil.stripIllegalCharacters(courseShortName);
+
         // Try to find the folder in the file system. If it is not found, return false.
         if (new File(localGitPath + File.separator + courseShortNameStripped + File.separator + projectKeyStripped).exists()) {
             log.warn("Local git project with key {} already exists: {}", projectKey, projectName);
