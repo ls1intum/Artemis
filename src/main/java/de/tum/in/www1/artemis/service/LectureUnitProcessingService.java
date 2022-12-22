@@ -1,0 +1,147 @@
+package de.tum.in.www1.artemis.service;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.*;
+
+import org.apache.commons.fileupload.*;
+import org.apache.commons.fileupload.disk.DiskFileItem;
+import org.apache.pdfbox.multipdf.Splitter;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
+import org.apache.pdfbox.text.PDFTextStripper;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.commons.CommonsMultipartFile;
+
+import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
+import de.tum.in.www1.artemis.service.util.Tuple;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitsDTO;
+
+@Service
+public class LectureUnitProcessingService {
+
+    private final Logger log = LoggerFactory.getLogger(FileService.class);
+
+    public List<LectureUnitsDTO> splitUnits(List<LectureUnitSplitDTO> lectureUnitSplitDTOs, MultipartFile file) throws IOException {
+
+        // TODO: 1. split the file into multiple units
+        // TODO: 2. create attachment, attachmentUnit, lecture and file in multipart type
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        List<LectureUnitsDTO> units = new ArrayList<>();
+        Splitter pdfSplitter = new Splitter();
+        PDDocument document = PDDocument.load(file.getBytes());
+
+        lectureUnitSplitDTOs.forEach(lectureUnit -> {
+            AttachmentUnit attachmentUnit = new AttachmentUnit();
+            Attachment attachment = new Attachment();
+            LectureUnitsDTO lectureUnitsDTO = new LectureUnitsDTO();
+            PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
+
+            pdfSplitter.setStartPage(Integer.parseInt(lectureUnit.startPage));
+            pdfSplitter.setEndPage(Integer.parseInt(lectureUnit.endPage));
+            pdfSplitter.setSplitAtPage(Integer.parseInt(lectureUnit.endPage));
+
+            List<PDDocument> documentUnits;
+            try {
+                documentUnits = pdfSplitter.split(document);
+                pdDocumentInformation.setTitle(lectureUnit.getUnitName());
+                documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
+                System.out.println(documentUnits.get(0).getDocumentInformation().getTitle());
+                documentUnits.get(0).save(outputStream);
+
+                // setup attachmentUnit and attachment
+                attachmentUnit.setDescription("");
+                attachment.setName(lectureUnit.getUnitName());
+                attachment.setAttachmentType(AttachmentType.FILE);
+                attachment.setVersion(1);
+                attachment.setUploadDate(ZonedDateTime.now());
+
+                lectureUnitsDTO.setAttachmentUnit(attachmentUnit);
+                lectureUnitsDTO.setAttachment(attachment);
+
+                // prepare file to be set from byte[] to MultipartFile
+                Path tempFile = Files.createTempFile(lectureUnit.getUnitName(), ".pdf");
+                Files.write(tempFile, outputStream.toByteArray());
+                System.out.println(tempFile.toString() + " :::test");
+                File file1 = new File(tempFile.toString());
+                FileItem fileItem = new DiskFileItem("mainUnitFile", Files.probeContentType(file1.toPath()), false, file1.getName(), (int) file1.length(), file1.getParentFile());
+
+                InputStream input = new FileInputStream(file1);
+                OutputStream os = fileItem.getOutputStream();
+                IOUtils.copy(input, os);
+                MultipartFile file2 = new CommonsMultipartFile(fileItem);
+
+                lectureUnitsDTO.setFile(file2);
+            }
+            catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            units.add(lectureUnitsDTO);
+        });
+
+        document.close();
+        return units;
+    }
+
+    public Optional<List<LectureUnitSplitDTO>> getSplitUnitData(MultipartFile file, String lectureId) throws IOException {
+
+        List<LectureUnitSplitDTO> units = new ArrayList<>();
+
+        PDDocument document = PDDocument.load(file.getBytes());
+        Map<Integer, Tuple<String, Tuple<Integer, Integer>>> unitsDocumentMap = separateIntoUnits(document);
+
+        unitsDocumentMap.forEach((k, v) -> {
+            LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO();
+            newLectureUnit.setUnitName(v.x());
+            newLectureUnit.setStartPage(v.y().x().toString());
+            newLectureUnit.setEndPage(v.y().y().toString());
+            units.add(newLectureUnit);
+        });
+
+        document.close();
+        return Optional.of(units);
+    }
+
+    private Map<Integer, Tuple<String, Tuple<Integer, Integer>>> separateIntoUnits(PDDocument document) throws IOException {
+        Map<Integer, Tuple<String, Tuple<Integer, Integer>>> outlineMap = new HashMap<>();
+
+        Splitter pdfSplitter = new Splitter();
+        PDFTextStripper pdfStripper = new PDFTextStripper();
+        List<PDDocument> Pages = pdfSplitter.split(document);
+
+        Iterator<PDDocument> iterator = Pages.listIterator();
+
+        int outlineCount = 0;
+        int index = 1;
+        while (iterator.hasNext()) {
+            PDDocument pd = iterator.next();
+            String slideText = pdfStripper.getText(pd);
+
+            if (slideText.contains("Outline")) {
+                outlineCount++;
+
+                String[] lines = slideText.split("\r\n|\r|\n");
+
+                outlineMap.put(outlineCount, new Tuple<>(lines[outlineCount + 1], new Tuple<>((outlineCount == 1) ? 1 : index, document.getNumberOfPages())));
+                if (outlineCount > 1) {
+                    int previousOutlineCount = outlineCount - 1;
+                    int previousStart = outlineMap.get(previousOutlineCount).y().x();
+                    outlineMap.remove(previousOutlineCount);
+                    outlineMap.put(previousOutlineCount, new Tuple<>(lines[previousOutlineCount + 1], new Tuple<>(previousStart, index - 1)));
+                }
+            }
+            index++;
+        }
+        return outlineMap;
+    }
+}

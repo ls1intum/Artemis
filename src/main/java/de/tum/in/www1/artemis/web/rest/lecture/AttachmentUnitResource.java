@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,7 +24,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AttachmentUnitService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.UnitProcessingService;
+import de.tum.in.www1.artemis.service.LectureUnitProcessingService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -47,12 +48,12 @@ public class AttachmentUnitResource {
 
     private final AttachmentUnitService attachmentUnitService;
 
-    private final UnitProcessingService unitProcessingService;
+    private final LectureUnitProcessingService lectureUnitProcessingService;
 
-    public AttachmentUnitResource(UnitProcessingService unitProcessingService, AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository,
+    public AttachmentUnitResource(LectureUnitProcessingService lectureUnitProcessingService, AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository,
             AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
-        this.unitProcessingService = unitProcessingService;
+        this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.groupNotificationService = groupNotificationService;
@@ -154,13 +155,28 @@ public class AttachmentUnitResource {
         return ResponseEntity.created(new URI("/api/attachment-units/" + savedAttachmentUnit.getId())).body(savedAttachmentUnit);
     }
 
-    @PostMapping("lecture/{lectureId}/process-units")
+    @PostMapping(value = "lectures/{lectureId}/attachment-units/split")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<Set<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestPart List<LectureUnitSplitDTO> lectureUnitSplitDTOs,
+            @RequestPart MultipartFile file) throws IOException {
+        log.debug("REST request to create AttachmentUnits {} with lectureId {}", lectureUnitSplitDTOs, lectureId);
+
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        if (lecture.getCourse() == null) {
+            throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+        Set<AttachmentUnit> savedAttachmentUnits = attachmentUnitService.createAttachmentUnits(lectureUnitSplitDTOs, lecture, file);
+        return ResponseEntity.ok().body(savedAttachmentUnits);
+    }
+
+    @PostMapping("lectures/{lectureId}/process-units")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Optional<List<LectureUnitSplitDTO>>> getAttachmentUnitsData(@RequestParam(value = "file") MultipartFile file, @PathVariable String lectureId)
             throws IOException {
         log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
 
-        Optional<List<LectureUnitSplitDTO>> attachmentUnitsData = unitProcessingService.getSplitUnitData(file, lectureId);
+        Optional<List<LectureUnitSplitDTO>> attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(file, lectureId);
         if (attachmentUnitsData.isEmpty()) {
             log.error("Failed to retrieve split PDF lecture units data for lecture with id {}", lectureId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

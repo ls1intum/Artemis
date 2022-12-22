@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
+import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Set;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
@@ -8,10 +11,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 @Service
@@ -27,8 +33,11 @@ public class AttachmentUnitService {
 
     private final LectureRepository lectureRepository;
 
-    public AttachmentUnitService(AttachmentUnitRepository attachmentUnitRepository, AttachmentRepository attachmentRepository, FileService fileService, CacheManager cacheManager,
-            LectureRepository lectureRepository) {
+    private final LectureUnitProcessingService lectureUnitProcessingService;
+
+    public AttachmentUnitService(LectureUnitProcessingService lectureUnitProcessingService, AttachmentUnitRepository attachmentUnitRepository,
+            AttachmentRepository attachmentRepository, FileService fileService, CacheManager cacheManager, LectureRepository lectureRepository) {
+        this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.attachmentRepository = attachmentRepository;
         this.fileService = fileService;
@@ -64,6 +73,31 @@ public class AttachmentUnitService {
         evictCache(file, savedAttachmentUnit);
 
         return savedAttachmentUnit;
+    }
+
+    public Set<AttachmentUnit> createAttachmentUnits(List<LectureUnitSplitDTO> lectureUnitSplitDTOs, Lecture lecture, MultipartFile file) throws IOException {
+
+        List<LectureUnitsDTO> lectureUnitsDTO = lectureUnitProcessingService.splitUnits(lectureUnitSplitDTOs, file);
+        System.out.println(lectureUnitsDTO.size());
+        lectureUnitsDTO.forEach(lectureUnit -> {
+            System.out.println(lectureUnit.getAttachment().getName());
+            lectureUnit.getAttachmentUnit().setLecture(null);
+            AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(lectureUnit.getAttachmentUnit());
+            lectureUnit.getAttachmentUnit().setLecture(lecture);
+            lecture.addLectureUnit(savedAttachmentUnit);
+            lectureRepository.save(lecture);
+
+            lectureUnit.getAttachment().setVersion(0);
+
+            handleFile(lectureUnit.getFile(), lectureUnit.getAttachment(), true);
+            lectureUnit.getAttachment().setAttachmentUnit(savedAttachmentUnit);
+            Attachment savedAttachment = attachmentRepository.saveAndFlush(lectureUnit.getAttachment());
+            lectureUnit.getAttachmentUnit().setAttachment(savedAttachment);
+
+            evictCache(lectureUnit.getFile(), savedAttachmentUnit);
+        });
+
+        return attachmentUnitRepository.findAllByLectureIdAndAttachmentTypeElseThrow(lecture.getId(), AttachmentType.FILE);
     }
 
     /**

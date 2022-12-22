@@ -15,7 +15,7 @@ import { AlertService } from 'app/core/util/alert.service';
 type UnitResponseType = {
     unitName: string;
     description?: string;
-    file: string;
+    file: File;
     releaseDate?: dayjs.Dayjs;
     version?: number;
     startPage: number;
@@ -28,9 +28,6 @@ type UnitResponseType = {
     styleUrls: [],
 })
 export class AttachmentUnitsComponent implements OnInit {
-    attachmentUnitToCreate: AttachmentUnit = new AttachmentUnit();
-    attachmentToCreate: Attachment = new Attachment();
-
     lectureId: number;
     isLoading: boolean;
     isProcessingMode: boolean;
@@ -58,8 +55,6 @@ export class AttachmentUnitsComponent implements OnInit {
         combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params]) => {
             this.lectureId = Number(params.get('lectureId'));
         });
-        this.attachmentUnitToCreate = new AttachmentUnit();
-        this.attachmentToCreate = new Attachment();
     }
 
     ngOnInit(): void {
@@ -85,57 +80,32 @@ export class AttachmentUnitsComponent implements OnInit {
                 this.isLoading = false;
             },
         });
+
+        console.log(this.file, this.fileName);
     }
 
     createAttachmentUnits(): void {
         this.isLoading = true;
 
-        this.units.forEach((unit) => {
-            // === Setting attachment ===
-            console.log(unit);
-            const { unitName: name, description, releaseDate, file: unitFile } = unit;
+        const formData: FormData = new FormData();
+        formData.append('file', this.file);
+        formData.append('lectureUnitSplitDTOs', objectToJsonBlob(this.units));
 
-            const fileBlob = this.base64toBlob(unitFile);
-            const newUnitFile = new File([fileBlob], name, { type: 'application/pdf' });
-
-            if (name) {
-                this.attachmentToCreate.name = name;
-            }
-
-            if (releaseDate) {
-                this.attachmentToCreate.releaseDate = releaseDate;
-            }
-            this.attachmentToCreate.attachmentType = AttachmentType.FILE;
-            this.attachmentToCreate.version = 1;
-            this.attachmentToCreate.uploadDate = dayjs();
-
-            // === Setting attachmentUnit ===
-            if (description) {
-                this.attachmentUnitToCreate.description = description;
-            }
-
-            const formData = new FormData();
-
-            formData.append('file', newUnitFile, name + '.pdf');
-            formData.append('attachment', objectToJsonBlob(this.attachmentToCreate));
-            formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnitToCreate));
-            this.attachmentUnitService
-                .create(formData, this.lectureId)
-                .subscribe({
-                    next: () => {},
-                    error: (res: HttpErrorResponse) => {
-                        if (res.error.params === 'file' && res?.error?.title) {
-                            this.alertService.error(res.error.title);
-                        } else {
-                            onError(this.alertService, res);
-                        }
-                        this.isLoading = false;
-                    },
-                })
-                .add();
+        this.attachmentUnitService.createUnits(this.lectureId, formData).subscribe({
+            next: (res: any) => {
+                console.log(res);
+                this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+                this.isLoading = false;
+            },
+            error: (res: HttpErrorResponse) => {
+                if (res.error.params === 'file' && res?.error?.title) {
+                    this.alertService.error(res.error.title);
+                } else {
+                    onError(this.alertService, res);
+                }
+                this.isLoading = false;
+            },
         });
-        this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
-        this.isLoading = false;
     }
 
     previousState() {
