@@ -44,7 +44,7 @@ services:
             artemis.continuous-integration.artemis-authentication-token-value: "${CI_AUTH_TOKEN}"
             # for bamboo and bitbucket notifications on /api/programming-exercises/new-result it seems like port
             # 54321 is internally open for the bamboo agents
-            server.url: "http://${HOST_HOSTNAME}:54321"
+            server.url: "${SERVER_URL}"
         ports:
             - 8080:8080
         networks:
@@ -86,7 +86,7 @@ services:
         ports:
             - 80:80
             - 443:443
-            # see comments above in artemis-app why this port is neededzs
+            # see comments above in artemis-app why this port is needed
             - 54321:54321
         depends_on:
             artemis-app:
