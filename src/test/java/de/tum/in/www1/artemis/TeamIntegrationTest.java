@@ -80,7 +80,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exercise.setMode(ExerciseMode.TEAM);
         exercise.setReleaseDate(ZonedDateTime.now().minusDays(1));
         exercise = exerciseRepo.save(exercise);
-        students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
+        students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", TEST_PREFIX + "student"));
         tutor = userRepo.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
     }
 
