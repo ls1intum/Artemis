@@ -71,6 +71,7 @@ services:
         volumes:
             - ./nginx-files/timeouts.conf:/etc/nginx/conf.d/timeouts.conf:ro
             - ./nginx-files/artemis-nginx.conf:/etc/nginx/conf.d/artemis-nginx.conf:ro
+            - ./nginx-files/artemis-ssl.conf:/etc/nginx/includes/artemis-ssl.conf:ro
             - ./nginx-files/artemis-server.conf:/etc/nginx/includes/artemis-server.conf:ro
             - ./nginx-files/dhparam.pem:/etc/nginx/dhparam.pem:ro
             - ./nginx-files/nginx_502.html:/usr/share/nginx/html/502.html:ro
