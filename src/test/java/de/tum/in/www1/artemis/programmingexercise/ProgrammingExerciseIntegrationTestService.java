@@ -122,6 +122,9 @@ class ProgrammingExerciseIntegrationTestService {
     // this will be a SpyBean because it was configured as SpyBean in the super class of the actual test class (see AbstractArtemisIntegrationTest)
     private GitService gitService;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private Course course;
 
     public ProgrammingExercise programmingExercise;
@@ -1515,6 +1518,13 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void lockAllRepositories() throws Exception {
+        course.setInstructorGroupName(userPrefix + "lockAll");
+        courseRepository.save(course);
+
+        var instructor = database.getUserByLogin(userPrefix + "instructor1");
+        instructor.setGroups(Set.of(userPrefix + "lockAll"));
+        userRepository.save(instructor);
+
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation1.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation1.getStudents());
         mockDelegate.mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), participation2.getStudents());
 
@@ -1545,6 +1555,13 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void unlockAllRepositories() throws Exception {
+        course.setInstructorGroupName(userPrefix + "unlockAll");
+        courseRepository.save(course);
+
+        var instructor = database.getUserByLogin(userPrefix + "instructor1");
+        instructor.setGroups(Set.of(userPrefix + "unlockAll"));
+        userRepository.save(instructor);
+
         mockConfigureRepository(programmingExercise);
         mockDelegate.mockDefaultBranch(programmingExercise);
 
