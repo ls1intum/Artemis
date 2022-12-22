@@ -46,6 +46,8 @@ import de.tum.in.www1.artemis.service.util.RoundingUtil;
 @Profile("scheduling")
 public class ParticipantScoreSchedulerService {
 
+    public static int DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+
     private final Logger logger = LoggerFactory.getLogger(ParticipantScoreSchedulerService.class);
 
     private final TaskScheduler scheduler;
@@ -118,7 +120,14 @@ public class ParticipantScoreSchedulerService {
     protected void scheduleTasks() {
         logger.info("Schedule tasks to process...");
         SecurityUtils.setAuthorizationObject();
+        executeScheduledTasks();
+    }
 
+    /**
+     * Schedule all results that were created/updated since the last run of the cron job.
+     * Additionally, we schedule all participant scores that are outdated/invalid.
+     */
+    public void executeScheduledTasks() {
         // Find all results that were added after the last run (on startup: last time we modified a participant score)
         var latestRun = lastScheduledRun.orElseGet(() -> participantScoreRepository.getLatestModifiedDate().orElse(Instant.now()));
         // Update last run time before we continue with time-consuming operations
@@ -143,7 +152,7 @@ public class ParticipantScoreSchedulerService {
             }
         });
 
-        logger.info("Scheduled processing of {} results and {} participant scores.", resultsToProcess.size(), participantScoresToProcess.size());
+        logger.info("Processing of {} results and {} participant scores.", resultsToProcess.size(), participantScoresToProcess.size());
     }
 
     /**
@@ -172,7 +181,7 @@ public class ParticipantScoreSchedulerService {
             scheduledTasks.remove(participantScoreHash);
         }
 
-        var schedulingTime = ZonedDateTime.now().plus(500, ChronoUnit.MILLIS);
+        var schedulingTime = ZonedDateTime.now().plus(DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS, ChronoUnit.MILLIS);
         var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted), schedulingTime.toInstant());
         scheduledTasks.put(participantScoreHash, future);
         logger.debug("Scheduled task for exercise {} and participant {} at {}.", exerciseId, participantId, schedulingTime);

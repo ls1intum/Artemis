@@ -802,7 +802,7 @@ public class UserTestService {
     private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String registrationNumbers, String status, String courseIds) {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
-        params.add("pageSize", "100");
+        params.add("pageSize", "1000");
         params.add("searchTerm", "");
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");

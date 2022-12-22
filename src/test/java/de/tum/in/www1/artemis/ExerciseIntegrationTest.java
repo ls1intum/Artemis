@@ -18,10 +18,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
+import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
+import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseService;
@@ -46,16 +52,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     private ParticipationRepository participationRepository;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
-
-    @Autowired
-    private ResultRepository resultRepository;
-
-    @Autowired
     private CourseRepository courseRepository;
-
-    @Autowired
-    private ExampleSubmissionRepository exampleSubmissionRepo;
 
     @Autowired
     private TutorParticipationRepository tutorParticipationRepo;
@@ -118,7 +115,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
         course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
         var exam = examRepository.findByCourseId(course.getId()).get(0);
-        var textExercise = examRepository.findAllExercisesByExamId(exam.getId()).stream().filter(ex -> ex instanceof TextExercise).findFirst().get();
+        var textExercise = examRepository.findAllExercisesByExamId(exam.getId()).stream().filter(ex -> ex instanceof TextExercise).findFirst().orElseThrow();
         StatsForDashboardDTO statsForDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                 StatsForDashboardDTO.class);
         assertThat(statsForDashboardDTO.getNumberOfSubmissions().inTime()).isZero();
@@ -154,9 +151,12 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), student)).isEmpty();
 
-        database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false);
-        var allExercises = new HashSet<>(exerciseRepository.findAll());
-        assertThrows(IllegalArgumentException.class, () -> exerciseService.filterOutExercisesThatUserShouldNotSee(allExercises, student));
+        var additionalCourses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false);
+        var exercisesFromMultipleCourses = course.getExercises();
+        for (var additionalCourse : additionalCourses) {
+            exercisesFromMultipleCourses.addAll(additionalCourse.getExercises());
+        }
+        assertThrows(IllegalArgumentException.class, () -> exerciseService.filterOutExercisesThatUserShouldNotSee(exercisesFromMultipleCourses, student));
     }
 
     @Test
@@ -229,13 +229,6 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
                 }
             }
         }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student11", roles = "USER")
-    void testGetExercise_forbidden() throws Exception {
-        database.addCourseWithOneReleasedTextExercise();
-        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId(), HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
@@ -426,9 +419,11 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student11", roles = "USER")
-    void testGetExerciseDetails_forbidden() throws Exception {
-        database.addCourseWithOneReleasedTextExercise();
-        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
+    void testGetExercise_forbidden() throws Exception {
+        var course = database.addCourseWithOneReleasedTextExercise();
+        var exercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        request.get("/api/exercises/" + exercise.getId(), HttpStatus.FORBIDDEN, Exercise.class);
+        request.get("/api/exercises/" + exercise.getId() + "/details", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
@@ -469,8 +464,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_submissionsWithoutAssessments() throws Exception {
         var validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        database.addCourseWithOneModelingExercise();
-        var exercise = exerciseRepository.findAll().get(0);
+        var course = database.addCourseWithOneModelingExercise();
+        var exercise = database.getFirstExerciseWithType(course, ModelingExercise.class);
         var exampleSubmission = database.generateExampleSubmission(validModel, exercise, true);
         database.addExampleSubmission(exampleSubmission);
         Exercise receivedExercise = request.get("/api/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.OK, Exercise.class);

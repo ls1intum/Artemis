@@ -2112,7 +2112,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(examChecklistDTO.getAllExamExercisesAllStudentsPrepared()).isFalse();
         assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 5L);
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isNull();
-        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(114L, 114L);
+        assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(90L, 90L);
 
         // change back to instructor user
         database.changeUser(TEST_PREFIX + "instructor1");
