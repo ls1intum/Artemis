@@ -197,9 +197,7 @@
             >
             </jhi-reset-repo-button>
             <!-- PROBLEM STATEMENT END -->
-            <ng-container
-                *ngIf="exampleSolutionInfo?.exampleSolutionUML || exampleSolutionInfo?.exampleSolution || exercise?.exampleSolutionPublished"
-            >
+            <ng-container *ngIf="exampleSolutionInfo?.exampleSolutionUML || exampleSolutionInfo?.exampleSolution || exercise?.exampleSolutionPublished">
                 <div class="row mb-2 mt-2 align-items-baseline">
                     <div class="control-label" (click)="changeExampleSolution()">
                         <span class="h3 pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</span>
