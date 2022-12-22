@@ -6,13 +6,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import java.security.SecureRandom;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import javax.mail.internet.MimeMessage;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -70,21 +70,14 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
         Course course = this.database.createCourse();
         student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
-        tutorialGroup = createAndSaveTutorialGroup(course.getId(), "ExampleTitle1", "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
+        tutorialGroup = createAndSaveTutorialGroup(course.getId(), new SecureRandom().nextInt(1000000000) + "", "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
                 userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get(),
                 Set.of(userRepository.findOneByLogin(TEST_PREFIX + "student1").get(), userRepository.findOneByLogin(TEST_PREFIX + "student2").get(),
                         userRepository.findOneByLogin(TEST_PREFIX + "student3").get(), userRepository.findOneByLogin(TEST_PREFIX + "student4").get(),
                         userRepository.findOneByLogin(TEST_PREFIX + "student5").get()));
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
-
-        notificationSettingRepository.deleteAll();
         tutorialGroupNotificationRepository.deleteAll();
-    }
-
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
     }
 
     private void verifyRepositoryCallWithCorrectNotification(int numberOfGroupsAndCalls, String expectedNotificationTitle) {
@@ -98,8 +91,8 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void notifyAboutTutorialGroupUpdate_shouldSaveAndSend(boolean contactTutor) {
-        prepareNotificationSettingForTest(student1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
-        prepareNotificationSettingForTest(tutor1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
+        var setting1 = prepareNotificationSettingForTest(student1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
+        var setting2 = prepareNotificationSettingForTest(tutor1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
 
         tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(tutorialGroup, contactTutor, "LoremIpsum");
         verifyRepositoryCallWithCorrectNotification(1, TUTORIAL_GROUP_UPDATED_TITLE);
@@ -109,20 +102,26 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
         else {
             verifyEmail(1);
         }
+
+        notificationSettingRepository.deleteById(setting1.getId());
+        notificationSettingRepository.deleteById(setting2.getId());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void notifyAboutTutorialGroupDeletion_shouldSaveAndSend() {
-        prepareNotificationSettingForTest(student1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
+        var setting = prepareNotificationSettingForTest(student1, NOTIFICATION__TUTORIAL_GROUP_NOTIFICATION__TUTORIAL_GROUP_DELETE_UPDATE);
         tutorialGroupNotificationService.notifyAboutTutorialGroupDeletion(tutorialGroup);
         verifyRepositoryCallWithCorrectNotification(1, TUTORIAL_GROUP_DELETED_TITLE);
         verifyEmail(1);
+
+        notificationSettingRepository.deleteById(setting.getId());
     }
 
-    private void prepareNotificationSettingForTest(User user, String notificationSettingIdentifier) {
+    private NotificationSetting prepareNotificationSettingForTest(User user, String notificationSettingIdentifier) {
         NotificationSetting notificationSetting = new NotificationSetting(user, true, true, notificationSettingIdentifier);
         notificationSettingRepository.save(notificationSetting);
+        return notificationSetting;
     }
 
     private void verifyEmail(int times) {

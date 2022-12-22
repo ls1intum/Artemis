@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +14,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
-import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
@@ -34,9 +32,6 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private ResultRepository resultRepository;
-
-    @Autowired
-    private MigrationChangeRepository migrationChangeRepository;
 
     private TextExercise textExercise;
 
@@ -83,11 +78,6 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
         this.teamTextExercise = this.database.createTeamTextExercise(course, null, null, null);
 
         this.team = this.database.createTeam(Set.of(this.student1), this.tutor1, this.teamTextExercise, TEST_PREFIX + "Team");
-    }
-
-    @AfterEach
-    void tearDown() {
-        migrationChangeRepository.deleteAllInBatch();
     }
 
     @Test

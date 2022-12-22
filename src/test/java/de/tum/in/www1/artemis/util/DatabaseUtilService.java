@@ -216,7 +216,7 @@ public class DatabaseUtilService {
     private TutorParticipationRepository tutorParticipationRepo;
 
     @Autowired
-    public PostRepository postRepository;
+    private PostRepository postRepository;
 
     @Autowired
     private AnswerPostRepository answerPostRepository;
@@ -4390,7 +4390,7 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
-    public Course createCourseWithTutor(String login) {
+    public Course createCourseWithTextExerciseAndTutor(String login) {
         Course course = this.createCourse();
         TextExercise textExercise = createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         StudentParticipation participation = ModelFactory.generateStudentParticipationWithoutUser(InitializationState.INITIALIZED, textExercise);
