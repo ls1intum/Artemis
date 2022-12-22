@@ -24,7 +24,7 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockResultService } from '../../helpers/mocks/service/mock-result.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { Feedback } from 'app/entities/feedback.model';
+import { Feedback, FeedbackType } from 'app/entities/feedback.model';
 
 describe('ExerciseScoresExportButtonComponent', () => {
     let component: ExerciseScoresExportButtonComponent;
@@ -323,13 +323,21 @@ describe('ExerciseScoresExportButtonComponent', () => {
         const feedback1 = new Feedback();
         feedback1.text = 'TestName1';
         feedback1.positive = true;
+        feedback1.type = FeedbackType.AUTOMATIC;
 
         const feedback2 = new Feedback();
         feedback2.text = 'TestName2';
         feedback2.positive = false;
         feedback2.detailText = 'Detailed text with \nnewlines and \nsymbols ;.\'~"';
+        feedback2.type = FeedbackType.AUTOMATIC;
 
-        feedbacks.push(feedback1, feedback2);
+        const feedback3 = new Feedback();
+        feedback3.text = 'File src/test/exercise/Main.java at line 123';
+        feedback3.positive = false;
+        feedback3.detailText = 'This is a manual feedback';
+        feedback3.type = FeedbackType.MANUAL;
+
+        feedbacks.push(feedback1, feedback2, feedback3);
 
         return feedbacks;
     }
