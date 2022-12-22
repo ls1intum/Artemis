@@ -29,9 +29,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     private CourseRepository courseRepository;
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
