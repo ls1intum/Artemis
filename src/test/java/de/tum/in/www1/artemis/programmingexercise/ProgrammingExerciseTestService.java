@@ -1421,7 +1421,7 @@ public class ProgrammingExerciseTestService {
         setupTeamExercise();
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", userPrefix));
+        Set<User> students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", userPrefix + "student"));
         Team team = new Team().name("Team 1").shortName(userPrefix + teamShortName).exercise(exercise).students(students);
         team = teamRepository.save(exercise, team);
 
@@ -1452,13 +1452,11 @@ public class ProgrammingExerciseTestService {
         setupTeamExercise();
 
         // Create a team with students
-        Set<User> students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", userPrefix));
-        int numberOfStudents = students.size();
-
+        Set<User> students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", userPrefix + "student"));
         Team team = new Team().name("Team 1").shortName(userPrefix + teamShortName).exercise(exercise).students(students);
         team = teamRepository.save(exercise, team);
 
-        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents);
+        assertThat(team.getStudents()).as("Students were correctly added to team").hasSize(numberOfStudents).hasSameSizeAs(students);
 
         // Set up mockRetrieveArtifacts requests for start participation
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, team.getParticipantIdentifier(), team.getStudents(), true, HttpStatus.CREATED);
@@ -1484,7 +1482,7 @@ public class ProgrammingExerciseTestService {
 
         // create a team for the user (necessary condition before starting an exercise)
         // final String edxUsername = userPrefixEdx.get() + "student"; // TODO: Fix this (userPrefixEdx is missing)
-        final String edxUsername = userPrefix + "student" + "ltinotpres";
+        final String edxUsername = userPrefix + "ltinotpres" + "student";
 
         User edxStudent = ModelFactory.generateActivatedUsers(edxUsername, new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).get(0);
         edxStudent.setInternal(true);
