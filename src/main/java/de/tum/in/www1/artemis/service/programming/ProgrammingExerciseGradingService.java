@@ -738,7 +738,17 @@ public class ProgrammingExerciseGradingService {
             result.setScore(score, programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         }
 
-        // TODO: setting feedback credits shouldn't happen here.
+        updateFeedbacks(result, allTestCases, programmingExercise);
+    }
+
+    private void updateFeedbacks(Result result, Set<ProgrammingExerciseTestCase> allTestCases, ProgrammingExercise programmingExercise) {
+        double weightSum = calculateWeightSum(allTestCases);
+
+        allTestCases.stream().filter(testCase -> testCase.isSuccessful(result)).forEach(testCase -> {
+            double credits = calculatePointsForTestCase(result, programmingExercise, testCase, allTestCases.size(), weightSum);
+            setCreditsForTestCaseFeedback(result, testCase, credits);
+        });
+
         result.getFeedbacks().stream()//
                 .filter(feedback -> Objects.isNull(feedback.getCredits()))//
                 .forEach(feedback -> feedback.setCredits(0D));
