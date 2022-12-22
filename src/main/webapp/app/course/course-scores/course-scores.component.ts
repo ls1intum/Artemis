@@ -521,7 +521,7 @@ export class CourseScoresComponent implements OnInit, OnDestroy {
      * @param gradingScale The grading scale of the course.
      * @param plagiarismMap An object which has value true for a student id if the student has at least one PlagiarismVerdict.PLAGIARISM verdict assigned in the course.
      */
-    findStudentGradeStep(student: CourseScoresStudentStatistics, gradingScale: GradingScale, plagiarismMap: { [id: number]: boolean }) {
+    findStudentGradeStep(student: CourseScoresStudentStatistics, gradingScale: GradingScale, plagiarismMap: { [id: number]: boolean }): GradeStep | undefined {
         if (!student.participations?.length) {
             // Currently the server does not return CourseScoresStudentStatistics for users without participations,
             // but this should handle noParticipation grade if the server response changes.
