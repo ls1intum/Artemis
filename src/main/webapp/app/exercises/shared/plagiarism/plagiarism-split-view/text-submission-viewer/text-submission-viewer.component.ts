@@ -10,6 +10,7 @@ import { DomainChange, DomainType, FileType } from 'app/exercises/programming/sh
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { captureException } from '@sentry/angular';
+import { escape } from 'lodash-es';
 
 type FilesWithType = { [p: string]: FileType };
 
@@ -175,7 +176,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 this.repositoryService.getFile(file, domain).subscribe({
                     next: ({ fileContent }) => {
                         this.loading = false;
-                        this.fileContent = this.insertMatchTokens(this.sanitize(fileContent));
+                        this.fileContent = this.insertMatchTokens(escape(fileContent));
                     },
                     error: () => {
                         this.loading = false;
@@ -242,16 +243,5 @@ export class TextSubmissionViewerComponent implements OnChanges {
         });
 
         return rows.join('\n');
-    }
-
-    /**
-     * Replace characters in text so that the text can be displayed in html
-     *
-     * @param text Text containing characters to be replaced
-     * @return Text which characters are replaced
-     * @private
-     */
-    private sanitize(text: string): string {
-        return text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 }
