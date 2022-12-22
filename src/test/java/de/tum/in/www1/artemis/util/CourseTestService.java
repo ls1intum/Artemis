@@ -687,11 +687,7 @@ public class CourseTestService {
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
         List<Course> coursesCreated = database.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false);
         for (var course : coursesCreated) {
-            course.setStudentGroupName(userPrefix + "student" + suffix);
-            course.setTeachingAssistantGroupName(course.getTeachingAssistantGroupName() + suffix);
-            course.setEditorGroupName(course.getEditorGroupName() + suffix);
-            course.setInstructorGroupName(course.getInstructorGroupName() + suffix);
-            courseRepo.save(course);
+            updateCourseGroups(course, suffix);
         }
 
         // Perform the request that is being tested here
@@ -991,10 +987,14 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses() throws Exception {
-        adjustUserGroupsToCustomGroups();
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, 6, 4, 4, 2, true, 1, validModel);
-        testCourse.setTeachingAssistantGroupName(userPrefix + "tutors");
+
+        String suffix = "assessStats";
+        adjustUserGroupsToCustomGroups(suffix);
+        // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
+        updateCourseGroups(testCourse, suffix);
+
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
@@ -1057,6 +1057,12 @@ public class CourseTestService {
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses_Large() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, 9, 8, 8, 5, true, 5, validModel);
+
+        String suffix = "assessStatsLarge";
+        adjustUserGroupsToCustomGroups(suffix);
+        // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
+        updateCourseGroups(testCourse, suffix);
+
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 8 submissions of 3 exercises. The rest two only 8 of two exercises.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(3 * 8);
@@ -1083,6 +1089,14 @@ public class CourseTestService {
         assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfComplaintResponses()).isZero();
         // 9 exercises, for each one there are 5 complaintResponses
         assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfComplaintResponses()).isEqualTo(9 * 5);
+    }
+
+    private void updateCourseGroups(Course course, String suffix) {
+        course.setStudentGroupName(userPrefix + "student" + suffix);
+        course.setTeachingAssistantGroupName(userPrefix + "tutor" + suffix);
+        course.setEditorGroupName(userPrefix + "editor" + suffix);
+        course.setInstructorGroupName(userPrefix + "instructor" + suffix);
+        courseRepo.save(course);
     }
 
     // Test
