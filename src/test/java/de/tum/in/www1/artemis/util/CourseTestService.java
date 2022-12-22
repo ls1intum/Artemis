@@ -980,8 +980,10 @@ public class CourseTestService {
 
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaintsAndResponses() throws Exception {
+        adjustUserGroupsToCustomGroups();
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, 6, 4, 4, 2, true, 1, validModel);
+        testCourse.setTeachingAssistantGroupName(userPrefix + "tutors");
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
