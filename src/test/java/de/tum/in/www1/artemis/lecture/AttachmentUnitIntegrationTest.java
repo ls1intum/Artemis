@@ -218,6 +218,6 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
 
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getAttachment().getId(), HttpStatus.NOT_FOUND, Attachment.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, Attachment.class);
     }
 }
