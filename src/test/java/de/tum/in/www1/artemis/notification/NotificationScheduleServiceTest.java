@@ -49,8 +49,8 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
     void init() {
         database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         user = database.getUserByLogin(TEST_PREFIX + "student1");
-        database.addCourseWithFileUploadExercise();
-        exercise = exerciseRepository.findAll().get(0);
+        final Course course = database.addCourseWithModelingAndTextExercise();
+        exercise = database.getFirstExerciseWithType(course, TextExercise.class);
         exercise.setReleaseDate(now().plus(500, ChronoUnit.MILLIS));
         exercise.setAssessmentDueDate(now().plus(1000, ChronoUnit.MILLIS));
         exerciseRepository.save(exercise);
@@ -68,10 +68,9 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
     @Timeout(5)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtReleaseDate() {
-        var countBefore = notificationRepository.count();
         notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED));
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
-        await().until(() -> notificationRepository.count() > countBefore);
+        await().until(() -> notificationRepository.count() > 0);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(exercise);
         verify(javaMailSender, timeout(2000).times(1)).send(any(MimeMessage.class));
     }
