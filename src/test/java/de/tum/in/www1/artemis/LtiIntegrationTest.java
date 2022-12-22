@@ -208,6 +208,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_RequireExistingUser(String requestBody) throws Exception {
+        course = courseRepository.findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         OnlineCourseConfiguration onlineCourseConfiguration = course.getOnlineCourseConfiguration();
         onlineCourseConfiguration.setRequireExistingUser(true);
         courseRepository.save(course);
@@ -298,6 +299,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void dynamicRegistrationFailsForNonOnlineCourse() throws Exception {
         course.setOnlineCourse(false);
+        course.setOnlineCourseConfiguration(null);
         courseRepository.save(course);
 
         var params = new LinkedMultiValueMap<String, String>();
