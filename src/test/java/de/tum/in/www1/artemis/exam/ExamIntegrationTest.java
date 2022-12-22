@@ -2434,22 +2434,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(ints = { 0, 1, 2 })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetStatsForExamAssessmentDashboardOneCorrectionRound() throws Exception {
-        testGetStatsForExamAssessmentDashboard(1);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetStatsForExamAssessmentDashboardTwoCorrectionRounds() throws Exception {
-        testGetStatsForExamAssessmentDashboard(2);
-    }
-
     void testGetStatsForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
-        log.error("testGetStatsForExamAssessmentDashboard: step 1 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 1 done");
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
 
-        User examTutor1 = userRepo.findOneByLogin(TEST_PREFIX + "tutor1").get();
-        User examTutor2 = userRepo.findOneByLogin(TEST_PREFIX + "tutor2").get();
+        User examTutor1 = userRepo.findOneByLogin(TEST_PREFIX + "tutor1").orElseThrow();
+        User examTutor2 = userRepo.findOneByLogin(TEST_PREFIX + "tutor2").orElseThrow();
 
         var examVisibleDate = now().minusMinutes(5);
         var examStartDate = now().plusMinutes(5);
@@ -2460,7 +2450,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam = examRepository.save(exam);
         exam = database.addExerciseGroupsAndExercisesToExam(exam, false);
 
-        log.error("testGetStatsForExamAssessmentDashboard: step 2 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 2 done");
 
         var stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         assertThat(stats.getNumberOfSubmissions()).isInstanceOf(DueDateStat.class);
@@ -2474,7 +2464,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         }
         assertThat(stats.getNumberOfAssessmentLocks()).isZero();
         assertThat(stats.getNumberOfSubmissions().inTime()).isZero();
-        assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
+        if (numberOfCorrectionRounds > 0) {
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()[0].inTime()).isZero();
+        }
+        else {
+            assertThat(stats.getNumberOfAssessmentsOfCorrectionRounds()).isNull();
+        }
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
 
         if (numberOfCorrectionRounds == 0) {
@@ -2485,7 +2480,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).isEmpty();
 
-        log.error("testGetStatsForExamAssessmentDashboard: step 3 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 3 done");
 
         // register users. Instructors are ignored from scores as they are exclusive for test run exercises
         Set<User> registeredStudents = getRegisteredStudentsForExam();
@@ -2495,7 +2490,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam = examRepository.save(exam);
         exam = examRepository.findWithRegisteredUsersAndExerciseGroupsAndExercisesById(exam.getId()).get();
 
-        log.error("testGetStatsForExamAssessmentDashboard: step 4 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 4 done");
 
         // generate individual student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
@@ -2511,7 +2506,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         });
         studentExamRepository.saveAll(studentExams);
 
-        log.error("testGetStatsForExamAssessmentDashboard: step 5 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 5 done");
 
         // Fetch the created participations and assign them to the exercises
         int participationCounter = 0;
@@ -2523,7 +2518,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         }
         assertEquals(participationCounter, noGeneratedParticipations);
 
-        log.error("testGetStatsForExamAssessmentDashboard: step 6 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 6 done");
 
         // Assign submissions to the participations
         for (var exercise : exercisesInExam) {
@@ -2536,7 +2531,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             }
         }
 
-        log.error("testGetStatsForExamAssessmentDashboard: step 7 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 7 done");
 
         // check the stats again - check the count of submitted submissions
         stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
@@ -2550,7 +2545,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Score used for all exercise results
         Double resultScore = 75.0;
 
-        log.error("testGetStatsForExamAssessmentDashboard: step 7 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 7 done");
 
         // Lock all submissions
         for (var exercise : exercisesInExam) {
@@ -2573,7 +2568,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 submissionRepository.save(submission);
             }
         }
-        log.error("testGetStatsForExamAssessmentDashboard: step 8 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 8 done");
 
         // check the stats again
         database.changeUser(TEST_PREFIX + "tutor1");
@@ -2587,7 +2582,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(stats.getNumberOfComplaints()).isZero();
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isEqualTo(studentExams.size() * 5L);
 
-        log.error("testGetStatsForExamAssessmentDashboard: step 9 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 9 done");
 
         // test the query needed for assessment information
         database.changeUser(TEST_PREFIX + "tutor2");
@@ -2600,13 +2595,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 assertThat(locks).isEqualTo(studentExams.size());
         });
 
-        log.error("testGetStatsForExamAssessmentDashboard: step 10 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 10 done");
 
         database.changeUser(TEST_PREFIX + "instructor1");
         lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).hasSize(studentExams.size() * 5);
 
-        log.error("testGetStatsForExamAssessmentDashboard: step 11 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 11 done");
 
         // Finish assessment of all submissions
         for (var exercise : exercisesInExam) {
@@ -2620,7 +2615,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             }
         }
 
-        log.error("testGetStatsForExamAssessmentDashboard: step 12 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 12 done");
 
         // check the stats again
         stats = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/stats-for-exam-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
@@ -2632,7 +2627,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(stats.getNumberOfComplaints()).isZero();
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
 
-        log.error("testGetStatsForExamAssessmentDashboard: step 13 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 13 done");
 
         lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
         assertThat(lockedSubmissions).isEmpty();
@@ -2640,7 +2635,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             lockAndAssessForSecondCorrection(exam, course, studentExams, exercisesInExam, numberOfCorrectionRounds);
         }
 
-        log.error("testGetStatsForExamAssessmentDashboard: step 14 done");
+        log.debug("testGetStatsForExamAssessmentDashboard: step 14 done");
     }
 
     private void lockAndAssessForSecondCorrection(Exam exam, Course course, List<StudentExam> studentExams, List<Exercise> exercisesInExam, int numberOfCorrectionRounds)
