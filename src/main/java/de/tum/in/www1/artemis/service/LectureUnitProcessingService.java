@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -33,14 +32,13 @@ public class LectureUnitProcessingService {
 
     public List<LectureUnitsDTO> splitUnits(List<LectureUnitSplitDTO> lectureUnitSplitDTOs, MultipartFile file) throws IOException {
 
-        // TODO: 1. split the file into multiple units
-        // TODO: 2. create attachment, attachmentUnit, lecture and file in multipart type
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         List<LectureUnitsDTO> units = new ArrayList<>();
         Splitter pdfSplitter = new Splitter();
         PDDocument document = PDDocument.load(file.getBytes());
+        List<PDDocument> documentUnits;
 
-        lectureUnitSplitDTOs.forEach(lectureUnit -> {
+        for (LectureUnitSplitDTO lectureUnit : lectureUnitSplitDTOs) {
             AttachmentUnit attachmentUnit = new AttachmentUnit();
             Attachment attachment = new Attachment();
             LectureUnitsDTO lectureUnitsDTO = new LectureUnitsDTO();
@@ -50,44 +48,44 @@ public class LectureUnitProcessingService {
             pdfSplitter.setEndPage(Integer.parseInt(lectureUnit.endPage));
             pdfSplitter.setSplitAtPage(Integer.parseInt(lectureUnit.endPage));
 
-            List<PDDocument> documentUnits;
-            try {
-                documentUnits = pdfSplitter.split(document);
-                pdDocumentInformation.setTitle(lectureUnit.getUnitName());
-                documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
-                System.out.println(documentUnits.get(0).getDocumentInformation().getTitle());
-                documentUnits.get(0).save(outputStream);
+            documentUnits = pdfSplitter.split(document);
+            System.out.println(documentUnits.size());
+            pdDocumentInformation.setTitle(lectureUnit.getUnitName());
+            documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
+            System.out.println(documentUnits.get(0).getDocumentInformation().getTitle());
+            documentUnits.get(0).save(outputStream);
 
-                // setup attachmentUnit and attachment
-                attachmentUnit.setDescription("");
-                attachment.setName(lectureUnit.getUnitName());
-                attachment.setAttachmentType(AttachmentType.FILE);
-                attachment.setVersion(1);
-                attachment.setUploadDate(ZonedDateTime.now());
+            // setup attachmentUnit and attachment
+            attachmentUnit.setDescription("");
+            attachment.setName(lectureUnit.getUnitName());
+            attachment.setAttachmentType(AttachmentType.FILE);
+            attachment.setVersion(1);
+            attachment.setReleaseDate(lectureUnit.getReleaseDate());
+            attachment.setUploadDate(ZonedDateTime.now());
 
-                lectureUnitsDTO.setAttachmentUnit(attachmentUnit);
-                lectureUnitsDTO.setAttachment(attachment);
+            lectureUnitsDTO.setAttachmentUnit(attachmentUnit);
+            lectureUnitsDTO.setAttachment(attachment);
 
-                // prepare file to be set from byte[] to MultipartFile
-                Path tempFile = Files.createTempFile(lectureUnit.getUnitName(), ".pdf");
-                Files.write(tempFile, outputStream.toByteArray());
-                System.out.println(tempFile.toString() + " :::test");
-                File file1 = new File(tempFile.toString());
-                FileItem fileItem = new DiskFileItem("mainUnitFile", Files.probeContentType(file1.toPath()), false, file1.getName(), (int) file1.length(), file1.getParentFile());
+            // prepare file to be set from byte[] to MultipartFile by using CommonsMultipartFile
+            String tempDirectory = System.getProperty("java.io.tmpdir");
 
-                InputStream input = new FileInputStream(file1);
-                OutputStream os = fileItem.getOutputStream();
-                IOUtils.copy(input, os);
-                MultipartFile file2 = new CommonsMultipartFile(fileItem);
+            File tempFile = new File(tempDirectory, lectureUnit.getUnitName() + ".pdf");
+            Files.write(tempFile.toPath(), outputStream.toByteArray());
 
-                lectureUnitsDTO.setFile(file2);
-            }
-            catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            File outputFile = new File(tempFile.toString());
+            FileItem fileItem = new DiskFileItem("mainUnitFile", Files.probeContentType(outputFile.toPath()), false, outputFile.getName(), (int) outputFile.length(),
+                    outputFile.getParentFile());
+
+            InputStream input = new FileInputStream(outputFile);
+            OutputStream os = fileItem.getOutputStream();
+            IOUtils.copy(input, os);
+            MultipartFile multipartFile = new CommonsMultipartFile(fileItem);
+            lectureUnitsDTO.setFile(multipartFile);
 
             units.add(lectureUnitsDTO);
-        });
+            tempFile.deleteOnExit();
+            documentUnits.get(0).close();
+        }
 
         document.close();
         return units;
