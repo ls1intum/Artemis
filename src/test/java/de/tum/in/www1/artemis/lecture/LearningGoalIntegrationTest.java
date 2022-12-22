@@ -89,6 +89,9 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
 
+    @Autowired
+    private TeamRepository teamRepository;
+
     private Long idOfCourse;
 
     private Long idOfCourseTwo;
@@ -119,6 +122,13 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @BeforeEach
     void setupTestScenario() {
+        // We can not remove the teams due to the existing participations etc., but we can remove all students from them so that they are no longer accessed
+        // The students are reused between tests
+        // TODO: Check if this can also be solved by changing ExerciseRepo#calculateStatisticsForTeamCourseExercises to check for the exerciseId
+        var existingTeams = teamRepository.findAll().stream().filter(t -> t.getShortName().contains(TEST_PREFIX)).toList();
+        existingTeams.forEach(t -> t.setStudents(Set.of()));
+        teamRepository.saveAll(existingTeams);
+
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
         this.database.addUsers(TEST_PREFIX, 5, 10, 0, 10);
@@ -586,6 +596,8 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getLearningGoalCourseProgressTeamsTest_asInstructorOne() throws Exception {
+        // adjustToCustomGroup("asInstructorOne");
+
         cleanUpInitialParticipations();
 
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
