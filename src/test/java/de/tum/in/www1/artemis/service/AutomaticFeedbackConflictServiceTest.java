@@ -116,6 +116,8 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void changedFeedbackConflictsType() {
+        var feedbackConflictCountBefore = feedbackConflictRepository.count();
+
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
 
@@ -140,13 +142,13 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
         atheneRequestMockProvider.mockFeedbackConsistency(createRemoteServiceResponse(feedback1, feedback2));
         automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(Set.of(textBlock), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
 
-        await().until(() -> feedbackConflictRepository.count() >= 0);
+        await().until(() -> feedbackConflictRepository.count() > feedbackConflictCountBefore);
 
-        // TODO: Fix this
-        assertThat(feedbackConflictRepository.findAll()).hasSize(1);
-        assertThat(feedbackConflictRepository.findAll().get(0).getFirstFeedback()).isEqualTo(feedback1);
-        assertThat(feedbackConflictRepository.findAll().get(0).getSecondFeedback()).isEqualTo(feedback2);
-        assertThat(feedbackConflictRepository.findAll().get(0).getType()).isEqualTo(FeedbackConflictType.INCONSISTENT_SCORE);
+        assertThat(feedbackConflictRepository.count()).isEqualTo(feedbackConflictCountBefore + 1);
+        var newFeedbackConflict = feedbackConflictRepository.findByFirstFeedbackIdAndConflict(feedback1.getId(), true).iterator().next();
+        assertThat(newFeedbackConflict.getFirstFeedback()).isEqualTo(feedback1);
+        assertThat(newFeedbackConflict.getSecondFeedback()).isEqualTo(feedback2);
+        assertThat(newFeedbackConflict.getType()).isEqualTo(FeedbackConflictType.INCONSISTENT_SCORE);
     }
 
     /**
@@ -244,10 +246,10 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testFeedbackConflictDelete() {
-        // TODO: Fix this
-        createTextSubmissionWithResultFeedbackAndConflicts();
+        var textSubmission = createTextSubmissionWithResultFeedbackAndConflicts();
         feedbackConflictRepository.deleteAll();
-        assertThat(feedbackRepository.findAll()).hasSize(2);
+        var feedbacks = feedbackRepository.findByResult(textSubmission.getLatestResult());
+        assertThat(feedbacks).hasSize(2);
     }
 
     private List<FeedbackConflictResponseDTO> createRemoteServiceResponse(Feedback firstFeedback, Feedback secondFeedback) {
