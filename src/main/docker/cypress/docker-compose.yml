@@ -1,27 +1,28 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Cypress Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
+# TODO: this requires a newer docker compose version for the bamboo agents which is already requested
+
 services:
     mysql:
         extends:
             file: ../mysql.yml
             service: mysql
-        healthcheck:
-            test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
-            interval: 1s
-            timeout: 3s
-            retries: 30
 
     artemis-app:
-        # TODO: check bamboo E2E pipeline and how we can integrate this here
-        build:
-            # This is required to copy the Artemis war file properly into the container
-            context: ../../../..
-            dockerfile: ../artemis/Dockerfile
-        volumes:
-            - ../../resources/config/application-prod.yml:/opt/artemis/config/application-prod.yml:ro
-            - ./application.yml:/opt/artemis/config/application.yml:ro
+        extends:
+            file: ./artemis/artemis.yml
+            service: artemis-app
+        depends_on:
+            mysql:
+                condition: service_healthy
+        env_file:
+            - ../../resources/config/docker-cypress-application-local.env
+        # TODO: after the pipeline is running on bamboo maybe also migrate/merge these environment variables
         environment:
-            _JAVA_OPTIONS: "-Xmx5120m -Xms2560m"
+            spring.profiles.active: "artemis,bamboo,bitbucket,jira,prod,cypress"
             JHIPSTER_SLEEP: 30 # gives time for other services to boot before the application
-            spring.profiles.active: "prod,bamboo,bitbucket,jira,artemis,cypress"
             spring.datasource.url: "${DATASOURCE_URL}"
             spring.datasource.username: root
             spring.datasource.password: ""
@@ -42,19 +43,14 @@ services:
             server.port: "${SERVER_PORT}"
         ports:
             - ${SERVER_PORT}:${SERVER_PORT}
-        networks:
-            - artemis
-        depends_on:
-            mysql:
-                condition: service_healthy
 
     artemis-cypress:
         # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
         image: cypress/browsers:node18.12.0-chrome107
         pull_policy: always
         depends_on:
-            - artemis-app
-            - artemis-mysql
+            artemis-app:
+                condition: service_healthy
         environment:
             - CYPRESS_baseUrl
             - CYPRESS_adminUsername
@@ -76,6 +72,10 @@ services:
 networks:
     artemis:
         driver: "bridge"
+        name: artemis
 
 volumes:
     artemis-mysql-data:
+        name: artemis-mysql-data
+    artemis-data:
+        name: artemis-data
