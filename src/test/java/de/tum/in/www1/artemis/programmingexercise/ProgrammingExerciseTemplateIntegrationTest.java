@@ -100,7 +100,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
     }
 
     @BeforeEach
-    @SuppressWarnings("resource")
     void setup() throws Exception {
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 1, 1, 0, 1);
         Course course = database.addEmptyCourse();

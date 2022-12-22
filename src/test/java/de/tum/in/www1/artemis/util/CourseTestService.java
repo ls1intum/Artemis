@@ -89,9 +89,6 @@ public class CourseTestService {
     private UserRepository userRepo;
 
     @Autowired
-    private NotificationRepository notificationRepo;
-
-    @Autowired
     private ExamRepository examRepo;
 
     @Autowired
@@ -165,27 +162,31 @@ public class CourseTestService {
         database.createAndSaveUser(userPrefix + "instructor2");
     }
 
-    public void adjustUserGroupsToCustomGroups() {
+    public void adjustUserGroupsToCustomGroups(String suffix) {
         for (int i = 1; i <= numberOfStudents; i++) {
             var user = database.getUserByLogin(userPrefix + "student" + i);
-            user.setGroups(Set.of(userPrefix + "students"));
+            user.setGroups(Set.of(userPrefix + "student" + suffix));
             userRepo.save(user);
         }
         for (int i = 1; i <= numberOfEditors; i++) {
             var user = database.getUserByLogin(userPrefix + "editor" + i);
-            user.setGroups(Set.of(userPrefix + "editors"));
+            user.setGroups(Set.of(userPrefix + "editor" + suffix));
             userRepo.save(user);
         }
         for (int i = 1; i <= numberOfTutors; i++) {
             var user = database.getUserByLogin(userPrefix + "tutor" + i);
-            user.setGroups(Set.of(userPrefix + "tutors"));
+            user.setGroups(Set.of(userPrefix + "tutor" + suffix));
             userRepo.save(user);
         }
         for (int i = 1; i <= numberOfInstructors; i++) {
             var user = database.getUserByLogin(userPrefix + "instructor" + i);
-            user.setGroups(Set.of(userPrefix + "instructors"));
+            user.setGroups(Set.of(userPrefix + "instructor" + suffix));
             userRepo.save(user);
         }
+    }
+
+    public void adjustUserGroupsToCustomGroups() {
+        adjustUserGroupsToCustomGroups("");
     }
 
     public void tearDown() {
@@ -681,21 +682,30 @@ public class CourseTestService {
 
     // Test
     public void testGetAllCoursesForDashboard() throws Exception {
+        String suffix = "getall";
+        adjustUserGroupsToCustomGroups(suffix);
+        // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
         List<Course> coursesCreated = database.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false);
+        for (var course : coursesCreated) {
+            course.setStudentGroupName(userPrefix + "student" + suffix);
+            course.setTeachingAssistantGroupName(course.getTeachingAssistantGroupName() + suffix);
+            course.setEditorGroupName(course.getEditorGroupName() + suffix);
+            course.setInstructorGroupName(course.getInstructorGroupName() + suffix);
+            courseRepo.save(course);
+        }
 
         // Perform the request that is being tested here
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-        System.err.println("Found " + courses.size() + " courses");
 
         Course activeCourse = coursesCreated.get(0);
         Course inactiveCourse = coursesCreated.get(1);
 
         // Test that the prepared inactive course was filtered out
-        assertThat(courses.stream().filter(c -> c.getId() == inactiveCourse.getId()).toList()).as("Inactive course was filtered out").isEmpty();
+        assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), inactiveCourse.getId())).toList()).as("Inactive course was filtered out").isEmpty();
 
-        Optional<Course> optionalCourse = courses.stream().filter(c -> c.getId() == activeCourse.getId()).findFirst();
+        Optional<Course> optionalCourse = courses.stream().filter(c -> Objects.equals(c.getId(), activeCourse.getId())).findFirst();
         assertThat(optionalCourse).as("Active course was not filtered").isPresent();
-        Course activeCourseNotFiltered = optionalCourse.get();
+        Course activeCourseNotFiltered = optionalCourse.orElseThrow();
 
         // Test that the remaining course has five exercises
         assertThat(activeCourseNotFiltered.getExercises()).as("Five exercises are returned").hasSize(5);
@@ -728,11 +738,12 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesWithoutActiveExercises() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
-                userPrefix + "instructor");
+        String suffix = "active";
+        adjustUserGroupsToCustomGroups(suffix);
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
+                userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
         course = courseRepo.save(course);
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-        System.err.println("Found " + courses.size() + " courses");
         final var finalCourse = course;
         Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
         assertThat(courseInList).isNotNull();
@@ -742,12 +753,12 @@ public class CourseTestService {
     // Test
     public void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
         adjustUserGroupsToCustomGroups();
-        Course courseActive = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(), userPrefix + "students",
-                userPrefix + "tutors", userPrefix + "editors", userPrefix + "instructors");
+        Course courseActive = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(), userPrefix + "student",
+                userPrefix + "tutor", userPrefix + "editor", userPrefix + "instructor");
         Course courseNotActivePast = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(),
-                userPrefix + "students", userPrefix + "tutors", userPrefix + "editors", userPrefix + "instructors");
+                userPrefix + "student", userPrefix + "tutor", userPrefix + "editor", userPrefix + "instructor");
         Course courseNotActiveFuture = ModelFactory.generateCourse(3L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(),
-                userPrefix + "students", userPrefix + "tutors", userPrefix + "editors", userPrefix + "instructors");
+                userPrefix + "student", userPrefix + "tutor", userPrefix + "editor", userPrefix + "instructor");
         courseActive = courseRepo.save(courseActive);
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
@@ -784,9 +795,9 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups();
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
         Course course = testCourses.get(0);
-        course.setStudentGroupName(userPrefix + "students");
-        course.setTeachingAssistantGroupName(userPrefix + "tutors");
-        course.setInstructorGroupName(userPrefix + "instructors");
+        course.setStudentGroupName(userPrefix + "student");
+        course.setTeachingAssistantGroupName(userPrefix + "tutor");
+        course.setInstructorGroupName(userPrefix + "instructor");
         courseRepo.save(course);
 
         List<Course> receivedCourses = request.getList("/api/courses/with-user-stats", HttpStatus.OK, Course.class);
@@ -1079,20 +1090,20 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups();
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
         for (Course testCourse : testCourses) {
-            testCourse.setInstructorGroupName(userPrefix + "instructors");
-            testCourse.setTeachingAssistantGroupName(userPrefix + "tutors");
-            testCourse.setEditorGroupName(userPrefix + "editors");
-            testCourse.setStudentGroupName(userPrefix + "students");
+            testCourse.setInstructorGroupName(userPrefix + "instructor");
+            testCourse.setTeachingAssistantGroupName(userPrefix + "tutor");
+            testCourse.setEditorGroupName(userPrefix + "editor");
+            testCourse.setStudentGroupName(userPrefix + "student");
             courseRepo.save(testCourse);
 
             Course courseWithExercises = request.get("/api/courses/" + testCourse.getId() + "/with-exercises", HttpStatus.OK, Course.class);
             Course courseOnly = request.get("/api/courses/" + testCourse.getId(), HttpStatus.OK, Course.class);
 
             // Check course properties on courseOnly
-            assertThat(courseOnly.getStudentGroupName()).as("Student group name is correct").isEqualTo(userPrefix + "students");
-            assertThat(courseOnly.getTeachingAssistantGroupName()).as("Teaching assistant group name is correct").isEqualTo(userPrefix + "tutors");
-            assertThat(courseOnly.getEditorGroupName()).as("Editor group name is correct").isEqualTo(userPrefix + "editors");
-            assertThat(courseOnly.getInstructorGroupName()).as("Instructor group name is correct").isEqualTo(userPrefix + "instructors");
+            assertThat(courseOnly.getStudentGroupName()).as("Student group name is correct").isEqualTo(userPrefix + "student");
+            assertThat(courseOnly.getTeachingAssistantGroupName()).as("Teaching assistant group name is correct").isEqualTo(userPrefix + "tutor");
+            assertThat(courseOnly.getEditorGroupName()).as("Editor group name is correct").isEqualTo(userPrefix + "editor");
+            assertThat(courseOnly.getInstructorGroupName()).as("Instructor group name is correct").isEqualTo(userPrefix + "instructor");
             assertThat(courseOnly.getEndDate()).as("End date is after start date").isAfter(courseOnly.getStartDate());
             assertThat(courseOnly.getMaxComplaints()).as("Max complaints is correct").isEqualTo(3);
             assertThat(courseOnly.getPresentationScore()).as("Presentation score is correct").isEqualTo(2);
@@ -1191,8 +1202,8 @@ public class CourseTestService {
     // Test
     public void testGetAllStudentsOrTutorsOrInstructorsInCourse() throws Exception {
         adjustUserGroupsToCustomGroups();
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "students", userPrefix + "tutors", userPrefix + "editors",
-                userPrefix + "instructors");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
+                userPrefix + "instructor");
         course = courseRepo.save(course);
 
         // Get all students for course
@@ -1210,13 +1221,11 @@ public class CourseTestService {
 
     /**
      * Searches for others users of a course in multiple roles
-     *
-     * @throws Exception
      */
     public void testSearchStudentsAndTutorsAndInstructorsInCourse() throws Exception {
         adjustUserGroupsToCustomGroups();
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "students", userPrefix + "tutors", userPrefix + "editors",
-                userPrefix + "instructors");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
+                userPrefix + "instructor");
         course = courseRepo.save(course);
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -1244,8 +1253,6 @@ public class CourseTestService {
 
     /**
      * Tries to search for users of another course and expects to be forbidden
-     *
-     * @throws Exception
      */
     public void testSearchStudentsAndTutorsAndInstructorsInOtherCourseForbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "other-tumuser", "other-tutor", "other-editor", "other-instructor");
@@ -1261,8 +1268,8 @@ public class CourseTestService {
     // Test
     public void testGetAllEditorsInCourse() throws Exception {
         adjustUserGroupsToCustomGroups();
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "students", userPrefix + "tutors", userPrefix + "editors",
-                userPrefix + "instructors");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
+                userPrefix + "instructor");
         course = courseRepo.save(course);
 
         // Get all editors for course
@@ -1293,8 +1300,8 @@ public class CourseTestService {
     // Test
     public void testAddStudentOrTutorOrEditorOrInstructorToCourse() throws Exception {
         adjustUserGroupsToCustomGroups();
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "students", userPrefix + "tutors", userPrefix + "editors",
-                userPrefix + "instructors");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
+                userPrefix + "instructor");
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.OK);
 
@@ -1311,8 +1318,8 @@ public class CourseTestService {
     // Test
     public void testAddStudentOrTutorOrInstructorToCourse_AsTutor_forbidden() throws Exception {
         adjustUserGroupsToCustomGroups();
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "students", userPrefix + "tutors", userPrefix + "editors",
-                userPrefix + "instructors");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
+                userPrefix + "instructor");
         course = courseRepo.save(course);
         testAddStudentOrTutorOrEditorOrInstructorToCourse(course, HttpStatus.FORBIDDEN);
     }
@@ -1320,8 +1327,8 @@ public class CourseTestService {
     // Test
     public void testAddStudentOrTutorOrInstructorToCourse_WithNonExistingUser() throws Exception {
         adjustUserGroupsToCustomGroups();
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "students", userPrefix + "tutors", userPrefix + "editors",
-                userPrefix + "instructors");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
+                userPrefix + "instructor");
         course = courseRepo.save(course);
 
         request.postWithoutLocation("/api/courses/" + course.getId() + "/students/maxMustermann", null, HttpStatus.NOT_FOUND, null);
@@ -1351,8 +1358,8 @@ public class CourseTestService {
     // Test
     public void testAddTutorAndEditorAndInstructorToCourse_failsToAddUserToGroup(HttpStatus expectedFailureCode) throws Exception {
         adjustUserGroupsToCustomGroups();
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "students", userPrefix + "tutors", userPrefix + "editors",
-                userPrefix + "instructors");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
+                userPrefix + "instructor");
         course = courseRepo.save(course);
         database.addProgrammingExerciseToCourse(course, false);
         course = courseRepo.save(course);
@@ -1373,8 +1380,8 @@ public class CourseTestService {
     // Test
     public void testRemoveTutorFromCourse_failsToRemoveUserFromGroup() throws Exception {
         adjustUserGroupsToCustomGroups();
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "students", userPrefix + "tutors", userPrefix + "editors",
-                userPrefix + "instructors");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
+                userPrefix + "instructor");
         course = courseRepo.save(course);
         database.addProgrammingExerciseToCourse(course, false);
         course = courseRepo.save(course);
@@ -1395,8 +1402,8 @@ public class CourseTestService {
     // Test
     public void testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_WithNonExistingUser() throws Exception {
         adjustUserGroupsToCustomGroups();
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "students", userPrefix + "tutors", userPrefix + "editors",
-                userPrefix + "instructors");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
+                userPrefix + "instructor");
         course = courseRepo.save(course);
         request.delete("/api/courses/" + course.getId() + "/students/maxMustermann", HttpStatus.NOT_FOUND);
         request.delete("/api/courses/" + course.getId() + "/tutors/maxMustermann", HttpStatus.NOT_FOUND);
@@ -1414,8 +1421,8 @@ public class CourseTestService {
     // Test
     public void testRemoveStudentOrTutorOrInstructorFromCourse_AsTutor_forbidden() throws Exception {
         adjustUserGroupsToCustomGroups();
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "students", userPrefix + "tutors", userPrefix + "editors",
-                userPrefix + "instructors");
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student", userPrefix + "tutor", userPrefix + "editor",
+                userPrefix + "instructor");
         course = courseRepo.save(course);
         testRemoveStudentOrTutorOrEditorOrInstructorFromCourse_forbidden(course, HttpStatus.FORBIDDEN);
     }
@@ -1493,8 +1500,6 @@ public class CourseTestService {
 
     /**
      * Test
-     *
-     * @throws Exception
      */
     public void searchStudentsInCourse() throws Exception {
         var course = database.createCourse();
@@ -1827,10 +1832,10 @@ public class CourseTestService {
         var instructorsCourse = database.createCourse();
         instructorsCourse.setStartDate(ZonedDateTime.now().minusWeeks(1).with(DayOfWeek.MONDAY));
         instructorsCourse.setEndDate(ZonedDateTime.now().minusWeeks(1).with(DayOfWeek.WEDNESDAY));
-        instructorsCourse.setInstructorGroupName(userPrefix + "instructors");
-        instructorsCourse.setEditorGroupName(userPrefix + "editors");
-        instructorsCourse.setTeachingAssistantGroupName(userPrefix + "tutors");
-        instructorsCourse.setStudentGroupName(userPrefix + "students");
+        instructorsCourse.setInstructorGroupName(userPrefix + "instructor");
+        instructorsCourse.setEditorGroupName(userPrefix + "editor");
+        instructorsCourse.setTeachingAssistantGroupName(userPrefix + "tutor");
+        instructorsCourse.setStudentGroupName(userPrefix + "student");
 
         var instructor = database.getUserByLogin(userPrefix + "instructor1");
 
@@ -2003,18 +2008,18 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups();
         ZonedDateTime now = ZonedDateTime.now();
         var course = database.createCourse();
-        course.setInstructorGroupName(userPrefix + "instructors");
-        course.setEditorGroupName(userPrefix + "editors");
-        course.setTeachingAssistantGroupName(userPrefix + "tutors");
-        course.setStudentGroupName(userPrefix + "students");
+        course.setInstructorGroupName(userPrefix + "instructor");
+        course.setEditorGroupName(userPrefix + "editor");
+        course.setTeachingAssistantGroupName(userPrefix + "tutor");
+        course.setStudentGroupName(userPrefix + "student");
 
         course.setStartDate(now.plusWeeks(3));
 
-        var student1 = database.createAndSaveUser(userPrefix + "user1");
-        var student2 = database.createAndSaveUser(userPrefix + "user2");
+        database.createAndSaveUser(userPrefix + "user1");
+        database.createAndSaveUser(userPrefix + "user2");
 
         var instructor2 = database.createAndSaveUser(userPrefix + "instructor2");
-        instructor2.setGroups(Set.of(userPrefix + "instructors"));
+        instructor2.setGroups(Set.of(userPrefix + "instructor"));
         userRepo.save(instructor2);
 
         courseRepo.save(course);
@@ -2042,10 +2047,10 @@ public class CourseTestService {
         var course1 = courses.get(0);
         var course2 = courses.get(1);
         course1.setStartDate(now.minusWeeks(2));
-        course1.setStudentGroupName(userPrefix + "students");
-        course1.setTeachingAssistantGroupName(userPrefix + "tutors");
-        course1.setEditorGroupName(userPrefix + "editors");
-        course1.setInstructorGroupName(userPrefix + "instructors");
+        course1.setStudentGroupName(userPrefix + "student");
+        course1.setTeachingAssistantGroupName(userPrefix + "tutor");
+        course1.setEditorGroupName(userPrefix + "editor");
+        course1.setInstructorGroupName(userPrefix + "instructor");
 
         /*
          * We will duplicate the following submission and result configuration with course2. course1 contains additional submissions created by the DatabaseUtilService. These
@@ -2053,10 +2058,10 @@ public class CourseTestService {
          * distribution only for course2.
          */
         course2.setStartDate(now.minusWeeks(2));
-        course2.setStudentGroupName(userPrefix + "students");
-        course2.setTeachingAssistantGroupName(userPrefix + "tutors");
-        course2.setEditorGroupName(userPrefix + "editors");
-        course2.setInstructorGroupName(userPrefix + "instructors");
+        course2.setStudentGroupName(userPrefix + "student");
+        course2.setTeachingAssistantGroupName(userPrefix + "tutor");
+        course2.setEditorGroupName(userPrefix + "editor");
+        course2.setInstructorGroupName(userPrefix + "instructor");
 
         var student1 = database.createAndSaveUser(userPrefix + "user1");
         var student2 = database.createAndSaveUser(userPrefix + "user2");
