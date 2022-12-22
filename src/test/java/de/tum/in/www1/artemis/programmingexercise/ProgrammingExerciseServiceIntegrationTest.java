@@ -232,8 +232,17 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminGetsResultsFromAllCourses() throws Exception {
-        database.addCourseInOtherInstructionGroupAndExercise("Programming");
-        final var search = database.configureSearch("Programming");
+        // Use unique name for exercise to not query exercises from other tests
+        var title = "testAdminGetsResultsFromAllCourses-Programming";
+        programmingExercise.setTitle(title);
+        programmingExerciseRepository.save(programmingExercise);
+
+        var otherCourse = database.addCourseInOtherInstructionGroupAndExercise("Programming");
+        var otherProgrammingExercise = database.getFirstExerciseWithType(otherCourse, ProgrammingExercise.class);
+        otherProgrammingExercise.setTitle(title);
+        programmingExerciseRepository.save(otherProgrammingExercise);
+
+        final var search = database.configureSearch(title);
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
     }

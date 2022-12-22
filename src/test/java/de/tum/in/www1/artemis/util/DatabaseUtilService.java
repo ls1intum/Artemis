@@ -2568,7 +2568,7 @@ public class DatabaseUtilService {
     /**
      * @param title The title reflect the genre of exercise that will be added to the course
      */
-    public void addCourseInOtherInstructionGroupAndExercise(String title) {
+    public Course addCourseInOtherInstructionGroupAndExercise(String title) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "other-instructors");
         if ("Programming".equals(title)) {
             course = courseRepo.save(course);
@@ -2598,6 +2598,8 @@ public class DatabaseUtilService {
             courseRepo.save(course);
             exerciseRepo.save(modelingExercise);
         }
+
+        return course;
     }
 
     public Course addCourseWithOneProgrammingExerciseAndSpecificTestCases() {
