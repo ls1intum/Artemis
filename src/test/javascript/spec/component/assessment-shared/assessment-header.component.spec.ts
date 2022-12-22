@@ -8,7 +8,7 @@ import { Result } from 'app/entities/result.model';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -23,6 +23,8 @@ import { HttpResponse } from '@angular/common/http';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { of } from 'rxjs';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -47,7 +49,7 @@ describe('AssessmentHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule],
+            imports: [ArtemisTestModule, RouterTestingModule, MockModule(NgbTooltipModule), MockComponent(NgbAlert)],
             declarations: [
                 AssessmentHeaderComponent,
                 AssessmentWarningComponent,

@@ -19,11 +19,6 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
     styleUrls: ['./course-exercise-row.scss'],
 })
 export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges {
-    readonly QUIZ = ExerciseType.QUIZ;
-    readonly PROGRAMMING = ExerciseType.PROGRAMMING;
-    readonly MODELING = ExerciseType.MODELING;
-    readonly TEXT = ExerciseType.TEXT;
-    readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly dayjs = dayjs;
     @HostBinding('class') classes = 'exercise-row';
@@ -41,6 +36,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     isAfterAssessmentDueDate: boolean;
     dueDate?: dayjs.Dayjs;
     gradedStudentParticipation?: StudentParticipation;
+
+    routerLink: string[];
 
     participationUpdateListener: Subscription;
 
@@ -77,6 +74,8 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
                 this.dueDate = getExerciseDueDate(this.exercise, this.gradedStudentParticipation);
             }
         });
+
+        this.routerLink = ['/courses', this.course.id!.toString(), 'exercises', this.exercise.id!.toString()];
     }
 
     ngOnChanges(): void {
