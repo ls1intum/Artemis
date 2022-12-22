@@ -89,7 +89,7 @@ public class LectureUnitProcessingService {
         return units;
     }
 
-    public Optional<List<LectureUnitSplitDTO>> getSplitUnitData(MultipartFile file, String lectureId) throws IOException {
+    public Optional<List<LectureUnitSplitDTO>> getSplitUnitData(MultipartFile file) throws IOException {
 
         List<LectureUnitSplitDTO> units = new ArrayList<>();
 
@@ -118,6 +118,7 @@ public class LectureUnitProcessingService {
         Iterator<PDDocument> iterator = Pages.listIterator();
 
         int outlineCount = 0;
+        boolean breakFlag = false;
         int index = 1;
         while (iterator.hasNext()) {
             PDDocument pd = iterator.next();
@@ -133,7 +134,7 @@ public class LectureUnitProcessingService {
                     int previousOutlineCount = outlineCount - 1;
                     int previousStart = outlineMap.get(previousOutlineCount).y().x();
                     outlineMap.remove(previousOutlineCount);
-                    outlineMap.put(previousOutlineCount, new Tuple<>(lines[previousOutlineCount + 1], new Tuple<>(previousStart, index - 1)));
+                    outlineMap.put(previousOutlineCount, new Tuple<>(lines[previousOutlineCount + 1], new Tuple<>(previousStart, index - 2)));
                 }
             }
             index++;

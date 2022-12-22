@@ -175,7 +175,7 @@ public class AttachmentUnitResource {
             throws IOException {
         log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
 
-        Optional<List<LectureUnitSplitDTO>> attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(file, lectureId);
+        Optional<List<LectureUnitSplitDTO>> attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(file);
         if (attachmentUnitsData.isEmpty()) {
             log.error("Failed to retrieve split PDF lecture units data for lecture with id {}", lectureId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
