@@ -111,12 +111,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
-        solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
+        solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
         database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, TEST_PREFIX + "student1");
 
-        database.addCourseWithOneModelingExercise();
-        modelingExercise = modelingExerciseRepository.findAll().get(0);
+        Course secondCourse = database.addCourseWithOneModelingExercise();
+        modelingExercise = database.getFirstExerciseWithType(secondCourse, ModelingExercise.class);
         modelingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         modelingExerciseRepository.save(modelingExercise);
         studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student2");
@@ -232,7 +232,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void shouldReturnBadrequestForNonMatchingParticipationId() throws Exception {
+    void shouldReturnBadRequestForNonMatchingParticipationId() throws Exception {
         Result result = database.addResultToParticipation(null, null, solutionParticipation);
         database.addSampleFeedbackToResults(result);
         request.getList("/api/participations/" + 1337 + "/results/" + result.getId() + "/details", HttpStatus.BAD_REQUEST, Feedback.class);
@@ -501,7 +501,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     private GradingCriterion getGradingCriterionByTitle(Exercise exercise, String title) {
-        return exercise.getGradingCriteria().stream().filter(crit -> title.equals(crit.getTitle())).findFirst().get();
+        return exercise.getGradingCriteria().stream().filter(criteria -> title.equals(criteria.getTitle())).findFirst().orElseThrow();
     }
 
     @Test
@@ -566,7 +566,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var now = ZonedDateTime.now();
         for (int i = 1; i <= 5; i++) {
             ModelingSubmission modelingSubmission = new ModelingSubmission();
-            modelingSubmission.model("Testingsubmission");
+            modelingSubmission.model("TestingSubmission");
             modelingSubmission.submitted(true);
             modelingSubmission.submissionDate(now.minusHours(2));
             database.addSubmission(this.examModelingExercise, modelingSubmission, TEST_PREFIX + "student" + i);
@@ -762,7 +762,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         // participation
         StudentParticipation studentParticipation = new StudentParticipation();
-        studentParticipation.setParticipant(userRepository.findOneByLogin(TEST_PREFIX + "student1").get());
+        studentParticipation.setParticipant(userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
         studentParticipation.setExercise(textExercise);
         studentParticipationRepository.save(studentParticipation);
 
@@ -807,7 +807,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         // participation
         ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = new ProgrammingExerciseStudentParticipation();
-        programmingExerciseStudentParticipation.setParticipant(userRepository.findOneByLogin(TEST_PREFIX + "student1").get());
+        programmingExerciseStudentParticipation.setParticipant(userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow());
         programmingExerciseStudentParticipation.setExercise(programmingExercise);
         programmingExerciseStudentParticipationRepository.save(programmingExerciseStudentParticipation);
 
