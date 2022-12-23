@@ -1,0 +1,83 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Cypress Setup
+# ----------------------------------------------------------------------------------------------------------------------
+
+# TODO: this requires a newer docker compose version for the bamboo agents which is already requested
+
+services:
+    mysql:
+        extends:
+            file: ../mysql.yml
+            service: mysql
+
+    artemis-app:
+        extends:
+            file: ./artemis/artemis.yml
+            service: artemis-app
+        depends_on:
+            mysql:
+                condition: service_healthy
+        env_file:
+            - ../../resources/config/docker-cypress-application-local.env
+        # TODO: after the pipeline is running on bamboo maybe also migrate/merge these environment variables
+        environment:
+            spring.profiles.active: "artemis,bamboo,bitbucket,jira,prod,cypress"
+            spring.datasource.url: "jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
+            spring.datasource.username: "root"
+            spring.datasource.password: ""
+            artemis.user-management.internal-admin.username: "${bamboo_artemis_admin_username}"
+            artemis.user-management.internal-admin.password: "${bamboo_artemis_admin_password}"
+            artemis.user-management.external.url: "https://jira-prelive.ase.in.tum.de"
+            artemis.user-management.external.user: "${bamboo_jira_prelive_admin_user}"
+            artemis.user-management.external.password: "${bamboo_jira_prelive_admin_password}"
+            artemis.version-control.url: "https://bitbucket-prelive.ase.in.tum.de"
+            artemis.version-control.user: "${bamboo_jira_prelive_admin_user}"
+            artemis.version-control.password: "${bamboo_jira_prelive_admin_password}"
+            artemis.continuous-integration.url: "https://bamboo-prelive.ase.in.tum.de"
+            artemis.continuous-integration.user: "${bamboo_jira_prelive_admin_user}"
+            artemis.continuous-integration.password: "${bamboo_jira_prelive_admin_password}"
+            artemis.continuous-integration.token: "${bamboo_ARTEMIS_CONTINUOUS_INTEGRATION_TOKEN_SECRET}"
+            artemis.continuous-integration.artemis-authentication-token-value: "${bamboo_ARTEMIS_CONTINUOUS_INTEGRATION_ARTEMIS_AUTHENTICATION_TOKEN_VALUE_SECRET}"
+            # for bamboo and bitbucket notifications on /api/programming-exercises/new-result it seems like port
+            # 54321 is internally open for the bamboo agents
+            # also can't use SSL for this as the hostnames are not integrated in the self-signed certificate
+            server.url: "http://${HOST_HOSTNAME}:54321"
+            server.port: "54321"
+        ports:
+            - 54321:54321
+
+    artemis-cypress:
+        # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
+        image: cypress/browsers:node18.12.0-chrome107
+        pull_policy: always
+        depends_on:
+            artemis-app:
+                condition: service_healthy
+        environment:
+            CYPRESS_baseUrl: "http://artemis-app:54321"
+            CYPRESS_adminUsername: "${bamboo_artemis_admin_username}"
+            CYPRESS_adminPassword: "${bamboo_artemis_admin_password}"
+            CYPRESS_username: "${bamboo_cypress_username_template}"
+            CYPRESS_password: "${bamboo_cypress_password_template}"
+            CYPRESS_allowGroupCustomization: "true"
+            CYPRESS_studentGroupName: "artemis-e2etest-students"
+            CYPRESS_tutorGroupName: "artemis-e2etest-tutors"
+            CYPRESS_editorGroupName: "artemis-e2etest-editors"
+            CYPRESS_instructorGroupName: "artemis-e2etest-instructors"
+        # Wait up to 5 minutes until Artemis has booted
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:run"
+        volumes:
+            - ../../../../:/app/artemis
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+
+volumes:
+    artemis-mysql-data:
+        name: artemis-mysql-data
+    artemis-data:
+        name: artemis-data
