@@ -64,7 +64,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         courseRepository.save(course);
 
         Exam targetExam = database.addExamWithExerciseGroup(course, true);
-        targetExam.setMaxPoints(200);
+        targetExam.setExamMaxPoints(200);
         examRepository.save(targetExam);
 
         Exam sourceExam = database.addExamWithExerciseGroup(course, true);
