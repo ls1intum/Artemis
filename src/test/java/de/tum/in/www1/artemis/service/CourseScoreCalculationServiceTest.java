@@ -76,6 +76,17 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
     }
 
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void calculateCourseScoreWithoutExercises() {
+        Course course = database.addEmptyCourse();
+
+        User student = userRepository.findOneByLogin("student1").get();
+
+        var courseResult = courseScoreCalculationService.calculateCourseScores(course.getId(), List.of(student.getId()));
+        assertThat(courseResult).isNull();
+    }
+
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
