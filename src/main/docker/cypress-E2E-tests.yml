@@ -24,7 +24,7 @@ services:
             - ../resources/config/docker-cypress-application-local.env
         # TODO: after the pipeline is running on bamboo maybe also migrate/merge these environment variables
         environment:
-            spring.profiles.active: "artemis,bamboo,bitbucket,jira,prod,cypress"
+            spring.profiles.active: "artemis,bamboo,bitbucket,jira,docker,prod,cypress"
             spring.datasource.url: "jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
             spring.datasource.username: "root"
             spring.datasource.password: ""

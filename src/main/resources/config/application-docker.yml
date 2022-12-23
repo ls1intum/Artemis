@@ -1,6 +1,6 @@
 # this profile contains the default variables for the docker setups
 artemis:
-    course-archives-path: /opt/artemis/data/courses
+    course-archives-path: /opt/artemis/data/course-archives
     repo-clone-path: /opt/artemis/data/repos
     repo-download-clone-path: /opt/artemis/data/repos-download
     file-upload-path: /opt/artemis/data/uploads
