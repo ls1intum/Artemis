@@ -69,7 +69,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
                 this.versionControlUrl = info.versionControlUrl;
             }
             this.versionControlAccessTokenRequired = info.versionControlAccessToken;
-            this.localVCEnabled = info.activeProfiles.includes('localVC');
+            this.localVCEnabled = info.activeProfiles.includes('localvc');
         });
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
