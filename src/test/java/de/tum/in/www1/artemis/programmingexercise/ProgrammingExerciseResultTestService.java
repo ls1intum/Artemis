@@ -100,7 +100,7 @@ public class ProgrammingExerciseResultTestService {
 
     public void setup(String userPrefix) {
         this.userPrefix = userPrefix;
-        database.addUsers(userPrefix, 10, 2, 0, 2);
+        database.addUsers(userPrefix, 2, 2, 0, 2);
         setupForProgrammingLanguage(ProgrammingLanguage.JAVA);
     }
 

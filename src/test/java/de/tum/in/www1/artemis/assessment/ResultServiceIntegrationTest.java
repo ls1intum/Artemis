@@ -103,9 +103,11 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     private StudentParticipation studentParticipation;
 
+    private int numberOfStudents = 5;
+
     @BeforeEach
-    void reset() {
-        database.addUsers(TEST_PREFIX, 10, 2, 0, 2);
+    void setupTest() {
+        database.addUsers(TEST_PREFIX, numberOfStudents, 2, 0, 2);
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         ProgrammingExercise programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true);
@@ -281,7 +283,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         QuizExercise quizExercise = database.createQuiz(course, now.minusHours(5), now.minusMinutes(2), quizMode);
         quizExerciseRepository.save(quizExercise);
 
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= numberOfStudents; i++) {
             QuizSubmission quizSubmission = new QuizSubmission();
             quizSubmission.setScoreInPoints(2.0);
             quizSubmission.submitted(true);
@@ -296,7 +298,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         }
 
         List<Result> results = request.getList("/api/exercises/" + quizExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(5);
+        assertThat(results).hasSize(numberOfStudents / 2);
         // TODO: check additional values
     }
 
@@ -304,7 +306,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetResultsForModelingExercise() throws Exception {
         var now = ZonedDateTime.now();
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= numberOfStudents; i++) {
             ModelingSubmission modelingSubmission = new ModelingSubmission();
             modelingSubmission.model("Text");
             modelingSubmission.submitted(true);
@@ -319,7 +321,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         }
 
         List<Result> results = request.getList("/api/exercises/" + modelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(5);
+        assertThat(results).hasSize(numberOfStudents / 2);
         // TODO: check additional values
     }
 
@@ -331,7 +333,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         course.addExercises(textExercise);
         textExerciseRepository.save(textExercise);
 
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= numberOfStudents; i++) {
             TextSubmission textSubmission = new TextSubmission();
             textSubmission.text("Text");
             textSubmission.submitted(true);
@@ -346,7 +348,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         }
 
         List<Result> results = request.getList("/api/exercises/" + textExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(5);
+        assertThat(results).hasSize(numberOfStudents / 2);
         // TODO: check additional values
     }
 
@@ -355,7 +357,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void testGetResultsForFileUploadExercise() throws Exception {
         FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
         List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(5);
+        assertThat(results).hasSize(numberOfStudents / 2);
         // TODO: check additional values
     }
 
@@ -369,7 +371,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
-        assertThat(results).hasSize(5);
+        assertThat(results).hasSize(numberOfStudents / 2);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
@@ -391,7 +393,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
 
         // with points should return the same results as the /results endpoint
-        assertThat(results).hasSize(5);
+        assertThat(results).hasSize(numberOfStudents / 2);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
@@ -424,7 +426,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         course.addExercises(fileUploadExercise);
         fileUploadExerciseRepository.save(fileUploadExercise);
 
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= numberOfStudents; i++) {
             FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
             fileUploadSubmission.submitted(true);
             fileUploadSubmission.submissionDate(now.minusHours(3));

@@ -61,7 +61,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 10, 5, 0, 1);
+        database.addUsers(TEST_PREFIX, 7, 5, 0, 1);
 
         // Add users that are not in exercise/course
         database.createAndSaveUser(TEST_PREFIX + "student11");
