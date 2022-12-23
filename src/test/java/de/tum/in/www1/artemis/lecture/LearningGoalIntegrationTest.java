@@ -123,6 +123,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @BeforeEach
     void setupTestScenario() {
+        participantScoreSchedulerService.activate();
         // We can not remove the teams due to the existing participations etc., but we can remove all students from them so that they are no longer accessed
         // The students are reused between tests
         // TODO: Check if this can also be solved by changing ExerciseRepo#calculateStatisticsForTeamCourseExercises to check for the exerciseId
