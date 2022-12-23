@@ -186,7 +186,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
+    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String courseShortName, String repositorySlug) {
         return new BitbucketRepositoryUrl(projectKey, repositorySlug);
     }
 
@@ -535,7 +535,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public boolean checkIfProjectExists(String projectKey, String projectName) {
+    public boolean checkIfProjectExists(String projectKey, String courseShortName, String projectName) {
         try {
             // first check that the project key is unique, if the project does not exist, we expect a 404 Not Found status
             var project = getBitbucketProject(projectKey);
@@ -867,8 +867,8 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     @Override
-    public void createRepository(String entityName, String topLevelEntity, String parentEntity) {
-        createRepository(entityName, topLevelEntity);
+    public void createRepository(String projectKey, String courseShortName, String repositorySlug, String parentProjectKey) {
+        createRepository(projectKey, repositorySlug);
     }
 
     public final class BitbucketRepositoryUrl extends VcsRepositoryUrl {
@@ -879,7 +879,7 @@ public class BitbucketService extends AbstractVersionControlService {
                 this.uri = new URI(urlString);
             }
             catch (URISyntaxException e) {
-                throw new BitbucketException("Could not Bitbucket Repository URL", e);
+                throw new BitbucketException("Could not create Bitbucket Repository URL", e);
             }
         }
 

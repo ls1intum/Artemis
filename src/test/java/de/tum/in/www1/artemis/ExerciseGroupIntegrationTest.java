@@ -245,7 +245,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         programmingGroup.addExercise(programming);
         exerciseRepository.save(programming);
 
-        doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());
+        doReturn(true).when(versionControlService).checkIfProjectExists(any(), any(), any());
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/import-exercise-group", List.of(programmingGroup), ExerciseGroup.class,

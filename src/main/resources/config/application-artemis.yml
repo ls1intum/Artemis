@@ -6,6 +6,7 @@ artemis:
     course-archives-path: ./exports/courses         # a folder in which archived courses and exams are stored.
     repo-clone-path: ./repos                        # a folder in which git repos for the online code editor are stored. In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes
     repo-download-clone-path: ./repos-download      # a temporary folder, in which git repos are downloaded that are immediately deleted afterwards (e.g. exports, plagiarism checks), should NOT be in a shared file system area
+    local-git-server-path: /home/kutsch/TestGitRepos # a folder in which the local git repos are stored (using profile 'localgit' to save files locally instead of on Bitbucket or Gitlab). In a multi node setup, this folder should be in a shared file system area (e.g. based on NFS), so that user can access the same files over multiple nodes.
     encryption-password: <encrypt-password>         # LEGACY: arbitrary password for encrypting database values
     bcrypt-salt-rounds: 11  # The number of salt rounds for the bcrypt password hashing. Lower numbers make it faster but more unsecure and vice versa.
                             # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark

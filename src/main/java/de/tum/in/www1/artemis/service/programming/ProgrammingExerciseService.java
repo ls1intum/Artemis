@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -62,6 +63,8 @@ public class ProgrammingExerciseService {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseService.class);
 
+    private final Environment environment;
+
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final FileService fileService;
@@ -104,7 +107,7 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
 
-    public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
+    public ProgrammingExerciseService(Environment environment, ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
@@ -113,6 +116,7 @@ public class ProgrammingExerciseService {
             InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository) {
+        this.environment = environment;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -145,7 +149,7 @@ public class ProgrammingExerciseService {
      *     <li>VCS webhooks</li>
      *     <li>Bamboo build plans</li>
      * </ul>
-     *
+     * <p>
      * The exercise gets set up in the following order:
      * <ol>
      *     <li>Create all repositories for the new exercise</li>
@@ -158,7 +162,7 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The programmingExercise that should be setup
      * @return The new setup exercise
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
-     * @throws IOException If the template files couldn't be read
+     * @throws IOException     If the template files couldn't be read
      */
     @Transactional // TODO: apply the transaction on a smaller scope
     // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
@@ -167,6 +171,7 @@ public class ProgrammingExerciseService {
         final User exerciseCreator = userRepository.getUser();
 
         programmingExercise.setBranch(versionControlService.get().getDefaultBranchOfArtemis());
+
         createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
         setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
@@ -181,16 +186,24 @@ public class ProgrammingExerciseService {
         // Save programming exercise to prevent transient exception
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        setupBuildPlansForNewExercise(programmingExercise);
+        // The local git repository (profile "localgit") cannot be integrated with Bamboo and Jenkins (e.g. to automatically trigger build plans on push).
+        // We will only allow "localgit" together with some "localci" profile that is to be implemented. In the meantime build plans are not set up at all when "localgit" is used.
+        // TODO: Remove check once "localci" is implemented.
+        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+            setupBuildPlansForNewExercise(programmingExercise);
+        }
 
         // save to get the id required for the webhook
         programmingExercise = programmingExerciseRepository.saveAndFlush(programmingExercise);
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
-        // The creation of the webhooks must occur after the initial push, because the participation is
-        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
-        versionControlService.get().addWebHooksForExercise(programmingExercise);
+        // Webhooks must not be created for the local git server. Notifying Artemis on push is handled in the JGitPushFilter.
+        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+            // The creation of the webhooks must occur after the initial push, because the participation is
+            // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
+            versionControlService.get().addWebHooksForExercise(programmingExercise);
+        }
         scheduleOperations(programmingExercise.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(programmingExercise);
         return programmingExercise;
@@ -264,6 +277,7 @@ public class ProgrammingExerciseService {
 
     private void setURLsAndBuildPlanIDsForNewExercise(ProgrammingExercise programmingExercise) {
         final var projectKey = programmingExercise.getProjectKey();
+        final var courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         final var templateParticipation = programmingExercise.getTemplateParticipation();
         final var solutionParticipation = programmingExercise.getSolutionParticipation();
         final var templatePlanId = programmingExercise.generateBuildPlanId(TEMPLATE);
@@ -273,15 +287,15 @@ public class ProgrammingExerciseService {
         final var testRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
 
         templateParticipation.setBuildPlanId(templatePlanId); // Set build plan id to newly created BaseBuild plan
-        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, exerciseRepoName).toString());
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, courseShortName, exerciseRepoName).toString());
         solutionParticipation.setBuildPlanId(solutionPlanId);
-        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, testRepoName).toString());
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, courseShortName, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, courseShortName, testRepoName).toString());
     }
 
     private void setURLsForAuxiliaryRepositoriesOfExercise(ProgrammingExercise programmingExercise) {
-        programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUrl(
-                versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
+        programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(),
+                programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
     }
 
     /**
@@ -391,20 +405,26 @@ public class ProgrammingExerciseService {
 
     private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) throws GitAPIException {
         final String projectKey = programmingExercise.getProjectKey();
+        final String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
-        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template repository
-        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests repository
-        versionControlService.get().createRepository(projectKey, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution repository
+        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template
+        // repository
+        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests
+        // repository
+        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution
+        // repository
 
         // Create auxiliary repositories
-        createAndInitializeAuxiliaryRepositories(projectKey, programmingExercise);
+        createAndInitializeAuxiliaryRepositories(projectKey, courseShortName, programmingExercise);
     }
 
-    private void createAndInitializeAuxiliaryRepositories(String projectKey, ProgrammingExercise programmingExercise) throws GitAPIException {
+    private void createAndInitializeAuxiliaryRepositories(String projectKey, String courseShortName, ProgrammingExercise programmingExercise) throws GitAPIException {
         for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
-            versionControlService.get().createRepository(projectKey, repositoryName, null);
-            repo.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(), repositoryName).toString());
+            versionControlService.get().createRepository(projectKey, courseShortName, repositoryName, null);
+            repo.setRepositoryUrl(versionControlService.get()
+                    .getCloneRepositoryUrl(programmingExercise.getProjectKey(), programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), repositoryName)
+                    .toString());
             Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUrl(), true);
             gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
         }
@@ -412,8 +432,8 @@ public class ProgrammingExerciseService {
 
     /**
      * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
-     * @param updatedProgrammingExercise the changed programming exercise with its new values
-     * @param notificationText    optional text about the changes for a notification
+     * @param updatedProgrammingExercise      the changed programming exercise with its new values
+     * @param notificationText                optional text about the changes for a notification
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
@@ -781,7 +801,7 @@ public class ProgrammingExerciseService {
      * @param testsPath       The path to the tests' folder, e.g. the path inside the repository where the structure oracle file will be saved in.
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
-     * @throws IOException If the URLs cannot be converted to actual {@link Path paths}
+     * @throws IOException     If the URLs cannot be converted to actual {@link Path paths}
      * @throws GitAPIException If the checkout fails
      */
     public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
@@ -866,15 +886,18 @@ public class ProgrammingExerciseService {
         cancelScheduledOperations(programmingExercise.getId());
 
         if (deleteBaseReposBuildPlans) {
-            final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
-            if (templateBuildPlanId != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
+            // TODO: Remove when "localci" profile is implemented.
+            if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+                final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
+                if (templateBuildPlanId != null) {
+                    continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
+                }
+                final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
+                if (solutionBuildPlanId != null) {
+                    continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
+                }
+                continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
             }
-            final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
-            if (solutionBuildPlanId != null) {
-                continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
-            }
-            continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
 
             if (programmingExercise.getTemplateRepositoryUrl() != null) {
                 versionControlService.get().deleteRepository(templateRepositoryUrlAsUrl);
@@ -909,6 +932,12 @@ public class ProgrammingExerciseService {
         if (programmingExercise.getTestRepositoryUrl() != null) {
             gitService.deleteLocalRepository(testRepositoryUrlAsUrl);
         }
+
+        programmingExercise.getAuxiliaryRepositories().forEach(repo -> {
+            if (repo.getRepositoryUrl() != null) {
+                gitService.deleteLocalRepository(repo.getVcsRepositoryUrl());
+            }
+        });
 
         programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExerciseId);
 
@@ -1031,15 +1060,19 @@ public class ProgrammingExerciseService {
      */
     public void checkIfProjectExists(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
+        String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String projectName = programmingExercise.getProjectName();
-        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, courseShortName, projectName);
         if (projectExists) {
             var errorMessageVcs = "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!";
             throw new BadRequestAlertException(errorMessageVcs, "ProgrammingExercise", "vcsProjectExists");
         }
-        String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
-        if (errorMessageCis != null) {
-            throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
+        // TODO: Remove check when local CI is implemented.
+        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+            String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
+            if (errorMessageCis != null) {
+                throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
+            }
         }
         // means the project does not exist in version control server and does not exist in continuous integration server
     }
@@ -1049,7 +1082,7 @@ public class ProgrammingExerciseService {
      * The check is done based on a generated project key (course short name + exercise short name) and the project name (course short name + exercise title).
      *
      * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
-     * @param courseShortName the shortName of the course the programming exercise should be imported in
+     * @param courseShortName     the shortName of the course the programming exercise should be imported in
      * @return TRUE if a project with the same ProjectKey or ProjectName already exists, otherwise false
      */
     public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
@@ -1057,7 +1090,7 @@ public class ProgrammingExerciseService {
         String projectName = courseShortName + " " + programmingExercise.getTitle();
         log.debug("Project Key: " + projectKey);
         log.debug("Project Name: " + projectName);
-        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, courseShortName, projectName);
         if (projectExists) {
             return true;
         }
@@ -1083,8 +1116,9 @@ public class ProgrammingExerciseService {
     /**
      * Locks or unlocks the repository if necessary due to the changes in the programming exercise.
      * Notice: isAllowOfflineIde() == null means that the offline IDE is allowed
+     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise the updated exercise with new values
+     * @param updatedProgrammingExercise      the updated exercise with new values
      */
     public void handleRepoAccessRightChanges(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (!programmingExerciseBeforeUpdate.isReleased()) {
@@ -1112,8 +1146,9 @@ public class ProgrammingExerciseService {
 
     /**
      * Checks if the repos have to be locked/unlocked based on the new due date. Individual due dates are considered, so not all repositories might get locked/unlocked
+     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise the updated exercise with new values
+     * @param updatedProgrammingExercise      the updated exercise with new values
      * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
      */
     private boolean handleRepoAccessRightChangesDueDates(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
@@ -1138,8 +1173,9 @@ public class ProgrammingExerciseService {
 
     /**
      * Checks if the repos have to be locked/unlocked based on the allowance of offline IDEs. The read access in the VCS is only necessary when working with an offline IDE
+     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise the updated exercise with new values
+     * @param updatedProgrammingExercise      the updated exercise with new values
      * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
      */
     private boolean handleRepoAccessRightChangesChangesOfflineIDE(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {

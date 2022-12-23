@@ -74,8 +74,10 @@ public class ProgrammingExerciseImportService {
      * @param newExercise      The new exercise without any repositories
      */
     public void importRepositories(final ProgrammingExercise templateExercise, final ProgrammingExercise newExercise) {
-        final var targetProjectKey = newExercise.getProjectKey();
         final var sourceProjectKey = templateExercise.getProjectKey();
+        final var sourceCourseShortName = templateExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+        final var targetProjectKey = newExercise.getProjectKey();
+        final var targetCourseShortName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
 
         // First, create a new project for our imported exercise
         versionControlService.get().createProjectForExercise(newExercise);
@@ -86,15 +88,18 @@ public class ProgrammingExerciseImportService {
 
         String sourceBranch = versionControlService.get().getOrRetrieveBranchOfExercise(templateExercise);
 
-        versionControlService.get().copyRepository(sourceProjectKey, templateRepoName, sourceBranch, targetProjectKey, RepositoryType.TEMPLATE.getName());
-        versionControlService.get().copyRepository(sourceProjectKey, solutionRepoName, sourceBranch, targetProjectKey, RepositoryType.SOLUTION.getName());
-        versionControlService.get().copyRepository(sourceProjectKey, testRepoName, sourceBranch, targetProjectKey, RepositoryType.TESTS.getName());
+        versionControlService.get().copyRepository(sourceProjectKey, sourceCourseShortName, templateRepoName, sourceBranch, targetProjectKey, targetCourseShortName,
+                RepositoryType.TEMPLATE.getName());
+        versionControlService.get().copyRepository(sourceProjectKey, sourceCourseShortName, solutionRepoName, sourceBranch, targetProjectKey, targetCourseShortName,
+                RepositoryType.SOLUTION.getName());
+        versionControlService.get().copyRepository(sourceProjectKey, sourceCourseShortName, testRepoName, sourceBranch, targetProjectKey, targetCourseShortName,
+                RepositoryType.TESTS.getName());
 
         List<AuxiliaryRepository> auxiliaryRepositories = templateExercise.getAuxiliaryRepositories();
         for (int i = 0; i < auxiliaryRepositories.size(); i++) {
             AuxiliaryRepository auxiliaryRepository = auxiliaryRepositories.get(i);
-            String repositoryUrl = versionControlService.get()
-                    .copyRepository(sourceProjectKey, auxiliaryRepository.getRepositoryName(), sourceBranch, targetProjectKey, auxiliaryRepository.getName()).toString();
+            String repositoryUrl = versionControlService.get().copyRepository(sourceProjectKey, sourceCourseShortName, auxiliaryRepository.getRepositoryName(), sourceBranch,
+                    targetProjectKey, targetCourseShortName, auxiliaryRepository.getName()).toString();
             AuxiliaryRepository newAuxiliaryRepository = newExercise.getAuxiliaryRepositories().get(i);
             newAuxiliaryRepository.setRepositoryUrl(repositoryUrl);
             auxiliaryRepositoryRepository.save(newAuxiliaryRepository);
@@ -208,7 +213,7 @@ public class ProgrammingExerciseImportService {
      * @param templateExercise the exercise from which the values that should be replaced are extracted
      * @param newExercise      the exercise from which the values that should be inserted are extracted
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws IOException If the values in the files could not be replaced
+     * @throws IOException     If the values in the files could not be replaced
      */
     private void adjustProjectNames(ProgrammingExercise templateExercise, ProgrammingExercise newExercise) throws GitAPIException, IOException {
         final var projectKey = newExercise.getProjectKey();
@@ -227,11 +232,13 @@ public class ProgrammingExerciseImportService {
         // Used in .project
         replacements.put("<name>" + templateExercise.getTitle(), "<name>" + newExercise.getTitle());
 
+        final var courseShortName = newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
+
         final var user = userRepository.getUser();
 
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), user);
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), user);
-        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.SOLUTION), user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TEMPLATE), courseShortName, user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.TESTS), courseShortName, user);
+        adjustProjectName(replacements, projectKey, newExercise.generateRepositoryName(RepositoryType.SOLUTION), courseShortName, user);
     }
 
     /**
@@ -243,10 +250,11 @@ public class ProgrammingExerciseImportService {
      * @param repositoryName the name of the repository that should be adjusted
      * @param user           the user which performed the action (used as Git author)
      * @throws GitAPIException If the checkout/push of one repository fails
-     * @throws IOException If the values in the files could not be replaced
+     * @throws IOException     If the values in the files could not be replaced
      */
-    private void adjustProjectName(Map<String, String> replacements, String projectKey, String repositoryName, User user) throws GitAPIException, IOException {
-        final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, repositoryName);
+    private void adjustProjectName(Map<String, String> replacements, String projectKey, String courseShortName, String repositoryName, User user)
+            throws GitAPIException, IOException {
+        final var repositoryUrl = versionControlService.get().getCloneRepositoryUrl(projectKey, courseShortName, repositoryName);
         Repository repository = gitService.getOrCheckoutRepository(repositoryUrl, true);
         fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements, List.of("gradle-wrapper.jar"));
         gitService.stageAllChanges(repository);
@@ -259,9 +267,9 @@ public class ProgrammingExerciseImportService {
      * Referenced entities, s.a. the test cases or the hints will get cloned and assigned a new id.
      *
      * @param originalProgrammingExercise the Programming Exercise which should be used as a blueprint
-     * @param newExercise The new exercise already containing values which should not get copied, i.e. overwritten
-     * @param updateTemplate if the template files should be updated
-     * @param recreateBuildPlans if the build plans should be recreated
+     * @param newExercise                 The new exercise already containing values which should not get copied, i.e. overwritten
+     * @param updateTemplate              if the template files should be updated
+     * @param recreateBuildPlans          if the build plans should be recreated
      * @return the imported programming exercise
      */
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise newExercise, boolean updateTemplate,

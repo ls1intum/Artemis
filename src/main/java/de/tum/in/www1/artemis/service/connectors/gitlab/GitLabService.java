@@ -170,9 +170,9 @@ public class GitLabService extends AbstractVersionControlService {
     /**
      * Protects a branch from the repository, so that developers cannot change the history
      *
-     * @param repositoryUrl     The repository url of the repository to update. It contains the project key & the repository name.
-     * @param branch            The name of the branch to protect (e.g "main")
-     * @throws VersionControlException      If the communication with the VCS fails.
+     * @param repositoryUrl The repository url of the repository to update. It contains the project key & the repository name.
+     * @param branch        The name of the branch to protect (e.g "main")
+     * @throws VersionControlException If the communication with the VCS fails.
      */
     private void protectBranch(VcsRepositoryUrl repositoryUrl, String branch) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
@@ -307,7 +307,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
+    public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String courseShortName, String repositorySlug) {
         return new GitLabRepositoryUrl(projectKey, repositorySlug);
     }
 
@@ -437,7 +437,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void createRepository(String projectKey, String repoName, String parentProjectKey) throws VersionControlException {
+    public void createRepository(String projectKey, String courseShortName, String repoName, String parentProjectKey) throws VersionControlException {
         try {
             final var groupId = gitlab.getGroupApi().getGroup(projectKey).getId();
             final var project = new Project().withPath(repoName.toLowerCase()).withName(repoName.toLowerCase()).withNamespaceId(groupId).withVisibility(Visibility.PRIVATE)
@@ -454,7 +454,7 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public boolean checkIfProjectExists(String projectKey, String projectName) {
+    public boolean checkIfProjectExists(String projectKey, String courseShortName, String projectName) {
         try {
             return !gitlab.getProjectApi().getProjects(projectKey).isEmpty();
         }

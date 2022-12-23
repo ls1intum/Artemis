@@ -148,7 +148,8 @@ public class ProgrammingExerciseImportBasicService {
      */
     private void setupTestRepository(ProgrammingExercise newExercise) {
         final var testRepoName = newExercise.generateRepositoryName(RepositoryType.TESTS);
-        newExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(newExercise.getProjectKey(), testRepoName).toString());
+        newExercise.setTestRepositoryUrl(versionControlService.get()
+                .getCloneRepositoryUrl(newExercise.getProjectKey(), newExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), testRepoName).toString());
     }
 
     /**

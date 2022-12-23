@@ -3061,7 +3061,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         programmingGroup.addExercise(programming);
         exerciseRepo.save(programming);
 
-        doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());
+        doReturn(true).when(versionControlService).checkIfProjectExists(any(), any(), any());
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
         request.getMvc().perform(post("/api/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))

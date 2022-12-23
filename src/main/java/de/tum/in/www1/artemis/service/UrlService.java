@@ -130,8 +130,8 @@ public class UrlService {
         }
         // Note: pathComponents[] = "" because the path always starts with "/"
         var projectKey = pathComponents[1];
-        if ("scm".equals(pathComponents[1])) {
-            // special case for Bitbucket
+        if ("scm".equals(pathComponents[1]) || "git".equals(pathComponents[1])) {
+            // special case for Bitbucket and local Git
             projectKey = pathComponents[2];
         }
         return projectKey;

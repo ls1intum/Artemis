@@ -5,6 +5,8 @@ import java.net.URISyntaxException;
 import java.util.Objects;
 
 // TODO: we might want to rename this class to VcsRepositoryUri
+// TODO: Refactor, merge with UrlService and make independent from environment variables.
+// Maybe also look at LocalRepository
 public class VcsRepositoryUrl {
 
     protected String username;
@@ -66,7 +68,7 @@ public class VcsRepositoryUrl {
      * Generates the unique local folder name for a given file or remote repository URI.
      * For file URIs, we take the last element of the path, which should be unique
      * For URLs pointing to remote git repositories, we use the whole path
-     *
+     * <p>
      * Examples:
      * https://bitbucket.ase.in.tum.de/scm/eist20l06e03/eist20l06e03-ab123cd.git --> eist20l06e03/eist20l06e03-ab123cd
      * ssh://git@bitbucket.ase.in.tum.de:7999/eist20l06e03/eist20l06e03-ab123cd.git --> eist20l06e03/eist20l06e03-ab123cd
@@ -86,6 +88,7 @@ public class VcsRepositoryUrl {
             path = path.replaceAll(".git$", "");
             path = path.replaceAll("/$", "");
             path = path.replaceAll("^/.*scm", "");
+            path = path.replaceAll("^/.*git", "");
             return path;
         }
     }
