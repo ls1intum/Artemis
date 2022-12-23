@@ -44,7 +44,6 @@ public class Complaint extends DomainObject {
     // TODO: delete in the next major release
     @Deprecated
     @Column(name = "result_before_complaint")
-    // @Lob
     @JsonIgnore
     private String resultBeforeComplaint;
 

@@ -80,19 +80,15 @@ public class Exam extends DomainObject {
     private int workingTime;
 
     @Column(name = "start_text")
-    // @Lob
     private String startText;
 
     @Column(name = "end_text")
-    // @Lob
     private String endText;
 
     @Column(name = "confirmation_start_text")
-    // @Lob
     private String confirmationStartText;
 
     @Column(name = "confirmation_end_text")
-    // @Lob
     private String confirmationEndText;
 
     @Column(name = "max_points")
