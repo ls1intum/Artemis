@@ -63,6 +63,7 @@ public class EmailSummaryService {
      * @param users the users to prepare email summaries for
      */
     public void prepareEmailSummariesForUsers(Set<User> users) {
+        checkSecurityUtils();
         // More elements that should be displayed in weekly summaries can be extracted here
         // Currently only exercises are used for weekly summaries
 
@@ -99,6 +100,7 @@ public class EmailSummaryService {
      * @return all users that should receive this summary email
      */
     public Set<User> findRelevantUsersForSummary() {
+        checkSecurityUtils();
         // currently, only weekly summaries are supported -> for daily just add one more case
         if (scheduleInterval.equals(weekly)) {
             return notificationSettingRepository
