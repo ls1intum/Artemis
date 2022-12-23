@@ -604,8 +604,7 @@ public class ProgrammingExerciseGradingService {
             }
 
             // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
-            final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream()//
-                    .filter(testCase -> testCase.isSuccessful(result))//
+            final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(testCase -> testCase.isSuccessful(result))
                     .collect(Collectors.toSet());
 
             updateScore(result, testCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
@@ -648,7 +647,7 @@ public class ProgrammingExerciseGradingService {
      * @param testCases of the programming exercise.
      */
     private void filterAutomaticFeedbacksWithoutTestCase(Result result, final Set<ProgrammingExerciseTestCase> testCases) {
-        result.getFeedbacks().removeIf(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()//
+        result.getFeedbacks().removeIf(feedback -> feedback.getType() == FeedbackType.AUTOMATIC && !feedback.isStaticCodeAnalysisFeedback()
                 && testCases.stream().noneMatch(test -> test.getTestName().equalsIgnoreCase(feedback.getText())));
     }
 
@@ -670,12 +669,8 @@ public class ProgrammingExerciseGradingService {
      * @param allTests of the given programming exercise.
      */
     private void createFeedbackForNotExecutedTests(Result result, Set<ProgrammingExerciseTestCase> allTests) {
-        List<Feedback> feedbacksForNotExecutedTestCases = allTests.stream().filter(testCase -> testCase.wasNotExecuted(result))//
-                .map(testCase -> new Feedback()//
-                        .type(FeedbackType.AUTOMATIC)//
-                        .text(testCase.getTestName())//
-                        .detailText("Test was not executed."))
-                .toList();
+        List<Feedback> feedbacksForNotExecutedTestCases = allTests.stream().filter(testCase -> testCase.wasNotExecuted(result))
+                .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).toList();
 
         result.addFeedbacks(feedbacksForNotExecutedTestCases);
     }
@@ -693,6 +688,7 @@ public class ProgrammingExerciseGradingService {
         Set<String> uniqueFeedbackNames = new HashSet<>();
         Set<String> duplicateFeedbackNames = result.getFeedbacks().stream()
                 .filter(feedback -> !feedback.isStaticCodeAnalysisFeedback() && FeedbackType.AUTOMATIC.equals(feedback.getType())).map(Feedback::getText)
+                // Set.add() returns false if the feedbackName.toLowerCase is already contained in the set
                 .filter(feedbackName -> !uniqueFeedbackNames.add(feedbackName.toLowerCase())).collect(Collectors.toSet());
 
         if (!duplicateFeedbackNames.isEmpty()) {
@@ -744,9 +740,7 @@ public class ProgrammingExerciseGradingService {
             setCreditsForTestCaseFeedback(result, testCase, credits);
         });
 
-        result.getFeedbacks().stream()//
-                .filter(feedback -> Objects.isNull(feedback.getCredits()))//
-                .forEach(feedback -> feedback.setCredits(0D));
+        result.getFeedbacks().stream().filter(feedback -> Objects.isNull(feedback.getCredits())).forEach(feedback -> feedback.setCredits(0D));
     }
 
     /**
@@ -761,7 +755,6 @@ public class ProgrammingExerciseGradingService {
      */
     private double calculateScore(final ProgrammingExercise programmingExercise, final Set<ProgrammingExerciseTestCase> allTests, final Result result,
             final List<Feedback> staticCodeAnalysisFeedback, boolean applySubmissionPolicy) {
-
         // TODO: this might be redundant and covered in calculateSuccessfulTestPoints
         var noSuccessfulTestCases = allTests.stream().filter(testCase -> testCase.isSuccessful(result)).toList().isEmpty();
         if (noSuccessfulTestCases) {
@@ -790,19 +783,16 @@ public class ProgrammingExerciseGradingService {
      * @return the total score for this result without penalty deductions.
      */
     private double calculateSuccessfulTestPoints(final ProgrammingExercise programmingExercise, final Result result, final Set<ProgrammingExerciseTestCase> allTests) {
-
         Set<ProgrammingExerciseTestCase> successfulTestCases = allTests.stream().filter(testCase -> testCase.isSuccessful(result)).collect(Collectors.toSet());
         double weightSum = calculateWeightSum(allTests);
-        double successfulTestPoints = successfulTestCases.stream()//
+        double successfulTestPoints = successfulTestCases.stream()
                 .mapToDouble(test -> calculatePointsForTestCase(result, programmingExercise.getMaxPoints(), test, allTests.size(), weightSum)).sum();
 
         return capPointsAtMaximum(programmingExercise, successfulTestPoints);
     }
 
     private double calculateWeightSum(final Set<ProgrammingExerciseTestCase> allTests) {
-        return allTests.stream()//
-                .filter(testCase -> !testCase.isInvisible())//
-                .mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
+        return allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
     }
 
     /**
