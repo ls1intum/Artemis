@@ -128,7 +128,6 @@
         "@types/sockjs-client": "1.5.1",
         "@types/uuid": "9.0.0",
         "@typescript-eslint/eslint-plugin": "5.47.0",
-        "@typescript-eslint/eslint-plugin-tslint": "5.47.0",
         "@typescript-eslint/parser": "5.47.0",
         "browser-sync": "2.27.11",
         "browser-sync-webpack-plugin": "2.3.0",
