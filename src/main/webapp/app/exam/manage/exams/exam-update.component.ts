@@ -166,7 +166,7 @@ export class ExamUpdateComponent implements OnInit {
     }
 
     get isValidMaxPoints(): boolean {
-        return this.exam?.maxPoints !== undefined && this.exam?.maxPoints > 0;
+        return this.exam?.examMaxPoints !== undefined && this.exam?.examMaxPoints > 0;
     }
 
     /**
