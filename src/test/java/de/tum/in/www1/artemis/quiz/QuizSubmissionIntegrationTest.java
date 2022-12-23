@@ -78,7 +78,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void init() {
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
         quizScheduleService.stopSchedule();
-        database.addUsers(TEST_PREFIX, 1000, 5, 0, 10);
+        database.addUsers(TEST_PREFIX, 100, 5, 0, 5);
     }
 
     @Test
@@ -92,7 +92,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, false, null);
-            final var username = TEST_PREFIX + "student" + (i + 100);
+            final var username = TEST_PREFIX + "student" + i;
             final Principal principal = () -> username;
             // save
             quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
@@ -101,7 +101,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // only half of the students submit manually
         for (int i = 1; i <= numberOfParticipants / 2; i++) {
             quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, true, null);
-            final var username = TEST_PREFIX + "student" + (i + 100);
+            final var username = TEST_PREFIX + "student" + i;
             final Principal principal = () -> username;
             // submit
             quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
@@ -235,7 +235,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         submissions.add(student3Submission);
 
         for (int i = 0; i < 3; i++) {
-            var username = TEST_PREFIX + "student" + (i + 300);
+            var username = TEST_PREFIX + "student" + (i + 1);
             final Principal principal = () -> username;
             quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), submissions.get(i), principal);
         }
@@ -283,12 +283,12 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         if (quizMode != QuizMode.SYNCHRONIZED) {
             var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(10)));
             for (int i = 1; i <= numberOfParticipants; i++) {
-                joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student" + (i + 400));
+                joinQuizBatch(quizExercise, batch, TEST_PREFIX + "student" + i);
             }
         }
 
         for (int i = 1; i <= numberOfParticipants; i++) {
-            database.changeUser(TEST_PREFIX + "student" + (i + 400));
+            database.changeUser(TEST_PREFIX + "student" + i);
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, false, null);
             assertThat(quizSubmission.getSubmittedAnswers()).hasSize(3);
             assertThat(quizSubmission.isSubmitted()).isFalse();
@@ -420,7 +420,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // submit 10 times for 10 different students
         for (int i = 1; i <= numberOfParticipants; i++) {
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, true, null);
-            database.changeUser(TEST_PREFIX + "student" + (i + 500));
+            database.changeUser(TEST_PREFIX + "student" + i);
             Result receivedResult = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.OK);
             assertThat(((QuizSubmission) receivedResult.getSubmission()).getSubmittedAnswers()).hasSameSizeAs(quizSubmission.getSubmittedAnswers());
         }
@@ -703,7 +703,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         int numberOfParticipants = 10;
         for (int i = 1; i <= numberOfParticipants; i++) {
             quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, false, null);
-            final var username = TEST_PREFIX + "student" + (i + 600);
+            final var username = TEST_PREFIX + "student" + i;
             final Principal principal = () -> username;
             // save
             quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, principal);
