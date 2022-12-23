@@ -66,7 +66,7 @@ describe('Detailed Grading System Component', () => {
     const gradeSteps = [gradeStep1, gradeStep2, gradeStep3];
 
     const exam = new Exam();
-    exam.maxPoints = 100;
+    exam.examMaxPoints = 100;
     const course = new Course();
     course.maxPoints = 100;
 
@@ -122,7 +122,7 @@ describe('Detailed Grading System Component', () => {
         expect(findGradingScaleForExamStub).toHaveBeenCalledOnce();
         expect(findExamStub).toHaveBeenCalledOnce();
         expect(comp.exam).toStrictEqual(exam);
-        expect(comp.maxPoints).toBe(exam.maxPoints);
+        expect(comp.maxPoints).toBe(exam.examMaxPoints);
     });
 
     it('should handle find response for exam and not find a grading scale', () => {
@@ -285,7 +285,7 @@ describe('Detailed Grading System Component', () => {
         comp.existingGradingScale = true;
         comp.isExam = false;
         comp.courseId = 123;
-        const gradingSystemDeleteForCourseStub = jest.spyOn(gradingSystemService, 'deleteGradingScaleForCourse').mockReturnValue(of(new HttpResponse<{}>({ body: [] })));
+        const gradingSystemDeleteForCourseStub = jest.spyOn(gradingSystemService, 'deleteGradingScaleForCourse').mockReturnValue(of(new HttpResponse<any>({ body: [] })));
 
         comp.delete();
 
@@ -297,7 +297,7 @@ describe('Detailed Grading System Component', () => {
     it('should delete grading scale for exam', () => {
         comp.existingGradingScale = true;
         comp.isExam = true;
-        const gradingSystemDeleteForExamStub = jest.spyOn(gradingSystemService, 'deleteGradingScaleForExam').mockReturnValue(of(new HttpResponse<{}>({ body: [] })));
+        const gradingSystemDeleteForExamStub = jest.spyOn(gradingSystemService, 'deleteGradingScaleForExam').mockReturnValue(of(new HttpResponse<any>({ body: [] })));
 
         comp.delete();
 

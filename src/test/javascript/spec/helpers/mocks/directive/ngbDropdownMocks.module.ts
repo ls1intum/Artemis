@@ -1,30 +1,34 @@
 import { Directive, EventEmitter, Input, NgModule, Output } from '@angular/core';
 
 @Directive({
+    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[ngbDropdownItem]',
 })
-class NgbDropdownItemMock {
+class NgbDropdownItemMockDirective {
     @Input() disabled: boolean;
 }
 
 @Directive({
+    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[ngbDropdownMenu]',
 })
-class NgbDropdownMenuMock {}
+class NgbDropdownMenuMockDirective {}
 
 @Directive({
+    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[ngbDropdownToggle]',
 })
-class NgbDropdownToggleMock {}
+class NgbDropdownToggleMockDirective {}
 
 @Directive({
+    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[ngbDropdown]',
     exportAs: 'ngbDropdown',
 })
-class NgbDropdownMock {
+class NgbDropdownMockDirective {
     @Input() autoClose: boolean | 'outside' | 'inside';
     @Input() dropdownClass: string;
-    @Input('open') _open = false;
+    @Input() open = false;
     @Input() placement: any;
     @Input() popperOptions: (options: Partial<any>) => Partial<any>;
     @Input() container: null | 'body';
@@ -33,12 +37,13 @@ class NgbDropdownMock {
 }
 
 @Directive({
+    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[ngbDropdownAnchor]',
 })
-class NgbDropdownAnchorMock {}
+class NgbDropdownAnchorMockDirective {}
 
 @NgModule({
-    declarations: [NgbDropdownItemMock, NgbDropdownMenuMock, NgbDropdownToggleMock, NgbDropdownMock, NgbDropdownAnchorMock],
-    exports: [NgbDropdownItemMock, NgbDropdownMenuMock, NgbDropdownToggleMock, NgbDropdownMock, NgbDropdownAnchorMock],
+    declarations: [NgbDropdownItemMockDirective, NgbDropdownMenuMockDirective, NgbDropdownToggleMockDirective, NgbDropdownMockDirective, NgbDropdownAnchorMockDirective],
+    exports: [NgbDropdownItemMockDirective, NgbDropdownMenuMockDirective, NgbDropdownToggleMockDirective, NgbDropdownMockDirective, NgbDropdownAnchorMockDirective],
 })
 export class NgbDropdownMocksModule {}

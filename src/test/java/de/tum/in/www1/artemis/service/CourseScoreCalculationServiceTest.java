@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -22,6 +21,8 @@ import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 
 class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "cscservicetest";
+
     @Autowired
     private ExerciseRepository exerciseRepository;
 
@@ -36,19 +37,14 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
     private Course course;
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     @BeforeEach
     void init() {
-        database.addUsers(2, 2, 0, 1);
-        course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(false);
+        database.addUsers(TEST_PREFIX, 2, 2, 0, 1);
+        course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(TEST_PREFIX, false);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreWithNotIncludedExercises() {
         var exerciseList = new ArrayList<>(course.getExercises());
         exerciseList.sort(Comparator.comparing(Exercise::getId));
@@ -63,7 +59,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         exerciseRepository.save(exercise);
 
-        User student = userRepository.findOneByLogin("student1").get();
+        User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
 
         var courseResult = courseScoreCalculationService.calculateCourseScores(course.getId(), List.of(student.getId()));
         assertThat(courseResult.maxPoints()).isEqualTo(0.0);
@@ -78,7 +74,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreForStudentWithMultipleResultsInParticipation(boolean withDueDate) {
 
         ZonedDateTime dueDate = withDueDate ? ZonedDateTime.now() : null;
@@ -86,7 +82,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
 
         exerciseRepository.saveAll(course.getExercises());
 
-        User student = userRepository.findOneByLogin("student1").get();
+        User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
 
         var studentParticipations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(course.getId(), student.getId());
 

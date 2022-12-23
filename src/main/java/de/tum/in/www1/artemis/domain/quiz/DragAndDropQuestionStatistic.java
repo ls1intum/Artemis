@@ -37,11 +37,6 @@ public class DragAndDropQuestionStatistic extends QuizQuestionStatistic {
         this.dropLocationCounters = dropLocationCounters;
     }
 
-    @Override
-    public String toString() {
-        return "DragAndDropQuestionStatistic{" + "id=" + getId() + "}";
-    }
-
     /**
      * 1. creates the DropLocationCounter for the new DropLocation if where is already an DropLocationCounter with the given DropLocation -> nothing happens
      *

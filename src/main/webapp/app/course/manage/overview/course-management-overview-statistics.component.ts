@@ -54,7 +54,7 @@ export class CourseManagementOverviewStatisticsComponent extends ActiveStudentsC
     }
 
     ngOnChanges() {
-        if (!!this.initialStats) {
+        if (this.initialStats) {
             this.loading = false;
             this.createChartData();
         }

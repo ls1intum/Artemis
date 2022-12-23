@@ -634,21 +634,18 @@ public class UserService {
     }
 
     /**
-     * remove the user from the specified group only in the Artemis database
+     * remove the user from the specified group
      *
      * @param user  the user
      * @param group the group
-     * @param role the role
      */
-    public void removeUserFromGroup(User user, String group, Role role) {
+    public void removeUserFromGroup(User user, String group) {
         removeUserFromGroupInternal(user, group); // internal Artemis database
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
-        // e.g. Gitlab
+        // e.g. Gitlab/Bitbucket
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of()));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> {
-            ciUserManagementService.removeUserFromGroups(user.getLogin(), Set.of(group));
-            ciUserManagementService.addUserToGroups(user.getLogin(), user.getGroups());
-        });
+        // e.g. Jenkins
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.removeUserFromGroups(user.getLogin(), Set.of(group)));
     }
 
     /**

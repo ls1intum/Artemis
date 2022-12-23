@@ -202,6 +202,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     updateMarkdown(): void {
         // make sure that always the correct result is set, before updating markdown
         // looks weird, but in setter of latestResult are setters of sub components invoked
+        // eslint-disable-next-line no-self-assign
         this.latestResult = this.latestResult;
 
         this.injectableContentForMarkdownCallbacks = [];

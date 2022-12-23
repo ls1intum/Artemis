@@ -123,11 +123,13 @@ export class CodeEditorFileBrowserComponent implements OnInit, OnChanges, AfterV
     faAngleDoubleUp = faAngleDoubleUp;
     faAngleDoubleDown = faAngleDoubleDown;
 
+    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set selectedFile(file: string | undefined) {
         this.selectedFileValue = file;
         this.selectedFileChange.emit(this.selectedFile);
     }
 
+    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;
         this.commitStateChange.emit(commitState);
