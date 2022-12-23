@@ -116,7 +116,7 @@ describe('ExamDetailComponent', () => {
         exam.course.id = 1;
         exam.title = 'Example Exam';
         exam.numberOfRegisteredUsers = 3;
-        exam.examMaxPoints = 100;
+        exam.maxPoints = 100;
         exam.exerciseGroups = [];
         examDetailComponent.exam = exam;
     });
