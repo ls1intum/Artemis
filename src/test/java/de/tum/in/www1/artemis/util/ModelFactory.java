@@ -92,7 +92,8 @@ public class ModelFactory {
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        attachment.setLink(Path.of(FileService.DEFAULT_FILE_SUBPATH, testFileName).toString());
+        // Path.toString() uses platform dependant path separators. Since we want to use this as a URL later, we need to replace \ with /.
+        attachment.setLink(Path.of(FileService.DEFAULT_FILE_SUBPATH, testFileName).toString().replace('\\', '/'));
         return attachment;
     }
 
