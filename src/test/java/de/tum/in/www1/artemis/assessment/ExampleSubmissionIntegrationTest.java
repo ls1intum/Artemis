@@ -9,6 +9,8 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -28,6 +30,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 
 class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private final Logger log = LoggerFactory.getLogger(ExampleSubmissionIntegrationTest.class);
 
     private static final String TEST_PREFIX = "examplesubmissionintegration";
 
@@ -60,12 +64,14 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @BeforeEach
     void initTestCase() throws Exception {
+        log.error("Test setup start");
         database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = database.addCourseWithModelingAndTextExercise();
         modelingExercise = database.getFirstExerciseWithType(course, ModelingExercise.class);
         textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
         emptyModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
         validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        log.error("Test setup done");
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

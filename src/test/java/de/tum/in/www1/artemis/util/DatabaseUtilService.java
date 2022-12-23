@@ -355,15 +355,31 @@ public class DatabaseUtilService {
      * @return users that were generated
      */
     public List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, String[] groups, Set<Authority> authorities, int amount, String registrationNumberPrefix) {
-        List<User> generatedUsers = generateActivatedUsers(loginPrefix, groups, authorities, amount);
+        List<User> generatedUsers = generateAndSaveActivatedUsers(loginPrefix, groups, authorities, amount);
         for (int i = 0; i < generatedUsers.size(); i++) {
             generatedUsers.get(i).setRegistrationNumber(registrationNumberPrefix + "R" + i);
         }
         return generatedUsers;
     }
 
-    public List<User> generateActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
-        return generateActivatedUsers(loginPrefix, USER_PASSWORD, groups, authorities, amount);
+    public List<User> generateAndSaveActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
+        return generateAndSaveActivatedUsers(loginPrefix, USER_PASSWORD, groups, authorities, amount);
+    }
+
+    public List<User> generateAndSaveActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
+        List<User> generatedUsers = new ArrayList<>();
+        for (int i = 1; i <= amount; i++) {
+            var login = loginPrefix + i;
+            // the following line either creates the user or resets and existing user to its original state
+            User user = createOrReuseExistingUser(login, commonPasswordHash);
+            if (groups != null) {
+                user.setGroups(Set.of(groups));
+                user.setAuthorities(authorities);
+            }
+            user = userRepo.save(user);
+            generatedUsers.add(user);
+        }
+        return generatedUsers;
     }
 
     public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
@@ -371,12 +387,11 @@ public class DatabaseUtilService {
         for (int i = 1; i <= amount; i++) {
             var login = loginPrefix + i;
             // the following line either creates the user or resets and existing user to its original state
-            User user = createAndSaveUser(login, commonPasswordHash);
+            User user = createOrReuseExistingUser(login, commonPasswordHash);
             if (groups != null) {
                 user.setGroups(Set.of(groups));
                 user.setAuthorities(authorities);
             }
-            user = userRepo.save(user);
             generatedUsers.add(user);
         }
         return generatedUsers;
@@ -507,6 +522,15 @@ public class DatabaseUtilService {
         return userRepo.save(user);
     }
 
+    public User createOrReuseExistingUser(String login, String hashedPassword) {
+        User user = ModelFactory.generateActivatedUser(login, hashedPassword);
+        if (userExistsWithLogin(login)) {
+            // save the user with the newly created values (to override previous changes) with the same ID
+            user.setId(getUserByLogin(login).getId());
+        }
+        return user;
+    }
+
     public User createAndSaveUser(String login) {
         User user = ModelFactory.generateActivatedUser(login);
         if (userExistsWithLogin(login)) {
@@ -535,15 +559,19 @@ public class DatabaseUtilService {
         if (authorityRepository.count() == 0) {
             authorityRepository.saveAll(adminAuthorities);
         }
-
+        log.debug("Generate " + numberOfStudents + " students...");
         var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(USER_PASSWORD), new String[] { "tumuser", "testgroup", prefix + "tumuser" },
                 studentAuthorities, numberOfStudents);
+        log.debug(numberOfStudents + " students generated. Generate " + numberOfTutors + " tutors...");
         var tutors = generateActivatedUsers(prefix + "tutor", passwordService.hashPassword(USER_PASSWORD), new String[] { "tutor", "testgroup", prefix + "tutor" },
                 tutorAuthorities, numberOfTutors);
+        log.debug(numberOfTutors + " tutors generated. Generate " + numberOfEditors + " editors...");
         var editors = generateActivatedUsers(prefix + "editor", passwordService.hashPassword(USER_PASSWORD), new String[] { "editor", "testgroup", prefix + "editor" },
                 editorAuthorities, numberOfEditors);
+        log.debug(numberOfEditors + " editors generated. Generate " + numberOfInstructors + " instructors...");
         var instructors = generateActivatedUsers(prefix + "instructor", passwordService.hashPassword(USER_PASSWORD),
                 new String[] { "instructor", "testgroup", prefix + "instructor" }, instructorAuthorities, numberOfInstructors);
+        log.debug(numberOfInstructors + " instructors generated");
 
         List<User> usersToAdd = new ArrayList<>();
         usersToAdd.addAll(students);
@@ -552,14 +580,18 @@ public class DatabaseUtilService {
         usersToAdd.addAll(instructors);
 
         if (!userExistsWithLogin("admin")) {
+            log.debug("Generate admin");
             User admin = ModelFactory.generateActivatedUser("admin", passwordService.hashPassword(USER_PASSWORD));
             admin.setGroups(Set.of("admin"));
             admin.setAuthorities(adminAuthorities);
             usersToAdd.add(admin);
+            log.debug("Generate admin done");
         }
 
         if (usersToAdd.size() > 0) {
+            log.debug("Save " + usersToAdd.size() + " users to database...");
             usersToAdd = userRepo.saveAll(usersToAdd);
+            log.debug("Save " + usersToAdd.size() + " users to database. Done");
         }
 
         return usersToAdd;
@@ -632,7 +664,7 @@ public class DatabaseUtilService {
 
     public void addInstructor(final String instructorGroup, final String instructorName) {
         if (!userExistsWithLogin(instructorName)) {
-            var newUsers = generateActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1);
+            var newUsers = generateAndSaveActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1);
             if (!newUsers.isEmpty()) {
                 var instructor = userRepo.save(newUsers.get(0));
                 assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
@@ -642,7 +674,7 @@ public class DatabaseUtilService {
 
     public void addEditor(final String editorGroup, final String editorName) {
         if (!userExistsWithLogin(editorName)) {
-            var newUsers = generateActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1);
+            var newUsers = generateAndSaveActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1);
             if (!newUsers.isEmpty()) {
                 var editor = userRepo.save(newUsers.get(0));
                 assertThat(editor.getId()).as("Editor has been created").isNotNull();
@@ -652,7 +684,7 @@ public class DatabaseUtilService {
 
     public void addTeachingAssistant(final String taGroup, final String taName) {
         if (!userExistsWithLogin(taName)) {
-            var newUsers = generateActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1);
+            var newUsers = generateAndSaveActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1);
             if (!newUsers.isEmpty()) {
                 var ta = userRepo.save(newUsers.get(0));
                 assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
@@ -662,7 +694,7 @@ public class DatabaseUtilService {
 
     public void addStudent(final String studentGroup, final String studentName) {
         if (!userExistsWithLogin(studentName)) {
-            var newUsers = generateActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1);
+            var newUsers = generateAndSaveActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1);
             if (!newUsers.isEmpty()) {
                 var student = userRepo.save(newUsers.get(0));
                 assertThat(student.getId()).as("Student has been created").isNotNull();

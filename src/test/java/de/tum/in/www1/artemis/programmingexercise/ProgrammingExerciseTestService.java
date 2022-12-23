@@ -1434,7 +1434,7 @@ public class ProgrammingExerciseTestService {
 
         // Add a new student to the team
         User newStudent = database
-                .generateActivatedUsers(userPrefix + "new-student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).get(0);
+                .generateAndSaveActivatedUsers(userPrefix + "new-student", new String[] { "tumuser", "testgroup" }, Set.of(new Authority(Role.STUDENT.getAuthority())), 1).get(0);
         newStudent = userRepo.save(newStudent);
         team.addStudents(newStudent);
 
