@@ -133,7 +133,7 @@ class Lti13LaunchFilterTest {
         verify(responseWriter).print(argument.capture());
         JSONObject responseJsonBody = argument.getValue();
         verify(lti13Service).buildLtiResponse(any(), any());
-        assertThat(((String) responseJsonBody.get("targetLinkUri")).contains(this.targetLinkUri)).as("Response body contains the expected targetLinkUri");
+        assertThat(((String) responseJsonBody.get("targetLinkUri"))).as("Response body contains the expected targetLinkUri").contains(this.targetLinkUri);
     }
 
     @Test
