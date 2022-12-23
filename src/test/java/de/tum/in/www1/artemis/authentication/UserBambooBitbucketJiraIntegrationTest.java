@@ -97,8 +97,7 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
         student.setInternal(true);
         student = userRepository.save(student);
         student.setFirstName("changed");
-        jiraRequestMockProvider.mockIsGroupAvailable("testgroup");
-        jiraRequestMockProvider.mockIsGroupAvailable("tumuser");
+        student.getGroups().forEach(groupName -> jiraRequestMockProvider.mockIsGroupAvailable(groupName));
         bitbucketRequestMockProvider.mockUpdateUserDetails(student.getLogin(), student.getEmail(), student.getName(), false);
         bitbucketRequestMockProvider.mockUpdateUserPassword(student.getLogin(), "newPassword", true, false);
 
