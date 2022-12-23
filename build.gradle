@@ -81,7 +81,7 @@ modernizer {
     includeTestClasses = true
 }
 
-// Execute the test cases: ./gradlew executeTests
+// Execute the test cases: ./gradlew test
 
 test {
     useJUnitPlatform()
@@ -310,9 +310,7 @@ dependencies {
     testImplementation "org.gradle:gradle-tooling-api:7.3"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M7"
     testImplementation "com.opencsv:opencsv:5.7.1"
-    testImplementation "io.zonky.test:embedded-database-spring-test:2.1.2"
-    testImplementation "org.testcontainers:postgresql:1.17.6"
-    testImplementation "org.testcontainers:mysql:1.17.6"
+    testImplementation "io.zonky.test:embedded-database-spring-test:2.2.0"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20220924"
@@ -320,16 +318,12 @@ dependencies {
 
 dependencyManagement {
     imports {
-        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:14.5.0"
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:15.1.0"
     }
 }
 
 task cleanResources(type: Delete) {
     delete "build/resources"
-}
-
-task executeTests (type: Exec) {
-    commandLine "./gradlew", "test", "-x", "webapp"
 }
 
 // Taken from here: https://stackoverflow.com/questions/3963708/gradle-how-to-display-test-results-in-the-console-in-real-time
@@ -379,10 +373,6 @@ checkstyle {
     maxErrors = 0
 }
 
-task executeCheckstyle (type: Exec) {
-    commandLine "./gradlew", "checkstyleMain", "-x", "npm", "-x", "webapp"
-}
-
 task buildJarForDocker (type: Exec) {
     commandLine "./gradlew", "build", "-x", "webapp", "-x", "test", "-x", "jacocoTestCoverageVerification"
 }
@@ -430,8 +420,8 @@ pitest {
 // Available commands:
 //
 // 1) Build production:                             ./gradlew -Pprod -Pwar clean bootWar
-// 2) Execute tests with coverage report:           ./gradlew executeTests jacocoTestReport -x webapp
-// 2a) Execute tests without coverage report:       ./gradlew executeTests -x webapp
+// 2) Execute tests with coverage report:           ./gradlew test jacocoTestReport -x webapp
+// 2a) Execute tests without coverage report:       ./gradlew test -x webapp
 // 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
 // 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
 // 4) Check Java code format:                       ./gradlew spotlessCheck -x webapp

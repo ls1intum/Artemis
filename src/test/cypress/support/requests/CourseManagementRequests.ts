@@ -557,8 +557,8 @@ export class CypressExamBuilder {
     /**
      * @param points the maximum amount of points achieved in the exam (default is 10)
      */
-    maxPoints(points: number) {
-        this.template.maxPoints = points;
+    examMaxPoints(points: number) {
+        this.template.examMaxPoints = points;
         return this;
     }
 
