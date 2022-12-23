@@ -215,8 +215,6 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     void testExportAll_IOException() throws Exception {
         doThrow(IOException.class).when(zipFileService).createZipFile(any(), any(), any());
         request.postWithResponseBodyFile("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
-        // the following line resets the mock and prevents it from disturbing any other tests
-
     }
 
     @Test
