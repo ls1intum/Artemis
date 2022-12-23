@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { faBan, faClock, faGlobe, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faClock, faGlobe, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -12,7 +12,6 @@ import { AlertService } from 'app/core/util/alert.service';
 
 type UnitResponseType = {
     unitName: string;
-    file: File;
     releaseDate?: dayjs.Dayjs;
     startPage: number;
     endPage: number;
@@ -34,6 +33,8 @@ export class AttachmentUnitsComponent implements OnInit {
     faBan = faBan;
     faGlobe = faGlobe;
     faClock = faClock;
+    faTimes = faTimes;
+    faPlus = faPlus;
 
     file: File;
     fileName: string;
@@ -63,9 +64,7 @@ export class AttachmentUnitsComponent implements OnInit {
         this.attachmentUnitService.getSplitUnitsData(this.lectureId, formData).subscribe({
             next: (res: any) => {
                 this.units = res.body;
-                if (this.units.length > 0) {
-                    this.isLoading = false;
-                }
+                this.isLoading = false;
             },
             error: (res: HttpErrorResponse) => {
                 if (res.error.params === 'file' && res?.error?.title) {
@@ -76,8 +75,6 @@ export class AttachmentUnitsComponent implements OnInit {
                 this.isLoading = false;
             },
         });
-
-        console.log(this.file, this.fileName);
     }
 
     createAttachmentUnits(): void {
@@ -107,6 +104,26 @@ export class AttachmentUnitsComponent implements OnInit {
 
     previousState() {
         this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+    }
+
+    addRow() {
+        const unitDynamic = {
+            unitName: '',
+            startPage: 0,
+            endPage: 0,
+        };
+        this.units.push(unitDynamic);
+        console.log(unitDynamic);
+        return true;
+    }
+
+    deleteRow(i: number) {
+        if (this.units.length === 1) {
+            return false;
+        } else {
+            this.units.splice(i, 1);
+            return true;
+        }
     }
 
     get currentTimeZone(): string {

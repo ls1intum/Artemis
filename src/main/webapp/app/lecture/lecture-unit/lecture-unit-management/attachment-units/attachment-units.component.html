@@ -18,6 +18,7 @@
                     </th>
                     <th><span jhiTranslate="artemisApp.lecture.split.startPage">Start Page</span></th>
                     <th><span jhiTranslate="artemisApp.lecture.split.endPage">End Page</span></th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody class="markdown-preview" id="lecture-preview">
@@ -61,7 +62,11 @@
                             [(ngModel)]="units[i].endPage"
                         />
                     </td>
+                    <td>
+                        <button (click)="deleteRow(i)" class="btn btn-danger"><fa-icon [icon]="faTimes"></fa-icon></button>
+                    </td>
                 </tr>
+                <button (click)="addRow()" class="btn btn-success mt-2"><fa-icon [icon]="faPlus"></fa-icon></button>
             </tbody>
         </table>
         <button (click)="createAttachmentUnits()" class="btn btn-primary">
