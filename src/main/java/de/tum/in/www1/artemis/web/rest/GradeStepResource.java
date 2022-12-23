@@ -89,7 +89,7 @@ public class GradeStepResource {
         if (!isInstructor && !exam.resultsPublished()) {
             throw new AccessForbiddenException();
         }
-        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, exam.getMaxPoints(), exam.getTitle());
+        GradeStepsDTO gradeStepsDTO = prepareGradeStepsDTO(gradingScale, exam.getExamMaxPoints(), exam.getTitle());
         return ResponseEntity.ok(gradeStepsDTO);
     }
 

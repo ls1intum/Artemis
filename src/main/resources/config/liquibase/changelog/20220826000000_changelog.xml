@@ -64,7 +64,7 @@
         </createTable>
         <createTable tableName="tutorial_groups_configuration">
             <column autoIncrement="true" name="id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_schedule_PK"/>
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_groups_configuration_PK"/>
             </column>
             <column name="tutorial_period_start_inclusive" type="DATE">
             </column>
