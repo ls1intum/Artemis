@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.connectors;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.AfterEach;
