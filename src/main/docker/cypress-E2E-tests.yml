@@ -48,6 +48,8 @@ services:
             server.port: "54321"
         ports:
             - 54321:54321
+        healthcheck:
+            test: wget -nv -t1 --spider http://localhost:54321/actuator/health || exit 1
 
     artemis-cypress:
         # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
