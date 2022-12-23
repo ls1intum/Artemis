@@ -52,10 +52,12 @@ class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Test
     void testProcessingClusterAddedDistances() throws Exception {
         SecurityUtils.setAuthorizationObject();
-        database.addUsers(TEST_PREFIX, 10, 0, 0, 0);
+        int numberOfStudents = 5;
+
+        database.addUsers(TEST_PREFIX, numberOfStudents, 0, 0, 0);
         final var course = database.addCourseWithOneFinishedTextExercise();
         final var exercise = (TextExercise) course.getExercises().iterator().next();
-        final var textSubmissions = ModelFactory.generateTextSubmissions(10);
+        final var textSubmissions = ModelFactory.generateTextSubmissions(numberOfStudents);
         for (int i = 0; i < textSubmissions.size(); i++) {
             final var submission = textSubmissions.get(i);
             submission.setId(null);

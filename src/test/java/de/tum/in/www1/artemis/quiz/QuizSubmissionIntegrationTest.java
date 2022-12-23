@@ -74,23 +74,24 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private QuizBatchService quizBatchService;
 
+    int numberOfStudentsInTest = 10;
+
     @BeforeEach
     void init() {
         // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
         quizScheduleService.stopSchedule();
-        database.addUsers(TEST_PREFIX, 100, 5, 0, 5);
+        database.addUsers(TEST_PREFIX, numberOfStudentsInTest, 5, 0, 1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testQuizSubmit() throws Exception {
+    void testQuizSubmit() {
         QuizExercise quizExercise = setupQuizExerciseParameters();
         quizExercise = quizExerciseService.save(quizExercise);
 
-        int numberOfParticipants = 100;
         QuizSubmission quizSubmission;
 
-        for (int i = 1; i <= numberOfParticipants; i++) {
+        for (int i = 1; i <= numberOfStudentsInTest; i++) {
             quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, false, null);
             final var username = TEST_PREFIX + "student" + i;
             final Principal principal = () -> username;
@@ -99,7 +100,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         }
 
         // only half of the students submit manually
-        for (int i = 1; i <= numberOfParticipants / 2; i++) {
+        for (int i = 1; i <= numberOfStudentsInTest / 2; i++) {
             quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, true, null);
             final var username = TEST_PREFIX + "student" + i;
             final Principal principal = () -> username;
@@ -112,7 +113,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         // process first half of the submissions
         quizScheduleService.processCachedQuizSubmissions();
-        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(numberOfParticipants / 2);
+        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(numberOfStudentsInTest / 2);
 
         // End the quiz right now so that results can be processed
         quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
@@ -125,28 +126,29 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizScheduleService.processCachedQuizSubmissions();
 
         // after the quiz submissions have been processed, all submission are saved to the database
-        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(numberOfParticipants);
+        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(numberOfStudentsInTest);
 
         // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic).isNotNull();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfStudentsInTest);
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
         // check general statistics
         for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
+            log.debug(pointCounter.toString());
             if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 3.0));
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfStudentsInTest / 3.0));
                 assertThat(pointCounter.getUnRatedCounter()).isZero();
             }
             else if (pointCounter.getPoints() == 3.0 || pointCounter.getPoints() == 4.0 || pointCounter.getPoints() == 6.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 6.0));
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfStudentsInTest / 6.0));
                 assertThat(pointCounter.getUnRatedCounter()).isZero();
             }
-            else if (pointCounter.getPoints() == 7.0 || pointCounter.getPoints() == 9.0) {
-                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfParticipants / 12.0));
+            else if (pointCounter.getPoints() == 7.0) {
+                assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfStudentsInTest / 12.0));
                 assertThat(pointCounter.getUnRatedCounter()).isZero();
             }
             else {
@@ -156,29 +158,30 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         }
         // check statistic for each question
         for (var question : quizExerciseWithStatistic.getQuizQuestions()) {
+            log.debug(question.getQuizQuestionStatistic().toString());
             if (question instanceof MultipleChoiceQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 2.0));
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfStudentsInTest / 2.0));
             }
             else if (question instanceof DragAndDropQuestion) {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 3.0));
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfStudentsInTest / 3.0));
             }
             else {
-                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(Math.round(numberOfParticipants / 4.0));
+                assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isEqualTo(numberOfStudentsInTest / 4);
             }
             assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isZero();
-            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
+            assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isEqualTo(numberOfStudentsInTest);
             assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isZero();
         }
 
         // execute the scheduler again, this should remove the quiz exercise from the cache
         quizScheduleService.processCachedQuizSubmissions();
         // but of course keep all submissions
-        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(numberOfParticipants);
+        assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isEqualTo(numberOfStudentsInTest);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
-    void testQuizSubmit_partial_points() throws Exception {
+    void testQuizSubmit_partial_points() {
         QuizExercise quizExercise = setupQuizExerciseParameters();
         // force getting partial points
         quizExercise.getQuizQuestions().get(0).setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
@@ -249,10 +252,10 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         for (var pointCounter : quizPointStatistic.getPointCounters()) {
             assertThat(pointCounter.getUnRatedCounter()).as("Unrated counter is always 0").isZero();
             if (pointCounter.getPoints() == 0.0) {
-                assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 1 rated submission -> 0.33 points").isEqualTo(1);
+                assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 0 rated submission -> 0.33 points").isEqualTo(1);
             }
             else if (pointCounter.getPoints() == 1.0) {
-                assertThat(pointCounter.getRatedCounter()).as("Bucket 1.0 contains 1 rated submission -> 0.83 points").isEqualTo(1);
+                assertThat(pointCounter.getRatedCounter()).as("Bucket 1.0 contains 0 rated submission -> 0.83 points").isEqualTo(1);
             }
             else if (pointCounter.getPoints() == 6.0) {
                 assertThat(pointCounter.getRatedCounter()).as("Bucket 6.0 contains 1 rated submission -> 6 points").isEqualTo(1);
@@ -415,10 +418,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
         assertThat(participationRepository.findByExerciseId(quizExercise.getId())).isEmpty();
 
-        var numberOfParticipants = 10;
-
         // submit 10 times for 10 different students
-        for (int i = 1; i <= numberOfParticipants; i++) {
+        for (int i = 1; i <= numberOfStudentsInTest; i++) {
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, true, null);
             database.changeUser(TEST_PREFIX + "student" + i);
             Result receivedResult = request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.OK);
@@ -426,8 +427,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         }
 
         // after the quiz has ended, all submission are saved to the database
-        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(numberOfParticipants);
-        assertThat(participationRepository.findByExerciseId(quizExercise.getId())).hasSize(numberOfParticipants);
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(numberOfStudentsInTest);
+        assertThat(participationRepository.findByExerciseId(quizExercise.getId())).hasSize(numberOfStudentsInTest);
 
         // processing the quiz submissions will update the statistics
         quizScheduleService.processCachedQuizSubmissions();
@@ -436,7 +437,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic).isNotNull();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isZero();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(numberOfParticipants);
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(numberOfStudentsInTest);
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
@@ -471,7 +472,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
                 assertThat(question.getQuizQuestionStatistic().getUnRatedCorrectCounter()).isEqualTo(2);
             }
             assertThat(question.getQuizQuestionStatistic().getRatedCorrectCounter()).isZero();
-            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(numberOfParticipants);
+            assertThat(question.getQuizQuestionStatistic().getParticipantsUnrated()).isEqualTo(numberOfStudentsInTest);
             assertThat(question.getQuizQuestionStatistic().getParticipantsRated()).isZero();
         }
     }
@@ -525,7 +526,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student11", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student10", roles = "USER")
     void testQuizSubmitPreview_forbidden() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
         Course course = courses.get(0);
@@ -535,7 +536,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student12", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student10", roles = "USER")
     void testQuizSubmitPractice_forbidden() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
         Course course = courses.get(0);
@@ -566,13 +567,13 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPractice_badRequest_noQuiz() throws Exception {
         request.postWithResponseBody("/api/exercises/" + 11223344 + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.NOT_FOUND);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor3", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPreview_badRequest_submissionId() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
         Course course = courses.get(0);
@@ -584,7 +585,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor4", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPractice_badRequest_submissionId() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
         Course course = courses.get(0);
@@ -596,7 +597,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor5", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPreview(QuizMode quizMode) throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
@@ -644,7 +645,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student13", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student10", roles = "USER")
     void testQuizSubmitScheduledAndDeleted() throws Exception {
         log.debug("// Start testQuizSubmitScheduledAndDeleted");
         /*
@@ -667,41 +668,37 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         checkQuizNotStarted(publishQuizPath);
 
         // wait a bit
-        sleep(1000);
+        sleep(500);
         checkQuizNotStarted(publishQuizPath);
 
         // reschedule
         log.debug("// Rescheduling the quiz for another 2s into the future");
-        var adjustedReleaseDate = initialReleaseDate.plus(2000, ChronoUnit.MILLIS);
+        var adjustedReleaseDate = initialReleaseDate.plus(1000, ChronoUnit.MILLIS);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(adjustedReleaseDate));
         quizExercise = quizExerciseService.save(quizExercise);
 
         // wait for the old release date to pass
-        sleep(1500);
+        sleep(750);
 
         // check that quiz has still not started now
         checkQuizNotStarted(publishQuizPath);
 
         // check that submission fails
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, 1, true, null);
-        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> TEST_PREFIX + "student13");
+        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> TEST_PREFIX + "student3");
 
         quizScheduleService.processCachedQuizSubmissions();
         assertThat(submissionRepository.countByExerciseIdSubmitted(quizExercise.getId())).isZero();
 
-        // wait for the new release date to pass
-        sleep(2500);
-
         // check that quiz has started
         log.debug("// Check that the quiz has started");
-        verify(messagingTemplate, times(1)).send(eq(publishQuizPath), any());
+        verify(messagingTemplate, timeout(2000).times(1)).send(eq(publishQuizPath), any());
 
         // process cached submissions
         quizScheduleService.processCachedQuizSubmissions();
 
         // save submissions
-        int numberOfParticipants = 10;
-        for (int i = 1; i <= numberOfParticipants; i++) {
+        for (int i = 1; i <= numberOfStudentsInTest; i++) {
             quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, false, null);
             final var username = TEST_PREFIX + "student" + i;
             final Principal principal = () -> username;
@@ -725,7 +722,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // ... directly delete the quiz
         exerciseRepository.delete(quizExercise);
 
-        sleep(1000);
+        sleep(500);
 
         // the deleted quiz should get removed, no submissions should be saved
         quizScheduleService.processCachedQuizSubmissions();
@@ -737,7 +734,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student14", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     void testQuizScoringTypes() {
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
@@ -749,7 +746,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(question));
         }
         quizSubmission.submitted(true);
-        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> TEST_PREFIX + "student14");
+        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> TEST_PREFIX + "student4");
 
         quizScheduleService.processCachedQuizSubmissions();
 
@@ -786,7 +783,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ScoringType.class)
-    @WithMockUser(username = TEST_PREFIX + "student15", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student5", roles = "USER")
     void testQuizScoringType(ScoringType scoringType) {
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
@@ -799,7 +796,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             quizSubmission.addSubmittedAnswers(database.generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(question));
         }
         quizSubmission.submitted(true);
-        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> TEST_PREFIX + "student15");
+        quizSubmissionWebsocketService.saveSubmission(quizExercise.getId(), quizSubmission, () -> TEST_PREFIX + "student5");
 
         quizScheduleService.processCachedQuizSubmissions();
 
@@ -825,7 +822,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "student16", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student6", roles = "USER")
     @ValueSource(booleans = { true, false })
     void submitExercise_shortAnswer_tooLarge(boolean tooLarge) throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false);
@@ -898,7 +895,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Course course = database.addCourseWithOneQuizExercise();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now(), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(240);
-
         return quizExercise;
     }
 }
