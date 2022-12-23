@@ -24,10 +24,10 @@ services:
             - ./application.yml:/opt/artemis/config/application.yml:ro
         environment:
             _JAVA_OPTIONS: "-Xmx5120m -Xms2560m"
-            JHIPSTER_SLEEP: 30 # gives time for other services to boot before the application
+            JHIPSTER_SLEEP: "30" # gives time for other services to boot before the application
             spring.profiles.active: "prod,bamboo,bitbucket,jira,artemis"
             spring.datasource.url: "jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
-            spring.datasource.username: root
+            spring.datasource.username: "root"
             spring.datasource.password: ""
             artemis.user-management.internal-admin.username: "${bamboo_artemis_admin_username}"
             artemis.user-management.internal-admin.password: "${bamboo_artemis_admin_password}"
@@ -105,16 +105,16 @@ services:
             artemis-app:
                 condition: service_healthy
         environment:
-            CYPRESS_baseUrl: https://artemis-nginx
+            CYPRESS_baseUrl: "https://artemis-nginx"
             CYPRESS_adminUsername: "${bamboo_artemis_admin_username}"
             CYPRESS_adminPassword: "${bamboo_artemis_admin_password}"
             CYPRESS_username: "${bamboo_cypress_username_template}"
             CYPRESS_password: "${bamboo_cypress_password_template}"
-            CYPRESS_allowGroupCustomization: true
-            CYPRESS_studentGroupName: artemis-e2etest-students
-            CYPRESS_tutorGroupName: artemis-e2etest-tutors
-            CYPRESS_editorGroupName: artemis-e2etest-editors
-            CYPRESS_instructorGroupName: artemis-e2etest-instructors
+            CYPRESS_allowGroupCustomization: "true"
+            CYPRESS_studentGroupName: "artemis-e2etest-students"
+            CYPRESS_tutorGroupName: "artemis-e2etest-tutors"
+            CYPRESS_editorGroupName: "artemis-e2etest-editors"
+            CYPRESS_instructorGroupName: "artemis-e2etest-instructors"
         command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:run"
         volumes:
             - ../../../../:/app/artemis
