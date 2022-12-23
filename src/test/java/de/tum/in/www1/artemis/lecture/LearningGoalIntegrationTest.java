@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
@@ -621,6 +622,11 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getLearningGoalCourseProgressIndividualTest_asInstructorOne() throws Exception {
+        var course = courseRepository.findById(idOfCourse).get();
+        course.setStudentGroupName(TEST_PREFIX + "student" + "individualTest");
+        courseRepository.save(course);
+        adjustStudentGroupsToCustomGroups("individualTest");
+
         cleanUpInitialParticipations();
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
@@ -651,6 +657,11 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getLearningGoalCourseProgressIndividualTest_asInstructorOne_usingParticipantScoreTable() throws Exception {
+        var course = courseRepository.findById(idOfCourse).get();
+        course.setStudentGroupName(TEST_PREFIX + "student" + "individualTestTable");
+        courseRepository.save(course);
+        adjustStudentGroupsToCustomGroups("individualTestTable");
+
         cleanUpInitialParticipations();
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
@@ -836,6 +847,14 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // Test that a learning goal of a course can not be a prerequisite to the same course
         LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         request.postWithResponseBody("/api/courses/" + idOfCourse + "/prerequisites/" + idOfLearningGoal, learningGoal, LearningGoal.class, HttpStatus.CONFLICT);
+    }
+
+    private void adjustStudentGroupsToCustomGroups(String suffix) {
+        var testUsers = userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX);
+        // Ignore student 42 because not part of course
+        var testStudents = testUsers.stream().filter(user -> user.getLogin().contains("student") && !user.getLogin().contains("42")).toList();
+        testStudents.forEach(student -> student.setGroups(Set.of(TEST_PREFIX + "student" + suffix)));
+        userRepository.saveAll(testStudents);
     }
 
 }
