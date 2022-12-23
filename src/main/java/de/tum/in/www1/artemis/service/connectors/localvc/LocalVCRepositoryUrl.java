@@ -41,7 +41,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
     }
 
     public String getLocalPath(String localVCPath) {
-        return StringUtil.resolveHomeDirectory(localVCPath) + File.separator + courseShortName + File.separator + projectKey + File.separator + repositorySlug + ".git";
+        return localVCPath + File.separator + courseShortName + File.separator + projectKey + File.separator + repositorySlug + ".git";
     }
 
     public String getCourseShortName() {

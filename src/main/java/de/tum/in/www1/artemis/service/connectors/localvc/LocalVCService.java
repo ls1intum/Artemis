@@ -155,7 +155,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void deleteProject(String projectKey) {
         try {
-            String folderName = StringUtil.resolveHomeDirectory(localVCPath) + File.separator + projectKey;
+            String folderName = localVCPath + File.separator + projectKey;
             FileUtils.deleteDirectory(new File(folderName));
         }
         catch (IOException e) {
@@ -167,7 +167,7 @@ public class LocalVCService extends AbstractVersionControlService {
     public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
         try {
             // TODO: Remove .git from here by refactoring VcsRepositoryUrl
-            String folderName = StringUtil.resolveHomeDirectory(localVCPath) + repositoryUrl.folderNameForRepositoryUrl() + ".git";
+            String folderName = localVCPath + repositoryUrl.folderNameForRepositoryUrl() + ".git";
             FileUtils.deleteDirectory(new File(folderName));
         }
         catch (IOException e) {
@@ -386,8 +386,8 @@ public class LocalVCService extends AbstractVersionControlService {
     public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws LocalVCException {
         // TODO: Refactor VcsRepositoryUrl
         try {
-            Map<String, Ref> remoteRepositoryRefs = Git.lsRemoteRepository()
-                    .setRemote(StringUtil.resolveHomeDirectory(localVCPath) + File.separator + repositoryUrl.folderNameForRepositoryUrl() + ".git").callAsMap();
+            Map<String, Ref> remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localVCPath + File.separator + repositoryUrl.folderNameForRepositoryUrl() + ".git")
+                    .callAsMap();
             if (remoteRepositoryRefs.containsKey("HEAD")) {
                 return remoteRepositoryRefs.get("HEAD").getTarget().getName();
             }
@@ -456,7 +456,7 @@ public class LocalVCService extends AbstractVersionControlService {
         String courseShortNameStripped = StringUtil.stripIllegalCharacters(courseShortName);
 
         // Try to find the folder in the file system. If it is not found, return false.
-        if (new File(StringUtil.resolveHomeDirectory(localVCPath) + File.separator + courseShortNameStripped + File.separator + projectKeyStripped).exists()) {
+        if (new File(localVCPath + File.separator + courseShortNameStripped + File.separator + projectKeyStripped).exists()) {
             log.warn("Local git project with key {} already exists: {}", projectKey, projectName);
             return true;
         }
@@ -474,7 +474,7 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws LocalVCException {
-        String localVCPathResolved = StringUtil.resolveHomeDirectory(localVCPath);
+        String localVCPathResolved = localVCPath;
         String courseShortName = StringUtil.stripIllegalCharacters(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName());
         String projectKey = StringUtil.stripIllegalCharacters(programmingExercise.getProjectKey());
 

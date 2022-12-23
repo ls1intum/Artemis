@@ -150,6 +150,7 @@ Desktop.ini
 .dbus/
 repos/
 repos-download/
+local-vcs-repos
 /templates/
 
 ######################

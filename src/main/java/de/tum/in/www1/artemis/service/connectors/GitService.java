@@ -56,7 +56,6 @@ import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
 @Service
 public class GitService {
@@ -267,7 +266,7 @@ public class GitService {
     private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
         // If the "localvc" profile is active, the repository is cloned from the folder defined in "artemis.version-control.local-vcs-repo-path".
         if (Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
-            Path vcsRepositoryFolderPath = getLocalPathOfRepo(localVCPath, vcsRepositoryUrl);
+            Path vcsRepositoryFolderPath = getLocalPathOfRepo(localVCPath, vcsRepositoryUrl).toAbsolutePath();
             return new URI(vcsRepositoryFolderPath + ".git");
         }
         return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURI();
@@ -553,7 +552,7 @@ public class GitService {
         if (targetUrl == null) {
             return null;
         }
-        return Path.of(StringUtil.resolveHomeDirectory(targetPath).replaceAll("^\\." + Pattern.quote(java.io.File.separator), ""), targetUrl.folderNameForRepositoryUrl());
+        return Path.of(targetPath.replaceAll("^\\." + Pattern.quote(java.io.File.separator), ""), targetUrl.folderNameForRepositoryUrl());
     }
 
     /**
