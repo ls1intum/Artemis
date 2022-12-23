@@ -224,7 +224,7 @@ class LtiServiceTest {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         assertEquals(user.getLogin(), auth.getPrincipal());
-        assertThat(user.getGroups().contains(LtiService.LTI_GROUP_NAME));
+        assertThat(user.getGroups()).contains(LtiService.LTI_GROUP_NAME);
     }
 
     @Test

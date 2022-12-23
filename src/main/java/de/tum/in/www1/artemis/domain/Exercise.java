@@ -58,11 +58,9 @@ public abstract class Exercise extends BaseExercise implements Completable {
     private IncludedInOverallScore includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
 
     @Column(name = "problem_statement")
-    // @Lob
     private String problemStatement;
 
     @Column(name = "grading_instructions")
-    // @Lob
     private String gradingInstructions;
 
     @ManyToMany(mappedBy = "exercises")
