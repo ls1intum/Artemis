@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localgit;
+package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import java.io.File;
 import java.net.URI;
@@ -6,12 +6,12 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.exception.LocalGitException;
+import de.tum.in.www1.artemis.exception.LocalVCException;
 import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
-public class LocalGitRepositoryUrl extends VcsRepositoryUrl {
+public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
 
-    private String localGitUrl;
+    private String localVCUrl;
 
     private String projectKey;
 
@@ -22,17 +22,17 @@ public class LocalGitRepositoryUrl extends VcsRepositoryUrl {
     // Part of the repositorySlug, identifies the repository's type (exercise, solution, tests) or its owner (e.g. "artemis_test_user_1").
     private String repositoryTypeOrUserName;
 
-    public LocalGitRepositoryUrl(URL localGitServerUrl, String projectKey, String courseShortName, String repositorySlug) {
+    public LocalVCRepositoryUrl(URL localVCServerUrl, String projectKey, String courseShortName, String repositorySlug) {
         this.projectKey = StringUtil.stripIllegalCharacters(projectKey);
         this.courseShortName = StringUtil.stripIllegalCharacters(courseShortName);
         this.repositorySlug = StringUtil.stripIllegalCharacters(repositorySlug);
         this.repositoryTypeOrUserName = this.repositorySlug.toLowerCase().replace(this.projectKey.toLowerCase() + "-", "");
-        final String url = localGitServerUrl.getProtocol() + "://" + localGitServerUrl.getAuthority() + buildRepositoryPath();
+        final String url = localVCServerUrl.getProtocol() + "://" + localVCServerUrl.getAuthority() + buildRepositoryPath();
         try {
             this.uri = new URI(url);
         }
         catch (URISyntaxException e) {
-            throw new LocalGitException("Could not create Local Git Repository URL.", e);
+            throw new LocalVCException("Could not create Local Git Repository URL.", e);
         }
     }
 
@@ -40,8 +40,8 @@ public class LocalGitRepositoryUrl extends VcsRepositoryUrl {
         return "/git/" + courseShortName + "/" + projectKey + "/" + repositorySlug + ".git";
     }
 
-    public String getLocalPath(String localGitPath) {
-        return localGitPath + File.separator + courseShortName + File.separator + projectKey + File.separator + repositorySlug + ".git";
+    public String getLocalPath(String localVCPath) {
+        return localVCPath + File.separator + courseShortName + File.separator + projectKey + File.separator + repositorySlug + ".git";
     }
 
     public String getCourseShortName() {

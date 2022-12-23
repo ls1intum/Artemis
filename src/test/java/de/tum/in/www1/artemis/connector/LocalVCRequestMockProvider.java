@@ -45,8 +45,8 @@ import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
 
 @Component
-@Profile("localgit")
-public class LocalGitRequestMockProvider {
+@Profile("localvc")
+public class LocalVCRequestMockProvider {
 
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;
@@ -67,8 +67,8 @@ public class LocalGitRequestMockProvider {
 
     private MockRestServiceServer mockServerShortTimeout;
 
-    public LocalGitRequestMockProvider(@Qualifier("localGitRestTemplate") RestTemplate restTemplate,
-            @Qualifier("shortTimeoutLocalGitRestTemplate") RestTemplate shortTimeoutRestTemplate) {
+    public LocalVCRequestMockProvider(@Qualifier("localVCRestTemplate") RestTemplate restTemplate,
+            @Qualifier("shortTimeoutLocalVCRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }

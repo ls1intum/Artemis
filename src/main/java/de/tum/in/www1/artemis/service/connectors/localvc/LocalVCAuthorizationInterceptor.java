@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localgit;
+package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import static org.springframework.http.HttpMethod.*;
 
@@ -17,9 +17,9 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Component;
 
-@Profile("localgit")
+@Profile("localvc")
 @Component
-public class LocalGitAuthorizationInterceptor implements ClientHttpRequestInterceptor {
+public class LocalVCAuthorizationInterceptor implements ClientHttpRequestInterceptor {
 
     @Value("${artemis.version-control.user}")
     private String bitbucketUser;

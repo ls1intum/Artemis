@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.jgitServlet;
+package de.tum.in.www1.artemis.security.localVC;
 
 import java.net.URL;
 import java.time.ZonedDateTime;
@@ -28,16 +28,16 @@ import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.connectors.localgit.LocalGitRepositoryUrl;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Service
-public class JGitFilterUtilService {
+public class LocalVCFilterUtilService {
 
-    private final Logger log = LoggerFactory.getLogger(JGitFilterUtilService.class);
+    private final Logger log = LoggerFactory.getLogger(LocalVCFilterUtilService.class);
 
     @Value("${artemis.version-control.url}")
-    private URL localGitServerUrl;
+    private URL localVCServerUrl;
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
@@ -53,7 +53,7 @@ public class JGitFilterUtilService {
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
-    public JGitFilterUtilService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseRepository courseRepository,
+    public LocalVCFilterUtilService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseRepository courseRepository,
             AuthorizationCheckService authorizationCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             StudentParticipationRepository studentParticipationRepository) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
@@ -67,11 +67,11 @@ public class JGitFilterUtilService {
     /**
      * @param servletRequest The object containing all information about the incoming request.
      * @param forPush        Whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
-     * @throws LocalGitAuthException
+     * @throws LocalVCAuthException
      */
-    public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, boolean forPush) throws LocalGitAuthException {
+    public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, boolean forPush) throws LocalVCAuthException {
 
-        String basicAuthCredentials = checkAuthorizationHeader(servletRequest.getHeader(JGitFilterUtilService.AUTHORIZATION_HEADER));
+        String basicAuthCredentials = checkAuthorizationHeader(servletRequest.getHeader(LocalVCFilterUtilService.AUTHORIZATION_HEADER));
 
         String username = basicAuthCredentials.split(":")[0];
         String password = basicAuthCredentials.split(":")[1];
@@ -79,11 +79,11 @@ public class JGitFilterUtilService {
         User user = authenticateUser(username, password);
 
         String uri = servletRequest.getRequestURI();
-        LocalGitRepositoryUrl localGitUrl = validateRepositoryUrl(uri);
+        LocalVCRepositoryUrl localVCUrl = validateRepositoryUrl(uri);
 
-        String projectKey = localGitUrl.getProjectKey();
-        String courseShortName = localGitUrl.getCourseShortName();
-        String repositoryTypeOrUserName = localGitUrl.getRepositoryTypeOrUserName();
+        String projectKey = localVCUrl.getProjectKey();
+        String courseShortName = localVCUrl.getCourseShortName();
+        String repositoryTypeOrUserName = localVCUrl.getRepositoryTypeOrUserName();
 
         Course course = findCourseForRepository(courseShortName);
 
@@ -97,22 +97,22 @@ public class JGitFilterUtilService {
         }
     }
 
-    private String checkAuthorizationHeader(String authorizationHeader) throws LocalGitAuthException {
+    private String checkAuthorizationHeader(String authorizationHeader) throws LocalVCAuthException {
         if (authorizationHeader == null) {
-            throw new LocalGitAuthException();
+            throw new LocalVCAuthException();
         }
 
         String[] basicAuthCredentialsEncoded = authorizationHeader.split(" ");
 
         if (!basicAuthCredentialsEncoded[0].equals("Basic")) {
-            throw new LocalGitAuthException();
+            throw new LocalVCAuthException();
         }
 
         // Return decoded basic auth credentials which contain the username and the password.
         return new String(Base64.getDecoder().decode(basicAuthCredentialsEncoded[1]));
     }
 
-    private User authenticateUser(String username, String password) throws LocalGitAuthException {
+    private User authenticateUser(String username, String password) throws LocalVCAuthException {
         try {
             SecurityUtils.checkUsernameAndPasswordValidity(username, password);
 
@@ -121,74 +121,74 @@ public class JGitFilterUtilService {
             authenticationManagerBuilder.getObject().authenticate(authenticationToken);
         }
         catch (AccessForbiddenException | AuthenticationException ex) {
-            throw new LocalGitAuthException();
+            throw new LocalVCAuthException();
         }
 
         User user = userRepository.findOneByLogin(username).orElse(null);
 
         // Check that the user exists.
         if (user == null) {
-            throw new LocalGitAuthException();
+            throw new LocalVCAuthException();
         }
 
         return user;
     }
 
-    private LocalGitRepositoryUrl validateRepositoryUrl(String urlPath) throws LocalGitBadRequestException {
+    private LocalVCRepositoryUrl validateRepositoryUrl(String urlPath) throws LocalVCBadRequestException {
 
         String[] pathSplit = urlPath.split("/");
 
         // Should start with '/git', and end with '.git'.
         if (!pathSplit[1].equals("git") || !(pathSplit[4].endsWith(".git"))) {
-            throw new LocalGitBadRequestException("Invalid URL.");
+            throw new LocalVCBadRequestException("Invalid URL.");
         }
 
         String repositorySlug = pathSplit[4].replace(".git", "");
 
         // TODO: Refactor VcsRepositoryUrl and LocalGitRepositoryUrl properly so I do not have to hand an environment variable to the constructor.
-        LocalGitRepositoryUrl localGitRepo = new LocalGitRepositoryUrl(localGitServerUrl, pathSplit[3], pathSplit[2], repositorySlug);
+        LocalVCRepositoryUrl localVCRepo = new LocalVCRepositoryUrl(localVCServerUrl, pathSplit[3], pathSplit[2], repositorySlug);
 
         // Project key should contain the course short name.
-        if (!localGitRepo.getProjectKey().toLowerCase().contains(localGitRepo.getCourseShortName().toLowerCase())) {
-            throw new LocalGitBadRequestException("Badly formed Local Git URI: " + urlPath + " Expected the repository name to start with the lower case course short name.");
+        if (!localVCRepo.getProjectKey().toLowerCase().contains(localVCRepo.getCourseShortName().toLowerCase())) {
+            throw new LocalVCBadRequestException("Badly formed Local Git URI: " + urlPath + " Expected the repository name to start with the lower case course short name.");
         }
 
-        return localGitRepo;
+        return localVCRepo;
     }
 
-    private Course findCourseForRepository(String courseShortName) throws LocalGitNotFoundException, LocalGitInternalException {
+    private Course findCourseForRepository(String courseShortName) throws LocalVCNotFoundException, LocalVCInternalException {
         List<Course> courses = courseRepository.findAllByShortName(courseShortName);
         if (courses.size() != 1) {
             if (courses.size() == 0) {
-                throw new LocalGitNotFoundException("No course found for the given short name: " + courseShortName);
+                throw new LocalVCNotFoundException("No course found for the given short name: " + courseShortName);
             }
             else {
-                throw new LocalGitInternalException("Multiple courses found for the given short name: " + courseShortName);
+                throw new LocalVCInternalException("Multiple courses found for the given short name: " + courseShortName);
             }
         }
         return courses.get(0);
     }
 
-    private ProgrammingExercise findExerciseForRepository(String projectKey) throws LocalGitNotFoundException, LocalGitInternalException {
+    private ProgrammingExercise findExerciseForRepository(String projectKey) throws LocalVCNotFoundException, LocalVCInternalException {
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByProjectKey(projectKey);
         if (exercises.size() != 1) {
             if (exercises.size() == 0) {
-                throw new LocalGitNotFoundException("No exercise found for the given project key: " + projectKey);
+                throw new LocalVCNotFoundException("No exercise found for the given project key: " + projectKey);
             }
             else {
-                throw new LocalGitInternalException("Multiple exercises found for the given project key: " + projectKey);
+                throw new LocalVCInternalException("Multiple exercises found for the given project key: " + projectKey);
             }
         }
         return exercises.get(0);
     }
 
-    private void authorizeUser(String repositoryTypeOrUserName, Course course, ProgrammingExercise exercise, User user, boolean forPush) throws LocalGitAuthException {
+    private void authorizeUser(String repositoryTypeOrUserName, Course course, ProgrammingExercise exercise, User user, boolean forPush) throws LocalVCAuthException {
         if (isRequestingBaseRepository(repositoryTypeOrUserName)) {
             // ---- Requesting one of the base repositories ("exercise", "tests", or "solution") ----
             // Check that the user is at least an instructor in the course the repository belongs to.
             boolean isAtLeastInstructorInCourse = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
             if (!isAtLeastInstructorInCourse) {
-                throw new LocalGitAuthException();
+                throw new LocalVCAuthException();
             }
             return;
         }
@@ -197,24 +197,24 @@ public class JGitFilterUtilService {
 
         // Check that the user name in the repository name corresponds to the user name used for Basic Auth.
         if (!user.getLogin().equals(repositoryTypeOrUserName)) {
-            throw new LocalGitAuthException();
+            throw new LocalVCAuthException();
         }
 
         // Check that the user is at least a student in the course.
         boolean isAtLeastStudentInCourse = authorizationCheckService.isAtLeastStudentInCourse(course, user);
         if (!isAtLeastStudentInCourse) {
-            throw new LocalGitAuthException();
+            throw new LocalVCAuthException();
         }
 
         // Check that the user participates in the exercise the repository belongs to.
         Optional<StudentParticipation> participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
 
         if (participation.isEmpty())
-            throw new LocalGitAuthException();
+            throw new LocalVCAuthException();
 
         // Check that the exercise's Release Date is either not set or is in the past.
         if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
-            throw new LocalGitAuthException();
+            throw new LocalVCAuthException();
         }
         if (!forPush)
             return;
@@ -226,7 +226,7 @@ public class JGitFilterUtilService {
             // Students can still commit code and receive feedback after the exercise due date, if manual review and complaints are not activated. The results for these submissions
             // will not be rated.
             if (exercise.getAssessmentType() == AssessmentType.MANUAL || exercise.getAllowComplaintsForAutomaticAssessments()) {
-                throw new LocalGitAuthException();
+                throw new LocalVCAuthException();
             }
         }
 

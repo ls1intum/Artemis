@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localgit;
+package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.BitbucketException;
-import de.tum.in.www1.artemis.exception.LocalGitException;
+import de.tum.in.www1.artemis.exception.LocalVCException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
@@ -49,21 +49,21 @@ import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketPermission;
 import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
 @Service
-@Profile("localgit")
-public class LocalGitService extends AbstractVersionControlService {
+@Profile("localvc")
+public class LocalVCService extends AbstractVersionControlService {
 
     private static final int MAX_GIVE_PERMISSIONS_RETRIES = 5;
 
-    private final Logger log = LoggerFactory.getLogger(LocalGitService.class);
+    private final Logger log = LoggerFactory.getLogger(LocalVCService.class);
 
     @Value("${artemis.user-management.external.admin-group-name}")
     private String adminGroupName;
 
     @Value("${artemis.version-control.url}")
-    private URL localGitServerUrl;
+    private URL localVCServerUrl;
 
-    @Value("${artemis.local-git-server-path}")
-    private String localGitPath;
+    @Value("${localvc.server-path}")
+    private String localVCPath;
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
@@ -74,8 +74,8 @@ public class LocalGitService extends AbstractVersionControlService {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    public LocalGitService(@Qualifier("localGitRestTemplate") RestTemplate restTemplate, UserRepository userRepository, UrlService urlService,
-            @Qualifier("shortTimeoutLocalGitRestTemplate") RestTemplate shortTimeoutRestTemplate, GitService gitService, ApplicationContext applicationContext,
+    public LocalVCService(@Qualifier("localVCRestTemplate") RestTemplate restTemplate, UserRepository userRepository, UrlService urlService,
+            @Qualifier("shortTimeoutLocalVCRestTemplate") RestTemplate shortTimeoutRestTemplate, GitService gitService, ApplicationContext applicationContext,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository);
         this.userRepository = userRepository;
@@ -158,7 +158,7 @@ public class LocalGitService extends AbstractVersionControlService {
     @Override
     public void deleteProject(String projectKey) {
         try {
-            String folderName = localGitPath + File.separator + projectKey;
+            String folderName = localVCPath + File.separator + projectKey;
             FileUtils.deleteDirectory(new File(folderName));
         }
         catch (IOException e) {
@@ -169,7 +169,7 @@ public class LocalGitService extends AbstractVersionControlService {
     @Override
     public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
         try {
-            String folderName = localGitPath + repositoryUrl.folderNameForRepositoryUrl();
+            String folderName = localVCPath + repositoryUrl.folderNameForRepositoryUrl();
             FileUtils.deleteDirectory(new File(folderName));
         }
         catch (IOException e) {
@@ -179,7 +179,7 @@ public class LocalGitService extends AbstractVersionControlService {
 
     @Override
     public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String courseShortName, String repositorySlug) {
-        return new LocalGitRepositoryUrl(localGitServerUrl, projectKey, courseShortName, repositorySlug);
+        return new LocalVCRepositoryUrl(localVCServerUrl, projectKey, courseShortName, repositorySlug);
     }
 
     /**
@@ -385,20 +385,20 @@ public class LocalGitService extends AbstractVersionControlService {
      * @return the name of the default branch, e.g. 'main'
      */
     @Override
-    public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws LocalGitException {
+    public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws LocalVCException {
         // TODO: Refactor VcsRepositoryUrl
         try {
-            Map<String, Ref> remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localGitPath + File.separator + repositoryUrl.folderNameForRepositoryUrl() + ".git")
+            Map<String, Ref> remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localVCPath + File.separator + repositoryUrl.folderNameForRepositoryUrl() + ".git")
                     .callAsMap();
             if (remoteRepositoryRefs.containsKey("HEAD")) {
                 return remoteRepositoryRefs.get("HEAD").getTarget().getName();
             }
 
-            throw new LocalGitException("Cannot get default branch of repository " + repositoryUrl.folderNameForRepositoryUrl() + ". ls-remote does not return a HEAD reference.");
+            throw new LocalVCException("Cannot get default branch of repository " + repositoryUrl.folderNameForRepositoryUrl() + ". ls-remote does not return a HEAD reference.");
         }
         catch (Exception e) {
             log.error("Unable to get default branch for repository {}", repositoryUrl.folderNameForRepositoryUrl(), e);
-            throw new LocalGitException("Unable to get default branch for repository " + repositoryUrl.folderNameForRepositoryUrl(), e);
+            throw new LocalVCException("Unable to get default branch for repository " + repositoryUrl.folderNameForRepositoryUrl(), e);
         }
     }
 
@@ -420,7 +420,7 @@ public class LocalGitService extends AbstractVersionControlService {
      *                             READ_ONLY, WRITE)
      */
     private void setStudentRepositoryPermission(VcsRepositoryUrl repositoryUrl, String projectKey, String username, VersionControlRepositoryPermission repositoryPermission)
-            throws LocalGitException {
+            throws LocalVCException {
         // Not implemented.
     }
 
@@ -458,7 +458,7 @@ public class LocalGitService extends AbstractVersionControlService {
         String courseShortNameStripped = StringUtil.stripIllegalCharacters(courseShortName);
 
         // Try to find the folder in the file system. If it is not found, return false.
-        if (new File(localGitPath + File.separator + courseShortNameStripped + File.separator + projectKeyStripped).exists()) {
+        if (new File(localVCPath + File.separator + courseShortNameStripped + File.separator + projectKeyStripped).exists()) {
             log.warn("Local git project with key {} already exists: {}", projectKey, projectName);
             return true;
         }
@@ -472,21 +472,21 @@ public class LocalGitService extends AbstractVersionControlService {
      *
      * @param programmingExercise the programming exercise for which the local git
      *                            Project should be created
-     * @throws LocalGitException if the project could not be created
+     * @throws LocalVCException if the project could not be created
      */
     @Override
-    public void createProjectForExercise(ProgrammingExercise programmingExercise) throws LocalGitException {
+    public void createProjectForExercise(ProgrammingExercise programmingExercise) throws LocalVCException {
         Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
         String courseShortName = StringUtil.stripIllegalCharacters(course.getShortName());
 
         String projectKey = StringUtil.stripIllegalCharacters(programmingExercise.getProjectKey());
 
-        log.debug("Creating folder for local git project at {}", localGitPath + File.separator + courseShortName + File.separator + projectKey);
+        log.debug("Creating folder for local git project at {}", localVCPath + File.separator + courseShortName + File.separator + projectKey);
 
         try {
             // Instead of defining a project like would be done for GitLab or Bitbucket,
             // just define a directory that will contain all repositories.
-            File localPath = new File(localGitPath + File.separator + courseShortName + File.separator + projectKey);
+            File localPath = new File(localVCPath + File.separator + courseShortName + File.separator + projectKey);
 
             if (!localPath.mkdirs()) {
                 throw new IOException("Could not create directory " + localPath.getPath());
@@ -494,7 +494,7 @@ public class LocalGitService extends AbstractVersionControlService {
         }
         catch (Exception e) {
             log.error("Could not create local git project for key {} in course {}", projectKey, courseShortName, e);
-            throw new LocalGitException("Error while creating local git project.");
+            throw new LocalVCException("Error while creating local git project.");
         }
     }
 
@@ -519,14 +519,14 @@ public class LocalGitService extends AbstractVersionControlService {
      * @param projectKey      The project key of the parent project
      * @param courseShortName The short name of the course the repository belongs to
      * @param repositorySlug  The name for the new repository
-     * @throws LocalGitException if the repo could not be created
+     * @throws LocalVCException if the repo could not be created
      */
-    private void createRepository(String projectKey, String courseShortName, String repositorySlug) throws LocalGitException {
+    private void createRepository(String projectKey, String courseShortName, String repositorySlug) throws LocalVCException {
 
-        LocalGitRepositoryUrl localGitUrl = new LocalGitRepositoryUrl(localGitServerUrl, projectKey, courseShortName, repositorySlug);
+        LocalVCRepositoryUrl localVCUrl = new LocalVCRepositoryUrl(localVCServerUrl, projectKey, courseShortName, repositorySlug);
         // TODO: Save Url in db.
 
-        String localFilePath = localGitUrl.getLocalPath(localGitPath);
+        String localFilePath = localVCUrl.getLocalPath(localVCPath);
 
         log.debug("Creating local git repo {} in folder {}", repositorySlug, localFilePath);
 
@@ -552,7 +552,7 @@ public class LocalGitService extends AbstractVersionControlService {
         }
         catch (GitAPIException | IOException e) {
             log.error("Could not create local git repo {} at location {}", repositorySlug, localFilePath, e);
-            throw new LocalGitException("Error while creating local git project.");
+            throw new LocalVCException("Error while creating local git project.");
         }
     }
 
@@ -592,7 +592,7 @@ public class LocalGitService extends AbstractVersionControlService {
             projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
             repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
         }
-        catch (LocalGitException e) {
+        catch (LocalVCException e) {
             // Either the project Key or the repository slug could not be extracted,
             // therefore this can't be a valid URL
             return false;
@@ -648,7 +648,7 @@ public class LocalGitService extends AbstractVersionControlService {
     }
 
     @Override
-    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) throws LocalGitException {
+    public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) throws LocalVCException {
         // If the event object is supplied we try to retrieve the push date from there
         // to save one call
         // if (eventObject != null) {
@@ -659,7 +659,7 @@ public class LocalGitService extends AbstractVersionControlService {
             return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
         }
         catch (DateTimeParseException e) {
-            throw new LocalGitException("Unable to get the push date from participation.");
+            throw new LocalVCException("Unable to get the push date from participation.");
         }
         // }
         // }
@@ -715,7 +715,7 @@ public class LocalGitService extends AbstractVersionControlService {
             // .pathSegment("rest", "api", "1.0", "projects", projectKey, "repos", slug, "commits", hash).build();
             final JsonNode commitInfo = null; // restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, null, JsonNode.class).getBody();
             if (commitInfo == null) {
-                throw new LocalGitException("Unable to fetch commit info from local git for hash " + hash);
+                throw new LocalVCException("Unable to fetch commit info from local git for hash " + hash);
             }
 
             return commitInfo;

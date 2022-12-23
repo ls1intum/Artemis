@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.jgitServlet;
+package de.tum.in.www1.artemis.security.localVC;
 
 import java.io.IOException;
 
@@ -11,46 +11,45 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Filters incoming push requests reaching the jgitServlet at /git/*.
+ * Filters incoming fetch requests reaching the local git server implementation.
  */
-public class JGitPushFilter extends OncePerRequestFilter {
+public class LocalVCFetchFilter extends OncePerRequestFilter {
 
-    private final Logger log = LoggerFactory.getLogger(JGitPushFilter.class);
+    private final Logger log = LoggerFactory.getLogger(LocalVCFetchFilter.class);
 
-    private final JGitFilterUtilService jGitFilterUtilService;
+    private final LocalVCFilterUtilService localVCFilterUtilService;
 
-    public JGitPushFilter(JGitFilterUtilService jGitFilterUtilService) {
-        this.jGitFilterUtilService = jGitFilterUtilService;
+    public LocalVCFetchFilter(LocalVCFilterUtilService localVCFilterUtilService) {
+        this.localVCFilterUtilService = localVCFilterUtilService;
     }
 
     @Override
     public void doFilterInternal(HttpServletRequest servletRequest, HttpServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
 
-        log.debug("Trying to push to repository {}", servletRequest.getRequestURI());
+        log.debug("Trying to fetch repository {}", servletRequest.getRequestURI());
 
         servletResponse.setHeader("WWW-Authenticate", "Basic");
 
         try {
-            jGitFilterUtilService.authenticateAndAuthorizeGitRequest(servletRequest, true);
+            localVCFilterUtilService.authenticateAndAuthorizeGitRequest(servletRequest, false);
         }
-        catch (LocalGitAuthException e) {
+        catch (LocalVCAuthException e) {
             servletResponse.setStatus(401);
             return;
         }
-        catch (LocalGitBadRequestException e) {
+        catch (LocalVCBadRequestException e) {
             servletResponse.setStatus(400);
             return;
         }
-        catch (LocalGitNotFoundException e) {
+        catch (LocalVCNotFoundException e) {
             servletResponse.setStatus(404);
             return;
         }
-        catch (LocalGitInternalException e) {
+        catch (LocalVCInternalException e) {
             servletResponse.setStatus(500);
             return;
         }
 
         filterChain.doFilter(servletRequest, servletResponse);
-
     }
 }

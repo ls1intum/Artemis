@@ -186,10 +186,10 @@ public class ProgrammingExerciseService {
         // Save programming exercise to prevent transient exception
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        // The local git repository (profile "localgit") cannot be integrated with Bamboo and Jenkins (e.g. to automatically trigger build plans on push).
-        // We will only allow "localgit" together with some "localci" profile that is to be implemented. In the meantime build plans are not set up at all when "localgit" is used.
+        // The local git repository (profile "localvc") cannot be integrated with Bamboo and Jenkins (e.g. to automatically trigger build plans on push).
+        // We will only allow "localvc" together with some "localci" profile that is to be implemented. In the meantime build plans are not set up at all when "localvc" is used.
         // TODO: Remove check once "localci" is implemented.
-        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
             setupBuildPlansForNewExercise(programmingExercise);
         }
 
@@ -199,7 +199,7 @@ public class ProgrammingExerciseService {
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
         // Webhooks must not be created for the local git server. Notifying Artemis on push is handled in the JGitPushFilter.
-        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
             // The creation of the webhooks must occur after the initial push, because the participation is
             // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
             versionControlService.get().addWebHooksForExercise(programmingExercise);
@@ -887,7 +887,7 @@ public class ProgrammingExerciseService {
 
         if (deleteBaseReposBuildPlans) {
             // TODO: Remove when "localci" profile is implemented.
-            if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+            if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
                 final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
                 if (templateBuildPlanId != null) {
                     continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
@@ -1068,7 +1068,7 @@ public class ProgrammingExerciseService {
             throw new BadRequestAlertException(errorMessageVcs, "ProgrammingExercise", "vcsProjectExists");
         }
         // TODO: Remove check when local CI is implemented.
-        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
+        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
             String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
             if (errorMessageCis != null) {
                 throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");

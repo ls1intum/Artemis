@@ -22,6 +22,7 @@ import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
+import javax.servlet.ServletContext;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
@@ -66,8 +67,8 @@ public class GitService {
     @Value("${artemis.version-control.url}")
     private URL gitUrl;
 
-    @Value("${artemis.local-git-server-path}")
-    private String localGitPath;
+    @Value("${localvc.server-path}")
+    private String localVCPath;
 
     @Value("${artemis.version-control.user}")
     private String gitUser;
@@ -107,6 +108,8 @@ public class GitService {
 
     private final ZipFileService zipFileService;
 
+    private final ServletContext servletContext;
+
     private TransportConfigCallback sshCallback;
 
     private static final int JGIT_TIMEOUT_IN_SECONDS = 5;
@@ -117,7 +120,7 @@ public class GitService {
 
     private static final String REMOTE_NAME = "origin";
 
-    public GitService(Environment environment, FileService fileService, ZipFileService zipFileService) {
+    public GitService(Environment environment, FileService fileService, ZipFileService zipFileService, ServletContext servletContext) {
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
@@ -125,6 +128,7 @@ public class GitService {
         this.environment = environment;
         this.fileService = fileService;
         this.zipFileService = zipFileService;
+        this.servletContext = servletContext;
     }
 
     /**
@@ -260,10 +264,13 @@ public class GitService {
     }
 
     private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
-        // If the "localgit" profile is active the repository is cloned from the folder defined in artemis.local-git-server-path.
-        if (Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
-            String vcsRepositoryFolderPath = vcsRepositoryUrl.folderNameForRepositoryUrl();
-            return new URI(localGitPath + vcsRepositoryFolderPath + ".git");
+        // If the "localvc" profile is active, the repository is cloned from the folder defined in localvc.server-path.
+        if (Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
+            Path relativeVcsRepositoryFolderPath = getLocalPathOfRepo(localVCPath, vcsRepositoryUrl);
+            // TODO: Get the absolute path on the server where the repositories are located.
+            // String absoluteVcsRepositoryFolderPath = servletContext.
+            // servletContext.getRealPath(relativeVcsRepositoryFolderPath.toString());
+            return new URI(relativeVcsRepositoryFolderPath + ".git");
         }
         return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURI();
     }
@@ -765,13 +772,9 @@ public class GitService {
             return;
         }
         // Note: we reset the remote url, because it might have changed from https to ssh or ssh to https.
-        // When using the "localgit" profile it might have also changed because the folder the repository is saved at locally is set as the remote url during cloning.
         try {
             var existingRemoteUrl = repo.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url");
             var newRemoteUrl = getGitUriAsString(repo.getRemoteRepositoryUrl());
-            // if (Arrays.asList(this.environment.getActiveProfiles()).contains("localgit")) {
-            // newRemoteUrl = repo.getRemoteRepositoryUrl().toString();
-            // }
             if (!Objects.equals(newRemoteUrl, existingRemoteUrl)) {
                 log.info("Replace existing remote url {} with new remote url {}", existingRemoteUrl, newRemoteUrl);
                 repo.getConfig().setString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url", newRemoteUrl);

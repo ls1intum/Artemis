@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.BambooAuthorizationInter
 import de.tum.in.www1.artemis.service.connectors.bitbucket.BitbucketAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabAuthorizationInterceptor;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInterceptor;
-import de.tum.in.www1.artemis.service.connectors.localgit.LocalGitAuthorizationInterceptor;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCAuthorizationInterceptor;
 
 /**
  * For now only provides a basic {@link org.springframework.web.client.RestTemplate RestTemplate} bean. Can be extended
@@ -59,9 +59,9 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("localgit")
-    public RestTemplate localGitRestTemplate(LocalGitAuthorizationInterceptor bitbucketAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(bitbucketAuthorizationInterceptor, createRestTemplate());
+    @Profile("localvc")
+    public RestTemplate localVCRestTemplate(LocalVCAuthorizationInterceptor localVCAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(localVCAuthorizationInterceptor, createRestTemplate());
     }
 
     @Bean
@@ -113,9 +113,9 @@ public class RestTemplateConfiguration {
     }
 
     @Bean
-    @Profile("localgit")
-    public RestTemplate shortTimeoutLocalGitRestTemplate(LocalGitAuthorizationInterceptor bitbucketAuthorizationInterceptor) {
-        return initializeRestTemplateWithInterceptors(bitbucketAuthorizationInterceptor, createShortTimeoutRestTemplate());
+    @Profile("localvc")
+    public RestTemplate shortTimeoutLocalVCRestTemplate(LocalVCAuthorizationInterceptor localVCAuthorizationInterceptor) {
+        return initializeRestTemplateWithInterceptors(localVCAuthorizationInterceptor, createShortTimeoutRestTemplate());
     }
 
     @Bean

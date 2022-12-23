@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.localgit;
+package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import java.net.URL;
 import java.util.Optional;
@@ -12,8 +12,8 @@ import org.springframework.stereotype.Component;
 import de.tum.in.www1.artemis.config.Constants;
 
 @Component
-@Profile("localgit")
-public class LocalGitInfoContributor implements InfoContributor {
+@Profile("localvc")
+public class LocalVCInfoContributor implements InfoContributor {
 
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;

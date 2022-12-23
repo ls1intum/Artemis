@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.config;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.http.server.GitServlet;
@@ -15,11 +16,9 @@ import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.jgitServlet.JGitFetchFilter;
-import de.tum.in.www1.artemis.security.jgitServlet.JGitFilterUtilService;
-import de.tum.in.www1.artemis.security.jgitServlet.JGitPushFilter;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.security.localVC.LocalVCFetchFilter;
+import de.tum.in.www1.artemis.security.localVC.LocalVCFilterUtilService;
+import de.tum.in.www1.artemis.security.localVC.LocalVCPushFilter;
 
 /**
  * Configuration of the JGit Servlet that handles fetch and push requests for local Version Control.
@@ -29,21 +28,15 @@ public class JGitServletConfiguration {
 
     private final Logger log = LoggerFactory.getLogger(JGitServletConfiguration.class);
 
-    @Value("${artemis.local-git-server-path}")
-    private String localGitPath;
+    @Value("${localvc.server-path}")
+    private String localVCPath;
 
-    private final HashMap<String, Repository> repositories = new HashMap<>();
+    private final Map<String, Repository> repositories = new HashMap<>();
 
-    private final UserRepository userRepository;
+    private final LocalVCFilterUtilService localVCFilterUtilService;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
-    private final JGitFilterUtilService jGitFilterUtilService;
-
-    public JGitServletConfiguration(JGitFilterUtilService jGitFilterUtilService, UserRepository userRepository, AuthorizationCheckService authorizationCheckService) {
-        this.jGitFilterUtilService = jGitFilterUtilService;
-        this.userRepository = userRepository;
-        this.authorizationCheckService = authorizationCheckService;
+    public JGitServletConfiguration(LocalVCFilterUtilService localVCFilterUtilService) {
+        this.localVCFilterUtilService = localVCFilterUtilService;
     }
 
     /**
@@ -60,7 +53,7 @@ public class JGitServletConfiguration {
                 // Returns the opened repository instance, never null.
 
                 // Find the local repository depending on the name and return an opened instance. Must be closed later on.
-                File gitDir = new File(localGitPath + File.separator + name);
+                File gitDir = new File(localVCPath + File.separator + name);
 
                 log.debug("Path to resolve repository from: {}", gitDir.getPath());
                 if (!gitDir.exists()) {
@@ -94,8 +87,8 @@ public class JGitServletConfiguration {
                 return repository;
             });
 
-            gitServlet.addUploadPackFilter(new JGitFetchFilter(jGitFilterUtilService));
-            gitServlet.addReceivePackFilter(new JGitPushFilter(jGitFilterUtilService));
+            gitServlet.addUploadPackFilter(new LocalVCFetchFilter(localVCFilterUtilService));
+            gitServlet.addReceivePackFilter(new LocalVCPushFilter(localVCFilterUtilService));
 
             log.info("Registering GitServlet");
             return new ServletRegistrationBean<GitServlet>(gitServlet, "/git/*");

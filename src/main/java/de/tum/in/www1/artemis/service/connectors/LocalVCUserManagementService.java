@@ -12,24 +12,24 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.localgit.LocalGitService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Service
-@Profile("localgit")
-public class LocalGitUserManagementService implements VcsUserManagementService {
+@Profile("localvc")
+public class LocalVCUserManagementService implements VcsUserManagementService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalGitUserManagementService.class);
+    private final Logger log = LoggerFactory.getLogger(LocalVCUserManagementService.class);
 
-    private final LocalGitService localGitService;
+    private final LocalVCService localVCService;
 
     private final UserRepository userRepository;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    public LocalGitUserManagementService(LocalGitService localGitService, UserRepository userRepository, PasswordService passwordService,
+    public LocalVCUserManagementService(LocalVCService localVCService, UserRepository userRepository, PasswordService passwordService,
             ProgrammingExerciseRepository programmingExerciseRepository) {
-        this.localGitService = localGitService;
+        this.localVCService = localVCService;
         this.userRepository = userRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
     }
