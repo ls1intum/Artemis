@@ -5,7 +5,15 @@ Modeling exercise
     :depth: 3
 
 .. note::
-   The standalone version of the modeling editor can be accessed via https://apollon.ase.in.tum.de/.
+   - Artemis uses a npm library called `Apollon`_ as its modeling editor.
+   - It has its standalone version which can be accessed via https://apollon.ase.in.tum.de/.
+   - The standalone version is free to use without the necessity of creating an account.
+   - It offers additional features, including but not limited to, sharing and exporting the diagram.
+   - For more information please visit `Apollon Standalone`_.
+
+
+.. _Apollon: https://www.npmjs.com/package/@ls1intum/apollon
+.. _Apollon Standalone: https://github.com/ls1intum/Apollon_standalone
 
 Overview
 --------
