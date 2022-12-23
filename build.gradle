@@ -155,9 +155,9 @@ check.dependsOn jacocoTestCoverageVerification
 
 configurations {
     providedRuntime
-    // Exclude JUnit 4 in favor of JUnit Jupiter (a.k.a. JUnit 5.x)
-//    all*.exclude group: "junit", module: "junit"
-//    all*.exclude group: "org.junit.vintage"
+    // Exclude JUnit 4 in favor of JUnit Jupiter (JUnit 5)
+    all*.exclude group: "junit", module: "junit"
+    all*.exclude group: "org.junit.vintage"
 }
 
 repositories {
