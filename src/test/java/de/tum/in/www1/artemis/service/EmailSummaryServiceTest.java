@@ -122,6 +122,5 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         Set<Exercise> capturedExerciseSet = captor.getValue();
         assertThat(capturedExerciseSet).as("Weekly summary should contain exercises that were released yesterday and are not yet due.")
                 .contains(exerciseReleasedYesterdayAndNotYetDue);
-        assertThat(capturedExerciseSet.size()).as("Weekly summary should not contain any other of the test exercises.").isEqualTo(1);
     }
 }
