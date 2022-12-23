@@ -233,6 +233,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
                             AND e.course.teachingAssistantGroupName not member of u.groups
                             AND (e.course.editorGroupName IS NULL OR  e.course.editorGroupName not member of u.groups)
                             AND e.course.instructorGroupName not member of u.groups
+                            AND t.exercise.id IN :exerciseIds
                     )
                 )
             FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r JOIN p.team.students st
