@@ -3,7 +3,8 @@
 # ----------------------------------------------------------------------------------------------------------------------
 
 # TODO: this requires a newer docker compose version for the bamboo agents which is already requested
-
+# for now we use 2.4 until this is fixed
+version: '2.4'
 services:
     mysql:
         extends:
