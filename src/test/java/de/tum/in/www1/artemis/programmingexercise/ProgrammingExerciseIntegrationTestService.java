@@ -205,7 +205,6 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void tearDown() throws IOException {
-        database.resetDatabase();
         if (downloadedFile != null && downloadedFile.exists()) {
             FileUtils.forceDelete(downloadedFile);
         }

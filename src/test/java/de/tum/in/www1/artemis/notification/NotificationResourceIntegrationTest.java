@@ -68,7 +68,6 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         systemNotificationRepository.deleteAll();
         notificationRepository.deleteAll();
     }

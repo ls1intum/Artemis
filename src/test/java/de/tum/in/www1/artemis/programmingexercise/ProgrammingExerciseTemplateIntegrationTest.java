@@ -118,7 +118,6 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     @AfterEach
     void tearDown() throws IOException {
-        database.resetDatabase();
         reset(gitService);
         reset(bambooServer);
         bitbucketRequestMockProvider.reset();

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -30,11 +29,6 @@ class ContentVersionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         final MockHttpServletResponse response = res.getResponse();
         final String contentVersionHeader = response.getHeader(ApiVersionFilter.CONTENT_VERSION_HEADER);
         assertThat(contentVersionHeader).isEqualTo("1.3.3-beta7");
-    }
-
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
     }
 
 }

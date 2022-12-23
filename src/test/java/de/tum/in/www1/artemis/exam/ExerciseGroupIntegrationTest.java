@@ -6,7 +6,6 @@ import static org.mockito.Mockito.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,11 +63,6 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var textEx = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
         textEx.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         textExercise1 = textExerciseRepository.save(textEx);
-    }
-
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
     }
 
     @Test

@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.ArrayList;
 import java.util.Comparator;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,11 +53,6 @@ class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringIntegrat
         database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         final Course course = database.addCourseWithOneProgrammingExercise();
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

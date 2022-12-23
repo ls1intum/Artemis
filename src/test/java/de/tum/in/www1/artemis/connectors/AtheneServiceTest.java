@@ -61,7 +61,6 @@ class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void tearDown() throws Exception {
         atheneRequestMockProvider.reset();
         atheneService.finishTask(exercise1.getId());
-        database.resetDatabase();
     }
 
     /**

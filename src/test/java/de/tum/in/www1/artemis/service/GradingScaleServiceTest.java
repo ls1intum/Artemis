@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -57,11 +56,6 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         gradeSteps = new HashSet<>();
         course = database.addEmptyCourse();
         exam = database.addExam(course);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     /**

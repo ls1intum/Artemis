@@ -126,10 +126,9 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @AfterEach
-    void resetDatabase() throws Exception {
+    void tearDown() {
         // change back to instructor user
         database.changeUser(TEST_PREFIX + "instructor1");
-        database.resetDatabase();
     }
 
     @Test

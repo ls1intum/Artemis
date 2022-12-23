@@ -134,7 +134,6 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
             tutorialCourse.setInstructorGroupName("non-tutorial-course");
             courseRepository.save(tutorialCourse);
         }
-        database.resetDatabase();
     }
 
     @Test

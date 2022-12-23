@@ -9,7 +9,6 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -74,11 +73,6 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         lateFileUploadSubmission = ModelFactory.generateLateFileUploadSubmission();
         database.createAndSaveParticipationForExercise(releasedFileUploadExercise, TEST_PREFIX + "student3");
         participation = database.createAndSaveParticipationForExercise(finishedFileUploadExercise, TEST_PREFIX + "student3");
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

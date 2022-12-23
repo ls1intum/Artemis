@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.exam;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,11 +40,6 @@ class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         studentExam1 = database.addStudentExam(exam1);
         studentExam1.setUser(student1);
         studentExamRepository.save(studentExam1);
-    }
-
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
     }
 
     @Test

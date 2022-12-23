@@ -189,10 +189,6 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups("");
     }
 
-    public void tearDown() {
-        database.resetDatabase();
-    }
-
     // Test
     public void testCreateCourseWithPermission() throws Exception {
         assertThrows(EntityNotFoundException.class, () -> courseRepo.findByIdWithLecturesAndExamsElseThrow(Long.MAX_VALUE));

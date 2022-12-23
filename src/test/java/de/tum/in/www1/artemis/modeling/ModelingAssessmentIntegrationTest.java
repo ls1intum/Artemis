@@ -139,7 +139,6 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         // Note: we delete all model elements to avoid test issues
         modelElementRepository.deleteAll();
         modelClusterRepository.deleteAll();

@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,12 +13,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.GradeStep;
+import de.tum.in.www1.artemis.domain.GradeType;
+import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.GradeStepsDTO;
 
@@ -31,13 +31,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     private GradingScaleRepository gradingScaleRepository;
 
     @Autowired
-    private GradeStepRepository gradeStepRepository;
-
-    @Autowired
     private ExamRepository examRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     private Course course;
 
@@ -70,15 +64,9 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         examGradingScale.setGradeSteps(gradeSteps);
     }
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     /**
      * Test get request for all grade steps when no grading scale exists
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -96,7 +84,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     /**
      * Test get request for all grade steps
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -132,7 +119,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     /**
      * Test get request for all grade steps when no grading scale exists
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -144,7 +130,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * Test get request for all grade steps as a student
      * when the exam results have not been published yet
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -157,7 +142,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     /**
      * Test get request for all grade steps
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -191,7 +175,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     /**
      * Test get request for a single grade step when no grading scale exists
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -202,7 +185,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     /**
      * Test get request for a single grade step
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -225,7 +207,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     /**
      * Test get request for a single grade step when no grading scale exists
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -236,7 +217,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     /**
      * Test get request for a single grade step
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
@@ -260,7 +240,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     /**
      * Test get request for a single grade step by grade percentage when no grading scale exists
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -271,7 +250,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     /**
      * Test get request for a single grade by grade percentage
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -297,7 +275,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     /**
      * Test get request for a single grade step by grade percentage when no grading scale exists
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -309,7 +286,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
      * Test get request for a single grade step by grade pecentage as a student
      * when the exam results have not been published yet
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -322,7 +298,6 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     /**
      * Test get request for a single grade by grade percentage
      *
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")

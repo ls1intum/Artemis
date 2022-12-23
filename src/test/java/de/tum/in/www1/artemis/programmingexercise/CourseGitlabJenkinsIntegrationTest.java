@@ -9,7 +9,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.gitlab4j.api.GitLabApiException;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,11 +51,6 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         courseTestService.setup(TEST_PREFIX, this);
         gitlabRequestMockProvider.enableMockingOfRequests();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
-    }
-
-    @AfterEach
-    void teardown() {
-        database.resetDatabase();
     }
 
     @Test

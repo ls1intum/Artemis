@@ -101,7 +101,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
     }

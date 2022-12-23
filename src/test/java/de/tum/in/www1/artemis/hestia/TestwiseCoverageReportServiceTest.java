@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,11 +66,6 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
         var solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
         solutionSubmission = database.createProgrammingSubmission(solutionParticipation, false);
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

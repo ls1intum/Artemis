@@ -8,7 +8,6 @@ import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +53,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     private ObjectMapper mapper;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.attachment = ModelFactory.generateAttachment(null);
         this.attachment.setLink("files/temp/example.txt");
@@ -99,11 +98,6 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lecture1.getId() + "/attachment-units").file(attachmentUnitPart).file(attachmentPart)
                 .file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
-    }
-
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
     }
 
     @Test

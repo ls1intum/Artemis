@@ -49,9 +49,6 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     private GroupNotificationScheduleService groupNotificationScheduleService;
 
     @Autowired
-    private CourseRepository courseRepository;
-
-    @Autowired
     private UserRepository userRepository;
 
     private Exercise exercise;
@@ -166,8 +163,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     }
 
     @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
+    void tearDown() {
         notificationRepository.deleteAllInBatch();
     }
 

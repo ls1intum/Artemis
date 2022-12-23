@@ -8,7 +8,6 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 import org.assertj.core.api.Condition;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,11 +41,6 @@ class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationBambooB
         Course course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         participation = database.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

@@ -7,14 +7,11 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -47,9 +44,6 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     private ComplaintResponseRepository complaintResponseRepo;
 
-    @Autowired
-    private ObjectMapper mapper;
-
     private ModelingExercise modelingExercise;
 
     private ModelingSubmission modelingSubmission;
@@ -78,11 +72,6 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

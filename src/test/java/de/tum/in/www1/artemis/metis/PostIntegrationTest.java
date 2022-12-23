@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -79,6 +80,8 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private Validator validator;
 
+    private ValidatorFactory validatorFactory;
+
     private User student1;
 
     private static final int MAX_POSTS_PER_PAGE = 20;
@@ -87,7 +90,8 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void initTestCase() {
 
         // used to test hibernate validation using custom PostContextConstraintValidator
-        validator = Validation.buildDefaultValidatorFactory().getValidator();
+        validatorFactory = Validation.buildDefaultValidatorFactory();
+        validator = validatorFactory.getValidator();
 
         database.addUsers(TEST_PREFIX, 5, 5, 4, 4);
 
@@ -132,7 +136,9 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
+        if (validatorFactory != null) {
+            validatorFactory.close();
+        }
     }
 
     // POST

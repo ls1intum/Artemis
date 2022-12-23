@@ -42,7 +42,6 @@ class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         bitbucketRequestMockProvider.reset();
     }
 

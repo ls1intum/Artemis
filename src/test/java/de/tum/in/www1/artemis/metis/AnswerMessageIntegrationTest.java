@@ -5,11 +5,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,8 +33,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     private List<Post> existingPostsWithAnswersCourseWide;
 
-    private List<AnswerPost> existingAnswerPosts;
-
     private Long courseId;
 
     @BeforeEach
@@ -53,9 +49,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         existingConversationPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() != null).collect(Collectors.toList());
 
-        // get all answerPosts
-        existingAnswerPosts = existingPostsAndConversationPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
-
         // get all existing posts with answers in exercise context
         List<Post> existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream()
                 .filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getExercise() != null).toList();
@@ -68,11 +61,6 @@ class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         SimpMessageSendingOperations simpMessageSendingOperations = mock(SimpMessageSendingOperations.class);
         doNothing().when(simpMessageSendingOperations).convertAndSendToUser(any(), any(), any());
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     // CREATE

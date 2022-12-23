@@ -56,7 +56,6 @@ class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @AfterEach
     void tearDown() throws Exception {
-        database.resetDatabase();
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         mockedXmlFileUtils.close();

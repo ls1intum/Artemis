@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -54,11 +53,6 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @BeforeEach
     void initTestCase() {
         database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

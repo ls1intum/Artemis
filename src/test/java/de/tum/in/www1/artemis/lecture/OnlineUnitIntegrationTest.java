@@ -23,15 +23,11 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 
 class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "onlineunitintegration";
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private OnlineUnitRepository onlineUnitRepository;
@@ -46,7 +42,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     private MockedStatic<Jsoup> jsoupMock;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.onlineUnit = new OnlineUnit();
@@ -69,9 +65,8 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @AfterEach
-    void resetDatabase() {
+    void tearDown() {
         jsoupMock.close();
-        database.resetDatabase();
     }
 
     @Test

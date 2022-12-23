@@ -11,7 +11,6 @@ import java.time.temporal.ChronoUnit;
 
 import javax.mail.internet.MimeMessage;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -57,11 +56,6 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
         notificationRepository.deleteAll();
         assertThat(notificationRepository.count()).isZero();
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

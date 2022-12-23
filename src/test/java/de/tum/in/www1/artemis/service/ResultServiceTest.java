@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -60,11 +59,6 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         ProgrammingExercise examProgrammingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExercise();
         this.examStudentParticipation = database.addStudentParticipationForProgrammingExercise(examProgrammingExercise, TEST_PREFIX + "student1");
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

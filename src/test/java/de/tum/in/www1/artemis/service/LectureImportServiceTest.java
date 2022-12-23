@@ -53,7 +53,6 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     void tearDown() {
         // Delete lecture, which removes testing files on disk for associated attachments
         lectureRepository.delete(this.lecture1);
-        database.resetDatabase();
     }
 
     @Test

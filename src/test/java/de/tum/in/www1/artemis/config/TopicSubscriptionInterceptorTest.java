@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import java.security.Principal;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.Message;
@@ -23,11 +22,6 @@ class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationBambooBi
 
     @Autowired
     private WebsocketConfiguration websocketConfiguration;
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
 
     @Test
     void testAllowSubscription() {

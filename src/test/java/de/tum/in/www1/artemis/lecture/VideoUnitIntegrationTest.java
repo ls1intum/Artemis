@@ -15,15 +15,11 @@ import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.VideoUnitRepository;
 
 class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "videounitintegrationtest";
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private VideoUnitRepository videoUnitRepository;
@@ -36,7 +32,7 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     private VideoUnit videoUnit;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.videoUnit = new VideoUnit();

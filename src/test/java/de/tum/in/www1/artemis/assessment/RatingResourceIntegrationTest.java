@@ -57,7 +57,6 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @AfterEach
     void tearDown() {
         ratingRepo.deleteAllInBatch();
-        database.resetDatabase();
     }
 
     @Test

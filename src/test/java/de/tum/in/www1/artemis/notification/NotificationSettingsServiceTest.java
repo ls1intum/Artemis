@@ -71,8 +71,7 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
     }
 
     @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
+    void tearDown() {
         notificationSettingRepository.deleteAll();
     }
 

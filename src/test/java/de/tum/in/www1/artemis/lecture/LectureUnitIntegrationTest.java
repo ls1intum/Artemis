@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,11 +45,6 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private TextUnit textUnit2;
 
     private TextUnit textUnit3;
-
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
-    }
 
     private void testAllPreAuthorize() throws Exception {
         request.put("/api/lectures/" + lecture1.getId() + "/lecture-units-order", List.of(), HttpStatus.FORBIDDEN);

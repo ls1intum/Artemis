@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,9 +25,6 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private CourseRepository courseRepository;
-
-    @Autowired
-    private UserRepository userRepo;
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -76,11 +72,6 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         database.createAndSaveUser(TEST_PREFIX + "student42");
         database.createAndSaveUser(TEST_PREFIX + "tutor42");
         database.createAndSaveUser(TEST_PREFIX + "instructor42");
-    }
-
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -133,8 +124,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         exerciseUnit.setId(1L);
-        ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
-                HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -144,8 +134,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
         exerciseUnit.setId(1L);
-        ExerciseUnit persistedExerciseUnit = request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class,
-                HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/exercise-units", exerciseUnit, ExerciseUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

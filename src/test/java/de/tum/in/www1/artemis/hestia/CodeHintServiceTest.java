@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.*;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,15 +46,10 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private ProgrammingExercise exercise;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         final Course course = database.addCourseWithOneProgrammingExercise();
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     private ProgrammingExerciseTestCase addTestCaseToExercise(String name) {

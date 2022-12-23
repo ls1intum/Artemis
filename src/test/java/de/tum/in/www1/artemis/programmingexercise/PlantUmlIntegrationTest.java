@@ -7,11 +7,9 @@ import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -37,13 +35,8 @@ class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     private final byte[] UML_PNG = new byte[] { 3, 4, 2, 1 };
 
     @BeforeEach
-    void setUp() throws IOException {
+    void setUp() {
         database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

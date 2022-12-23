@@ -63,10 +63,9 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     }
 
     @AfterEach
-    void resetDatabase() {
+    void tearDown() {
         exam1.removeExerciseGroup(exerciseGroup1);
         examRepository.save(exam1);
-        database.resetDatabase();
     }
 
     @Test

@@ -329,13 +329,6 @@ public class DatabaseUtilService {
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
 
-    /**
-     * This should be as fast as possible to avoid that the test time increases significantly, therefore we only delete the most important entities
-     */
-    public void resetDatabase() {
-        // TODO: remove
-    }
-
     // TODO: this should probably be moved into another service
     public void changeUser(String username) {
         User user = getUserByLogin(username);

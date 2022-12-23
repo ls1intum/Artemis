@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -102,11 +101,6 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         userRepository.findOneByLogin(USERNAME).ifPresent(userRepository::delete);
 
         jiraRequestMockProvider.enableMockingOfRequests();
-    }
-
-    @AfterEach
-    void teardown() {
-        database.resetDatabase();
     }
 
     @Test

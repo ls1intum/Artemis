@@ -87,7 +87,6 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
     @AfterEach
     void tearDown() throws Exception {
-        database.resetDatabase();
         jenkinsRequestMockProvider.reset();
         gitlabRequestMockProvider.reset();
     }

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -58,11 +57,6 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseId = programmingExercise.getId();
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     // Beginning of getSubmissionPolicyOfProgrammingExercise tests

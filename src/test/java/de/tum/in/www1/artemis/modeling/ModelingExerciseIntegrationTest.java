@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Function;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,7 +25,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
@@ -43,9 +41,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Autowired
     private ModelingExerciseRepository modelingExerciseRepository;
-
-    @Autowired
-    private UserRepository userRepo;
 
     @Autowired
     private TeamRepository teamRepository;
@@ -66,9 +61,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
-    private PlagiarismResultRepository plagiarismResultRepository;
-
-    @Autowired
     private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
 
     private ModelingExercise classExercise;
@@ -76,7 +68,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     private List<GradingCriterion> gradingCriteria;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         Course course = database.addCourseWithOneModelingExercise();
         classExercise = (ModelingExercise) course.getExercises().iterator().next();
@@ -85,11 +77,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         database.createAndSaveUser(TEST_PREFIX + "instructor2");
         database.createAndSaveUser(TEST_PREFIX + "tutor2");
 
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test
@@ -553,7 +540,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorSearchTermMatchesTitle() throws Exception {
-        database.resetDatabase();
         database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         testSearchTermMatchesTitle();
     }
@@ -561,7 +547,6 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminSearchTermMatchesTitle() throws Exception {
-        database.resetDatabase();
         database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         testSearchTermMatchesTitle();
     }

@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,11 +67,6 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         database.createAndSaveUser(TEST_PREFIX + "student11");
         database.createAndSaveUser(TEST_PREFIX + "tutor6");
         database.createAndSaveUser(TEST_PREFIX + "instructor2");
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

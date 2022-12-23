@@ -9,7 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,11 +70,6 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
 
         // Load again to fetch changes to statement and hints while keeping eager refs
         programmingExercise = database.loadProgrammingExerciseWithEagerReferences(programmingExercise);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test
