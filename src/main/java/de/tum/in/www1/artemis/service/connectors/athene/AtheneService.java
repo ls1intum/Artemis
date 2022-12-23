@@ -159,7 +159,7 @@ public class AtheneService {
         log.info("Calling Remote Service to calculate automatic feedback for {} submissions.", textSubmissions.size());
 
         try {
-            final RequestDTO request = new RequestDTO(exercise.getId(), textSubmissions, artemisServerUrl + "/api/athene-result/" + exercise.getId());
+            final RequestDTO request = new RequestDTO(exercise.getId(), textSubmissions, artemisServerUrl + "/api/public/athene-result/" + exercise.getId());
             ResponseDTO response = connector.invokeWithRetry(atheneUrl + "/submit", request, maxRetries);
             log.info("Remote Service to calculate automatic feedback responded: {}", response.detail);
 

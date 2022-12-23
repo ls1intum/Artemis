@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.publicc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
  * REST controller for managing Athene results.
  */
 @RestController
+@RequestMapping("public")
 @Profile("athene")
 public class AtheneResource {
 
@@ -31,7 +32,7 @@ public class AtheneResource {
     }
 
     /**
-     * Saves automatic textAssessments of Athene
+     * POST athene-result/:exerciseId -- Saves automatic textAssessments of Athene
      *
      * @param exerciseId The exerciseId of the exercise which will be saved
      * @param atheneResponse The calculation results containing blocks and clusters
@@ -61,5 +62,4 @@ public class AtheneResource {
 
         return ResponseEntity.ok().build();
     }
-
 }
