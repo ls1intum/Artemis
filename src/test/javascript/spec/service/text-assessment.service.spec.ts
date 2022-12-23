@@ -24,11 +24,10 @@ import { ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 describe('TextAssessment Service', () => {
     let service: TextAssessmentService;
     let httpMock: HttpTestingController;
-    let textSubmission: TextSubmission;
-    let mockResponse: any;
+    const textSubmission = new TextSubmission();
     let actualResponse: any;
 
-    mockResponse = {
+    const mockResponse: any = {
         id: 1,
         submissions: [
             {
@@ -65,8 +64,6 @@ describe('TextAssessment Service', () => {
         assessmentType: AssessmentType.MANUAL,
         course: { id: 123, isAtLeastInstructor: true } as Course,
     } as TextExercise;
-
-    textSubmission = new TextSubmission();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -369,13 +366,9 @@ describe('TextAssessment Service', () => {
     });
 
     it('should resolve new StudentParticipations for TextSubmissionAssessmentComponent', () => {
-        let resolver: NewStudentParticipationResolver;
-        let textSubmissionService: TextSubmissionService;
-        let newStudentParticipationStub: jest.SpyInstance;
-
-        resolver = TestBed.inject(NewStudentParticipationResolver);
-        textSubmissionService = TestBed.inject(TextSubmissionService);
-        newStudentParticipationStub = jest.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(textSubmission));
+        const resolver = TestBed.inject(NewStudentParticipationResolver);
+        const textSubmissionService = TestBed.inject(TextSubmissionService);
+        const newStudentParticipationStub = jest.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment').mockReturnValue(of(textSubmission));
 
         const snapshot = {
             paramMap: convertToParamMap({ exerciseId: 1 }),
@@ -389,10 +382,8 @@ describe('TextAssessment Service', () => {
     });
 
     it('should resolve the needed StudentParticipations for TextSubmissionAssessmentComponent', () => {
-        let resolver: StudentParticipationResolver;
-        let studentParticipationSpy: jest.SpyInstance;
-        resolver = TestBed.inject(StudentParticipationResolver);
-        studentParticipationSpy = jest.spyOn(service, 'getFeedbackDataForExerciseSubmission');
+        const resolver = TestBed.inject(StudentParticipationResolver);
+        const studentParticipationSpy = jest.spyOn(service, 'getFeedbackDataForExerciseSubmission');
 
         const snapshot = {
             paramMap: convertToParamMap({ participationId: 1, submissionId: 2, resultId: 1 }),
@@ -406,10 +397,8 @@ describe('TextAssessment Service', () => {
     });
 
     it('should resolve the needed textSubmissions for TextFeedbackConflictsComponent', () => {
-        let resolver: FeedbackConflictResolver;
-        let feedbackConflictSpy: jest.SpyInstance;
-        resolver = TestBed.inject(FeedbackConflictResolver);
-        feedbackConflictSpy = jest.spyOn(service, 'getConflictingTextSubmissions');
+        const resolver = TestBed.inject(FeedbackConflictResolver);
+        const feedbackConflictSpy = jest.spyOn(service, 'getConflictingTextSubmissions');
 
         const snapshot = {
             paramMap: convertToParamMap({ participationId: 1, submissionId: 2, feedbackId: 3 }),

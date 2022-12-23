@@ -122,6 +122,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
 
         // set data based on the spots for each spot
         this.question.spots!.forEach((spot) => {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             const spotCounter = (this.questionStatistic as ShortAnswerQuestionStatistic).shortAnswerSpotCounters?.find((sCounter) => {
                 return spot.id === sCounter.spot?.id;
             })!;

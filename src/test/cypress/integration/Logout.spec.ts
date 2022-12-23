@@ -26,7 +26,7 @@ describe('Logout tests', () => {
     });
 
     after(() => {
-        if (!!course) {
+        if (course) {
             cy.login(users.getAdmin());
             courseRequests.deleteCourse(course.id!);
         }
