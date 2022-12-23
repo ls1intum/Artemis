@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -56,11 +55,6 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     private final ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
 
     private Course course1 = new Course();
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
 
     @BeforeEach
     void init() {

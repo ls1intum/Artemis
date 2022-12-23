@@ -7,7 +7,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,11 +64,6 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
-
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
-    }
 
     @BeforeEach
     void setupTestScenario() {

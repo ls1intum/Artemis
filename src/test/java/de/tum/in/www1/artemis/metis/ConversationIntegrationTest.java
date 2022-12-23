@@ -50,7 +50,6 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @AfterEach
     public void tearDown() {
-        database.resetDatabase();
     }
 
     // Conversation
@@ -151,8 +150,6 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private void checkCreatedConversationParticipants(Set<ConversationParticipant> conversationParticipants) {
         // check each individual conversationParticipant
-        conversationParticipants.forEach(conversationParticipant -> {
-            assertThat(conversationParticipant.getUser()).isNotNull();
-        });
+        conversationParticipants.forEach(conversationParticipant -> assertThat(conversationParticipant.getUser()).isNotNull());
     }
 }

@@ -3,9 +3,10 @@ package de.tum.in.www1.artemis.assessment;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -62,11 +63,6 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         userRepository.save(instructor);
     }
 
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
-    }
-
     /**
      * Tests the TutorEffortResource.calculateTutorEffort method with a scenario involving a distance between
      * timestamps of 1 minute but
@@ -89,7 +85,6 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     /**
      * Tests the TutorEffortResource.calculateTutorEffort method with a scenario involving a distance
      * between timestamps of 5 minutes.
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")
@@ -110,7 +105,6 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
      * Tests the TutorEffortResource.calculateTutorEffort method with a scenario involving 10 minutes
      * of distance between timestamps. In this case time difference between timestamps is not calculated
      * as it is referred as a period of inactivity
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor", roles = "INSTRUCTOR")

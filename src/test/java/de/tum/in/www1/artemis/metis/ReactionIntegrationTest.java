@@ -10,6 +10,7 @@ import java.util.Set;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,13 +55,16 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     private Validator validator;
 
+    private ValidatorFactory validatorFactory;
+
     private static final int MAX_POSTS_PER_PAGE = 20;
 
     @BeforeEach
     void initTestCase() {
 
         // used to test hibernate validation using custom ReactionConstraintValidator
-        validator = Validation.buildDefaultValidatorFactory().getValidator();
+        validatorFactory = Validation.buildDefaultValidatorFactory();
+        validator = validatorFactory.getValidator();
 
         database.addUsers(TEST_PREFIX, 5, 5, 4, 4);
 
@@ -80,7 +84,9 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
+        if (validatorFactory != null) {
+            validatorFactory.close();
+        }
     }
 
     // CREATE

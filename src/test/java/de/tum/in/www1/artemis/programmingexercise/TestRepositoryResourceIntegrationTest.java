@@ -92,7 +92,6 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @AfterEach
     void tearDown() throws IOException {
-        database.resetDatabase();
         reset(gitService);
         testRepo.resetLocalRepo();
     }
@@ -473,7 +472,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
     void testIsClean() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         doReturn(true).when(gitService).isRepositoryCached(any());
-        var status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, HashMap.class);
+        var status = request.get(testRepoBaseUrl + programmingExercise.getId(), HttpStatus.OK, Map.class);
         assertThat(status).isNotEmpty();
     }
 

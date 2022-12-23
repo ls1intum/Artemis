@@ -198,9 +198,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @AfterEach
-    void resetDatabase() {
+    void tearDown() {
         bitbucketRequestMockProvider.reset();
-        // database.resetDatabase();
     }
 
     @Test

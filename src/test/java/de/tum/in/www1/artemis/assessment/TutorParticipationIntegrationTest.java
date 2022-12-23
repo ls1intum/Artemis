@@ -7,7 +7,6 @@ import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -85,11 +84,6 @@ class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooB
         }
 
         textBlockIds = new ArrayList<>();
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

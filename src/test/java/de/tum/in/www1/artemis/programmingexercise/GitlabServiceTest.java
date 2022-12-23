@@ -47,7 +47,6 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @AfterEach
     void tearDown() throws Exception {
-        database.resetDatabase();
         gitlabRequestMockProvider.reset();
     }
 

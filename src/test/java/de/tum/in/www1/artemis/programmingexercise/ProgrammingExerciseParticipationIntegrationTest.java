@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -45,12 +44,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     private ParticipationRepository participationRepository;
 
     @Autowired
-    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
-
-    @Autowired
-    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
-
-    @Autowired
     private ResultRepository resultRepository;
 
     private ProgrammingExercise programmingExercise;
@@ -63,11 +56,6 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     private static Stream<Arguments> argumentsForGetParticipationWithLatestResult() {

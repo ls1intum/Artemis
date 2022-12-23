@@ -84,7 +84,6 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBam
 
     @AfterEach
     void tearDown() throws IOException {
-        database.resetDatabase();
         if (localRepoFile != null && localRepoFile.exists()) {
             FileUtils.deleteDirectory(localRepoFile);
         }

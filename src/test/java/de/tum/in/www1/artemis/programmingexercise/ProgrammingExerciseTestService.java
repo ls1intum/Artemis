@@ -246,7 +246,6 @@ public class ProgrammingExerciseTestService {
     }
 
     public void tearDown() throws Exception {
-        database.resetDatabase();
         exerciseRepo.resetLocalRepo();
         testRepo.resetLocalRepo();
         solutionRepo.resetLocalRepo();

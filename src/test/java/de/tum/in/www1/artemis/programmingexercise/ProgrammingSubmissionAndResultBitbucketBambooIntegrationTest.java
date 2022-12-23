@@ -132,7 +132,6 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         bambooRequestMockProvider.reset();
         bitbucketRequestMockProvider.reset();
     }

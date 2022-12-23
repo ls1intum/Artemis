@@ -203,7 +203,6 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @AfterEach
     void tearDown() throws IOException {
-        database.resetDatabase();
         reset(gitService);
         studentRepository.resetLocalRepo();
     }

@@ -25,7 +25,6 @@ class ConsistencyCheckBitbucketBambooIntegrationTest extends AbstractSpringInteg
     void tearDown() throws Exception {
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
-        database.resetDatabase();
     }
 
     /**

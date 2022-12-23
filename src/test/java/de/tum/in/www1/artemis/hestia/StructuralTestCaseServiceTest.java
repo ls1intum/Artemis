@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import java.time.ZonedDateTime;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,15 +47,10 @@ class StructuralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
     private ProgrammingExercise exercise;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         Course course = database.addEmptyCourse();
         database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     private void addTestCaseToExercise(String name) {

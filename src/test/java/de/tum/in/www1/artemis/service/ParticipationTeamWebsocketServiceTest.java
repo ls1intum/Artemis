@@ -52,7 +52,6 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
         if (closeable != null) {
             closeable.close();
         }
-        database.resetDatabase();
     }
 
     @Test

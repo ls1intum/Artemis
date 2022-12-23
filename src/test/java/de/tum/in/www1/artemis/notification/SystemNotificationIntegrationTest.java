@@ -49,7 +49,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @AfterEach
-    void resetDatabase() {
+    void tearDown() {
         systemNotificationRepo.deleteAll();
     }
 

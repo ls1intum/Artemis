@@ -73,7 +73,6 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @AfterEach
     void tearDown() throws Exception {
-        database.resetDatabase();
         examMonitoringScheduleService.stopSchedule();
         examMonitoringScheduleService.clearAllExamMonitoringData();
     }

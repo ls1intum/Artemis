@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.util.TestConstants;
 
 class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
@@ -33,9 +32,6 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
 
     @Autowired
     private BuildLogEntryRepository buildLogEntryRepository;
@@ -47,7 +43,6 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
 
     @AfterEach
     void tearDown() throws IOException {
-        database.resetDatabase();
     }
 
     @Test

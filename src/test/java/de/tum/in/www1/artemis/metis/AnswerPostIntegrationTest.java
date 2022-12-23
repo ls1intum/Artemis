@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.Collection;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -77,11 +76,6 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
                 .toList();
 
         courseId = existingPostsWithAnswersInExercise.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     // CREATE

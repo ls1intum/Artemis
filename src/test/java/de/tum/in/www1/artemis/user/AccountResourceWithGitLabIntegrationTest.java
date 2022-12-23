@@ -45,7 +45,6 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
 
     @AfterEach
     void tearDown() throws Exception {
-        database.resetDatabase();
         gitlabRequestMockProvider.reset();
     }
 

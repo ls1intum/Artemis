@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.modeling.ApollonDiagram;
 import de.tum.in.www1.artemis.repository.ApollonDiagramRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -31,9 +30,6 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Autowired
     private CourseRepository courseRepo;
-
-    @Autowired
-    private UserRepository userRepo;
 
     private ApollonDiagram apollonDiagram;
 
@@ -56,8 +52,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
+    void tearDown() {
         apollonDiagram = null;
         apollonDiagramRepository.deleteAll();
     }

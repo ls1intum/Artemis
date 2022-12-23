@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.stream.IntStream;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -49,11 +48,6 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     @BeforeEach
     void initTestCase() {
         database.addUsers(TEST_PREFIX, 2, 0, 0, 1);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     static IntStream weekRangeProvider() {

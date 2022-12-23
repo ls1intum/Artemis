@@ -51,9 +51,8 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @AfterEach
-    void resetDatabase() {
+    void tearDown() {
         bitbucketRequestMockProvider.reset();
-        database.resetDatabase();
     }
 
     private void testWithRegistrationDisabled(Executable test) throws Throwable {

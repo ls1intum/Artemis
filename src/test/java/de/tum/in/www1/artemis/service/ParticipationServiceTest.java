@@ -60,7 +60,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @AfterEach
     void tearDown() throws Exception {
-        database.resetDatabase();
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         if (closeable != null) {

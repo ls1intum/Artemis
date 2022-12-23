@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,12 +21,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelCluster;
 import de.tum.in.www1.artemis.domain.modeling.ModelElement;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.repository.ModelAssessmentKnowledgeRepository;
-import de.tum.in.www1.artemis.repository.ModelingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.TextAssessmentKnowledgeRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ModelAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.compass.controller.ModelClusterFactory;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
@@ -70,11 +64,6 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
     void initTestCase() {
         database.addUsers(TEST_PREFIX, 10, 1, 0, 1);
         database.addInstructor("other-instructors", "instructorother");
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     /**

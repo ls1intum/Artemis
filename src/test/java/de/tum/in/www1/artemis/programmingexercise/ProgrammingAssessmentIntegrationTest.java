@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
 import org.eclipse.jgit.lib.ObjectId;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
@@ -29,7 +28,6 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -51,9 +49,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Autowired
     private ExerciseRepository exerciseRepository;
-
-    @Autowired
-    private ProgrammingAssessmentService programmingAssessmentService;
 
     @Autowired
     private ExamRepository examRepository;
@@ -113,11 +108,6 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         manualResult.rated(true);
 
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

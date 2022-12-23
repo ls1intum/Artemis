@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,11 +53,6 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         database.addUsers(TEST_PREFIX, 2, 2, 0, 2);
         final Course course = database.addCourseWithOneProgrammingExercise();
         programmingExerciseId = database.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     ProgrammingExerciseTask addTaskToProgrammingExercise(String taskName) {

@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -67,11 +66,6 @@ class TeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         assertThat(modelingExercise).isNotNull();
         assertThat(textExercise).isNotNull();
         students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

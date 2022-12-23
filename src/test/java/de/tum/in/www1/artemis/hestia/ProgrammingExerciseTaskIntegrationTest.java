@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,11 +65,6 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBa
             solutionEntry.setFilePath("code.java");
             programmingExerciseSolutionEntryRepository.save(solutionEntry);
         }
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

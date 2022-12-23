@@ -22,16 +22,11 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
     private static final String TEST_PREFIX = "notificationsettingsresourrce";
 
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
     private NotificationSettingRepository notificationSettingRepository;
 
     private NotificationSetting settingA;
 
     private NotificationSetting settingsB;
-
-    private User student1;
 
     /**
      * Prepares the common variables and data for testing
@@ -39,7 +34,7 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
     @BeforeEach
     void initTestCase() {
         database.addUsers(TEST_PREFIX, 2, 1, 1, 1);
-        student1 = database.getUserByLogin(TEST_PREFIX + "student1");
+        User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
         settingA = new NotificationSetting(student1, true, false, "notification.lecture-notification.attachment-changes");
         settingsB = new NotificationSetting(student1, false, false, "notification.exercise-notification.exercise-open-for-practice");
@@ -50,7 +45,6 @@ class NotificationSettingsResourceIntegrationTest extends AbstractSpringIntegrat
      */
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         notificationSettingRepository.deleteAll();
     }
 

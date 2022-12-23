@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,11 +71,6 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBa
         modelingSubmission = database.addModelingSubmissionWithEmptyResult((ModelingExercise) exercise, "", student1.getLogin());
         result = database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, tutor1, 60.0, true).getLatestResult();
         database.addRatingToResult(result, 5);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     private void assertLeaderboardData(List<TutorLeaderboardDTO> leaderboardData) {

@@ -101,7 +101,6 @@ public class UserTestService {
 
     public void tearDown() throws IOException {
         userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-        database.resetDatabase();
     }
 
     public User getStudent() {

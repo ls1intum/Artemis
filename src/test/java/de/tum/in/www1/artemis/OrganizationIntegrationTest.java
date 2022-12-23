@@ -43,7 +43,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @AfterEach
-    void resetDatabase() {
+    void tearDown() {
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
     }

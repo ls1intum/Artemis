@@ -85,7 +85,6 @@ class StatisticsRepositoryTest extends AbstractSpringIntegrationBambooBitbucketJ
         assertThat(entryList).as("Result has 2 entries for two time slots").hasSize(2);
         assertThat(entryList).as("Result contains the entry for 19.11.21").anyMatch((entry) -> compareStatisticsEntries(entry, entry191121));
 
-        database.resetDatabase();
         persistenceAuditEventRepository.deleteAll();
     }
 

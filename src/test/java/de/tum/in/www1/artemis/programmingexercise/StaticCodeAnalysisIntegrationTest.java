@@ -66,7 +66,6 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         bambooRequestMockProvider.reset();
     }
 

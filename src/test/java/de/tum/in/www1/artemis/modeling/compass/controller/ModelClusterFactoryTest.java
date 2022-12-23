@@ -20,7 +20,7 @@ class ModelClusterFactoryTest {
     private ModelClusterFactory modelClusterFactory;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         modelClusterFactory = new ModelClusterFactory();
     }
 

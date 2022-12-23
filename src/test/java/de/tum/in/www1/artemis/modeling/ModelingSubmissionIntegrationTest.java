@@ -11,7 +11,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -135,11 +134,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         database.createAndSaveUser(TEST_PREFIX + "student4");
         database.createAndSaveUser(TEST_PREFIX + "tutor2");
         database.createAndSaveUser(TEST_PREFIX + "instructor2");
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test
@@ -496,7 +490,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "TA")
     void getModelingSubmissionWithResultId() throws Exception {
-        User user = database.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = (ModelingSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(classExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(1);
@@ -512,7 +505,6 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getModelingSubmissionWithResultIdAsTutor_badRequest() throws Exception {
-        User user = database.getUserByLogin(TEST_PREFIX + "tutor1");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         submission = (ModelingSubmission) database.addModelingSubmissionWithFinishedResultAndAssessor(classExercise, submission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(0);

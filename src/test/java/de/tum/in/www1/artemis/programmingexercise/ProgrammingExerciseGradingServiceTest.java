@@ -186,7 +186,6 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         bambooRequestMockProvider.reset();
     }
 
@@ -907,7 +906,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading() throws Exception {
+    void shouldRemoveInvisibleStaticCodeAnalysisFeedbackOnGrading() {
         var participation1 = database.addStudentParticipationForProgrammingExercise(programmingExerciseSCAEnabled, TEST_PREFIX + "student1");
         var result1 = new Result().participation(participation1).successful(false).rated(true).score(100D);
         // Add some positive test case feedback otherwise the service method won't execute

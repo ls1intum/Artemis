@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
 import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,11 +55,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private Validator validator;
 
+    private ValidatorFactory validatorFactory;
+
     @BeforeEach
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initTestCase() {
         // used to test hibernate validation using custom PostContextConstraintValidator
-        validator = Validation.buildDefaultValidatorFactory().getValidator();
+        validatorFactory = Validation.buildDefaultValidatorFactory();
+        validator = validatorFactory.getValidator();
 
         database.addUsers(TEST_PREFIX, 5, 5, 4, 1);
 
@@ -66,7 +70,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         // (there are 4 posts with lecture context, 4 with exercise context, 3 with course-wide context and 3 with conversation initialized): 14 posts in total
         existingPostsAndConversationPosts = database.createPostsWithinCourse(TEST_PREFIX);
 
-        List<Post> existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
+        List<Post> existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList();
 
         // filters existing posts with conversation
         existingConversationPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() != null).toList();
@@ -87,7 +91,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
+        if (validatorFactory != null) {
+            validatorFactory.close();
+        }
     }
 
     @Test

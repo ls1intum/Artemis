@@ -65,7 +65,6 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
     }
 

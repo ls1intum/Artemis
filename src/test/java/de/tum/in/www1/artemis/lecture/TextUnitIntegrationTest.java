@@ -16,14 +16,10 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 
 class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "textunitintegrationtest";
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private TextUnitRepository textUnitRepository;
@@ -36,7 +32,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     private TextUnit textUnit;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         this.database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         this.lecture = this.database.createCourseWithLecture(true);
         this.textUnit = new TextUnit();

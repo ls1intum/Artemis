@@ -10,7 +10,6 @@ import java.util.Set;
 
 import javax.mail.internet.MimeMessage;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -123,11 +122,6 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         tutorialGroup.setTeachingAssistant(userTwo);
 
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
-    }
-
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
     }
 
     /**

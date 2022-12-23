@@ -58,9 +58,6 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     private ResultRepository resultRepository;
 
     @Autowired
-    private UserRepository userRepo;
-
-    @Autowired
     private FeatureToggleService featureToggleService;
 
     @Autowired
@@ -120,7 +117,6 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
     }
 
@@ -548,25 +544,25 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getDifficulty()).isNull();
             assertThat(exercise.getMode()).isEqualTo(ExerciseMode.INDIVIDUAL);
-            if (exercise instanceof ProgrammingExercise programmingExercise) {
-                assertThat(programmingExercise.getSolutionParticipation()).isNull();
-                assertThat(programmingExercise.getTemplateParticipation()).isNull();
-                assertThat(programmingExercise.getTestRepositoryUrl()).isNull();
-                assertThat(programmingExercise.getShortName()).isNull();
-                assertThat(programmingExercise.isPublishBuildPlanUrl()).isNull();
-                assertThat(programmingExercise.getProgrammingLanguage()).isNull();
-                assertThat(programmingExercise.getPackageName()).isNull();
-                assertThat(programmingExercise.isAllowOnlineEditor()).isNull();
+            if (exercise instanceof ProgrammingExercise aProgrammingExercise) {
+                assertThat(aProgrammingExercise.getSolutionParticipation()).isNull();
+                assertThat(aProgrammingExercise.getTemplateParticipation()).isNull();
+                assertThat(aProgrammingExercise.getTestRepositoryUrl()).isNull();
+                assertThat(aProgrammingExercise.getShortName()).isNull();
+                assertThat(aProgrammingExercise.isPublishBuildPlanUrl()).isNull();
+                assertThat(aProgrammingExercise.getProgrammingLanguage()).isNull();
+                assertThat(aProgrammingExercise.getPackageName()).isNull();
+                assertThat(aProgrammingExercise.isAllowOnlineEditor()).isNull();
             }
             else if (exercise instanceof QuizExercise quizExercise) {
                 assertThat(quizExercise.getQuizQuestions()).isEmpty();
             }
-            else if (exercise instanceof TextExercise textExercise) {
-                assertThat(textExercise.getExampleSolution()).isNull();
+            else if (exercise instanceof TextExercise aTextExercise) {
+                assertThat(aTextExercise.getExampleSolution()).isNull();
             }
-            else if (exercise instanceof ModelingExercise modelingExercise) {
-                assertThat(modelingExercise.getExampleSolutionModel()).isNull();
-                assertThat(modelingExercise.getExampleSolutionExplanation()).isNull();
+            else if (exercise instanceof ModelingExercise aModelingExercise) {
+                assertThat(aModelingExercise.getExampleSolutionModel()).isNull();
+                assertThat(aModelingExercise.getExampleSolutionExplanation()).isNull();
             }
         });
     }
@@ -650,7 +646,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateIndividualDueDateOk() throws Exception {
         final var course = database.addCourseWithFileUploadExercise();
-        var exercise = (FileUploadExercise) course.getExercises().stream().findAny().get();
+        var exercise = (FileUploadExercise) course.getExercises().stream().findAny().orElseThrow();
         exercise.setDueDate(ZonedDateTime.now().plusHours(2));
         exercise = exerciseRepo.save(exercise);
 
@@ -660,7 +656,6 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final var participationsToUpdate = new StudentParticipationList((StudentParticipation) submission.getParticipation());
         final var response = request.putWithResponseBodyList(String.format("/api/exercises/%d/participations/update-individual-due-date", exercise.getId()), participationsToUpdate,
                 StudentParticipation.class, HttpStatus.OK);
-        exercise = (FileUploadExercise) exerciseRepo.findByIdElseThrow(exercise.getId());
 
         assertThat(response).hasSize(1);
         assertThat(response.get(0).getIndividualDueDate()).isEqualToIgnoringNanos(submission.getParticipation().getIndividualDueDate());

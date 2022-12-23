@@ -117,7 +117,6 @@ public class ProgrammingExerciseResultTestService {
     }
 
     public void tearDown() {
-        database.resetDatabase();
     }
 
     // Test

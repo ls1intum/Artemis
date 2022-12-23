@@ -11,7 +11,6 @@ import java.util.*;
 import java.util.function.Function;
 
 import org.assertj.core.data.Offset;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -83,11 +82,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void initTestCase() {
         database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         database.addInstructor("other-instructors", TEST_PREFIX + "instructorother");
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

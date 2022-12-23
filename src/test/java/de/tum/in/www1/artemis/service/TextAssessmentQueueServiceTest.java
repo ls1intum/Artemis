@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.*;
 
 import org.assertj.core.data.Percentage;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,11 +48,6 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
         course = database.addCourseWithOneReleasedTextExercise();
         random = new Random();
         errorRate = Percentage.withPercentage(0.0001);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test

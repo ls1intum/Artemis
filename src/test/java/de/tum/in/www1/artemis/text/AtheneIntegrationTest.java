@@ -8,7 +8,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,11 +42,6 @@ class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @Autowired
     private TextClusterRepository textClusterRepository;
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
 
     /**
      * Test that Added Distances are calculated and positionInCluster is stored when receiving

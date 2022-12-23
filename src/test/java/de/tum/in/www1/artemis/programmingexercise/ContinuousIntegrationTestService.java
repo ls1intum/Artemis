@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -32,9 +31,6 @@ public class ContinuousIntegrationTestService {
 
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
-
-    @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     private final LocalRepository localRepo = new LocalRepository(defaultBranch);
 
@@ -90,7 +86,6 @@ public class ContinuousIntegrationTestService {
     }
 
     public void tearDown() throws IOException {
-        database.resetDatabase();
         reset(gitService);
         localRepo.resetLocalRepo();
     }

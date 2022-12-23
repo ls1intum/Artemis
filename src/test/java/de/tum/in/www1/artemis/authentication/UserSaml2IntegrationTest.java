@@ -52,7 +52,6 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
     @AfterEach
     void clearAuthentication() {
         TestSecurityContextHolder.clearContext();
-        this.database.resetDatabase();
     }
 
     @Test
