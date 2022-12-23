@@ -53,7 +53,6 @@ public class Course extends DomainObject {
 
     @Column(name = "description")
     @JsonView(QuizView.Before.class)
-    // @Lob
     private String description;
 
     @Column(name = "short_name", unique = true)
