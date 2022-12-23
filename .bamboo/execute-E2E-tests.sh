@@ -5,7 +5,8 @@ export HOST_HOSTNAME=$(hostname)
 
 docker-compose -f ./src/main/docker/cypress-E2E-tests.yml pull
 docker-compose -f ./src/main/docker/cypress-E2E-tests.yml build --no-cache --pull
-docker-compose -f ./src/main/docker/cypress-E2E-tests.yml up --exit-code-from artemis-cypress
+#TODO: remove log-level as new docker compose version shows enough infos by default
+docker-compose --log-level DEBUG -f ./src/main/docker/cypress-E2E-tests.yml up --exit-code-from artemis-cypress
 exitCode=$?
 echo "Cypress container exit code: $exitCode"
 if [ $exitCode -eq 0 ]
