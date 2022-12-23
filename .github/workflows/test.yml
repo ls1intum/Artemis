@@ -71,6 +71,34 @@ jobs:
         name: artemis-server
         flags: server
 
+  server-tests-mysql:
+      runs-on: ubuntu-latest
+      timeout-minutes: 60
+      steps:
+          - uses: actions/checkout@v3
+          - name: Setup Java
+            uses: actions/setup-java@v3
+            with:
+                distribution: 'temurin'
+                java-version: '${{ env.java }}'
+                cache: 'gradle'
+          - name: Java Tests
+            run: SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain executeTests jacocoTestReport -x webapp jacocoTestCoverageVerification
+
+  server-tests-postgres:
+      runs-on: ubuntu-latest
+      timeout-minutes: 60
+      steps:
+          - uses: actions/checkout@v3
+          - name: Setup Java
+            uses: actions/setup-java@v3
+            with:
+                distribution: 'temurin'
+                java-version: '${{ env.java }}'
+                cache: 'gradle'
+          - name: Java Tests
+            run: SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain executeTests jacocoTestReport -x webapp jacocoTestCoverageVerification
+
   server-style:
     runs-on: ubuntu-latest
     timeout-minutes: 30
