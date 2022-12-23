@@ -110,9 +110,10 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         var filteredUsers = weeklyEmailSummaryService.findRelevantUsersForSummary();
         assertThat(filteredUsers).contains(userWithActivatedWeeklySummaries);
         assertThat(filteredUsers).doesNotContain(userWithDeactivatedWeeklySummaries);
-        weeklyEmailSummaryService.prepareEmailSummariesForUsers(Set.of(userWithActivatedWeeklySummaries));
 
         when(exerciseRepository.findAllExercisesForSummary(any(), any())).thenReturn(Set.of(exerciseReleasedYesterdayAndNotYetDue));
+
+        weeklyEmailSummaryService.prepareEmailSummariesForUsers(Set.of(userWithActivatedWeeklySummaries));
 
         ArgumentCaptor<Set<Exercise>> captor = ArgumentCaptor.forClass(Set.class);
         verify(mailService, timeout(5000).times(1)).sendWeeklySummaryEmail(eq(userWithActivatedWeeklySummaries), captor.capture());
