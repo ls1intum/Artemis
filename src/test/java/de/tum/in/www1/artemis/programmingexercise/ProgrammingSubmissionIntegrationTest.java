@@ -660,7 +660,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    // TODO: This test is still not working with TestContainers
     void testGetProgrammingSubmissionWithoutAssessment() throws Exception {
         String login = TEST_PREFIX + "student1";
         ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);

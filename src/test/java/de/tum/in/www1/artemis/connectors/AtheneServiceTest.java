@@ -32,13 +32,7 @@ class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     private StudentParticipationRepository participationRepository;
 
     @Autowired
-    private TextBlockRepository textBlockRepository;
-
-    @Autowired
     private TextSubmissionRepository textSubmissionRepository;
-
-    @Autowired
-    private TextClusterRepository textClusterRepository;
 
     @Autowired
     private AtheneService atheneService;

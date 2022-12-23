@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors;
+package de.tum.in.www1.artemis.connectors;
 
 import static org.mockito.Mockito.*;
 
@@ -13,6 +13,9 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.service.connectors.Lti10Service;
+import de.tum.in.www1.artemis.service.connectors.Lti13Service;
+import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
 
 class LtiNewResultServiceTest {
 

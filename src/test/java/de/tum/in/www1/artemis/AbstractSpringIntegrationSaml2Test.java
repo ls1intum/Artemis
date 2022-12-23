@@ -5,6 +5,8 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
@@ -28,16 +30,14 @@ import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 
 /**
- * Test base for {@link UserJWTController#authorizeSAML2(String)} and {@link SAML2Service}.
+ * Test base for {@link UserJWTController#authorizeSAML2(String, HttpServletResponse)}} and {@link SAML2Service}.
  *
  * @author Dominik Fuchss
  */
-@SpringBootTest(properties = { "artemis.athene.token-validity-in-seconds=10800",
-        "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
+@SpringBootTest
 @AutoConfigureMockMvc
 @AutoConfigureEmbeddedDatabase
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
-
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "saml2" })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
 public abstract class AbstractSpringIntegrationSaml2Test {

@@ -400,12 +400,12 @@ class Lti13ServiceTest {
         result.addFeedback(feedback);
 
         State state = getValidStateForNewResult(result);
-        LtiResourceLaunch launch = state.getLti13ResourceLaunch();
-        User user = state.getUser();
-        Exercise exercise = state.getExercise();
-        StudentParticipation participation = state.getParticipation();
+        LtiResourceLaunch launch = state.ltiResourceLaunch;
+        User user = state.user();
+        Exercise exercise = state.exercise();
+        StudentParticipation participation = state.participation();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        ClientRegistration clientRegistration = state.getClientRegistration();
+        ClientRegistration clientRegistration = state.clientRegistration();
 
         doReturn(course).when(courseRepository).findByIdWithEagerOnlineCourseConfigurationElseThrow(course.getId());
         doReturn(clientRegistration).when(onlineCourseConfigurationService).getClientRegistration(any());
@@ -434,12 +434,12 @@ class Lti13ServiceTest {
 
         State state = getValidStateForNewResult(result);
 
-        LtiResourceLaunch launch = state.getLti13ResourceLaunch();
-        User user = state.getUser();
-        Exercise exercise = state.getExercise();
-        StudentParticipation participation = state.getParticipation();
+        LtiResourceLaunch launch = state.ltiResourceLaunch;
+        User user = state.user();
+        Exercise exercise = state.exercise();
+        StudentParticipation participation = state.participation();
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-        ClientRegistration clientRegistration = state.getClientRegistration();
+        ClientRegistration clientRegistration = state.clientRegistration();
 
         doReturn(Collections.singletonList(launch)).when(launchRepository).findByUserAndExercise(user, exercise);
         doReturn(Optional.of(result)).when(resultRepository).findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
@@ -508,53 +508,9 @@ class Lti13ServiceTest {
     }
 
     /**
-     * A wrapper for Entities that are related to each other.
-     */
-    private static class State {
-
-        private LtiResourceLaunch ltiResourceLaunch;
-
-        private Exercise exercise;
-
-        private User user;
-
-        private StudentParticipation participation;
-
-        private Result result;
-
-        private ClientRegistration clientRegistration;
-
-        public State(LtiResourceLaunch ltiResourceLaunch, Exercise exercise, User user, StudentParticipation participation, Result result, ClientRegistration clientRegistration) {
-            this.ltiResourceLaunch = ltiResourceLaunch;
-            this.exercise = exercise;
-            this.user = user;
-            this.participation = participation;
-            this.result = result;
-            this.clientRegistration = clientRegistration;
-        }
-
-        public LtiResourceLaunch getLti13ResourceLaunch() {
-            return ltiResourceLaunch;
-        }
-
-        public Exercise getExercise() {
-            return exercise;
-        }
-
-        public User getUser() {
-            return user;
-        }
-
-        public StudentParticipation getParticipation() {
-            return participation;
-        }
-
-        public Result getResult() {
-            return result;
-        }
-
-        public ClientRegistration getClientRegistration() {
-            return clientRegistration;
-        }
+         * A wrapper for Entities that are related to each other.
+         */
+    private record State(LtiResourceLaunch ltiResourceLaunch, Exercise exercise, User user, StudentParticipation participation, Result result,
+            ClientRegistration clientRegistration) {
     }
 }

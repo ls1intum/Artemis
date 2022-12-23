@@ -49,6 +49,9 @@ artemis:
                     default: "~~invalid~~"
                 ocaml:
                     default: "~~invalid~~"
+    athene:
+        token-validity-in-seconds: 10800
+        base64-secret: "YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo="
 
 spring:
     application:

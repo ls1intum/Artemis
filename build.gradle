@@ -314,8 +314,8 @@ dependencies {
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M7"
     testImplementation "com.opencsv:opencsv:5.7.1"
     testImplementation "io.zonky.test:embedded-database-spring-test:2.1.2"
-
-    implementation enforcedPlatform("io.zonky.test.postgres:embedded-postgres-binaries-bom:14.5.0")
+    testImplementation "org.testcontainers:postgresql:1.17.6"
+    testImplementation "org.testcontainers:mysql:1.17.6"
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20220924"
