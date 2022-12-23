@@ -438,6 +438,13 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAssignedTeamIdOnExerciseForCurrentUser() throws Exception {
+        var student = database.getUserByLogin(TEST_PREFIX + "student1");
+        student.setGroups(Set.of(TEST_PREFIX + "student" + "assignedTeam"));
+        userRepo.save(student);
+
+        course.setStudentGroupName(TEST_PREFIX + "student" + "assignedTeam");
+        courseRepo.save(course);
+
         // Create team that contains student "student1" (Team shortName needs to be empty since it is used as a prefix for the generated student logins)
         Team team = new Team().name(TEST_PREFIX + "Team").shortName(TEST_PREFIX + "team").exercise(exercise)
                 .students(userRepo.findOneByLogin(TEST_PREFIX + "student1").map(Set::of).orElseThrow());

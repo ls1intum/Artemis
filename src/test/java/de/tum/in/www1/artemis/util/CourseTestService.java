@@ -744,13 +744,13 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
-        adjustUserGroupsToCustomGroups();
-        Course courseActive = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(), userPrefix + "student",
-                userPrefix + "tutor", userPrefix + "editor", userPrefix + "instructor");
+        adjustUserGroupsToCustomGroups("timezone");
+        Course courseActive = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
+                userPrefix + "student" + "timezone", userPrefix + "tutor" + "timezone", userPrefix + "editor" + "timezone", userPrefix + "instructor" + "timezone");
         Course courseNotActivePast = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(),
-                userPrefix + "student", userPrefix + "tutor", userPrefix + "editor", userPrefix + "instructor");
+                userPrefix + "student" + "timezone", userPrefix + "tutor" + "timezone", userPrefix + "editor" + "timezone", userPrefix + "instructor" + "timezone");
         Course courseNotActiveFuture = ModelFactory.generateCourse(3L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(),
-                userPrefix + "student", userPrefix + "tutor", userPrefix + "editor", userPrefix + "instructor");
+                userPrefix + "student" + "timezone", userPrefix + "tutor" + "timezone", userPrefix + "editor" + "timezone", userPrefix + "instructor" + "timezone");
         courseActive = courseRepo.save(courseActive);
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
