@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -36,9 +35,6 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Autowired
     private CourseRepository courseRepository;
-
-    @Autowired
-    private ExerciseRepository exerciseRepository;
 
     User userWithActivatedWeeklySummaries;
 
@@ -115,6 +111,8 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(filteredUsers).contains(userWithActivatedWeeklySummaries);
         assertThat(filteredUsers).doesNotContain(userWithDeactivatedWeeklySummaries);
         weeklyEmailSummaryService.prepareEmailSummariesForUsers(Set.of(userWithActivatedWeeklySummaries));
+
+        when(exerciseRepository.findAllExercisesForSummary(any(), any())).thenReturn(Set.of(exerciseReleasedYesterdayAndNotYetDue));
 
         ArgumentCaptor<Set<Exercise>> captor = ArgumentCaptor.forClass(Set.class);
         verify(mailService, timeout(5000).times(1)).sendWeeklySummaryEmail(eq(userWithActivatedWeeklySummaries), captor.capture());

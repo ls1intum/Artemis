@@ -17,6 +17,7 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -112,6 +113,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @SpyBean
     protected ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
 
+    @SpyBean
+    protected ExerciseRepository exerciseRepository;
+
     @Autowired
     protected QuizScheduleService quizScheduleService;
 
@@ -135,7 +139,6 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         quizScheduleService.clearAllQuizData();
     }
 
-    // TOOD: Check how to unify these
     @AfterEach
     void stopRunningTasks() {
         participantScoreSchedulerService.shutdown();
@@ -145,7 +148,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         Mockito.reset(lti10Service, gitService, groupNotificationService, tutorialGroupNotificationService, singleUserNotificationService, websocketMessagingService,
                 messagingTemplate, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
                 urlService, scheduleService, participantScoreSchedulerService, javaMailSender, programmingTriggerService, zipFileService,
-                programmingExerciseStudentParticipationRepository);
+                programmingExerciseStudentParticipationRepository, exerciseRepository);
     }
 
     @Override
