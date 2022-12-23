@@ -26,6 +26,8 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
 class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "bitbucketservicetest";
+
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -34,17 +36,17 @@ class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
     @BeforeEach
     void initTestCase() {
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         bitbucketRequestMockProvider.reset();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testHealthRunning() throws URISyntaxException, JsonProcessingException {
         bitbucketRequestMockProvider.mockHealth("RUNNING", HttpStatus.OK);
         var health = versionControlService.health();
@@ -53,7 +55,7 @@ class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testHealthNotRunning() throws URISyntaxException, JsonProcessingException {
         bitbucketRequestMockProvider.mockHealth("PAUSED", HttpStatus.OK);
         var health = versionControlService.health();
@@ -62,7 +64,7 @@ class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testHealthException() throws URISyntaxException, JsonProcessingException {
         bitbucketRequestMockProvider.mockHealth("RUNNING", HttpStatus.INTERNAL_SERVER_ERROR);
         var health = versionControlService.health();

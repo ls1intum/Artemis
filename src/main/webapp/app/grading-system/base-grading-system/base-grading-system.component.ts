@@ -100,8 +100,8 @@ export abstract class BaseGradingSystemComponent implements OnInit {
                 if (this.isExam) {
                     this.examService.find(this.courseId!, this.examId!).subscribe((examResponse) => {
                         this.exam = examResponse.body!;
-                        this.maxPoints = this.exam?.maxPoints;
-                        this.onChangeMaxPoints(this.exam?.maxPoints);
+                        this.maxPoints = this.exam?.examMaxPoints;
+                        this.onChangeMaxPoints(this.exam?.examMaxPoints);
                     });
                 } else {
                     this.courseService.find(this.courseId!).subscribe((courseResponse) => {
@@ -145,7 +145,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
         });
         if (this.isExam) {
             this.gradingScale.exam = this.exam;
-            this.gradingScale.exam!.maxPoints = this.maxPoints;
+            this.gradingScale.exam!.examMaxPoints = this.maxPoints;
         } else {
             this.gradingScale.course = this.course;
             this.gradingScale.course!.maxPoints = this.maxPoints;
