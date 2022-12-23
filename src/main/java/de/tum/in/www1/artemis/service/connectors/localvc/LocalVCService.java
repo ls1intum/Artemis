@@ -56,9 +56,6 @@ public class LocalVCService extends AbstractVersionControlService {
 
     private final Logger log = LoggerFactory.getLogger(LocalVCService.class);
 
-    @Value("${artemis.user-management.external.admin-group-name}")
-    private String adminGroupName;
-
     @Value("${artemis.version-control.url}")
     private URL localVCServerUrl;
 
