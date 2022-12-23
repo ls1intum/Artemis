@@ -27,9 +27,9 @@
             </div>
         </div>
     </div>
-    <div class="question-options card-header question-card-header question-card-header" *ngIf="reEvaluationInProgress">
+    <div class="question-options card-header question-card-header-reevaluation" *ngIf="reEvaluationInProgress">
         <div class="row">
-            <div class="col-3 col-lg-1">
+            <div class="col-3 col-lg-1 mt-1">
                 <button
                     class="btn question-collapse"
                     (click)="isQuestionCollapsed = !isQuestionCollapsed"
@@ -39,7 +39,7 @@
                     <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown"></fa-icon>
                 </button>
             </div>
-            <div class="col-9 col-lg-8 text-start">
+            <div class="col-9 col-lg-8 text-start mt-3">
                 <div class="input-group row">
                     <div class="col-10 col-lg-11">
                         <input
@@ -63,12 +63,12 @@
                     </div>
                 </div>
             </div>
-            <div class="col-3 col-lg-1">
+            <div class="col-3 col-lg-1 mt-lg-3">
                 <div class="question-type">
                     <h3 class="mb-0"><span class="badge bg-warning align-text-top" style="width: 60px">DnD</span></h3>
                 </div>
             </div>
-            <div class="col-9 col-lg-2 text-end">
+            <div class="col-9 col-lg-2 text-end mt-lg-3">
                 <button
                     id="move-up-button"
                     class="btn btn-outline-secondary"
@@ -221,7 +221,6 @@
                                 type="button"
                                 (click)="resetQuestionText()"
                                 [ngbTooltip]="'artemisApp.quizExercise.re-evaluate.resetQuestionText' | artemisTranslate"
-                                style="margin-top: 40px"
                             >
                                 <fa-icon [icon]="faUndo"></fa-icon>
                             </button>

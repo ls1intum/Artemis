@@ -51,32 +51,14 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="form-group">
-                            <ng-container>
-                                <label for="quiz-duration-minutes" jhiTranslate="artemisApp.quizExercise.duration">Duration</label>
-                                <div class="d-flex align-items-center">
-                                    <input
-                                        id="quiz-duration-minutes"
-                                        style="width: 70px"
-                                        class="form-control me-2"
-                                        title="Duration"
-                                        [value]="duration.minutes"
-                                        type="number"
-                                        disabled
-                                    />
-                                    <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
-                                    <input
-                                        id="quiz-duration-seconds"
-                                        style="width: 70px"
-                                        class="form-control me-2 ms-2"
-                                        title="Duration"
-                                        type="number"
-                                        [value]="duration.seconds"
-                                        disabled
-                                    />
-                                    <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
-                                </div>
-                            </ng-container>
+                        <div class="form-group quiz-duration">
+                            <label for="quiz-duration-minutes" jhiTranslate="artemisApp.quizExercise.duration">Duration</label>
+                            <div class="d-flex align-items-center">
+                                <input id="quiz-duration-minutes" class="form-control me-2" title="Duration" [value]="duration.minutes" type="number" disabled />
+                                <span jhiTranslate="artemisApp.quizExercise.minutes"></span>
+                                <input id="quiz-duration-seconds" class="form-control me-2 ms-2" title="Duration" type="number" [value]="duration.seconds" disabled />
+                                <span jhiTranslate="artemisApp.quizExercise.seconds"></span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -108,7 +90,7 @@
                 <span jhiTranslate="artemisApp.quizExercise.questions"></span>
             </h4>
         </div>
-        <div class="card" *ngFor="let question of quizExercise.quizQuestions; let i = index" style="width: 100%; margin-bottom: 18px">
+        <div class="card mb-3" *ngFor="let question of quizExercise.quizQuestions; let i = index" style="width: 100%">
             <div *ngIf="question.type === MULTIPLE_CHOICE">
                 <jhi-re-evaluate-multiple-choice-question
                     [question]="question"

@@ -27,9 +27,9 @@
             </div>
         </div>
     </div>
-    <div class="question-options card-header question-card-header" *ngIf="reEvaluationInProgress">
+    <div class="question-options card-header question-card-header-reevaluation" *ngIf="reEvaluationInProgress">
         <div class="row">
-            <div class="col-3 col-lg-1">
+            <div class="col-3 col-lg-1 mt-1">
                 <button
                     class="btn question-collapse"
                     (click)="isQuestionCollapsed = !isQuestionCollapsed"
@@ -39,7 +39,7 @@
                     <fa-icon size="3x" [icon]="isQuestionCollapsed ? faAngleRight : faAngleDown"></fa-icon>
                 </button>
             </div>
-            <div class="col-9 col-lg-8 text-start">
+            <div class="col-9 col-lg-8 text-start mt-3">
                 <div class="input-group row">
                     <div class="col-10 col-lg-11">
                         <input
@@ -63,12 +63,12 @@
                     </div>
                 </div>
             </div>
-            <div class="col-3 col-lg-1">
+            <div class="col-3 col-lg-1 mt-lg-3">
                 <div class="question-type">
                     <h3 class="mb-0"><span class="badge bg-success align-text-top" style="width: 60px">SA</span></h3>
                 </div>
             </div>
-            <div class="col-9 col-lg-2 text-end">
+            <div class="col-9 col-lg-2 text-end mt-lg-3">
                 <button
                     id="move-up-button"
                     class="btn btn-outline-secondary"
@@ -207,7 +207,7 @@
 
             <div class="col-12 row align-items-center justify-content-center justify-content-lg-start">
                 <div class="col-lg-6 row">
-                    <div class="col-12 col-lg-4 form-group" style="margin: 0 0 0 5px">
+                    <div class="col-12 col-lg-4 form-group mt-1">
                         <span class="colon-suffix no-flex-shrink">{{ 'artemisApp.quizExercise.answerMatching.title' | artemisTranslate }}</span>
                     </div>
                     <div class="col-12 col-lg-7">
@@ -225,13 +225,13 @@
                                     (ngModelChange)="questionUpdated.emit()"
                                     style="width: 60%"
                                 />
-                                <p style="margin: 7px">{{ shortAnswerQuestion.similarityValue }} %</p>
+                                <p style="margin: 0.5rem">{{ shortAnswerQuestion.similarityValue }} %</p>
                                 <jhi-match-percentage-info-modal></jhi-match-percentage-info-modal>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="col-12 col-lg-3" style="padding: 0 8px">
+                <div class="col-12 col-lg-3" style="padding: 0 0.5rem">
                     <div class="form-check custom-control custom-checkbox">
                         <input
                             #inputElement
@@ -246,7 +246,7 @@
                         }}</label>
                     </div>
                 </div>
-                <div class="col-12 col-lg-3" style="padding: 0 8px">
+                <div class="col-12 col-lg-3" style="padding: 0 0.5rem">
                     <div class="form-check custom-control custom-checkbox">
                         <input
                             type="checkbox"

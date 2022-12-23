@@ -140,7 +140,19 @@
         }
 
         .question-collapse {
-            margin-top: -15px;
+            width: 3.25rem;
+        }
+    }
+
+    .question-card-header-reevaluation {
+        width: 100%;
+        padding: 0;
+
+        .row {
+            width: 100%;
+        }
+
+        .question-collapse {
             width: 3.25rem;
         }
     }
@@ -153,7 +165,7 @@
         }
 
         .form-control:disabled {
-            background-color: #e9ecef;
+            background-color: var(--gray-200);
         }
 
         .form-group > * {
@@ -171,7 +183,7 @@
         }
 
         .delete-button:hover {
-            color: red;
+            color: var(--red);
         }
     }
 }

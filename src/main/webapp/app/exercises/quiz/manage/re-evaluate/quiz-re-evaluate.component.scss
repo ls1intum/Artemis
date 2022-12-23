@@ -38,12 +38,12 @@
             }
 
             label {
-                font-size: 17px;
+                font-size: medium;
                 font-weight: bolder;
             }
 
             .form-check-label {
-                font-size: 15px;
+                font-size: var(--bs-body-font-size);
             }
 
             > div.time-picker {
@@ -52,7 +52,7 @@
             }
 
             .form-control:disabled {
-                background-color: #e9ecef;
+                background-color: var(--gray-200);
             }
         }
 
@@ -68,6 +68,12 @@
         .drag-item-file {
             margin-bottom: 0.5rem;
             margin-top: 0.5rem;
+        }
+
+        .quiz-duration {
+            input {
+                width: 4rem;
+            }
         }
     }
 }

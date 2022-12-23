@@ -1,13 +1,12 @@
 .edit-mc-question {
     .card-header {
-        padding: 15px 5px 5px 5px;
+        padding: 0;
 
         .row {
             width: 100%;
         }
 
         .question-collapse {
-            margin-top: -15px;
             width: 3.25rem;
         }
 
@@ -37,7 +36,7 @@
             }
 
             .form-control:disabled {
-                background-color: #e9ecef;
+                background-color: var(--gray-200);
             }
         }
 
@@ -59,7 +58,7 @@
     }
 
     .delete-button:hover {
-        color: red;
+        color: var(--red);
     }
 
     .point-input {
@@ -74,7 +73,7 @@
         height: auto;
         cursor: default;
         .re-evaluate-order-button {
-            height: 200px;
+            height: 13rem;
             display: flex;
             align-items: center;
             justify-content: center;
