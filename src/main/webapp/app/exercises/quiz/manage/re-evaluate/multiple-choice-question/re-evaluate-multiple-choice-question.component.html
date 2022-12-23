@@ -14,7 +14,12 @@
             <div class="col-9 col-lg-8 text-start mt-3">
                 <div class="input-group row">
                     <div class="col-10 col-lg-11">
-                        <input class="form-control" [(ngModel)]="question.title" placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}" />
+                        <input
+                            class="form-control"
+                            [(ngModel)]="question.title"
+                            placeholder="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
+                            aria-label="{{ 'artemisApp.quizExercise.placeholder.shortQuestionTitle' | artemisTranslate }}"
+                        />
                     </div>
                     <div class="col-2 col-lg-1">
                         <span class="input-group-btn">
