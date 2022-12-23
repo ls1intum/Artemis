@@ -122,15 +122,17 @@ describe('Text Submission Viewer Component', () => {
         comp.plagiarismSubmission = { submissionId } as PlagiarismSubmission<TextSubmissionElement>;
 
         const fileName = Object.keys(files)[1];
+        comp.matches = new Map();
         const expectedHeaders = new HttpHeaders().append('content-type', 'text/plain');
         jest.spyOn(repositoryService, 'getFileHeaders').mockReturnValue(of(new HttpResponse<Blob>({ headers: expectedHeaders })));
-        jest.spyOn(repositoryService, 'getFile').mockReturnValue(of({ fileContent: 'Test' }));
+        jest.spyOn(repositoryService, 'getFile').mockReturnValue(of({ fileContent: 'if(current>max)' }));
 
         comp.handleFileSelect(fileName);
 
         const expectedDomain: DomainChange = [DomainType.PARTICIPATION, { id: submissionId }];
         expect(repositoryService.getFile).toHaveBeenCalledWith(fileName, expectedDomain);
         expect(comp.currentFile).toEqual(fileName);
+        expect(comp.fileContent).toBe('if(current&gt;max)');
     });
 
     it('handles binary file selection', () => {
