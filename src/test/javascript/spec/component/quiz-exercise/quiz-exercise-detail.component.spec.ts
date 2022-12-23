@@ -76,6 +76,7 @@ describe('QuizExercise Management Detail Component', () => {
         quizExercise.quizQuestions = [mcQuestion];
         quizExercise.quizBatches = [];
         quizExercise.releaseDate = undefined;
+        quizExercise.dueDate = undefined;
         quizExercise.quizMode = QuizMode.SYNCHRONIZED;
     };
 
@@ -292,8 +293,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.isImport = true;
                 quizExercise.testRunParticipationsExist = true;
 
-                let alertServiceStub: jest.SpyInstance;
-                alertServiceStub = jest.spyOn(alertService, 'warning');
+                const alertServiceStub = jest.spyOn(alertService, 'warning');
                 comp.ngOnInit();
 
                 expect(alertServiceStub).not.toHaveBeenCalled();
@@ -305,8 +305,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.isImport = false;
                 quizExercise.testRunParticipationsExist = true;
 
-                let alertServiceStub: jest.SpyInstance;
-                alertServiceStub = jest.spyOn(alertService, 'warning');
+                const alertServiceStub = jest.spyOn(alertService, 'warning');
                 comp.ngOnInit();
 
                 expect(alertServiceStub).toHaveBeenCalledOnce();
@@ -791,8 +790,7 @@ describe('QuizExercise Management Detail Component', () => {
                 it('should call alert service if fails', () => {
                     quizExerciseServiceFindForCourseStub.mockReturnValue(throwError(() => ({ status: 404 })));
                     console.error = jest.fn();
-                    let alertServiceStub: jest.SpyInstance;
-                    alertServiceStub = jest.spyOn(alertService, 'error');
+                    const alertServiceStub = jest.spyOn(alertService, 'error');
                     comp.onCourseSelect();
                     expect(alertServiceStub).toHaveBeenCalledOnce();
                 });
@@ -838,8 +836,7 @@ describe('QuizExercise Management Detail Component', () => {
                 it('should call alert service if fails', () => {
                     quizExerciseServiceFindForExamStub.mockReturnValue(throwError(() => ({ status: 404 })));
                     console.error = jest.fn();
-                    let alertServiceStub: jest.SpyInstance;
-                    alertServiceStub = jest.spyOn(alertService, 'error');
+                    const alertServiceStub = jest.spyOn(alertService, 'error');
                     comp.onExamSelect();
                     expect(alertServiceStub).toHaveBeenCalledOnce();
                 });
@@ -1213,6 +1210,19 @@ describe('QuizExercise Management Detail Component', () => {
                 const { question } = createValidSAQuestion();
                 removeCorrectMappingsAndExpectInvalidQuiz(question);
             });
+
+            it('should be valid for synchronized mode when dueDate is less than releaseDate', () => {
+                const now = dayjs();
+                comp.quizExercise.quizMode = QuizMode.SYNCHRONIZED;
+                comp.scheduleQuizStart = true;
+                comp.quizExercise.quizBatches = [new QuizBatch()];
+                comp.quizExercise.releaseDate = now;
+                comp.quizExercise.startDate = now.add(1, 'day');
+                comp.quizExercise.dueDate = now.add(-1, 'day');
+                comp.cacheValidation();
+                expect(comp.quizExercise.dueDateError).toBeFalsy();
+                expect(comp.quizExercise.dueDate).toBeUndefined();
+            });
         });
 
         describe('saving', () => {
@@ -1227,8 +1237,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             const saveAndExpectAlertService = () => {
                 console.error = jest.fn();
-                let alertServiceStub: jest.SpyInstance;
-                alertServiceStub = jest.spyOn(alertService, 'error');
+                const alertServiceStub = jest.spyOn(alertService, 'error');
                 saveQuizWithPendingChangesCache();
                 expect(alertServiceStub).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();

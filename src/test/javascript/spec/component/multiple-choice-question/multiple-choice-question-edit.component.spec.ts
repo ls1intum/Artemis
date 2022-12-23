@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { By } from '@angular/platform-browser';
-import { NgbCollapse, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { MultipleChoiceQuestionEditComponent } from 'app/exercises/quiz/manage/multiple-choice-question/multiple-choice-question-edit.component';
 import { QuizScoringInfoModalComponent } from 'app/exercises/quiz/manage/quiz-scoring-info-modal/quiz-scoring-info-modal.component';
@@ -17,8 +16,9 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { DragDropModule } from '@angular/cdk/drag-drop';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ArtemisTestModule } from '../../test.module';
+import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollapseMocks.module';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('MultipleChoiceQuestionEditComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
@@ -37,7 +37,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, DragDropModule],
+            imports: [ArtemisTestModule, FormsModule, DragDropModule, NgbCollapseMocksModule, MockDirective(NgbTooltip)],
             declarations: [
                 MultipleChoiceQuestionEditComponent,
                 MockPipe(ArtemisTranslatePipe),
@@ -45,10 +45,8 @@ describe('MultipleChoiceQuestionEditComponent', () => {
                 MockComponent(MarkdownEditorComponent),
                 MockComponent(SecuredImageComponent),
                 MockComponent(DragAndDropQuestionComponent),
-                MockDirective(NgbCollapse),
                 MockComponent(MultipleChoiceQuestionComponent),
             ],
-            providers: [{ provide: NgbModal, useClass: MockNgbModalService }],
         }).compileComponents();
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
         component = fixture.componentInstance;

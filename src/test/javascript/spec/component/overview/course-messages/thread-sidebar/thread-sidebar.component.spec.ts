@@ -16,14 +16,13 @@ describe('ThreadSidebarComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [MockModule(FormsModule)],
+            imports: [MockModule(FormsModule), MockDirective(NgbTooltip)],
             declarations: [
                 ThreadSidebarComponent,
                 MockComponent(PostComponent),
                 MockComponent(MessageReplyInlineInputComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
-                MockDirective(NgbTooltip),
             ],
             providers: [],
         })

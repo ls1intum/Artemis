@@ -15,6 +15,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -55,9 +56,9 @@ public class QuizExercise extends Exercise {
     private Boolean isOpenForPractice;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "quiz_mode")
+    @Column(name = "quiz_mode", columnDefinition = "varchar(63) default 'SYNCHRONIZED'", nullable = false)
     @JsonView(QuizView.Before.class)
-    private QuizMode quizMode;
+    private QuizMode quizMode = QuizMode.SYNCHRONIZED; // default value
 
     /**
      * The duration of the quiz exercise in seconds
@@ -98,6 +99,7 @@ public class QuizExercise extends Exercise {
         this.allowedNumberOfAttempts = allowedNumberOfAttempts;
     }
 
+    @JsonProperty
     public Integer getRemainingNumberOfAttempts() {
         return remainingNumberOfAttempts;
     }

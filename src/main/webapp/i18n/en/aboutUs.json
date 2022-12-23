@@ -30,7 +30,7 @@
                 "text": "<a href={{ assessmentUrl }}>Assessment:</a> Double-blind grading with structured criteria, integrated training, a leader board, ratings, and complaints improve consistency and fairness."
             },
             "communication": {
-                "text": "<a href={{ communicationUrl }}>Communication:</a> Post announcements. Ask questions, post comments, and react to other posts. Filter unanswered questions."
+                "text": "<a href={{ communicationUrl }}>Communication:</a> Post announcements. Ask questions, post comments, and react to other posts. Filter unanswered questions. Message course participants in private."
             },
             "notifications": {
                 "text": "<a href = {{ notificationsURL }}>Notifications:</a> Customizable for web and email. Users can enable and disable different notification types."

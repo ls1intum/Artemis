@@ -135,10 +135,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             select distinct pe from ProgrammingExercise pe
             left join pe.studentParticipations participation
-            where pe.releaseDate > :#{#now}
-                or pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#now}
-                or pe.dueDate > :#{#now}
-                or (participation.individualDueDate is not null and participation.individualDueDate > :#{#now})
+            where pe.releaseDate > :now
+                or pe.buildAndTestStudentSubmissionsAfterDueDate > :now
+                or pe.dueDate > :now
+                or (participation.individualDueDate is not null and participation.individualDueDate > :now)
             """)
     List<ProgrammingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
@@ -211,6 +211,14 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
                 OR pe.solutionParticipation.id = :#{#participationId}
             """)
     Optional<ProgrammingExercise> findByParticipationId(@Param("participationId") Long participationId);
+
+    @Query("""
+            SELECT pe FROM ProgrammingExercise pe
+            LEFT JOIN pe.studentParticipations pep
+            LEFT JOIN FETCH pe.templateParticipation tp
+            WHERE pep.id = :#{#participationId}
+            """)
+    Optional<ProgrammingExercise> findByStudentParticipationIdWithTemplateParticipation(@Param("participationId") Long participationId);
 
     @Query("""
                 SELECT exercise FROM ProgrammingExercise exercise
@@ -296,7 +304,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT DISTINCT pe FROM ProgrammingExercise pe
             LEFT JOIN pe.testCases tc
-            WHERE pe.dueDate > :#{#now}
+            WHERE pe.dueDate > :now
                 AND pe.buildAndTestStudentSubmissionsAfterDueDate IS NULL
                 AND tc.visibility = 'AFTER_DUE_DATE'
             """)

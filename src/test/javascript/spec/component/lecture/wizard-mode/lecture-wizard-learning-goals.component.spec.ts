@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -18,6 +18,7 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 describe('LectureWizardLearningGoalsComponent', () => {
     let wizardLearningGoalsComponentFixture: ComponentFixture<LectureUpdateWizardLearningGoalsComponent>;
@@ -26,7 +27,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [LectureUpdateWizardLearningGoalsComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [LectureUpdateWizardLearningGoalsComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
             providers: [
                 MockProvider(AlertService),
                 MockProvider(LectureService),
@@ -269,7 +270,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
             status: 201,
         });
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(goalsResponse));
-        const deleteStub = jest.spyOn(learningGoalService, 'delete').mockReturnValue(of(new HttpResponse<Object>({ status: 201 })));
+        const deleteStub = jest.spyOn(learningGoalService, 'delete').mockReturnValue(of(new HttpResponse<any>({ status: 201 })));
 
         wizardLearningGoalsComponentFixture.detectChanges();
 
@@ -346,7 +347,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<Object>({ status: 201, body: new LearningGoal() })));
+        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: new LearningGoal() })));
         const alertStub = jest.spyOn(alertService, 'success');
 
         wizardLearningGoalsComponentFixture.detectChanges();
@@ -381,7 +382,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         exercise.id = 2;
         goal.exercises = [exercise];
         goal.lectureUnits = [];
-        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<Object>({ status: 201, body: goal })));
+        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: goal })));
         const alertStub = jest.spyOn(alertService, 'success');
 
         const unit = new ExerciseUnit();
@@ -421,7 +422,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<Object>({ status: 201, body: new LearningGoal() })));
+        const createStub = jest.spyOn(learningGoalService, 'create').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: new LearningGoal() })));
         const alertStub = jest.spyOn(alertService, 'success');
 
         wizardLearningGoalsComponentFixture.detectChanges();
@@ -446,7 +447,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError(() => ({ status: 404 })));
 
-        const editStub = jest.spyOn(learningGoalService, 'update').mockReturnValue(of(new HttpResponse<Object>({ status: 201, body: new LearningGoal() })));
+        const editStub = jest.spyOn(learningGoalService, 'update').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: new LearningGoal() })));
         const alertStub = jest.spyOn(alertService, 'success');
 
         wizardLearningGoalsComponentFixture.detectChanges();
@@ -482,7 +483,7 @@ describe('LectureWizardLearningGoalsComponent', () => {
         exercise.id = 2;
         goal.exercises = [exercise];
         goal.lectureUnits = [];
-        const editStub = jest.spyOn(learningGoalService, 'update').mockReturnValue(of(new HttpResponse<Object>({ status: 201, body: goal })));
+        const editStub = jest.spyOn(learningGoalService, 'update').mockReturnValue(of(new HttpResponse<any>({ status: 201, body: goal })));
         const alertStub = jest.spyOn(alertService, 'success');
 
         const unit = new ExerciseUnit();

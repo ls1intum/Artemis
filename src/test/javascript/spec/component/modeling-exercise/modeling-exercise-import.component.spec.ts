@@ -1,6 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { NgbHighlight, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseImportComponent, TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
@@ -13,6 +12,7 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ModelingExerciseImportComponent', () => {
     let fixture: ComponentFixture<ModelingExerciseImportComponent>;
@@ -26,13 +26,11 @@ describe('ModelingExerciseImportComponent', () => {
     let modelingExercise: ModelingExercise;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
             declarations: [
                 ModelingExerciseImportComponent,
                 MockPipe(ExerciseCourseTitlePipe),
                 MockComponent(ButtonComponent),
-                MockComponent(NgbHighlight),
-                MockComponent(NgbPagination),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
             ],

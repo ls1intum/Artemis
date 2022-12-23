@@ -141,7 +141,7 @@ export class DiscussionSectionComponent extends CourseDiscussionDirective implem
         }
 
         // 3rd criterion
-        if (!!this.currentSortDirection) {
+        if (this.currentSortDirection) {
             const comparison = this.sortByDate(postA, postB, this.currentSortDirection);
             if (comparison !== 0) {
                 return comparison;

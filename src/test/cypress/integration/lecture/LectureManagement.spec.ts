@@ -29,7 +29,7 @@ describe('Lecture management', () => {
     });
 
     after(() => {
-        if (!!course) {
+        if (course) {
             cy.login(admin);
             courseManagementRequests.deleteCourse(course.id!);
         }

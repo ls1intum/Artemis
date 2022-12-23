@@ -287,9 +287,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     cacheValidation() {
-        this.validateDate();
-
         if (this.quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
+            this.quizExercise.dueDate = undefined; // Due date is calculated on server side
             if (this.scheduleQuizStart) {
                 if ((this.quizExercise.quizBatches?.length ?? 0) !== 1) {
                     this.quizExercise.quizBatches = [this.quizExercise.quizBatches?.[0] ?? new QuizBatch()];
@@ -301,6 +300,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             }
         }
 
+        this.validateDate();
         return super.cacheValidation(this.changeDetector);
     }
 
@@ -1031,6 +1031,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             return [];
         }
         // Release Date valid but lies in the past
+        // eslint-disable-next-line no-constant-condition
         if (false /*this.quizExercise.isPlannedToStart*/) {
             // TODO: quiz cleanup: properly validate dates and deduplicate the checks (see isValidQuiz)
             if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
@@ -1053,7 +1054,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     isSaveDisabled(): boolean {
-        // tslint:disable-next-line:max-line-length
+        // eslint-disable-next-line max-len
         return this.isSaving || !this.pendingChangesCache || !this.quizIsValid || this.hasSavedQuizStarted || this.quizExercise.dueDateError || this.hasErrorInQuizBatches();
     }
 

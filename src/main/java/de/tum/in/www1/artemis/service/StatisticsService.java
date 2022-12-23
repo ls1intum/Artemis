@@ -178,7 +178,7 @@ public class StatisticsService {
             numberOfStudentsOrTeams = userRepository.countUserInGroup(course.getStudentGroupName());
         }
         exerciseManagementStatisticsDTO.setNumberOfParticipations(numberOfParticipationsOfStudentsOrTeams);
-        exerciseManagementStatisticsDTO.setNumberOfStudentsOrTeamsInCourse(Objects.requireNonNullElse(numberOfStudentsOrTeams, 0L));
+        exerciseManagementStatisticsDTO.setNumberOfStudentsOrTeamsInCourse(numberOfStudentsOrTeams);
 
         // post stats
         long numberOfExercisePosts = statisticsRepository.getNumberOfExercisePosts(exercise.getId());
