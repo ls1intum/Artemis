@@ -65,8 +65,7 @@ class TutorialGroupNotificationServiceTest extends AbstractSpringIntegrationBamb
 
     @BeforeEach
     void setUp() {
-        // creating the users student1-student10, tutor1-tutor10, editor1-editor10 and instructor1-instructor10
-        this.database.addUsers(TEST_PREFIX, 10, 10, 10, 10);
+        this.database.addUsers(TEST_PREFIX, 5, 1, 0, 1);
         Course course = this.database.createCourse();
         student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();

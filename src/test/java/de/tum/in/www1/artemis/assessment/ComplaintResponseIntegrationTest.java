@@ -55,17 +55,17 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @BeforeEach
     void initTestCase() throws Exception {
-        log.error("Test setup start");
+        log.debug("Test setup start");
         // creating the users student1, tutor1-tutor3 and instructor1
         this.database.addUsers(TEST_PREFIX, 1, 3, 0, 1);
         // Add users that are not in the course
-        log.error("0 Test setup 25 users done");
+        log.debug("0 Test setup 25 users done");
         database.createAndSaveUser(TEST_PREFIX + "student42");
         database.createAndSaveUser(TEST_PREFIX + "tutor42");
         database.createAndSaveUser(TEST_PREFIX + "instructor42");
         userRepository.flush();
 
-        log.error("1 Test setup 3 additional users done");
+        log.debug("1 Test setup 3 additional users done");
 
         // creating course
         // students: student1 | tutors: tutor1-tutor3 | instructors: instructor1
@@ -76,7 +76,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         textExercise.setBonusPoints(0.0);
         textExercise = exerciseRepository.saveAndFlush(textExercise);
 
-        log.error("2 Test setup course and exercise done");
+        log.debug("2 Test setup course and exercise done");
 
         // creating participation of student1 by starting the exercise
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
@@ -101,7 +101,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         result.setSubmission(submission);
         submissionRepository.saveAndFlush(submission);
 
-        log.error("3 Test setup submissions done");
+        log.debug("3 Test setup submissions done");
 
         // creating complaint by student 1
         complaint = new Complaint();
@@ -114,7 +114,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         complaint = complaintRepository.saveAndFlush(complaint);
 
-        log.error("4 Test setup complaints done");
+        log.debug("4 Test setup complaints done");
     }
 
     @AfterEach
