@@ -142,7 +142,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // add folder to the repository folder
         Path folderPath = Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName);
-        Files.createDirectory(folderPath).toFile();
+        Files.createDirectory(folderPath);
 
         var localRepoUrl = new GitUtilService.MockFileRepositoryUrl(studentRepository.localRepoFile);
         participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "student1", localRepoUrl.getURI());
@@ -161,7 +161,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // add folder to the template repo folder
         Path templateFolderPath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFolderName);
-        Files.createDirectory(templateFolderPath).toFile();
+        Files.createDirectory(templateFolderPath);
 
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
@@ -311,7 +311,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // add folder to the template repo folder
         Path solutionFolderPath = Path.of(solutionRepository.localRepoFile + "/" + currentLocalFolderName);
-        Files.createDirectory(solutionFolderPath).toFile();
+        Files.createDirectory(solutionFolderPath);
 
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());

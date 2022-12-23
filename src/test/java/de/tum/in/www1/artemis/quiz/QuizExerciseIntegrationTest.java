@@ -154,8 +154,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 assertThat(dropLocations.get(0).getPosY()).as("Pos Y for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(0).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(0).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                dropLocations.get(0).getQuestion();
-                dropLocations.get(0).getMappings();
+                assertThat(dropLocations.get(0).getQuestion()).isNotNull();
+                assertThat(dropLocations.get(0).getMappings()).isNotEmpty();
                 assertThat(dropLocations.get(1).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
@@ -212,7 +212,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 assertThat(answerOptions.get(1).getHint()).as("Hint for answer option is correct").isEqualTo("H2");
                 assertThat(answerOptions.get(1).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E2");
                 assertThat(answerOptions.get(1).isIsCorrect()).as("Is correct for answer option is correct").isFalse();
-                answerOptions.get(1).getQuestion();
+                assertThat(answerOptions.get(1).getQuestion()).isNotNull();
             }
             else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(3);

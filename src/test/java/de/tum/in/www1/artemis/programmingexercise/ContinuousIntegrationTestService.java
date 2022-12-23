@@ -71,7 +71,7 @@ public class ContinuousIntegrationTestService {
         FileUtils.write(file, currentLocalFileContent, Charset.defaultCharset());
         // add folder to the repository folder
         filePath = Path.of(localRepo.localRepoFile + "/" + currentLocalFolderName);
-        Files.createDirectory(filePath).toFile();
+        Files.createDirectory(filePath);
 
         GitUtilService.MockFileRepositoryUrl localRepoUrl = new GitUtilService.MockFileRepositoryUrl(localRepo.localRepoFile);
         // create a participation
