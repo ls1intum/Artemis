@@ -73,6 +73,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void initTestCase() {
+        participantScoreSchedulerService.activate();
         database.addUsers(TEST_PREFIX, 12, 10, 0, 10);
 
         course = database.addCourseWithOneModelingExercise();

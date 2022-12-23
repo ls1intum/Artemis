@@ -12,11 +12,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class OnlineUnit extends LectureUnit {
 
     @Column(name = "description")
-    // @Lob
     private String description;
 
     @Column(name = "source")
-    // @Lob
     private String source;
 
     public String getSource() {
