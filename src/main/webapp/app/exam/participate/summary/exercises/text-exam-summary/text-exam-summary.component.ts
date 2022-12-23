@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { TextSubmission } from 'app/entities/text-submission.model';
 
 @Component({
@@ -14,8 +14,6 @@ import { TextSubmission } from 'app/entities/text-submission.model';
         `,
     ],
 })
-export class TextExamSummaryComponent implements OnInit {
+export class TextExamSummaryComponent {
     @Input() submission: TextSubmission;
-
-    ngOnInit(): void {}
 }

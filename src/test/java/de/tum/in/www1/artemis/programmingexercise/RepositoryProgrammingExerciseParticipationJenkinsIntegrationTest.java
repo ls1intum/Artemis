@@ -19,41 +19,39 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.util.TestConstants;
 
 class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
-    @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private static final String TEST_PREFIX = "repoprogexpartjenk";
 
     @Autowired
-    private StudentParticipationRepository studentParticipationRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     private BuildLogEntryRepository buildLogEntryRepository;
 
     @BeforeEach
     void setup() throws Exception {
-        database.addUsers(1, 1, 0, 1);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
+        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
     }
 
     @AfterEach
     void tearDown() throws IOException {
-        database.resetDatabase();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestBuildLogsFails() throws Exception {
-        var programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        var programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+        var programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
 
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
@@ -68,12 +66,8 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry3", submission));
         submission.setBuildLogEntries(buildLogEntries);
 
-        database.addProgrammingSubmission(programmingExercise, submission, "student1");
+        database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
         buildLogEntryRepository.deleteAll();
-
-        var participation = studentParticipationRepository.findAll().get(0);
-
-        ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) submission.getParticipation();
 
         var jobWithDetails = mock(JobWithDetails.class);
         jenkinsRequestMockProvider.mockGetJob(programmingExercise.getProjectKey(), programmingExerciseParticipation.getBuildPlanId(), jobWithDetails, false);
@@ -81,7 +75,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
         doReturn(lastBuild).when(jobWithDetails).getLastBuild();
         doThrow(IOException.class).when(lastBuild).details();
 
-        var url = "/api/repository/" + participation.getId() + "/buildlogs";
+        var url = "/api/repository/" + programmingExerciseParticipation.getId() + "/buildlogs";
         request.getList(url, HttpStatus.INTERNAL_SERVER_ERROR, BuildLogEntry.class);
     }
 }

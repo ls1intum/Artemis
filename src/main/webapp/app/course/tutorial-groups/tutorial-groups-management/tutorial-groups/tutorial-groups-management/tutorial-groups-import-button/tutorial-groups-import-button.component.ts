@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, Output, TemplateRef, ViewChild } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { TutorialGroupsRegistrationImportDialog } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
+import { TutorialGroupsRegistrationImportDialogComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { Subject, from } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -22,7 +22,7 @@ export class TutorialGroupsImportButtonComponent implements OnDestroy {
 
     openTutorialGroupImportDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupsRegistrationImportDialog, { size: 'xl', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupsRegistrationImportDialogComponent, { size: 'xl', scrollable: false, backdrop: 'static' });
         modalRef.componentInstance.courseId = this.courseId;
 
         from(modalRef.result)
