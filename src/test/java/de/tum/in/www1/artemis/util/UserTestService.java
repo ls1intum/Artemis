@@ -791,11 +791,12 @@ public class UserTestService {
 
     /**
      * Helper method to create the params.
-     * @param authorities authorities of the users
-     * @param origins of the users
+     *
+     * @param authorities         authorities of the users
+     * @param origins             of the users
      * @param registrationNumbers of the users
-     * @param status of the users
-     * @param courseIds which the users are part
+     * @param status              of the users
+     * @param courseIds           which the users are part
      * @return params for request
      */
     private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String registrationNumbers, String status, String courseIds) {
@@ -815,6 +816,7 @@ public class UserTestService {
 
     /**
      * Helper method to determine the user authority which is used most often in a user creation matrix
+     *
      * @param userNumbers the user creation matrix
      * @return String of the user authority with the most users
      * @throws Exception
@@ -822,18 +824,13 @@ public class UserTestService {
     private String getMainUserAuthority(Integer[] userNumbers) throws Exception {
         List<Integer> userNumbersList = Arrays.asList(userNumbers);
         var authorityIndex = userNumbersList.indexOf(Collections.max(userNumbersList));
-        switch (authorityIndex) {
-            case 0:
-                return "student";
-            case 1:
-                return "tutor";
-            case 2:
-                return "editor";
-            case 3:
-                return "instructor";
-            default:
-                throw new Exception("Couldn't match the input user array to an authority.");
-        }
+        return switch (authorityIndex) {
+            case 0 -> "student";
+            case 1 -> "tutor";
+            case 2 -> "editor";
+            case 3 -> "instructor";
+            default -> throw new Exception("Couldn't match the input user array to an authority.");
+        };
     }
 
     // Test
@@ -892,7 +889,7 @@ public class UserTestService {
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
@@ -916,7 +913,7 @@ public class UserTestService {
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
@@ -939,7 +936,7 @@ public class UserTestService {
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
@@ -963,7 +960,7 @@ public class UserTestService {
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
@@ -1000,7 +997,7 @@ public class UserTestService {
 
     /**
      * Test for the user search with the following parameters:
-     * @Param registrationNumbers
+     *
      * @throws Exception if the user is not the same as the expected user
      */
     public void testUserWithRegistrationNumber() throws Exception {
@@ -1027,7 +1024,7 @@ public class UserTestService {
 
     /**
      * Test for the user search with the following parameters:
-     * @Param registrationNumbers
+     *
      * @throws Exception if the user is not the same as the expected user
      */
     public void testUserWithoutRegistrationNumber() throws Exception {
@@ -1040,7 +1037,7 @@ public class UserTestService {
         Integer[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
         for (Integer[] number : numbers) {
             userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
-            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            database.addUsers(TEST_PREFIX, number[0], number[1], number[2], number[3]);
             final var mainUserAuthority = getMainUserAuthority(number);
             User user1 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 1);
             User user2 = userRepository.getUserByLoginElseThrow(TEST_PREFIX + mainUserAuthority + 2);
