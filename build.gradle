@@ -433,15 +433,15 @@ pitest {
 // 2) Execute tests with coverage report:           ./gradlew executeTests jacocoTestReport -x webapp
 // 2a) Execute tests without coverage report:       ./gradlew executeTests -x webapp
 // 2b) Run a single test:                           ./gradlew test --tests ExamIntegrationTest -x webapp or ./gradlew test --tests ExamIntegrationTest.testGetExamScore -x webapp
-// 3) Check Java code format:                       ./gradlew spotlessCheck -x webapp
-// 4) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp
-// 5) Find dependency updates:                      ./gradlew dependencyUpdates -Drevision=release
-// 6) Check JavaDoc:                                ./gradlew checkstyleMain -x webapp
-// 7) Generate Liquibase diff:                      ./gradlew liquibaseDiffChangelog
-// 8) Clear Liquibase checksums:                    ./gradlew liquibaseClearChecksums
-// 9) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
-// 10) Detects uses of legacy code:                 ./gradlew modernizer -x webapp
-// 11) Run PIT Mutation Tests:                      ./gradlew pitest -x webapp
-// 12) Check for vulnerabilities in dependencies    ./gradlew dependencyCheckAnalyze
+// 3) Verify code coverage (after tests):           ./gradlew jacocoTestCoverageVerification
+// 4) Check Java code format:                       ./gradlew spotlessCheck -x webapp
+// 5) Apply Java code formatter:                    ./gradlew spotlessApply -x webapp
+// 6) Find dependency updates:                      ./gradlew dependencyUpdates -Drevision=release
+// 7) Check JavaDoc:                                ./gradlew checkstyleMain -x webapp
+// 8) Detects uses of legacy code:                  ./gradlew modernizer -x webapp
+// 9) Check for vulnerabilities in dependencies     ./gradlew dependencyCheckAnalyze -x webapp
+// 10) Generate Liquibase diff:                     ./gradlew liquibaseDiffChangelog
+// 11) Clear Liquibase checksums:                   ./gradlew liquibaseClearChecksums
+// 12) Run PIT Mutation Tests:                      ./gradlew pitest -x webapp
 // 13) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
 // 14) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)
