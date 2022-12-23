@@ -84,7 +84,7 @@ describe('Exam management', () => {
     });
 
     after(() => {
-        if (!!course) {
+        if (course) {
             cy.login(users.getAdmin());
             courseManagementRequests.deleteCourse(course.id!);
         }

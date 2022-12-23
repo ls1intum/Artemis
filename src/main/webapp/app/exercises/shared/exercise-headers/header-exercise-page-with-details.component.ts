@@ -102,6 +102,7 @@ export class HeaderExercisePageWithDetailsComponent implements OnChanges, OnInit
             this.countSubmissions();
         }
         if (this.studentParticipation?.results?.[0].rated) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.achievedPoints = roundValueSpecifiedByCourseSettings((this.studentParticipation?.results?.[0].score! * this.exercise.maxPoints!) / 100, this.course);
         }
     }

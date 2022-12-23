@@ -142,6 +142,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Sets value of the testcases
      * @param testCases the test cases which should be set
      */
+    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set testCases(testCases: ProgrammingExerciseTestCase[]) {
         this.testCasesValue = testCases;
         this.updateTestCaseFilter();
