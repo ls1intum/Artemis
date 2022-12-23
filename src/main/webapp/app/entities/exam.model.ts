@@ -27,7 +27,7 @@ export class Exam implements BaseEntity {
     public endText?: string;
     public confirmationStartText?: string;
     public confirmationEndText?: string;
-    public maxPoints?: number;
+    public examMaxPoints?: number;
     public randomizeExerciseOrder?: boolean;
     public numberOfExercisesInExam?: number;
     public numberOfCorrectionRoundsInExam?: number;
@@ -51,7 +51,7 @@ export class Exam implements BaseEntity {
     constructor() {
         this.randomizeExerciseOrder = false; // default value (set by server)
         this.numberOfCorrectionRoundsInExam = 1; // default value
-        this.maxPoints = 1; // default value
+        this.examMaxPoints = 1; // default value
         this.workingTime = 0; // will be updated during creation
         this.testExam = false; // default value
 

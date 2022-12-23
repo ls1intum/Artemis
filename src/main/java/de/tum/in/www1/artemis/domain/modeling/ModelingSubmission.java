@@ -28,12 +28,10 @@ public class ModelingSubmission extends Submission {
 
     @Column(name = "model")
     @Size(max = MAX_SUBMISSION_MODEL_LENGTH, message = "The modeling submission is too large.")
-    @Lob
     private String model;
 
     @Column(name = "explanation_text")
     @Size(max = MAX_SUBMISSION_TEXT_LENGTH, message = "The explanation of the modeling submission is too large.")
-    @Lob
     private String explanationText;
 
     @Transient

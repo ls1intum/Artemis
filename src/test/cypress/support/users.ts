@@ -72,7 +72,7 @@ export class CypressUserManagement {
      * Provides the entire account info for the user that is currently logged in
      * Use like this: artemis.users.getAccountInfo((account) => { someFunction(account); });
      * */
-    public getAccountInfo(func: Function) {
+    public getAccountInfo(func: (response: any) => void) {
         cy.request({ method: GET, url: BASE_API + 'account', log: false }).then((response) => {
             func(response.body);
         });
