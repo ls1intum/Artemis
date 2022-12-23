@@ -2296,7 +2296,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         Exam testExamWithExercises = database.addTestExam(course1);
         testExamWithExercises = database.addTextModelingProgrammingExercisesToExam(testExamWithExercises, false, true);
-        testExamWithExercises.setMaxPoints(19);
+        testExamWithExercises.setExamMaxPoints(19);
         testExamWithExercises.setVisibleDate(ZonedDateTime.now().minusHours(1));
         testExamWithExercises.setStartDate(ZonedDateTime.now().minusMinutes(30));
         testExamWithExercises.setWorkingTime(6000);

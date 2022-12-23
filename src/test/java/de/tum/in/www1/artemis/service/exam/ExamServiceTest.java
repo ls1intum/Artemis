@@ -206,7 +206,7 @@ class ExamServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private Exam createExam(int numberOfExercisesInExam, Long id, Integer maxPoints) {
         Exam exam = new Exam();
-        exam.setMaxPoints(maxPoints);
+        exam.setExamMaxPoints(maxPoints);
         exam.setId(id);
         exam.setNumberOfExercisesInExam(numberOfExercisesInExam);
         exam.setStartDate(ZonedDateTime.now().plusDays(1));
