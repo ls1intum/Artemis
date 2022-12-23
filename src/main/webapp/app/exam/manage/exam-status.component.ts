@@ -125,7 +125,7 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
         if (this.isTestExam) {
             // This method is called here, as it is part of the exercise configuration - although it is a separate entry to highlight the importance
             this.maxPointExercises = this.examChecklistService.calculateExercisePoints(maximumPointsEqual, this.exam);
-            examPointsReachable = this.exam.examMaxPoints === this.maxPointExercises;
+            examPointsReachable = this.exam.maxPoints === this.maxPointExercises;
         } else {
             examPointsReachable = this.examChecklistService.checkTotalPointsMandatory(maximumPointsEqual, this.exam);
         }

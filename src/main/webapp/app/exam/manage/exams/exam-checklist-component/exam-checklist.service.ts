@@ -54,10 +54,10 @@ export class ExamChecklistService {
                 }
             });
 
-            if (sumPointsExerciseGroupsMandatory <= exam.examMaxPoints!) {
+            if (sumPointsExerciseGroupsMandatory <= exam.maxPoints!) {
                 totalPointsMandatory = true;
             }
-            if (sumPointsExerciseGroupsMandatory + sumPointsExerciseGroupsOptional >= exam.examMaxPoints!) {
+            if (sumPointsExerciseGroupsMandatory + sumPointsExerciseGroupsOptional >= exam.maxPoints!) {
                 totalPointsMandatoryOptional = true;
             }
         }

@@ -96,7 +96,7 @@ public class Exam extends DomainObject {
     private String confirmationEndText;
 
     @Column(name = "max_points")
-    private Integer examMaxPoints;
+    private Integer maxPoints;
 
     @Column(name = "randomize_exercise_order")
     private Boolean randomizeExerciseOrder;
@@ -270,12 +270,12 @@ public class Exam extends DomainObject {
         this.confirmationEndText = confirmationEndText;
     }
 
-    public int getExamMaxPoints() {
-        return this.examMaxPoints == null ? 0 : this.examMaxPoints;
+    public int getMaxPoints() {
+        return this.maxPoints == null ? 0 : this.maxPoints;
     }
 
-    public void setExamMaxPoints(Integer examMaxPoints) {
-        this.examMaxPoints = examMaxPoints;
+    public void setMaxPoints(Integer maxPoints) {
+        this.maxPoints = maxPoints;
     }
 
     public Integer getNumberOfExercisesInExam() {

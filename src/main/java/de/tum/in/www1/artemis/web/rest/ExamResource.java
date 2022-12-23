@@ -339,7 +339,7 @@ public class ExamResource {
      * @param exam the exam to be checked
      */
     private void checkExamPointsAndCorrectionRoundsElseThrow(Exam exam) {
-        if (exam.getExamMaxPoints() <= 0) {
+        if (exam.getMaxPoints() <= 0) {
             throw new BadRequestAlertException("An exam cannot have negative points.", ENTITY_NAME, "negativePoints");
         }
 

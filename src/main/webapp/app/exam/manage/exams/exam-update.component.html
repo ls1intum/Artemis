@@ -127,7 +127,7 @@
                 <div class="col-sm-6">
                     <label class="form-check-label" for="maxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum Number of Points in Exam</label>
                     <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.examManagement.maxPoints.warning' | artemisTranslate }}"></fa-icon>
-                    <input id="maxPoints" name="maxPoints" class="form-control" type="number" min="1" [(ngModel)]="exam.examMaxPoints" />
+                    <input id="maxPoints" name="maxPoints" class="form-control" type="number" min="1" [(ngModel)]="exam.maxPoints" />
                 </div>
                 <div class="col-sm-6">
                     <label class="form-check-label" for="numberOfExercisesInExam" jhiTranslate="artemisApp.examManagement.numberOfExercisesInExam"
