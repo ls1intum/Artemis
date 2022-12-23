@@ -77,8 +77,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         ZonedDateTime pastDueDate = ZonedDateTime.now().minusDays(3);
         ZonedDateTime pastAssessmentDueDate = ZonedDateTime.now().minusDays(2);
 
-        // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
-        this.database.addUsers(TEST_PREFIX, 5, 10, 0, 10);
+        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         idOfStudent1 = student1.getId();
         // creating course
