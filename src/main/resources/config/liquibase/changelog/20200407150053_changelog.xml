@@ -1,9 +1,0 @@
-<?xml version="1.1" encoding="UTF-8" standalone="no"?>
-<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
-                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
-    <changeSet author="madwau" id="20200407150053">
-        <dropUniqueConstraint constraintName="short_name" tableName="team"/>
-        <addUniqueConstraint columnNames="exercise_id, short_name" constraintName="uc_team_exercise_id_and_short_name" tableName="team"/>
-    </changeSet>
-</databaseChangeLog>

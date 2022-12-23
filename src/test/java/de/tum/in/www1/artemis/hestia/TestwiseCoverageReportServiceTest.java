@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.*;
 import java.util.Map;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +22,8 @@ import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
 class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "testwisecoveragereportservice";
 
     @Autowired
     private TestwiseCoverageService testwiseCoverageService;
@@ -50,9 +51,9 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void setup() throws Exception {
-        database.addUsers(1, 0, 0, 1);
-        database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
+        final Course course = database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         programmingExercise = hestiaUtilTestService.setupSolution(
                 Map.ofEntries(Map.entry("src/de/tum/in/ase/BubbleSort.java", "\n ".repeat(28)), Map.entry("src/de/tum/in/ase/Context.java", "\n ".repeat(18))), programmingExercise,
@@ -67,13 +68,8 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
         programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
     }
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateFullTestwiseCoverageReport() {
         var fileReportsByTestName = TestwiseCoverageTestUtil.generateCoverageFileReportByTestName();
         testwiseCoverageService.createTestwiseCoverageReport(fileReportsByTestName, programmingExercise, solutionSubmission);

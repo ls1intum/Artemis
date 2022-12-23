@@ -1,4 +1,3 @@
-import { HttpResponse } from '@angular/common/http';
 import { EMPTY, Observable, of } from 'rxjs';
 import { IResultService, ResultsWithPointsArrayResponseType } from 'app/exercises/shared/result/result.service';
 import { Result } from 'app/entities/result.model';

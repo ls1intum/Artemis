@@ -42,7 +42,7 @@ describe('Exam participation', () => {
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
                 .endDate(dayjs().add(3, 'days'))
-                .maxPoints(40)
+                .examMaxPoints(40)
                 .numberOfExercises(4)
                 .build();
             courseRequests.createExam(examContent).then((examResponse) => {

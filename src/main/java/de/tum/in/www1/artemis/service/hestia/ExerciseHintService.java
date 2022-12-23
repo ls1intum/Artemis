@@ -231,7 +231,7 @@ public class ExerciseHintService {
                 student.getId(), true);
         practiceStudentParticipation.ifPresent(participation -> submissions.addAll(participation.getSubmissions()));
 
-        Collections.sort(submissions, Comparator.reverseOrder());
+        submissions.sort(Comparator.reverseOrder());
 
         return submissions;
     }

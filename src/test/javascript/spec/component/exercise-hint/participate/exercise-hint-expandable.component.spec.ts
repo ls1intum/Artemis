@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
-import { MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { HttpResponse } from '@angular/common/http';
+import { MatExpansionModule } from '@angular/material/expansion';
 
 import { ArtemisTestModule } from '../../../test.module';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
@@ -28,7 +29,7 @@ describe('Exercise Hint Expandable Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockModule(MatExpansionModule)],
             declarations: [ExerciseHintExpandableComponent, MockPipe(ArtemisTranslatePipe), StarRatingComponent, CastToCodeHintPipe],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })

@@ -149,7 +149,14 @@
                             >
                                 {{ result.submission.submissionDate | artemisDate : 'long-date' }}
                             </h4>
-                            <jhi-result [result]="result" [showUngradedResults]="true" [showBadge]="true" [showTestDetails]="true" [exercise]="exercise"> </jhi-result>
+                            <jhi-result
+                                [result]="result"
+                                [showUngradedResults]="true"
+                                [showBadge]="true"
+                                [showTestDetails]="programmingExercise?.showTestNamesToStudents ?? false"
+                                [exercise]="exercise"
+                            >
+                            </jhi-result>
                         </div>
                         <div class="no-results" *ngIf="!sortedHistoryResults">
                             {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | artemisTranslate }}
@@ -190,7 +197,7 @@
             >
             </jhi-reset-repo-button>
             <!-- PROBLEM STATEMENT END -->
-            <ng-container *ngIf="exampleSolutionUML || exampleSolution || programmingExercise?.exampleSolutionPublished">
+            <ng-container *ngIf="exampleSolutionUML || exampleSolution || exercise?.exampleSolutionPublished">
                 <div class="row mb-2 mt-2 align-items-baseline">
                     <div class="control-label" (click)="changeExampleSolution()">
                         <span class="h3 pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</span>
@@ -208,7 +215,7 @@
                         ></jhi-modeling-editor>
                     </dd>
                     <dd *ngIf="exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolution"></dd>
-                    <ng-container *ngIf="programmingExercise?.exampleSolutionPublished">
+                    <ng-container *ngIf="exercise?.exampleSolutionPublished">
                         <dd class="editor-outline-background">
                             <jhi-programming-exercise-example-solution-repo-download
                                 class="ms-2"
