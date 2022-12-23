@@ -8,18 +8,20 @@ version: '2.4'
 services:
     mysql:
         extends:
-            file: ../mysql.yml
+            #TODO: use standard version of mysql.yml after docker compose version is upgraded
+            file: mysql_compose_2_4.yml
             service: mysql
 
     artemis-app:
         extends:
-            file: ./artemis/artemis.yml
+            #TODO: use standard version of artemis.yml after docker compose version is upgraded
+            file: ./artemis/artemis_compose_2_4.yml
             service: artemis-app
         depends_on:
             mysql:
                 condition: service_healthy
         env_file:
-            - ../../resources/config/docker-cypress-application-local.env
+            - ../resources/config/docker-cypress-application-local.env
         # TODO: after the pipeline is running on bamboo maybe also migrate/merge these environment variables
         environment:
             spring.profiles.active: "artemis,bamboo,bitbucket,jira,prod,cypress"
@@ -50,7 +52,8 @@ services:
     artemis-cypress:
         # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
         image: cypress/browsers:node18.12.0-chrome107
-        pull_policy: always
+        #TODO: uncomment this after Docker compose version upgrade
+        #pull_policy: always
         depends_on:
             artemis-app:
                 condition: service_healthy

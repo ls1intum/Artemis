@@ -1,0 +1,47 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Artemis base service
+# ----------------------------------------------------------------------------------------------------------------------
+
+# copy of artemis.yml until the bamboo agents have a newer docker compose version
+
+version: '2.4'
+services:
+    artemis-app:
+        container_name: artemis-app
+        extra_hosts:
+            - "host.docker.internal:host-gateway"
+        # TODO: add support for armv8
+        platform: amd64
+        # look in the docs for more information about how to build your Artemis code with Docker
+        # https://docs.artemis.cit.tum.de/dev/setup/#
+        image: ghcr.io/ls1intum/artemis
+        build:
+            context: ../../../..
+            dockerfile: src/main/docker/artemis/Dockerfile
+        volumes:
+            - artemis-data:/opt/artemis/data
+        env_file:
+            - ../../resources/config/docker-artemis-prod-mysql-application-local.env
+        # environments can also be used for custom overrides (alternative to application-local.yml)
+        # the following environments are necessary for docker images orchestrated by docker compose
+        environment:
+            _JAVA_OPTIONS: -Xmx5120m -Xms2560m
+            SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,prod,docker
+        # TODO: add a restart at a certain stage for prod systems for sure, not sure about dev systems?, discuss
+        # restart: unless-stopped
+        healthcheck:
+            test: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
+            start_period: 300s
+            interval: 1s
+        ports:
+            - 8080:8080
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
+volumes:
+    artemis-data:
+        name: artemis-data
