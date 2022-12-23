@@ -38,6 +38,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @BeforeEach
     void setup() {
+        participantScoreSchedulerService.activate();
         courseTestService.setup(TEST_PREFIX, this);
         jiraRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();

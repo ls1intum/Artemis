@@ -55,7 +55,6 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
-import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -140,9 +139,6 @@ public class CourseTestService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
-    private ParticipantScoreSchedulerService participantScoreSchedulerService;
-
     private final static int numberOfStudents = 8;
 
     private final static int numberOfTutors = 5;
@@ -156,7 +152,6 @@ public class CourseTestService {
     private String userPrefix;
 
     public void setup(String userPrefix, MockDelegate mockDelegate) {
-        participantScoreSchedulerService.activate();
         this.userPrefix = userPrefix;
         this.mockDelegate = mockDelegate;
 
