@@ -74,7 +74,7 @@ describe('Exam creation/deletion', () => {
     });
 
     after(() => {
-        if (!!course) {
+        if (course) {
             courseManagementRequests.deleteCourse(course.id!);
         }
     });

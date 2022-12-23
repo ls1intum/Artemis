@@ -30,7 +30,7 @@ function urlValidator(control: AbstractControl) {
     }
 
     try {
-        // tslint:disable-next-line:no-unused-expression-chai
+        // eslint-disable-next-line
         new URL(control.value);
     } catch {
         validUrl = false;

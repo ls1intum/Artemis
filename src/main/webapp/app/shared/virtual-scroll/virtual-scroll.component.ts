@@ -48,6 +48,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     @Input() scrollPaddingTop: number;
 
     // all items being listed
+    // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('items') public originalItems: T[] | undefined = [];
 
     /**
@@ -225,6 +226,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
 
             if (collapsableHeight > 0) {
                 // scroll upwards by the height of collapsed nested components of the removed item to prevent unintentional automatic scrolling to other items
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
                 // @ts-ignore behavior 'instant'; this is needed to avoid a scrolling animation back and forth while we prevent automatic and unwanted scrolling to other items
                 window.scrollTo({ left: 0, top: window.scrollY - collapsableHeight, behavior: 'instant' });
             }

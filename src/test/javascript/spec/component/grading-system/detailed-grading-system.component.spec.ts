@@ -285,7 +285,7 @@ describe('Detailed Grading System Component', () => {
         comp.existingGradingScale = true;
         comp.isExam = false;
         comp.courseId = 123;
-        const gradingSystemDeleteForCourseStub = jest.spyOn(gradingSystemService, 'deleteGradingScaleForCourse').mockReturnValue(of(new HttpResponse<{}>({ body: [] })));
+        const gradingSystemDeleteForCourseStub = jest.spyOn(gradingSystemService, 'deleteGradingScaleForCourse').mockReturnValue(of(new HttpResponse<any>({ body: [] })));
 
         comp.delete();
 
@@ -297,7 +297,7 @@ describe('Detailed Grading System Component', () => {
     it('should delete grading scale for exam', () => {
         comp.existingGradingScale = true;
         comp.isExam = true;
-        const gradingSystemDeleteForExamStub = jest.spyOn(gradingSystemService, 'deleteGradingScaleForExam').mockReturnValue(of(new HttpResponse<{}>({ body: [] })));
+        const gradingSystemDeleteForExamStub = jest.spyOn(gradingSystemService, 'deleteGradingScaleForExam').mockReturnValue(of(new HttpResponse<any>({ body: [] })));
 
         comp.delete();
 
