@@ -18,4 +18,8 @@ public class StringUtil {
     public static String stripIllegalCharacters(String input) {
         return StringUtils.replaceChars(input, ILLEGAL_CHARACTERS, null);
     }
+
+    public static String resolveHomeDirectory(String path) {
+        return path.replaceFirst("^~", System.getProperty("user.home"));
+    }
 }

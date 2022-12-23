@@ -19,6 +19,7 @@ import org.springframework.context.annotation.Configuration;
 import de.tum.in.www1.artemis.security.localVC.LocalVCFetchFilter;
 import de.tum.in.www1.artemis.security.localVC.LocalVCFilterUtilService;
 import de.tum.in.www1.artemis.security.localVC.LocalVCPushFilter;
+import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
 /**
  * Configuration of the JGit Servlet that handles fetch and push requests for local Version Control.
@@ -28,7 +29,7 @@ public class JGitServletConfiguration {
 
     private final Logger log = LoggerFactory.getLogger(JGitServletConfiguration.class);
 
-    @Value("${localvc.server-path}")
+    @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCPath;
 
     private final Map<String, Repository> repositories = new HashMap<>();
@@ -53,7 +54,7 @@ public class JGitServletConfiguration {
                 // Returns the opened repository instance, never null.
 
                 // Find the local repository depending on the name and return an opened instance. Must be closed later on.
-                File gitDir = new File(localVCPath + File.separator + name);
+                File gitDir = new File(StringUtil.resolveHomeDirectory(localVCPath) + File.separator + name);
 
                 log.debug("Path to resolve repository from: {}", gitDir.getPath());
                 if (!gitDir.exists()) {

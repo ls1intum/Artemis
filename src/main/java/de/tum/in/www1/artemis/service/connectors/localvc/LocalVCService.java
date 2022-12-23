@@ -62,7 +62,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Value("${artemis.version-control.url}")
     private URL localVCServerUrl;
 
-    @Value("${localvc.server-path}")
+    @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCPath;
 
     @Value("${artemis.git.name}")
@@ -158,7 +158,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void deleteProject(String projectKey) {
         try {
-            String folderName = localVCPath + File.separator + projectKey;
+            String folderName = StringUtil.resolveHomeDirectory(localVCPath) + File.separator + projectKey;
             FileUtils.deleteDirectory(new File(folderName));
         }
         catch (IOException e) {
@@ -169,7 +169,8 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void deleteRepository(VcsRepositoryUrl repositoryUrl) {
         try {
-            String folderName = localVCPath + repositoryUrl.folderNameForRepositoryUrl();
+            // TODO: Remove .git from here by refactoring VcsRepositoryUrl
+            String folderName = StringUtil.resolveHomeDirectory(localVCPath) + repositoryUrl.folderNameForRepositoryUrl() + ".git";
             FileUtils.deleteDirectory(new File(folderName));
         }
         catch (IOException e) {
@@ -388,8 +389,8 @@ public class LocalVCService extends AbstractVersionControlService {
     public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws LocalVCException {
         // TODO: Refactor VcsRepositoryUrl
         try {
-            Map<String, Ref> remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localVCPath + File.separator + repositoryUrl.folderNameForRepositoryUrl() + ".git")
-                    .callAsMap();
+            Map<String, Ref> remoteRepositoryRefs = Git.lsRemoteRepository()
+                    .setRemote(StringUtil.resolveHomeDirectory(localVCPath) + File.separator + repositoryUrl.folderNameForRepositoryUrl() + ".git").callAsMap();
             if (remoteRepositoryRefs.containsKey("HEAD")) {
                 return remoteRepositoryRefs.get("HEAD").getTarget().getName();
             }
@@ -458,7 +459,7 @@ public class LocalVCService extends AbstractVersionControlService {
         String courseShortNameStripped = StringUtil.stripIllegalCharacters(courseShortName);
 
         // Try to find the folder in the file system. If it is not found, return false.
-        if (new File(localVCPath + File.separator + courseShortNameStripped + File.separator + projectKeyStripped).exists()) {
+        if (new File(StringUtil.resolveHomeDirectory(localVCPath) + File.separator + courseShortNameStripped + File.separator + projectKeyStripped).exists()) {
             log.warn("Local git project with key {} already exists: {}", projectKey, projectName);
             return true;
         }
@@ -476,17 +477,16 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws LocalVCException {
-        Course course = programmingExercise.getCourseViaExerciseGroupOrCourseMember();
-        String courseShortName = StringUtil.stripIllegalCharacters(course.getShortName());
-
+        String localVCPathResolved = StringUtil.resolveHomeDirectory(localVCPath);
+        String courseShortName = StringUtil.stripIllegalCharacters(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName());
         String projectKey = StringUtil.stripIllegalCharacters(programmingExercise.getProjectKey());
 
-        log.debug("Creating folder for local git project at {}", localVCPath + File.separator + courseShortName + File.separator + projectKey);
+        log.debug("Creating folder for local git project at {}", localVCPathResolved + File.separator + courseShortName + File.separator + projectKey);
 
         try {
             // Instead of defining a project like would be done for GitLab or Bitbucket,
             // just define a directory that will contain all repositories.
-            File localPath = new File(localVCPath + File.separator + courseShortName + File.separator + projectKey);
+            File localPath = new File(localVCPathResolved + File.separator + courseShortName + File.separator + projectKey);
 
             if (!localPath.mkdirs()) {
                 throw new IOException("Could not create directory " + localPath.getPath());

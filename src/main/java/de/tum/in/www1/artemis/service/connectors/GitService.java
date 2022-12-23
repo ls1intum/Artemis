@@ -56,6 +56,7 @@ import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.util.StringUtil;
 
 @Service
 public class GitService {
@@ -67,7 +68,7 @@ public class GitService {
     @Value("${artemis.version-control.url}")
     private URL gitUrl;
 
-    @Value("${localvc.server-path}")
+    @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCPath;
 
     @Value("${artemis.version-control.user}")
@@ -264,13 +265,10 @@ public class GitService {
     }
 
     private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
-        // If the "localvc" profile is active, the repository is cloned from the folder defined in localvc.server-path.
+        // If the "localvc" profile is active, the repository is cloned from the folder defined in "artemis.version-control.local-vcs-repo-path".
         if (Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
-            Path relativeVcsRepositoryFolderPath = getLocalPathOfRepo(localVCPath, vcsRepositoryUrl);
-            // TODO: Get the absolute path on the server where the repositories are located.
-            // String absoluteVcsRepositoryFolderPath = servletContext.
-            // servletContext.getRealPath(relativeVcsRepositoryFolderPath.toString());
-            return new URI(relativeVcsRepositoryFolderPath + ".git");
+            Path vcsRepositoryFolderPath = getLocalPathOfRepo(localVCPath, vcsRepositoryUrl);
+            return new URI(vcsRepositoryFolderPath + ".git");
         }
         return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURI();
     }
@@ -555,7 +553,7 @@ public class GitService {
         if (targetUrl == null) {
             return null;
         }
-        return Path.of(targetPath.replaceAll("^\\." + Pattern.quote(java.io.File.separator), ""), targetUrl.folderNameForRepositoryUrl());
+        return Path.of(StringUtil.resolveHomeDirectory(targetPath).replaceAll("^\\." + Pattern.quote(java.io.File.separator), ""), targetUrl.folderNameForRepositoryUrl());
     }
 
     /**
