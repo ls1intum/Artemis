@@ -383,7 +383,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.lastRouteUrlSegment = segment;
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            /* empty */
+        }
     }
 
     /**
@@ -441,6 +443,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'exercise-hints':
                 // obtain the exerciseId of the current path
                 // current path of form '/course-management/:courseId/exercises/:exerciseId/...
+
                 const exerciseId = currentPath.split('/')[4];
                 this.addResolvedTitleAsCrumb(EntityType.HINT, [Number(segment), Number(exerciseId)], currentPath, segment);
                 break;

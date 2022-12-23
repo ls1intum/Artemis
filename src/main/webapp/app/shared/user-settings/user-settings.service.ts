@@ -39,9 +39,7 @@ export class UserSettingsService {
      * @return updated settings structure based on loaded settings
      */
     public loadSettingsSuccessAsSettingsStructure(receivedSettingsFromServer: Setting[], category: UserSettingsCategory): UserSettingsStructure<Setting> {
-        let settingsResult: UserSettingsStructure<Setting>;
-        // load structure as foundation
-        settingsResult = UserSettingsService.loadSettingsStructure(category);
+        const settingsResult = UserSettingsService.loadSettingsStructure(category);
         this.updateSettingsStructure(receivedSettingsFromServer, settingsResult);
         return settingsResult;
     }

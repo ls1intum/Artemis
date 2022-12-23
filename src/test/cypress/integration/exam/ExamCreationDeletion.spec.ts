@@ -42,7 +42,7 @@ describe('Exam creation/deletion', () => {
         creationPage.setStartDate(dayjs().add(1, 'day'));
         creationPage.setEndDate(dayjs().add(2, 'day'));
         creationPage.setNumberOfExercises(4);
-        creationPage.setMaxPoints(40);
+        creationPage.setExamMaxPoints(40);
 
         creationPage.setStartText('Cypress exam start text');
         creationPage.setEndText('Cypress exam end text');
@@ -74,7 +74,7 @@ describe('Exam creation/deletion', () => {
     });
 
     after(() => {
-        if (!!course) {
+        if (course) {
             courseManagementRequests.deleteCourse(course.id!);
         }
     });

@@ -68,7 +68,7 @@ describe('Interval Grading System Component', () => {
     const gradeSteps = [gradeStep1, gradeStep2, gradeStep3, gradeStep4];
 
     const exam = new Exam();
-    exam.maxPoints = 100;
+    exam.examMaxPoints = 100;
     const course = new Course();
     course.maxPoints = 100;
 

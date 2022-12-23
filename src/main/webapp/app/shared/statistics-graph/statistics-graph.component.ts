@@ -110,24 +110,23 @@ export class StatisticsGraphComponent implements OnChanges {
             case SpanType.MONTH:
                 startDate = dayjs().subtract(1 - this.currentPeriod, 'months');
                 endDate = dayjs().subtract(-this.currentPeriod, 'months');
-                const daysInMonth = endDate.diff(startDate, 'days');
-                this.barChartLabels = this.getLabelsForMonth(daysInMonth);
+                this.barChartLabels = this.getLabelsForMonth(endDate.diff(startDate, 'days'));
                 this.chartTime = now
                     .add(this.currentPeriod, 'months')
                     .subtract(Math.floor(this.barChartLabels.length / 2.0) - 1, 'days')
                     .format('MMMM YYYY');
                 break;
             case SpanType.QUARTER:
-                const prefix = this.translateService.instant('calendar_week');
                 startDate = dayjs().subtract(11 + 12 * -this.currentPeriod, 'weeks');
                 endDate = this.currentPeriod !== 0 ? dayjs().subtract(12 * -this.currentPeriod, 'weeks') : dayjs();
+
                 let currentWeek;
                 for (let i = 0; i < 12; i++) {
                     currentWeek = dayjs()
                         .subtract(11 + 12 * -this.currentPeriod - i, 'weeks')
                         .isoWeekday(1)
                         .isoWeek();
-                    this.barChartLabels[i] = prefix + ' ' + currentWeek;
+                    this.barChartLabels[i] = this.translateService.instant('calendar_week') + ' ' + currentWeek;
                 }
                 this.chartTime = startDate.isoWeekday(1).format('DD.MM.YYYY') + ' - ' + endDate.isoWeekday(7).format('DD.MM.YYYY');
                 break;

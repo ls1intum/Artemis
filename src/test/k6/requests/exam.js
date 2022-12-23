@@ -25,7 +25,7 @@ export function newExam(artemis, course) {
         visibleDate: visibleDate,
         startDate: startDate,
         endDate: endDate,
-        maxPoints: 54,
+        examMaxPoints: 54,
         numberOfExercisesInExam: 4,
         randomizeExerciseOrder: false,
         started: false,
