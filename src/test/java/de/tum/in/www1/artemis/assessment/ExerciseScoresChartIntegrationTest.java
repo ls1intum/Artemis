@@ -69,8 +69,7 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
     void setupTestScenario() {
         participantScoreSchedulerService.activate();
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
-        this.database.addUsers(TEST_PREFIX, 5, 10, 0, 10);
+        this.database.addUsers(TEST_PREFIX, 3, 2, 0, 0);
         Course course = this.database.createCourse();
         idOfCourse = course.getId();
         TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);

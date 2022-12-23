@@ -64,14 +64,14 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @BeforeEach
     void initTestCase() throws Exception {
-        log.error("Test setup start");
+        log.debug("Test setup start");
         database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = database.addCourseWithModelingAndTextExercise();
         modelingExercise = database.getFirstExerciseWithType(course, ModelingExercise.class);
         textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
         emptyModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
         validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        log.error("Test setup done");
+        log.debug("Test setup done");
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

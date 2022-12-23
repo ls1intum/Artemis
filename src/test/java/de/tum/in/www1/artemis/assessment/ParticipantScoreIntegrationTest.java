@@ -83,19 +83,19 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         participantScoreSchedulerService.activate();
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
-        this.database.addUsers(TEST_PREFIX, 5, 10, 0, 10);
+        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         // Instructors should only be part of "participantscoreinstructor"
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= 1; i++) {
             var instructor = database.getUserByLogin(TEST_PREFIX + "instructor" + i);
             instructor.setGroups(Set.of("participantscoreinstructor"));
             userRepository.save(instructor);
         }
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= 1; i++) {
             var tutor = database.getUserByLogin(TEST_PREFIX + "tutor" + i);
             tutor.setGroups(Set.of("participantscoretutor"));
             userRepository.save(tutor);
         }
-        for (int i = 1; i <= 5; i++) {
+        for (int i = 1; i <= 1; i++) {
             var student = database.getUserByLogin(TEST_PREFIX + "student" + i);
             student.setGroups(Set.of("participantscorestudent"));
             userRepository.save(student);
@@ -216,7 +216,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getCourseScores_asInstructorOfCourse_shouldReturnCourseScores() throws Exception {
         List<ScoreDTO> courseScores = request.getList("/api/courses/" + courseId + "/course-scores", HttpStatus.OK, ScoreDTO.class);
-        assertThat(courseScores).hasSize(25);
+        assertThat(courseScores).hasSize(3);
         ScoreDTO scoreOfStudent1 = courseScores.stream().filter(scoreDTO -> scoreDTO.studentId.equals(idOfStudent1)).findFirst().get();
         assertThat(scoreOfStudent1.studentLogin).isEqualTo(TEST_PREFIX + "student1");
         assertThat(scoreOfStudent1.pointsAchieved).isEqualTo(10.0);

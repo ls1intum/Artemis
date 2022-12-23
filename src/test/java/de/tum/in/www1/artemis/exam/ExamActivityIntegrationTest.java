@@ -59,7 +59,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 15, 5, 0, 1);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         course = database.addEmptyCourse();
         var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         exam = database.addActiveExamWithRegisteredUser(course, student1);
@@ -72,7 +72,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @AfterEach
-    void tearDown() throws Exception {
+    void tearDown() {
         examMonitoringScheduleService.stopSchedule();
         examMonitoringScheduleService.clearAllExamMonitoringData();
     }
@@ -84,15 +84,9 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 examAction = new StartedExamAction();
                 ((StartedExamAction) examAction).setSessionId(0L);
             }
-            case ENDED_EXAM -> {
-                examAction = new EndedExamAction();
-            }
-            case HANDED_IN_EARLY -> {
-                examAction = new HandedInEarlyAction();
-            }
-            case CONTINUED_AFTER_HAND_IN_EARLY -> {
-                examAction = new ContinuedAfterHandedInEarlyAction();
-            }
+            case ENDED_EXAM -> examAction = new EndedExamAction();
+            case HANDED_IN_EARLY -> examAction = new HandedInEarlyAction();
+            case CONTINUED_AFTER_HAND_IN_EARLY -> examAction = new ContinuedAfterHandedInEarlyAction();
             case SWITCHED_EXERCISE -> {
                 examAction = new SwitchedExerciseAction();
                 ((SwitchedExerciseAction) examAction).setExerciseId(0L);

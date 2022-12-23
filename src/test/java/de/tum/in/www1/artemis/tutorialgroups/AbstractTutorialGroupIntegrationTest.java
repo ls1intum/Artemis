@@ -98,9 +98,8 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     @BeforeEach
     void setupTestScenario() {
-        // creating the users student1-student10, tutor1-tutor10, editor1-editor10 and instructor1-instructor10
         this.testPrefix = getTestPrefix();
-        this.database.addUsers(this.testPrefix, 10, 10, 10, 10);
+        this.database.addUsers(this.testPrefix, 9, 2, 2, 2);
 
         // Add users that are not in the course
         // only add those if they do not exist yet
