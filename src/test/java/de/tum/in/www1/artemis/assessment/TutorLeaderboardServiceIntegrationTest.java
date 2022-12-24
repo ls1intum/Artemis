@@ -35,9 +35,9 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBa
     @Autowired
     private CourseRepository courseRepository;
 
-    final private static int TUTOR_COUNT = 1;
+    private static final int TUTOR_COUNT = 1;
 
-    final private static int ASSESSMENT_COUNT = 2;
+    private static final int ASSESSMENT_COUNT = 2;
 
     private Course course;
 
@@ -48,7 +48,7 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBa
      */
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 10, TUTOR_COUNT, 0, 2);
+        database.addUsers(TEST_PREFIX, 1, TUTOR_COUNT, 0, 1);
         // Tutors should only be part of "leaderboardgroup"
         for (int i = 1; i <= TUTOR_COUNT; i++) {
             var tutor = database.getUserByLogin(TEST_PREFIX + "tutor" + i);
