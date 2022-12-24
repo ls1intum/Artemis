@@ -82,7 +82,7 @@ class SingleUserNotificationFactoryTest {
 
     private static User cheatingUser;
 
-    private final static String USER_LOGIN = "de27sms";
+    private static final String USER_LOGIN = "de27sms";
 
     private static PlagiarismComparison plagiarismComparison;
 

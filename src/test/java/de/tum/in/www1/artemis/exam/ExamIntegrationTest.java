@@ -167,7 +167,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private Exam testExam1;
 
-    private final static int numberOfStudents = 10;
+    private static final int numberOfStudents = 10;
 
     private User instructor;
 
