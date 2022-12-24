@@ -389,15 +389,13 @@ public class ProgrammingExerciseGradingService {
      */
     public Result calculateScoreForResult(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
         Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
-        final Set<ProgrammingExerciseTestCase> testCasesForCurrentDate;
+
         // We don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
         if (isStudentParticipation) {
-            testCasesForCurrentDate = filterTestCasesForCurrentDate(result.getParticipation(), testCases);
+            testCases = filterTestCasesForCurrentDate(result.getParticipation(), testCases);
         }
-        else {
-            testCasesForCurrentDate = testCases;
-        }
-        return calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, isStudentParticipation);
+
+        return calculateScoreForResult(testCases, testCases, result, exercise, isStudentParticipation);
     }
 
     /**
@@ -579,7 +577,6 @@ public class ProgrammingExerciseGradingService {
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
-
         List<Feedback> staticCodeAnalysisFeedback = result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback).toList();
         List<Feedback> testCaseFeedback = result.getFeedbacks().stream().filter(Feedback::isTestFeedback).toList();
 
@@ -607,7 +604,7 @@ public class ProgrammingExerciseGradingService {
             final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(testCase -> testCase.isSuccessful(result))
                     .collect(Collectors.toSet());
 
-            updateScore(result, testCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
+            updateResultScore(result, testCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
             updateFeedbackCredits(result, testCases, exercise.getMaxPoints());
 
             result.setTestCaseCount(testCasesForCurrentDate.size());
@@ -719,23 +716,21 @@ public class ProgrammingExerciseGradingService {
      * @param programmingExercise         the given programming exercise.
      * @param hasDuplicateTestCases       indicates duplicate test cases.
      */
-    private void updateScore(final Result result, final Set<ProgrammingExerciseTestCase> allTestCases, final List<Feedback> staticCodeAnalysisFeedbacks,
+    private void updateResultScore(final Result result, final Set<ProgrammingExerciseTestCase> allTestCases, final List<Feedback> staticCodeAnalysisFeedbacks,
             final ProgrammingExercise programmingExercise, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
-        if (hasDuplicateTestCases) {
-            result.setScore(0D);
+        double score = 0D;
+
+        if (!hasDuplicateTestCases) {
+            score = calculateScore(programmingExercise, allTestCases, result, staticCodeAnalysisFeedbacks, applySubmissionPolicy);
         }
-        else {
-            double score = calculateScore(programmingExercise, allTestCases, result, staticCodeAnalysisFeedbacks, applySubmissionPolicy);
-            result.setScore(score, programmingExercise.getCourseViaExerciseGroupOrCourseMember());
-        }
+
+        result.setScore(score, programmingExercise.getCourseViaExerciseGroupOrCourseMember());
     }
 
     private void updateFeedbackCredits(Result result, Set<ProgrammingExerciseTestCase> allTestCases, Double exerciseMaxPoints) {
-        double weightSum = calculateWeightSum(allTestCases);
-
         // Set credits for successful test cases
         allTestCases.stream().filter(testCase -> testCase.isSuccessful(result)).forEach(testCase -> {
-            double credits = calculatePointsForTestCase(result, exerciseMaxPoints, testCase, allTestCases.size(), weightSum);
+            double credits = calculatePointsForTestCase(result.getParticipation(), exerciseMaxPoints, testCase, allTestCases);
             setCreditsForTestCaseFeedback(result, testCase, credits);
         });
 
@@ -783,9 +778,8 @@ public class ProgrammingExerciseGradingService {
      */
     private double calculateSuccessfulTestPoints(final ProgrammingExercise programmingExercise, final Result result, final Set<ProgrammingExerciseTestCase> allTests) {
         Set<ProgrammingExerciseTestCase> successfulTestCases = allTests.stream().filter(testCase -> testCase.isSuccessful(result)).collect(Collectors.toSet());
-        double weightSum = calculateWeightSum(allTests);
         double successfulTestPoints = successfulTestCases.stream()
-                .mapToDouble(test -> calculatePointsForTestCase(result, programmingExercise.getMaxPoints(), test, allTests.size(), weightSum)).sum();
+                .mapToDouble(test -> calculatePointsForTestCase(result.getParticipation(), programmingExercise.getMaxPoints(), test, allTests)).sum();
 
         return capPointsAtMaximum(programmingExercise, successfulTestPoints);
     }
@@ -811,7 +805,7 @@ public class ProgrammingExerciseGradingService {
             return 0;
         }
 
-        double maxPoints = programmingExercise.getMaxPoints() + Objects.requireNonNullElse(programmingExercise.getBonusPoints(), 0.0);
+        double maxPoints = programmingExercise.getMaxPoints() + Objects.requireNonNullElse(programmingExercise.getBonusPoints(), 0D);
 
         return Math.min(points, maxPoints);
     }
@@ -831,20 +825,23 @@ public class ProgrammingExerciseGradingService {
     /**
      * Calculates the points that should be awarded for a successful test case.
      *
-     * @param result             used to determine if the calculation is performed for the solution.
-     * @param exerciseMaxPoints  exercise.maxPoints usually
-     * @param test               for which the points should be calculated.
-     * @param totalTestCaseCount in the given exercise.
-     * @param weightSum          of all test cases in the exercise.
+     * @param participation     used to determine if the calculation is performed for the solution.
+     * @param exerciseMaxPoints exercise.maxPoints usually
+     * @param test              for which the points should be calculated.
+     * @param allTests          in the given exercise.
      * @return the points which should be awarded for successfully completing the test case.
      */
-    private double calculatePointsForTestCase(final Result result, Double exerciseMaxPoints, final ProgrammingExerciseTestCase test, int totalTestCaseCount, double weightSum) {
+    private double calculatePointsForTestCase(Participation participation, Double exerciseMaxPoints, final ProgrammingExerciseTestCase test,
+            Set<ProgrammingExerciseTestCase> allTests) {
+        final double weightSum = calculateWeightSum(allTests);
+        final int totalTestCaseCount = allTests.size();
+
         final boolean isWeightSumZero = Precision.equals(weightSum, 0, 1E-8);
         final double testPoints;
 
         // A weight-sum of zero would let the solution show an error to the instructor as the solution score must be
         // 100% of all reachable points. To prevent this, we weigh all test cases equally in such a case.
-        if (isWeightSumZero && result.getParticipation() instanceof SolutionProgrammingExerciseParticipation) {
+        if (isWeightSumZero && participation instanceof SolutionProgrammingExerciseParticipation) {
             testPoints = (1.0 / totalTestCaseCount) * exerciseMaxPoints;
         }
         else if (isWeightSumZero) {
