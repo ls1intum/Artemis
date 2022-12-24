@@ -134,7 +134,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
                 ZonedDateTime now = ZonedDateTime.now();
                 yield (int) ChronoUnit.DAYS.between(now.minusMonths(1), now);
             }
-            case QUARTER, YEAR -> 12; // TODO ?
+            case QUARTER, YEAR -> 12;
         };
     }
 
