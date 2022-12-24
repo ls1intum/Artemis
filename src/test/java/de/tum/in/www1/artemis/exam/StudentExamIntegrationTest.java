@@ -1040,7 +1040,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.CONFLICT);
 
         // assert that all repositories of programming exercises have been locked
-        assert exercisesToBeLocked.size() == studentProgrammingParticipations.size();
+        assertThat(exercisesToBeLocked).hasSameSizeAs(studentProgrammingParticipations);
         for (int i = 0; i < exercisesToBeLocked.size(); i++) {
             verify(programmingExerciseParticipationService, atLeastOnce()).lockStudentRepository(exercisesToBeLocked.get(i), studentProgrammingParticipations.get(i));
         }
@@ -1282,7 +1282,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private void assertVersionedSubmission(Submission submission) {
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
         var versionedSubmission = submissionVersionRepository.findLatestVersion(submission.getId());
-        assert versionedSubmission.isPresent();
+        assertThat(versionedSubmission).isPresent();
         if (submission instanceof TextSubmission) {
             assertThat(((TextSubmission) submission).getText()).isEqualTo(versionedSubmission.get().getContent());
         }
@@ -1293,7 +1293,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(((FileUploadSubmission) submission).getFilePath()).isEqualTo(versionedSubmission.get().getContent());
         }
         else {
-            assert submission instanceof QuizSubmission;
+            assertThat(submission).isInstanceOf(QuizSubmission.class);
             String submittedAnswersAsString;
             try {
                 submittedAnswersAsString = objectMapper.writeValueAsString(((QuizSubmission) submission).getSubmittedAnswers());

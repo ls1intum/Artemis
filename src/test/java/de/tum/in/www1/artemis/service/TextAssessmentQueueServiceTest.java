@@ -108,7 +108,7 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
                 assertThat(smallerClusterPercentages.get(textBlock)).isCloseTo(0.0, errorRate);
             }
             else {
-                assert false;
+                throw new AssertionError("invalid case");
             }
         });
     }
