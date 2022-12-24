@@ -141,6 +141,6 @@ public class QuizSubmission extends Submission {
 
     @Override
     public String toString() {
-        return "QuizSubmission{" + "id=" + getId() + ", scoreInPoints='" + getScoreInPoints() + ", submittedAnswers='" + getSubmittedAnswers() + "'" + "}";
+        return "QuizSubmission{" + "id=" + getId() + ", scoreInPoints='" + getScoreInPoints() + "'" + "}";
     }
 }

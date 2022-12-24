@@ -18,7 +18,7 @@ export class LearningGoalDetailModalComponent implements OnInit {
     @Input()
     learningGoalProgress: IndividualLearningGoalProgress;
     @Input()
-    isPrerequisite: Boolean;
+    isPrerequisite: boolean;
 
     public lectureUnitIdToLectureUnitProgress = new Map();
 

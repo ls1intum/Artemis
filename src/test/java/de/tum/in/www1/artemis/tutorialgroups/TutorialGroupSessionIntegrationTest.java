@@ -18,12 +18,15 @@ import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupSessionResour
 
 class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
-    void testJustForInstructorEndpoints() throws Exception {
-        // none
+    private static final String TEST_PREFIX = "tutorialgroupsession";
+
+    @Override
+    String getTestPrefix() {
+        return TEST_PREFIX;
     }
 
     @Test
-    @WithMockUser(value = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getOneOfCourse_asUser_shouldReturnTutorialGroupSession() throws Exception {
         // given
         var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleOneTutorialGroupId, firstAugustMonday);
@@ -31,34 +34,37 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var sessionFromRequest = request.get(getSessionsPathOfDefaultTutorialGroup() + session.getId(), HttpStatus.OK, TutorialGroupSession.class);
         // then
         assertThat(sessionFromRequest).isEqualTo(session);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(session.getId());
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createNewSession_asInstructor_shouldCreateSession() throws Exception {
         createNewSessionAllowedTest();
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createNewSession_asTutorOfGroup_shouldCreateSession() throws Exception {
         createNewSessionAllowedTest();
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void createNewSession_asNotTutorOfGroup_shouldForbidSession() throws Exception {
         createNewSessionForbiddenTest();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITO")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITO")
     void createNewSession_asEditor_shouldForbidSession() throws Exception {
         createNewSessionForbiddenTest();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createNewSession_overlapsWithExistingSession_shouldReturnBadRequest() throws Exception {
         // given
         var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleOneTutorialGroupId, firstAugustMonday);
@@ -67,10 +73,13 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         request.postWithResponseBody(getSessionsPathOfDefaultTutorialGroup(), dto, TutorialGroupSession.class, HttpStatus.BAD_REQUEST);
         // then
         assertThat(tutorialGroupSessionRepository.findAllByTutorialGroupId(exampleOneTutorialGroupId)).containsExactly(session);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(session.getId());
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createNewSession_onTutorialGroupFreeDay_shouldCreateAsCancelled() throws Exception {
         // given
         databaseUtilService.addTutorialGroupFreeDay(exampleConfigurationId, firstAugustMonday, "Holiday");
@@ -85,12 +94,12 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateSession_scheduledSession_shouldBeDisconnectedFromSchedule() throws Exception {
         // given
-        databaseUtilService.changeUser("instructor1");
-        TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule();
-        databaseUtilService.changeUser("tutor1");
+        databaseUtilService.changeUser(testPrefix + "instructor1");
+        TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId);
+        databaseUtilService.changeUser(testPrefix + "tutor1");
         var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).get();
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         assertThat(sessions).hasSize(2);
@@ -113,7 +122,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateSession_individualSession_shouldStillBeDisconnectedFromSchedule() throws Exception {
         // given
         var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleOneTutorialGroupId, firstAugustMonday);
@@ -128,10 +137,13 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         assertThat(updatedSession.getId()).isEqualTo(session.getId());
         session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
         assertIndividualSessionIsActiveOnDate(session, secondAugustMonday, exampleOneTutorialGroupId);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(session.getId());
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateSession_nowOverlapsWithOtherSession_shouldReturnBadRequest() throws Exception {
         // given
         var firstAugustMondaySession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleOneTutorialGroupId, firstAugustMonday);
@@ -145,10 +157,14 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         // then
         var sessions = this.getTutorialGroupSessionsAscending(exampleOneTutorialGroupId);
         assertThat(sessions).containsExactly(firstAugustMondaySession, secondAugustMondaySession);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
+        tutorialGroupSessionRepository.deleteById(secondAugustMondaySession.getId());
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateSession_nowOverlapsWithPreviousTimeOfSameSession_shouldUpdateCorrectly() throws Exception {
         // given
         var firstAugustMondaySession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleOneTutorialGroupId, firstAugustMonday);
@@ -163,10 +179,13 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(updatedSessionId);
         assertThat(updatedSession.getTutorialGroupSchedule()).isNull();
         assertSessionCreatedCorrectlyFromDTO(updatedSession, dto);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateSession_wasCancelled_shouldNowBeActiveAgain() throws Exception {
         // given
         var firstAugustMondaySession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleOneTutorialGroupId, firstAugustMonday);
@@ -186,13 +205,16 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         assertThat(updatedSession.getTutorialGroupSchedule()).isNull();
         assertSessionCreatedCorrectlyFromDTO(updatedSession, dto);
         assertIndividualSessionIsActiveOnDate(updatedSession, thirdAugustMonday, exampleOneTutorialGroupId);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateSession_nowOnTutorialGroupFreeDay_shouldUpdateAsCancelled() throws Exception {
         // given
-        databaseUtilService.addTutorialGroupFreeDay(exampleConfigurationId, thirdAugustMonday, "Holiday");
+        var freeDay = databaseUtilService.addTutorialGroupFreeDay(exampleConfigurationId, thirdAugustMonday, "Holiday");
         var firstAugustMondaySession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleOneTutorialGroupId, firstAugustMonday);
 
         var dto = createSessionDTO(thirdAugustMonday);
@@ -207,22 +229,26 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         assertThat(updatedSession.getTutorialGroupSchedule()).isNull();
         assertSessionCreatedCorrectlyFromDTO(updatedSession, dto);
         assertIndividualSessionIsCancelledOnDate(updatedSession, thirdAugustMonday, exampleOneTutorialGroupId, null);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
+        tutorialGroupFreePeriodRepository.deleteById(freeDay.getId());
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void updateSession_asNotTutorOfGroup_shouldReturnForbidden() throws Exception {
         updateSessionForbiddenTest();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void updateSession_asEditor_shouldReturnForbidden() throws Exception {
         updateSessionForbiddenTest();
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deleteSession_individualSession_shouldBeDeleted() throws Exception {
         // given
         var firstAugustMondaySession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleOneTutorialGroupId, firstAugustMonday);
@@ -234,10 +260,10 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteSession_scheduledSession_shouldBeDeleted() throws Exception {
         // given
-        TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule();
+        TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId);
         var sessions = this.getTutorialGroupSessionsAscending(tutorialGroup.getId());
         assertThat(sessions).hasSize(2);
         var firstAugustMondaySession = sessions.get(0);
@@ -253,61 +279,61 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void deleteSession_asNotTutorOfGroup_shouldReturnForbidden() throws Exception {
         deleteSessionForbiddenTest();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void deleteSession_asEditor_shouldReturnForbidden() throws Exception {
         deleteSessionForbiddenTest();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void cancelSession_asInstructor_shouldCancelSession() throws Exception {
         cancelSessionAllowedTest();
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void cancelSession_asTutorOfGroup_shouldCancelSession() throws Exception {
         cancelSessionAllowedTest();
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void cancelSession_asNotTutorOfGroup_shouldReturnForbidden() throws Exception {
         cancelSessionForbiddenTest();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void cancelSession_asEditor_shouldReturnForbidden() throws Exception {
         cancelSessionForbiddenTest();
     }
 
     @Test
-    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void activateCancelledSession_asInstructor_shouldActivateSession() throws Exception {
         activateSessionAllowedTest();
     }
 
     @Test
-    @WithMockUser(value = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void activateCancelledSession_asTutorOfGroup_shouldActivateSession() throws Exception {
         activateSessionAllowedTest();
     }
 
     @Test
-    @WithMockUser(value = "tutor2", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void activateCancelledSession_asNotTutorOfGroup_shouldReturnForbidden() throws Exception {
         activateSessionForbiddenTest();
     }
 
     @Test
-    @WithMockUser(value = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void activateCancelledSession_asEditor_shouldReturnForbidden() throws Exception {
         activateSessionForbiddenTest();
     }
@@ -325,6 +351,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         // then
         var updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(firstAugustMondaySession.getId());
         assertIndividualSessionIsActiveOnDate(updatedSession, firstAugustMonday, exampleOneTutorialGroupId);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
     }
 
     private void activateSessionForbiddenTest() throws Exception {
@@ -336,6 +365,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
 
         // when
         request.postWithoutLocation(getSessionsPathOfDefaultTutorialGroup() + firstAugustMondaySession.getId() + "/activate", null, HttpStatus.FORBIDDEN, null);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
     }
 
     private TutorialGroupSessionResource.TutorialGroupSessionDTO createSessionDTO(LocalDate date) {
@@ -360,6 +392,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
 
         // when
         request.put(getSessionsPathOfDefaultTutorialGroup() + firstAugustMondaySession.getId(), dto, HttpStatus.FORBIDDEN);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
     }
 
     private void createNewSessionAllowedTest() throws Exception {
@@ -371,6 +406,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var persistedSession = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
         assertSessionCreatedCorrectlyFromDTO(persistedSession, dto);
         assertIndividualSessionIsActiveOnDate(persistedSession, firstAugustMonday, exampleOneTutorialGroupId);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(persistedSession.getId());
     }
 
     private void createNewSessionForbiddenTest() throws Exception {
@@ -385,6 +423,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var firstAugustMondaySession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleOneTutorialGroupId, firstAugustMonday);
         // when
         request.delete(getSessionsPathOfDefaultTutorialGroup() + firstAugustMondaySession.getId(), HttpStatus.FORBIDDEN);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
     }
 
     private void cancelSessionAllowedTest() throws Exception {
@@ -397,6 +438,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         // then
         var updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(firstAugustMondaySession.getId());
         assertIndividualSessionIsCancelledOnDate(updatedSession, firstAugustMonday, exampleOneTutorialGroupId, "Holiday");
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
     }
 
     private void cancelSessionForbiddenTest() throws Exception {
@@ -406,6 +450,9 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var statusDTO = new TutorialGroupSessionResource.TutorialGroupStatusDTO("Holiday");
         // when
         request.postWithoutLocation(getSessionsPathOfDefaultTutorialGroup() + firstAugustMondaySession.getId() + "/cancel", statusDTO, HttpStatus.FORBIDDEN, null);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(firstAugustMondaySession.getId());
     }
 
 }

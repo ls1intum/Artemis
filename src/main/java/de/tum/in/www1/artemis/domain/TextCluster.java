@@ -22,11 +22,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextCluster extends DomainObject {
 
-    @Lob
     @Column(name = "probabilities")
     private byte[] probabilities;
 
-    @Lob
     @Column(name = "distance_matrix")
     private byte[] distanceMatrix;
 

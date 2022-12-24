@@ -69,7 +69,7 @@ describe('Course Exercise', () => {
     });
 
     after('Delete Course', () => {
-        if (!!courseId) {
+        if (courseId) {
             artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
         }
     });
