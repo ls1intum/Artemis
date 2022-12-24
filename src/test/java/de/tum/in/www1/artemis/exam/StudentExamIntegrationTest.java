@@ -136,11 +136,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private final List<LocalRepository> studentRepos = new ArrayList<>();
 
-    private final int students = 10;
-
     @BeforeEach
     void initTestCase() throws Exception {
-        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, students, 1, 0, 2);
+        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
         var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
         course1 = database.addEmptyCourse();
@@ -259,7 +257,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private List<StudentExam> prepareStudentExamsForConduction(boolean early, boolean setFields) throws Exception {
-        for (int i = 1; i <= students + 5; i++) {
+        for (int i = 1; i <= 15; i++) {
             bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
         }
 

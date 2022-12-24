@@ -162,7 +162,7 @@ public class ProgrammingExerciseTestService {
 
     public ProgrammingExercise examExercise;
 
-    public static final int numberOfStudents = 12;
+    public static final int numberOfStudents = 5;
 
     public static final String studentLogin = "student1";
 
@@ -1549,10 +1549,7 @@ public class ProgrammingExerciseTestService {
         setupTeamExercise();
 
         // Create a team with students
-        Set<User> students = new HashSet<>();
-        for (int i = 1; i <= numberOfStudents; i++) {
-            students.add(database.getUserByLogin(userPrefix + "student" + i));
-        }
+        Set<User> students = new HashSet<>(userRepo.searchByLoginOrNameInGroup("tumuser", userPrefix + "student"));
         Team team = new Team().name("Team 1").shortName(userPrefix + teamShortName).exercise(exercise).students(students);
         team = teamRepository.save(exercise, team);
 
