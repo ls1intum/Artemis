@@ -94,7 +94,9 @@ export class ExamPointsSummaryComponent implements OnInit {
 
     private hasAtLeastOneResult(): boolean {
         const exercises = this.studentExamWithGrade?.studentExam?.exercises;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         if (exercises?.length! > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             return exercises!.some((exercise) => exercise.studentParticipations?.[0]?.results?.length! > 0);
         }
         return false;

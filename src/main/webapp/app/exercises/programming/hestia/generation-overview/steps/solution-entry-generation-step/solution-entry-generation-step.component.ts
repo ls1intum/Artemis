@@ -125,6 +125,7 @@ export class SolutionEntryGenerationStepComponent implements OnInit, OnDestroy {
     }
 
     deleteAllSolutionEntries() {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         this.solutionEntryService.deleteAllSolutionEntriesForExercise(this.exercise?.id!).subscribe({
             next: () => {
                 this.solutionEntries = [];
@@ -137,6 +138,7 @@ export class SolutionEntryGenerationStepComponent implements OnInit, OnDestroy {
     }
 
     deleteSolutionEntry(entry: ProgrammingExerciseSolutionEntry) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         this.solutionEntryService.deleteSolutionEntry(this.exercise?.id!, entry.testCase?.id!, entry.id!).subscribe({
             next: () => {
                 this.solutionEntries = this.solutionEntries.filter((existingEntry) => entry !== existingEntry);
@@ -158,6 +160,7 @@ export class SolutionEntryGenerationStepComponent implements OnInit, OnDestroy {
                 this.testCaseSortOrder = SortingOrder.ASCENDING;
                 break;
             case undefined:
+                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                 this.solutionEntries = this.solutionEntries.sort((a, b) => a.testCase?.testName!.localeCompare(b.testCase?.testName!)!);
                 this.testCaseSortOrder = SortingOrder.ASCENDING;
         }

@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +16,8 @@ import de.tum.in.www1.artemis.repository.SubmissionRepository;
 
 class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "psitest"; // only lower case is supported
+
     @Autowired
     private SubmissionRepository submissionRepository;
 
@@ -27,20 +28,15 @@ class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationBa
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(2, 2, 0, 2);
+        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         Course course = database.addCourseWithOneReleasedTextExercise();
         textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
     }
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteSubmissionOfParticipation() throws Exception {
-        Submission submissionWithResult = database.addSubmission(textExercise, new TextSubmission(), "student1");
+        Submission submissionWithResult = database.addSubmission(textExercise, new TextSubmission(), TEST_PREFIX + "student1");
         submissionWithResult = database.addResultToSubmission(submissionWithResult, null);
         Long participationId = submissionWithResult.getParticipation().getId();
         Long submissionId = submissionWithResult.getId();
@@ -60,20 +56,20 @@ class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteParticipation_forbidden_student() throws Exception {
         request.delete("/api/submissions/" + 1, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deleteParticipation_forbidden_tutor() throws Exception {
         request.delete("/api/submissions/" + 1, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteParticipation_notFound() throws Exception {
-        request.delete("/api/submissions/" + 1, HttpStatus.NOT_FOUND);
+        request.delete("/api/submissions/" + -1, HttpStatus.NOT_FOUND);
     }
 }
