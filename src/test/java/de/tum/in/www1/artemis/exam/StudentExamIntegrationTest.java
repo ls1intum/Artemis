@@ -592,7 +592,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register user
-        Set<User> registeredStudents = getRegisteredStudents(10);
+        Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
         exam.setRegisteredUsers(new HashSet<>(registeredStudents));
         exam.setNumberOfExercisesInExam(2);
         exam.setRandomizeExerciseOrder(false);
@@ -617,7 +617,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register user
-        Set<User> registeredStudents = getRegisteredStudents(10);
+        Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
         exam.setRegisteredUsers(new HashSet<>(registeredStudents));
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
