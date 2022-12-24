@@ -608,6 +608,7 @@ public class ProgrammingExerciseGradingService {
                     .collect(Collectors.toSet());
 
             updateScore(result, testCases, staticCodeAnalysisFeedback, exercise, hasDuplicateTestCases, applySubmissionPolicy);
+            updateFeedbackCredits(result, testCases, exercise.getMaxPoints());
 
             result.setTestCaseCount(testCasesForCurrentDate.size());
             result.setPassedTestCaseCount(successfulTestCases.size());
@@ -727,8 +728,6 @@ public class ProgrammingExerciseGradingService {
             double score = calculateScore(programmingExercise, allTestCases, result, staticCodeAnalysisFeedbacks, applySubmissionPolicy);
             result.setScore(score, programmingExercise.getCourseViaExerciseGroupOrCourseMember());
         }
-
-        updateFeedbackCredits(result, allTestCases, programmingExercise.getMaxPoints());
     }
 
     private void updateFeedbackCredits(Result result, Set<ProgrammingExerciseTestCase> allTestCases, Double exerciseMaxPoints) {
