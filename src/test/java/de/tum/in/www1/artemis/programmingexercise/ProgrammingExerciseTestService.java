@@ -1576,6 +1576,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void automaticCleanupBuildPlans() throws Exception {
+        database.addUsers(userPrefix, 7, 0, 0, 0);
 
         exercise = programmingExerciseRepository.save(exercise);
         examExercise = programmingExerciseRepository.save(examExercise);
