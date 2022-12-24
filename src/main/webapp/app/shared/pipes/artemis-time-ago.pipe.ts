@@ -10,7 +10,7 @@ import { TranslateService } from '@ngx-translate/core';
 export class ArtemisTimeAgoPipe implements PipeTransform, OnDestroy {
     private currentTimer: number | null;
 
-    private lastTime: Number;
+    private lastTime: number;
     private lastValue: dayjs.ConfigType;
     private lastOmitSuffix?: boolean;
     private lastLocale: string;

@@ -165,7 +165,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                 }
             }
             this.loadingExam = true;
-            if (!!this.testRunId) {
+            if (this.testRunId) {
                 this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
                     next: (studentExam) => {
                         this.studentExam = studentExam;
@@ -416,7 +416,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         message: 'artemisApp.studentExam.submitSuccessful',
                         timeout: 20000,
                     });
-                    if (!!this.testRunId) {
+                    if (this.testRunId) {
                         // If this is a test run, forward the user directly to the exam summary
                         this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'summary']);
                     }
@@ -427,7 +427,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
                     // When we have already submitted load the existing submission
                     if (alreadySubmitted) {
-                        if (!!this.testRunId) {
+                        if (this.testRunId) {
                             this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
                                 next: (studentExam: StudentExam) => {
                                     this.studentExam = studentExam;
@@ -535,7 +535,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam is visible
      */
     isVisible(): boolean {
-        if (!!this.testRunId) {
+        if (this.testRunId) {
             return true;
         }
         if (!this.exam) {
@@ -548,7 +548,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * check if exam has started
      */
     isActive(): boolean {
-        if (!!this.testRunId) {
+        if (this.testRunId) {
             return true;
         }
         if (!this.exam) {

@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.*;
 
 import org.assertj.core.data.Percentage;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +18,8 @@ import de.tum.in.www1.artemis.repository.TextClusterRepository;
 import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 
 class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "textassessmentqueueservice";
 
     @Autowired
     private TextAssessmentQueueService textAssessmentQueueService;
@@ -43,15 +44,10 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
 
     @BeforeEach
     void init() {
-        database.addUsers(1, 1, 1, 1);
+        database.createAndSaveUser(TEST_PREFIX + "student1");
         course = database.addCourseWithOneReleasedTextExercise();
         random = new Random();
         errorRate = Percentage.withPercentage(0.0001);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
     }
 
     @Test
@@ -81,7 +77,7 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
     // evaluated in the call textAssessmentQueueService.calculateSmallerClusterPercentageBatch
     // TODO: we should remove transactions in the corresponding production code and make sure to eagerly load text blocks with the submission in such a case
     @Transactional(readOnly = true) // TODO: remove transactional
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void calculateSmallerClusterPercentageTest() {
         int submissionCount = 5;
         int submissionSize = 4;

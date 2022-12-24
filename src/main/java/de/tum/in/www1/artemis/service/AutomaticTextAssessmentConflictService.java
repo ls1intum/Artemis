@@ -96,7 +96,7 @@ public class AutomaticTextAssessmentConflictService {
         feedbackConflictResponseDTOS.forEach(conflict -> {
             Optional<Feedback> firstFeedback = feedbackRepository.findById(conflict.getFirstFeedbackId());
             Optional<Feedback> secondFeedback = feedbackRepository.findById(conflict.getSecondFeedbackId());
-            List<FeedbackConflict> storedConflicts = this.feedbackConflictRepository.findConflictsOrDiscardedOnesByFirstAndSecondFeedback(conflict.getFirstFeedbackId(),
+            List<FeedbackConflict> storedConflicts = feedbackConflictRepository.findConflictsOrDiscardedOnesByFirstAndSecondFeedback(conflict.getFirstFeedbackId(),
                     conflict.getSecondFeedbackId());
             // if the found conflict is present but its type has changed, update it
             if (!storedConflicts.isEmpty() && !storedConflicts.get(0).getType().equals(conflict.getType())) {

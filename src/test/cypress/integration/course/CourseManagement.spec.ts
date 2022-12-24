@@ -76,7 +76,7 @@ describe('Course management', () => {
         });
 
         after(() => {
-            if (!!courseId) {
+            if (courseId) {
                 artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
             }
         });
@@ -101,7 +101,7 @@ describe('Course management', () => {
         });
 
         after(() => {
-            if (!!courseId) {
+            if (courseId) {
                 artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
             }
         });
@@ -166,7 +166,7 @@ describe('Course management', () => {
         });
 
         afterEach(() => {
-            if (!!courseId) {
+            if (courseId) {
                 artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
             }
         });
