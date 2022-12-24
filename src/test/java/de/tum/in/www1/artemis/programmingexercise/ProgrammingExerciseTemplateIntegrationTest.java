@@ -63,9 +63,9 @@ class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrati
 
     private final LocalRepository auxRepo = new LocalRepository(defaultBranch);
 
-    private final static String MAVEN_TEST_RESULTS_PATH = "target/surefire-reports";
+    private static final String MAVEN_TEST_RESULTS_PATH = "target/surefire-reports";
 
-    private final static String GRADLE_TEST_RESULTS_PATH = "build/test-results/test";
+    private static final String GRADLE_TEST_RESULTS_PATH = "build/test-results/test";
 
     @BeforeAll
     static void detectMavenHome() {
