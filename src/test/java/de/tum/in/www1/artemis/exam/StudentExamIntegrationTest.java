@@ -138,7 +138,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     void initTestCase() throws Exception {
-        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 0);
+        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 1);
         var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
         course1 = database.addEmptyCourse();
