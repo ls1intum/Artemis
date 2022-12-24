@@ -42,9 +42,9 @@ class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     private Exercise exerciseReleasedYesterdayAndNotYetDue;
 
-    private final static String USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN = TEST_PREFIX + "student1";
+    private static final String USER_WITH_DEACTIVATED_WEEKLY_SUMMARIES_LOGIN = TEST_PREFIX + "student1";
 
-    private final static String USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN = TEST_PREFIX + "student2";
+    private static final String USER_WITH_ACTIVATED_WEEKLY_SUMMARIES_LOGIN = TEST_PREFIX + "student2";
 
     /**
      * Prepares the needed values and objects for testing

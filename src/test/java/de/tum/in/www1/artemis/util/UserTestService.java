@@ -78,13 +78,13 @@ public class UserTestService {
 
     public User student;
 
-    private final static int numberOfStudents = 50;
+    private static final int numberOfStudents = 50;
 
-    private final static int numberOfTutors = 1;
+    private static final int numberOfTutors = 1;
 
-    private final static int numberOfEditors = 1;
+    private static final int numberOfEditors = 1;
 
-    private final static int numberOfInstructors = 1;
+    private static final int numberOfInstructors = 1;
 
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
