@@ -20,7 +20,7 @@ export class CourseMessagesComponent {
     setPostInThread(post?: Post) {
         this.showPostThread = false;
 
-        if (!!post) {
+        if (post) {
             this.postInThread = post;
             this.showPostThread = true;
         }

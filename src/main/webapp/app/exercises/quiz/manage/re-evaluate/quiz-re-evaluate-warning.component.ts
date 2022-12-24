@@ -85,6 +85,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         // check each question
         this.quizExercise.quizQuestions!.forEach((question) => {
             // find same question in backUp (necessary if the order has been changed)
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             const backUpQuestion = this.backUpQuiz.quizQuestions?.find((questionBackUp) => question.id === questionBackUp.id)!;
 
             this.checkQuestion(question, backUpQuestion);

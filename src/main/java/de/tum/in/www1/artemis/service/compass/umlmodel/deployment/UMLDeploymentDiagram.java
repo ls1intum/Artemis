@@ -50,7 +50,7 @@ public class UMLDeploymentDiagram extends UMLComponentDiagram {
     }
 
     @Override
-    protected List<UMLElement> getModelElements() {
+    public List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = super.getModelElements();
         modelElements.addAll(nodeList);
         modelElements.addAll(artifactList);
