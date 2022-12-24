@@ -74,6 +74,8 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private ValidatorFactory validatorFactory;
 
+    private static final int MAX_POSTS_PER_PAGE = 20;
+
     @BeforeEach
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initTestCase() {
