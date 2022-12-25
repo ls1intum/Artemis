@@ -1,7 +1,7 @@
 import { Notification, NotificationType } from 'app/entities/notification.model';
 import { Course } from 'app/entities/course.model';
 
-export const enum GroupNotificationType {
+export const enum DatabaseNotificationType {
     INSTRUCTOR = 'INSTRUCTOR',
     EDITOR = 'EDITOR',
     TA = 'TA',
@@ -9,7 +9,7 @@ export const enum GroupNotificationType {
 }
 
 export class GroupNotification extends Notification {
-    type?: GroupNotificationType;
+    type?: DatabaseNotificationType;
     course?: Course;
 
     constructor() {

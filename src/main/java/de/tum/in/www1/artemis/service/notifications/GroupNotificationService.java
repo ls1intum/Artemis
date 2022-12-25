@@ -69,35 +69,35 @@ public class GroupNotificationService {
     /**
      * Auxiliary method to call the correct factory method and start the process to save & sent the notification
      *
-     * @param groups is an array of GroupNotificationTypes that should be notified (e.g. STUDENTS, INSTRUCTORS)
+     * @param notificationTypes is an array of DatabaseNotificationTypes that should be notified (e.g. STUDENTS, INSTRUCTORS)
      * @param notificationType is the discriminator for the factory
      * @param notificationSubject is the subject of the notification (e.g. exercise, attachment)
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, ARCHIVE -> List<String> archiveErrors)
      * @param author is the user who initiated the process of the notifications. Can be null if not specified
      */
-    private void notifyGroupsWithNotificationType(DatabaseNotificationType[] groups, NotificationType notificationType, Object notificationSubject, Object typeSpecificInformation,
-            User author) {
-        for (DatabaseNotificationType group : groups) {
+    private void notifyGroupsWithNotificationType(DatabaseNotificationType[] notificationTypes, NotificationType notificationType, Object notificationSubject,
+            Object typeSpecificInformation, User author) {
+        for (DatabaseNotificationType type : notificationTypes) {
             GroupNotification resultingGroupNotification;
             resultingGroupNotification = switch (notificationType) {
                 // Post Types
                 case NEW_EXERCISE_POST, NEW_REPLY_FOR_EXERCISE_POST, NEW_LECTURE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_COURSE_POST, NEW_REPLY_FOR_COURSE_POST, NEW_ANNOUNCEMENT_POST -> createNotification(
-                        (Post) notificationSubject, author, group, notificationType, (Course) typeSpecificInformation);
+                        (Post) notificationSubject, author, type, notificationType, (Course) typeSpecificInformation);
                 // General Types
-                case ATTACHMENT_CHANGE -> createNotification((Attachment) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
-                case QUIZ_EXERCISE_STARTED -> createNotification((QuizExercise) notificationSubject, author, group, notificationType, (String) typeSpecificInformation);
-                case EXERCISE_UPDATED, EXERCISE_RELEASED, EXERCISE_PRACTICE -> createNotification((Exercise) notificationSubject, author, group, notificationType,
+                case ATTACHMENT_CHANGE -> createNotification((Attachment) notificationSubject, author, type, notificationType, (String) typeSpecificInformation);
+                case QUIZ_EXERCISE_STARTED -> createNotification((QuizExercise) notificationSubject, author, type, notificationType, (String) typeSpecificInformation);
+                case EXERCISE_UPDATED, EXERCISE_RELEASED, EXERCISE_PRACTICE -> createNotification((Exercise) notificationSubject, author, type, notificationType,
                         (String) typeSpecificInformation);
                 // Archive Types
-                case COURSE_ARCHIVE_STARTED, COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FAILED -> createNotification((Course) notificationSubject, author, group, notificationType,
+                case COURSE_ARCHIVE_STARTED, COURSE_ARCHIVE_FINISHED, COURSE_ARCHIVE_FAILED -> createNotification((Course) notificationSubject, author, type, notificationType,
                         (List<String>) typeSpecificInformation);
-                case EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED -> createNotification((Exam) notificationSubject, author, group, notificationType,
+                case EXAM_ARCHIVE_STARTED, EXAM_ARCHIVE_FINISHED, EXAM_ARCHIVE_FAILED -> createNotification((Exam) notificationSubject, author, type, notificationType,
                         (List<String>) typeSpecificInformation);
                 // Critical Types
-                case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, group, notificationType,
+                case DUPLICATE_TEST_CASE, ILLEGAL_SUBMISSION -> createNotification((Exercise) notificationSubject, author, type, notificationType,
                         (String) typeSpecificInformation);
                 // Additional Types
-                case PROGRAMMING_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST -> createNotification((Exercise) notificationSubject, author, group, notificationType,
+                case PROGRAMMING_TEST_CASES_CHANGED, NEW_MANUAL_FEEDBACK_REQUEST -> createNotification((Exercise) notificationSubject, author, type, notificationType,
                         (String) typeSpecificInformation);
                 default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
             };

@@ -9,7 +9,7 @@ import { Params, Router, UrlSerializer } from '@angular/router';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
-import { GroupNotification, GroupNotificationType } from 'app/entities/group-notification.model';
+import { DatabaseNotificationType, GroupNotification } from 'app/entities/group-notification.model';
 import {
     NEW_ANNOUNCEMENT_POST_TITLE,
     NEW_COURSE_POST_TITLE,
@@ -175,13 +175,13 @@ export class NotificationService {
 
     private subscribeToGroupNotificationUpdates(courses: Course[]): void {
         courses.forEach((course) => {
-            let courseTopic = `/topic/course/${course.id}/${GroupNotificationType.STUDENT}`;
+            let courseTopic = `/topic/course/${course.id}/${DatabaseNotificationType.STUDENT}`;
             if (this.accountService.isAtLeastInstructorInCourse(course)) {
-                courseTopic = `/topic/course/${course.id}/${GroupNotificationType.INSTRUCTOR}`;
+                courseTopic = `/topic/course/${course.id}/${DatabaseNotificationType.INSTRUCTOR}`;
             } else if (this.accountService.isAtLeastEditorInCourse(course)) {
-                courseTopic = `/topic/course/${course.id}/${GroupNotificationType.EDITOR}`;
+                courseTopic = `/topic/course/${course.id}/${DatabaseNotificationType.EDITOR}`;
             } else if (this.accountService.isAtLeastTutorInCourse(course)) {
-                courseTopic = `/topic/course/${course.id}/${GroupNotificationType.TA}`;
+                courseTopic = `/topic/course/${course.id}/${DatabaseNotificationType.TA}`;
             }
             if (!this.subscribedTopics.includes(courseTopic)) {
                 this.subscribedTopics.push(courseTopic);

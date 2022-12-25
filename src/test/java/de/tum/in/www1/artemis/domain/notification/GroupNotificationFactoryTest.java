@@ -72,7 +72,7 @@ class GroupNotificationFactoryTest {
 
     private NotificationType notificationType;
 
-    private DatabaseNotificationType groupNotificationType = DatabaseNotificationType.STUDENT;
+    private DatabaseNotificationType databaseNotificationType = DatabaseNotificationType.STUDENT;
 
     private static String notificationText = "notification text";
 
@@ -170,34 +170,34 @@ class GroupNotificationFactoryTest {
     private void createAndCheckNotification(Base base) {
         switch (base) {
             case ATTACHMENT: {
-                createdNotification = createNotification(attachment, user, groupNotificationType, notificationType, notificationText);
+                createdNotification = createNotification(attachment, user, databaseNotificationType, notificationType, notificationText);
                 checkCreatedNotificationWithNotificationText();
-                createdNotification = createNotification(attachment, user, groupNotificationType, notificationType, null);
+                createdNotification = createNotification(attachment, user, databaseNotificationType, notificationType, null);
                 break;
             }
             case EXERCISE: {
                 if (notificationType == DUPLICATE_TEST_CASE) {
-                    createdNotification = createNotification(programmingExercise, user, groupNotificationType, notificationType, notificationText);
+                    createdNotification = createNotification(programmingExercise, user, databaseNotificationType, notificationType, notificationText);
                     checkCreatedNotificationWithNotificationText();
                     // duplicate test cases always have a notification text
                 }
                 else {
-                    createdNotification = createNotification(exercise, user, groupNotificationType, notificationType, notificationText);
+                    createdNotification = createNotification(exercise, user, databaseNotificationType, notificationType, notificationText);
                     checkCreatedNotificationWithNotificationText();
-                    createdNotification = createNotification(exercise, user, groupNotificationType, notificationType, null);
+                    createdNotification = createNotification(exercise, user, databaseNotificationType, notificationType, null);
                 }
                 break;
             }
             case POST: {
-                createdNotification = createNotification(post, user, groupNotificationType, notificationType, course);
+                createdNotification = createNotification(post, user, databaseNotificationType, notificationType, course);
                 break;
             }
             case COURSE: {
-                createdNotification = createNotification(course, user, groupNotificationType, notificationType, archiveErrors);
+                createdNotification = createNotification(course, user, databaseNotificationType, notificationType, archiveErrors);
                 break;
             }
             case EXAM: {
-                createdNotification = createNotification(exam, user, groupNotificationType, notificationType, archiveErrors);
+                createdNotification = createNotification(exam, user, databaseNotificationType, notificationType, archiveErrors);
                 break;
             }
         }
@@ -298,11 +298,11 @@ class GroupNotificationFactoryTest {
         // EXERCISE_UPDATED's implementation differs from the other types therefore the testing has to be adjusted (more explicit)
 
         // with notification text -> exam popup
-        createdNotification = createNotification(examExercise, user, groupNotificationType, notificationType, notificationText);
+        createdNotification = createNotification(examExercise, user, databaseNotificationType, notificationType, notificationText);
         checkCreatedNotificationWithNotificationText();
 
         // without notification text -> silent exam update (expectedText = null)
-        createdNotification = createNotification(examExercise, user, groupNotificationType, notificationType, null);
+        createdNotification = createNotification(examExercise, user, databaseNotificationType, notificationType, null);
         checkCreatedNotification(createdNotification, expectedTitle, null, expectedTransientTarget, HIGH);
     }
 

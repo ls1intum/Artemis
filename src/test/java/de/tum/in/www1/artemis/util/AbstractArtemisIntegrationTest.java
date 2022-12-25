@@ -32,6 +32,7 @@ import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import jakarta.mail.internet.MimeMessage;
 
 /**
  * this test should be completely independent of any profiles or configurations (e.g. VCS, CIS)

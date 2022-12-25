@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest.errors;
 
-import static javax.servlet.RequestDispatcher.ERROR_EXCEPTION;
+import static jakarta.servlet.RequestDispatcher.ERROR_EXCEPTION;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.web.context.request.RequestAttributes.SCOPE_REQUEST;
 import static org.zalando.problem.Status.BAD_REQUEST;

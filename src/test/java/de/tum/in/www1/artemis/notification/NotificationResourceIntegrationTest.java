@@ -134,14 +134,14 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testGetNotifications_groupNotificationTypeEvaluation_asStudent() throws Exception {
-        GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
+    void testGetNotifications_databaseNotificationTypeEvaluation_asStudent() throws Exception {
+        GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.STUDENT);
         notificationRepository.save(notificationStudent);
-        GroupNotification notificationTutor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.TA);
+        GroupNotification notificationTutor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.TA);
         notificationRepository.save(notificationTutor);
-        GroupNotification notificationEditor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.EDITOR);
+        GroupNotification notificationEditor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.EDITOR);
         notificationRepository.save(notificationEditor);
-        GroupNotification notificationInstructor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.INSTRUCTOR);
+        GroupNotification notificationInstructor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.INSTRUCTOR);
         notificationRepository.save(notificationInstructor);
 
         List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
@@ -153,14 +153,14 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetNotifications_groupNotificationTypeEvaluation_asTutor() throws Exception {
-        GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
+    void testGetNotifications_databaseNotificationTypeEvaluation_asTutor() throws Exception {
+        GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.STUDENT);
         notificationRepository.save(notificationStudent);
-        GroupNotification notificationTutor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.TA);
+        GroupNotification notificationTutor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.TA);
         notificationRepository.save(notificationTutor);
-        GroupNotification notificationEditor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.EDITOR);
+        GroupNotification notificationEditor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.EDITOR);
         notificationRepository.save(notificationEditor);
-        GroupNotification notificationInstructor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.INSTRUCTOR);
+        GroupNotification notificationInstructor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.INSTRUCTOR);
         notificationRepository.save(notificationInstructor);
 
         List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
@@ -172,14 +172,14 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testGetNotifications_groupNotificationTypeEvaluation_asEditor() throws Exception {
-        GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
+    void testGetNotifications_databaseNotificationTypeEvaluation_asEditor() throws Exception {
+        GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.STUDENT);
         notificationRepository.save(notificationStudent);
-        GroupNotification notificationTutor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.TA);
+        GroupNotification notificationTutor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.TA);
         notificationRepository.save(notificationTutor);
-        GroupNotification notificationEditor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.EDITOR);
+        GroupNotification notificationEditor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.EDITOR);
         notificationRepository.save(notificationEditor);
-        GroupNotification notificationInstructor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.INSTRUCTOR);
+        GroupNotification notificationInstructor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.INSTRUCTOR);
         notificationRepository.save(notificationInstructor);
 
         List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);
@@ -191,14 +191,14 @@ class NotificationResourceIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetNotifications_groupNotificationTypeEvaluation_asInstructor() throws Exception {
-        GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.STUDENT);
+    void testGetNotifications_databaseNotificationTypeEvaluation_asInstructor() throws Exception {
+        GroupNotification notificationStudent = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.STUDENT);
         notificationRepository.save(notificationStudent);
-        GroupNotification notificationTutor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.TA);
+        GroupNotification notificationTutor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.TA);
         notificationRepository.save(notificationTutor);
-        GroupNotification notificationEditor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.EDITOR);
+        GroupNotification notificationEditor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.EDITOR);
         notificationRepository.save(notificationEditor);
-        GroupNotification notificationInstructor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, GroupNotificationType.INSTRUCTOR);
+        GroupNotification notificationInstructor = ModelFactory.generateGroupNotification(ZonedDateTime.now(), course1, DatabaseNotificationType.INSTRUCTOR);
         notificationRepository.save(notificationInstructor);
 
         List<Notification> notifications = request.getList("/api/notifications", HttpStatus.OK, Notification.class);

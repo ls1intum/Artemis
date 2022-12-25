@@ -36,6 +36,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import jakarta.annotation.Nullable;
 
 @Service
 public class RequestUtilService {

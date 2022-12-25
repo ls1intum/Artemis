@@ -8,8 +8,6 @@ import static org.mockito.Mockito.*;
 import java.time.ZonedDateTime;
 import java.util.Set;
 
-import javax.mail.internet.MimeMessage;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

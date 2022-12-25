@@ -21,8 +21,6 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
-import javax.validation.constraints.NotNull;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -280,9 +278,6 @@ public class DatabaseUtilService {
     private ModelingExerciseRepository modelingExerciseRepository;
 
     @Autowired
-    private DatabaseCleanupService databaseCleanupService;
-
-    @Autowired
     private AuxiliaryRepositoryRepository auxiliaryRepositoryRepository;
 
     @Autowired
@@ -396,16 +391,6 @@ public class DatabaseUtilService {
             generatedUsers.add(user);
         }
         return generatedUsers;
-    }
-
-    private User activateUser(final User user) {
-        if (user.getActivated()) {
-            return user;
-        }
-        else {
-            user.setActivated(true);
-            return userRepo.save(user);
-        }
     }
 
     /**

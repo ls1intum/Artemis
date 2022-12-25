@@ -21,12 +21,12 @@ public class GroupNotificationFactory {
      *
      * @param attachment            for which a notification should be created
      * @param author                of the notification
-     * @param groupNotificationType user group type the notification should target
+     * @param databaseNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
      * @param notificationText      custom notification text
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Attachment attachment, User author, DatabaseNotificationType groupNotificationType, NotificationType notificationType,
+    public static GroupNotification createNotification(Attachment attachment, User author, DatabaseNotificationType databaseNotificationType, NotificationType notificationType,
             String notificationText) {
         String title;
         String text;
@@ -51,7 +51,7 @@ public class GroupNotificationFactory {
             lecture = attachment.getLecture();
         }
         Course course = lecture.getCourse();
-        GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
+        GroupNotification notification = new GroupNotification(course, title, text, author, databaseNotificationType);
 
         notification.setTransientAndStringTarget(createAttachmentUpdatedTarget(lecture));
 
@@ -63,12 +63,12 @@ public class GroupNotificationFactory {
      *
      * @param exercise              for which a notification should be created
      * @param author                of the notification
-     * @param groupNotificationType user group type the notification should target
+     * @param databaseNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
      * @param notificationText      custom notification text
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Exercise exercise, User author, DatabaseNotificationType groupNotificationType, NotificationType notificationType,
+    public static GroupNotification createNotification(Exercise exercise, User author, DatabaseNotificationType databaseNotificationType, NotificationType notificationType,
             String notificationText) {
         String title;
         String text;
@@ -127,7 +127,7 @@ public class GroupNotificationFactory {
             text = notificationText;
         }
 
-        GroupNotification notification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), title, text, author, groupNotificationType, priority);
+        GroupNotification notification = new GroupNotification(exercise.getCourseViaExerciseGroupOrCourseMember(), title, text, author, databaseNotificationType, priority);
 
         // Exercises for exams
         if (exercise.isExamExercise()) {
@@ -157,12 +157,13 @@ public class GroupNotificationFactory {
      *
      * @param post              for which a notification should be created
      * @param author                of the notification
-     * @param groupNotificationType user group type the notification should target
+     * @param databaseNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
      * @param course                the post belongs to
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Post post, User author, DatabaseNotificationType groupNotificationType, NotificationType notificationType, Course course) {
+    public static GroupNotification createNotification(Post post, User author, DatabaseNotificationType databaseNotificationType, NotificationType notificationType,
+            Course course) {
         String title;
         String text;
         GroupNotification notification;
@@ -171,46 +172,46 @@ public class GroupNotificationFactory {
                 Exercise exercise = post.getExercise();
                 title = NEW_EXERCISE_POST_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new post.";
-                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification = new GroupNotification(course, title, text, author, databaseNotificationType);
                 notification.setTransientAndStringTarget(createExercisePostTarget(post, course));
             }
             case NEW_LECTURE_POST -> {
                 Lecture lecture = post.getLecture();
                 title = NEW_LECTURE_POST_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new post.";
-                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification = new GroupNotification(course, title, text, author, databaseNotificationType);
                 notification.setTransientAndStringTarget(createLecturePostTarget(post, course));
             }
             case NEW_COURSE_POST -> {
                 title = NEW_COURSE_POST_TITLE;
                 text = "Course \"" + course.getTitle() + "\" got a new course-wide post.";
-                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification = new GroupNotification(course, title, text, author, databaseNotificationType);
                 notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
             }
             case NEW_ANNOUNCEMENT_POST -> {
                 title = NEW_ANNOUNCEMENT_POST_TITLE;
                 text = "Course \"" + course.getTitle() + "\" got a new announcement.";
-                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification = new GroupNotification(course, title, text, author, databaseNotificationType);
                 notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
             }
             case NEW_REPLY_FOR_EXERCISE_POST -> {
                 Exercise exercise = post.getExercise();
                 title = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
                 text = "Exercise \"" + exercise.getTitle() + "\" got a new reply.";
-                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification = new GroupNotification(course, title, text, author, databaseNotificationType);
                 notification.setTransientAndStringTarget(createExercisePostTarget(post, course));
             }
             case NEW_REPLY_FOR_LECTURE_POST -> {
                 Lecture lecture = post.getLecture();
                 title = NEW_REPLY_FOR_LECTURE_POST_TITLE;
                 text = "Lecture \"" + lecture.getTitle() + "\" got a new reply.";
-                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification = new GroupNotification(course, title, text, author, databaseNotificationType);
                 notification.setTransientAndStringTarget(createLecturePostTarget(post, course));
             }
             case NEW_REPLY_FOR_COURSE_POST -> {
                 title = NEW_REPLY_FOR_COURSE_POST_TITLE;
                 text = "Course-wide post in course \"" + course.getTitle() + "\" got a new reply.";
-                notification = new GroupNotification(course, title, text, author, groupNotificationType);
+                notification = new GroupNotification(course, title, text, author, databaseNotificationType);
                 notification.setTransientAndStringTarget(createCoursePostTarget(post, course));
             }
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
@@ -223,12 +224,12 @@ public class GroupNotificationFactory {
      *
      * @param course                the course being archived
      * @param author                of the notification
-     * @param groupNotificationType user group type the notification should target
+     * @param databaseNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
      * @param archiveErrors         a list of errors that occurred during archiving
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Course course, User author, DatabaseNotificationType groupNotificationType, NotificationType notificationType,
+    public static GroupNotification createNotification(Course course, User author, DatabaseNotificationType databaseNotificationType, NotificationType notificationType,
             List<String> archiveErrors) {
         String title;
         String text;
@@ -252,7 +253,7 @@ public class GroupNotificationFactory {
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
-        GroupNotification notification = new GroupNotification(course, title, text, author, groupNotificationType);
+        GroupNotification notification = new GroupNotification(course, title, text, author, databaseNotificationType);
         notification.setTransientAndStringTarget(createCourseTarget(course, COURSE_ARCHIVE_UPDATED_TEXT));
         return notification;
     }
@@ -262,12 +263,12 @@ public class GroupNotificationFactory {
      *
      * @param exam                  the exam being archived
      * @param author                of the notification
-     * @param groupNotificationType user group type the notification should target
+     * @param databaseNotificationType user group type the notification should target
      * @param notificationType      type of the notification that should be created
      * @param archiveErrors         a list of errors that occurred during archiving
      * @return an instance of GroupNotification
      */
-    public static GroupNotification createNotification(Exam exam, User author, DatabaseNotificationType groupNotificationType, NotificationType notificationType,
+    public static GroupNotification createNotification(Exam exam, User author, DatabaseNotificationType databaseNotificationType, NotificationType notificationType,
             List<String> archiveErrors) {
         String title;
         String text;
@@ -291,7 +292,7 @@ public class GroupNotificationFactory {
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         }
 
-        GroupNotification notification = new GroupNotification(exam.getCourse(), title, text, author, groupNotificationType);
+        GroupNotification notification = new GroupNotification(exam.getCourse(), title, text, author, databaseNotificationType);
         notification.setTransientAndStringTarget(createCourseTarget(exam.getCourse(), "examArchiveUpdated"));
         return notification;
     }

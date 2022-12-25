@@ -5,8 +5,6 @@ import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
 import java.util.Map;
 
-import javax.servlet.http.HttpServletResponse;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +28,7 @@ import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
+import jakarta.servlet.http.HttpServletResponse;
 
 /**
  * Test base for {@link UserJWTController#authorizeSAML2(String, HttpServletResponse)}} and {@link SAML2Service}.

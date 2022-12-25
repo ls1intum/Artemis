@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.domain.enumeration;
 
 /**
- * The GroupNotificationType enumeration.
+ * The DatabaseNotificationType enumeration.
  */
 public enum DatabaseNotificationType {
     // SystemNotification types
