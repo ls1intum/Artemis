@@ -136,7 +136,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     getExerciseParticipationsLink(participationId: number): string[] {
-        return !!this.exercise.exerciseGroup
+        return this.exercise.exerciseGroup
             ? [
                   '/course-management',
                   this.course.id!.toString(),

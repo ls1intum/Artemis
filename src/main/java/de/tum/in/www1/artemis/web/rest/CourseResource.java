@@ -155,10 +155,10 @@ public class CourseResource {
         // this is important, otherwise someone could put himself into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
-        Set<String> existingGroupNames = Set.of(existingCourse.getStudentGroupName(), existingCourse.getTeachingAssistantGroupName(), existingCourse.getEditorGroupName(),
-                existingCourse.getInstructorGroupName());
-        Set<String> newGroupNames = Set.of(courseUpdate.getStudentGroupName(), courseUpdate.getTeachingAssistantGroupName(), courseUpdate.getEditorGroupName(),
-                courseUpdate.getInstructorGroupName());
+        Set<String> existingGroupNames = new HashSet<>(List.of(existingCourse.getStudentGroupName(), existingCourse.getTeachingAssistantGroupName(),
+                existingCourse.getEditorGroupName(), existingCourse.getInstructorGroupName()));
+        Set<String> newGroupNames = new HashSet<>(List.of(courseUpdate.getStudentGroupName(), courseUpdate.getTeachingAssistantGroupName(), courseUpdate.getEditorGroupName(),
+                courseUpdate.getInstructorGroupName()));
         Set<String> changedGroupNames = new HashSet<>(newGroupNames);
         changedGroupNames.removeAll(existingGroupNames);
 
@@ -315,6 +315,7 @@ public class CourseResource {
     public List<Course> getAllCourses(@RequestParam(defaultValue = "false") boolean onlyActive) {
         log.debug("REST request to get all Courses the user has access to");
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        // TODO: we should avoid findAll() and instead try to filter this directly in the database, in case of admins, we should load batches of courses, e.g. per semester
         List<Course> courses = courseRepository.findAll();
         Stream<Course> userCourses = courses.stream().filter(course -> user.getGroups().contains(course.getTeachingAssistantGroupName())
                 || user.getGroups().contains(course.getInstructorGroupName()) || authCheckService.isAdmin(user));
@@ -972,7 +973,7 @@ public class CourseResource {
     public ResponseEntity<Void> removeStudentFromCourse(@PathVariable Long courseId, @PathVariable String studentLogin) {
         log.debug("REST request to remove {} as student from course : {}", studentLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName(), Role.STUDENT);
+        return removeUserFromCourseGroup(studentLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getStudentGroupName());
     }
 
     /**
@@ -987,7 +988,7 @@ public class CourseResource {
     public ResponseEntity<Void> removeTutorFromCourse(@PathVariable Long courseId, @PathVariable String tutorLogin) {
         log.debug("REST request to remove {} as tutor from course : {}", tutorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName(), Role.TEACHING_ASSISTANT);
+        return removeUserFromCourseGroup(tutorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getTeachingAssistantGroupName());
     }
 
     /**
@@ -1002,7 +1003,7 @@ public class CourseResource {
     public ResponseEntity<Void> removeEditorFromCourse(@PathVariable Long courseId, @PathVariable String editorLogin) {
         log.debug("REST request to remove {} as editor from course : {}", editorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName(), Role.EDITOR);
+        return removeUserFromCourseGroup(editorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getEditorGroupName());
     }
 
     /**
@@ -1018,7 +1019,7 @@ public class CourseResource {
     public ResponseEntity<Void> removeInstructorFromCourse(@PathVariable Long courseId, @PathVariable String instructorLogin) {
         log.debug("REST request to remove {} as instructor from course : {}", instructorLogin, courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
-        return removeUserFromCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName(), Role.INSTRUCTOR);
+        return removeUserFromCourseGroup(instructorLogin, userRepository.getUserWithGroupsAndAuthorities(), course, course.getInstructorGroupName());
     }
 
     /**
@@ -1028,11 +1029,10 @@ public class CourseResource {
      * @param instructorOrAdmin the user who initiates this request who must be an instructor of the given course or an admin
      * @param course            the course which is only passes to check if the instructorOrAdmin is an instructor of the course
      * @param group             the group from which the userLogin should be removed
-     * @param role              the role which should be removed
      * @return empty ResponseEntity with status 200 (OK) or with status 404 (Not Found) or with status 403 (Forbidden)
      */
     @NotNull
-    public ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group, Role role) {
+    public ResponseEntity<Void> removeUserFromCourseGroup(String userLogin, User instructorOrAdmin, Course course, String group) {
         if (!authCheckService.isAtLeastInstructorInCourse(course, instructorOrAdmin)) {
             throw new AccessForbiddenException();
         }
@@ -1040,7 +1040,7 @@ public class CourseResource {
         if (userToRemoveFromGroup.isEmpty()) {
             throw new EntityNotFoundException("User", userLogin);
         }
-        courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group, role);
+        courseService.removeUserFromGroup(userToRemoveFromGroup.get(), group);
         return ResponseEntity.ok().body(null);
     }
 

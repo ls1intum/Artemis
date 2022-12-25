@@ -8,6 +8,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -18,6 +19,8 @@ import de.tum.in.www1.artemis.util.UserTestService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "userbamb"; // shorter prefix as user's name is limited to 50 chars
 
     @Autowired
     private UserTestService userTestService;
@@ -30,13 +33,14 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
 
     @BeforeEach
     void setUp() throws Exception {
-        userTestService.setup(this);
+        userTestService.setup(TEST_PREFIX, this);
         jiraRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
     void teardown() throws IOException {
+        userRepository.deleteAll(userRepository.searchAllByLoginOrName(Pageable.unpaged(), TEST_PREFIX));
         bitbucketRequestMockProvider.reset();
         userTestService.tearDown();
     }
@@ -67,13 +71,13 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateUser_asInstructor_forbidden() throws Exception {
         request.put("/api/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void updateUser_asTutor_forbidden() throws Exception {
         request.put("/api/admin/users", new ManagedUserVM(userTestService.getStudent()), HttpStatus.FORBIDDEN);
     }
@@ -93,8 +97,7 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
         student.setInternal(true);
         student = userRepository.save(student);
         student.setFirstName("changed");
-        jiraRequestMockProvider.mockIsGroupAvailable("testgroup");
-        jiraRequestMockProvider.mockIsGroupAvailable("tumuser");
+        student.getGroups().forEach(groupName -> jiraRequestMockProvider.mockIsGroupAvailable(groupName));
         bitbucketRequestMockProvider.mockUpdateUserDetails(student.getLogin(), student.getEmail(), student.getName(), false);
         bitbucketRequestMockProvider.mockUpdateUserPassword(student.getLogin(), "newPassword", true, false);
 
@@ -118,7 +121,7 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createInternalUser_asAdmin_isSuccessful() throws Exception {
         bitbucketRequestMockProvider.mockUserDoesNotExist("batman");
-        bitbucketRequestMockProvider.mockCreateUser("batman", "foobar1234", "batman@secret.invalid", "student1First student1Last");
+        bitbucketRequestMockProvider.mockCreateUser("batman", "foobar1234", "batman@secret.invalid", TEST_PREFIX + "student1First " + TEST_PREFIX + "student1Last");
         bitbucketRequestMockProvider.mockAddUserToGroups();
         userTestService.createInternalUser_asAdmin_isSuccessful();
     }
@@ -145,6 +148,7 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
         bitbucketRequestMockProvider.mockUserExists("batman");
         userTestService.createUser_withNullAsPassword_generatesRandomPassword();
     }
@@ -167,8 +171,8 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteUser_isSuccessful() throws Exception {
-        bitbucketRequestMockProvider.mockDeleteUser("student1", false);
-        bitbucketRequestMockProvider.mockEraseDeletedUser("student1");
+        bitbucketRequestMockProvider.mockDeleteUser(TEST_PREFIX + "student1", false);
+        bitbucketRequestMockProvider.mockEraseDeletedUser(TEST_PREFIX + "student1");
         userTestService.deleteUser_isSuccessful();
     }
 
@@ -191,7 +195,7 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void searchUsers_asInstructor_isSuccessful() throws Exception {
         userTestService.searchUsers_asInstructor_isSuccessful();
     }
@@ -203,7 +207,7 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void searchUsers_asTutor_forbidden() throws Exception {
         userTestService.searchUsers_asTutor_forbidden();
     }
@@ -221,19 +225,19 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getUsersOrAuthorities_asInstructor_forbidden() throws Exception {
         userTestService.getUsersOrAuthorities_asInstructor_forbidden();
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getUsersOrAuthorities_asTutor_forbidden() throws Exception {
         userTestService.getUsersOrAuthorities_asTutor_forbidden();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getUsersOrAuthorities_asStudent_forbidden() throws Exception {
         userTestService.getUsersOrAuthorities_asStudent_forbidden();
     }
@@ -245,25 +249,25 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void updateUserNotificationDate_asStudent_isSuccessful() throws Exception {
         userTestService.updateUserNotificationDate_asStudent_isSuccessful();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void updateUserNotificationVisibility_showAll_asStudent_isSuccessful() throws Exception {
         userTestService.updateUserNotificationVisibilityShowAllAsStudentIsSuccessful();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void updateUserNotificationVisibility_hideUntil_asStudent_isSuccessful() throws Exception {
         userTestService.updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUser() throws Exception {
         bitbucketRequestMockProvider.mockUserExists(userTestService.student.getLogin());
         bitbucketRequestMockProvider.mockUpdateUserDetails(userTestService.student.getLogin(), userTestService.student.getEmail(), userTestService.student.getName());
@@ -272,19 +276,19 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUserWithoutFlag() throws Exception {
         userTestService.initializeUserWithoutFlag();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUserNonLTI() throws Exception {
         userTestService.initializeUserNonLTI();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void initializeUserExternal() throws Exception {
         userTestService.initializeUserExternal();
     }

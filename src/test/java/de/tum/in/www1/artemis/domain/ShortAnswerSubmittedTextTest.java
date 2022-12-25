@@ -16,8 +16,7 @@ class ShortAnswerSubmittedTextTest {
     private ShortAnswerQuestion shortAnswerQuestion;
 
     /**
-     * @func init
-     * @desc initialize attributes for test cases
+     * initialize attributes for test cases
      */
     @BeforeEach
     void init() {
@@ -29,8 +28,8 @@ class ShortAnswerSubmittedTextTest {
     }
 
     /**
-     * @func testSubmissionWithMatchingLetterCaseAndExactMatching
-     * @desc tests {@link ShortAnswerSubmittedText#isSubmittedTextCorrect(String, String)} with similarity value 100 and letter case matching
+     * testSubmissionWithMatchingLetterCaseAndExactMatching
+     * tests {@link ShortAnswerSubmittedText#isSubmittedTextCorrect(String, String)} with similarity value 100 and letter case matching
      */
     @Test
     void testSubmissionWithMatchingLetterCaseAndExactMatching() {
