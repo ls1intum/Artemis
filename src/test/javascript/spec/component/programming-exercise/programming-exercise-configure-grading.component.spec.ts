@@ -44,7 +44,6 @@ import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/p
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbAlert, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { NgModel } from '@angular/forms';
 import { TestCaseDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/test-case-distribution-chart.component';
 import { ScaCategoryDistributionChartComponent } from 'app/exercises/programming/manage/grading/charts/sca-category-distribution-chart.component';
@@ -55,6 +54,7 @@ import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -210,7 +210,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule)],
+            imports: [ArtemisTestModule, NgxDatatableModule, MockModule(TranslateTestingModule), MockModule(NgbTooltipModule)],
             declarations: [
                 ProgrammingExerciseConfigureGradingComponent,
                 ProgrammingExerciseConfigureGradingStatusComponent,
@@ -225,12 +225,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 MockComponent(TestCaseDistributionChartComponent),
                 MockComponent(CategoryIssuesChartComponent),
                 MockComponent(ScaCategoryDistributionChartComponent),
-                MockComponent(NgbAlert),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(NgModel),
-                MockDirective(NgbPopover),
-                MockDirective(NgbTooltip),
                 MockDirective(TranslateDirective),
             ],
             providers: [

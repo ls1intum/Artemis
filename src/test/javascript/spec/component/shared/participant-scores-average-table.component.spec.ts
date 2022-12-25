@@ -20,14 +20,8 @@ describe('ParticipantScoresAverageTable', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxDatatableModule, NgbTooltipModule, TranslateModule.forRoot()],
-            declarations: [
-                ParticipantScoresAverageTableComponent,
-                MockDirective(TranslateDirective),
-                MockPipe(ArtemisTranslatePipe),
-                DataTableComponent,
-                MockDirective(NgbTypeahead),
-            ],
+            imports: [ArtemisTestModule, NgxDatatableModule, NgbTooltipModule, TranslateModule.forRoot(), MockDirective(NgbTypeahead)],
+            declarations: [ParticipantScoresAverageTableComponent, MockDirective(TranslateDirective), MockPipe(ArtemisTranslatePipe), DataTableComponent],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 {

@@ -7,7 +7,6 @@ import java.util.List;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.JoinTable;
@@ -53,18 +52,5 @@ public class DatabaseCleanupService implements InitializingBean {
             var joinTableAnnotation = AnnotationUtils.findAnnotation((Field) attribute.getJavaMember(), JoinTable.class);
             return joinTableAnnotation.name();
         }).toList();
-    }
-
-    /**
-     * Utility method that truncates all identified tables
-     */
-    @Transactional // ok
-    public void clearDatabase() {
-        entityManager.flush();
-        entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY FALSE").executeUpdate();
-        tableNames.forEach(tableName -> entityManager.createNativeQuery("TRUNCATE TABLE " + tableName).executeUpdate());
-        joinTableNames.forEach(joinTableName -> entityManager.createNativeQuery("TRUNCATE TABLE " + joinTableName).executeUpdate());
-        entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY TRUE").executeUpdate();
-
     }
 }

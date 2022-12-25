@@ -1,14 +1,17 @@
 package de.tum.in.www1.artemis.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.json.simple.JSONObject;
+import javax.servlet.FilterChain;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -72,9 +75,11 @@ class Lti13LaunchFilterTest {
 
     private final Map<String, Object> idTokenClaims = new HashMap<>();
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void init() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         launchFilter = new Lti13LaunchFilter(defaultFilter, CustomLti13Configurer.LTI13_LOGIN_PATH, lti13Service);
         SecurityContextHolder.setContext(securityContext);
         doReturn(authentication).when(securityContext).getAuthentication();
@@ -91,6 +96,14 @@ class Lti13LaunchFilterTest {
         oidcToken = new OidcAuthenticationToken(oidcUser, null, "some-registration", "some-state");
 
         targetLinkUri = "https://any-artemis-domain.org/course/123/exercise/1234";
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
+        reset(defaultFilter, lti13Service, responseWriter, filterChain, httpResponse, httpRequest, securityContext, authentication, idToken);
     }
 
     private void initValidIdToken() {
@@ -122,7 +135,7 @@ class Lti13LaunchFilterTest {
         verify(responseWriter).print(argument.capture());
         JSONObject responseJsonBody = argument.getValue();
         verify(lti13Service).buildLtiResponse(any(), any());
-        assertThat(((String) responseJsonBody.get("targetLinkUri")).contains(this.targetLinkUri)).as("Response body contains the expected targetLinkUri");
+        assertThat(((String) responseJsonBody.get("targetLinkUri"))).as("Response body contains the expected targetLinkUri").contains(this.targetLinkUri);
     }
 
     @Test

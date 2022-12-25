@@ -33,6 +33,7 @@ export class RemoveAuxiliaryRepositoryButtonComponent {
      * Removes the auxiliary repository of the selected row from the respective programming exercise.
      */
     removeAuxiliaryRepository() {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const auxRepoIndex = this.programmingExercise.auxiliaryRepositories?.indexOf(this.row)!;
         this.programmingExercise.auxiliaryRepositories?.splice(auxRepoIndex, 1); // Note: splice changes the array auxiliaryRepositories in place
         this.onRefresh.emit();

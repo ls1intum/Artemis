@@ -21,7 +21,6 @@ import jakarta.persistence.*;
 public class TextExercise extends Exercise {
 
     @Column(name = "example_solution")
-    @Lob
     private String exampleSolution;
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE)

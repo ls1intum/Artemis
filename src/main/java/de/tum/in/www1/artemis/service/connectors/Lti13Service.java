@@ -116,7 +116,7 @@ public class Lti13Service {
      * @return the username for the LTI user
      */
     @NotNull
-    protected String createUsernameFromLaunchRequest(OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
+    public String createUsernameFromLaunchRequest(OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username;
 
         if (!StringUtils.isEmpty(ltiIdToken.getPreferredUsername())) {

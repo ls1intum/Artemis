@@ -295,13 +295,8 @@ public class UserCreationService {
         user.setActivated(true);
         userRepository.save(user);
 
-        optionalCIUserManagementService.ifPresent(service -> {
-            service.updateUser(user, newPassword);
-        });
-
-        optionalVcsUserManagementService.ifPresent(service -> {
-            service.updateVcsUser(user.getLogin(), user, new HashSet<>(), new HashSet<>(), newPassword);
-        });
+        optionalCIUserManagementService.ifPresent(service -> service.updateUser(user, newPassword));
+        optionalVcsUserManagementService.ifPresent(service -> service.updateVcsUser(user.getLogin(), user, new HashSet<>(), new HashSet<>(), newPassword));
 
         return newPassword;
     }

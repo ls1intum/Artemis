@@ -145,7 +145,7 @@ describe('Exam date verification', () => {
     });
 
     after(() => {
-        if (!!course) {
+        if (course) {
             cy.login(artemis.users.getAdmin());
             courseManagementRequests.deleteCourse(course.id!);
         }

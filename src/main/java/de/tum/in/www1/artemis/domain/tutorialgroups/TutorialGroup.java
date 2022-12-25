@@ -32,7 +32,6 @@ public class TutorialGroup extends DomainObject {
     private String title;
 
     @Column(name = "additional_information")
-    @Lob
     private String additionalInformation;
 
     @Column(name = "capacity")

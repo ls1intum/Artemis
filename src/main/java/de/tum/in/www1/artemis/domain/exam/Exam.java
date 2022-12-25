@@ -9,9 +9,7 @@ import java.util.Set;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -81,23 +79,19 @@ public class Exam extends DomainObject {
     private int workingTime;
 
     @Column(name = "start_text")
-    @Lob
     private String startText;
 
     @Column(name = "end_text")
-    @Lob
     private String endText;
 
     @Column(name = "confirmation_start_text")
-    @Lob
     private String confirmationStartText;
 
     @Column(name = "confirmation_end_text")
-    @Lob
     private String confirmationEndText;
 
     @Column(name = "max_points")
-    private Integer maxPoints;
+    private Integer examMaxPoints;
 
     @Column(name = "randomize_exercise_order")
     private Boolean randomizeExerciseOrder;
@@ -271,12 +265,12 @@ public class Exam extends DomainObject {
         this.confirmationEndText = confirmationEndText;
     }
 
-    public int getMaxPoints() {
-        return this.maxPoints == null ? 0 : this.maxPoints;
+    public int getExamMaxPoints() {
+        return this.examMaxPoints == null ? 0 : this.examMaxPoints;
     }
 
-    public void setMaxPoints(Integer maxPoints) {
-        this.maxPoints = maxPoints;
+    public void setExamMaxPoints(Integer examMaxPoints) {
+        this.examMaxPoints = examMaxPoints;
     }
 
     public Integer getNumberOfExercisesInExam() {
@@ -387,7 +381,6 @@ public class Exam extends DomainObject {
         this.registeredUsers.remove(user);
     }
 
-    // needed for Jackson
     public Long getNumberOfRegisteredUsers() {
         return this.numberOfRegisteredUsersTransient;
     }
@@ -396,11 +389,20 @@ public class Exam extends DomainObject {
         this.numberOfRegisteredUsersTransient = numberOfRegisteredUsers;
     }
 
+    public String getExamArchivePath() {
+        return examArchivePath;
+    }
+
+    public void setExamArchivePath(String examArchivePath) {
+        this.examArchivePath = examArchivePath;
+    }
+
     /**
      * check if students are allowed to see this exam
      *
      * @return true, if students are allowed to see this exam, otherwise false, null if this cannot be determined
      */
+    @JsonIgnore
     public Boolean isVisibleToStudents() {
         if (visibleDate == null) {  // no visible date means the exam is configured wrongly and should not be visible!
             return null;
@@ -413,6 +415,7 @@ public class Exam extends DomainObject {
      *
      * @return true, if the exam has started, otherwise false, null if this cannot be determined
      */
+    @JsonIgnore
     public Boolean isStarted() {
         if (startDate == null) {   // no start date means the exam is configured wrongly and we cannot answer the question!
             return null;
@@ -425,6 +428,7 @@ public class Exam extends DomainObject {
      *
      * @return true, if the results are published, false if not published or not set!
      */
+    @JsonIgnore
     public Boolean resultsPublished() {
         if (publishResultsDate == null) {
             return false;
@@ -442,16 +446,9 @@ public class Exam extends DomainObject {
         return ZonedDateTime.now().isAfter(getStartDate().plusSeconds(getStudentExams().stream().mapToInt(StudentExam::getWorkingTime).max().orElse(0)));
     }
 
+    @JsonIgnore
     public boolean hasExamArchive() {
         return examArchivePath != null && !examArchivePath.isEmpty();
-    }
-
-    public String getExamArchivePath() {
-        return examArchivePath;
-    }
-
-    public void setExamArchivePath(String examArchivePath) {
-        this.examArchivePath = examArchivePath;
     }
 
     /**

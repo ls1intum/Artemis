@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
+import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601DateString;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDate;
@@ -122,6 +124,10 @@ public class TutorialGroupsConfigurationResource {
     private static void isValidTutorialGroupConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
         if (tutorialGroupsConfiguration.getTutorialPeriodStartInclusive() == null || tutorialGroupsConfiguration.getTutorialPeriodEndInclusive() == null) {
             throw new BadRequestAlertException("Tutorial period start and end must be set", ENTITY_NAME, "illegalConfiguration");
+        }
+        if (!isIso8601DateString(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive())
+                || !isIso8601DateString(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive())) {
+            throw new BadRequestAlertException("Tutorial period start and end must be valid ISO 8601 date strings", ENTITY_NAME, "invalidDate");
         }
         if (LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive()).isAfter(LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive()))) {
             throw new BadRequestAlertException("Tutorial period start must be before tutorial period end", ENTITY_NAME, "illegalConfiguration");

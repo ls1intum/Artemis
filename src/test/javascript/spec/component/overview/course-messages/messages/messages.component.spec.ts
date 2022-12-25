@@ -6,8 +6,7 @@ import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -20,7 +19,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ItemCountComponent } from 'app/shared/pagination/item-count.component';
-
 import { MockExerciseService } from '../../../../helpers/mocks/service/mock-exercise.service';
 import { conversationsOfUser1, messagesBetweenUser1User2, metisCourse } from '../../../../helpers/sample/metis-sample-data';
 import { MockAnswerPostService } from '../../../../helpers/mocks/service/mock-answer-post.service';
@@ -31,6 +29,7 @@ import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-
 import { MessagesComponent } from 'app/overview/course-messages/messages/messages.component';
 import { MessageInlineInputComponent } from 'app/shared/metis/message/message-inline-input/message-inline-input.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 describe('MessagesComponent', () => {
     let component: MessagesComponent;
@@ -52,7 +51,7 @@ describe('MessagesComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(InfiniteScrollModule)],
             declarations: [
                 MessagesComponent,
                 MockComponent(PostingThreadComponent),
@@ -60,7 +59,6 @@ describe('MessagesComponent', () => {
                 MockComponent(MessageInlineInputComponent),
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
                 MockComponent(ButtonComponent),
                 MockComponent(ItemCountComponent),
             ],

@@ -24,7 +24,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                 LEFT JOIN notification.course
                 LEFT JOIN notification.recipient
             WHERE notification.notificationDate IS NOT NULL
-                AND (:hideUntil IS NULL OR notification.notificationDate > :hideUntil)
+                AND (cast(:hideUntil as timestamp) IS NULL OR notification.notificationDate > :hideUntil)
                 AND (
                     (TYPE(notification) = GroupNotification
                         AND ((notification.course.instructorGroupName IN :currentGroups AND notification.type = 'INSTRUCTOR')
@@ -46,7 +46,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                 LEFT JOIN notification.course
                 LEFT JOIN notification.recipient
             WHERE notification.notificationDate IS NOT NULL
-                AND (:hideUntil IS NULL OR notification.notificationDate > :hideUntil)
+                AND (cast(:hideUntil as timestamp) IS NULL OR notification.notificationDate > :hideUntil)
                 AND (
                      (TYPE(notification) = GroupNotification
                         AND (notification.title NOT IN :deactivatedTitles

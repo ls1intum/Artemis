@@ -52,7 +52,6 @@ public class Course extends DomainObject {
 
     @Column(name = "description")
     @JsonView(QuizView.Before.class)
-    @Lob
     private String description;
 
     @Column(name = "short_name", unique = true)
@@ -87,8 +86,8 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private String semester;
 
-    @Column(name = "test_course")
-    @JsonView(QuizView.Before.class)
+    @Column(name = "test_course", nullable = false)
+    @JsonView({ QuizView.Before.class })
     private boolean testCourse = false;
 
     @Enumerated(EnumType.STRING)
@@ -109,25 +108,29 @@ public class Course extends DomainObject {
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
-    @Column(name = "max_complaints")
+    @Column(name = "max_complaints", nullable = false)
     @JsonView(QuizView.Before.class)
-    private Integer maxComplaints;
+    private Integer maxComplaints = 3;  // default value
 
-    @Column(name = "max_team_complaints")
+    @Column(name = "max_team_complaints", nullable = false)
     @JsonView(QuizView.Before.class)
-    private Integer maxTeamComplaints;
+    private Integer maxTeamComplaints = 3;  // default value
 
-    @Column(name = "max_complaint_time_days")
+    @Column(name = "max_complaint_time_days", nullable = false)
     @JsonView(QuizView.Before.class)
-    private int maxComplaintTimeDays;
+    private int maxComplaintTimeDays = 7;   // default value
+
+    @Column(name = "max_request_more_feedback_time_days", nullable = false)
+    @JsonView(QuizView.Before.class)
+    private int maxRequestMoreFeedbackTimeDays = 7;   // default value
 
     @Column(name = "max_complaint_text_limit")
     @JsonView(QuizView.Before.class)
-    private int maxComplaintTextLimit;
+    private int maxComplaintTextLimit = 2000;
 
     @Column(name = "max_complaint_response_text_limit")
     @JsonView(QuizView.Before.class)
-    private int maxComplaintResponseTextLimit;
+    private int maxComplaintResponseTextLimit = 2000;
 
     @Column(name = "posts_enabled")
     @JsonView(QuizView.Before.class)
@@ -137,10 +140,6 @@ public class Course extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Post> posts = new HashSet<>();
-
-    @Column(name = "max_request_more_feedback_time_days")
-    @JsonView(QuizView.Before.class)
-    private int maxRequestMoreFeedbackTimeDays;
 
     @Column(name = "color")
     private String color;
@@ -163,9 +162,9 @@ public class Course extends DomainObject {
     @Column(name = "max_points")
     private Integer maxPoints;
 
-    @Column(name = "accuracy_of_scores")
+    @Column(name = "accuracy_of_scores", nullable = false)
     @JsonView(QuizView.Before.class)
-    private Integer accuracyOfScores;
+    private Integer accuracyOfScores = 1; // default value
 
     /**
      * Note: Currently just used in the scope of the tutorial groups feature

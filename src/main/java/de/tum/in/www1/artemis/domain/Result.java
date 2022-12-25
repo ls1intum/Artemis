@@ -459,7 +459,7 @@ public class Result extends DomainObject {
     /**
      * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
      * their assessor.
-     *
+     * <p>
      * Does not filter feedbacks.
      */
     public void filterSensitiveInformation() {
@@ -476,6 +476,7 @@ public class Result extends DomainObject {
         if (isBeforeDueDate) {
             feedbacks.removeIf(Feedback::isAfterDueDate);
         }
+        // TODO: this is not good code!
         setTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).count());
         setPassedTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
     }

@@ -59,7 +59,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
      */
     @CollectionTable(name = "plagiarism_result_similarity_distribution", joinColumns = @JoinColumn(name = "plagiarism_result_id"))
     @MapKeyColumn(name = "idx")
-    @Column(name = "the_value")  // TODO: we need to rename the column with liquibase because "end" is a preserved keyword in H2
+    @Column(name = "`value`")
     @ElementCollection(fetch = FetchType.EAGER)
     protected Map<Integer, Integer> similarityDistribution;
 

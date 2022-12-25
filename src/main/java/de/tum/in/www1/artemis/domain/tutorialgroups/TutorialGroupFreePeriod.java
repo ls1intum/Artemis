@@ -27,13 +27,13 @@ public class TutorialGroupFreePeriod extends DomainObject {
     /**
      * NOTE: Stored in UTC in the database
      */
-    @Column(name = "start_time")
+    @Column(name = "period_start")
     private ZonedDateTime start;
 
     /**
      * NOTE: Stored in UTC in the database
      */
-    @Column(name = "end_time")  // TODO: we need to rename the column with liquibase because "end" is a preserved keyword in H2
+    @Column(name = "period_end")
     private ZonedDateTime end;
 
     @Column(name = "reason")

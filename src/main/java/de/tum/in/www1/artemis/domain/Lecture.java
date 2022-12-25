@@ -26,7 +26,6 @@ public class Lecture extends DomainObject implements Completable {
     @Column(name = "title")
     private String title;
 
-    @Lob
     @Column(name = "description")
     private String description;
 

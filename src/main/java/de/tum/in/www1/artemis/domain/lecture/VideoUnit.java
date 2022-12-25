@@ -10,11 +10,9 @@ import jakarta.persistence.*;
 public class VideoUnit extends LectureUnit {
 
     @Column(name = "description")
-    @Lob
     private String description;
 
     @Column(name = "source")
-    @Lob
     private String source;
 
     public String getSource() {

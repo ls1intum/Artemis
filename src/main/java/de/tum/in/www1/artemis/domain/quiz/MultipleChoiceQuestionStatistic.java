@@ -37,11 +37,6 @@ public class MultipleChoiceQuestionStatistic extends QuizQuestionStatistic {
         this.answerCounters = answerCounters;
     }
 
-    @Override
-    public String toString() {
-        return "MultipleChoiceQuestionStatistic{" + "id=" + getId() + "}";
-    }
-
     /**
      * 1. creates the AnswerCounter for the new AnswerOption if where is already an AnswerCounter with the given answerOption -> nothing happens
      *

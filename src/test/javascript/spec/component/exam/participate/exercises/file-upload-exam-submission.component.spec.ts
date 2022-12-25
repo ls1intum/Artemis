@@ -1,13 +1,12 @@
 import { ChangeDetectorRef } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { By, SafeHtml } from '@angular/platform-browser';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { Course } from 'app/entities/course.model';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../../test.module';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -55,7 +54,6 @@ describe('FileUploadExamSubmissionComponent', () => {
                 ResizeableContainerComponent,
                 TranslatePipeMock,
                 MockPipe(HtmlForMarkdownPipe, (markdown) => markdown as SafeHtml),
-                MockDirective(NgbTooltip),
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(ExamExerciseUpdateHighlighterComponent),
             ],

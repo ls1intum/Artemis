@@ -44,7 +44,7 @@ public class PersistentAuditEvent implements Serializable {
 
     @ElementCollection
     @MapKeyColumn(name = "name")
-    @Column(name = "the_value")  // TODO: we need to rename the column with liquibase because "end" is a preserved keyword in H2
+    @Column(name = "`value`")
     @CollectionTable(name = "jhi_persistent_audit_evt_data", joinColumns = @JoinColumn(name = "event_id"))
     private Map<String, String> data = new HashMap<>();
 

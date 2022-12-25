@@ -190,13 +190,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                SUBSTRING(CAST( s.submissionDate as String ), 1, 10), p.student.login
+                substring(cast(s.submissionDate as string), 1, 10), p.student.login
                 )
             FROM StudentParticipation p JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
-                AND s.submissionDate >= :startDate
-                AND s.submissionDate <= :endDate
-                GROUP BY SUBSTRING( CAST( s.submissionDate as String ), 1, 10), p.student.login
+                AND s.submissionDate >= cast(:startDate as timestamp)
+                AND s.submissionDate <= cast(:endDate as timestamp)
+                group by substring(cast(s.submissionDate as string), 1, 10), p.student.login
             """)
     List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorValue;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Lob;
 
 @Entity
 @DiscriminatorValue("O")
@@ -13,11 +12,9 @@ import jakarta.persistence.Lob;
 public class OnlineUnit extends LectureUnit {
 
     @Column(name = "description")
-    @Lob
     private String description;
 
     @Column(name = "source")
-    @Lob
     private String source;
 
     public String getSource() {

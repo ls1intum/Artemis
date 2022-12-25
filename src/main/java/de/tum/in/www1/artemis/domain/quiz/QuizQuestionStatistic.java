@@ -83,4 +83,10 @@ public abstract class QuizQuestionStatistic extends QuizStatistic {
         setRatedCorrectCounter(0);
         setUnRatedCorrectCounter(0);
     }
+
+    @Override
+    public String toString() {
+        return getClass() + "{" + "ratedCorrectCounter=" + ratedCorrectCounter + ", unRatedCorrectCounter=" + unRatedCorrectCounter + "participantsRated=" + getParticipantsRated()
+                + ", participantsUnrated=" + getParticipantsUnrated() + '}';
+    }
 }

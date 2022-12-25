@@ -9,7 +9,6 @@ import jakarta.persistence.*;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextUnit extends LectureUnit {
 
-    @Lob
     @Column(name = "content")
     private String content;
 

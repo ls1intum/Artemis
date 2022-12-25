@@ -46,7 +46,10 @@
               "js-video-url-parser",
               "dompurify",
               "interactjs",
-              "mobile-drag-drop"
+              "mobile-drag-drop",
+              "dagre",
+              "webcola",
+              "rfdc"
             ],
             "outputPath": "build/resources/main/static/",
             "index": "src/main/webapp/index.html",
@@ -76,10 +79,20 @@
                 "glob": "*.{js,css,html,png}",
                 "input": "./node_modules/swagger-ui-dist",
                 "output": "swagger-ui",
-                "ignore": ["**/index.html"]
+                "ignore": [
+                  "**/index.html"
+                ]
               },
-              { "glob": "axios.min.js", "input": "./node_modules/axios/dist", "output": "swagger-ui" },
-              { "glob": "**/*", "input": "src/main/webapp/swagger-ui/", "output": "swagger-ui" }
+              {
+                "glob": "axios.min.js",
+                "input": "./node_modules/axios/dist",
+                "output": "swagger-ui"
+              },
+              {
+                "glob": "**/*",
+                "input": "src/main/webapp/swagger-ui/",
+                "output": "swagger-ui"
+              }
             ],
             "styles": [
               "src/main/webapp/content/scss/themes/theme-default.scss",
@@ -113,8 +126,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2mb",
-                  "maximumError": "2.33mb"
+                  "maximumWarning": "2.3mb",
+                  "maximumError": "2.4mb"
                 },
                 {
                   "type": "anyComponentStyle",
@@ -155,6 +168,15 @@
           "options": {
             "configPath": "jest.config.js"
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/main/webapp/**/*.ts",
+              "src/main/webapp/**/*.html"
+            ]
+          }
         }
       }
     }
@@ -166,6 +188,10 @@
       "enabled": true,
       "path": ".cache",
       "environment": "all"
-    }
+    },
+    "schematicCollections": [
+      "@angular-eslint/schematics",
+      "@angular-eslint/schematics"
+    ]
   }
 }

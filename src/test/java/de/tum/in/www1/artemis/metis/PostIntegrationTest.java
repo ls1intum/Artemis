@@ -10,6 +10,11 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import javax.validation.ValidatorFactory;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -44,6 +49,8 @@ import jakarta.validation.Validator;
 
 class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "postintegration";
+
     @Autowired
     private PostRepository postRepository;
 
@@ -76,6 +83,8 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private Validator validator;
 
+    private ValidatorFactory validatorFactory;
+
     private User student1;
 
     private static final int MAX_POSTS_PER_PAGE = 20;
@@ -84,15 +93,16 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void initTestCase() {
 
         // used to test hibernate validation using custom PostContextConstraintValidator
-        validator = Validation.buildDefaultValidatorFactory().getValidator();
+        validatorFactory = Validation.buildDefaultValidatorFactory();
+        validator = validatorFactory.getValidator();
 
-        database.addUsers(5, 5, 4, 4);
+        database.addUsers(TEST_PREFIX, 5, 5, 4, 4);
 
-        student1 = database.getUserByLogin("student1");
+        student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
         // initialize test setup and get all existing posts (there are 4 posts with lecture context, 4 with exercise context,
         // 1 plagiarism case, 3 with course-wide context and 3 with conversation initialized - initialized): 15 posts in total
-        existingPostsAndConversationPosts = database.createPostsWithinCourse();
+        existingPostsAndConversationPosts = database.createPostsWithinCourse(TEST_PREFIX);
 
         existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList();
 
@@ -129,13 +139,15 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
+        if (validatorFactory != null) {
+            validatorFactory.close();
+        }
     }
 
     // POST
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateExercisePost() throws Exception {
         Post postToSave = createPostWithoutContext();
         Exercise exercise = existingExercisePosts.get(0).getExercise();
@@ -152,7 +164,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateExamExercisePost_badRequest() throws Exception {
         Exam exam = database.setupSimpleExamWithExerciseGroupExercise(course);
         Post postToSave = createPostWithoutContext();
@@ -169,7 +181,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateLecturePost() throws Exception {
         Post postToSave = createPostWithoutContext();
         Lecture lecture = existingLecturePosts.get(0).getLecture();
@@ -186,7 +198,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateCourseWidePost() throws Exception {
         Post postToSave = createPostWithoutContext();
         postToSave.setCourse(course);
@@ -205,46 +217,57 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateAnnouncement() throws Exception {
         Post postToSave = createPostWithoutContext();
         postToSave.setCourse(course);
         postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setCourseId(course.getId());
+        postContextFilter.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+        var numberOfPostsBefore = postRepository.findPosts(postContextFilter, null, false, null).getSize();
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
         database.assertSensitiveInformationHidden(createdPost);
         postToSave.setDisplayPriority(DisplayPriority.PINNED);
         checkCreatedPost(postToSave, createdPost);
 
-        PostContextFilter postContextFilter = new PostContextFilter();
-        postContextFilter.setCourseId(courseId);
-
         List<Post> updatedCourseWidePosts = postRepository.findPosts(postContextFilter, null, false, null).stream().filter(post -> post.getCourseWideContext() != null).toList();
-        assertThat(existingCourseWidePosts).hasSize(updatedCourseWidePosts.size() - 1);
+        assertThat(postRepository.findPosts(postContextFilter, null, false, null)).hasSize(numberOfPostsBefore + 1);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutNewAnnouncement(createdPost, course);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateAnnouncement_asStudent_forbidden() throws Exception {
         Post postToSave = createPostWithoutContext();
         postToSave.setCourse(course);
         postToSave.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
 
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setCourseId(course.getId());
+        postContextFilter.setCourseWideContext(CourseWideContext.ANNOUNCEMENT);
+        var numberOfPostsBefore = postRepository.findPosts(postContextFilter, null, false, null).getSize();
+
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.FORBIDDEN);
-        assertThat(existingPostsAndConversationPosts.size()).isEqualTo(postRepository.count());
+        // assertThat(existingPostsAndConversationPosts.size()).isEqualTo(postRepository.count());
+
+        assertThat(postRepository.findPosts(postContextFilter, null, false, null)).hasSize(numberOfPostsBefore);
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewAnnouncement(any(), any());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreatePlagiarismPost() throws Exception {
         doNothing().when(singleUserNotificationService).notifyUserAboutNewPlagiarismCase(any(), any());
 
         Post postToSave = createPostWithoutContext();
         postToSave.setCourse(course);
 
-        final PlagiarismCase plagiarismCase = plagiarismCaseRepository.save(new PlagiarismCase());
+        var plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(existingExercisePosts.get(0).getExercise());
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         postToSave.setPlagiarismCase(plagiarismCase);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);
@@ -255,17 +278,21 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateExistingPost_badRequest() throws Exception {
         Post existingPostToSave = existingPosts.get(0);
 
+        PostContextFilter postContextFilter = new PostContextFilter();
+        postContextFilter.setCourseId(courseId);
+        var sizeBefore = postRepository.findPosts(postContextFilter, null, false, null).getSize();
+
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", existingPostToSave, Post.class, HttpStatus.BAD_REQUEST);
-        assertThat(existingPostsAndConversationPosts.size()).isEqualTo(postRepository.count());
+        assertThat(postRepository.findPosts(postContextFilter, null, false, null)).hasSize(sizeBefore);
         verify(groupNotificationService, times(0)).notifyAllGroupsAboutNewPostForExercise(any(), any());
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreatePostForCourseWithDisabledPosts_badRequest() throws Exception {
         Course course = database.createCourseWithPostsDisabled();
         courseId = course.getId();
@@ -278,7 +305,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateEmptyPostWithParsingError() throws Exception {
         Post postToSave = createPostWithoutContext();
         Exercise exercise = existingExercisePosts.get(0).getExercise();
@@ -301,7 +328,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testValidatePostContextConstraintViolation() throws Exception {
         Post invalidPost = createPostWithoutContext();
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
@@ -329,7 +356,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSimilarityCheck() throws Exception {
         Post postToCheck = new Post();
         postToCheck.setTitle("Title Post");
@@ -341,7 +368,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     // UPDATE
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditAnnouncement_asTutor_forbidden() throws Exception {
         Post postToUpdate = editExistingPost(existingCourseWidePosts.get(0));
         // simulate as if it was an announcement
@@ -352,7 +379,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditPost_asTutor() throws Exception {
         // update post of student1 (index 0)--> OK
         Post postToUpdate = editExistingPost(existingPosts.get(0));
@@ -363,7 +390,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditPostByChangingContext1_asTutor() throws Exception {
         // update exercise post
         Post postToUpdate = existingExercisePosts.get(0);
@@ -377,7 +404,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditPostByChangingContext2_asTutor() throws Exception {
         // update lecture post
         Post postToUpdate = existingLecturePosts.get(0);
@@ -391,7 +418,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditPostByChangingContext3_asTutor() throws Exception {
         // update course-wide post
         Post postToUpdate = existingCourseWidePosts.get(0);
@@ -406,7 +433,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testEditPostByChangingContext4_asTutor() throws Exception {
         // update course post
         Post postToUpdate = existingCourseWidePosts.get(0);
@@ -419,7 +446,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditPost_forbidden() throws Exception {
         // update own post (index 0)--> OK
         Post postToUpdate = editExistingPost(existingPosts.get(0));
@@ -436,7 +463,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditPostByChangingContext_asStudent() throws Exception {
         // update exercise post
         Post postToNotUpdate = existingExercisePosts.get(0);
@@ -454,7 +481,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditPost_asStudent_forbidden() throws Exception {
         // update post from another student (index 1)--> forbidden
         Post postToNotUpdate = editExistingPost(existingPosts.get(1));
@@ -464,7 +491,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testEditPostWithIdIsNull_badRequest() throws Exception {
         Post postToUpdate = existingPosts.get(0);
         postToUpdate.setId(null);
@@ -474,7 +501,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPinPost_asStudent_forbidden() throws Exception {
         Post postToNotPin = editExistingPost(existingPosts.get(1));
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -487,7 +514,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testPinPost_asTutor() throws Exception {
         Post postToPin = editExistingPost(existingPosts.get(0));
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -501,7 +528,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testArchivePost_asStudent_forbidden() throws Exception {
         Post postToNotArchive = editExistingPost(existingPosts.get(1));
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -514,7 +541,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testArchivePost_asTutor() throws Exception {
         Post postToArchive = editExistingPost(existingPosts.get(0));
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -530,7 +557,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     // GET
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetPostsForCourse() throws Exception {
         // no request params set will fetch all course posts without any context filter
         var params = new LinkedMultiValueMap<String, String>();
@@ -547,7 +574,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetPostsForCourse_WithCourseWideContextRequestParam() throws Exception {
         var courseWideContext = CourseWideContext.RANDOM;
         // request param courseWideContext will fetch all course posts that match this context filter
@@ -562,7 +589,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetPostsForCourse_WithExerciseIdRequestParam() throws Exception {
         // request param courseWideContext will fetch all course posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
@@ -575,7 +602,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetPostsForCourse_WithLectureIdRequestParam() throws Exception {
         // request param courseWideContext will fetch all course posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
@@ -588,7 +615,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asInstructor() throws Exception {
         // request param plagiarismCaseId will fetch all posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
@@ -602,7 +629,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asStudent() throws Exception {
         // request param plagiarismCaseId will fetch all posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
@@ -615,7 +642,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetPostsForCourse_WithPlagiarismCaseIdRequestParam_asStudent_Forbidden() throws Exception {
         // request param plagiarismCaseId will fetch all posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
@@ -626,7 +653,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetPostsForCourse_WithInvalidRequestParams_badRequest() throws Exception {
         // request param courseWideContext will fetch all course posts that match this context filter
         var params = new LinkedMultiValueMap<String, String>();
@@ -639,7 +666,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostTagsForCourse() throws Exception {
         List<String> returnedTags = request.getList("/api/courses/" + courseId + "/posts/tags", HttpStatus.OK, String.class);
         // 4 different tags were used for the posts
@@ -647,14 +674,14 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostTagsForCourseWithNonExistentCourseId_notFound() throws Exception {
         List<String> returnedTags = request.getList("/api/courses/" + 9999L + "/posts/tags", HttpStatus.NOT_FOUND, String.class);
         assertThat(returnedTags).isNull();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourse_WithUsersOwnPosts() throws Exception {
         // filterToOwn set; will fetch all course posts of current logged-in user
         var params = new LinkedMultiValueMap<String, String>();
@@ -667,7 +694,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetUnresolvedPostsPostsForCourse_AnnouncementsFilteredOut() throws Exception {
         // filterToUnresolved set true; will filter out announcements as they are resolved by default
         var params = new LinkedMultiValueMap<String, String>();
@@ -683,7 +710,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourse_WithPostId() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
@@ -697,7 +724,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "Title Post 1", "Content Post 1", "Tag 1" })
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourse_SearchByTitleOrContentOrTag(String searchText) throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("searchText", searchText);
@@ -709,7 +736,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourse_OrderByCreationDateDESC() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
 
@@ -729,7 +756,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsForCourse_OrderByCreationDateASC() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
 
@@ -749,7 +776,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetPostsPageForCourse() throws Exception {
         // pagingEnabled set; will fetch a page of course posts
         var params = new LinkedMultiValueMap<String, String>();
@@ -767,27 +794,27 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     // DELETE
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeletePosts_asStudent() throws Exception {
         // delete own post (index 0)--> OK
         Post postToDelete = existingPosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversationPosts.size() - 1);
+        assertThat(postRepository.findById(postToDelete.getId())).isEmpty();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeletePosts_asStudent_forbidden() throws Exception {
         // delete post from another student (index 1) --> forbidden
         Post postToNotDelete = existingPosts.get(1);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversationPosts.size());
+        assertThat(postRepository.findById(postToNotDelete.getId())).isPresent();
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteAnnouncement_asTutor_forbidden() throws Exception {
         Post postToNotDelete = existingCourseWidePosts.get(1);
         // simulate as if it was an announcement
@@ -795,31 +822,30 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         postRepository.save(postToNotDelete);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToNotDelete.getId(), HttpStatus.FORBIDDEN);
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversationPosts.size());
+        assertThat(postRepository.findById(postToNotDelete.getId())).isPresent();
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeletePosts_asTutor() throws Exception {
         Post postToDelete = existingLecturePosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
         assertThat(postRepository.findById(postToDelete.getId())).isEmpty();
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversationPosts.size() - 1);
 
         postToDelete = existingExercisePosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversationPosts.size() - 2);
+        assertThat(postRepository.findById(postToDelete.getId())).isEmpty();
 
         postToDelete = existingCourseWidePosts.get(0);
 
         request.delete("/api/courses/" + courseId + "/posts/" + postToDelete.getId(), HttpStatus.OK);
-        assertThat(postRepository.count()).isEqualTo(existingPostsAndConversationPosts.size() - 3);
+        assertThat(postRepository.findById(postToDelete.getId())).isEmpty();
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testDeleteNonExistentPosts_asTutor_notFound() throws Exception {
         // try to delete non-existing post
         request.delete("/api/courses/" + courseId + "/posts/" + 9999L, HttpStatus.NOT_FOUND);

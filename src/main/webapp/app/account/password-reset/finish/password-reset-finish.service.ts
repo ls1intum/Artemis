@@ -6,7 +6,7 @@ import { Observable } from 'rxjs';
 export class PasswordResetFinishService {
     constructor(private http: HttpClient) {}
 
-    save(key: string, newPassword: string): Observable<{}> {
+    save(key: string, newPassword: string): Observable<any> {
         return this.http.post(SERVER_API_URL + 'api/account/reset-password/finish', { key, newPassword });
     }
 }

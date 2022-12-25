@@ -41,6 +41,7 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
     }
 
     public List<ClientRegistration> getAllClientRegistrations() {
+        // TODO: we should avoid findAll() and instead try to retrieve the correct object directly from the database, potentially in a batch
         return onlineCourseConfigurationRepository.findAll().stream().map(this::getClientRegistration).filter(Objects::nonNull).toList();
     }
 

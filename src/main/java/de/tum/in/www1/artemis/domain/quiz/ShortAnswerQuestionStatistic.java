@@ -38,11 +38,6 @@ public class ShortAnswerQuestionStatistic extends QuizQuestionStatistic {
         this.shortAnswerSpotCounters = shortAnswerSpotCounters;
     }
 
-    @Override
-    public String toString() {
-        return "ShortAnswerQuestionStatistic{" + "id=" + getId() + "}";
-    }
-
     /**
      * 1. creates the ShortAnswerSpotCounter for the new spot if where is already an ShortAnswerSpotCounter with the given spot -> nothing happens
      *

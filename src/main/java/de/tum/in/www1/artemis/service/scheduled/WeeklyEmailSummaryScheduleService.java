@@ -80,7 +80,7 @@ public class WeeklyEmailSummaryScheduleService {
     Runnable scheduleEmailSummaries() {
         return () -> {
             checkSecurityUtils();
-            emailSummaryService.prepareEmailSummaries();
+            emailSummaryService.prepareEmailSummariesAsynchronously();
         };
     }
 

@@ -16,7 +16,7 @@
  * @type {Cypress.PluginConfig}
  */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-module.exports = (on: (arg0: string, arg1: {}) => void, config: any) => {
+module.exports = (on: (arg0: string, arg1: any) => void, config: any) => {
     // `on` is used to hook into various events Cypress emits
     // `config` is the resolved Cypress config
     on('task', {

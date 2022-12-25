@@ -1,3 +1,5 @@
+import { HeaderCourseComponent } from 'app/overview/header-course.component';
+import { FeatureToggleHideDirective } from 'app/shared/feature-toggle/feature-toggle-hide.directive';
 import { Subject, of } from 'rxjs';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -128,12 +130,14 @@ describe('CourseOverviewComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
+                MockDirective(FeatureToggleHideDirective),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(CourseExercisesComponent),
                 MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseCardComponent),
                 MockComponent(SecuredImageComponent),
+                MockComponent(HeaderCourseComponent),
             ],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
