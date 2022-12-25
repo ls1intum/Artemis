@@ -144,7 +144,7 @@ describe('ModelingExercise Management Component', () => {
     });
 
     it('should delete the given exercise', fakeAsync(() => {
-        const deleteStub = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<{}>));
+        const deleteStub = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of({} as HttpResponse<any>));
         const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
         comp.deleteModelingExercise(2);
         expect(deleteStub).toHaveBeenCalledWith(2);

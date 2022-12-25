@@ -4,7 +4,7 @@
  *
  */
 
-import { Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
+import { Component, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, Renderer2, SimpleChanges, ViewChild } from '@angular/core';
 import { NavigationStart, Router } from '@angular/router';
 import { VirtualScrollRenderEvent } from 'app/shared/virtual-scroll/virtual-scroll-render-event.class';
 import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
@@ -24,8 +24,8 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
  * <jhi-virtual-scroll
  *   #virtualScrollContainer
  *   [items]="posts"
+ *   [scrollPaddingTop]="750"
  *   [minItemHeight]="126.7"
- *   [containerHeight]="'500px'"
  *   [collapsableHtmlClassNames]="['.answer-post', '.new-reply-inline-input']"
  *   [endOfListReachedItemThreshold]="5"
  *   [(forceReload)]="forceReload"
@@ -40,7 +40,15 @@ import { ITEMS_PER_PAGE } from 'app/shared/constants/pagination.constants';
 export class VirtualScrollComponent<T extends { id?: number }> implements OnInit, OnChanges, OnDestroy {
     @ViewChild('itemsContainer', { static: true }) private itemsContainerElRef: ElementRef<HTMLElement>;
 
+    /**
+     * padding from the top in pixels for which we defer the virtual scrolling process
+     * this approach is needed to prevent items near the top of the window from being
+     * removed out of the DOM tree when scrolling down
+     */
+    @Input() scrollPaddingTop: number;
+
     // all items being listed
+    // eslint-disable-next-line @angular-eslint/no-input-rename
     @Input('items') public originalItems: T[] | undefined = [];
 
     /**
@@ -52,9 +60,6 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
 
     // the minimum height an item can occupy, needed when the item's height is not cached before
     @Input() minItemHeight: number;
-
-    // height of the container elements are listed in
-    @Input() containerHeight = 'auto';
 
     // number of items from the bottom which should be rendered so that the endOfListReached event is emitted to the parent component
     @Input() endOfListReachedItemThreshold: number;
@@ -86,10 +91,24 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
 
     private lastScrollIsUp = false;
 
-    scrollUnlistener: () => void;
-    focusInUnlistener: () => void;
+    scrollUnListener: () => void;
+    focusInUnListener: () => void;
 
-    constructor(private elementRef: ElementRef<HTMLElement>, private renderer: Renderer2, private router: Router) {}
+    screenHeight: any;
+    windowScrollTop: any;
+
+    constructor(private renderer: Renderer2, private router: Router) {
+        this.getScreenSize();
+    }
+
+    /**
+     * updates screen height when window is resized
+     * this value is needed to calculate number of rendered items on the DOM tree
+     */
+    @HostListener('window:resize', ['$event'])
+    getScreenSize() {
+        this.screenHeight = window.innerHeight;
+    }
 
     /**
      * start listening to focusin events on initialization to prevent unintentional scrolling when the user focuses into the text area of ace editor component
@@ -97,14 +116,11 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
      * start listening to navigationStart events of router and enable forceReloadChange to scroll to the top of the updated item list
      */
     ngOnInit() {
-        // set element container height
-        this.elementRef.nativeElement.style.height = this.containerHeight;
-
-        this.focusInUnlistener = this.renderer.listen(this.elementRef.nativeElement, 'focusin', this.onFocusIn.bind(this));
-        this.scrollUnlistener = this.renderer.listen(this.elementRef.nativeElement, 'scroll', this.onScroll.bind(this));
+        this.focusInUnListener = this.renderer.listen(window, 'focusin', this.onFocusIn.bind(this));
+        this.scrollUnListener = this.renderer.listen(window, 'scroll', this.onScroll.bind(this));
         this.router.events.forEach((event) => {
             if (event instanceof NavigationStart) {
-                // scroll to the top of items in case user clicks to an item reference to solely display that item within the same page
+                // invalidate item height cache in case user clicks to an item reference to solely display that item within the same page
                 this.forceReloadChange.emit(true);
             }
         });
@@ -112,10 +128,6 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
 
     ngOnChanges(changes: SimpleChanges) {
         setTimeout(() => {
-            if ('height' in changes) {
-                this.elementRef.nativeElement.style.height = this.containerHeight;
-            }
-
             if ('originalItems' in changes) {
                 // on item change
                 if (!this.originalItems) {
@@ -126,8 +138,6 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
                     // invalidate previously calculated item heights
                     this.previousItemsHeight = new Array(this.originalItems.length).fill(null);
 
-                    // scroll to the top of the items
-                    this.elementRef.nativeElement.scrollTop = 0;
                     this.prepareDataItems();
                 } else {
                     if (this.originalItems.length > this.prevOriginalItems.length && this.prevOriginalItems.length % ITEMS_PER_PAGE === 0) {
@@ -162,7 +172,7 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
      * prevents automatic scrolling to other items when user clicks the text area of ace editor component
      */
     onFocusIn() {
-        this.elementRef.nativeElement.scrollTop = this.currentScroll;
+        window.scrollTo(0, this.windowScrollTop);
     }
 
     /**
@@ -171,9 +181,11 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
      */
     onScroll() {
         this.lastScrollIsUp = this.scrollIsUp;
-        this.scrollIsUp = this.elementRef.nativeElement.scrollTop < this.currentScroll;
+        this.scrollIsUp = window.scrollY < this.windowScrollTop;
 
-        this.currentScroll = this.elementRef.nativeElement.scrollTop;
+        this.windowScrollTop = window.scrollY;
+        // delays virtualScrolling due to page elements above items such as page title, menu, filter elements, etc.
+        this.currentScroll = Math.max(window.scrollY - this.scrollPaddingTop * 2, 0);
         this.prepareDataItems();
     }
 
@@ -214,9 +226,9 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
 
             if (collapsableHeight > 0) {
                 // scroll upwards by the height of collapsed nested components of the removed item to prevent unintentional automatic scrolling to other items
-                this.elementRef.nativeElement.scrollTop -= collapsableHeight;
-                // register currentScroll after update
-                this.currentScroll = this.elementRef.nativeElement.scrollTop;
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore behavior 'instant'; this is needed to avoid a scrolling animation back and forth while we prevent automatic and unwanted scrolling to other items
+                window.scrollTo({ left: 0, top: window.scrollY - collapsableHeight, behavior: 'instant' });
             }
         }
     }
@@ -260,12 +272,13 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
     }
 
     /**
-     * updates elements of the DOM tree, emits currently rendered items, their real start and end indexes and the total number of elements in the DOM tree
+     * updates elements of the DOM tree, emits currently rendered items,
+     * their real start and end indexes and the total number of elements in the DOM tree
      */
     prepareDataVirtualScroll() {
         const dimensions = this.getDimensions();
 
-        this.contentHeight = dimensions.contentHeight;
+        this.contentHeight = this.originalItems!.length !== 0 ? Math.max(dimensions.contentHeight, this.screenHeight - this.scrollPaddingTop) : this.screenHeight / 2;
         this.paddingTop = dimensions.paddingTop;
 
         if (dimensions.itemsThatAreGone > this.startIndex) {
@@ -299,14 +312,14 @@ export class VirtualScrollComponent<T extends { id?: number }> implements OnInit
      *  @return total number of items that are to be rendered on the DOM tree
      */
     numberItemsCanRender() {
-        return Math.floor(this.elementRef.nativeElement.clientHeight / this.minItemHeight) + 2;
+        return Math.floor(this.screenHeight / this.minItemHeight) + 5;
     }
 
     /**
      *  stop listening to events
      */
     ngOnDestroy() {
-        this.scrollUnlistener();
-        this.focusInUnlistener();
+        this.scrollUnListener();
+        this.focusInUnListener();
     }
 }

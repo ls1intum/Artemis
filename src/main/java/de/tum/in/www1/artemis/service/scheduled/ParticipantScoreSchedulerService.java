@@ -6,6 +6,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -46,6 +47,8 @@ import de.tum.in.www1.artemis.service.util.RoundingUtil;
 @Profile("scheduling")
 public class ParticipantScoreSchedulerService {
 
+    public static int DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+
     private final Logger logger = LoggerFactory.getLogger(ParticipantScoreSchedulerService.class);
 
     private final TaskScheduler scheduler;
@@ -68,6 +71,12 @@ public class ParticipantScoreSchedulerService {
 
     private final TeamRepository teamRepository;
 
+    /**
+     * Determines if the scheduled service is running or not. Use startup() and shutdown() to modify this value accordingly.
+     * It should only be necessary in tests to deactivate the service
+     */
+    private final AtomicBoolean isRunning = new AtomicBoolean(false);
+
     public ParticipantScoreSchedulerService(@Qualifier("taskScheduler") TaskScheduler scheduler, ParticipantScoreRepository participantScoreRepository,
             StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ExerciseRepository exerciseRepository, ResultRepository resultRepository,
             UserRepository userRepository, TeamRepository teamRepository) {
@@ -86,6 +95,9 @@ public class ParticipantScoreSchedulerService {
      * @return true if the scheduler is idle, false otherwise
      */
     public boolean isIdle() {
+        if (!isRunning.get()) {
+            return true;
+        }
         return scheduledTasks.isEmpty();
     }
 
@@ -94,7 +106,12 @@ public class ParticipantScoreSchedulerService {
      */
     @PostConstruct
     public void startup() {
+        isRunning.set(true);
         scheduleTasks();
+    }
+
+    public void activate() {
+        isRunning.set(true);
     }
 
     /**
@@ -102,10 +119,9 @@ public class ParticipantScoreSchedulerService {
      */
     @PreDestroy
     public void shutdown() {
+        isRunning.set(false);
         // Stop all running tasks, we will reschedule them on startup again
-        scheduledTasks.values().forEach(future -> {
-            future.cancel(true);
-        });
+        scheduledTasks.values().forEach(future -> future.cancel(true));
         scheduledTasks.clear();
     }
 
@@ -118,7 +134,20 @@ public class ParticipantScoreSchedulerService {
     protected void scheduleTasks() {
         logger.info("Schedule tasks to process...");
         SecurityUtils.setAuthorizationObject();
+        if (isRunning.get()) {
+            executeScheduledTasks();
+        }
+    }
 
+    /**
+     * Schedule all results that were created/updated since the last run of the cron job.
+     * Additionally, we schedule all participant scores that are outdated/invalid.
+     */
+    public void executeScheduledTasks() {
+        if (!isRunning.get()) {
+            logger.debug("Cannot execute scheduled tasks, because the service is not running");
+            return;
+        }
         // Find all results that were added after the last run (on startup: last time we modified a participant score)
         var latestRun = lastScheduledRun.orElseGet(() -> participantScoreRepository.getLatestModifiedDate().orElse(Instant.now()));
         // Update last run time before we continue with time-consuming operations
@@ -143,7 +172,7 @@ public class ParticipantScoreSchedulerService {
             }
         });
 
-        logger.info("Scheduled processing of {} results and {} participant scores.", resultsToProcess.size(), participantScoresToProcess.size());
+        logger.info("Processing of {} results and {} participant scores.", resultsToProcess.size(), participantScoresToProcess.size());
     }
 
     /**
@@ -153,6 +182,10 @@ public class ParticipantScoreSchedulerService {
      * @param resultIdToBeDeleted the id of the result that is about to be deleted (or null, if result is created/updated)
      */
     public void scheduleTask(@NotNull Long exerciseId, @NotNull Long participantId, Long resultIdToBeDeleted) {
+        if (!isRunning.get()) {
+            logger.debug("Cannot schedule task, because the service is not running");
+            return;
+        }
         scheduleTask(exerciseId, participantId, Instant.now(), resultIdToBeDeleted);
     }
 
@@ -172,7 +205,7 @@ public class ParticipantScoreSchedulerService {
             scheduledTasks.remove(participantScoreHash);
         }
 
-        var schedulingTime = ZonedDateTime.now().plus(500, ChronoUnit.MILLIS);
+        var schedulingTime = ZonedDateTime.now().plus(DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS, ChronoUnit.MILLIS);
         var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdToBeDeleted), schedulingTime.toInstant());
         scheduledTasks.put(participantScoreHash, future);
         logger.debug("Scheduled task for exercise {} and participant {} at {}.", exerciseId, participantId, schedulingTime);

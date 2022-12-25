@@ -1,7 +1,7 @@
 {
     "randomizeExerciseOrder": false,
     "numberOfCorrectionRoundsInExam": 1,
-    "maxPoints": 10,
+    "examMaxPoints": 10,
     "visible": false,
     "started": false,
     "gracePeriod": 30,
