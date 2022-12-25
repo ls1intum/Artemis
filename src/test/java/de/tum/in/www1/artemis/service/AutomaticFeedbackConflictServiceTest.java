@@ -188,7 +188,6 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
 
         Feedback finalFeedback = feedback1;
         await().until(() -> feedbackConflictRepository.findByFirstFeedbackIdAndConflict(finalFeedback.getId(), false).size() > 0);
-        System.out.println("ID HERE: " + feedback1.getId());
 
         assertThat(feedbackConflictRepository.findByFirstFeedbackIdAndConflict(finalFeedback.getId(), false)).hasSize(1);
 
