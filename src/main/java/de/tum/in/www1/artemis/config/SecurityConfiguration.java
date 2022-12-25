@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.security.access.expression.method.DefaultMethodSecurityExpressionHandler;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchy;
 import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -85,15 +86,16 @@ public class SecurityConfiguration {
     }
 
     @Bean
+    public DefaultMethodSecurityExpressionHandler methodExpressionHandler() {
+        DefaultMethodSecurityExpressionHandler expressionHandler = new DefaultMethodSecurityExpressionHandler();
+        expressionHandler.setRoleHierarchy(roleHierarchy());
+        return expressionHandler;
+    }
+
+    @Bean
     RoleHierarchy roleHierarchy() {
         var roleHierarchy = new RoleHierarchyImpl();
-        roleHierarchy.setHierarchy("""
-                    ROLE_ADMIN > ROLE_INSTRUCTOR
-                    ROLE_INSTRUCTOR > ROLE_EDITOR
-                    ROLE_EDITOR > ROLE_TA
-                    ROLE_TA > ROLE_USER
-                    ROLE_USER > ROLE_ANONYMOUS
-                """);
+        roleHierarchy.setHierarchy("ROLE_ADMIN > ROLE_INSTRUCTOR > ROLE_EDITOR > ROLE_TA > ROLE_USER > ROLE_ANONYMOUS");
         return roleHierarchy;
     }
 
