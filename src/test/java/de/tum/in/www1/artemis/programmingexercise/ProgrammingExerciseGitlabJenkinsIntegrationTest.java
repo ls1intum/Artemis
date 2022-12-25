@@ -384,7 +384,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportExamSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         programmingExerciseTestService.exportExamSolutionRepository_shouldReturnFileOrForbidden();
     }

@@ -349,7 +349,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "TA")
     void testGetExamExerciseForExampleSolution() throws Exception {
-        var user = database.getUserByLogin("student1");
+        var user = database.getUserByLogin(TEST_PREFIX + "student1");
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
         Exam exam = course.getExams().stream().findFirst().orElseThrow();
         exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
