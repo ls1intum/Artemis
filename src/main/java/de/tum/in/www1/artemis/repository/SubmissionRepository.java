@@ -47,6 +47,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     List<Submission> findAllByParticipationId(long participationId);
 
+    List<Submission> findByParticipation_Exercise_ExerciseGroup_Exam_Id(long examId);
+
     /**
      * Get all submissions of a participation and eagerly load results
      *
@@ -256,7 +258,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("""
             SELECT
                 new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                    p.exercise.id,
+                    e.id,
                     count(DISTINCT p)
                 )
             FROM StudentParticipation p JOIN p.submissions s JOIN p.exercise e
@@ -300,7 +302,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
                 AND p.testRun = FALSE
                 AND s.submitted = TRUE
                 AND (e.dueDate IS NULL OR s.submissionDate <= e.dueDate)
-            GROUP BY e.id
+            GROUP BY p.exercise.id
                 """)
     List<ExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDateIgnoreTestRuns(@Param("exerciseIds") Set<Long> exerciseIds);
 
@@ -338,7 +340,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("""
             SELECT
                 new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                    p.exercise.id,
+                    e.id,
                     count(DISTINCT p)
                     )
             FROM StudentParticipation p JOIN p.submissions s JOIN p.exercise e

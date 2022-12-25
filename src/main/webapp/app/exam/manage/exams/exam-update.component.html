@@ -125,9 +125,9 @@
             <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.exercises">Exam Exercises</h5>
             <div class="row mb-3">
                 <div class="col-sm-6">
-                    <label class="form-check-label" for="maxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum Number of Points in Exam</label>
+                    <label class="form-check-label" for="examMaxPoints" jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum Number of Points in Exam</label>
                     <fa-icon [icon]="faExclamationTriangle" class="text-warning" ngbTooltip="{{ 'artemisApp.examManagement.maxPoints.warning' | artemisTranslate }}"></fa-icon>
-                    <input id="maxPoints" name="maxPoints" class="form-control" type="number" min="1" [(ngModel)]="exam.maxPoints" />
+                    <input id="examMaxPoints" name="examMaxPoints" class="form-control" type="number" min="1" [(ngModel)]="exam.examMaxPoints" />
                 </div>
                 <div class="col-sm-6">
                     <label class="form-check-label" for="numberOfExercisesInExam" jhiTranslate="artemisApp.examManagement.numberOfExercisesInExam"

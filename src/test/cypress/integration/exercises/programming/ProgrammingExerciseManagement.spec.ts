@@ -84,7 +84,7 @@ describe('Programming Exercise Management', () => {
     });
 
     after(() => {
-        if (!!course) {
+        if (course) {
             artemisRequests.courseManagement.deleteCourse(course.id!);
         }
     });

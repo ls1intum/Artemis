@@ -16,7 +16,7 @@ import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
-class MockExtraColumn {
+class MockExtraColumnComponent {
     @Input() tutorialGroup: TutorialGroup;
 }
 
@@ -30,7 +30,7 @@ class MockExtraColumn {
         </jhi-tutorial-groups-table>
     `,
 })
-class MockWrapper {
+class MockWrapperComponent {
     @Input()
     tutorialGroups: TutorialGroup[];
 
@@ -40,15 +40,15 @@ class MockWrapper {
     @ViewChild(TutorialGroupsTableComponent)
     tutorialGroupTableInstance: TutorialGroupsTableComponent;
 
-    @ViewChildren(MockExtraColumn)
-    mockExtraColumns: QueryList<MockExtraColumn>;
+    @ViewChildren(MockExtraColumnComponent)
+    mockExtraColumns: QueryList<MockExtraColumnComponent>;
 }
 
 describe('TutorialGroupTableWrapperTest', () => {
-    let fixture: ComponentFixture<MockWrapper>;
-    let component: MockWrapper;
+    let fixture: ComponentFixture<MockWrapperComponent>;
+    let component: MockWrapperComponent;
     let tableInstance: TutorialGroupsTableComponent;
-    let mockExtraColumns: MockExtraColumn[];
+    let mockExtraColumns: MockExtraColumnComponent[];
     let tutorialGroupOne: TutorialGroup;
     let tutorialGroupTwo: TutorialGroup;
     const course = {
@@ -61,8 +61,8 @@ describe('TutorialGroupTableWrapperTest', () => {
             declarations: [
                 TutorialGroupsTableComponent,
                 TutorialGroupRowStubComponent,
-                MockWrapper,
-                MockExtraColumn,
+                MockWrapperComponent,
+                MockExtraColumnComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockComponent(FaIconComponent),
@@ -74,7 +74,7 @@ describe('TutorialGroupTableWrapperTest', () => {
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(MockWrapper);
+                fixture = TestBed.createComponent(MockWrapperComponent);
                 component = fixture.componentInstance;
                 tutorialGroupOne = generateExampleTutorialGroup({ id: 1 });
                 tutorialGroupTwo = generateExampleTutorialGroup({ id: 2 });

@@ -76,6 +76,7 @@ public class TextAssessmentEventResource {
             textAssessmentEventRepository.save(event);
             return ResponseEntity.created(new URI("/api/admin/event-insights/text-assessment/events/" + event.getCourseId())).build();
         }
+        // TODO: this is not really nice, because the reason for the bad request is not given
         return ResponseEntity.badRequest().build();
     }
 

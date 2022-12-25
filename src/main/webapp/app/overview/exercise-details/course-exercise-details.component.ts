@@ -302,6 +302,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     changedParticipation.exercise?.dueDate &&
                     hasExerciseDueDatePassed(changedParticipation.exercise, changedParticipation) &&
                     changedParticipation.id === this.gradedStudentParticipation?.id &&
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                     changedParticipation.results?.length! > this.gradedStudentParticipation?.results?.length!
                 ) {
                     this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
@@ -356,6 +357,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     subscribeForNewSubmissions() {
         this.studentParticipations.forEach((participation) => {
             this.submissionSubscription = this.submissionService
+                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                 .getLatestPendingSubmissionByParticipationId(participation!.id!, this.exercise?.id!, true)
                 .subscribe(({ submission }) => {
                     // Notify about received late submission
