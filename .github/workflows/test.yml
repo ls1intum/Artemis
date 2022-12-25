@@ -85,6 +85,7 @@ jobs:
           - name: Java Tests
             run: SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
+            if: success() || failure()
             run: cat tests.log | grep ".*>.*FAILED"
 
   server-tests-postgres:
@@ -101,6 +102,7 @@ jobs:
           - name: Java Tests
             run: SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
+            if: success() || failure()
             run: cat tests.log | grep ".*>.*FAILED"
 
   server-style:
