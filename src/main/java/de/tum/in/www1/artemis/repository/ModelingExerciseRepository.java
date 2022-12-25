@@ -137,6 +137,4 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     default ModelingExercise findByIdWithStudentParticipationsSubmissionsResultsElseThrow(long exerciseId) {
         return findWithStudentParticipationsSubmissionsResultsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
     }
-
-    Set<ModelingExercise> findAllByKnowledgeId(Long knowledgeId);
 }

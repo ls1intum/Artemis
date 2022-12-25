@@ -27,11 +27,6 @@ public class TextExercise extends Exercise {
     @JsonIgnore
     private List<TextCluster> clusters;
 
-    @ManyToOne
-    @JoinColumn(table = "text_exercise_details")
-    @JsonIgnore
-    private TextAssessmentKnowledge knowledge;
-
     public String getExampleSolution() {
         return exampleSolution;
     }
@@ -64,13 +59,4 @@ public class TextExercise extends Exercise {
     public String toString() {
         return "TextExercise{" + "id=" + getId() + ", exampleSolution='" + getExampleSolution() + "'" + "}";
     }
-
-    public TextAssessmentKnowledge getKnowledge() {
-        return knowledge;
-    }
-
-    public void setKnowledge(TextAssessmentKnowledge knowledge) {
-        this.knowledge = knowledge;
-    }
-
 }

@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
@@ -71,9 +70,6 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
-
-    @Autowired
-    private TextAssessmentKnowledgeService textAssessmentKnowledgeService;
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
@@ -303,7 +299,6 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup0);
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         textExercise = exerciseRepository.save(textExercise);
         getIdOfIndividualTextExerciseOfExam = textExercise.getId();
         return textExercise;

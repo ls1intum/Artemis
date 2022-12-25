@@ -93,16 +93,13 @@ public class TextExerciseResource {
 
     private final CourseRepository courseRepository;
 
-    private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
-
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
             ParticipationRepository participationRepository, ResultRepository resultRepository, TextExerciseImportService textExerciseImportService,
             TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
             GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
-            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
-            TextAssessmentKnowledgeService textAssessmentKnowledgeService) {
+            InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository) {
         this.feedbackRepository = feedbackRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -124,7 +121,6 @@ public class TextExerciseResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.textPlagiarismDetectionService = textPlagiarismDetectionService;
         this.courseRepository = courseRepository;
-        this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
     }
 
     /**
@@ -156,8 +152,6 @@ public class TextExerciseResource {
         // Check that the user is authorized to create the exercise
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        // if exercise is created from scratch we create new knowledge instance
-        textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(textExercise);

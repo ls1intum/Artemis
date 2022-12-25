@@ -579,15 +579,14 @@ public class TextAssessmentResource extends AssessmentResource {
             List<Feedback> nonGeneralFeedbacks = feedbacks.stream().filter(feedback -> feedback.getReference() != null).toList();
             Map<String, Feedback> feedbackMap = nonGeneralFeedbacks.stream().collect(Collectors.toMap(Feedback::getReference, Function.identity()));
             final Set<String> existingTextBlockIds = textSubmission.getBlocks().stream().map(TextBlock::getId).collect(toSet());
-            final var updatedTextBlocks = textBlocks.stream().filter(tb -> !existingTextBlockIds.contains(tb.getId())).peek(tb -> {
-                tb.setSubmission(textSubmission);
-                tb.setFeedback(feedbackMap.get(tb.getId()));
-                tb.setKnowledge(exercise.getKnowledge());
+            final var updatedTextBlocks = textBlocks.stream().filter(textBlock -> !existingTextBlockIds.contains(textBlock.getId())).peek(textBlock -> {
+                textBlock.setSubmission(textSubmission);
+                textBlock.setFeedback(feedbackMap.get(textBlock.getId()));
             }).collect(toSet());
             // Update the feedback_id for existing text blocks
             if (!existingTextBlockIds.isEmpty()) {
                 final var blocksToUpdate = textSubmission.getBlocks();
-                blocksToUpdate.forEach(tb -> tb.setFeedback(feedbackMap.get(tb.getId())));
+                blocksToUpdate.forEach(textBlock -> textBlock.setFeedback(feedbackMap.get(textBlock.getId())));
                 updatedTextBlocks.addAll(blocksToUpdate);
             }
             if (!updatedTextBlocks.isEmpty()) {

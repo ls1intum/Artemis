@@ -50,22 +50,12 @@ public class ExerciseDeletionService {
 
     private final PlagiarismResultRepository plagiarismResultRepository;
 
-    private final TextAssessmentKnowledgeService textAssessmentKnowledgeService;
-
-    private final ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
-
-    private final TextExerciseRepository textExerciseRepository;
-
-    private final ModelingExerciseRepository modelingExerciseRepository;
-
     private final LearningGoalRepository learningGoalRepository;
 
     public ExerciseDeletionService(ExerciseRepository exerciseRepository, ExerciseUnitRepository exerciseUnitRepository, ParticipationService participationService,
             ProgrammingExerciseService programmingExerciseService, ModelingExerciseService modelingExerciseService, QuizExerciseService quizExerciseService,
             TutorParticipationRepository tutorParticipationRepository, ExampleSubmissionService exampleSubmissionService, StudentExamRepository studentExamRepository,
-            LectureUnitService lectureUnitService, TextExerciseRepository textExerciseRepository, PlagiarismResultRepository plagiarismResultRepository,
-            TextAssessmentKnowledgeService textAssessmentKnowledgeService, ModelingExerciseRepository modelingExerciseRepository,
-            ModelAssessmentKnowledgeService modelAssessmentKnowledgeService, LearningGoalRepository learningGoalRepository) {
+            LectureUnitService lectureUnitService, PlagiarismResultRepository plagiarismResultRepository, LearningGoalRepository learningGoalRepository) {
         this.exerciseRepository = exerciseRepository;
         this.participationService = participationService;
         this.programmingExerciseService = programmingExerciseService;
@@ -77,10 +67,6 @@ public class ExerciseDeletionService {
         this.exerciseUnitRepository = exerciseUnitRepository;
         this.lectureUnitService = lectureUnitService;
         this.plagiarismResultRepository = plagiarismResultRepository;
-        this.textAssessmentKnowledgeService = textAssessmentKnowledgeService;
-        this.modelAssessmentKnowledgeService = modelAssessmentKnowledgeService;
-        this.textExerciseRepository = textExerciseRepository;
-        this.modelingExerciseRepository = modelingExerciseRepository;
         this.learningGoalRepository = learningGoalRepository;
     }
 
@@ -176,32 +162,6 @@ public class ExerciseDeletionService {
             programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
-            // delete text assessment knowledge if exercise is of type TextExercise and if no other exercise uses same knowledge
-            if (exercise instanceof TextExercise) {
-                // explicitly load the text exercise as such so that the knowledge is eagerly loaded as well
-                TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exercise.getId());
-                if (textExercise.getKnowledge() != null) {
-                    long knowledgeId = textExercise.getKnowledge().getId();
-                    // Remove knowledge to avoid foreign key constraint exception
-                    textExercise.setKnowledge(null);
-                    ((TextExercise) exercise).setKnowledge(null);
-                    textExerciseRepository.save(textExercise);
-                    textAssessmentKnowledgeService.deleteKnowledgeIfUnused(knowledgeId);
-                }
-            }
-            // delete model assessment knowledge if exercise is of type ModelExercise and if no other exercise uses same knowledge
-            else if (exercise instanceof ModelingExercise) {
-                // explicitly load the modeling exercise as such so that the knowledge is eagerly loaded as well
-                ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exercise.getId());
-                if (modelingExercise.getKnowledge() != null) {
-                    long knowledgeId = modelingExercise.getKnowledge().getId();
-                    // Remove knowledge to avoid foreign key constraint exception
-                    modelingExercise.setKnowledge(null);
-                    ((ModelingExercise) exercise).setKnowledge(null);
-                    modelingExerciseRepository.save(modelingExercise);
-                    modelAssessmentKnowledgeService.deleteKnowledgeIfUnused(knowledgeId);
-                }
-            }
             exerciseRepository.deleteById(exercise.getId());
         }
     }
