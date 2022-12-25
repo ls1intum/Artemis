@@ -83,7 +83,9 @@ jobs:
                 java-version: '${{ env.java }}'
                 cache: 'gradle'
           - name: Java Tests
-            run: SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification
+            run: SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+          - name: Print failed tests
+            run: cat tests.log | grep ".*>.*FAILED"
 
   server-tests-postgres:
       runs-on: ubuntu-latest
@@ -97,7 +99,9 @@ jobs:
                 java-version: '${{ env.java }}'
                 cache: 'gradle'
           - name: Java Tests
-            run: SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification
+            run: SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+          - name: Print failed tests
+            run: cat tests.log | grep ".*>.*FAILED"
 
   server-style:
     runs-on: ubuntu-latest
