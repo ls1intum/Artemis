@@ -28,7 +28,7 @@ class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringIntegrat
 
     private static final String TEST_PREFIX = "progexgitdiffreportservice";
 
-    private final static String FILE_NAME = "test.java";
+    private static final String FILE_NAME = "test.java";
 
     private final LocalRepository solutionRepo = new LocalRepository("main");
 

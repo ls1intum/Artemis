@@ -167,7 +167,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private Exam testExam1;
 
-    private final static int numberOfStudents = 10;
+    private static final int numberOfStudents = 10;
 
     private User instructor;
 
@@ -1796,7 +1796,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamScore(boolean withCourseBonus) throws Exception {
-        // scheduleService
         participantScoreRepository.deleteAll();
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // TODO avoid duplicated code with StudentExamIntegrationTest
