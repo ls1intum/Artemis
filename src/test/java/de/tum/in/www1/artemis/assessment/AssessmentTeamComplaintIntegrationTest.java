@@ -68,7 +68,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
         modelingExercise.setMode(ExerciseMode.TEAM);
         modelingExercise = exerciseRepo.save(modelingExercise);
-        team = database.addTeamForExercise(modelingExercise, database.getUserByLogin(TEST_PREFIX + "tutor1"));
+        team = database.addTeamForExercise(modelingExercise, database.getUserByLogin(TEST_PREFIX + "tutor1"), TEST_PREFIX);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
