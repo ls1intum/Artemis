@@ -60,9 +60,6 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Autowired
     private ExerciseService exerciseService;
 
-    @Autowired
-    private ExamRepository examRepository;
-
     @BeforeEach
     void init() {
         database.addUsers(TEST_PREFIX, 7, 5, 0, 1);
@@ -323,7 +320,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseExerciseForExampleSolution() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(true);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
         ZonedDateTime now = ZonedDateTime.now();
         for (Course course : courses) {
             for (Exercise exercise : course.getExercises()) {
