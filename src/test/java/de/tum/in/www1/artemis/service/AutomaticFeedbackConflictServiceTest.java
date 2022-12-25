@@ -115,7 +115,7 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void changedFeedbackConflictsType() {
-        var feedbackConflictCountBefore = feedbackConflictRepository.count();
+        long feedbackConflictCountBefore = feedbackConflictRepository.count();
 
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("text submission", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, TEST_PREFIX + "student1");
@@ -132,21 +132,25 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
                 List.of(feedback1, feedback2));
 
         // important: use the updated feedback that was already saved to the database and not the feedback1 and feedback2 objects
-        feedback1 = textSubmission.getLatestResult().getFeedbacks().get(0);
-        feedback2 = textSubmission.getLatestResult().getFeedbacks().get(1);
-        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(feedback1, feedback2);
+        Feedback updatedFeedback1 = textSubmission.getLatestResult().getFeedbacks().get(0);
+        Feedback updatedFeedback2 = textSubmission.getLatestResult().getFeedbacks().get(1);
+        FeedbackConflict feedbackConflict = ModelFactory.generateFeedbackConflictBetweenFeedbacks(updatedFeedback1, updatedFeedback2);
         feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_COMMENT);
         feedbackConflictRepository.save(feedbackConflict);
 
-        atheneRequestMockProvider.mockFeedbackConsistency(createRemoteServiceResponse(feedback1, feedback2));
-        automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(Set.of(textBlock), new ArrayList<>(Collections.singletonList(feedback1)), textExercise.getId());
+        atheneRequestMockProvider.mockFeedbackConsistency(createRemoteServiceResponse(updatedFeedback1, updatedFeedback2));
+        automaticTextAssessmentConflictService.asyncCheckFeedbackConsistency(Set.of(textBlock), new ArrayList<>(Collections.singletonList(updatedFeedback1)), textExercise.getId());
 
-        await().until(() -> feedbackConflictRepository.count() > feedbackConflictCountBefore);
+        await().until(() -> {
+            var newFeedbackConflict = feedbackConflictRepository.findByFirstFeedbackIdAndConflict(updatedFeedback1.getId(), true).iterator().next();
+            // wait until the async method finished (type changed)
+            return newFeedbackConflict.getType() != FeedbackConflictType.INCONSISTENT_COMMENT;
+        });
 
         assertThat(feedbackConflictRepository.count()).isEqualTo(feedbackConflictCountBefore + 1);
-        var newFeedbackConflict = feedbackConflictRepository.findByFirstFeedbackIdAndConflict(feedback1.getId(), true).iterator().next();
-        assertThat(newFeedbackConflict.getFirstFeedback()).isEqualTo(feedback1);
-        assertThat(newFeedbackConflict.getSecondFeedback()).isEqualTo(feedback2);
+        var newFeedbackConflict = feedbackConflictRepository.findByFirstFeedbackIdAndConflict(updatedFeedback1.getId(), true).iterator().next();
+        assertThat(newFeedbackConflict.getFirstFeedback()).isEqualTo(updatedFeedback1);
+        assertThat(newFeedbackConflict.getSecondFeedback()).isEqualTo(updatedFeedback2);
         assertThat(newFeedbackConflict.getType()).isEqualTo(FeedbackConflictType.INCONSISTENT_SCORE);
     }
 
@@ -184,6 +188,7 @@ class AutomaticFeedbackConflictServiceTest extends AbstractSpringIntegrationBamb
 
         Feedback finalFeedback = feedback1;
         await().until(() -> feedbackConflictRepository.findByFirstFeedbackIdAndConflict(finalFeedback.getId(), false).size() > 0);
+        System.out.println("ID HERE: " + feedback1.getId());
 
         assertThat(feedbackConflictRepository.findByFirstFeedbackIdAndConflict(finalFeedback.getId(), false)).hasSize(1);
 
