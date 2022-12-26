@@ -1512,7 +1512,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testdeleteResult() throws Exception {
+    void testDeleteResult() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions(TEST_PREFIX, "text", 1);
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
         database.addAssessmentToExercise(exercise, database.getUserByLogin(TEST_PREFIX + "tutor1"));

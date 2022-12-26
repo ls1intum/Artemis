@@ -91,7 +91,6 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         assertThat(newlyImported.getNumberOfComplaints()).isNull();
         assertThat(newlyImported.getNumberOfMoreFeedbackRequests()).isNull();
         assertThat(newlyImported.getNumberOfSubmissions()).isNull();
-        assertThat(newlyImported.getAttachments()).isNull();
         assertThat(newlyImported.getTutorParticipations()).isNull();
         assertThat(newlyImported.getExampleSubmissions()).isNull();
         assertThat(newlyImported.getPosts()).isNull();

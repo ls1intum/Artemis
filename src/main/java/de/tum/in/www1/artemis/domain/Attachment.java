@@ -53,10 +53,6 @@ public class Attachment extends DomainObject implements Serializable {
 
     @ManyToOne
     @JsonIgnoreProperties("attachments")
-    private Exercise exercise;
-
-    @ManyToOne
-    @JsonIgnoreProperties("attachments")
     private Lecture lecture;
 
     @OneToOne
@@ -200,14 +196,6 @@ public class Attachment extends DomainObject implements Serializable {
 
     public void setAttachmentType(AttachmentType attachmentType) {
         this.attachmentType = attachmentType;
-    }
-
-    public Exercise getExercise() {
-        return exercise;
-    }
-
-    public void setExercise(Exercise exercise) {
-        this.exercise = exercise;
     }
 
     public Lecture getLecture() {

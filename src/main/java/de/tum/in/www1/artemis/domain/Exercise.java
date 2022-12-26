@@ -119,11 +119,6 @@ public abstract class Exercise extends BaseExercise implements Completable {
 
     @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("exercise")
-    private Set<Attachment> attachments = new HashSet<>();
-
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIncludeProperties({ "id" })
     private Set<Post> posts = new HashSet<>();
 
@@ -357,14 +352,6 @@ public abstract class Exercise extends BaseExercise implements Completable {
 
     public void setExampleSubmissions(Set<ExampleSubmission> exampleSubmissions) {
         this.exampleSubmissions = exampleSubmissions;
-    }
-
-    public Set<Attachment> getAttachments() {
-        return attachments;
-    }
-
-    public void setAttachments(Set<Attachment> attachments) {
-        this.attachments = attachments;
     }
 
     public Set<Post> getPosts() {

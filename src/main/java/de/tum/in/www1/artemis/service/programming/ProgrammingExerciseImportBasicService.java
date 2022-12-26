@@ -262,7 +262,6 @@ public class ProgrammingExerciseImportBasicService {
         newExercise.setExerciseHints(null);
         newExercise.setTestCases(null);
         newExercise.setStaticCodeAnalysisCategories(null);
-        newExercise.setAttachments(null);
         newExercise.setPlagiarismCases(null);
         newExercise.setNumberOfMoreFeedbackRequests(null);
         newExercise.setNumberOfComplaints(null);

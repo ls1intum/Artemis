@@ -151,28 +151,20 @@ public class AttachmentResource {
             return ResponseEntity.notFound().build();
         }
         Attachment attachment = optionalAttachment.get();
-        Course course = null;
-        String relatedEntity = null;
-        if (attachment.getLecture() != null) {
-            course = attachment.getLecture().getCourse();
-            relatedEntity = "lecture " + attachment.getLecture().getTitle();
-            try {
-                this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(attachment.getLink()));
-            }
-            catch (RuntimeException exception) {
-                // this catch is required for deleting wrongly formatted attachment database entries
-            }
+        Course course = attachment.getLecture().getCourse();
+        try {
+            this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(attachment.getLink()));
         }
-        else if (attachment.getExercise() != null) {
-            course = attachment.getExercise().getCourseViaExerciseGroupOrCourseMember();
-            relatedEntity = "exercise " + attachment.getExercise().getTitle();
+        catch (RuntimeException exception) {
+            // this catch is required for deleting wrongly formatted attachment database entries
         }
+
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
-        log.info("{} deleted attachment with id {} for {}", user.getLogin(), id, relatedEntity);
+        log.info("{} deleted attachment with id {} for {} {}", user.getLogin(), id, "lecture", attachment.getLecture().getTitle());
         attachmentRepository.deleteById(id);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();
     }

@@ -537,7 +537,6 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             assertThat(exercise.getStudentParticipations()).isEmpty();
             assertThat(exercise.getTutorParticipations()).isEmpty();
             assertThat(exercise.getExampleSubmissions()).isEmpty();
-            assertThat(exercise.getAttachments()).isEmpty();
             assertThat(exercise.getCategories()).isEmpty();
             assertThat(exercise.getProblemStatement()).isNull();
             assertThat(exercise.getPosts()).isEmpty();

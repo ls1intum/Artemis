@@ -510,7 +510,6 @@ public class ParticipationResource {
             exercise.setStudentParticipations(null);
             exercise.setTutorParticipations(null);
             exercise.setExampleSubmissions(null);
-            exercise.setAttachments(null);
             exercise.setCategories(null);
             exercise.setProblemStatement(null);
             exercise.setPosts(null);
