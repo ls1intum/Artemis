@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -14,21 +16,47 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 class ChannelIntegrationTest extends AbstractConversationTest {
 
+    @BeforeEach
+    void setupTestScenario() throws Exception {
+        super.setupTestScenario();
+        this.database.addUsers(TEST_PREFIX, 2, 2, 1, 2);
+        if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
+            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "student42"));
+        }
+        if (userRepository.findOneByLogin(testPrefix + "tutor42").isEmpty()) {
+            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "tutor42"));
+        }
+        if (userRepository.findOneByLogin(testPrefix + "editor42").isEmpty()) {
+            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "editor42"));
+        }
+        if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
+            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "instructor42"));
+        }
+    }
+
+    private static final String TEST_PREFIX = "chtest";
+
+    @Override
+    String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createChannel_asInstructor_shouldCreateChannel(boolean isPublicChannel) throws Exception {
         isAllowedToCreateChannelTest(isPublicChannel, "instructor1");
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void createChannel_asTutor_shouldCreateChannel(boolean isPublicChannel) throws Exception {
         // given
         isAllowedToCreateChannelTest(isPublicChannel, "tutor1");
@@ -36,16 +64,16 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void createChannel_asEditor_shouldCreateChannel(boolean isPublicChannel) throws Exception {
         // given
         isAllowedToCreateChannelTest(isPublicChannel, "editor1");
     }
 
-    private void isAllowedToCreateChannelTest(boolean isPublicChannel, String loginName) throws Exception {
+    private void isAllowedToCreateChannelTest(boolean isPublicChannel, String loginNameWithoutPrefix) throws Exception {
         // given
         var channelDTO = new ChannelDTO();
-        channelDTO.setName("general");
+        channelDTO.setName(RandomConversationNameGenerator.generateRandomConversationName());
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
@@ -54,29 +82,32 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/channels", channelDTO, ChannelDTO.class, HttpStatus.CREATED);
         // then
         this.assertChannelProperties(chat.getId(), channelDTO.getName(), null, channelDTO.getDescription(), channelDTO.getIsPublic(), false);
-        var participants = assertParticipants(chat.getId(), 1, loginName);
+        var participants = assertParticipants(chat.getId(), 1, loginNameWithoutPrefix);
         // creator is automatically added as channel moderator
         assertThat(participants.stream().findFirst().get().getIsModerator()).isTrue();
-        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), loginName);
+        verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, chat.getId(), loginNameWithoutPrefix);
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.CREATE);
+
+        // cleanup
+        conversationRepository.deleteById(chat.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createChannel_nameInvalid_shouldReturnBadRequest(boolean isPublicChannel) throws Exception {
         // given
-        createChannel(isPublicChannel);
+        var channel = createChannel(isPublicChannel);
 
         var channelDTO = new ChannelDTO();
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
-        channelDTO.setName("newname");
+        channelDTO.setName(RandomConversationNameGenerator.generateRandomConversationName());
         channelDTO.setDescription("general channel");
 
         // when
         // duplicated name
-        channelDTO.setName("general");
+        channelDTO.setName(channel.getName());
         expectCreateBadRequest(channelDTO);
         // empty name
         channelDTO.setName("");
@@ -90,51 +121,51 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         verifyNoParticipantTopicWebsocketSent();
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createChannel_descriptionInvalid_shouldReturnBadRequest(boolean isPublicChannel) throws Exception {
         // given
-        createChannel(isPublicChannel);
+        var channel = createChannel(isPublicChannel);
 
         var channelDTO = new ChannelDTO();
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
-        channelDTO.setName("newname");
-        // set description to one above 250 chars. Generate via loop
-        var description = new StringBuilder();
-        for (int i = 0; i < 251; i++) {
-            description.append("a");
-        }
-        channelDTO.setDescription(description.toString());
+        channelDTO.setName(RandomConversationNameGenerator.generateRandomConversationName());
+        channelDTO.setDescription("a".repeat(251));
 
         // when
         expectCreateBadRequest(channelDTO);
-
         // then
         verifyNoParticipantTopicWebsocketSent();
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "student1", roles = "USER")
-    void createChannel_asNonCourseInstructorOrTutororEditor_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void createChannel_asNonCourseInstructorOrTutorOrEditor_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
         var channelDTO = new ChannelDTO();
-        channelDTO.setName("general");
+        channelDTO.setName(RandomConversationNameGenerator.generateRandomConversationName());
         channelDTO.setIsPublic(isPublicChannel);
         channelDTO.setIsAnnouncementChannel(false);
         channelDTO.setDescription("general channel");
 
         // then
         expectCreateForbidden(channelDTO);
-        database.changeUser("instructor42");
+        database.changeUser(testPrefix + "instructor42");
         expectCreateForbidden(channelDTO);
-        database.changeUser("tutor42");
+        database.changeUser(testPrefix + "tutor42");
         expectCreateForbidden(channelDTO);
-        database.changeUser("editor42");
+        database.changeUser(testPrefix + "editor42");
         expectCreateForbidden(channelDTO);
 
         verifyNoParticipantTopicWebsocketSent();
@@ -142,12 +173,12 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteChannel_asInstructor_shouldDeleteChannel(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
         // when
-        database.changeUser("instructor2");
+        database.changeUser(testPrefix + "instructor2");
         request.delete("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), HttpStatus.OK);
         // then
         assertThat(channelRepository.findById(channel.getId())).isEmpty();
@@ -157,7 +188,7 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deleteChannel_asCreator_shouldDeleteChannel(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
@@ -171,42 +202,45 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteChannel_asNonCourseInstructor_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
         addUserAsChannelModerators(channel, "tutor2");
 
         // then
-        database.changeUser("student1");
+        database.changeUser(testPrefix + "student1");
         expectDeleteForbidden(channel.getId());
-        database.changeUser("tutor1");
+        database.changeUser(testPrefix + "tutor1");
         expectDeleteForbidden(channel.getId());
-        database.changeUser("tutor2");
+        database.changeUser(testPrefix + "tutor2");
         expectDeleteForbidden(channel.getId());
-        database.changeUser("editor1");
+        database.changeUser(testPrefix + "editor1");
         expectDeleteForbidden(channel.getId());
-        database.changeUser("instructor42");
+        database.changeUser(testPrefix + "instructor42");
         expectDeleteForbidden(channel.getId());
 
         verifyNoParticipantTopicWebsocketSent();
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateChannel_asUserWithChannelModerationRights_shouldUpdateChannel(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
         var updateDTO = new ChannelDTO();
-        updateDTO.setName("newname");
+        updateDTO.setName(RandomConversationNameGenerator.generateRandomConversationName());
         updateDTO.setDescription("new description");
         updateDTO.setTopic("new topic");
         addUserAsChannelModerators(channel, "tutor1");
 
         // then
         // every instructor automatically has moderation rights for every channel
-        database.changeUser("instructor2");
+        database.changeUser(testPrefix + "instructor2");
         request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.OK);
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, false);
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
@@ -214,89 +248,101 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         resetWebsocketMock();
 
         // channel moderators can also update the channel
-        updateDTO.setName("newname2");
+        updateDTO.setName(RandomConversationNameGenerator.generateRandomConversationName());
         updateDTO.setDescription("new description2");
         updateDTO.setTopic("new topic2");
-        database.changeUser("tutor1");
+        database.changeUser(testPrefix + "tutor1");
         request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.OK);
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, false);
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateChannel_onArchivedChannel_shouldReturnOk(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
         archiveChannel(channel.getId());
 
         var updateDTO = new ChannelDTO();
-        updateDTO.setName("newname");
+        updateDTO.setName(RandomConversationNameGenerator.generateRandomConversationName());
         updateDTO.setDescription("new description");
         updateDTO.setTopic("new topic");
         addUserAsChannelModerators(channel, "tutor1");
 
         // then
-        database.changeUser("instructor2");
+        database.changeUser(testPrefix + "instructor2");
         request.putWithResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId(), updateDTO, ChannelDTO.class, HttpStatus.OK);
         this.assertChannelProperties(channel.getId(), updateDTO.getName(), updateDTO.getTopic(), updateDTO.getDescription(), isPublicChannel, true);
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1", "tutor1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE);
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateChannel_asUserWithoutChannelModerationRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
         var updateDTO = new ChannelDTO();
-        updateDTO.setName("newname");
+        updateDTO.setName(RandomConversationNameGenerator.generateRandomConversationName());
         updateDTO.setDescription("new description");
         updateDTO.setTopic("new topic");
 
         // then
-        database.changeUser("student1");
+        database.changeUser(testPrefix + "student1");
         expectUpdateForbidden(channel.getId(), updateDTO);
-        database.changeUser("tutor1");
+        database.changeUser(testPrefix + "tutor1");
         expectUpdateForbidden(channel.getId(), updateDTO);
-        database.changeUser("editor1");
+        database.changeUser(testPrefix + "editor1");
         expectUpdateForbidden(channel.getId(), updateDTO);
-        database.changeUser("instructor42");
+        database.changeUser(testPrefix + "instructor42");
         expectUpdateForbidden(channel.getId(), updateDTO);
 
         verifyNoParticipantTopicWebsocketSent();
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void archiveAndUnarchiveChannel_asUserWithoutChannelModerationRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
 
         // then
-        database.changeUser("student1");
+        database.changeUser(testPrefix + "student1");
         expectArchivalChangeForbidden(channel, isPublicChannel, true);
         expectArchivalChangeForbidden(channel, isPublicChannel, false);
-        database.changeUser("tutor1");
+        database.changeUser(testPrefix + "tutor1");
         expectArchivalChangeForbidden(channel, isPublicChannel, true);
         expectArchivalChangeForbidden(channel, isPublicChannel, false);
-        database.changeUser("editor1");
+        database.changeUser(testPrefix + "editor1");
         expectArchivalChangeForbidden(channel, isPublicChannel, true);
         expectArchivalChangeForbidden(channel, isPublicChannel, false);
-        database.changeUser("instructor42");
+        database.changeUser(testPrefix + "instructor42");
         expectArchivalChangeForbidden(channel, isPublicChannel, true);
         expectArchivalChangeForbidden(channel, isPublicChannel, false);
 
         verifyNoParticipantTopicWebsocketSent();
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void archiveAndUnarchiveChannel_asUserWithChannelModerationRights_shouldArchiveChannel(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
@@ -304,19 +350,22 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         // every instructor automatically has moderation rights for every channel
-        database.changeUser("instructor2");
+        database.changeUser(testPrefix + "instructor2");
         testArchivalChangeWorks(channel, isPublicChannel, true);
         testArchivalChangeWorks(channel, isPublicChannel, false);
 
         // channel moderators can also update the channel
-        database.changeUser("tutor1");
+        database.changeUser(testPrefix + "tutor1");
         testArchivalChangeWorks(channel, isPublicChannel, true);
         testArchivalChangeWorks(channel, isPublicChannel, false);
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void grantRevokeChannelModeratorRole_asUserWithChannelModerationRights_shouldGrantRevokeChannelModeratorRole(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
@@ -326,47 +375,53 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         // every instructor automatically has moderation rights for every channel
-        database.changeUser("instructor2");
+        database.changeUser(testPrefix + "instructor2");
         testGrantRevokeChannelModeratorRoleWorks(channel, true);
         testGrantRevokeChannelModeratorRoleWorks(channel, false);
 
         // channel moderators can also grand and revoke channel moderation rights
-        database.changeUser("tutor1");
+        database.changeUser(testPrefix + "tutor1");
         testGrantRevokeChannelModeratorRoleWorks(channel, true);
         testGrantRevokeChannelModeratorRoleWorks(channel, false);
 
         // note: you can NOT revoke the channel moderator role of the creator to guarantee that there is always at least one channel moderator
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/revoke-channel-moderator", List.of("instructor1"),
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/revoke-channel-moderator", List.of(testPrefix + "instructor1"),
                 HttpStatus.BAD_REQUEST);
         assertUsersAreChannelModerators(channel.getId(), "instructor1");
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void grantRevokeChannelModeratorRole_asUserWithoutChannelModerationRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
 
         // then
-        database.changeUser("student1");
+        database.changeUser(testPrefix + "student1");
         expectGrantRevokeChannelModeratorRoleForbidden(channel, true);
         expectGrantRevokeChannelModeratorRoleForbidden(channel, false);
-        database.changeUser("tutor1");
+        database.changeUser(testPrefix + "tutor1");
         expectGrantRevokeChannelModeratorRoleForbidden(channel, true);
         expectGrantRevokeChannelModeratorRoleForbidden(channel, false);
-        database.changeUser("editor1");
+        database.changeUser(testPrefix + "editor1");
         expectGrantRevokeChannelModeratorRoleForbidden(channel, true);
         expectGrantRevokeChannelModeratorRoleForbidden(channel, false);
-        database.changeUser("instructor42");
+        database.changeUser(testPrefix + "instructor42");
         expectGrantRevokeChannelModeratorRoleForbidden(channel, true);
         expectGrantRevokeChannelModeratorRoleForbidden(channel, false);
         verifyNoParticipantTopicWebsocketSent();
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void registerUsersToChannel_asUserWithChannelModerationRights_shouldRegisterUsersToChannel(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
@@ -374,17 +429,17 @@ class ChannelIntegrationTest extends AbstractConversationTest {
 
         // then
         // every instructor automatically has moderation rights for every channel
-        database.changeUser("instructor2");
+        database.changeUser(testPrefix + "instructor2");
         testRegisterAndDeregisterUserWorks(channel, true);
         testRegisterAndDeregisterUserWorks(channel, false);
 
         // channel moderators can also grant and revoke channel moderator role
-        database.changeUser("tutor1");
+        database.changeUser(testPrefix + "tutor1");
         testRegisterAndDeregisterUserWorks(channel, true);
         testRegisterAndDeregisterUserWorks(channel, false);
 
         removeUsersFromConversation(channel.getId(), "student1", "student2", "tutor1");
-        database.changeUser("instructor1");
+        database.changeUser(testPrefix + "instructor1");
         var params = new LinkedMultiValueMap<String, String>();
         params.add("addAllStudents", String.valueOf(true));
         params.add("addAllTutors", String.valueOf(true));
@@ -401,136 +456,172 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         allUserLogins.addAll(allEditorLogins);
         allUserLogins.addAll(allInstructorLogins);
         String[] allUserLoginsArray = allUserLogins.toArray(new String[0]);
+
+        allUserLoginsArray = Arrays.stream(allUserLoginsArray).filter(login -> login.startsWith(testPrefix)).map(login -> login.substring(testPrefix.length()))
+                .toArray(String[]::new);
+
         assertUsersAreConversationMembers(channel.getId(), allUserLoginsArray);
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void registerUsersToChannel_asUserWithoutChannelModerationRights_shouldReturnForbidden(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
 
         // then
-        database.changeUser("student1");
+        database.changeUser(testPrefix + "student1");
         expectRegisterDeregisterForbidden(channel, true);
         expectRegisterDeregisterForbidden(channel, false);
-        database.changeUser("tutor1");
+        database.changeUser(testPrefix + "tutor1");
         expectRegisterDeregisterForbidden(channel, true);
         expectRegisterDeregisterForbidden(channel, false);
-        database.changeUser("editor1");
+        database.changeUser(testPrefix + "editor1");
         expectRegisterDeregisterForbidden(channel, true);
         expectRegisterDeregisterForbidden(channel, false);
-        database.changeUser("instructor42");
+        database.changeUser(testPrefix + "instructor42");
         expectRegisterDeregisterForbidden(channel, true);
         expectRegisterDeregisterForbidden(channel, false);
         verifyNoParticipantTopicWebsocketSent();
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void leaveChannel_asNormalUser_canLeaveChannel(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
         addUsersToConversation(channel.getId(), "student1");
 
         // then
-        database.changeUser("student1");
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister", List.of("student1"), HttpStatus.OK);
+        database.changeUser(testPrefix + "student1");
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister", List.of(testPrefix + "student1"), HttpStatus.OK);
         assertUserAreNotConversationMembers(channel.getId(), "student1");
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1");
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.DELETE, channel.getId(), "student1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE, MetisCrudAction.DELETE);
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @ParameterizedTest
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void leaveChannel_asCreator_shouldReturnBadRequest(boolean isPublicChannel) throws Exception {
         // given
         var channel = createChannel(isPublicChannel);
         // then
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister", List.of("instructor1"), HttpStatus.BAD_REQUEST);
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/deregister", List.of(testPrefix + "instructor1"),
+                HttpStatus.BAD_REQUEST);
         assertUsersAreConversationMembers(channel.getId(), "instructor1");
         verifyNoParticipantTopicWebsocketSent();
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void joinPublicChannel_asNormalUser_canJoinPublicChannel() throws Exception {
         // given
         var channel = createChannel(true);
 
         // then
-        database.changeUser("student1");
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of("student1"), HttpStatus.OK);
+        database.changeUser(testPrefix + "student1");
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of(testPrefix + "student1"), HttpStatus.OK);
         assertUsersAreConversationMembers(channel.getId(), "student1");
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.UPDATE, channel.getId(), "instructor1");
         verifyMultipleParticipantTopicWebsocketSent(MetisCrudAction.CREATE, channel.getId(), "student1");
         verifyNoParticipantTopicWebsocketSentExceptAction(MetisCrudAction.UPDATE, MetisCrudAction.CREATE);
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void joinPrivateChannel_asNormalUser_canNotJoinPrivateChannel() throws Exception {
         // given
         var channel = createChannel(false);
 
         // then
-        database.changeUser("student1");
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of("student1"), HttpStatus.FORBIDDEN);
+        database.changeUser(testPrefix + "student1");
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of(testPrefix + "student1"), HttpStatus.FORBIDDEN);
         assertUserAreNotConversationMembers(channel.getId(), "student1");
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void joinPrivateChannel_asInstructor_canJoinPrivateChannel() throws Exception {
         // given
         var channel = createChannel(false);
 
         // then
-        database.changeUser("instructor2");
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of("instructor2"), HttpStatus.OK);
+        database.changeUser(testPrefix + "instructor2");
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + "/register", List.of(testPrefix + "instructor2"), HttpStatus.OK);
         assertUsersAreConversationMembers(channel.getId(), "instructor2");
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getCourseChannelsOverview_asNormalUser_canSeeAllPublicChannelsAndPrivateChannelsWhereMember() throws Exception {
         // given
-        var publicChannelWhereMember = createChannel(true, "public1");
+        var publicChannelWhereMember = createChannel(true, RandomConversationNameGenerator.generateRandomConversationName());
         addUsersToConversation(publicChannelWhereMember.getId(), "student1");
-        var publicChannelWhereNotMember = createChannel(true, "public2");
-        var privateChannelWhereMember = createChannel(false, "private1");
+        var publicChannelWhereNotMember = createChannel(true, RandomConversationNameGenerator.generateRandomConversationName());
+        var privateChannelWhereMember = createChannel(false, RandomConversationNameGenerator.generateRandomConversationName());
         addUsersToConversation(privateChannelWhereMember.getId(), "student1");
-        createChannel(false, "private2");
+        var privateChannelWhereNotMember = createChannel(false, RandomConversationNameGenerator.generateRandomConversationName());
 
         // then
-        database.changeUser("student1");
-        var channnels = request.getList("/api/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
-        assertThat(channnels).hasSize(3);
-        assertThat(channnels.stream().map(ChannelDTO::getId).collect(Collectors.toList())).containsExactlyInAnyOrder(publicChannelWhereMember.getId(),
-                publicChannelWhereNotMember.getId(), privateChannelWhereMember.getId());
+        database.changeUser(testPrefix + "student1");
+        var channels = request.getList("/api/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
+        assertThat(channels.stream().map(ChannelDTO::getId).collect(Collectors.toList())).contains(publicChannelWhereMember.getId(), publicChannelWhereNotMember.getId(),
+                privateChannelWhereMember.getId());
+
+        // cleanup
+        conversationRepository.deleteById(privateChannelWhereMember.getId());
+        conversationRepository.deleteById(publicChannelWhereNotMember.getId());
+        conversationRepository.deleteById(publicChannelWhereMember.getId());
+        conversationRepository.deleteById(privateChannelWhereNotMember.getId());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getCourseChannelsOverview_asCourseInstructor_canSeeAllPublicChannelsAndAllPrivateChannels() throws Exception {
         // given
-        var publicChannelWhereMember = createChannel(true, "public1");
+        var publicChannelWhereMember = createChannel(true, RandomConversationNameGenerator.generateRandomConversationName());
         addUsersToConversation(publicChannelWhereMember.getId(), "student1");
-        var publicChannelWhereNotMember = createChannel(true, "public2");
-        var privateChannelWhereMember = createChannel(false, "private1");
+        var publicChannelWhereNotMember = createChannel(true, RandomConversationNameGenerator.generateRandomConversationName());
+        var privateChannelWhereMember = createChannel(false, RandomConversationNameGenerator.generateRandomConversationName());
         addUsersToConversation(privateChannelWhereMember.getId(), "student1");
-        var privateChannelWhereNotMember = createChannel(false, "private2");
+        var privateChannelWhereNotMember = createChannel(false, RandomConversationNameGenerator.generateRandomConversationName());
 
         // then
-        database.changeUser("instructor2");
+        database.changeUser(testPrefix + "instructor2");
         var channels = request.getList("/api/courses/" + exampleCourseId + "/channels/overview", HttpStatus.OK, ChannelDTO.class);
-        assertThat(channels).hasSize(4);
-        assertThat(channels.stream().map(ChannelDTO::getId).collect(Collectors.toList())).containsExactlyInAnyOrder(publicChannelWhereMember.getId(),
-                publicChannelWhereNotMember.getId(), privateChannelWhereMember.getId(), privateChannelWhereNotMember.getId());
+        assertThat(channels.stream().map(ChannelDTO::getId).collect(Collectors.toList())).contains(publicChannelWhereMember.getId(), publicChannelWhereNotMember.getId(),
+                privateChannelWhereMember.getId(), privateChannelWhereNotMember.getId());
+
+        // cleanup
+        conversationRepository.deleteById(privateChannelWhereMember.getId());
+        conversationRepository.deleteById(publicChannelWhereNotMember.getId());
+        conversationRepository.deleteById(publicChannelWhereMember.getId());
+        conversationRepository.deleteById(privateChannelWhereNotMember.getId());
     }
 
     private void testArchivalChangeWorks(ChannelDTO channel, boolean isPublicChannel, boolean shouldArchive) throws Exception {
@@ -559,7 +650,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         }
         var postfix = shouldRegister ? "/register" : "/deregister";
 
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of("student1", "student2"), HttpStatus.OK);
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of(testPrefix + "student1", testPrefix + "student2"),
+                HttpStatus.OK);
         if (shouldRegister) {
             assertUsersAreConversationMembers(channel.getId(), "student1", "student2");
         }
@@ -590,7 +682,8 @@ class ChannelIntegrationTest extends AbstractConversationTest {
         }
         var postfix = shouldGrant ? "/grant-channel-moderator" : "/revoke-channel-moderator";
 
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of("student1", "student2"), HttpStatus.OK);
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of(testPrefix + "student1", testPrefix + "student2"),
+                HttpStatus.OK);
         if (shouldGrant) {
             assertUsersAreChannelModerators(channel.getId(), "student1", "student2");
         }
@@ -620,13 +713,15 @@ class ChannelIntegrationTest extends AbstractConversationTest {
     private void expectGrantRevokeChannelModeratorRoleForbidden(ChannelDTO channel, boolean shouldGrant) throws Exception {
         // prepare channel in db
         var postfix = shouldGrant ? "/grant-channel-moderator" : "/revoke-channel-moderator";
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of("student1", "student2"), HttpStatus.FORBIDDEN);
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of(testPrefix + "student1", testPrefix + "student2"),
+                HttpStatus.FORBIDDEN);
     }
 
     private void expectRegisterDeregisterForbidden(ChannelDTO channel, boolean shouldRegister) throws Exception {
         // prepare channel in db
         var postfix = shouldRegister ? "/register" : "/deregister";
-        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of("student1", "student2"), HttpStatus.FORBIDDEN);
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/channels/" + channel.getId() + postfix, List.of(testPrefix + "student1", testPrefix + "student2"),
+                HttpStatus.FORBIDDEN);
     }
 
     private void expectCreateBadRequest(ChannelDTO channelDTO) throws Exception {

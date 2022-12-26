@@ -2,31 +2,55 @@ package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationDTO;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ConversationUserDTO;
+import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
 class ConversationIntegrationTest extends AbstractConversationTest {
 
+    @BeforeEach
+    void setupTestScenario() throws Exception {
+        super.setupTestScenario();
+        this.database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
+        if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
+            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "student42"));
+        }
+    }
+
+    private static final String TEST_PREFIX = "contest";
+
+    @Override
+    String getTestPrefix() {
+        return TEST_PREFIX;
+    }
+
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getConversationsOfUser_shouldReturnConversationsWhereMember() throws Exception {
         // given
         var channel = createChannel(false);
         addUsersToConversation(channel.getId(), "tutor1");
         var groupChat = createGroupChat("tutor1");
         hideConversation(groupChat.getId(), "tutor1");
-        var oneToOneChat = createAndPostInOneToOneChat("tutor1");
+        var oneToOneChat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/one-to-one-chats/", List.of(testPrefix + "tutor1"), OneToOneChatDTO.class,
+                HttpStatus.CREATED);
+        var post = this.postInConversation(oneToOneChat.getId(), "instructor1");
+        this.resetWebsocketMock();
         favoriteConversation(oneToOneChat.getId(), "tutor1");
-        var channel2 = createChannel(false, "channel2");
+        var channel2 = createChannel(false, RandomConversationNameGenerator.generateRandomConversationName());
 
         // then
-        database.changeUser("tutor1");
+        database.changeUser(testPrefix + "tutor1");
         var convOfUsers = request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
         assertThat(convOfUsers).hasSize(3); // the channel2 is not returned because the user is not a member
         assertThat(convOfUsers).extracting(ConversationDTO::getId).containsExactlyInAnyOrder(channel.getId(), groupChat.getId(), oneToOneChat.getId());
@@ -50,7 +74,7 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         // check that the channel moderator role is correctly set
         convOfUsers.stream().filter(conv -> conv.getId().equals(channel.getId())).findFirst().ifPresent(conv -> assertThat(((ChannelDTO) conv).getIsChannelModerator()).isTrue());
         // check that creator is correctly set
-        database.changeUser("instructor1");
+        database.changeUser(testPrefix + "instructor1");
         var convOfInstructor = request.getList("/api/courses/" + exampleCourseId + "/conversations", HttpStatus.OK, ConversationDTO.class);
         // should be creator of all conversations
         assertThat(convOfInstructor).hasSize(4);
@@ -60,16 +84,22 @@ class ConversationIntegrationTest extends AbstractConversationTest {
             assertThat(conv.getIsHidden()).isFalse();
             assertConversationDTOTransientProperties(conv, true, true, true, true);
         }
+        // cleanup
+        conversationMessageRepository.deleteById(post.getId());
+        conversationRepository.deleteById(groupChat.getId());
+        conversationRepository.deleteById(oneToOneChat.getId());
+        conversationRepository.deleteById(channel.getId());
+        conversationRepository.deleteById(channel2.getId());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void switchFavoriteStatus_shouldSwitchFavoriteStatus() throws Exception {
         // given
         var channel = createChannel(false);
         addUsersToConversation(channel.getId(), "tutor1");
         // then
-        database.changeUser("tutor1");
+        database.changeUser(testPrefix + "tutor1");
         var trueParams = new LinkedMultiValueMap<String, String>();
         trueParams.add("isFavorite", String.valueOf(true));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/favorite", HttpStatus.OK, trueParams);
@@ -78,16 +108,19 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         falseParams.add("isFavorite", String.valueOf(false));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/favorite", HttpStatus.OK, falseParams);
         this.assertFavoriteStatus(channel.getId(), "tutor1", false);
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void switchHiddenStatus_shouldSwitchHiddenStatus() throws Exception {
         // given
         var channel = createChannel(false);
         addUsersToConversation(channel.getId(), "tutor1");
         // then
-        database.changeUser("tutor1");
+        database.changeUser(testPrefix + "tutor1");
         var trueParams = new LinkedMultiValueMap<String, String>();
         trueParams.add("isHidden", String.valueOf(true));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, trueParams);
@@ -96,23 +129,22 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         falseParams.add("isHidden", String.valueOf(false));
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/hidden", HttpStatus.OK, falseParams);
         this.assertHiddenStatus(channel.getId(), "tutor1", false);
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void searchMembersOfConversation_shouldFindMembersWhereLoginOrNameMatches() throws Exception {
         var channel = createChannel(false);
-        // add students 1-10 to the channel
-        for (int i = 1; i <= 5; i++) {
-            addUsersToConversation(channel.getId(), "student" + i);
-        }
-        // add editor1
+        addUsersToConversation(channel.getId(), "student1");
         addUsersToConversation(channel.getId(), "editor1");
         addUsersToConversation(channel.getId(), "tutor1");
         grantChannelModeratorRole(channel.getId(), "tutor1");
 
         // search for students
-        database.changeUser("tutor1");
+        database.changeUser(testPrefix + "tutor1");
         // <server>/api/courses/:courseId/conversations/:conversationId/members/search?loginOrName=:searchTerm&sort=firstName,asc&sort=lastName,asc&page=0&size=10
         // optional filter attribute to further : filter=INSTRUCTOR or EDITOR or TUTOR or STUDENT or CHANNEL_MODERATOR
         var params = new LinkedMultiValueMap<String, String>();
@@ -123,35 +155,38 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         params.add("size", "20");
         var members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class,
                 params);
-        assertThat(members).hasSize(8);
-        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("student1", "student2", "student3", "student4", "student5", "tutor1", "instructor1",
-                "editor1");
+        assertThat(members).hasSize(4);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder(testPrefix + "student1", testPrefix + "tutor1", testPrefix + "instructor1",
+                testPrefix + "editor1");
         // same request but now we only search for editor1
-        params.set("loginOrName", "editor1");
+        params.set("loginOrName", testPrefix + "editor1");
         members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
         assertThat(members).hasSize(1);
-        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("editor1");
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder(testPrefix + "editor1");
         params.set("loginOrName", "");
         // same request but now we only search for students
         params.set("filter", "STUDENT");
         members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
-        assertThat(members).hasSize(5);
-        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("student1", "student2", "student3", "student4", "student5");
+        assertThat(members).hasSize(1);
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder(testPrefix + "student1");
         // same request but now we only search for tutors (this will also include editors)
         params.set("filter", "TUTOR");
         members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
         assertThat(members).hasSize(2);
-        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("tutor1", "editor1");
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder(testPrefix + "tutor1", testPrefix + "editor1");
         // same request but now we only search for instructors
         params.set("filter", "INSTRUCTOR");
         members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
         assertThat(members).hasSize(1);
-        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("instructor1");
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder(testPrefix + "instructor1");
         // same request but now we only search for channel moderators
         params.set("filter", "CHANNEL_MODERATOR");
         members = request.getList("/api/courses/" + exampleCourseId + "/conversations/" + channel.getId() + "/members/search", HttpStatus.OK, ConversationUserDTO.class, params);
         assertThat(members).hasSize(2);
-        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder("tutor1", "instructor1");
+        assertThat(members).extracting(ConversationUserDTO::getLogin).containsExactlyInAnyOrder(testPrefix + "tutor1", testPrefix + "instructor1");
+
+        // cleanup
+        conversationRepository.deleteById(channel.getId());
     }
 
     private void assertConversationDTOTransientProperties(ConversationDTO conversationDTO, Boolean isCreator, Boolean isMember, Boolean hasChannelModerationRights,
@@ -165,14 +200,14 @@ class ConversationIntegrationTest extends AbstractConversationTest {
         }
     }
 
-    private void assertFavoriteStatus(Long channelId, String userLogin, Boolean expectedFavoriteStatus) throws Exception {
-        var user = database.getUserByLogin(userLogin);
+    private void assertFavoriteStatus(Long channelId, String userLoginWithoutPrefix, Boolean expectedFavoriteStatus) {
+        var user = database.getUserByLogin(testPrefix + userLoginWithoutPrefix);
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId());
         assertThat(participant.get().getIsFavorite()).isEqualTo(expectedFavoriteStatus);
     }
 
-    private void assertHiddenStatus(Long channelId, String userLogin, Boolean expectedHiddenStatus) throws Exception {
-        var user = database.getUserByLogin(userLogin);
+    private void assertHiddenStatus(Long channelId, String userLoginWithoutPrefix, Boolean expectedHiddenStatus) {
+        var user = database.getUserByLogin(testPrefix + userLoginWithoutPrefix);
         var participant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channelId, user.getId());
         assertThat(participant.get().getIsHidden()).isEqualTo(expectedHiddenStatus);
     }

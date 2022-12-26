@@ -109,7 +109,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateConversationPost() throws Exception {
         Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
 
@@ -136,7 +136,7 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
         PostContextFilter postContextFilter = new PostContextFilter();
         postContextFilter.setConversationId(postToSave.getConversation().getId());
-        var numberOfPostsBefore = messageRepository.findMessages(postContextFilter, Pageable.unpaged()).getSize();
+        var numberOfPostsBefore = conversationMessageRepository.findMessages(postContextFilter, Pageable.unpaged()).getSize();
 
         Post notCreatedPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.FORBIDDEN);
         assertThat(notCreatedPost).isNull();
