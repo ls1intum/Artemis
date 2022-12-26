@@ -212,15 +212,9 @@ describe('ListOfComplaintsComponent', () => {
         it('complaint locked by the current user', () => {
             const userLogin = 'user';
             const endDate = dayjs().add(2, 'days');
-            const complaint = new Complaint();
+            const complaint = createComplaint();
             complaint.id = 42;
             complaint.result = new Result();
-            complaint.complaintText = 'Test text';
-            complaint.complaintType = ComplaintType.MORE_FEEDBACK;
-            complaint.complaintResponse = new ComplaintResponse();
-            complaint.complaintResponse.isCurrentlyLocked = true;
-            complaint.complaintResponse.reviewer = { login: userLogin } as User;
-            complaint.complaintResponse.lockEndDate = endDate;
             jest.spyOn(complaintService, 'isComplaintLockedByLoggedInUser').mockReturnValue(true);
             jest.spyOn(complaintService, 'isComplaintLocked').mockReturnValue(true);
             jest.spyOn(translateService, 'instant');
@@ -255,15 +249,46 @@ describe('ListOfComplaintsComponent', () => {
     });
 
     it('navigate for openAssessmentEditor', () => {
-        const userLogin = 'user';
-        const endDate = dayjs().add(2, 'days');
+        testOpenAssessmentEditor(ComplaintType.MORE_FEEDBACK, false, 0);
+    });
+
+    it('uses correct correction round for accepted complaints', () => {
+        testOpenAssessmentEditor(ComplaintType.COMPLAINT, true, 1);
+    });
+
+    it('uses correct correction round for rejected complaints', () => {
+        testOpenAssessmentEditor(ComplaintType.COMPLAINT, false, 0);
+    });
+
+    it('uses correct correction round for accepted more feedback requests', () => {
+        testOpenAssessmentEditor(ComplaintType.MORE_FEEDBACK, true, 0);
+    });
+
+    function testOpenAssessmentEditor(type: ComplaintType, accepted: boolean, expectedCorrectionRound: number) {
         const submissionId = 13;
         const participationId = 69;
         const exerciseId = 1337;
         const courseId = 77;
+        const complaint = createComplaintWithSubmissionAndResult(submissionId, participationId, exerciseId, courseId, type);
+        complaint.accepted = accepted;
+        jest.spyOn(router, 'navigate');
+        activatedRoute.setParameters({ courseId });
+
+        comp.ngOnInit();
+        comp.openAssessmentEditor(complaint);
+
+        expect(comp.correctionRound).toBe(expectedCorrectionRound);
+        expect(router.navigate).toHaveBeenCalledOnce();
+        expect(router.navigate).toHaveBeenCalledWith(
+            ['/course-management', `${courseId}`, 'text-exercises', `${exerciseId}`, 'participations', `${participationId}`, 'submissions', `${submissionId}`, 'assessment'],
+            { queryParams: { 'correction-round': expectedCorrectionRound } },
+        );
+    }
+
+    function createComplaintWithSubmissionAndResult(submissionId: number, participationId: number, exerciseId: number, courseId: number, type?: ComplaintType): Complaint {
         const course = new Course();
         course.id = courseId;
-        const complaint = new Complaint();
+        const complaint = createComplaint(type);
         complaint.id = 42;
         complaint.result = new Result();
         complaint.result.submission = new TextSubmission();
@@ -272,25 +297,21 @@ describe('ListOfComplaintsComponent', () => {
         complaint.result.participation.id = participationId;
         complaint.result.participation.exercise = new TextExercise(course, undefined);
         complaint.result.participation.exercise.id = exerciseId;
+        return complaint;
+    }
+
+    function createComplaint(type = ComplaintType.MORE_FEEDBACK): Complaint {
+        const userLogin = 'user';
+        const endDate = dayjs().add(2, 'days');
+        const complaint = new Complaint();
         complaint.complaintText = 'Test text';
-        complaint.complaintType = ComplaintType.MORE_FEEDBACK;
+        complaint.complaintType = type;
         complaint.complaintResponse = new ComplaintResponse();
         complaint.complaintResponse.isCurrentlyLocked = true;
         complaint.complaintResponse.reviewer = { login: userLogin } as User;
         complaint.complaintResponse.lockEndDate = endDate;
-        jest.spyOn(router, 'navigate');
-        activatedRoute.setParameters({ courseId });
-
-        comp.ngOnInit();
-        comp.openAssessmentEditor(complaint);
-
-        expect(comp.correctionRound).toBe(0);
-        expect(router.navigate).toHaveBeenCalledOnce();
-        expect(router.navigate).toHaveBeenCalledWith(
-            ['/course-management', `${courseId}`, 'text-exercises', `${exerciseId}`, 'participations', `${participationId}`, 'submissions', `${submissionId}`, 'assessment'],
-            { queryParams: { 'correction-round': 0 } },
-        );
-    });
+        return complaint;
+    }
 
     it.each(['4', '5'])(
         'should filter complaints accordingly',
