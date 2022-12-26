@@ -202,12 +202,12 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
         fileUploadExercise.setCourse(fileUploadExercise.getExerciseGroup().getExam().getCourse());
 
-        request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
         fileUploadExercise.setCourse(null);
         fileUploadExercise.setExerciseGroup(null);
 
-        request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -576,13 +576,13 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setDueDate(baseTime.plusHours(3));
         fileUploadExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
 
         fileUploadExercise.setReleaseDate(baseTime.plusHours(3));
         fileUploadExercise.setDueDate(null);
         fileUploadExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -600,7 +600,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         var exampleSolutionPublicationDate = baseTime.plusHours(3);
         fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
 
-        var result = request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
+        var result = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
         fileUploadExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
@@ -609,7 +609,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         exampleSolutionPublicationDate = baseTime.plusHours(2);
         fileUploadExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
 
-        result = request.postWithResponseBody("/api/file-upload-exercises/", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
+        result = request.postWithResponseBody("/api/file-upload-exercises", fileUploadExercise, FileUploadExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
     }

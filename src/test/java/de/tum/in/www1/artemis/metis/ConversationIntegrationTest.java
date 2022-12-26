@@ -58,7 +58,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testCreateConversation() throws Exception {
         Conversation conversationToSave = conversationToCreate(course, database.getUserByLogin(TEST_PREFIX + "student2"));
 
-        Conversation createdConversation = request.postWithResponseBody("/api/courses/" + course.getId() + "/conversations/", conversationToSave, Conversation.class,
+        Conversation createdConversation = request.postWithResponseBody("/api/courses/" + course.getId() + "/conversations", conversationToSave, Conversation.class,
                 HttpStatus.CREATED);
 
         checkCreatedConversationParticipants(createdConversation.getConversationParticipants());
@@ -106,20 +106,20 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         request.postWithResponseBody("/api/courses/" + course.getId() + "/messages", post, Post.class, HttpStatus.CREATED);
 
-        conversationsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations/", HttpStatus.OK, Conversation.class, params);
+        conversationsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations", HttpStatus.OK, Conversation.class, params);
         assertThat(conversationsOfUser.get(0)).isEqualTo(existingConversation);
 
         database.changeUser(TEST_PREFIX + "tutor2");
-        conversationsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations/", HttpStatus.OK, Conversation.class, params);
+        conversationsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations", HttpStatus.OK, Conversation.class, params);
         assertThat(conversationsOfUser.get(0)).isEqualTo(existingConversation);
 
         database.changeUser(TEST_PREFIX + "tutor3");
-        conversationsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations/", HttpStatus.OK, Conversation.class, params);
+        conversationsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations", HttpStatus.OK, Conversation.class, params);
         assertThat(conversationsOfUser).isEmpty();
     }
 
     private void createConversationBadRequest(Conversation conversationToSave) throws Exception {
-        Conversation createdConversation = request.postWithResponseBody("/api/courses/" + course.getId() + "/conversations/", conversationToSave, Conversation.class,
+        Conversation createdConversation = request.postWithResponseBody("/api/courses/" + course.getId() + "/conversations", conversationToSave, Conversation.class,
                 HttpStatus.BAD_REQUEST);
         assertThat(createdConversation).isNull();
 

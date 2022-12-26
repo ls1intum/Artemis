@@ -522,7 +522,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor2, exam.getExerciseGroups());
 
-        List<StudentExam> response = request.getList("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs/", HttpStatus.OK, StudentExam.class);
+        List<StudentExam> response = request.getList("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-runs", HttpStatus.OK, StudentExam.class);
         assertThat(response).hasSize(2);
     }
 

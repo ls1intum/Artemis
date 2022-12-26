@@ -262,14 +262,14 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exerciseGroup);
         quizExercise.setCourse(exerciseGroup.getExam().getCourse());
-        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createQuizExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(null);
-        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -509,7 +509,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setExerciseGroup(exerciseGroup);
 
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -518,7 +518,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setCourse(null);
 
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -526,7 +526,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void updateQuizExercise_InvalidDates_badRequest() throws Exception {
         QuizExercise quizExercise = createQuizOnServer(ZonedDateTime.now().plusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now()));
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -538,7 +538,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise.setCourse(null);
         quizExercise.setExerciseGroup(exerciseGroup);
 
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -551,7 +551,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise.setExerciseGroup(null);
         quizExercise.setCourse(course);
 
-        request.putWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     private QuizExercise createQuizOnServer(ZonedDateTime releaseDate, ZonedDateTime dueDate, QuizMode quizMode) throws Exception {
@@ -788,7 +788,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetQuizExercisesForExam() throws Exception {
         quizExercise = createQuizOnServerForExam();
         var examId = quizExercise.getExerciseGroup().getExam().getId();
-        List<QuizExercise> quizExercises = request.getList("/api/" + examId + "/quiz-exercises", HttpStatus.OK, QuizExercise.class);
+        List<QuizExercise> quizExercises = request.getList("/api/exams" + examId + "/quiz-exercises", HttpStatus.OK, QuizExercise.class);
         assertThat(quizExercises).as("Quiz exercise was retrieved").hasSize(1);
         assertThat(quizExercise.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExercises.get(0).getId());
     }
@@ -844,14 +844,14 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
         String randomString = setupFilterTestCase();
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", randomString);
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises", randomString);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
         String randomString = setupFilterTestCase();
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/", randomString);
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises", randomString);
     }
 
     private String setupFilterTestCase() {
@@ -952,7 +952,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise = createQuizOnServer(ZonedDateTime.now().plusSeconds(5), null, QuizMode.SYNCHRONIZED);
 
         // we expect a bad request because the quiz has not ended yet
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(5));
         quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now().minusMinutes(1));
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
@@ -993,7 +993,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertQuizPointStatisticsPointCounters(quizExercise, Map.of(0.0, pc30, 3.0, pc20, 4.0, pc20, 6.0, pc20, 7.0, pc10));
 
         // reevaluate without changing anything and check if statistics are still correct (i.e. unchanged)
-        QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise,
+        QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise,
                 QuizExercise.class, HttpStatus.OK);
         checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
 
@@ -1003,7 +1003,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         multipleChoiceQuestion.getAnswerOptions().remove(1);
 
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, QuizExercise.class, HttpStatus.OK);
 
         // load the exercise again after it was re-evaluated
         quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
@@ -1023,7 +1023,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var shortAnswerQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
         shortAnswerQuestion.setInvalid(true);
 
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, QuizExercise.class, HttpStatus.OK);
         // load the exercise again after it was re-evaluated
         quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
 
@@ -1038,7 +1038,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // delete a question and reevaluate
         quizExercise.getQuizQuestions().remove(1);
 
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, QuizExercise.class, HttpStatus.OK);
         // load the exercise again after it was re-evaluated
         quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
 
@@ -1061,7 +1061,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise.getQuizQuestions().get(2).setScoringType(ScoringType.PROPORTIONAL_WITH_PENALTY);   // SA
 
         // we expect a bad request because the quiz has not ended yet
-        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
         quizExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         quizExercise.setDuration(3600);
         quizExerciseService.endQuiz(quizExercise, ZonedDateTime.now().minusHours(1));
@@ -1098,7 +1098,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         System.out.println("QuizPointStatistic before re-evaluate: " + quizExercise.getQuizPointStatistic());
 
         // reevaluate without changing anything and check if statistics are still correct
-        QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate/", quizExercise,
+        QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise,
                 QuizExercise.class, HttpStatus.OK);
         checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
 
@@ -1108,7 +1108,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         MultipleChoiceQuestion mc = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(0);
         mc.getAnswerOptions().remove(1);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExerciseWithReevaluatedStatistics.getId() + "/re-evaluate/",
+        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExerciseWithReevaluatedStatistics.getId() + "/re-evaluate",
                 quizExerciseWithReevaluatedStatistics, QuizExercise.class, HttpStatus.OK);
 
         // one student should get a higher score
@@ -1121,7 +1121,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // set a question invalid and reevaluate
         quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(2).setInvalid(true);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExerciseWithReevaluatedStatistics.getId() + "/re-evaluate/",
+        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExerciseWithReevaluatedStatistics.getId() + "/re-evaluate",
                 quizExerciseWithReevaluatedStatistics, QuizExercise.class, HttpStatus.OK);
 
         // several students should get a higher score
@@ -1133,7 +1133,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // delete a question and reevaluate
         quizExerciseWithReevaluatedStatistics.getQuizQuestions().remove(1);
 
-        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExerciseWithReevaluatedStatistics.getId() + "/re-evaluate/",
+        quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExerciseWithReevaluatedStatistics.getId() + "/re-evaluate",
                 quizExerciseWithReevaluatedStatistics, QuizExercise.class, HttpStatus.OK);
 
         // max score should be less
@@ -1837,7 +1837,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         question.setExplanation("0".repeat(validityThreshold));
 
-        QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
+        QuizExercise response = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         assertNotNull(response);
     }
 
@@ -1853,7 +1853,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         question.setExplanation("0".repeat(validityThreshold + 1));
 
-        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**
@@ -1868,7 +1868,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold));
 
-        QuizExercise response = request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.CREATED);
+        QuizExercise response = request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.CREATED);
         assertNotNull(response);
     }
 
@@ -1884,7 +1884,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         MultipleChoiceQuestion question = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         question.getAnswerOptions().get(0).setExplanation("0".repeat(validityThreshold + 1));
 
-        request.postWithResponseBody("/api/quiz-exercises/", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.postWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private QuizExercise createMultipleChoiceQuizExerciseDummy() {

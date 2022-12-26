@@ -249,7 +249,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExerciseRepository.save(modelingExercise);
 
-        request.postWithResponseBody("/api/modeling-exercises/", invalidDates.applyTo(modelingExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling-exercises", invalidDates.applyTo(modelingExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -271,7 +271,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         }
 
         classExercise.setDueDate(ZonedDateTime.now().plusHours(12));
-        request.put("/api/modeling-exercises/", classExercise, HttpStatus.OK);
+        request.put("/api/modeling-exercises", classExercise, HttpStatus.OK);
 
         {
             final var participations = studentParticipationRepository.findByExerciseId(classExercise.getId());
@@ -466,7 +466,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         modelingExercise.setTitle(title);
         modelingExercise.setDifficulty(difficulty);
 
-        ModelingExercise newModelingExercise = request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        ModelingExercise newModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
 
         assertThat(newModelingExercise.getTitle()).as("modeling exercise title was correctly set").isEqualTo(title);
         assertThat(newModelingExercise.getDifficulty()).as("modeling exercise difficulty was correctly set").isEqualTo(difficulty);
@@ -482,7 +482,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
 
-        request.postWithResponseBody("/api/modeling-exercises/", invalidDates.applyTo(modelingExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling-exercises", invalidDates.applyTo(modelingExercise), ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -491,14 +491,14 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
         modelingExercise.setCourse(exerciseGroup.getExam().getCourse());
-        request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createModelingExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         ModelingExercise modelingExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, null);
-        request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -533,7 +533,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
-        final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -571,11 +571,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         database.addCourseWithOneModelingExercise("ClassDiagram" + uuid);
         database.addCourseWithOneModelingExercise("Activity Diagram" + uuid);
         final var searchClassDiagram = database.configureSearch("ClassDiagram" + uuid);
-        final var resultClassDiagram = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchClassDiagram));
+        final var resultClassDiagram = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchClassDiagram));
         assertThat(resultClassDiagram.getResultsOnPage()).hasSize(1);
 
         final var searchActivityDiagram = database.configureSearch("Activity Diagram" + uuid);
-        final var resultActivityDiagram = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchActivityDiagram));
+        final var resultActivityDiagram = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchActivityDiagram));
         assertThat(resultActivityDiagram.getResultsOnPage()).hasSize(1);
     }
 
@@ -585,9 +585,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         final String uuid = UUID.randomUUID().toString();
         String searchTerm = "ClassDiagram" + uuid;
         final var search = database.configureSearch(searchTerm);
-        final var oldResult = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var oldResult = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         database.addCourseInOtherInstructionGroupAndExercise(searchTerm);
-        final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(oldResult.getResultsOnPage().size() + 1);
     }
 
@@ -597,7 +597,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         String randomString = UUID.randomUUID().toString();
         database.addCourseWithOneReleasedModelExerciseWithKnowledge(randomString);
         database.addCourseExamExerciseGroupWithOneModelingExercise(randomString + "-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/", randomString);
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises", randomString);
     }
 
     @Test
@@ -606,7 +606,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         String randomString = UUID.randomUUID().toString();
         database.addCourseWithOneReleasedModelExerciseWithKnowledge(randomString);
         database.addCourseExamExerciseGroupWithOneModelingExercise(randomString + "-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/", randomString);
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises", randomString);
     }
 
     @Test
@@ -803,13 +803,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         modelingExercise.setDueDate(baseTime.plusHours(3));
         modelingExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
 
         modelingExercise.setReleaseDate(baseTime.plusHours(3));
         modelingExercise.setDueDate(null);
         modelingExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -827,7 +827,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var exampleSolutionPublicationDate = baseTime.plusHours(3);
         modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
 
-        var result = request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        var result = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
         modelingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
@@ -836,7 +836,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         exampleSolutionPublicationDate = baseTime.plusHours(2);
         modelingExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
 
-        result = request.postWithResponseBody("/api/modeling-exercises/", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
+        result = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
     }

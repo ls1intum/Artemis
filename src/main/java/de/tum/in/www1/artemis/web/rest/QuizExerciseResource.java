@@ -121,7 +121,7 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 201 (Created) and with body the new quizExercise, or with status 400 (Bad Request) if the quizExercise has already an ID
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/quiz-exercises")
+    @PostMapping("quiz-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizExercise> createQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
         log.info("REST request to create QuizExercise : {}", quizExercise);
@@ -158,7 +158,7 @@ public class QuizExerciseResource {
      *         (Internal Server Error) if the quizExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping("/quiz-exercises")
+    @PutMapping("quiz-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizExercise> updateQuizExercise(@RequestBody QuizExercise quizExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
@@ -211,7 +211,7 @@ public class QuizExerciseResource {
      * @param courseId id of the course of which all exercises should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
      */
-    @GetMapping(value = "/courses/{courseId}/quiz-exercises")
+    @GetMapping("courses/{courseId}/quiz-exercises")
     @PreAuthorize("hasRole('TA')")
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
         log.info("REST request to get all quiz exercises for the course with id : {}", courseId);
@@ -237,7 +237,7 @@ public class QuizExerciseResource {
      * @param examId id of the exam of which all exercises should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
      */
-    @GetMapping("/{examId}/quiz-exercises")
+    @GetMapping("exams/{examId}/quiz-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public List<QuizExercise> getQuizExercisesForExam(@PathVariable Long examId) {
         log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
@@ -261,7 +261,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/quiz-exercises/{quizExerciseId}")
+    @GetMapping("quiz-exercises/{quizExerciseId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
@@ -285,7 +285,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise for which the statistics should be recalculated
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/quiz-exercises/{quizExerciseId}/recalculate-statistics")
+    @GetMapping("quiz-exercises/{quizExerciseId}/recalculate-statistics")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
         log.info("REST request to recalculate quiz statistics : {}", quizExerciseId);
@@ -304,7 +304,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
      */
-    @GetMapping("/quiz-exercises/{quizExerciseId}/for-student")
+    @GetMapping("quiz-exercises/{quizExerciseId}/for-student")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long quizExerciseId) {
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
@@ -330,7 +330,7 @@ public class QuizExerciseResource {
      * @param joinRequest DTO with the password for the batch to join; unused for quizzes in INDIVIDUAL mode
      * @return the ResponseEntity with status 200 (OK) and with body the quizBatch that was joined
      */
-    @PostMapping("/quiz-exercises/{quizExerciseId}/join")
+    @PostMapping("quiz-exercises/{quizExerciseId}/join")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<QuizBatch> joinBatch(@PathVariable Long quizExerciseId, @RequestBody QuizBatchJoinDTO joinRequest) {
         log.info("REST request to join quiz batch : {}, {}", quizExerciseId, joinRequest);
@@ -363,7 +363,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise to add the batch to
      * @return the ResponseEntity with status 200 (OK) and with body the new batch
      */
-    @PutMapping("/quiz-exercises/{quizExerciseId}/add-batch")
+    @PutMapping("quiz-exercises/{quizExerciseId}/add-batch")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<QuizBatch> addBatch(@PathVariable Long quizExerciseId) {
         log.info("REST request to add quiz batch : {}", quizExerciseId);
@@ -385,7 +385,7 @@ public class QuizExerciseResource {
      * @param quizBatchId the id of the quizBatch to start
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PutMapping("/quiz-exercises/{quizBatchId}/start-batch")
+    @PutMapping("quiz-exercises/{quizBatchId}/start-batch")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<QuizBatch> startBatch(@PathVariable Long quizBatchId) {
         log.info("REST request to start quiz batch : {}", quizBatchId);
@@ -417,7 +417,7 @@ public class QuizExerciseResource {
      * @param action the action to perform on the quiz (allowed actions: "start-now", "set-visible", "open-for-practice")
      * @return the response entity with status 200 if quiz was started, appropriate error code otherwise
      */
-    @PutMapping("/quiz-exercises/{quizExerciseId}/{action}")
+    @PutMapping("quiz-exercises/{quizExerciseId}/{action}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
         log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
@@ -513,7 +513,7 @@ public class QuizExerciseResource {
      * @param quizExerciseId the id of the quizExercise to delete
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/quiz-exercises/{quizExerciseId}")
+    @DeleteMapping("quiz-exercises/{quizExerciseId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
         log.info("REST request to delete quiz exercise : {}", quizExerciseId);
@@ -540,7 +540,7 @@ public class QuizExerciseResource {
      * @return the ResponseEntity with status 200 (OK) and with body the re-evaluated quizExercise, or with status 400 (Bad Request) if the quizExercise is not valid, or with
      *         status 500 (Internal Server Error) if the quizExercise couldn't be re-evaluated
      */
-    @PutMapping("/quiz-exercises/{quizExerciseId}/re-evaluate")
+    @PutMapping("quiz-exercises/{quizExerciseId}/re-evaluate")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestBody QuizExercise quizExercise) {
         log.info("REST request to re-evaluate quiz exercise : {}", quizExerciseId);
@@ -577,7 +577,7 @@ public class QuizExerciseResource {
      * @param isExamFilter   Whether to search in the groups for exercises
      * @return The desired page, sorted and matching the given query
      */
-    @GetMapping("/quiz-exercises")
+    @GetMapping("quiz-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search, @RequestParam(defaultValue = "true") Boolean isCourseFilter,
             @RequestParam(defaultValue = "true") Boolean isExamFilter) {
@@ -598,7 +598,7 @@ public class QuizExerciseResource {
      * or a forbidden error (403) if the user is not at least an instructor in the target course.
      * @throws URISyntaxException When the URI of the response entity is invalid
      */
-    @PostMapping("/quiz-exercises/import/{sourceExerciseId}")
+    @PostMapping("quiz-exercises/import/{sourceExerciseId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody QuizExercise importedExercise) throws URISyntaxException {
         log.info("REST request to import from quiz exercise : {}", sourceExerciseId);

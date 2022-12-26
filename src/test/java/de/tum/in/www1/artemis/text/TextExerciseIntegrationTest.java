@@ -159,7 +159,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
 
-        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
 
         assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
         assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
@@ -173,7 +173,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void createTextExercise_setExerciseTitleNull_badRequest() throws Exception {
         TextExercise textExercise = new TextExercise();
 
-        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -184,7 +184,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setId(null);
         textExercise.setDueDate(null);
 
-        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -196,7 +196,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         courseRepository.save(course);
         textExercise.setId(null);
 
-        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -210,7 +210,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
 
-        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
 
         assertThat(newTextExercise.getTitle()).as("text exercise title was correctly set").isEqualTo(title);
         assertThat(newTextExercise.getDifficulty()).as("text exercise difficulty was correctly set").isEqualTo(difficulty);
@@ -230,7 +230,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setTitle(title);
         textExercise.setDifficulty(difficulty);
         textExercise.setDueDate(someMoment);
-        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
         assertThat(exerciseGroup.getExercises()).doesNotContain(textExercise);
     }
 
@@ -240,7 +240,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void createTextExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
-        request.postWithResponseBody("/api/text-exercises/", invalidDates.applyTo(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text-exercises", invalidDates.applyTo(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -249,7 +249,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         textExercise.setCourse(exerciseGroup.getExam().getCourse());
-        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -257,7 +257,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void createTextExercise_setNeitherCourseAndExerciseGroup_badRequest() throws Exception {
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(null);
 
-        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -313,7 +313,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         exampleSubmissionRepo.save(exampleSubmission);
         textExercise.addExampleSubmission(exampleSubmission);
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(title);
         assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(difficulty);
@@ -344,7 +344,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         }
 
         textExercise.setDueDate(ZonedDateTime.now().plusHours(12));
-        request.put("/api/text-exercises/", textExercise, HttpStatus.OK);
+        request.put("/api/text-exercises", textExercise, HttpStatus.OK);
 
         {
             final var participations = studentParticipationRepository.findByExerciseId(textExercise.getId());
@@ -364,7 +364,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         textExercise.setId(null);
 
-        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
     @Test
@@ -395,7 +395,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course.setInstructorGroupName("test");
         courseRepository.save(course);
 
-        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -411,7 +411,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setTitle(updateTitle);
         textExercise.setDifficulty(updateDifficulty);
 
-        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.OK);
+        TextExercise updatedTextExercise = request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.OK);
 
         assertThat(updatedTextExercise.getTitle()).as("text exercise title was correctly updated").isEqualTo(updateTitle);
         assertThat(updatedTextExercise.getDifficulty()).as("text exercise difficulty was correctly updated").isEqualTo(updateDifficulty);
@@ -428,7 +428,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
         textExerciseRepository.save(textExercise);
 
-        request.putWithResponseBody("/api/text-exercises/", invalidDates.applyTo(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text-exercises", invalidDates.applyTo(textExercise), TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -439,7 +439,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         textExercise.setExerciseGroup(exerciseGroup);
 
-        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -449,7 +449,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         textExercise.setCourse(null);
 
-        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -461,7 +461,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         textExercise.setExerciseGroup(exerciseGroup);
 
-        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -473,7 +473,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         textExercise.setExerciseGroup(null);
 
-        request.putWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -638,7 +638,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void getAllTextExercisesForCourse() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
 
-        List<TextExercise> textExercises = request.getList("/api/courses/" + course.getId() + "/text-exercises/", HttpStatus.OK, TextExercise.class);
+        List<TextExercise> textExercises = request.getList("/api/courses/" + course.getId() + "/text-exercises", HttpStatus.OK, TextExercise.class);
 
         assertThat(textExercises).as("text exercises for course were retrieved").hasSize(1);
     }
@@ -650,7 +650,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course.setTeachingAssistantGroupName("test");
         courseRepository.save(course);
 
-        request.getList("/api/courses/" + course.getId() + "/text-exercises/", HttpStatus.FORBIDDEN, TextExercise.class);
+        request.getList("/api/courses/" + course.getId() + "/text-exercises", HttpStatus.FORBIDDEN, TextExercise.class);
     }
 
     @Test
@@ -1181,13 +1181,13 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setDueDate(baseTime.plusHours(3));
         textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
 
         textExercise.setReleaseDate(baseTime.plusHours(3));
         textExercise.setDueDate(null);
         textExercise.setExampleSolutionPublicationDate(baseTime.plusHours(2));
 
-        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1205,7 +1205,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var exampleSolutionPublicationDate = baseTime.plusHours(3);
         textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
 
-        var result = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+        var result = request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
 
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
@@ -1214,7 +1214,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         exampleSolutionPublicationDate = baseTime.plusHours(2);
         textExercise.setExampleSolutionPublicationDate(exampleSolutionPublicationDate);
 
-        result = request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
+        result = request.postWithResponseBody("/api/text-exercises", textExercise, TextExercise.class, HttpStatus.CREATED);
         assertThat(result.getExampleSolutionPublicationDate()).isEqualTo(exampleSolutionPublicationDate);
     }
 

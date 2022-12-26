@@ -101,7 +101,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "/api/admin/system-notifications/", "/api/notifications/" })
+    @ValueSource(strings = { "/api/admin/system-notifications", "/api/notifications" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCreateSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
         request.post(endpoint, systemNotification, HttpStatus.FORBIDDEN);
@@ -126,7 +126,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "/api/admin/system-notifications/", "/api/notifications/" })
+    @ValueSource(strings = { "/api/admin/system-notifications", "/api/notifications" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testUpdateSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
         systemNotificationRepo.save(systemNotification);
@@ -166,7 +166,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @ValueSource(strings = { "/api/admin/system-notifications/", "/api/notifications/" })
+    @ValueSource(strings = { "/api/admin/system-notifications", "/api/notifications" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testDeleteSystemNotification_asInstructor_Forbidden(String endpoint) throws Exception {
         SystemNotification notification = systemNotificationRepo.save(systemNotification);

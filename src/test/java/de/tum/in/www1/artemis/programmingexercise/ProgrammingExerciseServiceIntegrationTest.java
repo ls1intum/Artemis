@@ -192,7 +192,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         String randomString = UUID.randomUUID().toString();
         database.addCourseWithNamedProgrammingExerciseAndTestCases(randomString);
         database.addCourseExamExerciseGroupWithOneProgrammingExercise(randomString + "-Morpork", randomString + "Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/", randomString);
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises", randomString);
     }
 
     @Test
@@ -201,7 +201,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         String randomString = UUID.randomUUID().toString();
         database.addCourseWithNamedProgrammingExerciseAndTestCases(randomString);
         database.addCourseExamExerciseGroupWithOneProgrammingExercise(randomString + "-Morpork", randomString + "Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/", randomString);
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises", randomString);
     }
 
     @Test

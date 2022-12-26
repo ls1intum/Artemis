@@ -154,7 +154,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         request.get("/api/courses/" + courseId + "/participant-scores/average", HttpStatus.FORBIDDEN, Long.class);
         request.getList("/api/exams/" + idOfExam + "/participant-scores", HttpStatus.FORBIDDEN, ParticipantScoreDTO.class);
         request.getList("/api/exams/" + idOfExam + "/participant-scores/average-participant", HttpStatus.FORBIDDEN, ParticipantScoreAverageDTO.class);
-        request.get("/api/exams/" + idOfExam + "/participant-scores/", HttpStatus.FORBIDDEN, Long.class);
+        request.get("/api/exams/" + idOfExam + "/participant-scores", HttpStatus.FORBIDDEN, Long.class);
         request.getList("/api/courses/" + courseId + "/course-scores", HttpStatus.FORBIDDEN, ScoreDTO.class);
         request.getList("/api/exams/" + idOfExam + "/exam-scores", HttpStatus.FORBIDDEN, ScoreDTO.class);
     }

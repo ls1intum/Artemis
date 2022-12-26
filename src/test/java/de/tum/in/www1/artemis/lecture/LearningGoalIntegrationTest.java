@@ -769,7 +769,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
-        final var result = request.get("/api/learning-goals/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.get("/api/learning-goals", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -778,7 +778,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         final var search = database.configureSearch(learningGoal.getTitle());
-        final var result = request.get("/api/learning-goals/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.get("/api/learning-goals", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(10);
     }
 
