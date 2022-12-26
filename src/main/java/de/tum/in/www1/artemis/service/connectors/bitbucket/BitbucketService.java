@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -22,7 +23,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponents;
@@ -590,16 +590,16 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/projects", HttpMethod.POST, entity, Void.class);
             grantGroupPermissionToProject(projectKey, adminGroupName, BitbucketPermission.PROJECT_ADMIN); // admins get administrative permissions
 
-            if (StringUtils.hasText(course.getInstructorGroupName())) {
+            if (StringUtils.isNotBlank(course.getInstructorGroupName())) {
                 grantGroupPermissionToProject(projectKey, course.getInstructorGroupName(), BitbucketPermission.PROJECT_ADMIN); // instructors get administrative permissions
             }
 
             // editors get write permissions
-            if (StringUtils.hasText(course.getEditorGroupName())) {
+            if (StringUtils.isNotBlank(course.getEditorGroupName())) {
                 grantGroupPermissionToProject(projectKey, course.getEditorGroupName(), BitbucketPermission.PROJECT_WRITE);
             }
             // tutors get read permissions
-            if (StringUtils.hasText(course.getTeachingAssistantGroupName())) {
+            if (StringUtils.isNotBlank(course.getTeachingAssistantGroupName())) {
                 grantGroupPermissionToProject(projectKey, course.getTeachingAssistantGroupName(), BitbucketPermission.PROJECT_READ);
             }
         }

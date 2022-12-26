@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -15,7 +16,6 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
-import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import jakarta.annotation.Nullable;
@@ -38,13 +38,13 @@ public final class SecurityUtils {
      * @param password the password which should be validated
      */
     public static void checkUsernameAndPasswordValidity(String username, String password) {
-        if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
+        if (StringUtils.isEmpty(username) || username.length() < USERNAME_MIN_LENGTH) {
             throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
         }
         else if (username.length() > USERNAME_MAX_LENGTH) {
             throw new AccessForbiddenException("The username has to be less than " + USERNAME_MAX_LENGTH + " characters long");
         }
-        if (!StringUtils.hasLength(password) || password.length() < PASSWORD_MIN_LENGTH) {
+        if (StringUtils.isEmpty(password) || password.length() < PASSWORD_MIN_LENGTH) {
             throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
         }
         else if (password.length() > PASSWORD_MAX_LENGTH) {

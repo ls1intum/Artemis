@@ -7,11 +7,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -317,7 +317,7 @@ public class TutorialGroupResource {
             oldTAFromDatabase.ifPresent(user -> singleUserNotificationService.notifyTutorAboutUnassignmentFromTutorialGroup(oldTutorialGroup, user, responsibleUser));
         }
 
-        if (StringUtils.hasText(tutorialGroupUpdateDTO.notificationText())) {
+        if (StringUtils.isNotBlank(tutorialGroupUpdateDTO.notificationText())) {
             tutorialGroupNotificationService.notifyAboutTutorialGroupUpdate(oldTutorialGroup,
                     updatedTutorialGroup.getTeachingAssistant() == null || !updatedTutorialGroup.getTeachingAssistant().equals(responsibleUser),
                     tutorialGroupUpdateDTO.notificationText().strip());

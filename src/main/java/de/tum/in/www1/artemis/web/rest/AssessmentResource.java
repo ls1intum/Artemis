@@ -5,10 +5,10 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
@@ -187,7 +187,7 @@ public abstract class AssessmentResource {
             Result freshResult = new Result();
             freshResult.setId(result.getId());
             if (result.getFeedbacks() != null) {
-                result.getFeedbacks().stream().filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.hasText(feedback.getReference()))
+                result.getFeedbacks().stream().filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.isNotBlank(feedback.getReference()))
                         .forEach(feedback -> {
                             Feedback freshFeedback = new Feedback();
                             freshFeedback.setId(feedback.getId());

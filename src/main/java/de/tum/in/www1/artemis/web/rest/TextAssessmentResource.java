@@ -6,13 +6,13 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -455,7 +455,7 @@ public class TextAssessmentResource extends AssessmentResource {
                 // set the id to null to make sure that the client does know it is a restricted result and treat it accordingly
                 result.setId(null);
                 if (result.getFeedbacks() != null) {
-                    result.getFeedbacks().stream().filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.hasText(feedback.getReference()))
+                    result.getFeedbacks().stream().filter(feedback -> !FeedbackType.MANUAL_UNREFERENCED.equals(feedback.getType()) && StringUtils.isNotBlank(feedback.getReference()))
                         .forEach(feedback -> {
                             Feedback freshFeedback = new Feedback();
                             freshFeedback.setId(feedback.getId());

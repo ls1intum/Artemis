@@ -128,7 +128,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     }
 
     @Override
-    public Boolean isValid() {
+    public boolean isValid() {
         // check general validity (using superclass)
         if (!super.isValid()) {
             return false;

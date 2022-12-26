@@ -132,6 +132,7 @@ public class QuizExerciseResource {
         // check if quiz is valid
         if (!quizExercise.isValid()) {
             // TODO: improve error message and tell the client why the quiz is invalid (also see below in update Quiz)
+            // isValid --> checkValidity and throw BadRequestAlertException directly with the corresponding error message
             throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
         }
 

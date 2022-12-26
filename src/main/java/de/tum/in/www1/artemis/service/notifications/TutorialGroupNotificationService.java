@@ -10,9 +10,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
@@ -94,7 +94,7 @@ public class TutorialGroupNotificationService {
         if (tutorialGroup.getTeachingAssistant() != null && notifyTutor) {
             potentiallyInterestedUsers = Stream.concat(potentiallyInterestedUsers, Stream.of(tutorialGroup.getTeachingAssistant()));
         }
-        return potentiallyInterestedUsers.filter(user -> StringUtils.hasText(user.getEmail()))
+        return potentiallyInterestedUsers.filter(user -> StringUtils.isNotBlank(user.getEmail()))
                 .filter(user -> notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, user, EMAIL)).collect(Collectors.toSet());
     }
 }

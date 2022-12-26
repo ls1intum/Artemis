@@ -2,9 +2,9 @@ package de.tum.in.www1.artemis.security.jwt;
 
 import java.io.IOException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.util.StringUtils;
 import org.springframework.web.filter.GenericFilterBean;
 import org.springframework.web.util.WebUtils;
 
@@ -48,6 +48,6 @@ public class JWTFilter extends GenericFilterBean {
             return false;
         }
         String jwt = jwtCookie.getValue();
-        return StringUtils.hasText(jwt) && tokenProvider.validateTokenForAuthority(jwt);
+        return StringUtils.isNotBlank(jwt) && tokenProvider.validateTokenForAuthority(jwt);
     }
 }

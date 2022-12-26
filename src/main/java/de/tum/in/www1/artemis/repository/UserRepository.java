@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,7 +17,6 @@ import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
@@ -380,7 +380,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return the user with groups and authorities
      */
     default Optional<User> findUserWithGroupsAndAuthoritiesByRegistrationNumber(String registrationNumber) {
-        if (!StringUtils.hasText(registrationNumber)) {
+        if (StringUtils.isBlank(registrationNumber)) {
             return Optional.empty();
         }
         return findOneWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
@@ -393,7 +393,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return the user with groups and authorities
      */
     default Optional<User> findUserWithGroupsAndAuthoritiesByLogin(String login) {
-        if (!StringUtils.hasText(login)) {
+        if (StringUtils.isBlank(login)) {
             return Optional.empty();
         }
         return findOneWithGroupsAndAuthoritiesByLogin(login);

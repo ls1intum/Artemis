@@ -120,7 +120,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     @Override
-    public Boolean isValid() {
+    public boolean isValid() {
         // check general validity (using superclass)
         if (!super.isValid()) {
             return false;

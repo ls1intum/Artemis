@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +22,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
@@ -363,7 +363,7 @@ public class UserService {
      * @return a new user or null if the LDAP user was not found
      */
     public Optional<User> createUserFromLdap(String registrationNumber) {
-        if (!StringUtils.hasText(registrationNumber)) {
+        if (StringUtils.isBlank(registrationNumber)) {
             return Optional.empty();
         }
         if (ldapUserService.isPresent()) {
@@ -373,7 +373,7 @@ public class UserService {
                 log.info("Ldap User {} has registration number: {}", ldapUser.getUsername(), ldapUser.getRegistrationNumber());
 
                 // handle edge case, the user already exists in Artemis, but for some reason does not have a registration number or it is wrong
-                if (StringUtils.hasText(ldapUser.getUsername())) {
+                if (StringUtils.isNotBlank(ldapUser.getUsername())) {
                     var existingUser = userRepository.findOneByLogin(ldapUser.getUsername());
                     if (existingUser.isPresent()) {
                         existingUser.get().setRegistrationNumber(ldapUser.getRegistrationNumber());

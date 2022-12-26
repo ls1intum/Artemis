@@ -14,6 +14,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +24,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -776,7 +776,7 @@ public class CourseService {
             // NOTE: instructors cannot change the group of a course, because this would be a security issue!
             // only create default group names, if the ADMIN has used a custom group names, we assume that it already exists.
 
-            if (!StringUtils.hasText(course.getStudentGroupName())) {
+            if (StringUtils.isBlank(course.getStudentGroupName())) {
                 course.setStudentGroupName(course.getDefaultStudentGroupName());
                 artemisAuthenticationProvider.createGroup(course.getStudentGroupName());
             }
@@ -784,7 +784,7 @@ public class CourseService {
                 checkIfGroupsExists(course.getStudentGroupName());
             }
 
-            if (!StringUtils.hasText(course.getTeachingAssistantGroupName())) {
+            if (StringUtils.isBlank(course.getTeachingAssistantGroupName())) {
                 course.setTeachingAssistantGroupName(course.getDefaultTeachingAssistantGroupName());
                 artemisAuthenticationProvider.createGroup(course.getTeachingAssistantGroupName());
             }
@@ -792,7 +792,7 @@ public class CourseService {
                 checkIfGroupsExists(course.getTeachingAssistantGroupName());
             }
 
-            if (!StringUtils.hasText(course.getEditorGroupName())) {
+            if (StringUtils.isBlank(course.getEditorGroupName())) {
                 course.setEditorGroupName(course.getDefaultEditorGroupName());
                 artemisAuthenticationProvider.createGroup(course.getEditorGroupName());
             }
@@ -800,7 +800,7 @@ public class CourseService {
                 checkIfGroupsExists(course.getEditorGroupName());
             }
 
-            if (!StringUtils.hasText(course.getInstructorGroupName())) {
+            if (StringUtils.isBlank(course.getInstructorGroupName())) {
                 course.setInstructorGroupName(course.getDefaultInstructorGroupName());
                 artemisAuthenticationProvider.createGroup(course.getInstructorGroupName());
             }
@@ -828,7 +828,7 @@ public class CourseService {
         // Courses that have been created before Artemis version 4.11.9 do not have an editor group.
         // The editor group would be need to be set manually by instructors for the course and manually added to Jira.
         // To increase the usability the group is automatically generated when a user is added.
-        if (!StringUtils.hasText(course.getEditorGroupName())) {
+        if (StringUtils.isBlank(course.getEditorGroupName())) {
             try {
                 course.setEditorGroupName(course.getDefaultEditorGroupName());
                 if (!artemisAuthenticationProvider.isGroupAvailable(course.getDefaultEditorGroupName())) {

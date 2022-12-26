@@ -8,11 +8,11 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import net.sourceforge.plantuml.FileFormat;
 import net.sourceforge.plantuml.FileFormatOption;
@@ -99,7 +99,7 @@ public class PlantUmlService {
     }
 
     private String validateInputAndApplyTheme(final String plantUml, boolean useDarkTheme) {
-        if (!StringUtils.hasText(plantUml)) {
+        if (StringUtils.isBlank(plantUml)) {
             throw new IllegalArgumentException("The plantUml input cannot be empty");
         }
         if (plantUml.length() > 10000) {

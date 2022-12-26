@@ -179,7 +179,7 @@ public class MultipleChoiceQuestion extends QuizQuestion {
     }
 
     @Override
-    public Boolean isValid() {
+    public boolean isValid() {
         // check general validity (using superclass)
         if (!super.isValid()) {
             return false;
@@ -195,6 +195,9 @@ public class MultipleChoiceQuestion extends QuizQuestion {
         // check answer options
         if (getAnswerOptions() != null) {
             for (AnswerOption answerOption : getAnswerOptions()) {
+                if (!answerOption.isValid()) {
+                    return false;
+                }
                 if (answerOption.isIsCorrect()) {
                     correctAnswerCount++;
                 }

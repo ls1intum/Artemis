@@ -35,9 +35,8 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     List<QuizExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT qe
-            FROM QuizExercise qe
-            WHERE qe.exerciseGroup.exam.id = :#{#examId}
+            SELECT DISTINCT e FROM QuizExercise e
+            WHERE e.exerciseGroup.exam.id = :#{#examId}
             """)
     List<QuizExercise> findByExamId(Long examId);
 

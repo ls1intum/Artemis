@@ -6,7 +6,7 @@ import static de.tum.in.www1.artemis.config.Constants.MAX_SUBMISSION_TEXT_LENGTH
 import java.util.HashSet;
 import java.util.Set;
 
-import org.springframework.util.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -85,8 +85,8 @@ public class ModelingSubmission extends Submission {
      */
     public boolean isEmpty(ObjectMapper jacksonObjectMapper) {
         try {
-            // in case there is an explanation, we should
-            if (StringUtils.hasText(explanationText)) {
+            // in case there is an explanation, we take it into account
+            if (StringUtils.isNotBlank(explanationText)) {
                 return false;
             }
             // TODO: further improve this!!

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -110,6 +111,10 @@ public class AnswerOption extends DomainObject {
 
     public void setQuestion(MultipleChoiceQuestion multipleChoiceQuestion) {
         this.question = multipleChoiceQuestion;
+    }
+
+    public boolean isValid() {
+        return StringUtils.length(getExplanation()) <= 500;
     }
 
     @Override

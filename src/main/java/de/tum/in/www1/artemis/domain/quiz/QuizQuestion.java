@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.quiz;
 
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
@@ -207,9 +208,9 @@ public abstract class QuizQuestion extends DomainObject {
      * @return true, if the question is valid, otherwise false
      */
     @JsonIgnore
-    public Boolean isValid() {
-        // check title and score
-        return getTitle() != null && !getTitle().isEmpty() && getPoints() >= 1;
+    public boolean isValid() {
+        // check title, score and explanation <= 500 characters
+        return getTitle() != null && !getTitle().isEmpty() && getPoints() >= 1 && StringUtils.length(getExplanation()) <= 500;
     }
 
     /**

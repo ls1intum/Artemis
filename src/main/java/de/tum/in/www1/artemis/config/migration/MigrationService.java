@@ -13,6 +13,7 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,7 +21,6 @@ import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.MigrationChangelog;
 import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
