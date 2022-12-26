@@ -1,14 +1,11 @@
 package de.tum.in.www1.artemis.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -22,7 +19,6 @@ import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.statistics.ScoreDistribution;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
-import jakarta.validation.constraints.NotNull;
 
 @Repository
 public interface ParticipantScoreRepository extends JpaRepository<ParticipantScore, Long> {
@@ -38,19 +34,15 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             """)
     List<ParticipantScore> findAllOutdated();
 
-    @NotNull
-    @Override
-    @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
-    List<ParticipantScore> findAll();
-
-    @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
-    List<ParticipantScore> findAllByExercise(Exercise exercise);
-
     @Query("""
             SELECT p
-            FROM ParticipantScore p LEFT JOIN FETCH p.exercise LEFT JOIN FETCH p.lastResult LEFT JOIN FETCH p.lastRatedResult
+            FROM ParticipantScore p
+                LEFT JOIN FETCH p.exercise
+                LEFT JOIN FETCH p.lastResult
+                LEFT JOIN FETCH p.lastRatedResult
+            WHERE p.exercise = :exercise
             """)
-    List<ParticipantScore> findAllEagerly();
+    List<ParticipantScore> findAllByExercise(Exercise exercise);
 
     @Query("""
             SELECT AVG(p.lastRatedScore)

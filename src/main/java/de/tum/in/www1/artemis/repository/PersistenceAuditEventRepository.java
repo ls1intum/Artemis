@@ -25,10 +25,12 @@ public interface PersistenceAuditEventRepository extends JpaRepository<Persisten
     @EntityGraph(type = LOAD, attributePaths = { "data" })
     Page<PersistentAuditEvent> findAllByAuditEventDateBetween(Instant fromDate, Instant toDate, Pageable pageable);
 
+    @Override
     @NotNull
     @EntityGraph(type = LOAD, attributePaths = { "data" })
     Page<PersistentAuditEvent> findAll(@NotNull Pageable pageable);
 
+    @Override
     @NotNull
     @EntityGraph(type = LOAD, attributePaths = { "data" })
     Optional<PersistentAuditEvent> findById(@NotNull Long auditEventId);

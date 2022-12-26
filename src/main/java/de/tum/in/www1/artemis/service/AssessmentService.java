@@ -241,7 +241,8 @@ public class AssessmentService {
         Result result = submission.getResults().stream().filter(res -> res.getId().equals(resultId)).findAny().orElse(null);
 
         if (result == null) {
-            result = submissionService.saveNewEmptyResult(submission);
+            result = new Result();
+            result.setParticipation(submission.getParticipation());
         }
 
         // important to not lose complaint information when overriding an assessment
@@ -257,14 +258,19 @@ public class AssessmentService {
         result.updateAllFeedbackItems(feedbackList, false);
         result.determineAssessmentType();
 
-        if (result.getSubmission() == null) {
+        var assessor = result.getAssessor();
+
+        if (result.getSubmission() == null) {   // 1. case: the result is new
             result.setSubmission(submission);
             submission.addResult(result);
+            // this automatically saves the results due to CascadeType.ALL
             submissionRepository.save(submission);
         }
+        else {  // 2. case: the result already exists
+            result = resultRepository.save(result);
+        }
+
         // Workaround to prevent the assessor turning into a proxy object after saving
-        var assessor = result.getAssessor();
-        result = resultRepository.save(result);
         result.setAssessor(assessor);
         return result;
     }
