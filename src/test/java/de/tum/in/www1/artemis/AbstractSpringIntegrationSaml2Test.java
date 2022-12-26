@@ -64,7 +64,7 @@ public abstract class AbstractSpringIntegrationSaml2Test {
     protected SAML2Service saml2Service;
 
     @BeforeEach
-    void setUp() throws Exception {
+    void setUp() {
         doReturn(Map.of()).when(programmingLanguageFeatureService).getProgrammingLanguageFeatures();
         doReturn(null).when(programmingLanguageFeatureService).getProgrammingLanguageFeatures(any(ProgrammingLanguage.class));
         doReturn(null).when(relyingPartyRegistrationRepository).findByRegistrationId(anyString());

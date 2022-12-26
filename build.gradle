@@ -84,6 +84,7 @@ modernizer {
 // Execute the test cases: ./gradlew test
 
 test {
+    //maxParallelForks = 4
     useJUnitPlatform()
     exclude "**/*IT*", "**/*IntTest*"
     testLogging {
