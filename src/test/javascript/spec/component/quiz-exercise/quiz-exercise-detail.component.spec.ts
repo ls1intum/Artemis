@@ -942,7 +942,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should import SA question', async () => {
                 const { question, shortAnswerMapping1, shortAnswerMapping2, spot1, spot2, shortAnswerSolution1, shortAnswerSolution2 } = createValidSAQuestion();
-                importQuestionAndExpectOneMoreQuestionInQuestions(question);
+                await importQuestionAndExpectOneMoreQuestionInQuestions(question);
                 const lastAddedQuestion = comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1] as ShortAnswerQuestion;
                 expect(lastAddedQuestion.type).toEqual(QuizQuestionType.SHORT_ANSWER);
                 expect(lastAddedQuestion.correctShortAnswerMappings).toHaveLength(2);
@@ -966,7 +966,14 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.quizIsValid).toBeFalse();
             };
 
-            const removeCorrectMappingsAndExpectInvalidQuiz = (question: DragAndDropQuestion | ShortAnswerQuestion) => {
+            const removeCorrectDragAndDropMappingsAndExpectInvalidQuiz = (question: DragAndDropQuestion) => {
+                question.correctDragAndDropMappings = [];
+                comp.quizExercise.quizQuestions = [question];
+                comp.cacheValidation();
+                expect(comp.quizIsValid).toBeFalse();
+            };
+
+            const removeCorrectShortAnswerMappingsAndExpectInvalidQuiz = (question: ShortAnswerQuestion) => {
                 question.correctShortAnswerMappings = [];
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
@@ -1150,7 +1157,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should not be valid if DnD question has no correct mapping', () => {
                 const { question } = createValidDnDQuestion();
-                removeCorrectMappingsAndExpectInvalidQuiz(question);
+                removeCorrectDragAndDropMappingsAndExpectInvalidQuiz(question);
             });
 
             it('should be valid if DnD question hint has exactly 255 characters', () => {
@@ -1208,7 +1215,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should not be valid if SA question has no correct mapping', () => {
                 const { question } = createValidSAQuestion();
-                removeCorrectMappingsAndExpectInvalidQuiz(question);
+                removeCorrectShortAnswerMappingsAndExpectInvalidQuiz(question);
             });
 
             it('should be valid for synchronized mode when dueDate is less than releaseDate', () => {
