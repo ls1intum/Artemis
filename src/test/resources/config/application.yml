@@ -80,7 +80,7 @@ spring:
         database-platform: org.hibernate.dialect.H2Dialect # Alternatives org.hibernate.dialect.H2Dialect / org.hibernate.dialect.PostgreSQL10Dialect / org.hibernate.dialect.MySQL8Dialect
         database: h2        # Alternatives h2 / POSTGRESQL / MYSQL
         open-in-view: false
-        show-sql: true
+        show-sql: false
         hibernate:
             ddl-auto: none
             naming:
