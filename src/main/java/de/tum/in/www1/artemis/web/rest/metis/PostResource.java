@@ -27,7 +27,7 @@ import tech.jhipster.web.util.PaginationUtil;
  * REST controller for managing Post.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 public class PostResource {
 
     private final PostService postService;

@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.OrganizationRepository;
  * REST controller for managing the Organization entities
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api")
 public class OrganizationResource {
 
     private final Logger log = LoggerFactory.getLogger(OrganizationResource.class);

@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
  * Controller to provides endpoints to query the necessary data for the exercise-scores-chart.component.ts in the client
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api")
 public class ExerciseScoresChartResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseScoresChartResource.class);

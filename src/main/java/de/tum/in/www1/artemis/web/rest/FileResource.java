@@ -43,7 +43,7 @@ import jakarta.activation.MimetypesFileTypeMap;
  * REST controller for managing Files.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 public class FileResource {
 
     private final Logger log = LoggerFactory.getLogger(FileResource.class);

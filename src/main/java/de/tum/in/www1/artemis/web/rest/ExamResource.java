@@ -51,7 +51,7 @@ import jakarta.validation.constraints.NotNull;
  * REST controller for managing Exam.
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api")
 public class ExamResource {
 
     private final Logger log = LoggerFactory.getLogger(ExamResource.class);

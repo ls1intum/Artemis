@@ -41,7 +41,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
  * REST controller for managing TextExercise.
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api")
 public class TextExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(TextExerciseResource.class);

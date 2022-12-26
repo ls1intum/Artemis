@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
  * REST controller for managing {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask}.
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api")
 public class ProgrammingExerciseTaskResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTaskResource.class);

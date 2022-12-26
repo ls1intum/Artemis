@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
  * REST controller for managing ProgrammingExerciseTestwiseCoverageReports and its entries.
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api")
 public class CoverageReportResource {
 
     private final Logger log = LoggerFactory.getLogger(CoverageReportResource.class);

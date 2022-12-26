@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 public class TextUnitResource {
 
     @Value("${jhipster.clientApp.name}")

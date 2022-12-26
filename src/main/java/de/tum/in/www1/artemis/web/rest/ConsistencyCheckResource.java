@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
  * REST controller for consistency checks
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api")
 @PreAuthorize("hasRole('INSTRUCTOR')")
 public class ConsistencyCheckResource {
 

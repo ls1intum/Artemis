@@ -41,7 +41,7 @@ import de.tum.in.www1.artemis.web.websocket.team.TeamWebsocketService;
  * REST controller for managing Teams.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 public class TeamResource {
 
     private final Logger log = LoggerFactory.getLogger(TeamResource.class);

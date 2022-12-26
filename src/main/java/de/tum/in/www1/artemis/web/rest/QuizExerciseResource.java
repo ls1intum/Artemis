@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /** REST controller for managing QuizExercise. */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 public class QuizExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(QuizExerciseResource.class);

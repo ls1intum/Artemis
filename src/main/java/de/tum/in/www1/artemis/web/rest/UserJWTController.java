@@ -32,7 +32,7 @@ import jakarta.validation.Valid;
  * Controller to authenticate users.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 public class UserJWTController {
 
     private static final Logger log = LoggerFactory.getLogger(UserJWTController.class);

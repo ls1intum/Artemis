@@ -26,7 +26,7 @@ import io.swagger.annotations.ApiResponses;
 
 /** REST controller for managing ModelingAssessment. */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 public class ModelingAssessmentResource extends AssessmentResource {
 
     private final Logger log = LoggerFactory.getLogger(ModelingAssessmentResource.class);

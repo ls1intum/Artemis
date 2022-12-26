@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
  * deactivated but not deleted.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 public class StaticCodeAnalysisResource {
 
     private static final String ENTITY_NAME = "StaticCodeAnalysisCategory";

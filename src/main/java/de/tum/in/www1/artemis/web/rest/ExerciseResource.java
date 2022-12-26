@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  * REST controller for managing Exercise.
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api")
 public class ExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);

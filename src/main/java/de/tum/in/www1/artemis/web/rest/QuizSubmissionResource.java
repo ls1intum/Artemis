@@ -36,7 +36,7 @@ import jakarta.validation.Valid;
  * REST controller for managing QuizSubmission.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 public class QuizSubmissionResource {
 
     private final Logger log = LoggerFactory.getLogger(QuizSubmissionResource.class);

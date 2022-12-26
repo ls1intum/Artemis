@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.service.connectors.apollon.dto.ApollonModelDTO;
  * REST controller for managing ApollonDiagram.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 @Profile("apollon")
 public class ApollonConversionResource {
 

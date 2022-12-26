@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.service.metis.AnswerPostService;
  * REST controller for managing AnswerPost.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 public class AnswerPostResource {
 
     private final AnswerPostService answerPostService;

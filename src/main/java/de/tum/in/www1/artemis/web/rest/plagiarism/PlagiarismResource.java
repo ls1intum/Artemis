@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
  * REST controller for managing Plagiarism Cases.
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api")
 public class PlagiarismResource {
 
     private final CourseRepository courseRepository;

@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
  * REST controller for managing statistics.
  */
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api")
 public class StatisticsResource {
 
     private final StatisticsService statisticsService;

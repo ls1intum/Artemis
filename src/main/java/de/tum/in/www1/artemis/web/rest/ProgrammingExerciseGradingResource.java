@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsD
  * PUT or DELETE.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 public class ProgrammingExerciseGradingResource {
 
     public static final String RE_EVALUATE = "/programming-exercises/{exerciseId}/grading/re-evaluate";

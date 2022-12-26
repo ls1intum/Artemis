@@ -33,7 +33,7 @@ import jakarta.servlet.http.HttpServletRequest;
  * Executes requested actions on the test repository of a programming exercise. Only available to TAs, Instructors and Admins.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 @PreAuthorize("hasRole('TA')")
 public class TestRepositoryResource extends RepositoryResource {
 

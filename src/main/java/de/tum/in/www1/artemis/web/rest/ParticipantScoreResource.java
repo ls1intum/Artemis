@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ScoreDTO;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 public class ParticipantScoreResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipantScoreResource.class);

@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
  * PUT or DELETE.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api")
 public class ProgrammingExerciseTestCaseResource {
 
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseTestCaseResource.class);
