@@ -210,7 +210,6 @@ describe('ListOfComplaintsComponent', () => {
         });
 
         it('complaint locked by the current user', () => {
-            const userLogin = 'user';
             const endDate = dayjs().add(2, 'days');
             const complaint = createComplaint();
             complaint.id = 42;
@@ -270,6 +269,7 @@ describe('ListOfComplaintsComponent', () => {
         const exerciseId = 1337;
         const courseId = 77;
         const complaint = createComplaintWithSubmissionAndResult(submissionId, participationId, exerciseId, courseId, type);
+        activatedRoute.data = of({ complaintType: type });
         complaint.accepted = accepted;
         jest.spyOn(router, 'navigate');
         activatedRoute.setParameters({ courseId });
