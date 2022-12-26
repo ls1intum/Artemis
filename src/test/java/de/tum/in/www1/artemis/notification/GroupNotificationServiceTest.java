@@ -87,19 +87,19 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     private List<String> archiveErrors;
 
-    private final static String NOTIFICATION_TEXT = "notificationText";
+    private static final String NOTIFICATION_TEXT = "notificationText";
 
-    private final static ZonedDateTime FUTURISTIC_TIME = ZonedDateTime.now().plusHours(2);
+    private static final ZonedDateTime FUTURISTIC_TIME = ZonedDateTime.now().plusHours(2);
 
-    private final static ZonedDateTime FUTURE_TIME = ZonedDateTime.now().plusHours(1);
+    private static final ZonedDateTime FUTURE_TIME = ZonedDateTime.now().plusHours(1);
 
-    private final static ZonedDateTime CURRENT_TIME = ZonedDateTime.now();
+    private static final ZonedDateTime CURRENT_TIME = ZonedDateTime.now();
 
-    private final static ZonedDateTime PAST_TIME = ZonedDateTime.now().minusHours(1);
+    private static final ZonedDateTime PAST_TIME = ZonedDateTime.now().minusHours(1);
 
-    private final static ZonedDateTime ANCIENT_TIME = ZonedDateTime.now().minusHours(2);
+    private static final ZonedDateTime ANCIENT_TIME = ZonedDateTime.now().minusHours(2);
 
-    private final static int NUMBER_OF_ALL_GROUPS = 4;
+    private static final int NUMBER_OF_ALL_GROUPS = 4;
 
     /**
      * Sets up all needed mocks and their wanted behavior.

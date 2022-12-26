@@ -139,13 +139,13 @@ public class CourseTestService {
     @Autowired
     private ObjectMapper objectMapper;
 
-    private final static int numberOfStudents = 8;
+    private static final int numberOfStudents = 8;
 
-    private final static int numberOfTutors = 5;
+    private static final int numberOfTutors = 5;
 
-    private final static int numberOfEditors = 1;
+    private static final int numberOfEditors = 1;
 
-    private final static int numberOfInstructors = 1;
+    private static final int numberOfInstructors = 1;
 
     private MockDelegate mockDelegate;
 

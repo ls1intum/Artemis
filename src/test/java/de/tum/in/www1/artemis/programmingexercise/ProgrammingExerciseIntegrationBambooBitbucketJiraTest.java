@@ -17,6 +17,7 @@ import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -165,10 +166,18 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
         programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithSetupParticipations();
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
-    void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation() throws Exception {
-        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation();
+    void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation(boolean withSubmissionResults) throws Exception {
+        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation(withSubmissionResults);
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults) throws Exception {
+        programmingExerciseIntegrationTestService.testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(withSubmissionResults);
     }
 
     @Test
