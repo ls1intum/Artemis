@@ -35,9 +35,11 @@ public class Post extends Posting {
     @Column(name = "visible_for_students")
     private Boolean visibleForStudents;
 
+    // TODO: we should avoid FetchType.EAGER here in the future
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Reaction> reactions = new HashSet<>();
 
+    // TODO: we should avoid FetchType.EAGER here in the future
     @OneToMany(mappedBy = "post", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<AnswerPost> answers = new HashSet<>();
 
@@ -46,15 +48,15 @@ public class Post extends Posting {
     @Column(name = "text")
     private Set<String> tags = new HashSet<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id", "title" })
     private Exercise exercise;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id", "title" })
     private Lecture lecture;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id", "title" })
     private Course course;
 
@@ -62,14 +64,14 @@ public class Post extends Posting {
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Conversation conversation;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "display_priority", columnDefinition = "varchar(25) default 'NONE'")
     private DisplayPriority displayPriority = DisplayPriority.NONE;
 
-    @OneToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "plagiarism_case_id")
     @JsonIncludeProperties({ "id" })
     private PlagiarismCase plagiarismCase;

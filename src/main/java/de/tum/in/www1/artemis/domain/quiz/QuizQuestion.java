@@ -65,7 +65,7 @@ public abstract class QuizQuestion extends DomainObject {
     @JoinColumn(unique = true)
     private QuizQuestionStatistic quizQuestionStatistic;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private QuizExercise exercise;
 

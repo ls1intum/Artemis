@@ -28,7 +28,7 @@ public class AnswerPost extends Posting {
     @OneToMany(mappedBy = "answerPost", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Reaction> reactions = new HashSet<>();
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIncludeProperties({ "id", "exercise", "lecture", "course", "courseWideContext", "conversation", "author" })
     private Post post;
 

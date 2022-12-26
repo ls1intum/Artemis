@@ -16,7 +16,7 @@ public class PointCounter extends QuizStatisticCounter {
     @Column(name = "points")
     private Double points;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private QuizPointStatistic quizPointStatistic;
 

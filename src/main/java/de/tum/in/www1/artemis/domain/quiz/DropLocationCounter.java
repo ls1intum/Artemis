@@ -13,7 +13,7 @@ import jakarta.persistence.*;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class DropLocationCounter extends QuizStatisticCounter {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JsonIgnore
     private DragAndDropQuestionStatistic dragAndDropQuestionStatistic;
 
