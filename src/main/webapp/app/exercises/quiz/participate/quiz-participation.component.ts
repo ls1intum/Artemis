@@ -706,11 +706,11 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     const dndClientQuestion = clientQuestion as DragAndDropQuestion;
                     const dndFullQuestionFromServer = fullQuestionFromServer as DragAndDropQuestion;
 
-                    dndClientQuestion.correctMappings = dndFullQuestionFromServer.correctMappings;
+                    dndClientQuestion.correctDragAndDropMappings = dndFullQuestionFromServer.correctDragAndDropMappings;
                 } else if (clientQuestion.type === QuizQuestionType.SHORT_ANSWER) {
                     const shortAnswerClientQuestion = clientQuestion as ShortAnswerQuestion;
                     const shortAnswerFullQuestionFromServer = fullQuestionFromServer as ShortAnswerQuestion;
-                    shortAnswerClientQuestion.correctMappings = shortAnswerFullQuestionFromServer.correctMappings;
+                    shortAnswerClientQuestion.correctShortAnswerMappings = shortAnswerFullQuestionFromServer.correctShortAnswerMappings;
                 } else {
                     captureException(new Error('Unknown question type: ' + clientQuestion));
                 }

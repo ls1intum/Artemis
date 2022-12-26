@@ -215,7 +215,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.shortAnswerQuestion.solutions!.forEach((solution) => {
             let option = '[-option ';
             let firstSolution = true;
-            const spotsForSolution = this.shortAnswerQuestionUtil.getAllSpotsForSolutions(this.shortAnswerQuestion.correctMappings, solution);
+            const spotsForSolution = this.shortAnswerQuestionUtil.getAllSpotsForSolutions(this.shortAnswerQuestion.correctShortAnswerMappings, solution);
             spotsForSolution!.forEach((spotForSolution) => {
                 if (!spotForSolution) {
                     return;
@@ -285,7 +285,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         // Extract existing solutions IDs
         const existingSolutionIDs = this.shortAnswerQuestion.solutions!.filter((solution) => solution.id !== undefined).map((solution) => solution.id);
         this.shortAnswerQuestion.solutions = [];
-        this.shortAnswerQuestion.correctMappings = [];
+        this.shortAnswerQuestion.correctShortAnswerMappings = [];
 
         // Extract existing spot IDs
         const existingSpotIDs = this.shortAnswerQuestion.spots!.filter((spot) => spot.id !== undefined).map((spot) => spot.id);
@@ -331,7 +331,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         for (const id of spotIds) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             const spotForMapping = this.shortAnswerQuestion.spots?.find((spot) => spot.spotNr === id)!;
-            this.shortAnswerQuestion.correctMappings!.push(new ShortAnswerMapping(spotForMapping, solution));
+            this.shortAnswerQuestion.correctShortAnswerMappings!.push(new ShortAnswerMapping(spotForMapping, solution));
         }
     }
 
@@ -517,13 +517,13 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             return;
         }
 
-        if (!this.shortAnswerQuestion.correctMappings) {
-            this.shortAnswerQuestion.correctMappings = [];
+        if (!this.shortAnswerQuestion.correctShortAnswerMappings) {
+            this.shortAnswerQuestion.correctShortAnswerMappings = [];
         }
 
         // Check if this mapping already exists
         if (
-            !this.shortAnswerQuestion.correctMappings.some(
+            !this.shortAnswerQuestion.correctShortAnswerMappings.some(
                 (existingMapping) =>
                     this.shortAnswerQuestionUtil.isSameSpot(existingMapping.spot, spot) && this.shortAnswerQuestionUtil.isSameSolution(existingMapping.solution, dragItem),
             )
@@ -531,7 +531,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
             this.deleteMapping(this.getMappingsForSolution(dragItem).filter((mapping) => mapping.spot === undefined)[0]);
             // Mapping doesn't exit yet => add this mapping
             const saMapping = new ShortAnswerMapping(spot, dragItem);
-            this.shortAnswerQuestion.correctMappings.push(saMapping);
+            this.shortAnswerQuestion.correctShortAnswerMappings.push(saMapping);
 
             // Notify parent of changes
             this.questionUpdated.emit();
@@ -549,7 +549,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         const visitedSpots: ShortAnswerSpot[] = [];
         // Save reference to this due to nested some calls
         if (
-            this.shortAnswerQuestion.correctMappings?.some((correctMapping) => {
+            this.shortAnswerQuestion.correctShortAnswerMappings?.some((correctMapping) => {
                 if (
                     !visitedSpots.some((spot: ShortAnswerSpot) => {
                         return this.shortAnswerQuestionUtil.isSameSpot(spot, correctMapping.spot);
@@ -573,11 +573,11 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @return {Array} all mappings that belong to the given solution
      */
     getMappingsForSolution(solution: ShortAnswerSolution): ShortAnswerMapping[] {
-        if (!this.shortAnswerQuestion.correctMappings) {
-            this.shortAnswerQuestion.correctMappings = [];
+        if (!this.shortAnswerQuestion.correctShortAnswerMappings) {
+            this.shortAnswerQuestion.correctShortAnswerMappings = [];
         }
         return (
-            this.shortAnswerQuestion.correctMappings
+            this.shortAnswerQuestion.correctShortAnswerMappings
                 .filter((mapping) => this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution))
                 /** Moved the sorting from the template to the function call*/
                 .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
@@ -590,10 +590,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param solution {object} the solution for which we want to delete all mappings
      */
     deleteMappingsForSolution(solution: ShortAnswerSolution): void {
-        if (!this.shortAnswerQuestion.correctMappings) {
-            this.shortAnswerQuestion.correctMappings = [];
+        if (!this.shortAnswerQuestion.correctShortAnswerMappings) {
+            this.shortAnswerQuestion.correctShortAnswerMappings = [];
         }
-        this.shortAnswerQuestion.correctMappings = this.shortAnswerQuestion.correctMappings.filter(
+        this.shortAnswerQuestion.correctShortAnswerMappings = this.shortAnswerQuestion.correctShortAnswerMappings.filter(
             (mapping) => !this.shortAnswerQuestionUtil.isSameSolution(mapping.solution, solution),
         );
     }
@@ -604,10 +604,10 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param mappingToDelete {object} the mapping to delete
      */
     deleteMapping(mappingToDelete: ShortAnswerMapping): void {
-        if (!this.shortAnswerQuestion.correctMappings) {
-            this.shortAnswerQuestion.correctMappings = [];
+        if (!this.shortAnswerQuestion.correctShortAnswerMappings) {
+            this.shortAnswerQuestion.correctShortAnswerMappings = [];
         }
-        this.shortAnswerQuestion.correctMappings = this.shortAnswerQuestion.correctMappings.filter((mapping) => mapping !== mappingToDelete);
+        this.shortAnswerQuestion.correctShortAnswerMappings = this.shortAnswerQuestion.correctShortAnswerMappings.filter((mapping) => mapping !== mappingToDelete);
         this.questionEditorText = this.generateMarkdown();
     }
 
@@ -682,7 +682,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
         this.shortAnswerQuestion.randomizeOrder = this.backupQuestion.randomizeOrder;
         this.shortAnswerQuestion.scoringType = this.backupQuestion.scoringType;
         this.shortAnswerQuestion.solutions = cloneDeep(this.backupQuestion.solutions);
-        this.shortAnswerQuestion.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
+        this.shortAnswerQuestion.correctShortAnswerMappings = cloneDeep(this.backupQuestion.correctShortAnswerMappings);
         this.shortAnswerQuestion.spots = cloneDeep(this.backupQuestion.spots);
         this.resetQuestionText();
     }
@@ -724,10 +724,12 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param spot {object} the spot for which we want to delete all mappings
      */
     deleteMappingsForSpot(spot: ShortAnswerSpot): void {
-        if (!this.shortAnswerQuestion.correctMappings) {
-            this.shortAnswerQuestion.correctMappings = [];
+        if (!this.shortAnswerQuestion.correctShortAnswerMappings) {
+            this.shortAnswerQuestion.correctShortAnswerMappings = [];
         }
-        this.shortAnswerQuestion.correctMappings = this.shortAnswerQuestion.correctMappings.filter((mapping) => !this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot));
+        this.shortAnswerQuestion.correctShortAnswerMappings = this.shortAnswerQuestion.correctShortAnswerMappings.filter(
+            (mapping) => !this.shortAnswerQuestionUtil.isSameSpot(mapping.spot, spot),
+        );
     }
 
     /**

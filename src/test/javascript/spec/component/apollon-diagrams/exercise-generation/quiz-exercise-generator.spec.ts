@@ -95,6 +95,6 @@ describe('QuizExercise Generator', () => {
         // each DragItem needs one DropLocation
         expect(dragAndDropQuestion.dropLocations).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
         // if there are no similar elements -> amount of correct mappings = interactive elements
-        expect(dragAndDropQuestion.correctMappings).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
+        expect(dragAndDropQuestion.correctDragAndDropMappings).toHaveLength(interactiveElements.elements.length + interactiveElements.relationships.length);
     });
 });

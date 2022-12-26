@@ -107,8 +107,8 @@ export abstract class QuizExerciseValidationDirective {
                         question.title &&
                         question.title !== '' &&
                         question.title.length < this.maxLengthThreshold &&
-                        dndQuestion.correctMappings &&
-                        dndQuestion.correctMappings.length > 0 &&
+                        dndQuestion.correctDragAndDropMappings &&
+                        dndQuestion.correctDragAndDropMappings.length > 0 &&
                         this.dragAndDropQuestionUtil.solve(dndQuestion).length &&
                         this.dragAndDropQuestionUtil.validateNoMisleadingCorrectMapping(dndQuestion)
                     );
@@ -118,14 +118,14 @@ export abstract class QuizExerciseValidationDirective {
                     return (
                         question.title &&
                         question.title !== '' &&
-                        shortAnswerQuestion.correctMappings &&
-                        shortAnswerQuestion.correctMappings.length > 0 &&
+                        shortAnswerQuestion.correctShortAnswerMappings &&
+                        shortAnswerQuestion.correctShortAnswerMappings.length > 0 &&
                         this.shortAnswerQuestionUtil.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion) &&
-                        this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings, shortAnswerQuestion.spots!) &&
-                        this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings) &&
+                        this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctShortAnswerMappings, shortAnswerQuestion.spots!) &&
+                        this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctShortAnswerMappings) &&
                         shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim() === '').length === 0 &&
                         shortAnswerQuestion.solutions?.filter((solution) => solution.text!.trim().length >= this.maxLengthThreshold).length === 0 &&
-                        !this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings) &&
+                        !this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctShortAnswerMappings) &&
                         this.shortAnswerQuestionUtil.atLeastAsManySolutionsAsSpots(shortAnswerQuestion)
                     );
                 }
@@ -300,7 +300,7 @@ export abstract class QuizExerciseValidationDirective {
 
             if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 const dndQuestion = question as DragAndDropQuestion;
-                if (!dndQuestion.correctMappings || dndQuestion.correctMappings.length === 0) {
+                if (!dndQuestion.correctDragAndDropMappings || dndQuestion.correctDragAndDropMappings.length === 0) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 },
@@ -320,7 +320,7 @@ export abstract class QuizExerciseValidationDirective {
             }
             if (question.type === QuizQuestionType.SHORT_ANSWER) {
                 const shortAnswerQuestion = question as ShortAnswerQuestion;
-                if (!shortAnswerQuestion.correctMappings || shortAnswerQuestion.correctMappings.length === 0) {
+                if (!shortAnswerQuestion.correctShortAnswerMappings || shortAnswerQuestion.correctShortAnswerMappings.length === 0) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.questionCorrectMapping',
                         translateValues: { index: index + 1 },
@@ -332,13 +332,13 @@ export abstract class QuizExerciseValidationDirective {
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (!this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctMappings!, shortAnswerQuestion.spots!)) {
+                if (!this.shortAnswerQuestionUtil.everySpotHasASolution(shortAnswerQuestion.correctShortAnswerMappings!, shortAnswerQuestion.spots!)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEverySpotHasASolution',
                         translateValues: { index: index + 1 },
                     });
                 }
-                if (!this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings!)) {
+                if (!this.shortAnswerQuestionUtil.everyMappedSolutionHasASpot(shortAnswerQuestion.correctShortAnswerMappings!)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionEveryMappedSolutionHasASpot',
                         translateValues: { index: index + 1 },
@@ -356,7 +356,7 @@ export abstract class QuizExerciseValidationDirective {
                         translateValues: { index: index + 1, threshold: this.maxLengthThreshold },
                     });
                 }
-                if (this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings!)) {
+                if (this.shortAnswerQuestionUtil.hasMappingDuplicateValues(shortAnswerQuestion.correctShortAnswerMappings!)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.shortAnswerQuestionDuplicateMapping',
                         translateValues: { index: index + 1 },
@@ -415,11 +415,11 @@ export abstract class QuizExerciseValidationDirective {
                 this.pushToInvalidElements((<MultipleChoiceQuestion>question).answerOptions, invalidElements);
             } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                 this.pushToInvalidElements((<DragAndDropQuestion>question).dragItems, invalidElements);
-                this.pushToInvalidElements((<DragAndDropQuestion>question).correctMappings, invalidElements);
+                this.pushToInvalidElements((<DragAndDropQuestion>question).correctDragAndDropMappings, invalidElements);
                 this.pushToInvalidElements((<DragAndDropQuestion>question).dropLocations, invalidElements);
             } else {
                 this.pushToInvalidElements((<ShortAnswerQuestion>question).solutions, invalidElements);
-                this.pushToInvalidElements((<ShortAnswerQuestion>question).correctMappings, invalidElements);
+                this.pushToInvalidElements((<ShortAnswerQuestion>question).correctShortAnswerMappings, invalidElements);
                 this.pushToInvalidElements((<ShortAnswerQuestion>question).spots, invalidElements);
             }
             if (invalidQuestion || invalidElements.length !== 0) {

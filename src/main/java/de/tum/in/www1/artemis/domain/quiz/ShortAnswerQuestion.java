@@ -22,6 +22,9 @@ import jakarta.persistence.*;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerQuestion extends QuizQuestion {
 
+    // TODO: we should rethink if declaring the following 3 relations 'spots', 'solutions' and 'correctShortAnswerMappings' using FetchType.EAGER makes sense
+    // this actually means they will always be loaded from the database when a question is loaded
+
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderColumn
     @JoinColumn(name = "question_id")
@@ -37,11 +40,11 @@ public class ShortAnswerQuestion extends QuizQuestion {
     private List<ShortAnswerSolution> solutions = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderColumn
+    @OrderColumn(name = "correct_mappings_order")
     @JoinColumn(name = "question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.After.class)
-    private List<ShortAnswerMapping> correctMappings = new ArrayList<>();
+    private List<ShortAnswerMapping> correctShortAnswerMappings = new ArrayList<>();
 
     @Column(name = "similarity_value")
     @JsonView(QuizView.Before.class)
@@ -79,24 +82,24 @@ public class ShortAnswerQuestion extends QuizQuestion {
         this.solutions = shortAnswerSolutions;
     }
 
-    public List<ShortAnswerMapping> getCorrectMappings() {
-        return correctMappings;
+    public List<ShortAnswerMapping> getCorrectShortAnswerMappings() {
+        return correctShortAnswerMappings;
     }
 
     public ShortAnswerQuestion addCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
-        this.correctMappings.add(shortAnswerMapping);
+        this.correctShortAnswerMappings.add(shortAnswerMapping);
         shortAnswerMapping.setQuestion(this);
         return this;
     }
 
     public ShortAnswerQuestion removeCorrectMapping(ShortAnswerMapping shortAnswerMapping) {
-        this.correctMappings.remove(shortAnswerMapping);
+        this.correctShortAnswerMappings.remove(shortAnswerMapping);
         shortAnswerMapping.setQuestion(null);
         return this;
     }
 
-    public void setCorrectMappings(List<ShortAnswerMapping> shortAnswerMappings) {
-        this.correctMappings = shortAnswerMappings;
+    public void setCorrectShortAnswerMappings(List<ShortAnswerMapping> shortAnswerMappings) {
+        this.correctShortAnswerMappings = shortAnswerMappings;
     }
 
     public Integer getSimilarityValue() {
@@ -124,7 +127,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
         }
 
         // check if at least one correct mapping exists and if similarity values are in the allowed range
-        return getCorrectMappings() != null && !getCorrectMappings().isEmpty() && getSimilarityValue() >= 50 && getSimilarityValue() <= 100;
+        return getCorrectShortAnswerMappings() != null && !getCorrectShortAnswerMappings().isEmpty() && getSimilarityValue() >= 50 && getSimilarityValue() <= 100;
 
         // TODO (?): Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
     }
@@ -137,7 +140,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
      */
     public Set<ShortAnswerSolution> getCorrectSolutionForSpot(ShortAnswerSpot spot) {
         Set<ShortAnswerSolution> result = new HashSet<>();
-        for (ShortAnswerMapping mapping : correctMappings) {
+        for (ShortAnswerMapping mapping : correctShortAnswerMappings) {
             if (mapping.getSpot().equals(spot)) {
                 result.add(mapping.getSolution());
             }
@@ -251,7 +254,7 @@ public class ShortAnswerQuestion extends QuizQuestion {
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof ShortAnswerQuestion shortAnswerOriginalQuestion) {
             return checkSolutionsIfRecalculationIsNecessary(shortAnswerOriginalQuestion) || checkSpotsIfRecalculationIsNecessary(shortAnswerOriginalQuestion)
-                    || !getCorrectMappings().equals(shortAnswerOriginalQuestion.getCorrectMappings());
+                    || !getCorrectShortAnswerMappings().equals(shortAnswerOriginalQuestion.getCorrectShortAnswerMappings());
         }
         return false;
     }
@@ -324,14 +327,14 @@ public class ShortAnswerQuestion extends QuizQuestion {
     @Override
     public void filterForStudentsDuringQuiz() {
         super.filterForStudentsDuringQuiz();
-        setCorrectMappings(null);
+        setCorrectShortAnswerMappings(null);
         setSolutions(null);
     }
 
     @Override
     public void filterForStatisticWebsocket() {
         super.filterForStatisticWebsocket();
-        setCorrectMappings(null);
+        setCorrectShortAnswerMappings(null);
     }
 
     /**

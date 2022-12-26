@@ -35,7 +35,7 @@ const question = {
     text: 'Test Question',
     quizQuestionStatistic: questionStatistic,
     solutions: [shortAnswerSolution],
-    correctMappings: [shortAnswerMapping],
+    correctShortAnswerMappings: [shortAnswerMapping],
 } as ShortAnswerQuestion;
 const course = { id: 1 } as Course;
 let quizExercise = {

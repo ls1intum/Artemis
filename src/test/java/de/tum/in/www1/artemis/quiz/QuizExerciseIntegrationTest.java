@@ -321,13 +321,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         DragAndDropQuestion dnd = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         dnd.getDropLocations().remove(0);
-        dnd.getCorrectMappings().remove(0);
+        dnd.getCorrectDragAndDropMappings().remove(0);
         dnd.getDragItems().remove(0);
 
         ShortAnswerQuestion sa = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
         sa.getSpots().remove(0);
         sa.getSolutions().remove(0);
-        sa.getCorrectMappings().remove(0);
+        sa.getCorrectShortAnswerMappings().remove(0);
 
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
 
@@ -437,13 +437,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         DragAndDropQuestion dnd = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         dnd.getDropLocations().remove(0);
-        dnd.getCorrectMappings().remove(0);
+        dnd.getCorrectDragAndDropMappings().remove(0);
         dnd.getDragItems().remove(0);
 
         ShortAnswerQuestion sa = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
         sa.getSpots().remove(0);
         sa.getSolutions().remove(0);
-        sa.getCorrectMappings().remove(0);
+        sa.getCorrectShortAnswerMappings().remove(0);
 
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
 
@@ -1174,8 +1174,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         if (question instanceof ShortAnswerQuestion shortAnswerQuestion) {
             // demonstrate that the initial shortAnswerQuestion has 2 correct mappings and 2 solutions
-            assertThat(shortAnswerQuestion.getCorrectMappings()).hasSize(2);
-            assertThat(shortAnswerQuestion.getCorrectMappings()).hasSize(2);
+            assertThat(shortAnswerQuestion.getCorrectShortAnswerMappings()).hasSize(2);
+            assertThat(shortAnswerQuestion.getCorrectShortAnswerMappings()).hasSize(2);
 
             // add a solution with a mapping onto spot number 0
             ShortAnswerSolution newSolution = new ShortAnswerSolution();
@@ -1189,7 +1189,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
             newMapping.setSolution(newSolution);
             newMapping.setSpot(shortAnswerQuestion.getSpots().get(0));
             newMapping.setShortAnswerSpotIndex(0);
-            shortAnswerQuestion.getCorrectMappings().add(newMapping);
+            shortAnswerQuestion.getCorrectShortAnswerMappings().add(newMapping);
             quizExercise.getQuizQuestions().remove(2);
             quizExercise.getQuizQuestions().add(shortAnswerQuestion);
         }
@@ -1200,7 +1200,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(updatedQuizExercise).isEqualTo(quizExercise);
         ShortAnswerQuestion receivedShortAnswerQuestion = (ShortAnswerQuestion) updatedQuizExercise.getQuizQuestions().get(2);
         assertThat(receivedShortAnswerQuestion.getSolutions()).hasSize(3);
-        assertThat(receivedShortAnswerQuestion.getCorrectMappings()).hasSize(3);
+        assertThat(receivedShortAnswerQuestion.getCorrectShortAnswerMappings()).hasSize(3);
     }
 
     @Test
@@ -1538,13 +1538,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         DragAndDropQuestion dnd = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
         dnd.getDropLocations().remove(0);
-        dnd.getCorrectMappings().remove(0);
+        dnd.getCorrectDragAndDropMappings().remove(0);
         dnd.getDragItems().remove(0);
 
         ShortAnswerQuestion sa = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
         sa.getSpots().remove(0);
         sa.getSolutions().remove(0);
-        sa.getCorrectMappings().remove(0);
+        sa.getCorrectShortAnswerMappings().remove(0);
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("notificationText", "NotificationTextTEST!");

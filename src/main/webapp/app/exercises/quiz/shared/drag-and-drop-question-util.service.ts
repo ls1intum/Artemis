@@ -16,7 +16,7 @@ export class DragAndDropQuestionUtil {
      * @return {Array} array of mappings that would solve this question (can be empty, if question is unsolvable)
      */
     solve(question: DragAndDropQuestion, mappings?: DragAndDropMapping[]) {
-        if (!question.correctMappings) {
+        if (!question.correctDragAndDropMappings) {
             return [];
         }
 
@@ -25,7 +25,7 @@ export class DragAndDropQuestionUtil {
 
         // filter out dropLocations that do not need to be mapped
         let remainingDropLocations = question.dropLocations?.filter((dropLocation) => {
-            return question.correctMappings?.some((mapping) => {
+            return question.correctDragAndDropMappings?.some((mapping) => {
                 return this.isSameEntityWithTempId(mapping.dropLocation, dropLocation);
             }, this);
         }, this);
@@ -33,7 +33,7 @@ export class DragAndDropQuestionUtil {
         if (mappings) {
             // add mappings that are already correct
             mappings.forEach(function (mapping) {
-                const correctMapping = this.getMapping(question.correctMappings!, mapping.dragItem!, mapping.dropLocation!);
+                const correctMapping = this.getMapping(question.correctDragAndDropMappings!, mapping.dragItem!, mapping.dropLocation!);
                 if (correctMapping) {
                     sampleMappings.push(correctMapping);
                     remainingDropLocations = remainingDropLocations?.filter(function (dropLocation) {
@@ -47,7 +47,7 @@ export class DragAndDropQuestionUtil {
         }
 
         // solve recursively
-        const solved = this.solveRec(question.correctMappings, remainingDropLocations, availableDragItems, sampleMappings);
+        const solved = this.solveRec(question.correctDragAndDropMappings, remainingDropLocations, availableDragItems, sampleMappings);
 
         if (solved) {
             return sampleMappings;
@@ -105,7 +105,7 @@ export class DragAndDropQuestionUtil {
      * @return {boolean} true, if the condition is met, otherwise false
      */
     validateNoMisleadingCorrectMapping(question: DragAndDropQuestion) {
-        if (!question.correctMappings || !question.dragItems) {
+        if (!question.correctDragAndDropMappings || !question.dragItems) {
             // no correct mappings at all means there can be no misleading mappings
             return true;
         }
@@ -116,13 +116,13 @@ export class DragAndDropQuestionUtil {
                 const dragItem1 = question.dragItems[i];
                 const dragItem2 = question.dragItems[j];
                 const shareOneDropLocation = question.dropLocations?.some(function (dropLocation) {
-                    const isMappedWithDragItem1 = this.isMappedTogether(question.correctMappings, dragItem1, dropLocation);
-                    const isMappedWithDragItem2 = this.isMappedTogether(question.correctMappings, dragItem2, dropLocation);
+                    const isMappedWithDragItem1 = this.isMappedTogether(question.correctDragAndDropMappings, dragItem1, dropLocation);
+                    const isMappedWithDragItem2 = this.isMappedTogether(question.correctDragAndDropMappings, dragItem2, dropLocation);
                     return isMappedWithDragItem1 && isMappedWithDragItem2;
                 }, this);
                 if (shareOneDropLocation) {
-                    const allDropLocationsForDragItem1 = this.getAllDropLocationsForDragItem(question.correctMappings, dragItem1);
-                    const allDropLocationsForDragItem2 = this.getAllDropLocationsForDragItem(question.correctMappings, dragItem2);
+                    const allDropLocationsForDragItem1 = this.getAllDropLocationsForDragItem(question.correctDragAndDropMappings, dragItem1);
+                    const allDropLocationsForDragItem2 = this.getAllDropLocationsForDragItem(question.correctDragAndDropMappings, dragItem2);
                     if (!this.isSameSetOfDropLocations(allDropLocationsForDragItem1, allDropLocationsForDragItem2)) {
                         // condition is violated for this pair of dragItems
                         return false;

@@ -112,7 +112,7 @@ describe('Quiz Service', () => {
                 text: 'let',
             },
         ],
-        correctMappings: [
+        correctShortAnswerMappings: [
             {
                 spot: {
                     tempID: 8562027009747859,

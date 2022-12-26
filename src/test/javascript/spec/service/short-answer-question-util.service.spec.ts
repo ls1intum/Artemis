@@ -23,7 +23,7 @@ describe('ShortAnswerQuestionUtil', () => {
     shortAnswerQuestion.solutions = [solution];
     shortAnswerQuestion.text = `This is a short answer question
     **with markdown**`;
-    shortAnswerQuestion.correctMappings = [mapping];
+    shortAnswerQuestion.correctShortAnswerMappings = [mapping];
 
     const spotUnmapped = new ShortAnswerSpot();
     spotUnmapped.spotNr = 2;
@@ -34,7 +34,7 @@ describe('ShortAnswerQuestionUtil', () => {
 
     const addMappingToQuestionAndCheckMisleadingMapping = (spotForMapping: ShortAnswerSpot, solutionForMapping: ShortAnswerSolution, toBeTrue: boolean) => {
         const mappingToCheck = new ShortAnswerMapping(spotForMapping, solutionForMapping);
-        shortAnswerQuestion.correctMappings!.push(mappingToCheck);
+        shortAnswerQuestion.correctShortAnswerMappings!.push(mappingToCheck);
         const hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
         if (toBeTrue) {
             expect(hasNoMisleadingMapping).toBeTrue();
@@ -51,10 +51,10 @@ describe('ShortAnswerQuestionUtil', () => {
         service = TestBed.inject(ShortAnswerQuestionUtil);
     });
     it('should return correct getter', () => {
-        const solutions = service.getAllSolutionsForSpot(shortAnswerQuestion.correctMappings, spot);
-        const spots = service.getAllSpotsForSolutions(shortAnswerQuestion.correctMappings, solution);
+        const solutions = service.getAllSolutionsForSpot(shortAnswerQuestion.correctShortAnswerMappings, spot);
+        const spots = service.getAllSpotsForSolutions(shortAnswerQuestion.correctShortAnswerMappings, solution);
         const sampleSolutions = service.getSampleSolutions(shortAnswerQuestion);
-        const mappingFromGetter = service.getShortAnswerMapping(shortAnswerQuestion.correctMappings, solution, spot);
+        const mappingFromGetter = service.getShortAnswerMapping(shortAnswerQuestion.correctShortAnswerMappings, solution, spot);
         const spotFromGetter = service.getSpot(spot.spotNr!, shortAnswerQuestion);
         const spotNr = service.getSpotNr('[-spot 123]');
 
@@ -65,10 +65,10 @@ describe('ShortAnswerQuestionUtil', () => {
         expect(spotFromGetter).toEqual(spot);
         expect(spotNr).toBe(123);
 
-        let isMappedTogether = service.isMappedTogether(shortAnswerQuestion.correctMappings, solution, spot);
+        let isMappedTogether = service.isMappedTogether(shortAnswerQuestion.correctShortAnswerMappings, solution, spot);
         expect(isMappedTogether).toBeTrue();
 
-        isMappedTogether = service.isMappedTogether(shortAnswerQuestion.correctMappings, solutionUnmapped, spot);
+        isMappedTogether = service.isMappedTogether(shortAnswerQuestion.correctShortAnswerMappings, solutionUnmapped, spot);
         expect(isMappedTogether).toBeFalse();
 
         let isInputField = service.isInputField('[-spot 123]');
@@ -103,25 +103,25 @@ describe('ShortAnswerQuestionUtil', () => {
     });
 
     it('should check whether spots and solutions are setup correctly', () => {
-        let mappedSolutionsHaveSpots = service.everyMappedSolutionHasASpot(shortAnswerQuestion.correctMappings!);
+        let mappedSolutionsHaveSpots = service.everyMappedSolutionHasASpot(shortAnswerQuestion.correctShortAnswerMappings!);
         expect(mappedSolutionsHaveSpots).toBeTrue();
 
-        const wrongMapping = cloneDeep(shortAnswerQuestion.correctMappings);
+        const wrongMapping = cloneDeep(shortAnswerQuestion.correctShortAnswerMappings);
         // @ts-ignore
         wrongMapping.forEach((m) => (m.spot = undefined));
         mappedSolutionsHaveSpots = service.everyMappedSolutionHasASpot(wrongMapping!);
         expect(mappedSolutionsHaveSpots).toBeFalse();
 
-        let spotsHaveSolutions = service.everySpotHasASolution(shortAnswerQuestion.correctMappings!, shortAnswerQuestion.spots!);
+        let spotsHaveSolutions = service.everySpotHasASolution(shortAnswerQuestion.correctShortAnswerMappings!, shortAnswerQuestion.spots!);
         expect(spotsHaveSolutions).toBeTrue();
 
-        spotsHaveSolutions = service.everySpotHasASolution(shortAnswerQuestion.correctMappings!, [spotUnmapped]);
+        spotsHaveSolutions = service.everySpotHasASolution(shortAnswerQuestion.correctShortAnswerMappings!, [spotUnmapped]);
         expect(spotsHaveSolutions).toBeFalse();
 
-        let hasDuplicatedMappings = service.hasMappingDuplicateValues(shortAnswerQuestion.correctMappings!);
+        let hasDuplicatedMappings = service.hasMappingDuplicateValues(shortAnswerQuestion.correctShortAnswerMappings!);
         expect(hasDuplicatedMappings).toBeFalse();
 
-        const duplicatedMapping = cloneDeep(shortAnswerQuestion.correctMappings!);
+        const duplicatedMapping = cloneDeep(shortAnswerQuestion.correctShortAnswerMappings!);
         duplicatedMapping.push(duplicatedMapping[0]);
         hasDuplicatedMappings = service.hasMappingDuplicateValues(duplicatedMapping);
         expect(hasDuplicatedMappings).toBeTrue();
@@ -138,14 +138,14 @@ describe('ShortAnswerQuestionUtil', () => {
         let hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
         expect(hasNoMisleadingMapping).toBeTrue();
         // @ts-ignore
-        shortAnswerQuestion.correctMappings = undefined;
+        shortAnswerQuestion.correctShortAnswerMappings = undefined;
         hasNoMisleadingMapping = service.validateNoMisleadingShortAnswerMapping(shortAnswerQuestion);
         expect(hasNoMisleadingMapping).toBeTrue();
     });
 
     it('should check for misleading mappings', () => {
-        // This is done as the correctMappings is undefined (see previous test)
-        shortAnswerQuestion.correctMappings = [mapping];
+        // This is done as the correctShortAnswerMappings is undefined (see previous test)
+        shortAnswerQuestion.correctShortAnswerMappings = [mapping];
 
         const spot2 = new ShortAnswerSpot();
         spot2.spotNr = 2;

@@ -6,7 +6,7 @@ import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.mod
 export class ShortAnswerQuestion extends QuizQuestion {
     public spots?: ShortAnswerSpot[];
     public solutions?: ShortAnswerSolution[];
-    public correctMappings?: ShortAnswerMapping[];
+    public correctShortAnswerMappings?: ShortAnswerMapping[];
     public matchLetterCase = false;
     public similarityValue = 85;
 

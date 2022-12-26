@@ -117,7 +117,7 @@ describe('QuizExercise Management Detail Component', () => {
         dropLocation.height = 80;
         question.dropLocations = [dropLocation];
         const correctDragAndDropMapping = new DragAndDropMapping(dragItem1, dropLocation);
-        question.correctMappings = [correctDragAndDropMapping];
+        question.correctDragAndDropMappings = [correctDragAndDropMapping];
         question.points = 10;
         return { question, dragItem1, dragItem2, dropLocation, correctDragAndDropMapping };
     };
@@ -141,7 +141,7 @@ describe('QuizExercise Management Detail Component', () => {
         question.spots = [spot1, spot2];
         const shortAnswerMapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
         const shortAnswerMapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
-        question.correctMappings = [shortAnswerMapping1, shortAnswerMapping2];
+        question.correctShortAnswerMappings = [shortAnswerMapping1, shortAnswerMapping2];
         question.points = 10;
         return { question, shortAnswerMapping1, shortAnswerMapping2, spot1, spot2, shortAnswerSolution1, shortAnswerSolution2 };
     };
@@ -932,7 +932,7 @@ describe('QuizExercise Management Detail Component', () => {
                 await importQuestionAndExpectOneMoreQuestionInQuestions(question);
                 const lastAddedQuestion = comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1] as DragAndDropQuestion;
                 expect(lastAddedQuestion.type).toEqual(QuizQuestionType.DRAG_AND_DROP);
-                expect(lastAddedQuestion.correctMappings).toHaveLength(1);
+                expect(lastAddedQuestion.correctDragAndDropMappings).toHaveLength(1);
                 expect(lastAddedQuestion.dragItems![0]).toEqual(dragItem1);
                 expect(lastAddedQuestion.dragItems![1]).toEqual(dragItem2);
                 expect(lastAddedQuestion.dropLocations![0]).toEqual(dropLocation);
@@ -945,9 +945,9 @@ describe('QuizExercise Management Detail Component', () => {
                 importQuestionAndExpectOneMoreQuestionInQuestions(question);
                 const lastAddedQuestion = comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1] as ShortAnswerQuestion;
                 expect(lastAddedQuestion.type).toEqual(QuizQuestionType.SHORT_ANSWER);
-                expect(lastAddedQuestion.correctMappings).toHaveLength(2);
-                expect(lastAddedQuestion.correctMappings![0]).toEqual(shortAnswerMapping1);
-                expect(lastAddedQuestion.correctMappings![1]).toEqual(shortAnswerMapping2);
+                expect(lastAddedQuestion.correctShortAnswerMappings).toHaveLength(2);
+                expect(lastAddedQuestion.correctShortAnswerMappings![0]).toEqual(shortAnswerMapping1);
+                expect(lastAddedQuestion.correctShortAnswerMappings![1]).toEqual(shortAnswerMapping2);
                 expect(lastAddedQuestion.spots).toHaveLength(2);
                 expect(lastAddedQuestion.spots![0]).toEqual(spot1);
                 expect(lastAddedQuestion.spots![1]).toEqual(spot2);
@@ -967,7 +967,7 @@ describe('QuizExercise Management Detail Component', () => {
             };
 
             const removeCorrectMappingsAndExpectInvalidQuiz = (question: DragAndDropQuestion | ShortAnswerQuestion) => {
-                question.correctMappings = [];
+                question.correctShortAnswerMappings = [];
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
                 expect(comp.quizIsValid).toBeFalse();
@@ -1764,7 +1764,7 @@ describe('QuizExercise Management Detail Component', () => {
                 });
 
                 it('should put reason for no correct mappings', () => {
-                    question.correctMappings = [];
+                    question.correctDragAndDropMappings = [];
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionCorrectMapping');
                 });
 
@@ -1826,7 +1826,7 @@ describe('QuizExercise Management Detail Component', () => {
                 });
 
                 it('should put reason for no correct mappings', () => {
-                    question.correctMappings = [];
+                    question.correctShortAnswerMappings = [];
                     filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionCorrectMapping');
                 });
 

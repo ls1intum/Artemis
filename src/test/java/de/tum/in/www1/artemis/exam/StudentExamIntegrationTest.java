@@ -452,10 +452,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 }
             }
             else if (question instanceof DragAndDropQuestion) {
-                assertThat(((DragAndDropQuestion) question).getCorrectMappings()).isEmpty();
+                assertThat(((DragAndDropQuestion) question).getCorrectDragAndDropMappings()).isEmpty();
             }
             else if (question instanceof ShortAnswerQuestion) {
-                assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isEmpty();
+                assertThat(((ShortAnswerQuestion) question).getCorrectShortAnswerMappings()).isEmpty();
             }
         }
 
@@ -1114,10 +1114,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                             });
                         }
                         else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
-                            assertThat(dndQuestion.getCorrectMappings()).isNullOrEmpty();
+                            assertThat(dndQuestion.getCorrectDragAndDropMappings()).isNullOrEmpty();
                         }
                         else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
-                            assertThat(saQuestion.getCorrectMappings()).isNullOrEmpty();
+                            assertThat(saQuestion.getCorrectShortAnswerMappings()).isNullOrEmpty();
                         }
                     });
 
@@ -1364,14 +1364,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                         assertThat(question.getQuizQuestionStatistic()).isNull();
                         if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
                             ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().forEach(submittedText -> assertThat(submittedText.isIsCorrect()).isNull());
-                            assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isEmpty();
+                            assertThat(((ShortAnswerQuestion) question).getCorrectShortAnswerMappings()).isEmpty();
                             assertThat(((ShortAnswerQuestion) question).getSolutions()).isEmpty();
                         }
                         if (question instanceof DragAndDropQuestion) {
-                            assertThat(((DragAndDropQuestion) question).getCorrectMappings()).isEmpty();
+                            assertThat(((DragAndDropQuestion) question).getCorrectDragAndDropMappings()).isEmpty();
                         }
                         if (question instanceof ShortAnswerQuestion) {
-                            assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isEmpty();
+                            assertThat(((ShortAnswerQuestion) question).getCorrectShortAnswerMappings()).isEmpty();
                             assertThat(((ShortAnswerQuestion) question).getSolutions()).isEmpty();
                         }
                         if (question instanceof MultipleChoiceQuestion) {
@@ -1418,14 +1418,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                         assertThat(question.getQuizQuestionStatistic()).isNull();
                         if (submittedAnswer instanceof ShortAnswerSubmittedAnswer) {
                             ((ShortAnswerSubmittedAnswer) submittedAnswer).getSubmittedTexts().forEach(submittedText -> assertThat(submittedText.isIsCorrect()).isNotNull());
-                            assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isNotEmpty();
+                            assertThat(((ShortAnswerQuestion) question).getCorrectShortAnswerMappings()).isNotEmpty();
                             assertThat(((ShortAnswerQuestion) question).getSolutions()).isNotEmpty();
                         }
                         if (question instanceof DragAndDropQuestion) {
-                            assertThat(((DragAndDropQuestion) question).getCorrectMappings()).isNotEmpty();
+                            assertThat(((DragAndDropQuestion) question).getCorrectDragAndDropMappings()).isNotEmpty();
                         }
                         if (question instanceof ShortAnswerQuestion) {
-                            assertThat(((ShortAnswerQuestion) question).getCorrectMappings()).isNotEmpty();
+                            assertThat(((ShortAnswerQuestion) question).getCorrectShortAnswerMappings()).isNotEmpty();
                             assertThat(((ShortAnswerQuestion) question).getSolutions()).isNotEmpty();
                         }
                         if (question instanceof MultipleChoiceQuestion) {

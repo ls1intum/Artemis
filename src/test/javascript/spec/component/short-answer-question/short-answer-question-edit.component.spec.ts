@@ -257,7 +257,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const mapping1 = new ShortAnswerMapping(spot2, shortAnswerSolution1);
         const mapping2 = new ShortAnswerMapping(spot3, shortAnswerSolution1);
         const alternativeMapping = new ShortAnswerMapping(new ShortAnswerSpot(), new ShortAnswerSolution());
-        component.shortAnswerQuestion.correctMappings = [mapping1, mapping2, alternativeMapping];
+        component.shortAnswerQuestion.correctShortAnswerMappings = [mapping1, mapping2, alternativeMapping];
         const event = {
             item: {
                 data: shortAnswerSolution1,
@@ -268,7 +268,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.onDragDrop(spot, event);
 
         const expectedMapping = new ShortAnswerMapping(spot, shortAnswerSolution1);
-        expect(component.shortAnswerQuestion.correctMappings.pop()).toEqual(expectedMapping);
+        expect(component.shortAnswerQuestion.correctShortAnswerMappings.pop()).toEqual(expectedMapping);
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
     });
 
@@ -276,7 +276,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.shortAnswerQuestion.spots = [spot1, spot2];
         const mapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
         const mapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
-        component.shortAnswerQuestion.correctMappings = [mapping1, mapping2];
+        component.shortAnswerQuestion.correctShortAnswerMappings = [mapping1, mapping2];
 
         fixture.detectChanges();
 
@@ -312,7 +312,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.shortAnswerQuestion.spots = [spot1, spot2];
         const mapping1 = new ShortAnswerMapping(spot1, shortAnswerSolution1);
         const mapping2 = new ShortAnswerMapping(spot2, shortAnswerSolution2);
-        component.shortAnswerQuestion.correctMappings = [mapping1, mapping2];
+        component.shortAnswerQuestion.correctShortAnswerMappings = [mapping1, mapping2];
 
         component.addTextSolution();
 
@@ -392,7 +392,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         const questionUpdated = jest.spyOn(component.questionUpdated, 'emit');
 
         component.shortAnswerQuestion.spots = [spot1, spot2];
-        component.shortAnswerQuestion.correctMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
+        component.shortAnswerQuestion.correctShortAnswerMappings = [new ShortAnswerMapping(spot1, shortAnswerSolution1), new ShortAnswerMapping(spot2, shortAnswerSolution2)];
         fixture.detectChanges();
 
         component.addSpotAtCursorVisualMode();
@@ -412,11 +412,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.shortAnswerQuestion.text = 'This is the text of a question';
         component.showVisualMode = false;
         component.shortAnswerQuestion.spots = [spot1, spot2];
-        component.shortAnswerQuestion.correctMappings = [];
+        component.shortAnswerQuestion.correctShortAnswerMappings = [];
         let mapping = new ShortAnswerMapping(spot1, shortAnswerSolution1);
-        component.shortAnswerQuestion.correctMappings.push(mapping);
+        component.shortAnswerQuestion.correctShortAnswerMappings.push(mapping);
         mapping = new ShortAnswerMapping(spot2, shortAnswerSolution2);
-        component.shortAnswerQuestion.correctMappings.push(mapping);
+        component.shortAnswerQuestion.correctShortAnswerMappings.push(mapping);
 
         component.togglePreview();
         expect(component.textParts).toHaveLength(1);
@@ -443,7 +443,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
         backup.randomizeOrder = false;
         backup.scoringType = ScoringType.ALL_OR_NOTHING;
         backup.solutions = [];
-        backup.correctMappings = [];
+        backup.correctShortAnswerMappings = [];
         backup.spots = [];
         backup.text = 'This is the text of a backup question';
         backup.explanation = 'I dont know';

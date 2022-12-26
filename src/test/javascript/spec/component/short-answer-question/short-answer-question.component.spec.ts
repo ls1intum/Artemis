@@ -95,7 +95,7 @@ describe('ShortAnswerQuestionComponent', () => {
         alternativeQuestion.spots = [spot];
         const solution = new ShortAnswerSolution();
         const mapping = new ShortAnswerMapping(spot, solution);
-        alternativeQuestion.correctMappings = [mapping];
+        alternativeQuestion.correctShortAnswerMappings = [mapping];
 
         component.shortAnswerQuestion = alternativeQuestion;
         component.showSampleSolution();
@@ -165,13 +165,13 @@ describe('ShortAnswerQuestionComponent', () => {
         solution.id = 1;
         solution.text = text;
         const mapping = new ShortAnswerMapping(spot, solution);
-        alternativeQuestion.correctMappings = [mapping];
+        alternativeQuestion.correctShortAnswerMappings = [mapping];
 
         component.shortAnswerQuestion = alternativeQuestion;
         expect(component.classifyInputField(tag)).toBe('completely-correct');
         submittedText.text += '!';
         expect(component.classifyInputField(tag)).toBe('correct');
-        component.shortAnswerQuestion.correctMappings = [];
+        component.shortAnswerQuestion.correctShortAnswerMappings = [];
         expect(component.classifyInputField(tag)).toBe('correct');
         component.submittedTexts = [];
         expect(component.classifyInputField(tag)).toBe('wrong');

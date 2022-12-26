@@ -35,6 +35,9 @@ public class DragAndDropQuestion extends QuizQuestion {
     @JsonView(QuizView.Before.class)
     private String backgroundFilePath;
 
+    // TODO: we should rethink if declaring the following 3 relations 'dropLocations', 'dragItems' and 'correctDragAndDropMappings' using FetchType.EAGER makes sense
+    // this actually means they will always be loaded from the database when a question is loaded
+
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
     @OrderColumn
     @JoinColumn(name = "question_id")
@@ -50,11 +53,11 @@ public class DragAndDropQuestion extends QuizQuestion {
     private List<DragItem> dragItems = new ArrayList<>();
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
-    @OrderColumn
+    @OrderColumn(name = "correct_mappings_order")
     @JoinColumn(name = "question_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.After.class)
-    private List<DragAndDropMapping> correctMappings = new ArrayList<>();
+    private List<DragAndDropMapping> correctDragAndDropMappings = new ArrayList<>();
 
     public String getBackgroundFilePath() {
         return backgroundFilePath;
@@ -104,24 +107,24 @@ public class DragAndDropQuestion extends QuizQuestion {
         this.dragItems = dragItems;
     }
 
-    public List<DragAndDropMapping> getCorrectMappings() {
-        return correctMappings;
+    public List<DragAndDropMapping> getCorrectDragAndDropMappings() {
+        return correctDragAndDropMappings;
     }
 
     public DragAndDropQuestion addCorrectMapping(DragAndDropMapping dragAndDropMapping) {
-        this.correctMappings.add(dragAndDropMapping);
+        this.correctDragAndDropMappings.add(dragAndDropMapping);
         dragAndDropMapping.setQuestion(this);
         return this;
     }
 
     public DragAndDropQuestion removeCorrectMapping(DragAndDropMapping dragAndDropMapping) {
-        this.correctMappings.remove(dragAndDropMapping);
+        this.correctDragAndDropMappings.remove(dragAndDropMapping);
         dragAndDropMapping.setQuestion(null);
         return this;
     }
 
-    public void setCorrectMappings(List<DragAndDropMapping> dragAndDropMappings) {
-        this.correctMappings = dragAndDropMappings;
+    public void setCorrectDragAndDropMappings(List<DragAndDropMapping> dragAndDropMappings) {
+        this.correctDragAndDropMappings = dragAndDropMappings;
     }
 
     @Override
@@ -132,7 +135,7 @@ public class DragAndDropQuestion extends QuizQuestion {
         }
 
         // check if at least one correct mapping exists
-        return getCorrectMappings() != null && !getCorrectMappings().isEmpty();
+        return getCorrectDragAndDropMappings() != null && !getCorrectDragAndDropMappings().isEmpty();
 
         // TODO (?): Add checks for "is solvable" and "no misleading correct mapping" --> look at the implementation in the client
     }
@@ -194,7 +197,7 @@ public class DragAndDropQuestion extends QuizQuestion {
      */
     public Set<DragItem> getCorrectDragItemsForDropLocation(DropLocation dropLocation) {
         Set<DragItem> result = new HashSet<>();
-        for (DragAndDropMapping mapping : correctMappings) {
+        for (DragAndDropMapping mapping : correctDragAndDropMappings) {
             if (mapping.getDropLocation().equals(dropLocation)) {
                 result.add(mapping.getDragItem());
             }
@@ -327,7 +330,7 @@ public class DragAndDropQuestion extends QuizQuestion {
     public boolean isUpdateOfResultsAndStatisticsNecessary(QuizQuestion originalQuizQuestion) {
         if (originalQuizQuestion instanceof DragAndDropQuestion dndOriginalQuestion) {
             return checkDragItemsIfRecalculationIsNecessary(dndOriginalQuestion) || checkDropLocationsIfRecalculationIsNecessary(dndOriginalQuestion)
-                    || !getCorrectMappings().equals(dndOriginalQuestion.getCorrectMappings());
+                    || !getCorrectDragAndDropMappings().equals(dndOriginalQuestion.getCorrectDragAndDropMappings());
         }
         return false;
     }
@@ -401,13 +404,13 @@ public class DragAndDropQuestion extends QuizQuestion {
     @Override
     public void filterForStudentsDuringQuiz() {
         super.filterForStudentsDuringQuiz();
-        setCorrectMappings(null);
+        setCorrectDragAndDropMappings(null);
     }
 
     @Override
     public void filterForStatisticWebsocket() {
         super.filterForStatisticWebsocket();
-        setCorrectMappings(null);
+        setCorrectDragAndDropMappings(null);
     }
 
     /**

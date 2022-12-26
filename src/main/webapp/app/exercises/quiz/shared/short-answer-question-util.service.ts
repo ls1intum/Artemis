@@ -21,29 +21,29 @@ export class ShortAnswerQuestionUtil {
      */
 
     validateNoMisleadingShortAnswerMapping(question: ShortAnswerQuestion) {
-        if (!question.correctMappings) {
+        if (!question.correctShortAnswerMappings) {
             // no correct mappings at all means there can be no misleading mappings
             return true;
         }
 
-        let unusedMappings: ShortAnswerMapping[] = cloneDeep(question.correctMappings);
+        let unusedMappings: ShortAnswerMapping[] = cloneDeep(question.correctShortAnswerMappings);
         const spotsCanBeSolved: boolean[] = [];
 
         for (const spot of question.spots!) {
             let atLeastOneMapping = false;
-            const solutionsForSpots = this.getAllSolutionsForSpot(question.correctMappings, spot)!;
+            const solutionsForSpots = this.getAllSolutionsForSpot(question.correctShortAnswerMappings, spot)!;
 
             solutionsForSpots.forEach((solution) => {
-                if (unusedMappings.length > 0 && unusedMappings.length !== question.correctMappings!.length) {
+                if (unusedMappings.length > 0 && unusedMappings.length !== question.correctShortAnswerMappings!.length) {
                     atLeastOneMapping = true;
                 }
                 // unusedMappings.length > 0 will be always true for the first iteration, therefore we need a special check
-                if (unusedMappings.length === question.correctMappings!.length) {
+                if (unusedMappings.length === question.correctShortAnswerMappings!.length) {
                     // We need to verify if the first spot has mappings (solutions) that is only for itself
                     // In case there are multiple mappings (solutions) for spots, we use hasSpotEnoughSolutions
-                    const allSolutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings, spot)!;
+                    const allSolutionsForSpot = this.getAllSolutionsForSpot(question.correctShortAnswerMappings, spot)!;
                     const allSolutionsOnlyForSpot = allSolutionsForSpot.filter(
-                        (solutionForSpot) => this.getAllSpotsForSolutions(question.correctMappings, solutionForSpot)!.length === 1,
+                        (solutionForSpot) => this.getAllSpotsForSolutions(question.correctShortAnswerMappings, solutionForSpot)!.length === 1,
                     );
 
                     if (allSolutionsOnlyForSpot.length > 0) {
@@ -55,7 +55,7 @@ export class ShortAnswerQuestionUtil {
             });
 
             // In case there are multiple mappings for the spots there have to be at least as many solutions as spots
-            const hasSpotEnoughSolutions = this.getAllSolutionsForSpot(question.correctMappings, spot)!.length >= question.spots!.length;
+            const hasSpotEnoughSolutions = this.getAllSolutionsForSpot(question.correctShortAnswerMappings, spot)!.length >= question.spots!.length;
             // Check whether a mapping is still left to solve a spot correctly.
             if (atLeastOneMapping || hasSpotEnoughSolutions) {
                 spotsCanBeSolved.push(true);
@@ -233,8 +233,8 @@ export class ShortAnswerQuestionUtil {
     getSampleSolutions(question: ShortAnswerQuestion): ShortAnswerSolution[] {
         const sampleSolutions: ShortAnswerSolution[] = [];
         for (const spot of question.spots!) {
-            const solutionsForSpot = this.getAllSolutionsForSpot(question.correctMappings!, spot);
-            for (const mapping of question.correctMappings!) {
+            const solutionsForSpot = this.getAllSolutionsForSpot(question.correctShortAnswerMappings!, spot);
+            for (const mapping of question.correctShortAnswerMappings!) {
                 if (
                     mapping.spot!.id === spot.id &&
                     !sampleSolutions.some(

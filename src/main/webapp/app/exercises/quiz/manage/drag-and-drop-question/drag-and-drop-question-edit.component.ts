@@ -592,13 +592,13 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
             return;
         }
 
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
+        if (!this.question.correctDragAndDropMappings) {
+            this.question.correctDragAndDropMappings = [];
         }
 
         // Check if this mapping already exists
         if (
-            !this.question.correctMappings.some(
+            !this.question.correctDragAndDropMappings.some(
                 (existingMapping) =>
                     this.dragAndDropQuestionUtil.isSameEntityWithTempId(existingMapping.dropLocation, dropLocation) &&
                     this.dragAndDropQuestionUtil.isSameEntityWithTempId(existingMapping.dragItem, questionDragItem),
@@ -606,7 +606,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         ) {
             // Mapping doesn't exit yet => add this mapping
             const dndMapping = new DragAndDropMapping(questionDragItem, dropLocation);
-            this.question.correctMappings.push(dndMapping);
+            this.question.correctDragAndDropMappings.push(dndMapping);
 
             // Notify parent of changes
             this.questionUpdated.emit();
@@ -622,7 +622,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         const visitedDropLocations: DropLocation[] = [];
         // Save reference to this due nested some calls
         if (
-            this.question.correctMappings!.some((correctMapping) => {
+            this.question.correctDragAndDropMappings!.some((correctMapping) => {
                 if (
                     !visitedDropLocations.some((dropLocation: DropLocation) => {
                         return this.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, correctMapping.dropLocation);
@@ -645,10 +645,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @return {Array} all mappings that belong to the given drop location
      */
     getMappingsForDropLocation(dropLocation: DropLocation): DragAndDropMapping[] {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
+        if (!this.question.correctDragAndDropMappings) {
+            this.question.correctDragAndDropMappings = [];
         }
-        return this.question.correctMappings.filter((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation));
+        return this.question.correctDragAndDropMappings.filter((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation));
     }
 
     /**
@@ -657,11 +657,11 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @return {Array} all mappings that belong to the given drag item
      */
     getMappingsForDragItem(dragItem: DragItem): DragAndDropMapping[] {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
+        if (!this.question.correctDragAndDropMappings) {
+            this.question.correctDragAndDropMappings = [];
         }
         return (
-            this.question.correctMappings
+            this.question.correctDragAndDropMappings
                 .filter((mapping) => this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem))
                 /** Moved the sorting from the template to the function call **/
                 .sort((m1, m2) => this.getMappingIndex(m1) - this.getMappingIndex(m2))
@@ -673,10 +673,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param dropLocation {object} the drop location for which we want to delete all mappings
      */
     deleteMappingsForDropLocation(dropLocation: DropLocation): void {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
+        if (!this.question.correctDragAndDropMappings) {
+            this.question.correctDragAndDropMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation));
+        this.question.correctDragAndDropMappings = this.question.correctDragAndDropMappings.filter(
+            (mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dropLocation, dropLocation),
+        );
         // Notify parent of changes
         this.questionUpdated.emit();
     }
@@ -686,10 +688,12 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param dragItem {object} the drag item for which we want to delete all mappings
      */
     deleteMappingsForDragItem(dragItem: DragItem): void {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
+        if (!this.question.correctDragAndDropMappings) {
+            this.question.correctDragAndDropMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter((mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem));
+        this.question.correctDragAndDropMappings = this.question.correctDragAndDropMappings.filter(
+            (mapping) => !this.dragAndDropQuestionUtil.isSameEntityWithTempId(mapping.dragItem, dragItem),
+        );
         // Notify parent of changes
         this.questionUpdated.emit();
     }
@@ -699,10 +703,10 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
      * @param mappingToDelete {object} the mapping to delete
      */
     deleteMapping(mappingToDelete: DragAndDropMapping): void {
-        if (!this.question.correctMappings) {
-            this.question.correctMappings = [];
+        if (!this.question.correctDragAndDropMappings) {
+            this.question.correctDragAndDropMappings = [];
         }
-        this.question.correctMappings = this.question.correctMappings.filter((mapping) => mapping !== mappingToDelete);
+        this.question.correctDragAndDropMappings = this.question.correctDragAndDropMappings.filter((mapping) => mapping !== mappingToDelete);
         // Notify parent of changes
         this.questionUpdated.emit();
     }
@@ -791,7 +795,7 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
         this.resetBackground();
         this.question.dropLocations = cloneDeep(this.backupQuestion.dropLocations);
         this.question.dragItems = cloneDeep(this.backupQuestion.dragItems);
-        this.question.correctMappings = cloneDeep(this.backupQuestion.correctMappings);
+        this.question.correctDragAndDropMappings = cloneDeep(this.backupQuestion.correctDragAndDropMappings);
         this.resetQuestionText();
     }
 

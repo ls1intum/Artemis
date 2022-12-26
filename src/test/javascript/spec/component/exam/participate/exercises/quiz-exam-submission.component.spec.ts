@@ -187,7 +187,7 @@ describe('QuizExamSubmissionComponent', () => {
         const dragAndDropSubmittedAnswer = new DragAndDropSubmittedAnswer();
         dragAndDropSubmittedAnswer.quizQuestion = dragAndDropQuestion;
         dragAndDropSubmittedAnswer.mappings = [dragAndDropMapping];
-        dragAndDropQuestion.correctMappings = [dragAndDropMapping];
+        dragAndDropQuestion.correctDragAndDropMappings = [dragAndDropMapping];
 
         const shortAnswerSubmittedAnswer = new ShortAnswerSubmittedAnswer();
         shortAnswerSubmittedAnswer.quizQuestion = shortAnswerQuestion;

@@ -88,7 +88,7 @@ describe('DragAndDropQuestionComponent', () => {
         comp.question.dropLocations = [dropLocation1, dropLocation2, dropLocation3];
         // Mappings do not have any of drop locations so no selected item
         comp.mappings = [correctMapping4];
-        comp.question.correctMappings = [correctMapping1, correctMapping2, correctMapping4];
+        comp.question.correctDragAndDropMappings = [correctMapping1, correctMapping2, correctMapping4];
         comp.ngOnChanges();
         /*
          *   without selected items it should not set correct answers to drop locations without valid drag item

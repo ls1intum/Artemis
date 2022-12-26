@@ -102,7 +102,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
                         dragItem.setPictureFilePath(fileService.copyExistingFileToTarget(dragItem.getPictureFilePath(), FilePathService.getDragItemFilePath(), null));
                     }
                 }
-                for (DragAndDropMapping dragAndDropMapping : dndQuestion.getCorrectMappings()) {
+                for (DragAndDropMapping dragAndDropMapping : dndQuestion.getCorrectDragAndDropMappings()) {
                     dragAndDropMapping.setId(null);
                     dragAndDropMapping.setQuestion(dndQuestion);
                     if (dragAndDropMapping.getDragItemIndex() != null) {
@@ -122,7 +122,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
                     shortAnswerSolution.setId(null);
                     shortAnswerSolution.setQuestion(saQuestion);
                 }
-                for (ShortAnswerMapping shortAnswerMapping : saQuestion.getCorrectMappings()) {
+                for (ShortAnswerMapping shortAnswerMapping : saQuestion.getCorrectShortAnswerMappings()) {
                     shortAnswerMapping.setId(null);
                     shortAnswerMapping.setQuestion(saQuestion);
                     if (shortAnswerMapping.getShortAnswerSolutionIndex() != null) {

@@ -168,7 +168,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
             this.questionElementDeleted = true;
         }
         // check if the correct Mappings has changed
-        if (JSON.stringify(question.correctMappings).toLowerCase() !== JSON.stringify(backUpQuestion.correctMappings).toLowerCase()) {
+        if (JSON.stringify(question.correctDragAndDropMappings).toLowerCase() !== JSON.stringify(backUpQuestion.correctDragAndDropMappings).toLowerCase()) {
             this.questionCorrectness = true;
         }
         // only check if there are no changes on the question-elements yet
@@ -210,7 +210,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         }
 
         // check if the correct Mappings has changed
-        if (JSON.stringify(question.correctMappings).toLowerCase() !== JSON.stringify(backUpQuestion.correctMappings).toLowerCase()) {
+        if (JSON.stringify(question.correctShortAnswerMappings).toLowerCase() !== JSON.stringify(backUpQuestion.correctShortAnswerMappings).toLowerCase()) {
             this.questionCorrectness = true;
         }
         // only check if there are no changes on the question-elements yet

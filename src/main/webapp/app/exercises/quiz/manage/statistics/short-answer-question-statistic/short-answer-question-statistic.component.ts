@@ -81,7 +81,7 @@ export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComp
     }
 
     generateLettersForSolutions() {
-        for (const mapping of this.question.correctMappings || []) {
+        for (const mapping of this.question.correctShortAnswerMappings || []) {
             for (const i in this.question.spots) {
                 if (mapping.spot!.id === this.question.spots[i].id) {
                     this.lettersForSolutions.push(+i);

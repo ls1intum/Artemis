@@ -231,7 +231,7 @@ export class ShortAnswerQuestionComponent {
     isSubmittedTextCompletelyCorrect(spotTag: string): boolean {
         let isTextCorrect = false;
         const solutionsForSpot = this.shortAnswerQuestionUtil.getAllSolutionsForSpot(
-            this.shortAnswerQuestion.correctMappings,
+            this.shortAnswerQuestion.correctShortAnswerMappings,
             this.shortAnswerQuestionUtil.getSpot(this.shortAnswerQuestionUtil.getSpotNr(spotTag), this.shortAnswerQuestion),
         );
         const solutions = solutionsForSpot?.filter((solution) => solution.text?.trim() === this.getSubmittedTextForSpot(spotTag)?.text?.trim());

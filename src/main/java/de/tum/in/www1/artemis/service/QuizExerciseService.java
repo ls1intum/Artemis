@@ -245,7 +245,7 @@ public class QuizExerciseService {
      */
     private void saveCorrectMappingsInIndices(DragAndDropQuestion dragAndDropQuestion) {
         List<DragAndDropMapping> mappingsToBeRemoved = new ArrayList<>();
-        for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
+        for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectDragAndDropMappings()) {
             // check for NullPointers
             if (mapping.getDragItem() == null || mapping.getDropLocation() == null) {
                 mappingsToBeRemoved.add(mapping);
@@ -294,7 +294,7 @@ public class QuizExerciseService {
      */
     private void saveCorrectMappingsInIndicesShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
         List<ShortAnswerMapping> mappingsToBeRemoved = new ArrayList<>();
-        for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
+        for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectShortAnswerMappings()) {
             // check for NullPointers
             if (mapping.getSolution() == null || mapping.getSpot() == null) {
                 mappingsToBeRemoved.add(mapping);
@@ -342,7 +342,7 @@ public class QuizExerciseService {
      * @param dragAndDropQuestion the question for which to perform these actions
      */
     private void restoreCorrectMappingsFromIndices(DragAndDropQuestion dragAndDropQuestion) {
-        for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
+        for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectDragAndDropMappings()) {
             // drag item
             mapping.setDragItem(dragAndDropQuestion.getDragItems().get(mapping.getDragItemIndex()));
             // drop location
@@ -360,7 +360,7 @@ public class QuizExerciseService {
      * @param shortAnswerQuestion the question for which to perform these actions
      */
     private void restoreCorrectMappingsFromIndicesShortAnswer(ShortAnswerQuestion shortAnswerQuestion) {
-        for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
+        for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectShortAnswerMappings()) {
             // solution
             mapping.setSolution(shortAnswerQuestion.getSolutions().get(mapping.getShortAnswerSolutionIndex()));
             // spot

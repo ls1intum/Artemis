@@ -588,7 +588,7 @@ public class QuizExercise extends Exercise {
                         }
                     }
                     // reconnect correctMappings
-                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
+                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectDragAndDropMappings()) {
                         if (mapping.getId() != null) {
                             mapping.setQuestion(dragAndDropQuestion);
                         }
@@ -616,7 +616,7 @@ public class QuizExercise extends Exercise {
                         }
                     }
                     // reconnect correctMappings
-                    for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
+                    for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectShortAnswerMappings()) {
                         if (mapping.getId() != null) {
                             mapping.setQuestion(shortAnswerQuestion);
                         }
