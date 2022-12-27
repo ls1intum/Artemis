@@ -260,8 +260,9 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // create unreleased attachment unit
         AttachmentUnit attachmentUnit = database.createAttachmentUnit(true);
-        attachmentUnit.setLecture(lecture);
-        attachmentUnit = attachmentUnitRepo.save(attachmentUnit);
+        lecture.addLectureUnit(attachmentUnit);
+        // this will save the attachment unit relationship as well
+        lecture = lectureRepo.save(lecture);
         Attachment attachment = attachmentUnit.getAttachment();
         attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
         String attachmentPath = attachment.getLink();

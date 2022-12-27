@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -24,10 +25,14 @@ public class LectureService {
 
     private final LearningGoalRepository learningGoalRepository;
 
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LearningGoalRepository learningGoalRepository) {
+    private final AttachmentRepository attachmentRepository;
+
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LearningGoalRepository learningGoalRepository,
+            AttachmentRepository attachmentRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.learningGoalRepository = learningGoalRepository;
+        this.attachmentRepository = attachmentRepository;
     }
 
     /**
@@ -106,6 +111,11 @@ public class LectureService {
             lectureUnits.forEach(learningGoal.getLectureUnits()::remove);
             return learningGoal;
         }).toList());
+
+        // Delete the associated attachments (= orphan removal)
+        if (lecture.getAttachments() != null && !lecture.getAttachments().isEmpty()) {
+            attachmentRepository.deleteAll(lecture.getAttachments());
+        }
 
         lectureRepository.deleteById(lectureToDelete.getId());
     }

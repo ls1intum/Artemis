@@ -8,13 +8,11 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
-import de.tum.in.www1.artemis.repository.LearningGoalRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
-import de.tum.in.www1.artemis.repository.LectureUnitRepository;
+import de.tum.in.www1.artemis.repository.*;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
@@ -29,12 +27,15 @@ public class LectureUnitService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
+    private final AttachmentRepository attachmentRepository;
+
     public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LearningGoalRepository learningGoalRepository,
-            LectureUnitCompletionRepository lectureUnitCompletionRepository) {
+            LectureUnitCompletionRepository lectureUnitCompletionRepository, AttachmentRepository attachmentRepository) {
         this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.learningGoalRepository = learningGoalRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
+        this.attachmentRepository = attachmentRepository;
     }
 
     /**
@@ -90,6 +91,13 @@ public class LectureUnitService {
                 learningGoal.getLectureUnits().remove(lectureUnitToDelete);
                 return learningGoal;
             }).toList());
+        }
+
+        if (lectureUnitToDelete instanceof AttachmentUnit attachmentUnit) {
+            // // Delete the associated attachment (= orphan removal)
+            if (attachmentUnit.getAttachment() != null) {
+                attachmentRepository.delete(attachmentUnit.getAttachment());
+            }
         }
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureUnitToDelete.getLecture().getId());

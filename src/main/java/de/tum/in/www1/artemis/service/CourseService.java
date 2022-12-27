@@ -135,6 +135,8 @@ public class CourseService {
 
     private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 
+    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
@@ -144,7 +146,8 @@ public class CourseService {
             RatingRepository ratingRepository, ComplaintService complaintService, ComplaintRepository complaintRepository, ResultRepository resultRepository,
             ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ExerciseRepository exerciseRepository, ParticipantScoreRepository participantScoreRepository, TutorialGroupRepository tutorialGroupRepository,
-            TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository) {
+            TutorialGroupService tutorialGroupService, TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
+            OnlineCourseConfigurationRepository onlineCourseConfigurationRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -179,6 +182,7 @@ public class CourseService {
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.tutorialGroupService = tutorialGroupService;
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
+        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
     }
 
     /**
@@ -306,11 +310,18 @@ public class CourseService {
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
         deleteTutorialGroupsOfCourse(course);
+        deleteOnlineCourseConfiguration(course);
         courseRepository.deleteById(course.getId());
     }
 
     private void deleteTutorialGroupsOfCourse(Course course) {
         this.tutorialGroupRepository.deleteAllByCourse(course);
+    }
+
+    private void deleteOnlineCourseConfiguration(Course course) {
+        if (course.getOnlineCourseConfiguration() != null) {
+            this.onlineCourseConfigurationRepository.delete(course.getOnlineCourseConfiguration());
+        }
     }
 
     private void deleteGradingScaleOfCourse(Course course) {

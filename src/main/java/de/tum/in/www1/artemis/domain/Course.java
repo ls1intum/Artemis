@@ -104,7 +104,7 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Boolean onlineCourse = false;
 
-    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "online_course_configuration_id")
     private OnlineCourseConfiguration onlineCourseConfiguration;
 

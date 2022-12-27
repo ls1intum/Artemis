@@ -17,7 +17,7 @@ public class AttachmentUnit extends LectureUnit {
     @Column(name = "description")
     private String description;
 
-    @OneToOne(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @OneToOne(mappedBy = "attachmentUnit")
     @JsonIgnoreProperties(value = "attachmentUnit", allowSetters = true)
     private Attachment attachment;
 

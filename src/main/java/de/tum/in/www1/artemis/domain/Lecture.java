@@ -35,7 +35,8 @@ public class Lecture extends DomainObject implements Completable {
     @Column(name = "end_date")
     private ZonedDateTime endDate;
 
-    @OneToMany(mappedBy = "lecture", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "lecture", fetch = FetchType.EAGER)
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)
     private Set<Attachment> attachments = new HashSet<>();
 
