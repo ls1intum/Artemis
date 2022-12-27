@@ -24,7 +24,7 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringInte
 
     private static final String TEST_PREFIX = "progexgitdiffreport";
 
-    private final static String FILE_NAME = "test.java";
+    private static final String FILE_NAME = "test.java";
 
     private final LocalRepository solutionRepo = new LocalRepository("main");
 
