@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
-import { Subject, from } from 'rxjs';
+import { EMPTY, Subject, from } from 'rxjs';
 import { faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
@@ -9,7 +9,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
-import { takeUntil } from 'rxjs/operators';
+import { catchError, takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-tutorial-group-session-row-buttons',
@@ -56,7 +56,10 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
         modalRef.componentInstance.tutorialGroupId = this.tutorialGroup.id!;
 
         from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe((result) => {
                 if (result === 'confirmed') {
                     this.cancelOrActivatePressed.emit();
@@ -72,7 +75,10 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
         modalRef.componentInstance.tutorialGroupSession = this.tutorialGroupSession;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe(() => {
                 this.tutorialGroupEdited.emit();
             });

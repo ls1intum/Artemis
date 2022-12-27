@@ -387,7 +387,7 @@ export class AssessmentDashboardComponent implements OnInit {
         this.isTogglingSecondCorrection.set(currentExercise.id!, true);
         const index = this.currentlyShownExercises.indexOf(currentExercise);
         this.exerciseService.toggleSecondCorrection(exerciseId).subscribe({
-            next: (res: Boolean) => {
+            next: (res: boolean) => {
                 this.currentlyShownExercises[index].secondCorrectionEnabled = !this.currentlyShownExercises[index].secondCorrectionEnabled;
                 currentExercise!.secondCorrectionEnabled = res as boolean;
                 this.isTogglingSecondCorrection.set(currentExercise.id!, false);

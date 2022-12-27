@@ -8,7 +8,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
-import org.awaitility.Durations;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -27,8 +26,11 @@ import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ResultService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
 
 class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "resultlistenerintegrationtest";
 
     private Long idOfIndividualTextExercise;
 
@@ -63,19 +65,20 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     private ResultService resultService;
 
     @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
+    void cleanup() {
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
     }
 
     @BeforeEach
     void setupTestScenario() {
+        participantScoreSchedulerService.activate();
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
         ZonedDateTime pastReleaseDate = ZonedDateTime.now().minusDays(5);
         ZonedDateTime pastDueDate = ZonedDateTime.now().minusDays(3);
         ZonedDateTime pastAssessmentDueDate = ZonedDateTime.now().minusDays(2);
 
-        // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
-        this.database.addUsers(5, 10, 0, 10);
-        User student1 = userRepository.findOneByLogin("student1").get();
+        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
         idOfStudent1 = student1.getId();
         // creating course
         Course course = this.database.createCourse();
@@ -84,13 +87,13 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = database.createTeamTextExercise(course, pastReleaseDate, pastDueDate, pastAssessmentDueDate);
         idOfTeamTextExercise = teamExercise.getId();
-        User tutor1 = userRepository.findOneByLogin("tutor1").get();
+        User tutor1 = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
         idOfTeam1 = database.createTeam(Set.of(student1), tutor1, teamExercise, "team1").getId();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateExercisePoints_ShouldUpdatePointsInParticipantScores(boolean isTeamTest) throws Exception {
         setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Exercise exercise;
@@ -102,9 +105,9 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         }
         exercise.setMaxPoints(100.0);
         exercise.setBonusPoints(100.0);
-        database.changeUser("instructor1");
+        database.changeUser(TEST_PREFIX + "instructor1");
         request.put("/api/text-exercises", exercise, HttpStatus.OK);
-        List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllEagerly();
+        List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty().hasSize(1);
         ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
         assertThat(savedParticipantScore.getLastPoints()).isEqualTo(200.0);
@@ -113,21 +116,21 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveRatedResult_ShouldCreateStudentScore(boolean isTeamTest) {
         setupTestScenarioWithOneResultSaved(true, isTeamTest);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveUnratedResult_ShouldCreateStudentScore(boolean isTeamTest) {
         setupTestScenarioWithOneResultSaved(false, isTeamTest);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveRatedResult_then_saveAnotherRatedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         setupTestScenarioWithOneResultSaved(true, isTeamTest);
         // creating a new rated result should trigger the entity listener and update the student score
@@ -137,7 +140,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveRatedResult_then_saveAnotherUnratedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalStudentScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalStudentScore.getLastResult();
@@ -148,7 +151,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveUnratedResult_then_saveAnotherUnratedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         setupTestScenarioWithOneResultSaved(false, isTeamTest);
         // creating a new rated result should trigger the entity listener and update the student score BUT only the not rated part
@@ -158,7 +161,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveUnratedResult_then_saveAnotherRatedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         setupTestScenarioWithOneResultSaved(false, isTeamTest);
         // creating a new rated result should trigger the entity listener and update the student score
@@ -168,7 +171,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveUnratedResult_then_saveAnotherUnratedResult_thenRemoveSecondResult_ShouldUpdateStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -176,14 +179,14 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result newResult = createNewResult(isTeamTest, false);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), null, null);
         resultService.deleteResult(newResult, true);
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).hasSize(1);
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), null, null);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveUnratedResult_then_saveAnotherRatedResult_thenRemoveSecondResult_ShouldUpdateStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -191,14 +194,14 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result newResult = createNewResult(isTeamTest, true);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), newResult.getId(), newResult.getScore());
         resultService.deleteResult(newResult, true);
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).hasSize(1);
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), null, null);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveRatedResult_then_saveAnotherUnratedResult_thenRemoveSecondResult_ShouldUpdateStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -206,14 +209,14 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result newResult = createNewResult(isTeamTest, false);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
         resultService.deleteResult(newResult, true);
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).hasSize(1);
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveRatedResult_then_saveAnotherRatedResult_thenRemoveSecondResult_ShouldUpdateStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -221,14 +224,14 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result newResult = createNewResult(isTeamTest, true);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), newResult.getId(), newResult.getScore());
         resultService.deleteResult(newResult, true);
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).hasSize(1);
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveUnratedResult_then_changeScoreOfResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -240,7 +243,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveUnratedResult_then_makeResultRated_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -252,7 +255,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveRatedResult_then_changeScoreOfResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -264,7 +267,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveRatedResult_then_makeResultUnrated_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -276,7 +279,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveRatedResult_then_removeSavedResult_ShouldRemoveAssociatedStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result persistedResult = originalParticipantScore.getLastResult();
@@ -286,15 +289,13 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // Wait for the scheduler to execute its task
         await().until(() -> participantScoreSchedulerService.isIdle());
 
-        List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedStudentScores).isEmpty();
-        assertThat(savedResults).isEmpty();
+        assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
+        assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveUnratedResult_then_removeSavedResult_ShouldRemoveAssociatedStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(false, isTeamTest);
         Result persistedResult = originalParticipantScore.getLastResult();
@@ -304,15 +305,13 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // Wait for the scheduler to execute its task
         await().until(() -> participantScoreSchedulerService.isIdle());
 
-        List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedStudentScores).isEmpty();
-        assertThat(savedResults).isEmpty();
+        assertThat(studentScoreRepository.findById(originalParticipantScore.getId())).isEmpty();
+        assertThat(resultRepository.findById(persistedResult.getId())).isEmpty();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveRatedResult_then_saveAnotherUnratedResult_then_removeRatedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -320,14 +319,14 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result newResult = createNewResult(isTeamTest, false);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
         resultService.deleteResult(originalResult, true);
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).hasSize(1);
+        assertThat(resultRepository.findById(originalResult.getId())).isEmpty();
+        assertThat(resultRepository.findById(newResult.getId())).isPresent();
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), null, null);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void saveRatedResult_then_saveAnotherUnratedResult_then_removeUnratedResult_ShouldUpdateOriginalStudentScore(boolean isTeamTest) {
         ParticipantScore originalParticipantScore = setupTestScenarioWithOneResultSaved(true, isTeamTest);
         Result originalResult = originalParticipantScore.getLastResult();
@@ -335,8 +334,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result newResult = createNewResult(isTeamTest, false);
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, newResult.getId(), newResult.getScore(), originalResult.getId(), originalResult.getScore());
         resultService.deleteResult(newResult, true);
-        List<Result> savedResults = resultRepository.findAll();
-        assertThat(savedResults).hasSize(1);
+        assertThat(resultRepository.findById(newResult.getId())).isEmpty();
+        assertThat(resultRepository.findById(originalResult.getId())).isPresent();
         verifyStructureOfParticipantScoreInDatabase(isTeamTest, originalResult.getId(), originalResult.getScore(), originalResult.getId(), originalResult.getScore());
     }
 
@@ -385,9 +384,6 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     private ParticipantScore setupTestScenarioWithOneResultSaved(boolean isRatedResult, boolean isTeam) {
-        List<ParticipantScore> savedParticipantScores = participantScoreRepository.findAllEagerly();
-        assertThat(savedParticipantScores).isEmpty();
-
         Long idOfExercise;
         Participant participant;
         if (isTeam) {
@@ -395,16 +391,19 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             idOfExercise = idOfTeamTextExercise;
         }
         else {
-            participant = userRepository.findOneByLogin("student1").get();
+            participant = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
             idOfExercise = idOfIndividualTextExercise;
         }
+
+        var exercise = exerciseRepository.findById(idOfExercise).get();
 
         Result persistedResult = database.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
 
         // Wait for the scheduler to execute its task
+        participantScoreSchedulerService.executeScheduledTasks();
         await().until(() -> participantScoreSchedulerService.isIdle());
 
-        savedParticipantScores = participantScoreRepository.findAllEagerly();
+        var savedParticipantScores = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScores).isNotEmpty();
         assertThat(savedParticipantScores).hasSize(1);
         ParticipantScore savedParticipantScore = savedParticipantScores.get(0);
@@ -429,14 +428,17 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             idOfExercise = idOfTeamTextExercise;
         }
         else {
-            participant = userRepository.findOneByLogin("student1").get();
+            participant = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
             idOfExercise = idOfIndividualTextExercise;
         }
 
-        // Wait for the scheduler to execute its task
-        await().pollDelay(Durations.ONE_SECOND).until(() -> participantScoreSchedulerService.isIdle());
+        var exercise = exerciseRepository.findById(idOfExercise).get();
 
-        List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllEagerly();
+        // Wait for the scheduler to execute its task
+        participantScoreSchedulerService.executeScheduledTasks();
+        await().until(() -> participantScoreSchedulerService.isIdle());
+
+        List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllByExercise(exercise);
         assertThat(savedParticipantScore).isNotEmpty();
         assertThat(savedParticipantScore).hasSize(1);
         ParticipantScore updatedParticipantScore = savedParticipantScore.get(0);

@@ -134,6 +134,7 @@ describe('GradeKeyOverviewComponent', () => {
     });
 
     it('should initialize when params are in parent route', () => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         route.parent!.snapshot.params = route.parent?.parent?.snapshot.params!;
         route.parent!.parent!.snapshot = { params: {} } as ActivatedRouteSnapshot;
 
@@ -141,6 +142,7 @@ describe('GradeKeyOverviewComponent', () => {
     });
 
     it('should initialize when params are in current route', () => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         route.snapshot.params = route.parent?.parent?.snapshot.params!;
         route.parent!.parent!.snapshot = { params: {} } as ActivatedRouteSnapshot;
 
@@ -162,6 +164,7 @@ describe('GradeKeyOverviewComponent', () => {
             } as HttpResponse<Bonus>),
         );
 
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         route.snapshot.params = route.parent?.parent?.snapshot.params!;
         route.parent!.parent!.snapshot = { params: {} } as ActivatedRouteSnapshot;
         route.snapshot.data.forBonus = true;
@@ -219,7 +222,7 @@ describe('GradeKeyOverviewComponent', () => {
     it('should round correctly', () => {
         expect(comp.round(undefined)).toBeUndefined();
         expect(comp.round(5)).toBe(5);
-        expect(comp.round(3.33333333333333333)).toBe(3.33);
+        expect(comp.round(3.333333333333333)).toBe(3.33);
     });
 
     it.each([456, undefined])('should call the back method on the nav util service on previousState for examId %s', (examId) => {

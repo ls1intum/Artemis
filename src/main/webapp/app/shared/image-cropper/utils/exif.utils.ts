@@ -74,7 +74,7 @@ function getExifRotation(imageBase64: string): number {
                     return view.getUint16(offset + i * 12 + 8, little);
                 }
             }
-            // tslint:disable-next-line:no-bitwise
+            // eslint-disable-next-line no-bitwise
         } else if ((marker & 0xff00) !== 0xff00) {
             break;
         } else {
@@ -85,7 +85,7 @@ function getExifRotation(imageBase64: string): number {
 }
 
 function base64ToArrayBuffer(imageBase64: string) {
-    imageBase64 = imageBase64.replace(/^data\:([^\;]+)\;base64,/gim, '');
+    imageBase64 = imageBase64.replace(/^data:([^;]+);base64,/gim, '');
     const binaryString = window.atob(imageBase64);
     const len = binaryString.length;
     const bytes = new Uint8Array(len);

@@ -427,7 +427,7 @@ export class ExerciseService {
         }
     }
 
-    toggleSecondCorrection(exerciseId: number): Observable<Boolean> {
+    toggleSecondCorrection(exerciseId: number): Observable<boolean> {
         return this.http.put<boolean>(`${this.resourceUrl}/${exerciseId}/toggle-second-correction`, { observe: 'response' });
     }
 
