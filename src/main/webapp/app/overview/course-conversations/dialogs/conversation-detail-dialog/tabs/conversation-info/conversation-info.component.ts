@@ -169,7 +169,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         updateDTO[propertyName] = updateValue;
 
         this.groupChatService
-            .update(this.course?.id!, groupChat.id!, updateDTO)
+            .update(this.course.id!, groupChat.id!, updateDTO)
             .pipe(
                 map((res: HttpResponse<GroupChatDto>) => res.body),
                 takeUntil(this.ngUnsubscribe),
@@ -187,7 +187,7 @@ export class ConversationInfoComponent implements OnInit, OnDestroy {
         const updateDTO = new ChannelDTO();
         updateDTO[propertyName] = updateValue;
         this.channelService
-            .update(this.course?.id!, channel.id!, updateDTO)
+            .update(this.course.id!, channel.id!, updateDTO)
             .pipe(
                 map((res: HttpResponse<ChannelDTO>) => res.body),
                 takeUntil(this.ngUnsubscribe),

@@ -66,6 +66,12 @@ describe('CourseUsersSelectorComponent', () => {
         expect(wrapperComponent).toBeTruthy();
     });
 
+    it('should have host class', () => {
+        const courseUsersSelector = fixture.debugElement.query(By.css('jhi-course-users-selector'));
+        expect(courseUsersSelector).toBeTruthy();
+        expect(courseUsersSelector.nativeElement.classList).toContain('course-users-selector');
+    });
+
     const testCases = [
         {
             multiSelect: true,
@@ -167,7 +173,7 @@ function expectDropdownItems(nativeEl: HTMLElement, dropdownEntries: string[]): 
 }
 
 function normalizeText(txt: string | null): string {
-    return !!txt ? txt.trim().replace(/\s+/g, ' ') : '';
+    return txt ? txt.trim().replace(/\s+/g, ' ') : '';
 }
 
 function generateExampleUserPublicInfoDTO({

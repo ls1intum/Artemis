@@ -92,7 +92,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
         switch (channelAction.action) {
             case 'register':
                 this.channelService
-                    .registerUsersToChannel(this.course?.id!, channelAction.channel.id!)
+                    .registerUsersToChannel(this.course.id!, channelAction.channel.id!)
                     .pipe(takeUntil(this.ngUnsubscribe))
                     .subscribe(() => {
                         this.loadChannelsOfCourse();
@@ -101,7 +101,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                 break;
             case 'deregister':
                 this.channelService
-                    .deregisterUsersFromChannel(this.course?.id!, channelAction.channel.id!)
+                    .deregisterUsersFromChannel(this.course.id!, channelAction.channel.id!)
                     .pipe(takeUntil(this.ngUnsubscribe))
                     .subscribe(() => {
                         this.loadChannelsOfCourse();
@@ -126,7 +126,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
     loadChannelsOfCourse() {
         this.isLoading = true;
         this.channelService
-            .getChannelsOfCourse(this.course?.id!)
+            .getChannelsOfCourse(this.course.id!)
             .pipe(
                 map((res: HttpResponse<ChannelDTO[]>) => res.body),
                 finalize(() => {

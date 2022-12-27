@@ -32,10 +32,11 @@ export type SearchRoleGroup = 'tutors' | 'students' | 'instructors';
             multi: true,
         },
     ],
-    host: { class: 'course-users-selector' },
     encapsulation: ViewEncapsulation.None,
 })
 export class CourseUsersSelectorComponent implements ControlValueAccessor, OnInit, OnDestroy {
+    @HostBinding('class.course-users-selector') hostClass = true;
+
     private ngUnsubscribe = new Subject<void>();
 
     @ViewChild('instance', { static: true }) typeAheadInstance: NgbTypeahead;

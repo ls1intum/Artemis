@@ -29,7 +29,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     setPostInThread(post?: Post) {
         this.showPostThread = false;
 
-        if (!!post) {
+        if (post) {
             this.postInThread = post;
             this.showPostThread = true;
         }

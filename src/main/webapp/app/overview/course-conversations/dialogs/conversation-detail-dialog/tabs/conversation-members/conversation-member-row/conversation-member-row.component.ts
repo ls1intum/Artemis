@@ -22,6 +22,7 @@ import { GroupChatService } from 'app/shared/metis/conversations/group-chat.serv
 import { catchError } from 'rxjs/operators';
 
 @Component({
+    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-conversation-member-row]',
     templateUrl: './conversation-member-row.component.html',
     styleUrls: ['./conversation-member-row.component.scss'],
@@ -124,7 +125,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             channelName: channel.name!,
             userName: this.userLabel,
         };
-        const confirmedCallback = () => this.channelService.grantChannelModeratorRole(this.course?.id!, channel.id!, [this.conversationMember.login!]);
+        const confirmedCallback = () => this.channelService.grantChannelModeratorRole(this.course.id!, channel.id!, [this.conversationMember.login!]);
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 
@@ -144,7 +145,7 @@ export class ConversationMemberRowComponent implements OnInit, OnDestroy {
             channelName: channel.name!,
             userName: this.userLabel,
         };
-        const confirmedCallback = () => this.channelService.revokeChannelModeratorRole(this.course?.id!, channel.id!, [this.conversationMember.login!]);
+        const confirmedCallback = () => this.channelService.revokeChannelModeratorRole(this.course.id!, channel.id!, [this.conversationMember.login!]);
         this.openConfirmationDialog(translationKeys, translationParams, confirmedCallback);
     }
 

@@ -19,6 +19,7 @@ import { defaultFirstLayerDialogOptions } from 'app/overview/course-conversation
 import { catchError } from 'rxjs/operators';
 
 @Component({
+    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-conversation-sidebar-entry]',
     templateUrl: './conversation-sidebar-entry.component.html',
     styleUrls: ['./conversation-sidebar-entry.component.scss'],

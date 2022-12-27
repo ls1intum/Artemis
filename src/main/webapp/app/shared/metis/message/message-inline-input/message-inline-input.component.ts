@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
@@ -14,7 +14,7 @@ import { LocalStorageService } from 'ngx-webstorage';
     styleUrls: ['./message-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> {
+export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit {
     warningDismissed = false;
     constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder, protected localStorageService: LocalStorageService) {
         super(metisService, modalService, formBuilder);
