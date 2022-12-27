@@ -115,26 +115,36 @@ public class LectureUnitProcessingService {
         PDFTextStripper pdfStripper = new PDFTextStripper();
         List<PDDocument> Pages = pdfSplitter.split(document);
 
-        Iterator<PDDocument> iterator = Pages.listIterator();
+        ListIterator<PDDocument> iterator = Pages.listIterator();
 
         int outlineCount = 0;
-        boolean breakFlag = false;
         int index = 1;
         while (iterator.hasNext()) {
-            PDDocument pd = iterator.next();
-            String slideText = pdfStripper.getText(pd);
+            PDDocument pdCurrent = iterator.next();
+            String slideText = pdfStripper.getText(pdCurrent);
 
             if (slideText.contains("Outline")) {
                 outlineCount++;
 
                 String[] lines = slideText.split("\r\n|\r|\n");
-
                 outlineMap.put(outlineCount, new Tuple<>(lines[outlineCount + 1], new Tuple<>((outlineCount == 1) ? 1 : index, document.getNumberOfPages())));
                 if (outlineCount > 1) {
+
+                    // get previous slide details (move 2 iterations back)
+                    iterator.previous();
+                    PDDocument pdPrevious = iterator.previous();
+                    String previousSlideText = pdfStripper.getText(pdPrevious);
+
+                    // move 2 iteration forward
+                    iterator.next();
+                    iterator.next();
+
+                    // update previous outline map endPage
                     int previousOutlineCount = outlineCount - 1;
                     int previousStart = outlineMap.get(previousOutlineCount).y().x();
                     outlineMap.remove(previousOutlineCount);
-                    outlineMap.put(previousOutlineCount, new Tuple<>(lines[previousOutlineCount + 1], new Tuple<>(previousStart, index - 2)));
+                    outlineMap.put(previousOutlineCount,
+                            new Tuple<>(lines[previousOutlineCount + 1], new Tuple<>(previousStart, previousSlideText.contains("Break") ? index - 2 : index - 1)));
                 }
             }
             index++;
