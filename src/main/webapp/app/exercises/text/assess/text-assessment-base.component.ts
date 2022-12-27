@@ -43,6 +43,7 @@ export abstract class TextAssessmentBaseComponent implements OnInit {
     }
 
     protected computeTotalScore(assessments: Feedback[]): number {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const maxPoints = this.exercise?.maxPoints! + this.exercise?.bonusPoints! ?? 0.0;
         let totalScore = this.structuredGradingCriterionService.computeTotalScore(assessments);
 

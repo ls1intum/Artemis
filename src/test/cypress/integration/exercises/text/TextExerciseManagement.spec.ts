@@ -97,7 +97,7 @@ describe('Text exercise management', () => {
     });
 
     after(() => {
-        if (!!course) {
+        if (course) {
             cy.login(users.getAdmin());
             courseManagement.deleteCourse(course.id!);
         }

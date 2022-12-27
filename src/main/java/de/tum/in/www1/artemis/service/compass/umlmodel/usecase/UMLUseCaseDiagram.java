@@ -72,7 +72,7 @@ public class UMLUseCaseDiagram extends UMLDiagram {
     }
 
     @Override
-    protected List<UMLElement> getModelElements() {
+    public List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = new ArrayList<>();
         modelElements.addAll(useCaseList);
         modelElements.addAll(useCaseAssociationList);

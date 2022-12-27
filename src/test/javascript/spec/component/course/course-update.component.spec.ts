@@ -28,6 +28,7 @@ import dayjs from 'dayjs/esm';
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { CourseAdminService } from 'app/course/manage/course-admin.service';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -79,7 +80,7 @@ describe('Course Management Update Component', () => {
         } as any as ActivatedRoute;
         const route = { parent: parentRoute } as any as ActivatedRoute;
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), ImageCropperModule, MockDirective(NgbTypeahead)],
+            imports: [ArtemisTestModule, MockModule(ReactiveFormsModule), ImageCropperModule, MockDirective(NgbTypeahead), MockModule(NgbTooltipModule)],
             providers: [
                 {
                     provide: ActivatedRoute,

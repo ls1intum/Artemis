@@ -12,6 +12,7 @@ import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ModelingExerciseImportComponent', () => {
     let fixture: ComponentFixture<ModelingExerciseImportComponent>;
@@ -25,7 +26,7 @@ describe('ModelingExerciseImportComponent', () => {
     let modelingExercise: ModelingExercise;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
             declarations: [
                 ModelingExerciseImportComponent,
                 MockPipe(ExerciseCourseTitlePipe),

@@ -23,7 +23,6 @@ public class LearningGoal extends DomainObject {
     private String title;
 
     @Column(name = "description")
-    @Lob
     private String description;
 
     @Column(name = "mastery_threshold")

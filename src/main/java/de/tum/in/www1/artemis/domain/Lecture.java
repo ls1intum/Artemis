@@ -27,7 +27,6 @@ public class Lecture extends DomainObject {
     @Column(name = "title")
     private String title;
 
-    @Lob
     @Column(name = "description")
     private String description;
 

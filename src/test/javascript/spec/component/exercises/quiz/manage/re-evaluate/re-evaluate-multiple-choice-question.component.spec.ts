@@ -10,9 +10,8 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Directive, Input } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
-import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommands/incorrectOptionCommand';
 
-// tslint:disable-next-line:directive-selector
+// eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: '[sortableData]' })
 class MockSortableDataDirective {
     @Input('sortableData') data: any;
@@ -145,22 +144,13 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
     });
 
     it('should react to answer option changes', () => {
+        const answer = component.question.answerOptions![0];
         component.onAnswerOptionChange('solution[wrong]answer', answer1);
         fixture.detectChanges();
 
         expect(component.question.answerOptions).toHaveLength(1);
 
-        const answer = component.question.answerOptions![0];
-        expect(answer.isCorrect).toBeFalse();
-    });
-
-    it('should generate answer markdown', () => {
-        const generatedText = 'answer';
-
-        const result = component.generateAnswerMarkdown(answer1);
-        fixture.detectChanges();
-
-        expect(result).toBe(IncorrectOptionCommand.identifier + ' ' + generatedText);
+        expect(answer.isCorrect).toBeUndefined();
     });
 
     it('should react to question changes', () => {
@@ -179,5 +169,27 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
         fixture.detectChanges();
 
         expect(text).toBe(fakeText);
+    });
+
+    it('should change answer isCorrect to true if text is set to correct', () => {
+        const answer = component.question.answerOptions![0];
+        component.onAnswerOptionChange('[correct] correct option', answer1);
+        fixture.detectChanges();
+        expect(answer.isCorrect).toBeTrue();
+    });
+
+    it('should change answer isCorrect to false if text is set to wrong', () => {
+        const answer = component.question.answerOptions![0];
+        component.onAnswerOptionChange('[wrong] wrong option', answer1);
+        fixture.detectChanges();
+        expect(answer.isCorrect).toBeFalse();
+    });
+
+    it('should not change answer isCorrect if text is not set to either correct or wrong', () => {
+        const answer = component.question.answerOptions![0];
+        component.onAnswerOptionChange('[some text] wrong option', answer1);
+        fixture.detectChanges();
+        expect(component.question.answerOptions).toHaveLength(1);
+        expect(answer.isCorrect).toBeUndefined();
     });
 });
