@@ -146,6 +146,12 @@ public class ExceptionTranslator {
         return create(ex, problem, request);
     }
 
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleEntityNotFoundException(AccessForbiddenAlertException ex, NativeWebRequest request) {
+        Problem problem = Problem.builder().withStatus(Status.FORBIDDEN).with(MESSAGE_KEY, ErrorConstants.REQ_403_REASON).build();
+        return create(ex, problem, request);
+    }
+
     /**
      * @param e a specific exception
      * @param request the request
