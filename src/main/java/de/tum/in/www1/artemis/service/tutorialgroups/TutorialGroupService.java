@@ -348,7 +348,7 @@ public class TutorialGroupService {
         var registrationsWithTitle = new HashSet<TutorialGroupRegistrationImportDTO>();
         var registrationsWithoutTitle = new HashSet<TutorialGroupRegistrationImportDTO>();
         for (var importDTO : registrations) {
-            if (!StringUtils.isBlank(importDTO.title())) {
+            if (StringUtils.isBlank(importDTO.title())) {
                 registrationsWithoutTitle.add(importDTO.withImportResult(false, TutorialGroupImportErrors.NO_TITLE));
             }
             else {
