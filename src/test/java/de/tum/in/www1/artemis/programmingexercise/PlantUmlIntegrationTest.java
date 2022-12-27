@@ -74,10 +74,10 @@ class PlantUmlIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void generateSvg_asStudent_error() throws Exception {
         final var paramMap = new LinkedMultiValueMap<String, String>();
         paramMap.setAll(Map.of("plantuml", ""));    // empty string
-        request.get(ROOT + GENERATE_SVG, HttpStatus.INTERNAL_SERVER_ERROR, String.class, paramMap);
+        request.get(ROOT + GENERATE_SVG, HttpStatus.BAD_REQUEST, String.class, paramMap);
 
         var veryLongString = new String(new char[10001]).replace('\0', 'a');
         paramMap.setAll(Map.of("plantuml", veryLongString));
-        request.get(ROOT + GENERATE_SVG, HttpStatus.INTERNAL_SERVER_ERROR, String.class, paramMap);
+        request.get(ROOT + GENERATE_SVG, HttpStatus.BAD_REQUEST, String.class, paramMap);
     }
 }

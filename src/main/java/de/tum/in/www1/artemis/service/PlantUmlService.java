@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import net.sourceforge.plantuml.FileFormat;
 import net.sourceforge.plantuml.FileFormatOption;
 import net.sourceforge.plantuml.SourceStringReader;
@@ -100,10 +101,10 @@ public class PlantUmlService {
 
     private String validateInputAndApplyTheme(final String plantUml, boolean useDarkTheme) {
         if (StringUtils.isBlank(plantUml)) {
-            throw new IllegalArgumentException("The plantUml input cannot be empty");
+            throw new BadRequestAlertException("The plantUml input cannot be empty", "PlantUML", "emptyModel");
         }
         if (plantUml.length() > 10000) {
-            throw new IllegalArgumentException("Cannot parse plantUml input longer than 10.000 characters");
+            throw new BadRequestAlertException("Cannot parse plantUml input longer than 10.000 characters", "PlantUML", "tooLargeModel");
         }
 
         if (!plantUml.contains("!theme")) {
