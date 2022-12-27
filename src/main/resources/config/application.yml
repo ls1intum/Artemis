@@ -142,6 +142,7 @@ spring:
                 physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
                 implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
         properties:
+            hibernate.max_fetch_depth: 2
             hibernate.id.new_generator_mappings: true
             hibernate.connection.provider_disables_autocommit: true
             hibernate.generate_statistics: false
