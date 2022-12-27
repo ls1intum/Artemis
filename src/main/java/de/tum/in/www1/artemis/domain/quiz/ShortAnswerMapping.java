@@ -32,11 +32,11 @@ public class ShortAnswerMapping extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Boolean invalid;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonView(QuizView.Before.class)
     private ShortAnswerSolution solution;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonView(QuizView.Before.class)
     private ShortAnswerSpot spot;
 

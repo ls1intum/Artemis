@@ -31,7 +31,7 @@ public class ShortAnswerSolution extends TempIdObject {
     @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonIgnore
     private ShortAnswerQuestion question;
 

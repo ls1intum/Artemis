@@ -41,7 +41,7 @@ public class AnswerOption extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonIgnore
     private MultipleChoiceQuestion question;
 

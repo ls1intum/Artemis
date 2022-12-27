@@ -35,12 +35,12 @@ public abstract class SubmittedAnswer extends DomainObject {
     @JsonView(QuizView.After.class)
     private Double scoreInPoints;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonIgnoreProperties({ "questionStatistic", "exercise" })
     @JsonView(QuizView.Before.class)
     private QuizQuestion quizQuestion;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonIgnore
     private QuizSubmission submission;
 

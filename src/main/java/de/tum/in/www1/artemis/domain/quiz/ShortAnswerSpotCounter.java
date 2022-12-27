@@ -13,7 +13,7 @@ import jakarta.persistence.*;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ShortAnswerSpotCounter extends QuizStatisticCounter {
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonIgnore
     private ShortAnswerQuestionStatistic shortAnswerQuestionStatistic;
 

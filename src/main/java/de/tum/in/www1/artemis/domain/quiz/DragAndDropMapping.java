@@ -32,11 +32,11 @@ public class DragAndDropMapping extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Boolean invalid = false;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonView(QuizView.Before.class)
     private DragItem dragItem;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonView(QuizView.Before.class)
     private DropLocation dropLocation;
 

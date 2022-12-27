@@ -48,15 +48,15 @@ public class Post extends Posting {
     @Column(name = "text")
     private Set<String> tags = new HashSet<>();
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonIncludeProperties({ "id", "title" })
     private Exercise exercise;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonIncludeProperties({ "id", "title" })
     private Lecture lecture;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JsonIncludeProperties({ "id", "title" })
     private Course course;
 
@@ -64,14 +64,14 @@ public class Post extends Posting {
     @Column(name = "course_wide_context")
     private CourseWideContext courseWideContext;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     private Conversation conversation;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "display_priority", columnDefinition = "varchar(25) default 'NONE'")
     private DisplayPriority displayPriority = DisplayPriority.NONE;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne
     @JoinColumn(name = "plagiarism_case_id")
     @JsonIncludeProperties({ "id" })
     private PlagiarismCase plagiarismCase;
