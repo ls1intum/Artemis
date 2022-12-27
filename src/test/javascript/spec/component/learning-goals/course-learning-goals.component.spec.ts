@@ -20,8 +20,8 @@ import { Course } from 'app/entities/course.model';
 class LearningGoalCardStubComponent {
     @Input() learningGoal: LearningGoal;
     @Input() progress?: number;
-    @Input() isPrerequisite: Boolean;
-    @Input() displayOnly: Boolean;
+    @Input() isPrerequisite: boolean;
+    @Input() displayOnly: boolean;
 }
 
 class MockActivatedRoute {

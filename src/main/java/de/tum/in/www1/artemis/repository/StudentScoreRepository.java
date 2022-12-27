@@ -37,23 +37,23 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
             SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(s.user.login, AVG(s.lastScore), AVG(s.lastRatedScore), AVG(s.lastPoints), AVG(s.lastRatedPoints))
             FROM StudentScore s
             WHERE s.exercise IN :exercises
-            GROUP BY s.user
+            GROUP BY s.user.login
             """)
     List<ParticipantScoreAverageDTO> getAvgScoreOfStudentsInExercises(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
-            SELECT DISTINCT s
-            FROM StudentScore s
-            WHERE s.exercise = :exercise AND s.user = :user
+              SELECT DISTINCT s
+              FROM StudentScore s
+              WHERE s.exercise = :exercise AND s.user = :user
             """)
     Optional<StudentScore> findStudentScoreByExerciseAndUserLazy(@Param("exercise") Exercise exercise, @Param("user") User user);
 
     // TODO: use a custom object instead of Object[] (as in the example above with ParticipantScoreAverageDTO)
     @Query("""
-            SELECT sc.user, SUM(sc.lastRatedPoints)
-            FROM StudentScore sc
+            SELECT u, SUM(sc.lastRatedPoints)
+            FROM StudentScore sc LEFT JOIN sc.user u
             WHERE sc.exercise IN :exercises
-            GROUP BY sc.user
+            GROUP BY u.id
             """)
     List<Object[]> getAchievedPointsOfStudents(@Param("exercises") Set<Exercise> exercises);
 

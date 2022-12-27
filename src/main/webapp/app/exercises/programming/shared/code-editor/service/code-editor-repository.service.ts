@@ -24,7 +24,7 @@ export interface ICodeEditorRepositoryFileService {
     getFile: (fileName: string) => Observable<{ fileContent: string }>;
     createFile: (fileName: string) => Observable<void>;
     createFolder: (folderName: string) => Observable<void>;
-    updateFileContent: (fileName: string, fileContent: string) => Observable<Object>;
+    updateFileContent: (fileName: string, fileContent: string) => Observable<any>;
     updateFiles: (fileUpdates: Array<{ fileName: string; fileContent: string }>) => Observable<FileSubmission | FileSubmissionError>;
     renameFile: (filePath: string, newFileName: string) => Observable<void>;
     deleteFile: (filePath: string) => Observable<void>;

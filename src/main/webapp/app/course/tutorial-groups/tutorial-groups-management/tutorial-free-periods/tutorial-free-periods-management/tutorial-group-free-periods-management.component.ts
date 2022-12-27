@@ -1,7 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { Subject, combineLatest, finalize, from, switchMap, take } from 'rxjs';
+import { EMPTY, Subject, combineLatest, finalize, from, switchMap, take } from 'rxjs';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,13 +13,14 @@ import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
+import { catchError, takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-tutorial-free-periods',
     templateUrl: './tutorial-group-free-periods-management.component.html',
     styleUrls: ['./tutorial-group-free-periods-management.component.scss'],
 })
-export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
+export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDestroy {
     isLoading = false;
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
     tutorialGroupFreePeriods: TutorialGroupFreePeriod[] = [];
@@ -29,6 +30,8 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    ngUnsubscribe = new Subject<void>();
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -41,6 +44,12 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadAll();
+    }
+
+    ngOnDestroy(): void {
+        this.ngUnsubscribe.next();
+        this.ngUnsubscribe.complete();
+        this.dialogErrorSource.unsubscribe();
     }
 
     public isInThePast(tutorialGroupFreeDay: TutorialGroupFreePeriod): boolean {
@@ -61,6 +70,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
                     return this.tutorialGroupsConfigurationService.getOneOfCourse(this.course.id!);
                 }),
                 finalize(() => (this.isLoading = false)),
+                takeUntil(this.ngUnsubscribe),
             )
             .subscribe({
                 next: (tutorialGroupsConfigurationResult) => {
@@ -81,8 +91,13 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroupConfigurationId = this.tutorialGroupsConfiguration.id!;
         modalRef.componentInstance.initialize();
-        from(modalRef.result).subscribe(() => {
-            this.loadAll();
-        });
+        from(modalRef.result)
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
+            .subscribe(() => {
+                this.loadAll();
+            });
     }
 }

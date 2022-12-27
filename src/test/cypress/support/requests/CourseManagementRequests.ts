@@ -124,6 +124,7 @@ export class CourseManagementRequests {
             assessmentType: CypressAssessmentType[assessmentType],
         };
         const exercise: ProgrammingExercise = Object.assign({}, template, body) as ProgrammingExercise;
+        // eslint-disable-next-line no-prototype-builtins
         const isExamExercise = body.hasOwnProperty('exerciseGroup');
         if (!isExamExercise) {
             exercise.releaseDate = releaseDate;
@@ -190,7 +191,7 @@ export class CourseManagementRequests {
     /**
      * Adds the specified student to the course.
      * @param course the course
-     * @param student the student
+     * @param user the user
      * @returns <Chainable> request response
      */
     addStudentToCourse(course: Course, user: CypressCredentials) {
@@ -295,6 +296,7 @@ export class CourseManagementRequests {
             assessmentDueDate: dayjsToString(assessmentDueDate),
         };
         let newModelingExercise;
+        // eslint-disable-next-line no-prototype-builtins
         if (body.hasOwnProperty('course')) {
             newModelingExercise = Object.assign({}, templateCopy, dates, body);
         } else {
@@ -364,6 +366,7 @@ export class CourseManagementRequests {
         const dates = {
             releaseDate: dayjsToString(releaseDate),
         };
+        // eslint-disable-next-line no-prototype-builtins
         if (body.hasOwnProperty('course')) {
             newQuizExercise = Object.assign({}, quizExercise, dates, body);
         } else {
@@ -557,8 +560,8 @@ export class CypressExamBuilder {
     /**
      * @param points the maximum amount of points achieved in the exam (default is 10)
      */
-    maxPoints(points: number) {
-        this.template.maxPoints = points;
+    examMaxPoints(points: number) {
+        this.template.examMaxPoints = points;
         return this;
     }
 
