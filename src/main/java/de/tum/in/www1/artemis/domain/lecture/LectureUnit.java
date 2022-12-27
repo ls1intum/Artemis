@@ -31,9 +31,6 @@ import jakarta.persistence.*;
 public abstract class LectureUnit extends DomainObject implements Completable {
 
     @Transient
-    private boolean visibleToStudents;
-
-    @Transient
     @JsonSerialize
     private boolean completed;
 
@@ -131,5 +128,10 @@ public abstract class LectureUnit extends DomainObject implements Completable {
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
         return getCompletedUsers().stream().filter(completion -> completion.getUser().getId().equals(user.getId())).map(LectureUnitCompletion::getCompletedAt).findFirst();
+    }
+
+    @Override
+    public String toString() {
+        return getClass().getSimpleName() + "{id=" + getId() + ", completed=" + completed + ", name='" + name + '\'' + ", releaseDate=" + releaseDate + ", order=" + order + '}';
     }
 }

@@ -843,11 +843,16 @@ public class DatabaseUtilService {
     }
 
     public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
-        Lecture l = lectureRepo.findByIdWithLectureUnits(lecture.getId()).get();
+        lecture = lectureRepo.findByIdWithLectureUnits(lecture.getId()).get();
         for (LectureUnit lectureUnit : lectureUnits) {
-            l.addLectureUnit(lectureUnit);
+            if (lectureUnit instanceof AttachmentUnit attachmentUnit) {
+                // as a workaround we remove some values here, otherwise saving the lecture below does not work
+                attachmentUnit.setAttachment(null);
+                attachmentUnit.setLecture(null);
+            }
+            lecture.addLectureUnit(lectureUnit);
         }
-        return lectureRepo.save(l);
+        return lectureRepo.save(lecture);
     }
 
     public ExerciseUnit createExerciseUnit(Exercise exercise) {
@@ -857,14 +862,20 @@ public class DatabaseUtilService {
     }
 
     public AttachmentUnit createAttachmentUnit(Boolean withFile) {
-        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
-        Attachment attachmentOfAttachmentUnit = withFile ? ModelFactory.generateAttachmentWithFile(started) : ModelFactory.generateAttachment(started);
+        // create the attachment unit
         AttachmentUnit attachmentUnit = new AttachmentUnit();
         attachmentUnit.setDescription("Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
-        attachmentOfAttachmentUnit.setAttachmentUnit(attachmentUnit);
-        attachmentOfAttachmentUnit = attachmentRepository.save(attachmentOfAttachmentUnit);
-        attachmentUnit.setAttachment(attachmentOfAttachmentUnit);
+
+        // create the attachment
+        ZonedDateTime started = ZonedDateTime.now().minusDays(5);
+        Attachment attachment = withFile ? ModelFactory.generateAttachmentWithFile(started) : ModelFactory.generateAttachment(started);
+        attachment.setAttachmentUnit(attachmentUnit);
+        attachment = attachmentRepository.save(attachment);
+
+        // connect both
+        attachmentUnit.setAttachment(attachment);
+        attachment.setAttachmentUnit(attachmentUnit);
         return attachmentUnitRepository.save(attachmentUnit);
     }
 
@@ -2918,7 +2929,7 @@ public class DatabaseUtilService {
      * With this method we can generate a course. We can specify the number of exercises. To not only test one type, this method generates modeling, file-upload and text
      * exercises in a cyclic manner.
      *
-     * @param suffix
+     * @param suffix                        allows to make the users unique per tes
      * @param numberOfExercises             number of generated exercises. E.g. if you set it to 4, 2 modeling exercises, one text and one file-upload exercise will be generated.
      *                                      (thats why there is the %3 check)
      * @param numberOfSubmissionPerExercise for each exercise this number of submissions will be generated. E.g. if you have 2 exercises, and set this to 4, in total 8

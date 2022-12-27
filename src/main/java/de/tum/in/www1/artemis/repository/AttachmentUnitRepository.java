@@ -19,10 +19,10 @@ import jakarta.validation.constraints.NotNull;
 public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, Long> {
 
     @Query("""
-            SELECT attachmentUnit
-            FROM AttachmentUnit attachmentUnit
-            WHERE attachmentUnit.lecture.id = :#{#lectureId}
-            AND attachmentUnit.attachment.attachmentType = :#{#attachmentType}
+            SELECT a
+            FROM AttachmentUnit a
+            WHERE a.lecture.id = :lectureId
+                AND a.attachment.attachmentType = :attachmentType
             """)
     Set<AttachmentUnit> findAllByLectureIdAndAttachmentType(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType);
 
@@ -34,8 +34,7 @@ public interface AttachmentUnitRepository extends JpaRepository<AttachmentUnit, 
      * @return the list of all attachment units with the given lecture id and attachment type
      * @throws EntityNotFoundException if no results are found
      */
-    default Set<AttachmentUnit> findAllByLectureIdAndAttachmentTypeElseThrow(@Param("lectureId") Long lectureId, @Param("attachmentType") AttachmentType attachmentType)
-            throws EntityNotFoundException {
+    default Set<AttachmentUnit> findAllByLectureIdAndAttachmentTypeElseThrow(Long lectureId, AttachmentType attachmentType) throws EntityNotFoundException {
         Set<AttachmentUnit> attachmentUnits = findAllByLectureIdAndAttachmentType(lectureId, attachmentType);
         if (attachmentUnits.isEmpty()) {
             throw new EntityNotFoundException("AttachmentUnit");

@@ -288,8 +288,7 @@ class Lti13ServiceTest {
     void onNewResultNoOnlineCourseConfiguration() {
         Course course = new Course();
         course.setId(1L);
-        Exercise exercise = new ProgrammingExercise() {
-        };
+        Exercise exercise = new ProgrammingExercise();
         exercise.setCourse(course);
         StudentParticipation participation = new StudentParticipation();
         participation.setExercise(exercise);
@@ -309,8 +308,7 @@ class Lti13ServiceTest {
         course.setId(1L);
         User user = new User();
         user.setId(1L);
-        Exercise exercise = new ProgrammingExercise() {
-        };
+        Exercise exercise = new ProgrammingExercise();
         exercise.setCourse(course);
         StudentParticipation participation = new StudentParticipation();
         participation.setExercise(exercise);
@@ -333,8 +331,7 @@ class Lti13ServiceTest {
         course.setId(1L);
         User user = new User();
         user.setId(1L);
-        Exercise exercise = new ProgrammingExercise() {
-        };
+        Exercise exercise = new ProgrammingExercise();
         exercise.setCourse(course);
         StudentParticipation participation = new StudentParticipation();
         participation.setExercise(exercise);
@@ -367,8 +364,7 @@ class Lti13ServiceTest {
         course.setId(1L);
         User user = new User();
         user.setId(1L);
-        Exercise exercise = new ProgrammingExercise() {
-        };
+        Exercise exercise = new ProgrammingExercise();
         exercise.setCourse(course);
         StudentParticipation participation = new StudentParticipation();
         participation.setExercise(exercise);
@@ -482,8 +478,7 @@ class Lti13ServiceTest {
         Course course = new Course();
         course.setId(1L);
 
-        Exercise exercise = new ProgrammingExercise() {
-        };
+        Exercise exercise = new ProgrammingExercise();
         exercise.setMaxPoints(80d);
         exercise.setCourse(course);
 
