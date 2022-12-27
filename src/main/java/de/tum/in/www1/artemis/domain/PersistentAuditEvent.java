@@ -42,7 +42,7 @@ public class PersistentAuditEvent implements Serializable {
     @Column(name = "event_type")
     private String auditEventType;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER) // Intentionally EAGER because data should always be loaded
     @MapKeyColumn(name = "name")
     @Column(name = "`value`")
     @CollectionTable(name = "jhi_persistent_audit_evt_data", joinColumns = @JoinColumn(name = "event_id"))
