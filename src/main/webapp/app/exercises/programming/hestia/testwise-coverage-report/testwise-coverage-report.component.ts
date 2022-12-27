@@ -69,7 +69,7 @@ export class TestwiseCoverageReportComponent implements OnInit {
         this.fileReportByFileName = result;
     }
 
-    identifyCoverageFileComponent(index: Number, item: any) {
+    identifyCoverageFileComponent(index: number, item: any) {
         return item.key;
     }
 }

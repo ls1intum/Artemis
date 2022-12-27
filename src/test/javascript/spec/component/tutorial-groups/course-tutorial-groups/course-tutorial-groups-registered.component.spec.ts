@@ -8,7 +8,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
 
 @Component({ selector: 'jhi-course-tutorial-group-card', template: '' })
-class MockCourseTutorialGroupCard {
+class MockCourseTutorialGroupCardComponent {
     @Input()
     courseId: number;
     @Input()
@@ -21,7 +21,7 @@ describe('CourseTutorialGroupsRegisteredComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            declarations: [CourseTutorialGroupsRegisteredComponent, MockCourseTutorialGroupCard, MockPipe(ArtemisTranslatePipe)],
+            declarations: [CourseTutorialGroupsRegisteredComponent, MockCourseTutorialGroupCardComponent, MockPipe(ArtemisTranslatePipe)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CourseTutorialGroupsRegisteredComponent);
