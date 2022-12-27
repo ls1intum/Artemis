@@ -35,6 +35,7 @@ public class Lecture extends DomainObject implements Completable {
     @Column(name = "end_date")
     private ZonedDateTime endDate;
 
+    // TODO: we should think about turning this into Lazy and only load attachments when needed
     @OneToMany(mappedBy = "lecture", fetch = FetchType.EAGER)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties(value = "lecture", allowSetters = true)

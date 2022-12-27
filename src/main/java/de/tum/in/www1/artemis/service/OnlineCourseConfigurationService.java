@@ -58,11 +58,12 @@ public class OnlineCourseConfigurationService implements ClientRegistrationRepos
      */
     public OnlineCourseConfiguration createOnlineCourseConfiguration(Course course) {
         OnlineCourseConfiguration ocConfiguration = new OnlineCourseConfiguration();
-        ocConfiguration.setCourse(course);
         ocConfiguration.setLtiKey(RandomStringUtils.random(12, true, true));
         ocConfiguration.setLtiSecret(RandomStringUtils.random(12, true, true));
         ocConfiguration.setUserPrefix(course.getShortName());
         ocConfiguration.setRegistrationId(RandomStringUtils.random(24, true, true));
+        ocConfiguration = onlineCourseConfigurationRepository.save(ocConfiguration);
+        ocConfiguration.setCourse(course);
         course.setOnlineCourseConfiguration(ocConfiguration);
         return ocConfiguration;
     }

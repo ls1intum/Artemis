@@ -307,6 +307,9 @@ public class DatabaseUtilService {
     @Autowired
     private TutorialGroupSessionRepository tutorialGroupSessionRepository;
 
+    @Autowired
+    private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
@@ -2453,6 +2456,7 @@ public class DatabaseUtilService {
         onlineCourseConfiguration.setLtiSecret("fake-secret");
         onlineCourseConfiguration.setUserPrefix("prefix");
         onlineCourseConfiguration.setRegistrationId(course.getId().toString());
+        onlineCourseConfiguration = onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
         onlineCourseConfiguration.setCourse(course);
         course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         courseRepo.save(course);
