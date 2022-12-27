@@ -30,7 +30,7 @@ public abstract class UMLDiagram implements Similarity<UMLDiagram>, Serializable
      *
      * @return the list of first level model elements of the diagram
      */
-    protected abstract List<UMLElement> getModelElements();
+    public abstract List<UMLElement> getModelElements();
 
     /**
      * Get the list of model elements of the diagram including child elements (e.g. classes, relationships and packages of UML class diagrams, including attributes and methods of

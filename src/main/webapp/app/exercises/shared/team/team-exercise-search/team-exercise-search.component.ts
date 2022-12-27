@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { Observable, Subject, combineLatest, merge, of } from 'rxjs';
 import { catchError, filter, map, switchMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
@@ -13,7 +13,7 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
     selector: 'jhi-team-exercise-search',
     templateUrl: './team-exercise-search.component.html',
 })
-export class TeamExerciseSearchComponent implements OnInit {
+export class TeamExerciseSearchComponent {
     @ViewChild('instance', { static: true }) ngbTypeahead: NgbTypeahead;
     focus$ = new Subject<string>();
     click$ = new Subject<string>();
@@ -34,11 +34,6 @@ export class TeamExerciseSearchComponent implements OnInit {
     inputDisplayValue: string;
 
     constructor(private courseService: CourseManagementService, private translateService: TranslateService) {}
-
-    /**
-     * Life cycle hook to indicate component creation is done
-     */
-    ngOnInit() {}
 
     onAutocompleteSelect = (exercise: Exercise) => {
         this.inputDisplayValue = this.searchResultFormatter(exercise);

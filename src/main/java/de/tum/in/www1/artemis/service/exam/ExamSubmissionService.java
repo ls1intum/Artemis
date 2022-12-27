@@ -49,7 +49,7 @@ public class ExamSubmissionService {
      */
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, User user) {
         if (!isAllowedToSubmitDuringExam(exercise, user, false)) {
-            throw new AccessForbiddenException();
+            throw new AccessForbiddenException("Submission not allowed for " + user.getLogin() + " for exercise " + exercise.getId() + " in the exam.");
         }
     }
 

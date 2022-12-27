@@ -4,10 +4,6 @@ import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
-import de.tum.in.www1.artemis.repository.*;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.ProjectApi;
@@ -23,16 +19,20 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 
 @Profile("gitlabci")
@@ -66,9 +66,9 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     private URL artemisServerUrl;
 
     public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
-                           RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository,
-                           BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
-                           BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+            RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository,
+            BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate);
         this.gitlab = gitlab;
         this.urlService = urlService;
@@ -290,7 +290,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
-                                                    List<BuildLogEntry> buildLogEntries) {
+            List<BuildLogEntry> buildLogEntries) {
         // In GitLab CI we get the logs from the maven command. Therefore, we cannot extract any information about the setup of the runner.
         // In addition, static code analysis is not yet available.
 
@@ -310,7 +310,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
             testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
             dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
-        } else {
+        }
+        else {
             // A new, unsupported project type was used -> Log it but don't store it since it would only contain null-values
             log.warn("Received unsupported project type {} for GitLabCIService.extractAndPersistBuildLogStatistics, will not store any build log statistics.", projectType);
             return;
@@ -325,7 +326,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         var scaDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time.minusSeconds(1));
 
         buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
-            dependenciesDownloadedCount);
+                dependenciesDownloadedCount);
     }
 
     @Override

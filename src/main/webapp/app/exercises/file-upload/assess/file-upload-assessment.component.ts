@@ -210,6 +210,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
         this.course = getCourseFromExercise(this.exercise);
         this.hasAssessmentDueDatePassed = !!this.exercise.assessmentDueDate && dayjs(this.exercise.assessmentDueDate).isBefore(dayjs());
         if (this.resultId > 0) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
             this.result = getSubmissionResultById(this.submission, this.resultId);
         } else {

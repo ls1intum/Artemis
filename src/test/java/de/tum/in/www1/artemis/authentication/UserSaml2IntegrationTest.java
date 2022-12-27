@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
  */
 public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
-    private static final String STUDENT_NAME = "user1";
+    private static final String STUDENT_NAME = "student_saml_test";
 
     private static final String STUDENT_PASSWORD = "test1234";
 
@@ -45,19 +45,23 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIG
     private PasswordService passwordService;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         gitlabRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
-    public void tearDown() {
+    public void tearDown() throws Exception {
         gitlabRequestMockProvider.reset();
+    }
+
+    @AfterEach
+    void clearExistingUser() {
+        userRepository.findOneByLogin(STUDENT_NAME).ifPresent(userRepository::delete);
     }
 
     @AfterEach
     void clearAuthentication() {
         TestSecurityContextHolder.clearContext();
-        this.database.resetDatabase();
     }
 
     @Test
@@ -242,7 +246,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIG
 
     private void assertStudentNotExists() {
         assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Provided login user1 does not exist in database");
+                .hasMessage("Provided login " + STUDENT_NAME + " does not exist in database");
     }
 
     private void assertStudentExists() {
