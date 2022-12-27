@@ -289,11 +289,9 @@ public class SubmissionService {
     public Result saveNewEmptyResult(Submission submission) {
         Result result = new Result();
         result.setParticipation(submission.getParticipation());
+        result = resultRepository.save(result);
         result.setSubmission(submission);
-        if (!submission.getResults().contains(result)) {
-            submission.addResult(result);
-        }
-        // this automatically saves the results due to CascadeType.ALL
+        submission.addResult(result);
         submissionRepository.save(submission);
         return result;
     }
@@ -355,7 +353,8 @@ public class SubmissionService {
         Result newResult = new Result();
         newResult.setParticipation(submission.getParticipation());
         copyFeedbackToResult(newResult, feedbacks);
-        return copyResultContentAndAddToSubmission(submission, newResult, oldResult);
+        newResult = copyResultContentAndAddToSubmission(submission, newResult, oldResult);
+        return newResult;
     }
 
     /**
@@ -370,13 +369,11 @@ public class SubmissionService {
         newResult.setScore(oldResult.getScore());
         newResult.setRated(oldResult.isRated());
         newResult.copyProgrammingExerciseCounters(oldResult);
-        newResult.setSubmission(submission);
-        if (!submission.getResults().contains(newResult)) {
-            submission.addResult(newResult);
-        }
-        // this automatically saves the results due to CascadeType.ALL
+        var savedResult = resultRepository.save(newResult);
+        savedResult.setSubmission(submission);
+        submission.addResult(savedResult);
         submissionRepository.save(submission);
-        return newResult;
+        return savedResult;
     }
 
     /**
@@ -388,16 +385,15 @@ public class SubmissionService {
      * @return the result with correctly persisted relationship to its submission
      */
     public Result saveNewResult(Submission submission, final Result result) {
+        result.setSubmission(null);
         if (result.getParticipation() == null) {
             result.setParticipation(submission.getParticipation());
         }
-        result.setSubmission(submission);
-        if (!submission.getResults().contains(result)) {
-            submission.addResult(result);
-        }
-        // this automatically saves the results due to CascadeType.ALL
+        var savedResult = resultRepository.save(result);
+        savedResult.setSubmission(submission);
+        submission.addResult(savedResult);
         submissionRepository.save(submission);
-        return result;
+        return savedResult;
     }
 
     /**
@@ -493,8 +489,7 @@ public class SubmissionService {
         Result result = submission.getResultForCorrectionRound(correctionRound);
         if (result == null && correctionRound > 0) {
             // copy the result of the previous correction round
-            Result oldResult = submission.getResultForCorrectionRound(correctionRound - 1);
-            result = copyResultFromPreviousRoundAndSave(submission, oldResult);
+            result = copyResultFromPreviousRoundAndSave(submission, submission.getResultForCorrectionRound(correctionRound - 1));
         }
         else if (result == null) {
             result = saveNewEmptyResult(submission);

@@ -3295,6 +3295,9 @@ public class DatabaseUtilService {
         StudentParticipation participation = Optional.ofNullable(studentLogin).map(login -> createAndSaveParticipationForExercise(exercise, login))
                 .orElseGet(() -> addTeamParticipationForExercise(exercise, teamId));
 
+        submissionRepository.save(submission);
+
+        participation.addSubmission(submission);
         Result result = new Result();
         result.setAssessor(getUserByLogin(assessorLogin));
         result.setScore(100D);
@@ -3304,24 +3307,16 @@ public class DatabaseUtilService {
         else { // exam exercises do not have a release date
             result.setCompletionDate(ZonedDateTime.now());
         }
-
-        participation.addResult(result);
-        participation.addSubmission(submission);
-
-        // NOTE: we save (1) participation and (2) submission
-        participation = studentParticipationRepo.save(participation);
-        submission.addResult(result);
-        submission.setParticipation(participation);
-
-        // this automatically saves the results due to CascadeType.ALL
-        submission = textSubmissionRepo.save(submission);
-
-        // reconnect entities after save
-        participation.setSubmissions(Set.of(submission));
-        participation.setResults(Set.of(result));
+        result = resultRepo.save(result);
         result.setSubmission(submission);
-        result.setParticipation(participation);
+        submission.setParticipation(participation);
+        submission.addResult(result);
+        submission.getParticipation().addResult(result);
+        submission = textSubmissionRepo.save(submission);
+        resultRepo.save(result);
+        studentParticipationRepo.save(participation);
 
+        submission = textSubmissionRepo.save(submission);
         return submission;
     }
 
