@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.LtiNewResultService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import jakarta.validation.constraints.NotNull;
 
@@ -148,7 +149,7 @@ public class ResultService {
         final var submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new EntityNotFoundException("No example submission with ID " + submissionId + " found!"));
         if (!submission.isExampleSubmission()) {
-            throw new IllegalArgumentException("Submission is no example submission! Example results are not allowed!");
+            throw new BadRequestAlertException("Submission is no example submission! Example results are not allowed!", "Result", "noExampleSubmission");
         }
 
         final var newResult = new Result();

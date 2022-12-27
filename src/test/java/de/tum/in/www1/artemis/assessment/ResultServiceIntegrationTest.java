@@ -103,7 +103,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     private StudentParticipation studentParticipation;
 
-    private int numberOfStudents = 5;
+    private final int numberOfStudents = 5;
 
     @BeforeEach
     void setupTest() {
@@ -597,7 +597,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         result = database.addSampleFeedbackToResults(result);
         request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK);
         assertThat(resultRepository.existsById(result.getId())).isFalse();
-        request.delete("api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.NOT_FOUND);
+        request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -653,7 +653,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         submissionRepository.save(modelingSubmission);
 
         request.postWithResponseBody("/api/exercises/" + modelingExercise.getId() + "/example-submissions/" + modelingSubmission.getId() + "/example-results", exampleSubmission,
-                Result.class, HttpStatus.INTERNAL_SERVER_ERROR);
+                Result.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

@@ -267,7 +267,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void createCodeHintShouldFail() throws Exception {
         CodeHint codeHint = new CodeHint();
         codeHint.setTitle("Hint 1");
-        codeHint.setExercise(exercise);
+        codeHint.setExercise(exerciseLite);
 
         long sizeBefore = exerciseHintRepository.count();
         request.post("/api/programming-exercises/" + codeHint.getExercise().getId() + "/exercise-hints", codeHint, HttpStatus.BAD_REQUEST);
