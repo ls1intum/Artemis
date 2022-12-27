@@ -56,7 +56,7 @@ describe('FileUploadAssessmentComponent', () => {
     let submissionService: SubmissionService;
 
     const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxPoints: 100, bonusPoints: 0 } as FileUploadExercise;
-    const map1 = new Map<string, Object>().set('testRun', true).set('correction-round', 1);
+    const map1 = new Map<string, any>().set('testRun', true).set('correction-round', 1);
     const params1 = { exerciseId: 20, courseId: 123, submissionId: 7 };
     const params2 = { exerciseId: 20, courseId: 123, submissionId: 'new' };
 

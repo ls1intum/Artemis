@@ -95,6 +95,7 @@ export abstract class QuizExerciseValidationDirective {
                         question.title.length < this.maxLengthThreshold &&
                         mcQuestion.answerOptions!.every(
                             (answerOption) =>
+                                answerOption.isCorrect !== undefined &&
                                 (!answerOption.explanation || answerOption.explanation.length <= this.explanationLengthThreshold) &&
                                 (!answerOption.hint || answerOption.hint.length <= this.hintLengthThreshold),
                         )
@@ -268,6 +269,12 @@ export abstract class QuizExerciseValidationDirective {
                 if (mcQuestion.answerOptions!.some((answerOption) => answerOption.hint && answerOption.hint.length > this.hintLengthThreshold)) {
                     invalidReasons.push({
                         translateKey: 'artemisApp.quizExercise.invalidReasons.answerHintLength',
+                        translateValues: { index: index + 1, threshold: this.hintLengthThreshold },
+                    });
+                }
+                if (mcQuestion.answerOptions!.some((answerOption) => answerOption.isCorrect === undefined)) {
+                    invalidReasons.push({
+                        translateKey: 'artemisApp.quizExercise.invalidReasons.multipleChoiceQuestionAnswerOptionInvalid',
                         translateValues: { index: index + 1, threshold: this.hintLengthThreshold },
                     });
                 }
@@ -445,7 +452,7 @@ export abstract class QuizExerciseValidationDirective {
      * check if Dictionary is empty
      * @param obj the dictionary to be checked
      */
-    protected isEmpty(obj: {}) {
+    protected isEmpty(obj: any) {
         return Object.keys(obj).length === 0;
     }
 }

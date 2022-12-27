@@ -26,7 +26,6 @@ public class TextSubmission extends Submission {
 
     @Column(name = "text")
     @Size(max = MAX_SUBMISSION_TEXT_LENGTH, message = "The text submission is too large.")
-    @Lob
     private String text;
 
     @Enumerated(EnumType.STRING)

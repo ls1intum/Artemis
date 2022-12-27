@@ -7,7 +7,7 @@ import { Level, LoggersResponse } from './log.model';
 export class LogsService {
     constructor(private http: HttpClient) {}
 
-    changeLevel(name: string, configuredLevel: Level): Observable<{}> {
+    changeLevel(name: string, configuredLevel: Level): Observable<any> {
         return this.http.post(SERVER_API_URL + `management/loggers/${name}`, { configuredLevel });
     }
 

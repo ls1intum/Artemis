@@ -106,6 +106,7 @@ export class ListOfComplaintsComponent implements OnInit {
         }
         this.subscribeToComplaintResponse(complaintResponse);
         this.courseManagementService.find(this.courseId).subscribe((response) => {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.course = response?.body!;
         });
     }
@@ -187,8 +188,7 @@ export class ListOfComplaintsComponent implements OnInit {
      */
     triggerShowAllComplaints() {
         this.isLoadingAllComplaints = true;
-        let complaintResponse: Observable<HttpResponse<Complaint[]>>;
-        complaintResponse = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType);
+        const complaintResponse = this.complaintService.findAllWithoutStudentInformationForCourseId(this.courseId, this.complaintType);
         this.subscribeToComplaintResponse(complaintResponse);
         this.isLoadingAllComplaints = false;
         this.allComplaintsForTutorLoaded = true;

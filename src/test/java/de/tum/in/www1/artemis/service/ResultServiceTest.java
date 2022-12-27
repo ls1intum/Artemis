@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -30,6 +29,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "resultservice";
+
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
@@ -50,35 +51,30 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @BeforeEach
     void reset() {
-        database.addUsers(2, 1, 1, 1);
+        database.addUsers(TEST_PREFIX, 2, 1, 1, 1);
         Course course = database.addCourseWithOneProgrammingExercise();
-        this.programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).findAny().orElseThrow();
+        this.programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
-        this.programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(this.programmingExercise, "student1");
+        this.programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(this.programmingExercise, TEST_PREFIX + "student1");
 
         ProgrammingExercise examProgrammingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExercise();
-        this.examStudentParticipation = database.addStudentParticipationForProgrammingExercise(examProgrammingExercise, "student1");
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
+        this.examStudentParticipation = database.addStudentParticipationForProgrammingExercise(examProgrammingExercise, TEST_PREFIX + "student1");
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFeedbacksForResultAsTA() {
         this.testGetFeedbacksForResultAsCurrentUser();
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetFeedbacksForResultAsEditor() {
         this.testGetFeedbacksForResultAsCurrentUser();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFeedbacksForResultAsInstructor() {
         this.testGetFeedbacksForResultAsCurrentUser();
     }
@@ -91,7 +87,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetFeedbacksForResultAsStudent_shouldFilterInExamsBeforePublish() {
         Exam exam = examStudentParticipation.getExercise().getExamViaExerciseGroupOrCourseMember();
         exam.setPublishResultsDate(ZonedDateTime.now().plusDays(2));
@@ -105,7 +101,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetFeedbacksForResultAsStudent_shouldFilterInExamsAfterPublish() {
         Exam exam = examStudentParticipation.getExercise().getExamViaExerciseGroupOrCourseMember();
         exam.setPublishResultsDate(ZonedDateTime.now().minusDays(2));
@@ -119,7 +115,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetFeedbacksForResultAsStudent_shouldFilterInCourseBeforeDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.save(programmingExercise);
@@ -132,7 +128,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetFeedbacksForResultAsStudent_shouldFilterInCourseAfterDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
@@ -145,7 +141,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetFeedbacksForResultAsStudent_shouldFilterInCourseBeforeAssessmentDueDateWithNonAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(2));
@@ -161,7 +157,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetFeedbacksForResultAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithNonAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
@@ -176,7 +172,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetFeedbacksForResultAsStudent_shouldFilterInCourseAfterAssessmentDueDateWithAutomaticResult() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
@@ -192,13 +188,13 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
-    @WithMockUser(username = "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetFeedbacksForResultAsStudentShouldOnlyFilterAutomaticResultBeforeLastDueDate(AssessmentType assessmentType) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setAssessmentDueDate(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        final var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        final var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
         participation2.setIndividualDueDate(ZonedDateTime.now().plusDays(2));
         participationRepository.save(participation2);
 
@@ -220,13 +216,13 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
-    @WithMockUser(username = "student1", roles = "STUDENT")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
     void testGetFeedbacksForResultAsStudentShouldNotFilterAfterLatestDueDate(AssessmentType assessmentType) {
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setAssessmentDueDate(null);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        final var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
+        final var participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student2");
         participation2.setIndividualDueDate(ZonedDateTime.now().minusHours(1));
         participationRepository.save(participation2);
 

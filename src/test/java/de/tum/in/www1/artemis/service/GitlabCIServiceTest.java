@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
 
@@ -28,6 +27,8 @@ import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 
 public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
+    private static final String TEST_PREFIX = "gitlabciservicetest";
+
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
 
@@ -39,20 +40,19 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
     @BeforeEach
     void initTestCase() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
-        database.addUsers(2, 2, 0, 2);
-        database.addCourseWithOneProgrammingExercise();
-        programmingExerciseId = programmingExerciseRepository.findAll().get(0).getId();
+        database.addUsers(TEST_PREFIX, 2, 2, 0, 2);
+        var course = database.addCourseWithOneProgrammingExercise();
+        programmingExerciseId = database.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() throws Exception {
         super.resetMockProvider();
         super.resetSpyBeans();
-        database.resetDatabase();
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testHealth() {
         var health = continuousIntegrationService.health();
         assertThat(health.isUp()).isTrue();
@@ -60,10 +60,10 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testGetBuildStatusQueued() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockGetBuildStatus(PipelineStatus.CREATED);
 
         var result = continuousIntegrationService.getBuildStatus(participation);
@@ -72,10 +72,10 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testGetBuildStatusBuilding() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockGetBuildStatus(PipelineStatus.RUNNING);
 
         var result = continuousIntegrationService.getBuildStatus(participation);
@@ -84,10 +84,10 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testGetBuildStatusInactive() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockGetBuildStatus(PipelineStatus.CANCELED);
 
         var result = continuousIntegrationService.getBuildStatus(participation);
@@ -97,11 +97,12 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testTriggerBuildSuccess() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         exercise.setBranch("main");
         programmingExerciseRepository.save(exercise);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockTriggerBuild(null);
 
         continuousIntegrationService.triggerBuild(participation);
@@ -113,10 +114,10 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testTriggerBuildFails() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockTriggerBuildFailed(null);
 
         assertThatThrownBy(() -> continuousIntegrationService.triggerBuild(participation)).isInstanceOf(GitLabCIException.class);
@@ -127,17 +128,17 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testConfigureBuildPlanSuccess() throws Exception {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         mockConfigureBuildPlan(participation, defaultBranch);
         continuousIntegrationService.configureBuildPlan(participation, defaultBranch);
         verifyMocks();
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testConfigureBuildPlanFails() throws GitLabApiException {
         mockAddBuildPlanToGitLabRepositoryConfiguration(true);
 
@@ -148,9 +149,10 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testCreateBuildPlanForExercise() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
-        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
+        final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
         mockAddBuildPlanToGitLabRepositoryConfiguration(false);
 
@@ -164,7 +166,7 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testCopyBuildPlan() {
         final String targetProjectKey = "TARGETPROJECTKEY";
         final String targetPlanName1 = "TARGETPLANNAME1";
@@ -178,7 +180,7 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
+    @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testUnsupportedMethods() {
         continuousIntegrationService.createProjectForExercise(null);
         continuousIntegrationService.removeAllDefaultProjectPermissions(null);

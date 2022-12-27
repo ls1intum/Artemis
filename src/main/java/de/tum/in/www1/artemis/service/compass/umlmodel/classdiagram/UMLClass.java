@@ -166,7 +166,7 @@ public class UMLClass extends UMLElement implements Serializable {
      * @param jsonElementId the id of the UML element that should be returned
      * @return the UML element if one could be found for the given id, null otherwise
      */
-    UMLElement getElementByJSONID(String jsonElementId) {
+    public UMLElement getElementByJSONID(String jsonElementId) {
         if (getJSONElementID().equals(jsonElementId)) {
             return this;
         }

@@ -26,6 +26,7 @@ export class TutorialGroupSessionsTableStubComponent {
     tutorialGroup: TutorialGroup;
 }
 @Component({
+    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-session-row]',
     template: `
         <div>
