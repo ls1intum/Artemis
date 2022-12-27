@@ -96,7 +96,6 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testTriggerBuildSuccess() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
@@ -148,7 +147,6 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
     }
 
     @Test
-    @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
     @WithMockUser(roles = "INSTRUCTOR", username = TEST_PREFIX + "instructor1")
     void testCreateBuildPlanForExercise() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
