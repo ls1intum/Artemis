@@ -46,7 +46,6 @@ public class ApollonConversionService {
             request.setModel(model);
 
             var response = restTemplate.postForEntity(apollonConversionUrl + "/pdf", request, Resource.class);
-            assert response.getBody() != null;
             return response.getBody().getInputStream();
         }
         catch (HttpClientErrorException ex) {

@@ -267,7 +267,6 @@ public class TutorialGroupService {
         // === Step 3: Register all found users to their respective tutorial groups ===
         Map<TutorialGroup, Set<User>> tutorialGroupToRegisteredUsers = new HashMap<>();
         for (var registrationUserPair : uniqueRegistrationsWithMatchingUsers.entrySet()) {
-            assert registrationUserPair.getKey().title() != null;
             var tutorialGroup = tutorialGroupTitleToTutorialGroup.get(registrationUserPair.getKey().title().trim());
             var user = registrationUserPair.getValue();
             tutorialGroupToRegisteredUsers.computeIfAbsent(tutorialGroup, key -> new HashSet<>()).add(user);
@@ -383,7 +382,7 @@ public class TutorialGroupService {
 
     private static Optional<User> getMatchingUser(Set<User> users, TutorialGroupRegistrationImportDTO registration) {
         return users.stream().filter(user -> {
-            assert registration.student() != null; // should be the case as we filtered out all registrations without a student
+            // assert registration.student() != null should be the case as we filtered out all registrations without a student
             boolean hasRegistrationNumber = StringUtils.isNotBlank(registration.student().getRegistrationNumber());
             boolean hasLogin = StringUtils.isNotBlank(registration.student().getLogin());
 
@@ -402,7 +401,7 @@ public class TutorialGroupService {
         var loginsToSearchFor = new HashSet<String>();
 
         for (var registration : registrations) {
-            assert registration.student() != null; // should be the case as we filtered out all registrations without a student in the calling method
+            // assert registration.student() != null should be the case as we filtered out all registrations without a student in the calling method
 
             if (StringUtils.isNotBlank(registration.student().getRegistrationNumber())) {
                 registrationNumbersToSearchFor.add(registration.student().getRegistrationNumber().trim());

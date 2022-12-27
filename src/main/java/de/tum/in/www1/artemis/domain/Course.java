@@ -802,7 +802,7 @@ public class Course extends DomainObject {
             case "tutors" -> getTeachingAssistantGroupName();
             case "instructors" -> getInstructorGroupName();
             case "editors" -> getEditorGroupName();
-            default -> throw new IllegalArgumentException("The course group does not exist");
+            default -> throw new IllegalArgumentException("The course group " + courseGroup + " does not exist");
         };
     }
 

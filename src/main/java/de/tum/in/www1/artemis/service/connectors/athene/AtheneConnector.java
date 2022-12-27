@@ -5,6 +5,7 @@ import org.springframework.http.*;
 import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.exception.NetworkingError;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 import jakarta.validation.constraints.NotNull;
 
 /**
@@ -52,7 +53,9 @@ class AtheneConnector<RequestType, ResponseType> {
         }
 
         final ResponseType responseBody = response.getBody();
-        assert responseBody != null;
+        if (responseBody == null) {
+            throw new InternalServerErrorException("The response from Athene for POST " + url + " is not available");
+        }
         log.debug("Finished remote call in {}ms", System.currentTimeMillis() - start);
 
         return responseBody;

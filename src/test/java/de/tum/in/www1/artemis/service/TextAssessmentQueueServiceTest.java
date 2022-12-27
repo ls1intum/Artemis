@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.*;
 
@@ -108,7 +108,7 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
                 assertThat(smallerClusterPercentages.get(textBlock)).isCloseTo(0.0, errorRate);
             }
             else {
-                assert false;
+                fail("Found the wrong textBlock.cluster " + textBlock.getCluster());
             }
         });
     }
