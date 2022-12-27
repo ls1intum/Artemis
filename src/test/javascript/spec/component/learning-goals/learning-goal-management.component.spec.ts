@@ -24,7 +24,7 @@ import { ArtemisTestModule } from '../../test.module';
 class LearningGoalCardStubComponent {
     @Input() learningGoal: LearningGoal;
     @Input() learningGoalProgress: CourseLearningGoalProgress;
-    @Input() isPrerequisite: Boolean;
+    @Input() isPrerequisite: boolean;
 }
 
 describe('LearningGoalManagementComponent', () => {

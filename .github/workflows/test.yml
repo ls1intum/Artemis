@@ -33,7 +33,7 @@ on:
 # Keep in sync with codeql-analysis.yml and build-deploy.yml
 env:
   CI: true
-  node: 16.x
+  node: 18
   java: 17
 
 jobs:
@@ -50,7 +50,7 @@ jobs:
         java-version: '${{ env.java }}'
         cache: 'gradle'
     - name: Java Tests
-      run: ./gradlew --console=plain executeTests jacocoTestReport -x webapp jacocoTestCoverageVerification
+      run: ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification
     - name: "Codacy: Report coverage"
       uses: codacy/codacy-coverage-reporter-action@master
       with:
@@ -70,6 +70,34 @@ jobs:
         files: build/reports/jacoco/test/jacocoTestReport.xml
         name: artemis-server
         flags: server
+
+  server-tests-mysql:
+      runs-on: ubuntu-latest
+      timeout-minutes: 60
+      steps:
+          - uses: actions/checkout@v3
+          - name: Setup Java
+            uses: actions/setup-java@v3
+            with:
+                distribution: 'temurin'
+                java-version: '${{ env.java }}'
+                cache: 'gradle'
+          - name: Java Tests
+            run: SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification
+
+  server-tests-postgres:
+      runs-on: ubuntu-latest
+      timeout-minutes: 60
+      steps:
+          - uses: actions/checkout@v3
+          - name: Setup Java
+            uses: actions/setup-java@v3
+            with:
+                distribution: 'temurin'
+                java-version: '${{ env.java }}'
+                cache: 'gradle'
+          - name: Java Tests
+            run: SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification
 
   server-style:
     runs-on: ubuntu-latest

@@ -90,7 +90,7 @@ export class OrganizationManagementService {
      * @param organizationId the id of the organization to remove the user from
      * @param userLogin the user to remove
      */
-    removeUserFromOrganization(organizationId: number, userLogin: String): Observable<HttpResponse<void>> {
+    removeUserFromOrganization(organizationId: number, userLogin: string): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.adminResourceUrl}/${organizationId}/users/${userLogin}`, { observe: 'response' });
     }
 
@@ -99,7 +99,7 @@ export class OrganizationManagementService {
      * @param organizationId the id of the organization to add the user to
      * @param userLogin the user to add
      */
-    addUserToOrganization(organizationId: number, userLogin: String): Observable<HttpResponse<void>> {
+    addUserToOrganization(organizationId: number, userLogin: string): Observable<HttpResponse<void>> {
         return this.http.post<void>(`${this.adminResourceUrl}/${organizationId}/users/${userLogin}`, {}, { observe: 'response' });
     }
 

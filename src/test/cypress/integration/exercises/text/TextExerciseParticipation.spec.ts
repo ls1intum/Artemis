@@ -54,7 +54,7 @@ describe('Text exercise participation', () => {
     });
 
     after(() => {
-        if (!!course) {
+        if (course) {
             cy.login(users.getAdmin());
             courseManagement.deleteCourse(course.id!);
         }

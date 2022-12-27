@@ -167,6 +167,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
         this.course = getCourseFromExercise(this.modelingExercise);
         if (this.resultId > 0) {
             this.result = getSubmissionResultById(submission, this.resultId);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.correctionRound = submission.results?.findIndex((result) => result.id === this.resultId)!;
         } else {
             this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);

@@ -125,6 +125,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         this.conflictingSubmissions = conflictingTextSubmissions;
         conflictingTextSubmissions.forEach((submission) => setLatestSubmissionResult(submission, getLatestSubmissionResult(submission)));
         this.prepareTextBlocksAndFeedbackFor(this.leftSubmission!, this.leftTextBlockRefs, this.leftUnusedTextBlockRefs);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.latestResult?.feedbacks!);
         this.setConflictingSubmission(0);
     }
@@ -196,6 +197,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         this.overrideBusy = true;
         this.assessmentsService
             .submit(
+                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                 this.leftSubmission!.latestResult!.participation?.id!,
                 this.leftSubmission!.latestResult!.id!,
                 this.leftSubmission!.latestResult!.feedbacks!,
@@ -212,6 +214,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
      * override button is enabled.
      */
     leftTextBlockRefsChange(): void {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         this.leftTotalScore = this.computeTotalScore(this.leftSubmission!.latestResult?.feedbacks!);
         this.isOverrideDisabled = false;
     }
@@ -241,7 +244,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
 
         this.markBusy = true;
         this.assessmentsService.solveFeedbackConflict(this.exercise!.id!, feedbackConflictId).subscribe({
-            next: (response) => this.handleSolveConflictsSuccessWithAlert(response, 'artemisApp.textAssessment.solveFeedbackConflictSuccessful'),
+            next: () => this.handleSolveConflictsSuccessWithAlert('artemisApp.textAssessment.solveFeedbackConflictSuccessful'),
             error: (error) => this.handleSolveConflictsError(error),
         });
     }
@@ -259,7 +262,7 @@ export class TextFeedbackConflictsComponent extends TextAssessmentBaseComponent 
         this.location.back();
     }
 
-    private handleSolveConflictsSuccessWithAlert(response: FeedbackConflict, translationKey: string): void {
+    private handleSolveConflictsSuccessWithAlert(translationKey: string): void {
         this.alertService.success(translationKey);
         this.markBusy = false;
         this.isMarkingDisabled = true;

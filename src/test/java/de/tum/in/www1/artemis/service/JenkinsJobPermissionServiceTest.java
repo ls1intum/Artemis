@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissi
 
 class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
+    private static final String TEST_PREFIX = "jenkinsjobpermservice";
+
     @Autowired
     private JenkinsJobPermissionsService jenkinsJobPermissionsService;
 
@@ -38,37 +40,38 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() throws Exception {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         mockedJenkinsJobPermissionsUtils.close();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testAddInstructorAndEditorAndTAPermissionsToUsersForFolderThrowIOExceptionOnXmlError() throws IOException {
         String folderName = "JenkinsFolder";
         jenkinsRequestMockProvider.mockGetFolderConfig(folderName);
 
-        Set<String> taLogins = Set.of("ta1");
+        Set<String> taLogins = Set.of(TEST_PREFIX + "ta1");
         var permissionsToRemove = Set.of(JenkinsJobPermission.values());
 
         mockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(permissionsToRemove), eq(taLogins)))
                 .thenThrow(DOMException.class);
 
         Exception exception = assertThrows(IOException.class, () -> {
-            jenkinsJobPermissionsService.addInstructorAndEditorAndTAPermissionsToUsersForFolder(Set.of("ta1"), Set.of("editor1"), Set.of("instructor1"), folderName);
+            jenkinsJobPermissionsService.addInstructorAndEditorAndTAPermissionsToUsersForFolder(Set.of(TEST_PREFIX + "ta1"), Set.of(TEST_PREFIX + "editor1"),
+                    Set.of(TEST_PREFIX + "instructor1"), folderName);
         });
         Assertions.assertThat(exception.getMessage()).startsWith("Cannot add instructor, editor, and/or ta permissions to users for folder");
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testAddTeachingAssistantPermissionsToUserForFolderThrowIOExceptionOnXmlError() throws IOException {
         String folderName = "JenkinsFolder";
         jenkinsRequestMockProvider.mockGetFolderConfig(folderName);
 
-        String taLogin = "ta1";
+        String taLogin = TEST_PREFIX + "ta1";
         var permissionsToRemove = Set.of(JenkinsJobPermission.values());
 
         mockedJenkinsJobPermissionsUtils.when(() -> JenkinsJobPermissionsUtils.removePermissionsFromFolder(any(Document.class), eq(permissionsToRemove), eq(Set.of(taLogin))))
@@ -81,11 +84,11 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testAddPermissionsForUsersToFolderThrowIOExceptionOnXmlError() throws IOException {
         String folderName = "JenkinsFolder";
         Set<JenkinsJobPermission> taPermissions = JenkinsJobPermission.getTeachingAssistantPermissions();
-        Set<String> taLogins = Set.of("ta1");
+        Set<String> taLogins = Set.of(TEST_PREFIX + "ta1");
 
         jenkinsRequestMockProvider.mockGetFolderConfig(folderName);
 
@@ -98,11 +101,11 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testRemovePermissionsFromUserOfFolderThrowIOExceptionOnXmlError() throws IOException {
         String folderName = "JenkinsFolder";
         Set<JenkinsJobPermission> taPermissions = JenkinsJobPermission.getTeachingAssistantPermissions();
-        String taLogin = "ta1";
+        String taLogin = TEST_PREFIX + "ta1";
 
         jenkinsRequestMockProvider.mockGetFolderConfig(folderName);
 
@@ -116,11 +119,11 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void testRemovePermissionsFromUsersForFolderThrowIOExceptionOnXmlError() throws IOException {
         String folderName = "JenkinsFolder";
         Set<JenkinsJobPermission> taPermissions = JenkinsJobPermission.getTeachingAssistantPermissions();
-        Set<String> taLogins = Set.of("ta1");
+        Set<String> taLogins = Set.of(TEST_PREFIX + "ta1");
 
         jenkinsRequestMockProvider.mockGetFolderConfig(folderName);
 

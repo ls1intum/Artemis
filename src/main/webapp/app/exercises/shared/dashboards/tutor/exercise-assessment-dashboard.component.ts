@@ -699,6 +699,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param complaint
      */
     getComplaintQueryParams(complaint: Complaint) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const submission: Submission = complaint.result?.submission!;
         // numberOfAssessmentsOfCorrectionRounds size is the number of correction rounds
         if (complaint.complaintType === ComplaintType.MORE_FEEDBACK) {
@@ -730,7 +731,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     toggleSecondCorrection() {
         this.togglingSecondCorrectionButton = true;
-        this.exerciseService.toggleSecondCorrection(this.exerciseId).subscribe((res: Boolean) => {
+        this.exerciseService.toggleSecondCorrection(this.exerciseId).subscribe((res: boolean) => {
             this.secondCorrectionEnabled = res as boolean;
             this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
             this.getSubmissionWithoutAssessmentForAllCorrectionRounds();

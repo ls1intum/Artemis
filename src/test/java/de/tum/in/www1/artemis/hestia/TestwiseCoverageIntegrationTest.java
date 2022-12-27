@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.hestia.CoverageFileReport;
 import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.domain.hestia.TestwiseCoverageReportEntry;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
@@ -31,8 +30,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
 
 class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
+    private static final String TEST_PREFIX = "testwisecoverageint";
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
@@ -63,9 +61,9 @@ class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @BeforeEach
     void setup() {
-        database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
-        database.addUsers(1, 1, 0, 0);
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        database.addUsers(TEST_PREFIX, 1, 1, 0, 0);
+        final Course course = database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
         var unsavedPreviousSubmission = new ProgrammingSubmission();
         unsavedPreviousSubmission.setParticipation(solutionParticipation);
@@ -82,19 +80,14 @@ class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBambooBit
         latestReport = generateAndSaveSimpleReport(0.4, "src/de/tum/in/ase/BubbleSort.java", 20, 8, 1, 8, testCase2, latestSolutionSubmission);
     }
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getLatestFullCoverageReportAsStudent() throws Exception {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/full-testwise-coverage-report", HttpStatus.FORBIDDEN, CoverageReport.class);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getLatestFullCoverageReportAsTutor() throws Exception {
         var fullReport = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/full-testwise-coverage-report", HttpStatus.OK, CoverageReport.class);
         assertThat(fullReport.getCoveredLineRatio()).isEqualTo(latestReport.getCoveredLineRatio());
@@ -110,13 +103,13 @@ class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getLatestCoverageReportAsStudent() throws Exception {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/testwise-coverage-report", HttpStatus.FORBIDDEN, CoverageReport.class);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getLatestCoverageReportAsTutor() throws Exception {
         var report = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/testwise-coverage-report", HttpStatus.OK, CoverageReport.class);
         assertThat(report.getFileReports()).isNull();

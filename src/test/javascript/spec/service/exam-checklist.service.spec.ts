@@ -52,7 +52,7 @@ describe('ExamChecklistService', () => {
         exam.id = 1;
         exam.title = 'Example Exam';
         exam.numberOfRegisteredUsers = 3;
-        exam.maxPoints = 100;
+        exam.examMaxPoints = 100;
         exam.course = new Course();
         exam.course.id = 2;
 
@@ -117,7 +117,7 @@ describe('ExamChecklistService', () => {
 
         it('should set totalPointsMandatoryOptional to false if exam points cannot be reached by mandatory points + optional points', () => {
             exam.exerciseGroups = getExerciseGroups(true);
-            exam.maxPoints = 300;
+            exam.examMaxPoints = 300;
 
             result = service.checkTotalPointsMandatory(true, exam);
 
