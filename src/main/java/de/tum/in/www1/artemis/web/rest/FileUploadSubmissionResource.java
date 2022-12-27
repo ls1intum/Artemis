@@ -173,7 +173,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             // load the submission with additional needed properties by resultId
             fileUploadSubmission = (FileUploadSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
             // check if result with the requested id exists
-            Result result = fileUploadSubmission.getManualResultsById(resultId);
+            Result result = fileUploadSubmission.getManualResultById(resultId);
             if (result == null) {
                 return ResponseEntity.badRequest()
                         .headers(HeaderUtil.createFailureAlert(applicationName, true, "FileUploadSubmission", "ResultNotFound", "No Result was found for the given ID."))

@@ -36,7 +36,7 @@ public class ShortAnswerSubmittedText extends DomainObject {
     private Boolean isCorrect;
 
     @OneToOne
-    @JoinColumn()
+    @JoinColumn
     @JsonView(QuizView.Before.class)
     private ShortAnswerSpot spot;
 

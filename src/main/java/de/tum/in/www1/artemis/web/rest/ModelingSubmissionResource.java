@@ -196,7 +196,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
                 // load the submission with additional needed properties
                 modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
                 // check if result exists
-                Result result = modelingSubmission.getManualResultsById(resultId);
+                Result result = modelingSubmission.getManualResultById(resultId);
                 if (result == null) {
                     return ResponseEntity.badRequest()
                             .headers(HeaderUtil.createFailureAlert(applicationName, true, "ModelingSubmission", "ResultNotFound", "No Result was found for the given ID."))

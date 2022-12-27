@@ -192,8 +192,20 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      */
     @Nullable
     @JsonIgnore
-    public Result getManualResultsById(long resultId) {
-        return getManualResults().stream().filter(result1 -> result1.getId().equals(resultId)).findFirst().orElse(null);
+    public Result getManualResultById(long resultId) {
+        return getManualResults().stream().filter(aResult -> aResult.getId().equals(resultId)).findFirst().orElse(null);
+    }
+
+    /**
+     * Get the result by id of the submission
+     * @param resultId id of result
+     *
+     * @return a {@link Result} or null
+     */
+    @Nullable
+    @JsonIgnore
+    public Result getResultById(long resultId) {
+        return getResults().stream().filter(aResult -> aResult.getId().equals(resultId)).findFirst().orElse(null);
     }
 
     /**

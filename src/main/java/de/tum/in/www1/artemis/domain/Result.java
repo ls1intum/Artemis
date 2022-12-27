@@ -82,7 +82,7 @@ public class Result extends DomainObject {
     private Participation participation;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn()
+    @JoinColumn
     private User assessor;
 
     @Enumerated(EnumType.STRING)

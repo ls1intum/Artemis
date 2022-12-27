@@ -135,7 +135,7 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JoinTable(name = "jhi_user_authority", joinColumns = { @JoinColumn(name = "user_id", referencedColumnName = "id") }, inverseJoinColumns = {
             @JoinColumn(name = "authority_name", referencedColumnName = "name") })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @BatchSize(size = 20)
+    @BatchSize(size = 10)
     private Set<Authority> authorities = new HashSet<>();
 
     @ManyToMany

@@ -5,9 +5,11 @@ import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.TextBlock;
+import de.tum.in.www1.artemis.domain.TextCluster;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.repository.TextClusterRepository;
@@ -45,7 +47,6 @@ public class TextAssessmentQueueService {
      * @throws IllegalArgumentException if textExercise isn't automatically assessable
      * @return a TextSubmission with the highest information Gain if there is one
      */
-    @Transactional(readOnly = true) // TODO: remove transactional
     public Optional<TextSubmission> getProposedTextSubmission(TextExercise textExercise, List<Language> languages) {
         if (!textExercise.isAutomaticAssessmentEnabled()) {
             throw new IllegalArgumentException("The TextExercise is not automatic assessable");
@@ -76,11 +77,13 @@ public class TextAssessmentQueueService {
                 .collect(Collectors.toMap(TextCluster::getId, textCluster -> textCluster));
 
         // link up clusters with eager blocks
-        submissions.stream().flatMap(submission -> submission.getBlocks().stream()).forEach(textBlock -> {
+        submissions.forEach(submission -> submission.getBlocks().forEach(textBlock -> {
+            // reconnect textBlock and submission so that it can be used later without proxy exceptions
+            textBlock.setSubmission(submission);
             if (textBlock.getCluster() != null) {
                 textBlock.setCluster(textClusterMap.get(textBlock.getCluster().getId()));
             }
-        });
+        }));
 
         return submissions.stream()
                 .filter(submission -> submission.getParticipation().findLatestSubmission().isPresent() && submission == submission.getParticipation().findLatestSubmission().get())
@@ -161,33 +164,34 @@ public class TextAssessmentQueueService {
         if (textSubmissionList.stream().map(submission -> submission.getParticipation().getExercise()).anyMatch(elem -> elem != currentExercise)) {
             throw new IllegalArgumentException("All TextSubmissions have to be from the same Exercise");
         }
-        textSubmissionList.forEach(textSubmission -> {
-            textSubmission.getBlocks().forEach(textBlock -> {
-                if (textBlock.getCluster() == null) {
-                    return;
-                }
-                OptionalInt optionalLargestClusterSize = clusters.stream().mapToInt(TextCluster::openTextBlockCount).max();
+        textSubmissionList.forEach(textSubmission -> textSubmission.getBlocks().forEach(textBlock -> {
+            if (textBlock.getCluster() == null) {
+                return;
+            }
+            OptionalInt optionalLargestClusterSize = clusters.stream().mapToInt(TextCluster::openTextBlockCount).max();
 
-                // if cluster is empty
-                if (optionalLargestClusterSize.isEmpty()) {
-                    result.put(textBlock, 0.0);
-                    return;
-                }
-                // if cluster is the largest set to smaller percentage to 1
-                if (optionalLargestClusterSize.getAsInt() == textBlock.getCluster().openTextBlockCount()) {
-                    result.put(textBlock, 1.0);
-                    return;
-                }
+            // if cluster is empty
+            if (optionalLargestClusterSize.isEmpty()) {
+                result.put(textBlock, 0.0);
+                return;
+            }
+            // if cluster is the largest set to smaller percentage to 1
+            // Note: we use the instance from clusters because it has all required information from the database
+            var textBlockCluster = clusters.stream().filter(cluster -> Objects.equals(cluster.getId(), textBlock.getCluster().getId())).findFirst();
+            var openTextBlockCountForCluster = textBlockCluster.get().openTextBlockCount();
+            if (optionalLargestClusterSize.getAsInt() == openTextBlockCountForCluster) {
+                result.put(textBlock, 1.0);
+                return;
+            }
 
-                int smallerClusterCount = clusters.stream().mapToInt(TextCluster::openTextBlockCount).reduce(0, (sum, elem) -> {
-                    if (elem < textBlock.getCluster().openTextBlockCount()) {
-                        return sum + 1;
-                    }
-                    return sum;
-                });
-                result.put(textBlock, (double) smallerClusterCount / clusters.size());
+            int smallerClusterCount = clusters.stream().mapToInt(TextCluster::openTextBlockCount).reduce(0, (sum, elem) -> {
+                if (elem < openTextBlockCountForCluster) {
+                    return sum + 1;
+                }
+                return sum;
             });
-        });
+            result.put(textBlock, (double) smallerClusterCount / clusters.size());
+        }));
         return result;
     }
 }

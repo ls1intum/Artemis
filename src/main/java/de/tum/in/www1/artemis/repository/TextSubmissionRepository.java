@@ -38,7 +38,15 @@ public interface TextSubmissionRepository extends JpaRepository<TextSubmission, 
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor
      */
-    @Query("select distinct s from TextSubmission s left join fetch s.results r left join fetch r.feedbacks left join fetch r.assessor left join fetch s.blocks where s.id = :#{#submissionId}")
+    @Query("""
+             SELECT DISTINCT s
+             FROM TextSubmission s
+                 LEFT JOIN FETCH s.results r
+                 LEFT JOIN FETCH r.feedbacks
+                 LEFT JOIN FETCH r.assessor
+                 LEFT JOIN FETCH s.blocks
+             WHERE s.id = :#{#submissionId}
+            """)
     Optional<TextSubmission> findWithEagerResultsAndFeedbackAndTextBlocksById(@Param("submissionId") long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results", "results.assessor", "blocks", "results.feedbacks" })

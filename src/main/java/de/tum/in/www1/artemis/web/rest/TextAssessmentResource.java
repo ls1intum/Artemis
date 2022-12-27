@@ -355,7 +355,7 @@ public class TextAssessmentResource extends AssessmentResource {
         Result result;
         if (resultId != null) {
             // in case resultId is set we get result by id
-            result = textSubmission.getManualResultsById(resultId);
+            result = textSubmission.getManualResultById(resultId);
 
             if (result == null) {
                 return ResponseEntity.badRequest()
@@ -393,7 +393,7 @@ public class TextAssessmentResource extends AssessmentResource {
 
         // set result again as it was changed
         if (resultId != null) {
-            result = textSubmission.getManualResultsById(resultId);
+            result = textSubmission.getManualResultById(resultId);
             textSubmission.setResults(Collections.singletonList(result));
         }
         else {
@@ -401,7 +401,7 @@ public class TextAssessmentResource extends AssessmentResource {
         }
 
         textSubmission.removeNotNeededResults(correctionRound, resultId);
-        participation.setResults(Set.copyOf(textSubmission.getResults()));
+        participation.setResults(new HashSet<>(textSubmission.getResults()));
 
         final ResponseEntity.BodyBuilder bodyBuilder = ResponseEntity.ok();
         final Result finalResult = result;
