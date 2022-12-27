@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -150,18 +151,33 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachment() {
+        persistAttachmentUnitWithLecture();
+        assertThat(attachment.getId()).isNull();
+        attachment = attachmentRepository.save(attachment);
+        assertThat(attachment.getId()).isNotNull();
+
+        var attachmentIdBefore = attachment.getId();
+        attachment.setReleaseDate(ZonedDateTime.now().plusHours(2));
+        attachment = attachmentRepository.save(attachment);
+        // when updating an existing attachment, Hibernate should not create a new one (there was an issue once, therefore, we explicitly test this!)
+        assertThat(attachment.getId()).isEqualTo(attachmentIdBefore);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentUnit_asInstructor_shouldKeepOrdering() throws Exception {
         persistAttachmentUnitWithLecture();
 
         // Add a second lecture unit
-        AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
-        lecture1.addLectureUnit(attachmentUnit);
+        AttachmentUnit secondAttachmentUnit = database.createAttachmentUnit(false);
+        lecture1.addLectureUnit(secondAttachmentUnit);
         lecture1 = lectureRepository.save(lecture1);
 
         List<LectureUnit> orderedUnits = lecture1.getLectureUnits();
 
         // Updating the lecture unit should not influence order
-        request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isOk());
+        request.getMvc().perform(buildUpdateAttachmentUnit(secondAttachmentUnit, attachment)).andExpect(status().isOk());
 
         SecurityUtils.setAuthorizationObject();
         List<LectureUnit> updatedOrderedUnits = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits();
@@ -173,7 +189,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         lecture1 = lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get();
         lecture1.addLectureUnit(this.attachmentUnit);
         lecture1 = lectureRepository.saveAndFlush(lecture1);
-        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.attachmentUnit = (AttachmentUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits().iterator().next();
     }
 
     @Test

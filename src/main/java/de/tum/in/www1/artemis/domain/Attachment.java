@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -17,8 +18,14 @@ import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import jakarta.persistence.*;
 
-/**
- * A Attachment.
+/*
+ * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding attachment is deleted or it is replaced
+ * by another file. The workflow is as follows: 1. user uploads a file -> this is a temporary file, because at this point the corresponding attachment might not exist yet. 2. user
+ * saves the attachment -> now we move the temporary file which is addressed in link to a permanent location and update the value in link accordingly. => This happens
+ * in @PrePersist and @PostPersist 3. user might upload another file to replace the existing file -> this new file is a temporary file at first 4. user saves changes (with the new
+ * link pointing to the new temporary file) -> now we delete the old file in the permanent location and move the new file to a permanent location and update the value in link
+ * accordingly. => This happens in @PreUpdate and uses @PostLoad to know the old path 5. When attachment is deleted, the file in the permanent location is deleted => This happens
+ * in @PostRemove
  */
 @Entity
 @Table(name = "attachment")
@@ -57,18 +64,8 @@ public class Attachment extends DomainObject implements Serializable {
 
     @OneToOne
     @JoinColumn(name = "attachment_unit_id")
+    @JsonIgnoreProperties("attachment")
     private AttachmentUnit attachmentUnit;
-
-    // jhipster-needle-entity-add-field - JHipster will add fields here, do not remove
-    /*
-     * NOTE: The file management is necessary to differentiate between temporary and used files and to delete used files when the corresponding course is deleted or it is replaced
-     * by another file. The workflow is as follows 1. user uploads a file -> this is a temporary file, because at this point the corresponding course might not exist yet. 2. user
-     * saves the course -> now we move the temporary file which is addressed in courseIcon to a permanent location and update the value in courseIcon accordingly. => This happens
-     * in @PrePersist and @PostPersist 3. user might upload another file to replace the existing file -> this new file is a temporary file at first 4. user saves changes (with the
-     * new courseIcon pointing to the new temporary file) -> now we delete the old file in the permanent location and move the new file to a permanent location and update the value
-     * in courseIcon accordingly. => This happens in @PreUpdate and uses @PostLoad to know the old path 5. When course is deleted, the file in the permanent location is deleted =>
-     * This happens in @PostRemove
-     */
 
     /**
      * Initialisation of the Attachment on Server start
@@ -214,6 +211,7 @@ public class Attachment extends DomainObject implements Serializable {
         this.attachmentUnit = attachmentUnit;
     }
 
+    @JsonIgnore
     public Boolean isVisibleToStudents() {
         if (releaseDate == null) {  // no release date means the attachment is visible to students
             return Boolean.TRUE;

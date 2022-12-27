@@ -142,6 +142,6 @@ public class AttachmentUnitResource {
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, file, keepFilename);
 
-        return ResponseEntity.created(new URI("/api/attachment-units/" + savedAttachmentUnit.getId())).body(savedAttachmentUnit);
+        return ResponseEntity.created(new URI("/api/lectures/" + lectureId + "/attachment-units/" + savedAttachmentUnit.getId())).body(savedAttachmentUnit);
     }
 }
