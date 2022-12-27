@@ -83,7 +83,8 @@ public class JiraRequestMockProvider {
         final var regexGroups = String.join("|", groups);
         final var uriPattern = Pattern.compile(JIRA_URL + "/rest/api/2/group/user\\?groupname=(" + regexGroups + ")&username=" + username);
         var status = shouldFail ? HttpStatus.INTERNAL_SERVER_ERROR : (found ? HttpStatus.OK : HttpStatus.NOT_FOUND);
-        mockServer.expect(ExpectedCount.twice(), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.DELETE)).andRespond(withStatus(status));
+        mockServer.expect(ExpectedCount.times(groups.size()), requestTo(MatchesPattern.matchesPattern(uriPattern))).andExpect(method(HttpMethod.DELETE))
+                .andRespond(withStatus(status));
     }
 
     public void mockGetUsernameForEmail(String email, String emailToReturn, String usernameToBeReturned) throws IOException {

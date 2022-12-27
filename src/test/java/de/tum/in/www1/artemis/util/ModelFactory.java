@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.security.Role;
@@ -93,7 +92,8 @@ public class ModelFactory {
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        attachment.setLink(Path.of(FileService.DEFAULT_FILE_SUBPATH, testFileName).toString());
+        // Path.toString() uses platform dependant path separators. Since we want to use this as a URL later, we need to replace \ with /.
+        attachment.setLink(Path.of(FileService.DEFAULT_FILE_SUBPATH, testFileName).toString().replace('\\', '/'));
         return attachment;
     }
 
@@ -706,7 +706,7 @@ public class ModelFactory {
         exam.setEndText("End Text");
         exam.setConfirmationStartText("Confirmation Start Text");
         exam.setConfirmationEndText("Confirmation End Text");
-        exam.setMaxPoints(90);
+        exam.setExamMaxPoints(90);
         exam.setNumberOfExercisesInExam(1);
         exam.setRandomizeExerciseOrder(false);
         exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
@@ -1011,13 +1011,6 @@ public class ModelFactory {
         apollonDiagram.setDiagramType(diagramType);
         apollonDiagram.setTitle(title);
         return apollonDiagram;
-    }
-
-    public static LockRepositoryPolicy generateLockRepositoryPolicy(int submissionLimit, boolean active) {
-        LockRepositoryPolicy policy = new LockRepositoryPolicy();
-        policy.setSubmissionLimit(submissionLimit);
-        policy.setActive(active);
-        return policy;
     }
 
     /**

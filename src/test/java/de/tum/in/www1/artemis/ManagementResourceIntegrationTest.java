@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -27,6 +28,8 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "managementresource";
 
     @Autowired
     private PersistenceAuditEventRepository persistenceAuditEventRepository;
@@ -41,9 +44,9 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(1, 0, 0, 0);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
         persAuditEvent = new PersistentAuditEvent();
-        persAuditEvent.setPrincipal("student1");
+        persAuditEvent.setPrincipal(TEST_PREFIX + "student1");
         persAuditEvent.setAuditEventDate(Instant.now());
         persAuditEvent.setAuditEventType("type");
         var data = new HashMap<String, String>();
@@ -53,7 +56,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         persAuditEvent = persistenceAuditEventRepository.save(persAuditEvent);
 
         var persAuditEvent2 = new PersistentAuditEvent();
-        persAuditEvent2.setPrincipal("student2");
+        persAuditEvent2.setPrincipal(TEST_PREFIX + "student2");
         persAuditEvent2.setAuditEventDate(Instant.now().minus(5, ChronoUnit.DAYS));
         persAuditEvent2.setAuditEventType("tt");
         persAuditEvent2.setData(data);
@@ -62,7 +65,6 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @AfterEach
     void tearDown() {
-        database.resetDatabase();
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
     }
 
@@ -71,7 +73,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void toggleFeatures() throws Exception {
         // This setup only needed in this test case
         var course = database.addCourseWithOneProgrammingExercise();
-        var programmingExercise1 = programmingExerciseRepository.findAll().get(0);
+        var programmingExercise1 = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var programmingExercise2 = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), course);
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
         database.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");
