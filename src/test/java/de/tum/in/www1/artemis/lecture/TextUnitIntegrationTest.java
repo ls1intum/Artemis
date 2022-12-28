@@ -69,7 +69,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void createTextUnit_asEditor_shouldCreateTextUnitUnit() throws Exception {
         var persistedTextUnit = request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CREATED);
         assertThat(persistedTextUnit.getId()).isNotNull();
-        assertThat(persistedTextUnit.getName()).isEqualTo(textUnit.getName().strip());
+        assertThat(persistedTextUnit.getName()).isEqualTo("LoremIpsum");
     }
 
     @Test
