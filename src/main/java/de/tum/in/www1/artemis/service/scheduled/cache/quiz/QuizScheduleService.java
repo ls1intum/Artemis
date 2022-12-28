@@ -227,7 +227,7 @@ public class QuizScheduleService {
             try {
                 var scheduledFuture = threadPoolTaskScheduler.scheduleAtFixedRate(new QuizProcessCacheTask(), 0, delayInMillis, TimeUnit.MILLISECONDS);
                 scheduledProcessQuizSubmissions.set(scheduledFuture.getHandler());
-                log.info("QuizScheduleService was started to run repeatedly with {} second delay.", delayInMillis / 1000.0);
+                log.info("QuizScheduleService was started to run repeatedly with {}s delay", delayInMillis / 1000.0);
             }
             catch (@SuppressWarnings("unused") DuplicateTaskException e) {
                 log.warn("Quiz process cache task already registered");

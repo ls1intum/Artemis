@@ -68,7 +68,7 @@ public class MigrationService {
             throw new MigrationIntegrityException();
         }
         else {
-            log.info("Integrity check passed.");
+            log.info("Integrity check passed");
         }
 
         List<String> executedChanges = migrationChangeRepository.findAll().stream().map(MigrationChangelog::getDateString).toList();
@@ -148,7 +148,7 @@ public class MigrationService {
                 baseEntry = entry;
             }
         }
-        log.info("Ending migration integrity check.");
+        log.info("Ending migration integrity check");
         return passed;
     }
 
