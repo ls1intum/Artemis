@@ -142,19 +142,23 @@ public class GitlabRequestMockProvider {
     /**
      * Method to mock the getUser method to return mocked users with their id's
      *
-     * @throws GitLabApiException in case of git lab api errors
+     * @throws GitLabApiException in case of GitLab API errors
      */
     public void mockGetUserID() throws GitLabApiException {
-        User instructor = new User();
-        User tutor = new User();
-        User user = new User();
-        instructor.setId(2L);
-        tutor.setId(3L);
-        user.setId(4L);
+        mockGetUserID("instructor1", new User().withId(2L));
+        mockGetUserID("tutor1", new User().withId(3L));
+        mockGetUserID("user1", new User().withId(4L));
+    }
 
-        doReturn(instructor).when(userApi).getUser("instructor1");
-        doReturn(tutor).when(userApi).getUser("tutor1");
-        doReturn(user).when(userApi).getUser("user1");
+    /**
+     * Method to mock the getUser method to return a mocked user for the given username
+     *
+     * @param username The username of the user which should be returned
+     * @param user The user which should be returned
+     * @throws GitLabApiException in case of GitLab API errors
+     */
+    public void mockGetUserID(String username, User user) throws GitLabApiException {
+        doReturn(user).when(userApi).getUser(username);
     }
 
     public void mockUpdateUser() throws GitLabApiException {

@@ -211,7 +211,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIG
     }
 
     private void mockSAMLAuthentication(Saml2AuthenticatedPrincipal principal) throws Exception {
-        gitlabRequestMockProvider.mockGetUserID();
+        gitlabRequestMockProvider.mockGetUserID(STUDENT_NAME, new org.gitlab4j.api.models.User().withId(1L));
 
         Authentication authentication = new Saml2Authentication(principal, "Secret Credentials", null);
         TestSecurityContextHolder.setAuthentication(authentication);
