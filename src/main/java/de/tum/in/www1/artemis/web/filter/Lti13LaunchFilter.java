@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.lti;
+package de.tum.in.www1.artemis.web.filter;
 
 import java.io.IOException;
 import java.io.PrintWriter;

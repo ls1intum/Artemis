@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.config;
+package de.tum.in.www1.artemis.web.filter;
 
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_PRODUCTION;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;

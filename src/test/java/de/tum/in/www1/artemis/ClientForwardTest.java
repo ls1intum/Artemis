@@ -12,14 +12,11 @@ import org.springframework.test.web.servlet.ResultActions;
 
 import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.security.jwt.JWTFilter;
-import de.tum.in.www1.artemis.web.rest.ClientForwardResource;
 import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 import jakarta.servlet.http.Cookie;
 
 /**
- * Test class for the ClientForwardController REST controller.
- *
- * @see ClientForwardResource
+ * Test class for forwarding requests: TODO: we need to rewrite parts of it due to major changes in Spring 6
  */
 class ClientForwardTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

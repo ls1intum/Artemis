@@ -18,20 +18,22 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.server.resource.web.BearerTokenAuthenticationEntryPoint;
 import org.springframework.security.oauth2.server.resource.web.access.BearerTokenAccessDeniedHandler;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
-import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.web.filter.SpaWebFilter;
 import jakarta.annotation.PostConstruct;
 
 @Configuration
@@ -103,70 +105,61 @@ public class SecurityConfiguration {
     protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // @formatter:off
         http
-            .csrf()
-            .disable()
-                .exceptionHandling((exceptions) -> exceptions
-                    .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
-                    .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
-                )
-            .headers()
-            .contentSecurityPolicy("script-src 'self' 'unsafe-inline' 'unsafe-eval'")
-        .and()
-            .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
-        .and()
-            .permissionsPolicy().policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")
-        .and()
-            .frameOptions()
-            .deny()
-        .and()
-            .headers()
-            .httpStrictTransportSecurity()
-            .disable() // this is already configured using nginx
-        .and()
-            .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
-            .sessionManagement()
-            .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        .and()
-            .authorizeHttpRequests((auth) -> auth
-            // options
-                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .csrf(AbstractHttpConfigurer::disable)
+            .addFilterAfter(new SpaWebFilter(), BasicAuthenticationFilter.class)
+        .headers(headers -> headers
+            .contentSecurityPolicy(csp -> csp.policyDirectives("script-src 'self' 'unsafe-inline' 'unsafe-eval'"))
+            .frameOptions(HeadersConfigurer.FrameOptionsConfig::sameOrigin)
+            .referrerPolicy(referrer -> referrer.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+            .httpStrictTransportSecurity().disable() // this is already configured using nginx
+            .permissionsPolicy(permissions -> permissions.policy("camera=(), fullscreen=(*), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), midi=(), payment=(), sync-xhr=()")))
+        .authorizeHttpRequests(auth -> auth
+            // options: TODO: do we really need this?
+            .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
             // api
-                .requestMatchers("/api/register").permitAll()
-                .requestMatchers("/api/activate").permitAll()
-                .requestMatchers("/api/authenticate").permitAll()
-                .requestMatchers("/api/account/reset-password/init").permitAll()
-                .requestMatchers("/api/account/reset-password/finish").permitAll()
-                .requestMatchers("/api/lti/launch/*").permitAll()
-                .requestMatchers("/api/lti13/auth-callback").permitAll()
-                .requestMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH).permitAll()
-                .requestMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH).permitAll()
-                .requestMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*").permitAll()
-                .requestMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*").permitAll()
-                .requestMatchers(HttpMethod.POST, ATHENE_RESULT_API_PATH + "*").permitAll()
-                .requestMatchers("/api/**").authenticated()
+            .requestMatchers(HttpMethod.POST, "/api/register").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/activate").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/authenticate").permitAll()
+            .requestMatchers(HttpMethod.GET, "/api/authenticate").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/account/reset-password/init").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/account/reset-password/finish").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/lti/launch/*").permitAll()
+            .requestMatchers(HttpMethod.POST, "/api/lti13/auth-callback").permitAll()
+            .requestMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH).permitAll()
+            .requestMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH).permitAll()
+            .requestMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*").permitAll()
+            .requestMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*").permitAll()
+            .requestMatchers(HttpMethod.POST, ATHENE_RESULT_API_PATH + "*").permitAll()
+            .requestMatchers("/api/**").authenticated()
             // websockets
-                .requestMatchers("/websocket/tracker").hasAuthority(Role.ADMIN.getAuthority())
-                .requestMatchers("/websocket/**").permitAll()
+            .requestMatchers("/websocket/**").permitAll()
             // management
-                .requestMatchers("/management/health").permitAll()
-                .requestMatchers("/management/info").permitAll()
-                 // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
-                .requestMatchers("/management/prometheus/**").access((authentication, context) ->
-                        new AuthorizationDecision(context.getRequest().getRemoteAddr().equals(monitoringIpAddress.orElse("127.0.0.1"))))
-                .requestMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
+            .requestMatchers("/management/health").permitAll()
+            .requestMatchers("/management/info").permitAll()
+             // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
+            .requestMatchers("/management/prometheus/**").access((authentication, context) ->
+                    new AuthorizationDecision(context.getRequest().getRemoteAddr().equals(monitoringIpAddress.orElse("127.0.0.1"))))
+            .requestMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
             // others
-                .requestMatchers("/time").permitAll()
-                .requestMatchers("/app/*/*.js").permitAll()
-                .requestMatchers("/app/*/*.html").permitAll()
-                .requestMatchers("/i18n/**").permitAll()
-                .requestMatchers("/content/**").permitAll()
-                .requestMatchers("/test/**").permitAll()
-                .requestMatchers("/api.html").permitAll()
-                .requestMatchers("/api-docs/**").permitAll()
-            )
+            .requestMatchers("/time").permitAll()
+            .requestMatchers("/", "/index.html", "/*.js", "/*.map", "/*.css").permitAll()
+            .requestMatchers("/*.ico", "/*.png", "/*.svg", "/*.webapp").permitAll()
+            .requestMatchers("/public/**").permitAll()
+            .requestMatchers("/app/**").permitAll() //TODO: this might not work for us, because we don't use the app prefix
+            .requestMatchers("/i18n/**").permitAll()
+            .requestMatchers("/content/**").permitAll()
+            .requestMatchers("/api.html").permitAll()
+            .requestMatchers("/api-docs/**").permitAll())
+//        .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)    //TODO: we use JWTFilter, etc. at the moment, but we should switch to this solution
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .exceptionHandling(exceptions -> exceptions
+            .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
+            .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
+        )
         .apply(securityConfigurerAdapter());
 
-        http.apply(new CustomLti13Configurer());
+        // TODO: currently disabled because it is not fully working yet
+//        http.apply(new CustomLti13Configurer());
         // @formatter:on
 
         return http.build();

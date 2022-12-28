@@ -7,7 +7,6 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -29,12 +28,13 @@ public class SecurityJwtConfiguration {
     @Value("${jhipster.security.authentication.jwt.base64-secret}")
     private String jwtKey;
 
+    // TODO: merge this implementation with JWTConfigurer (defined) in SecurityConfiguration and with JWTFilter
     /**
      * configures the JWT decoder
      * @param metersService the service to track in case wrong tokens have been used
      * @return a JWT decoder using the Nimbus implementation
      */
-    @Bean
+    // @Bean
     public JwtDecoder jwtDecoder(SecurityMetersService metersService) {
         NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withSecretKey(getSecretKey()).macAlgorithm(JWT_ALGORITHM).build();
         return token -> {
@@ -59,7 +59,7 @@ public class SecurityJwtConfiguration {
         };
     }
 
-    @Bean
+    // @Bean
     public JwtEncoder jwtEncoder() {
         return new NimbusJwtEncoder(new ImmutableSecret<>(getSecretKey()));
     }
@@ -68,7 +68,7 @@ public class SecurityJwtConfiguration {
      * configures an authentication converter based on the provided authorities key
      * @return the authentication converter
      */
-    @Bean
+    // @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
         grantedAuthoritiesConverter.setAuthorityPrefix("");
@@ -83,7 +83,7 @@ public class SecurityJwtConfiguration {
      * creates a default bearer token resolver
      * @return the resolver
      */
-    @Bean
+    // @Bean
     public BearerTokenResolver bearerTokenResolver() {
         var bearerTokenResolver = new DefaultBearerTokenResolver();
         bearerTokenResolver.setAllowUriQueryParameter(true);
