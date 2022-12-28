@@ -145,12 +145,12 @@ public class TextAssessmentResource extends AssessmentResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Result> saveTextExampleAssessment(@PathVariable long exerciseId, @PathVariable long exampleSubmissionId, @RequestBody TextAssessmentDTO textAssessment) {
         log.debug("REST request to save text example assessment : {}", exampleSubmissionId);
-        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findBySubmissionId(exampleSubmissionId);
+        Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findById(exampleSubmissionId);
         if (optionalExampleSubmission.isPresent()) {
             ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
             if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
-                throw new BadRequestAlertException("exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + " (" + exampleSubmission.getExercise().getId()
-                        + ") doesn't match the paths exerciseId (" + exerciseId + ")!", "exerciseId", "exerciseIdMismatch");
+                throw new BadRequestAlertException("exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + " doesn't match the paths exerciseId!",
+                        "exerciseId", "exerciseIdMismatch");
             }
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
         }
