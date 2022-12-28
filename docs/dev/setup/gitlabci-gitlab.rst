@@ -110,19 +110,19 @@ Artemis
                 login:
                     account-name: TUM
             version-control:
-                url: http://gitlab # TODO
+                url: http://gitlab # change this value
                 user: root
-                password: password # TODO
-                token: gitlab-personal-access-token # TODO
+                password: password # change this value
+                token: gitlab-personal-access-token # change this value
             continuous-integration:
                 build-timeout: 30
-                artemis-authentication-token-value: notification-plugin-token # TODO
+                artemis-authentication-token-value: notification-plugin-token # change this value
             git:
                 name: Artemis
                 email: artemis.in@tum.de
         server:
             port: 8080
-            url: http://artemis:8080 # TODO
+            url: http://artemis:8080 # change this value
 
 3. Start Artemis
     Start Artemis with the ``gitlab`` and ``gitlabci`` profile.
