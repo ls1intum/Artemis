@@ -165,7 +165,7 @@ public class GradeStep extends DomainObject {
             }
         }
         catch (Exception e) {
-            log.debug("getNumericValue failed for: " + this.gradeName, e);
+            log.debug("getNumericValue failed for: {}", this.gradeName, e);
         }
         return null;
     }

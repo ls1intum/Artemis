@@ -8,7 +8,7 @@ import 'brace/theme/dracula';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { Subscription } from 'rxjs';
 
-declare var ace: any;
+declare let ace: any;
 
 export const MAX_TAB_SIZE = 8;
 
@@ -34,7 +34,7 @@ export class AceEditorComponent implements ControlValueAccessor, OnInit, OnDestr
      *
      * @param value The display width between 1 and {@link MAX_TAB_SIZE} (both inclusive).
      */
-    @Input('tabSize')
+    @Input()
     public set tabSize(value: number) {
         if (value > 0 && value <= MAX_TAB_SIZE) {
             this._editor.session.setTabSize(value);

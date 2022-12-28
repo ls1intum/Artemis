@@ -63,7 +63,7 @@ export class OrionVersionValidator {
     private extractVersionFromUserAgent(userAgent: string): string[] {
         return userAgent
             .split(' ')
-            .find((spec: string) => spec.includes('Orion') || spec.includes('IntelliJ'))!!
+            .find((spec: string) => spec.includes('Orion') || spec.includes('IntelliJ'))!
             .split('/');
     }
 

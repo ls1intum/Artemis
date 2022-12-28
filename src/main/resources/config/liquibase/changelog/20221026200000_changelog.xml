@@ -7,6 +7,7 @@
             <column name="authorization_uri" type="VARCHAR(255)"/>
             <column name="jkw_set_uri" type="VARCHAR(255)"/>
             <column name="token_uri" type="VARCHAR(255)"/>
+            <column name="require_existing_user" type="boolean" defaultValueNumeric="0"/>
         </addColumn>
 
         <comment>Add a unique value to the registrationId for all existing onlineCourseConfigurations</comment>

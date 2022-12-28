@@ -46,7 +46,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
-    delete(modelingExerciseId: number): Observable<HttpResponse<{}>> {
+    delete(modelingExerciseId: number): Observable<HttpResponse<any>> {
         return this.http.delete(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' });
     }
 
@@ -79,7 +79,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
 
     convertToPdf(model: string, filename: string): Observable<HttpResponse<Blob>> {
         return this.http
-            .post(`${SERVER_API_URL}api/apollon-convert/pdf`, { model }, { observe: 'response', responseType: 'blob' })
+            .post(`${SERVER_API_URL}api/apollon/convert-to-pdf`, { model }, { observe: 'response', responseType: 'blob' })
             .pipe(tap((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)));
     }
 
@@ -111,7 +111,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * Build the clusters to use in Compass
      * @param modelingExerciseId id of the exercise to build the clusters for
      */
-    buildClusters(modelingExerciseId: number): Observable<{}> {
+    buildClusters(modelingExerciseId: number): Observable<any> {
         return this.http.post(`${this.adminResourceUrl}/${modelingExerciseId}/trigger-automatic-assessment`, { observe: 'response' });
     }
 

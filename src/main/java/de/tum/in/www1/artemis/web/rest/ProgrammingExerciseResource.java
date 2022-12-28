@@ -487,10 +487,10 @@ public class ProgrammingExerciseResource {
         log.debug("REST request to get programming exercise with template and solution participation : {}", exerciseId);
         ProgrammingExercise programmingExercise;
         if (withSubmissionResults) {
-            programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsElseThrow(exerciseId);
+            programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesElseThrow(exerciseId);
         }
         else {
-            programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+            programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(exerciseId);
         }
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
         return ResponseEntity.ok(programmingExercise);

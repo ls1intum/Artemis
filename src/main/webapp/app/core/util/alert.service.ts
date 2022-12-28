@@ -48,7 +48,7 @@ interface AlertInternal extends AlertBase {
     openedAt?: dayjs.Dayjs;
 }
 
-export interface Alert extends Readonly<AlertInternal> {}
+export type Alert = Readonly<AlertInternal>;
 
 const DEFAULT_TIMEOUT = 15000;
 const DEFAULT_DISMISSIBLE = true;
