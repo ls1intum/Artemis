@@ -29,7 +29,7 @@
         "@fortawesome/free-regular-svg-icons": "6.2.1",
         "@fortawesome/free-solid-svg-icons": "6.2.1",
         "@ls1intum/apollon": "2.12.8",
-        "@ng-bootstrap/ng-bootstrap": "14.0.0",
+        "@ng-bootstrap/ng-bootstrap": "13.1.1",
         "@ngx-translate/core": "14.0.0",
         "@ngx-translate/http-loader": "7.0.0",
         "@sentry/angular": "7.28.1",
@@ -102,6 +102,12 @@
             "d3-interpolate": "^3.0.1",
             "d3-transition": "^3.0.1",
             "d3-brush": "^3.0.0"
+        },
+        "@ng-bootstrap/ng-bootstrap" : {
+            "@angular/common": "^15.0.0",
+            "@angular/core": "^15.0.0",
+            "@angular/forms": "^15.0.0",
+            "@angular/localize": "^15.0.0"
         }
     },
     "devDependencies": {
