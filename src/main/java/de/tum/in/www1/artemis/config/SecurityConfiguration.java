@@ -156,7 +156,8 @@ public class SecurityConfiguration {
                 .requestMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
             // others
                 .requestMatchers("/time").permitAll()
-                .requestMatchers("/app/**/*.{js,html}").permitAll()
+                .requestMatchers("/app/*/*.js").permitAll()
+                .requestMatchers("/app/*/*.html").permitAll()
                 .requestMatchers("/i18n/**").permitAll()
                 .requestMatchers("/content/**").permitAll()
                 .requestMatchers("/test/**").permitAll()
