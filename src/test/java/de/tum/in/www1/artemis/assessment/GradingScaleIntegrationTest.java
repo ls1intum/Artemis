@@ -197,7 +197,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      * Test post request for grading scale with plagiarism and no-participation special grades
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveGradingScaleWithSpecialGrades() throws Exception {
         gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
         courseGradingScale.setGradeSteps(gradeSteps);
