@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check for stale PRs
-        uses: actions/stale@v6
+        uses: actions/stale@v7
         with:
           days-before-stale: 7
           days-before-close: 14
