@@ -149,8 +149,8 @@ public class TextAssessmentResource extends AssessmentResource {
         if (optionalExampleSubmission.isPresent()) {
             ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
             if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
-                throw new BadRequestAlertException("exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + " doesn't match the paths exerciseId!",
-                        "exerciseId", "exerciseIdMismatch");
+                throw new BadRequestAlertException("exerciseId in ExampleSubmission of exampleSubmissionId " + exampleSubmissionId + " (" + exampleSubmission.getExercise().getId()
+                        + ") doesn't match the paths exerciseId (" + exerciseId + ")!", "exerciseId", "exerciseIdMismatch");
             }
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
         }
