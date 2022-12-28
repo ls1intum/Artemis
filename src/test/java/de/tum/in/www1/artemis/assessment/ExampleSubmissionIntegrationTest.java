@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -233,7 +232,6 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(preparedTextSubmission.getBlocks()).hasSize(2);
     }
 
-    @Disabled("TODO FIX SERVER TEST")
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExampleTextAssessment() throws Exception {

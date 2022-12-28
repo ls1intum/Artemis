@@ -71,12 +71,12 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     private final List<GraphType> exerciseGraphs = List.of(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS,
             GraphType.CREATED_FEEDBACKS, GraphType.POSTS, GraphType.RESOLVED_POSTS);
 
-    private final int numberOfStudents = 5;
+    private static final int NUMBER_OF_STUDENTS = 5;
 
     @BeforeEach
     void initTestCase() {
         participantScoreSchedulerService.activate();
-        database.addUsers(TEST_PREFIX, numberOfStudents, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 1);
 
         course = database.addCourseWithOneModelingExercise();
         var now = ZonedDateTime.now();
@@ -104,7 +104,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var submission = database.addSubmission(exercise, textSubmission, TEST_PREFIX + "student1");
         database.addResultToSubmission(submission, AssessmentType.MANUAL);
 
-        for (int i = 2; i <= numberOfStudents; i++) {
+        for (int i = 2; i <= NUMBER_OF_STUDENTS; i++) {
             textSubmission = new TextSubmission();
             textSubmission.submissionDate(ZonedDateTime.now().minusMonths(i - 1).withDayOfMonth(10));
             submission = database.addSubmission(exercise, textSubmission, TEST_PREFIX + "student" + i);
