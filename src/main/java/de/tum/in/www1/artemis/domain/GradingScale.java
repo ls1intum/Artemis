@@ -118,7 +118,7 @@ public class GradingScale extends DomainObject {
             return maxPoints != null ? maxPoints : 0;
         }
         else {
-            return this.getExam().getMaxPoints();
+            return this.getExam().getExamMaxPoints();
         }
     }
 

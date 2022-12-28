@@ -117,7 +117,7 @@ public class Lti13Service {
      * @return the username for the LTI user
      */
     @NotNull
-    protected String createUsernameFromLaunchRequest(OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
+    public String createUsernameFromLaunchRequest(OidcIdToken ltiIdToken, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username;
 
         if (!StringUtils.isEmpty(ltiIdToken.getPreferredUsername())) {
@@ -169,7 +169,7 @@ public class Lti13Service {
             Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
             if (result.isEmpty()) {
-                log.error("onNewResult triggered for participation " + participation.getId() + " but no result could be found");
+                log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
                 return;
             }
 
@@ -188,7 +188,7 @@ public class Lti13Service {
         String token = tokenRetriever.getToken(clientRegistration, Scopes.AGS_SCORE);
 
         if (token == null) {
-            log.error("Could not transmit score to " + clientRegistration.getClientId() + ": missing token");
+            log.error("Could not transmit score to {}: missing token", clientRegistration.getClientId());
             return;
         }
 
@@ -199,7 +199,7 @@ public class Lti13Service {
         HttpEntity<String> httpRequest = new HttpEntity<>(body, headers);
         try {
             restTemplate.postForEntity(scoreLineItemUrl, httpRequest, Object.class);
-            log.info("Submitted score for " + launch.getUser().getLogin() + " to client" + clientRegistration.getClientId());
+            log.info("Submitted score for {} to client {}", launch.getUser().getLogin(), clientRegistration.getClientId());
         }
         catch (HttpClientErrorException e) {
             String message = "Could not submit score for " + launch.getUser().getLogin() + " to client " + clientRegistration.getClientId() + ": " + e.getMessage();
@@ -245,12 +245,12 @@ public class Lti13Service {
             targetLinkPath = (new URL(targetLinkUrl)).getPath();
         }
         catch (MalformedURLException ex) {
-            log.info("Malformed target link url: " + targetLinkUrl);
+            log.info("Malformed target link url: {}", targetLinkUrl);
             return Optional.empty();
         }
 
         if (!matcher.match(EXERCISE_PATH_PATTERN, targetLinkPath)) {
-            log.info("Could not extract exerciseId and courseId from target link: " + targetLinkUrl);
+            log.info("Could not extract exerciseId and courseId from target link: {}", targetLinkUrl);
             return Optional.empty();
         }
         Map<String, String> pathVariables = matcher.extractUriTemplateVariables(EXERCISE_PATH_PATTERN, targetLinkPath);
@@ -260,7 +260,7 @@ public class Lti13Service {
         Optional<Exercise> exerciseOpt = exerciseRepository.findById(Long.valueOf(exerciseId));
 
         if (exerciseOpt.isEmpty()) {
-            log.info("Could not find exercise or course for target link url: " + targetLinkUrl);
+            log.info("Could not find exercise or course for target link url: {}", targetLinkUrl);
             return Optional.empty();
         }
 

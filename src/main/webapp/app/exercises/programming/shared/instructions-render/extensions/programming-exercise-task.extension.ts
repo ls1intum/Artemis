@@ -1,7 +1,7 @@
 import { EmbeddedViewRef, Injectable, Injector, ViewContainerRef } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import { ShowdownExtension } from 'showdown';
-// tslint:disable-next-line:max-line-length
+// eslint-disable-next-line max-len
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
 import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';

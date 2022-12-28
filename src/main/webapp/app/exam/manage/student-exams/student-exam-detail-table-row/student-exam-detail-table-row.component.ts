@@ -9,7 +9,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    /* tslint:disable-next-line component-selector */
+    /* eslint-disable-next-line  @angular-eslint/component-selector */
     selector: '[jhi-student-exam-detail-table-row]',
     templateUrl: './student-exam-detail-table-row.component.html',
     providers: [],
@@ -37,9 +37,11 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
     ngOnChanges() {
         if (this.exercise.studentParticipations?.[0]) {
             this.studentParticipation = this.exercise.studentParticipations![0];
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             if (this.studentParticipation.submissions?.length! > 0) {
                 this.submission = this.studentParticipation.submissions![0];
             }
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             if (this.studentParticipation.results?.length! > 0) {
                 this.result = this.studentParticipation.results![0];
             }
@@ -62,6 +64,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
         }
 
         if (exercise.type === ExerciseType.PROGRAMMING) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             route = getExerciseSubmissionsLink(exercise.type, this.courseId, exercise.id!, this.examId, exercise.exerciseGroup?.id!);
         } else if (submission) {
             this.openingAssessmentEditorForNewSubmission = true;
@@ -72,6 +75,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
                 this.studentParticipation?.id,
                 submission.id!,
                 this.examId,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
                 exercise.exerciseGroup?.id!,
                 resultId,
             );
