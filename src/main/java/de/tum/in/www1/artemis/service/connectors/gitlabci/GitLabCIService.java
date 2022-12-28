@@ -199,7 +199,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             boolean targetProjectExists) {
         // In GitLab CI we don't have to copy the build plan.
         // Instead, we configure a CI config path leading to the API when enabling the CI.
-        log.error("Unsupported action: GitLabCIService.copyBuildPlan()");
 
         // When sending the build results back, the build plan key is used to identify the participation.
         // Therefore, we return the key here even though GitLab CI does not need it.
