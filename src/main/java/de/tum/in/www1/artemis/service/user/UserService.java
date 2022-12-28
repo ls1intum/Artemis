@@ -7,10 +7,7 @@ import static de.tum.in.www1.artemis.security.Role.STUDENT;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -20,6 +17,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.cache.CacheManager;
 import org.springframework.context.event.EventListener;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -51,6 +49,7 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.PasswordViolatesRequirementsException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
+import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.security.RandomUtil;
 
 /**
@@ -102,12 +101,14 @@ public class UserService {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
+    private final Environment env;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository, InstanceMessageSendService instanceMessageSendService,
             ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository) {
+            TutorialGroupRepository tutorialGroupRepository, Environment env) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -124,6 +125,7 @@ public class UserService {
         this.exerciseHintActivationRepository = exerciseHintActivationRepository;
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
+        this.env = env;
     }
 
     /**
@@ -166,7 +168,11 @@ public class UserService {
             }
         }
         catch (Exception ex) {
-            log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", ex);
+            Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+            if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_TEST)) {
+                // no need to log this during tests
+                log.error("An error occurred after application startup when creating or updating the admin user or in the LDAP search", ex);
+            }
         }
     }
 

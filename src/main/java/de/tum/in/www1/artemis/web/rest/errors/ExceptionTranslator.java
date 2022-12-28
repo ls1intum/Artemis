@@ -30,7 +30,8 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.socket.sockjs.SockJsMessageDeliveryException;
 import org.zalando.problem.*;
 
-import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
+import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
+import de.tum.in.www1.artemis.exception.VersionControlException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.constraints.NotNull;
@@ -190,7 +191,13 @@ public class ExceptionTranslator {
     }
 
     @ExceptionHandler
-    public ResponseEntity<Problem> handleGitlabException(GitLabException ex, NativeWebRequest request) {
+    public ResponseEntity<Problem> handleContinuousIntegrationException(ContinuousIntegrationException ex, NativeWebRequest request) {
+        final var problem = Problem.builder().withStatus(Status.INTERNAL_SERVER_ERROR).with(MESSAGE_KEY, ex.getMessage()).build();
+        return create(ex, problem, request);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleVersionControlException(VersionControlException ex, NativeWebRequest request) {
         final var problem = Problem.builder().withStatus(Status.INTERNAL_SERVER_ERROR).with(MESSAGE_KEY, ex.getMessage()).build();
         return create(ex, problem, request);
     }

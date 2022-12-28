@@ -483,8 +483,7 @@ public class UserTestService {
 
         mockDelegate.mockFailToCreateUserInExernalUserManagement(student, false, false, true);
 
-        final var response = request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
-        assertThat(response).isNull();
+        request.postWithResponseBody("/api/admin/users", new ManagedUserVM(student), User.class, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     // Test
