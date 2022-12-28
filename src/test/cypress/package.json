@@ -7,7 +7,7 @@
         "node_modules"
     ],
     "devDependencies": {
-        "@heddendorp/coverage-git-compare": "1.3.1",
+        "@heddendorp/coverage-git-compare": "1.3.2",
         "@4tw/cypress-drag-drop": "2.2.3",
         "@types/node": "18.11.18",
         "cypress": "12.2.0",
