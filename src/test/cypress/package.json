@@ -8,6 +8,7 @@
     ],
     "devDependencies": {
         "@heddendorp/coverage-git-compare": "1.3.2",
+        "@heddendorp/cypress-plugin-multilanguage-coverage": "1.2.3",
         "@4tw/cypress-drag-drop": "2.2.3",
         "@types/node": "18.11.18",
         "cypress": "12.2.0",
@@ -22,8 +23,5 @@
         "cypress:run": "cypress run --browser=chrome",
         "detect:flakies": "coverage-git-compare bamboo $BAMBOO_PLAN_KEY $BAMBOO_TOKEN",
         "update": "npm-upgrade"
-    },
-    "dependencies": {
-        "@heddendorp/cypress-plugin-multilanguage-coverage": "1.2.3"
     }
 }
