@@ -55,10 +55,10 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-            LEFT JOIN FETCH lecture.lectureUnits lu
-            LEFT JOIN FETCH lu.learningGoals
-            LEFT JOIN FETCH lu.exercise exercise
-            LEFT JOIN FETCH exercise.learningGoals
+                LEFT JOIN FETCH lecture.lectureUnits lu
+                LEFT JOIN FETCH lu.learningGoals
+                LEFT JOIN FETCH lu.exercise exercise
+                LEFT JOIN FETCH exercise.learningGoals
             WHERE lecture.id = :#{#lectureId}
             """)
     Optional<Lecture> findByIdWithLectureUnitsAndLearningGoals(@Param("lectureId") Long lectureId);
@@ -66,7 +66,7 @@ public interface LectureRepository extends JpaRepository<Lecture, Long> {
     @Query("""
             SELECT lecture
             FROM Lecture lecture
-            LEFT JOIN FETCH lecture.lectureUnits
+                LEFT JOIN FETCH lecture.lectureUnits
             WHERE lecture.id = :#{#lectureId}
             """)
     Optional<Lecture> findByIdWithLectureUnits(@Param("lectureId") Long lectureId);

@@ -848,11 +848,6 @@ public class DatabaseUtilService {
     public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
         lecture = lectureRepo.findByIdWithLectureUnits(lecture.getId()).get();
         for (LectureUnit lectureUnit : lectureUnits) {
-            if (lectureUnit instanceof AttachmentUnit attachmentUnit) {
-                // as a workaround we remove some values here, otherwise saving the lecture below does not work
-                attachmentUnit.setAttachment(null);
-                attachmentUnit.setLecture(null);
-            }
             lecture.addLectureUnit(lectureUnit);
         }
         return lectureRepo.save(lecture);
@@ -867,7 +862,7 @@ public class DatabaseUtilService {
     public AttachmentUnit createAttachmentUnit(Boolean withFile) {
         // create the attachment unit
         AttachmentUnit attachmentUnit = new AttachmentUnit();
-        attachmentUnit.setDescription("Lorem Ipsum");
+        attachmentUnit.setDescription("Attachment Lorem Ipsum");
         attachmentUnit = attachmentUnitRepository.save(attachmentUnit);
 
         // create the attachment
@@ -884,13 +879,15 @@ public class DatabaseUtilService {
 
     public TextUnit createTextUnit() {
         TextUnit textUnit = new TextUnit();
-        textUnit.setContent("Lorem Ipsum");
+        textUnit.setContent("Text Lorem Ipsum");
+        textUnit.setName("Text Lorem Ipsum");
         return textUnitRepository.save(textUnit);
     }
 
     public VideoUnit createVideoUnit() {
         VideoUnit videoUnit = new VideoUnit();
-        videoUnit.setDescription("Lorem Ipsum");
+        videoUnit.setDescription("Video Lorem Ipsum");
+        videoUnit.setName("Video Lorem Ipsum");
         videoUnit.setSource("http://video.fake");
         return videoUnitRepository.save(videoUnit);
     }

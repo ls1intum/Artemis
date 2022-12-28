@@ -34,9 +34,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Autowired
     private AttachmentRepository attachmentRepository;
 
-    private Attachment attachmentDirectOfLecture;
+    private Attachment lectureAttachment;
 
-    private Attachment attachmentOfAttachmentUnit;
+    private Attachment unitAttachment;
 
     private TextExercise textExercise;
 
@@ -59,7 +59,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         // Setting up a lecture with various kinds of content
         ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);
         AttachmentUnit attachmentUnit = database.createAttachmentUnit(true);
-        this.attachmentOfAttachmentUnit = attachmentUnit.getAttachment();
+        this.unitAttachment = attachmentUnit.getAttachment();
         VideoUnit videoUnit = database.createVideoUnit();
         TextUnit textUnit = database.createTextUnit();
         addAttachmentToLecture();
@@ -68,11 +68,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     }
 
     private void addAttachmentToLecture() {
-        this.attachmentDirectOfLecture = ModelFactory.generateAttachment(null);
-        this.attachmentDirectOfLecture.setLink("files/temp/example2.txt");
-        this.attachmentDirectOfLecture.setLecture(this.lecture1);
-        this.attachmentDirectOfLecture = attachmentRepository.save(this.attachmentDirectOfLecture);
-        this.lecture1.addAttachments(this.attachmentDirectOfLecture);
+        this.lectureAttachment = ModelFactory.generateAttachment(null);
+        this.lectureAttachment.setLink("files/temp/example2.txt");
+        this.lectureAttachment.setLecture(this.lecture1);
+        this.lectureAttachment = attachmentRepository.save(this.lectureAttachment);
+        this.lecture1.addAttachments(this.lectureAttachment);
         this.lecture1 = lectureRepository.save(this.lecture1);
     }
 
@@ -210,9 +210,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getLecture_AttachmentNotReleased_shouldGetLectureWithoutAttachmentUnitAndAttachment() throws Exception {
-        Attachment unitAttachment = attachmentRepository.findById(attachmentOfAttachmentUnit.getId()).get();
+        Attachment unitAttachment = attachmentRepository.findById(this.unitAttachment.getId()).get();
         unitAttachment.setReleaseDate(ZonedDateTime.now().plusDays(10));
-        Attachment lectureAttachment = attachmentRepository.findById(attachmentDirectOfLecture.getId()).get();
+        Attachment lectureAttachment = attachmentRepository.findById(this.lectureAttachment.getId()).get();
         lectureAttachment.setReleaseDate(ZonedDateTime.now().plusDays(10));
         attachmentRepository.saveAll(Set.of(unitAttachment, lectureAttachment));
 
@@ -340,9 +340,11 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         Lecture lecture2 = request.postWithResponseBody("/api/lectures/import/" + lecture1.getId() + "?courseId=" + course2.getId(), null, Lecture.class, HttpStatus.CREATED);
 
         // Assert that all lecture units (except exercise units) were copied
+        // TODO: checking the name is not the best idea here, we should check other values as well
         assertThat(lecture2.getLectureUnits().stream().map(LectureUnit::getName).toList()).containsExactlyElementsOf(
                 this.lecture1.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(LectureUnit::getName).toList());
 
+        // TODO: checking the name is not the best idea here, we should check other values as well
         assertThat(lecture2.getAttachments().stream().map(Attachment::getName).toList())
                 .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
     }

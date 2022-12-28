@@ -41,9 +41,6 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private AttachmentRepository attachmentRepo;
 
     @Autowired
-    private AttachmentUnitRepository attachmentUnitRepo;
-
-    @Autowired
     private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired

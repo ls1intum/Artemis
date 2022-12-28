@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -99,7 +100,7 @@ public class LectureService {
      */
     @Transactional // ok because of delete
     public void delete(Lecture lecture) {
-        Lecture lectureToDelete = lectureRepository.findByIdElseThrow(lecture.getId());
+        Lecture lectureToDelete = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture.getId());
 
         // Hibernate sometimes adds null into the list of lecture units to keep the order, to prevent a NullPointerException we have to filter them
         var lectureUnits = lectureToDelete.getLectureUnits().stream().filter(Objects::nonNull).toList();
@@ -115,6 +116,15 @@ public class LectureService {
         // Delete the associated attachments (= orphan removal)
         if (lecture.getAttachments() != null && !lecture.getAttachments().isEmpty()) {
             attachmentRepository.deleteAll(lecture.getAttachments());
+        }
+
+        for (var lectureUnit : lectureUnits) {
+            if (lectureUnit instanceof AttachmentUnit attachmentUnit) {
+                // // Delete the associated attachment (= orphan removal)
+                if (attachmentUnit.getAttachment() != null) {
+                    attachmentRepository.delete(attachmentUnit.getAttachment());
+                }
+            }
         }
 
         lectureRepository.deleteById(lectureToDelete.getId());
