@@ -50,14 +50,14 @@ enum TestCaseBarTitle {
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip'
-                                        | artemisTranslate: { percentage: model.value.toFixed(2) }
+                                        | artemisTranslate : { percentage: model.value.toFixed(2) }
                                 }}
                             </span>
                             <br />
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
-                                        | artemisTranslate: { percentage: model.bonus.toFixed(2) }
+                                        | artemisTranslate : { percentage: model.bonus.toFixed(2) }
                                 }}
                             </span>
                         </div>
@@ -65,14 +65,14 @@ enum TestCaseBarTitle {
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightTooltip'
-                                        | artemisTranslate: { percentage: model.weight.toFixed(2) }
+                                        | artemisTranslate : { percentage: model.weight.toFixed(2) }
                                 }}
                             </span>
                             <br />
                             <span>
                                 {{
                                     'artemisApp.programmingExercise.configureGrading.charts.testCaseWeights.weightAndBonusTooltip'
-                                        | artemisTranslate: { percentage: model.value.toFixed(2) }
+                                        | artemisTranslate : { percentage: model.value.toFixed(2) }
                                 }}
                             </span>
                         </div>
@@ -98,7 +98,7 @@ enum TestCaseBarTitle {
                         <b>{{ model.name }}</b>
                         <br />
                         <span>
-                            {{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip' | artemisTranslate: { percentage: model.value.toFixed(2) } }}
+                            {{ 'artemisApp.programmingExercise.configureGrading.charts.testCasePoints.pointsTooltip' | artemisTranslate : { percentage: model.value.toFixed(2) } }}
                         </span>
                     </ng-template>
                 </ngx-charts-bar-horizontal-stacked>
