@@ -182,7 +182,7 @@ export class MetisService implements OnDestroy {
             this.postService.getPosts(this.courseId, postContextFilter).subscribe((res) => {
                 if (!forceUpdate && PageType.OVERVIEW === this.pageType) {
                     // if infinite scroll enabled, add fetched posts to the end of cachedPosts
-                    this.cachedPosts.push.apply(this.cachedPosts, res.body!);
+                    this.cachedPosts.push(...res.body!);
                 } else {
                     // if the context changed, we need to fetch posts and dismiss cached posts
                     this.cachedPosts = res.body!;
@@ -309,6 +309,8 @@ export class MetisService implements OnDestroy {
      * @param {CourseWideContext | undefined} courseWideContext optional course-wide context as default context
      * @param {Exercise | undefined} exercise optional exercise as default context
      * @param {Lecture | undefined} lecture optional lecture as default context
+     * @param plagiarismCase
+     * @param conversation
      * @return {Post} created default object
      */
     createEmptyPostForContext(courseWideContext?: CourseWideContext, exercise?: Exercise, lecture?: Lecture, plagiarismCase?: PlagiarismCase, conversation?: Conversation): Post {

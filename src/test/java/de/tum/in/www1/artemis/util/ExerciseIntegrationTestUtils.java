@@ -23,8 +23,8 @@ public class ExerciseIntegrationTestUtils {
     @Autowired
     protected RequestUtilService request;
 
-    public void testCourseAndExamFilters(String apiPath) throws Exception {
-        final var search = database.configureSearch("Ankh");
+    public void testCourseAndExamFilters(String apiPath, String searchTerm) throws Exception {
+        final var search = database.configureSearch(searchTerm);
 
         // no filter explicitly set -> should default to all filters active and show both exercises
         final var resultWithoutFiltersSet = request.get(apiPath, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
@@ -51,7 +51,7 @@ public class ExerciseIntegrationTestUtils {
         final var resultWithOnlyCoursesFilterActive = request.get(apiPath, HttpStatus.OK, SearchResultPageDTO.class, courseFilterParams);
         assertThat(resultWithOnlyCoursesFilterActive.getResultsOnPage()).hasSize(1);
         String courseFilterExerciseTitle = ((LinkedHashMap<String, String>) resultWithOnlyCoursesFilterActive.getResultsOnPage().get(0)).get("title");
-        assertThat(courseFilterExerciseTitle).isEqualTo("Ankh");
+        assertThat(courseFilterExerciseTitle).isEqualTo(searchTerm);
 
         // only exam filter set -> should show only the exercise course
         final MultiValueMap<String, String> examFilterParams = database.searchMapping(search);
@@ -60,7 +60,7 @@ public class ExerciseIntegrationTestUtils {
         final var resultWithOnlyExamFilterActive = request.get(apiPath, HttpStatus.OK, SearchResultPageDTO.class, examFilterParams);
         assertThat(resultWithOnlyExamFilterActive.getResultsOnPage()).hasSize(1);
         String examFilterExerciseTitle = ((LinkedHashMap<String, String>) resultWithOnlyExamFilterActive.getResultsOnPage().get(0)).get("title");
-        assertThat(examFilterExerciseTitle).isEqualTo("Ankh-Morpork");
+        assertThat(examFilterExerciseTitle).isEqualTo(searchTerm + "-Morpork");
     }
 
 }

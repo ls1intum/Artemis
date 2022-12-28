@@ -1031,6 +1031,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             return [];
         }
         // Release Date valid but lies in the past
+        // eslint-disable-next-line no-constant-condition
         if (false /*this.quizExercise.isPlannedToStart*/) {
             // TODO: quiz cleanup: properly validate dates and deduplicate the checks (see isValidQuiz)
             if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
@@ -1053,7 +1054,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     isSaveDisabled(): boolean {
-        // tslint:disable-next-line:max-line-length
+        // eslint-disable-next-line max-len
         return this.isSaving || !this.pendingChangesCache || !this.quizIsValid || this.hasSavedQuizStarted || this.quizExercise.dueDateError || this.hasErrorInQuizBatches();
     }
 

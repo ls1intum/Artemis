@@ -169,8 +169,10 @@ describe('User Settings Service', () => {
                 ) as NotificationSetting[];
                 updateNotificationSettings(expectedNotificationSettings, notificationSettingsForTesting);
 
-                let resultingSettings: NotificationSetting[];
-                resultingSettings = userSettingsService.loadSettingsSuccessAsIndividualSettings(notificationSettingsForTesting, userSettingsCategory) as NotificationSetting[];
+                const resultingSettings = userSettingsService.loadSettingsSuccessAsIndividualSettings(
+                    notificationSettingsForTesting,
+                    userSettingsCategory,
+                ) as NotificationSetting[];
 
                 expect(resultingSettings).toHaveLength(expectedNotificationSettings.length);
                 checkIfProvidedNotificationSettingsArePartOfExpectedSettings(resultingSettings, expectedNotificationSettings);

@@ -43,7 +43,6 @@ export class MockTranslateService {
         return this.languages;
     }
 
-    // tslint:disable-next-line:no-any
     getTranslation(): Observable<any> {
         return of({});
     }
