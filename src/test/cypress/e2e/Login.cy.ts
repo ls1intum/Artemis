@@ -24,6 +24,7 @@ describe('Login page tests', () => {
     });
 
     it('Displays error messages on wrong password', () => {
+        cy.visit('/');
         loginPage.login({ username: 'some_user_name', password: 'lorem-ipsum' });
         cy.location('pathname').should('eq', '/');
         cy.get('.alert').should('exist').and('have.text', 'Failed to sign in! Please check your username and password and try again.');
