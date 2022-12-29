@@ -152,10 +152,10 @@ public class CourseResource {
         // this is important, otherwise someone could put himself into the instructor group of the updated course
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingCourse, user);
 
-        Set<String> existingGroupNames = Set.of(existingCourse.getStudentGroupName(), existingCourse.getTeachingAssistantGroupName(), existingCourse.getEditorGroupName(),
-                existingCourse.getInstructorGroupName());
-        Set<String> newGroupNames = Set.of(courseUpdate.getStudentGroupName(), courseUpdate.getTeachingAssistantGroupName(), courseUpdate.getEditorGroupName(),
-                courseUpdate.getInstructorGroupName());
+        Set<String> existingGroupNames = new HashSet<>(List.of(existingCourse.getStudentGroupName(), existingCourse.getTeachingAssistantGroupName(),
+                existingCourse.getEditorGroupName(), existingCourse.getInstructorGroupName()));
+        Set<String> newGroupNames = new HashSet<>(List.of(courseUpdate.getStudentGroupName(), courseUpdate.getTeachingAssistantGroupName(), courseUpdate.getEditorGroupName(),
+                courseUpdate.getInstructorGroupName()));
         Set<String> changedGroupNames = new HashSet<>(newGroupNames);
         changedGroupNames.removeAll(existingGroupNames);
 

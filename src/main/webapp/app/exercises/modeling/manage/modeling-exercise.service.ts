@@ -79,7 +79,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
 
     convertToPdf(model: string, filename: string): Observable<HttpResponse<Blob>> {
         return this.http
-            .post(`${SERVER_API_URL}api/apollon-convert/pdf`, { model }, { observe: 'response', responseType: 'blob' })
+            .post(`${SERVER_API_URL}api/apollon/convert-to-pdf`, { model }, { observe: 'response', responseType: 'blob' })
             .pipe(tap((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)));
     }
 
