@@ -578,9 +578,9 @@ public class ProgrammingExerciseGradingService {
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
-        Map<Boolean, List<Feedback>> feedbacksGroupedByType = result.getFeedbacks().stream().collect(Collectors.groupingBy(Feedback::isStaticCodeAnalysisFeedback));
-        List<Feedback> staticCodeAnalysisFeedback = feedbacksGroupedByType.get(true);
-        List<Feedback> testCaseFeedback = feedbacksGroupedByType.get(false); // Feedbacks that are not SCA here are test cases
+        Map<Boolean, List<Feedback>> feedbacksGroupedByIsSCA = result.getFeedbacks().stream().collect(Collectors.groupingBy(Feedback::isStaticCodeAnalysisFeedback));
+        List<Feedback> staticCodeAnalysisFeedback = feedbacksGroupedByIsSCA.getOrDefault(true, new ArrayList<>());
+        List<Feedback> testCaseFeedback = feedbacksGroupedByIsSCA.getOrDefault(false, new ArrayList<>()); // Feedbacks that are not SCA here are test cases
 
         // Remove feedback that is in an invisible SCA category
         staticCodeAnalysisFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
