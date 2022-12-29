@@ -162,4 +162,47 @@ describe('Lecture', () => {
         expect(wizardModeButton).toHaveBeenCalledOnce();
         expect(lectureUpdateComponent.isShowingWizardMode).toBeTrue();
     }));
+
+    it('should show process units', fakeAsync(() => {
+        lectureUpdateComponent.processUnitMode = false;
+        const selectProcessUnit = jest.spyOn(lectureUpdateComponent, 'onSelectProcessUnit');
+        lectureUpdateComponent.onSelectProcessUnit();
+        tick();
+        expect(selectProcessUnit).toHaveBeenCalledOnce();
+        expect(lectureUpdateComponent.processUnitMode).toBeTrue();
+    }));
+
+    it('should create a lecture and then redirect to unit split', fakeAsync(() => {
+        lectureUpdateComponent.file = new File([''], 'testFile.pdf');
+        lectureUpdateComponent.fileName = 'testFile';
+        lectureUpdateComponent.processUnitMode = true;
+        lectureUpdateComponent.lecture = { title: 'test1' } as Lecture;
+        const navigateSpy = jest.spyOn(router, 'navigate');
+
+        const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
+            of<HttpResponse<Lecture>>(
+                new HttpResponse({
+                    body: {
+                        id: 3,
+                        title: 'test1',
+                        course: {
+                            id: 1,
+                        },
+                    } as Lecture,
+                }),
+            ),
+        );
+
+        const proceedToUnitSplitSpy = jest.spyOn(lectureUpdateComponent, 'proceedToUnitSplit');
+        lectureUpdateComponent.proceedToUnitSplit();
+        tick();
+
+        expect(createSpy).toHaveBeenCalledOnce();
+        expect(createSpy).toHaveBeenCalledWith({ title: 'test1' });
+        expect(proceedToUnitSplitSpy).toHaveBeenCalledOnce();
+        expect(lectureUpdateComponent.processUnitMode).toBeTrue();
+
+        const expectedPath = ['course-management', 1, 'lectures', 3, 'unit-management', 'attachment-units', 'process'];
+        expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName } });
+    }));
 });
