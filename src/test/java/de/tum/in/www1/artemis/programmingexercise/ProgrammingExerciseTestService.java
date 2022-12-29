@@ -887,7 +887,10 @@ public class ProgrammingExerciseTestService {
         else {
             permissions = VersionControlService.RepositoryPermissions.READ_ONLY;
         }
-        verify(versionControlService).addMemberToRepository(any(), eq(userRepo.getUserByLoginElseThrow(studentLogin)), eq(permissions));
+
+        final User participant = userRepo.getUserByLoginElseThrow(userPrefix + studentLogin);
+
+        verify(versionControlService).addMemberToRepository(any(), eq(participant), eq(permissions));
     }
 
     private Course setupCourseWithProgrammingExercise(ExerciseMode exerciseMode) {
