@@ -578,7 +578,8 @@ public class ProgrammingExerciseGradingService {
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
-        Map<Boolean, List<Feedback>> feedbacksGroupedByIsSCA = result.getFeedbacks().stream().collect(Collectors.groupingBy(Feedback::isStaticCodeAnalysisFeedback));
+        Map<Boolean, List<Feedback>> feedbacksGroupedByIsSCA = result.getFeedbacks().stream().filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType()))
+                .collect(Collectors.groupingBy(Feedback::isStaticCodeAnalysisFeedback));
         List<Feedback> staticCodeAnalysisFeedback = feedbacksGroupedByIsSCA.getOrDefault(true, new ArrayList<>());
         List<Feedback> testCaseFeedback = feedbacksGroupedByIsSCA.getOrDefault(false, new ArrayList<>()); // Feedbacks that are not SCA here are test cases
 
@@ -751,6 +752,12 @@ public class ProgrammingExerciseGradingService {
      */
     private double calculateScore(final ProgrammingExercise programmingExercise, final Set<ProgrammingExerciseTestCase> allTests, final Result result,
             final List<Feedback> staticCodeAnalysisFeedback, boolean applySubmissionPolicy) {
+        // TODO: this might be redundant and covered in calculateSuccessfulTestPoints
+        boolean noSuccessfulTestCases = allTests.stream().noneMatch(testCase -> testCase.isSuccessful(result));
+        if (noSuccessfulTestCases) {
+            return 0;
+        }
+
         double points = calculateSuccessfulTestPoints(programmingExercise, result, allTests);
         points -= calculateTotalPenalty(programmingExercise, result.getParticipation(), staticCodeAnalysisFeedback, applySubmissionPolicy);
 
