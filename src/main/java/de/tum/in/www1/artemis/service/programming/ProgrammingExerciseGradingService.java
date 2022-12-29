@@ -751,12 +751,6 @@ public class ProgrammingExerciseGradingService {
      */
     private double calculateScore(final ProgrammingExercise programmingExercise, final Set<ProgrammingExerciseTestCase> allTests, final Result result,
             final List<Feedback> staticCodeAnalysisFeedback, boolean applySubmissionPolicy) {
-        // TODO: this might be redundant and covered in calculateSuccessfulTestPoints
-        boolean noSuccessfulTestCases = allTests.stream().noneMatch(testCase -> testCase.isSuccessful(result));
-        if (noSuccessfulTestCases) {
-            return 0;
-        }
-
         double points = calculateSuccessfulTestPoints(programmingExercise, result, allTests);
         points -= calculateTotalPenalty(programmingExercise, result.getParticipation(), staticCodeAnalysisFeedback, applySubmissionPolicy);
 
