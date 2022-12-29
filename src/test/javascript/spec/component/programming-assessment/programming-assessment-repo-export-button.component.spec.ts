@@ -36,7 +36,6 @@ describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
                 ProgrammingAssessmentRepoExportButtonComponent,
                 MockTranslateValuesDirective,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(TranslateDirective),
             ],
@@ -45,7 +44,6 @@ describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingAssessmentRepoExportButtonComponent);

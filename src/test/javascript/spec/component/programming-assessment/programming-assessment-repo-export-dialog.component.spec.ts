@@ -54,7 +54,6 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 MockTranslateValuesDirective,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FormDateTimePickerComponent),
-                MockComponent(FaIconComponent),
                 MockDirective(TranslateDirective),
                 MockDirective(FeatureToggleDirective),
                 MockDirective(NgModel),
@@ -67,7 +66,6 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 // Ignore console errors

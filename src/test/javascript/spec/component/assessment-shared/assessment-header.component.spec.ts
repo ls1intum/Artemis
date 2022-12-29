@@ -50,15 +50,7 @@ describe('AssessmentHeaderComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, RouterTestingModule, MockModule(NgbTooltipModule), MockComponent(NgbAlert)],
-            declarations: [
-                AssessmentHeaderComponent,
-                AssessmentWarningComponent,
-                AlertOverlayComponent,
-                TranslateDirective,
-                ArtemisTranslatePipe,
-                MockTranslateValuesDirective,
-                MockComponent(FaIconComponent),
-            ],
+            declarations: [AssessmentHeaderComponent, AssessmentWarningComponent, AlertOverlayComponent, TranslateDirective, ArtemisTranslatePipe, MockTranslateValuesDirective],
             providers: [
                 {
                     provide: AlertService,
@@ -84,9 +76,7 @@ describe('AssessmentHeaderComponent', () => {
                     },
                 }),
             ],
-        })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
-            .compileComponents();
+        }).compileComponents();
     });
 
     beforeEach(() => {
