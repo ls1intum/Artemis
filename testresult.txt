@@ -1,4 +1,0 @@
-
-> artemis@6.0.0 test
-> ng test --coverage --log-heap-usage -w=4
-
