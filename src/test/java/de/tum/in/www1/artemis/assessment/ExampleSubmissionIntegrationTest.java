@@ -285,8 +285,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         var dto = new TextAssessmentDTO();
         dto.setFeedbacks(feedbacks);
         long randomId = 1233;
-        request.putWithResponseBody("/api/exercises/" + randomId + "/example-submissions/" + storedExampleSubmission.getSubmission().getId() + "/example-text-assessment", dto,
-                Result.class, HttpStatus.BAD_REQUEST);
+        request.putWithResponseBody("/api/exercises/" + randomId + "/example-submissions/" + storedExampleSubmission.getId() + "/example-text-assessment", dto, Result.class,
+                HttpStatus.BAD_REQUEST);
         assertThat(exampleSubmissionRepo.findBySubmissionId(randomId)).isEmpty();
     }
 
