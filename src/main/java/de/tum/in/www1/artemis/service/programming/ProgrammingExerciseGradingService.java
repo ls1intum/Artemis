@@ -389,13 +389,14 @@ public class ProgrammingExerciseGradingService {
      */
     public Result calculateScoreForResult(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
         Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
+        var testCasesForCurrentDate = testCases;
 
         // We don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
         if (isStudentParticipation) {
-            testCases = filterTestCasesForCurrentDate(result.getParticipation(), testCases);
+            testCasesForCurrentDate = filterTestCasesForCurrentDate(result.getParticipation(), testCases);
         }
 
-        return calculateScoreForResult(testCases, testCases, result, exercise, isStudentParticipation);
+        return calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, isStudentParticipation);
     }
 
     /**
