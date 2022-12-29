@@ -788,7 +788,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testGetQuizExercisesForExam() throws Exception {
         quizExercise = createQuizOnServerForExam();
         var examId = quizExercise.getExerciseGroup().getExam().getId();
-        List<QuizExercise> quizExercises = request.getList("/api/" + examId + "/quiz-exercises", HttpStatus.OK, QuizExercise.class);
+        List<QuizExercise> quizExercises = request.getList("/api/exams/" + examId + "/quiz-exercises", HttpStatus.OK, QuizExercise.class);
         assertThat(quizExercises).as("Quiz exercise was retrieved").hasSize(1);
         assertThat(quizExercise.getId()).as("Quiz exercise with the right id was retrieved").isEqualTo(quizExercises.get(0).getId());
     }

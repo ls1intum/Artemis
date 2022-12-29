@@ -513,7 +513,7 @@ public class StudentExamService {
                         .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
                                 generatedParticipations.size(), startedAt, lock))
                         .exceptionally(throwable -> {
-                            log.error("Exception while preparing exercises for student exam " + studentExam.getId(), throwable);
+                            log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
                             sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
                                     generatedParticipations.size(), startedAt, lock);
                             return null;
