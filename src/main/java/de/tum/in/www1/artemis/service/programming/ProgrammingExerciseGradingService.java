@@ -578,8 +578,9 @@ public class ProgrammingExerciseGradingService {
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
-        List<Feedback> staticCodeAnalysisFeedback = result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback).toList();
-        List<Feedback> testCaseFeedback = result.getFeedbacks().stream().filter(Feedback::isTestFeedback).toList();
+        Map<Boolean, List<Feedback>> feedbacksGroupedByType = result.getFeedbacks().stream().collect(Collectors.groupingBy(Feedback::isStaticCodeAnalysisFeedback));
+        List<Feedback> staticCodeAnalysisFeedback = feedbacksGroupedByType.get(true);
+        List<Feedback> testCaseFeedback = feedbacksGroupedByType.get(false); // Feedbacks that are not SCA here are test cases
 
         // Remove feedback that is in an invisible SCA category
         staticCodeAnalysisFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
@@ -751,7 +752,7 @@ public class ProgrammingExerciseGradingService {
     private double calculateScore(final ProgrammingExercise programmingExercise, final Set<ProgrammingExerciseTestCase> allTests, final Result result,
             final List<Feedback> staticCodeAnalysisFeedback, boolean applySubmissionPolicy) {
         // TODO: this might be redundant and covered in calculateSuccessfulTestPoints
-        var noSuccessfulTestCases = allTests.stream().filter(testCase -> testCase.isSuccessful(result)).toList().isEmpty();
+        boolean noSuccessfulTestCases = allTests.stream().noneMatch(testCase -> testCase.isSuccessful(result));
         if (noSuccessfulTestCases) {
             return 0;
         }
