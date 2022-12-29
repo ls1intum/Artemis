@@ -16,7 +16,6 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { TranslateDirective, TranslateService } from '@ngx-translate/core';
 import { TextAssessmentEventType } from 'app/entities/text-assesment-event.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { HttpResponse } from '@angular/common/http';
