@@ -578,7 +578,7 @@ public class ProgrammingExerciseGradingService {
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
-        Map<Boolean, List<Feedback>> feedbacksGroupedByType = result.getFeedbacks().stream().collect(Collectors.groupingBy(Feedback::isStaticCodeAnalysisFeedback));
+        Map<Boolean, List<Feedback>> feedbacksGroupedByType = result.getFeedbacks().stream().filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType())).collect(Collectors.groupingBy(Feedback::isStaticCodeAnalysisFeedback));
         List<Feedback> staticCodeAnalysisFeedback = feedbacksGroupedByType.get(true);
         List<Feedback> testCaseFeedback = feedbacksGroupedByType.get(false); // Feedbacks that are not SCA here are test cases
 
