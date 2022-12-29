@@ -63,7 +63,7 @@ describe('Lecture', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         parent: {
-                            data: of({}),
+                            data: of({ course: { id: 1 }, lecture: { id: 6 } }),
                         },
                         queryParams: of({}),
                         snapshot: {
@@ -126,5 +126,31 @@ describe('Lecture', () => {
         expect(createSpy).toHaveBeenCalledOnce();
         expect(createSpy).toHaveBeenCalledWith({ title: 'test1' });
         expect(lectureServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
+    }));
+
+    it('should edit a lecture', fakeAsync(() => {
+        lectureComponentFixture.detectChanges();
+        lectureUpdateComponent.lecture = { id: 6, title: 'test1Updated' } as Lecture;
+
+        const updateSpy = jest.spyOn(lectureService, 'update').mockReturnValue(
+            of<HttpResponse<Lecture>>(
+                new HttpResponse({
+                    body: {
+                        id: 6,
+                        title: 'test1Updated',
+                        course: {
+                            id: 1,
+                        },
+                    } as Lecture,
+                }),
+            ),
+        );
+
+        lectureUpdateComponent.save();
+        tick();
+        lectureUpdateComponentFixture.detectChanges();
+
+        expect(updateSpy).toHaveBeenCalledOnce();
+        expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated' });
     }));
 });
