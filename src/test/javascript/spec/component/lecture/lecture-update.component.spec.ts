@@ -153,4 +153,13 @@ describe('Lecture', () => {
         expect(updateSpy).toHaveBeenCalledOnce();
         expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated' });
     }));
+
+    it('should show wizard mode', fakeAsync(() => {
+        lectureUpdateComponent.isShowingWizardMode = false;
+        const wizardModeButton = jest.spyOn(lectureUpdateComponent, 'toggleWizardMode');
+        lectureUpdateComponent.toggleWizardMode();
+        tick();
+        expect(wizardModeButton).toHaveBeenCalledOnce();
+        expect(lectureUpdateComponent.isShowingWizardMode).toBeTrue();
+    }));
 });
