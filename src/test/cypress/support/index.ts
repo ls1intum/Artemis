@@ -58,7 +58,7 @@ Cypress.on('uncaught:exception', (err, runnable) => {
 });
 
 /**
- * We want to log out our test retries to the console to be able to see how often a test is retried.
+ * We want to log our test retries to the console to be able to see how often a test is retried.
  */
 const config: any = Cypress.config();
 if (!config.isInteractive && config.reporter !== 'spec') {
