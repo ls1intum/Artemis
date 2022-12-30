@@ -18,6 +18,8 @@ import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
 class ConversationIntegrationTest extends AbstractConversationTest {
 
+    private static final String TEST_PREFIX = "cvtest";
+
     @BeforeEach
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
@@ -26,8 +28,6 @@ class ConversationIntegrationTest extends AbstractConversationTest {
             userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "student42"));
         }
     }
-
-    private static final String TEST_PREFIX = "contest";
 
     @Override
     String getTestPrefix() {

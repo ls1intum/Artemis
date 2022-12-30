@@ -277,11 +277,11 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
         private static final SecureRandom RANDOM = new SecureRandom();
 
         public static String generateRandomConversationName() {
-            StringBuilder sb = new StringBuilder();
+            var stringBuilder = new StringBuilder();
             for (int i = 0; i < 10; i++) {
-                sb.append(ALL_CHARS.charAt(RANDOM.nextInt(ALL_CHARS.length())));
+                stringBuilder.append(ALL_CHARS.charAt(RANDOM.nextInt(ALL_CHARS.length())));
             }
-            return sb.toString();
+            return stringBuilder.toString();
         }
     }
 

@@ -16,6 +16,8 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 
 class GroupChatIntegrationTest extends AbstractConversationTest {
 
+    private static final String TEST_PREFIX = "grtest";
+
     @BeforeEach
     void setupTestScenario() throws Exception {
         super.setupTestScenario();
@@ -24,8 +26,6 @@ class GroupChatIntegrationTest extends AbstractConversationTest {
             userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "student42"));
         }
     }
-
-    private static final String TEST_PREFIX = "gctest";
 
     @Override
     String getTestPrefix() {
