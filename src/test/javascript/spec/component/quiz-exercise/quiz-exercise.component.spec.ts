@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { ArtemisTestModule } from '../../test.module';
 import { QuizExerciseComponent } from 'app/exercises/quiz/manage/quiz-exercise.component';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
-import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
@@ -328,6 +328,29 @@ describe('QuizExercise Management Component', () => {
 
     it('should return quiz id', () => {
         expect(comp.trackId(0, quizExercise)).toBe(456);
+    });
+
+    it('should check if quiz is editable', () => {
+        quizExercise.quizMode = QuizMode.BATCHED;
+        quizExercise.quizBatches = undefined;
+        expect(comp.isQuizEditable(quizExercise)).toBeTrue();
+        quizExercise.quizBatches = [];
+        expect(comp.isQuizEditable(quizExercise)).toBeTrue();
+        quizExercise.quizBatches = [new QuizBatch()];
+        expect(comp.isQuizEditable(quizExercise)).toBeFalse();
+
+        quizExercise.quizMode = QuizMode.SYNCHRONIZED;
+        quizExercise.quizBatches = undefined;
+        quizExercise.status = QuizStatus.VISIBLE;
+        expect(comp.isQuizEditable(quizExercise)).toBeTrue();
+        quizExercise.status = QuizStatus.ACTIVE;
+        expect(comp.isQuizEditable(quizExercise)).toBeFalse();
+
+        quizExercise.status = QuizStatus.VISIBLE;
+        quizExercise.quizEnded = false;
+        expect(comp.isQuizEditable(quizExercise)).toBeTrue();
+        quizExercise.quizEnded = true;
+        expect(comp.isQuizEditable(quizExercise)).toBeFalse();
     });
 
     describe('QuizExercise Search Exercises', () => {
