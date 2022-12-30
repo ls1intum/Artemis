@@ -56,7 +56,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    @Timeout(5)
+    @Timeout(10)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtReleaseDate() {
         long sizeBefore = notificationRepository.count();
@@ -64,7 +64,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
         await().until(() -> notificationRepository.count() > sizeBefore);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(exercise);
-        verify(javaMailSender, timeout(2000).times(1)).send(any(MimeMessage.class));
+        verify(javaMailSender, timeout(4000).times(1)).send(any(MimeMessage.class));
     }
 
     @Test
