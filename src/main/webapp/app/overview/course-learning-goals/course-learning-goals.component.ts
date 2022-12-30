@@ -5,9 +5,10 @@ import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { forkJoin } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-course-learning-goals',
@@ -23,10 +24,13 @@ export class CourseLearningGoalsComponent implements OnInit {
     learningGoals: LearningGoal[] = [];
     prerequisites: LearningGoal[] = [];
 
+    private courseUpdateSubscription?: Subscription;
+
     constructor(
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private courseCalculationService: CourseScoreCalculationService,
+        private courseManagementService: CourseManagementService,
         private learningGoalService: LearningGoalService,
     ) {}
 
@@ -35,7 +39,12 @@ export class CourseLearningGoalsComponent implements OnInit {
             this.courseId = parseInt(params['courseId'], 10);
         });
 
-        this.course = this.courseCalculationService.getCourse(this.courseId);
+        this.setCourse(this.courseCalculationService.getCourse(this.courseId));
+        this.courseUpdateSubscription = this.courseManagementService.getCourseUpdates(this.courseId).subscribe((course) => this.setCourse(course));
+    }
+
+    private setCourse(course?: Course) {
+        this.course = course;
         if (this.course && this.course.learningGoals && this.course.prerequisites) {
             this.learningGoals = this.course.learningGoals;
             this.prerequisites = this.course.prerequisites;

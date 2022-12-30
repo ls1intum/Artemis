@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,6 +22,13 @@ public interface LearningGoalProgressRepository extends JpaRepository<LearningGo
     @Transactional
     @Modifying
     void deleteAllByUserId(Long userId);
+
+    @Query("""
+            SELECT learningGoalProgress
+            FROM LearningGoalProgress learningGoalProgress
+            WHERE learningGoalProgress.learningGoal.id = :learningGoalId
+            """)
+    List<LearningGoalProgress> findAllByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
             SELECT learningGoalProgress

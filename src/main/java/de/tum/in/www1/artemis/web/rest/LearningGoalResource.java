@@ -14,15 +14,13 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.LearningGoal;
-import de.tum.in.www1.artemis.domain.LearningGoalRelation;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.service.LearningGoalService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
@@ -59,9 +57,14 @@ public class LearningGoalResource {
 
     private final LearningGoalProgressRepository learningGoalProgressRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
+    private final LearningGoalProgressService learningGoalProgressService;
+
     public LearningGoalResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             LearningGoalRepository learningGoalRepository, LearningGoalRelationRepository learningGoalRelationRepository, LectureUnitRepository lectureUnitRepository,
-            LearningGoalService learningGoalService, LearningGoalProgressRepository learningGoalProgressRepository) {
+            LearningGoalService learningGoalService, LearningGoalProgressRepository learningGoalProgressRepository, ExerciseRepository exerciseRepository,
+            LearningGoalProgressService learningGoalProgressService) {
         this.courseRepository = courseRepository;
         this.learningGoalRelationRepository = learningGoalRelationRepository;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -70,6 +73,8 @@ public class LearningGoalResource {
         this.learningGoalRepository = learningGoalRepository;
         this.learningGoalService = learningGoalService;
         this.learningGoalProgressRepository = learningGoalProgressRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.learningGoalProgressService = learningGoalProgressService;
     }
 
     /**
@@ -218,7 +223,7 @@ public class LearningGoalResource {
         if (learningGoal.getId() == null) {
             throw new BadRequestException();
         }
-        var existingLearningGoal = this.learningGoalRepository.findByIdElseThrow(learningGoal.getId());
+        var existingLearningGoal = this.learningGoalRepository.findByIdWithLectureUnitsElseThrow(learningGoal.getId());
         if (existingLearningGoal.getCourse() == null || !existingLearningGoal.getCourse().getId().equals(courseId)) {
             throw new BadRequestException();
         }
@@ -229,20 +234,17 @@ public class LearningGoalResource {
         existingLearningGoal.setDescription(learningGoal.getDescription());
         existingLearningGoal.setTaxonomy(learningGoal.getTaxonomy());
         existingLearningGoal.setMasteryThreshold(learningGoal.getMasteryThreshold());
+        var persistedLearningGoal = learningGoalRepository.save(existingLearningGoal);
 
-        // TODO: Move the managing of relations to its own endpoint (likely using a modal in the client)
-        var lectureUnitIds = learningGoal.getLectureUnits().stream().map(LectureUnit::getId).toList();
-        var lectureUnits = lectureUnitRepository.findAllById(lectureUnitIds);
-        var lectureUnitsWithoutExercises = lectureUnits.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
-        var exercises = lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise())
-                .collect(Collectors.toSet());
+        linkLectureUnitsToLearningGoal(persistedLearningGoal, learningGoal.getLectureUnits(), existingLearningGoal.getLectureUnits());
 
-        existingLearningGoal.setLectureUnits(lectureUnitsWithoutExercises);
-        existingLearningGoal.setExercises(exercises);
+        if (learningGoal.getLectureUnits().size() != existingLearningGoal.getLectureUnits().size()
+                || !existingLearningGoal.getLectureUnits().containsAll(learningGoal.getLectureUnits())) {
+            log.debug("Linked lecture units changed, updating student progress for learning goal...");
+            learningGoalProgressService.updateProgressByLearningGoalAsync(persistedLearningGoal);
+        }
 
-        existingLearningGoal = learningGoalRepository.save(existingLearningGoal);
-
-        return ResponseEntity.ok(existingLearningGoal);
+        return ResponseEntity.ok(persistedLearningGoal);
     }
 
     /**
@@ -274,15 +276,9 @@ public class LearningGoalResource {
         learningGoalToCreate.setMasteryThreshold(learningGoalFromClient.getMasteryThreshold());
         learningGoalToCreate.setCourse(course);
 
-        // TODO: Move the managing of relations to its own endpoint (likely using a modal in the client)
-        var lectureUnits = getLectureUnitsFromDatabase(learningGoalFromClient.getLectureUnits());
-        var lectureUnitsWithoutExercises = lectureUnits.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
-        var exercises = lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise())
-                .collect(Collectors.toSet());
-        learningGoalToCreate.setLectureUnits(lectureUnitsWithoutExercises);
-        learningGoalToCreate.setExercises(exercises);
-
         var persistedLearningGoal = learningGoalRepository.save(learningGoalToCreate);
+
+        linkLectureUnitsToLearningGoal(persistedLearningGoal, learningGoalFromClient.getLectureUnits(), Set.of());
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/goals/" + persistedLearningGoal.getId())).body(persistedLearningGoal);
     }
@@ -429,6 +425,31 @@ public class LearningGoalResource {
             }
         }
         return lectureUnitsFromDatabase;
+    }
+
+    /**
+     * Link the learning goal to a set of lecture units (and exercises if it includes exercise units)
+     * @param learningGoal The learning goal to be linked
+     * @param lectureUnitsToAdd A set of lecture units to link to the specified learning goal
+     * @param lectureUnitsToRemove A set of lecture units to unlink from the specified learning goal
+     */
+    private void linkLectureUnitsToLearningGoal(LearningGoal learningGoal, Set<LectureUnit> lectureUnitsToAdd, Set<LectureUnit> lectureUnitsToRemove) {
+        // Remove the learning goal from the old lecture units
+        var lectureUnitsToRemoveFromDb = getLectureUnitsFromDatabase(lectureUnitsToRemove);
+        lectureUnitRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
+                .peek(lectureUnit -> lectureUnit.getLearningGoals().remove(learningGoal)).collect(Collectors.toSet()));
+        exerciseRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
+                .map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).peek(exercise -> exercise.getLearningGoals().remove(learningGoal)).collect(Collectors.toSet()));
+
+        // Add the learning goal to the new lecture units
+        var lectureUnitsFromDb = getLectureUnitsFromDatabase(lectureUnitsToAdd);
+        var lectureUnitsWithoutExercises = lectureUnitsFromDb.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
+        var exercises = lectureUnitsFromDb.stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise())
+                .collect(Collectors.toSet());
+        lectureUnitsWithoutExercises.stream().map(LectureUnit::getLearningGoals).forEach(learningGoals -> learningGoals.add(learningGoal));
+        exercises.stream().map(Exercise::getLearningGoals).forEach(learningGoals -> learningGoals.add(learningGoal));
+        lectureUnitRepository.saveAll(lectureUnitsWithoutExercises);
+        exerciseRepository.saveAll(exercises);
     }
 
 }

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.Instant;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
@@ -56,23 +57,23 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Asynchronously update the progress for all learning goals linked to the given learning object
+     * Asynchronously update the progress for learning goals linked to the given learning object (for the specified participant)
      * @param learningObject The learning object for which to fetch the learning goals
      * @param participant The participant (user or team) for which to update the progress
      */
     @Async
     public void updateProgressByLearningObjectAsync(ILearningObject learningObject, @NotNull Participant participant) {
-        SecurityUtils.setAuthorizationObject();
+        SecurityUtils.setAuthorizationObject(); // required for async
         updateProgressByLearningObject(learningObject, participant.getParticipants());
     }
 
     /**
-     * Asynchronously update the progress for all learning goals linked to the given learning object
+     * Asynchronously update the progress for the learning goals linked to the given learning object (for all students in the course)
      * @param learningObject The learning object for which to fetch the learning goals
      */
     @Async
     public void updateProgressByLearningObjectAsync(ILearningObject learningObject) {
-        SecurityUtils.setAuthorizationObject();
+        SecurityUtils.setAuthorizationObject(); // required for async
         Course course;
         if (learningObject instanceof Exercise exercise) {
             course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -84,6 +85,33 @@ public class LearningGoalProgressService {
             throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
         }
         updateProgressByLearningObject(learningObject, new HashSet<>(userRepository.getStudents(course)));
+    }
+
+    /**
+     * Asynchronously update the existing progress for a specific learning goal
+     * @param learningGoal The learning goal for which to update all existing student progress
+     */
+    @Async
+    public void updateProgressByLearningGoalAsync(LearningGoal learningGoal) {
+        SecurityUtils.setAuthorizationObject(); // required for async
+        learningGoalProgressRepository.findAllByLearningGoalId(learningGoal.getId()).stream().map(LearningGoalProgress::getUser).forEach(user -> {
+            updateProgress(learningGoal.getId(), user);
+        });
+    }
+
+    /**
+     * Update the existing progress for a specific user in a course
+     * @param user The user for whom to update the existing learning goal progress
+     * @param course The course for which to fetch the learning goals from
+     * @return All learning goals of the course with the updated progress for the user
+     */
+    public Set<LearningGoal> getLearningGoalsAndUpdateProgressByUserInCourse(User user, Course course) {
+        return learningGoalRepository.findAllForCourse(course.getId()).stream().peek(learningGoal -> {
+            var updatedProgress = updateProgress(learningGoal.getId(), user);
+            if (updatedProgress != null) {
+                learningGoal.setUserProgress(Set.of(updatedProgress));
+            }
+        }).collect(Collectors.toSet());
     }
 
     /**
@@ -126,14 +154,15 @@ public class LearningGoalProgressService {
      * Updates the progress value (and confidence score) of the given learning goal and user
      * @param learningGoalId The id of the learning goal to update the progress for
      * @param user The user for which the progress should be updated
+     * @return The updated learning goal progress
      */
-    private void updateProgress(Long learningGoalId, User user) {
+    private LearningGoalProgress updateProgress(Long learningGoalId, User user) {
         var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsAndCompletions(learningGoalId).orElse(null);
 
         if (user == null || learningGoal == null) {
             // If the user or learning goal no longer exist, there is nothing to do
             logger.debug("User or learning goal no longer exist, skipping.");
-            return;
+            return null;
         }
 
         var learningGoalProgress = learningGoalProgressRepository.findEagerByLearningGoalIdAndUserId(learningGoalId, user.getId());
@@ -143,7 +172,7 @@ public class LearningGoalProgressService {
             if (lastModified != null && lastModified.isAfter(Instant.now().minusSeconds(5))) {
                 // If we have updated the progress within the last five seconds, skip it
                 logger.debug("Learning goal progress has been updated very recently, skipping.");
-                return;
+                return learningGoalProgress.get();
             }
         }
 
@@ -167,6 +196,7 @@ public class LearningGoalProgressService {
         learningGoalProgressRepository.save(progress);
 
         logger.debug("Updated progress for user {} in learning goal {} to {}.", user.getLogin(), learningGoal.getId(), progress.getProgress());
+        return progress;
     }
 
     /**

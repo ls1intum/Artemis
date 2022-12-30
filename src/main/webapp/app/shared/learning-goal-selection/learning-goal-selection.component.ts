@@ -31,6 +31,7 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
 
     faQuestionCircle = faQuestionCircle;
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _onChange = (value: any) => {};
 
     constructor(private route: ActivatedRoute, private courseCalculationService: CourseScoreCalculationService, private learningGoalService: LearningGoalService) {}

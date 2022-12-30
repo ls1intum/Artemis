@@ -407,11 +407,11 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
-    public Course getCourseForDashboard(@PathVariable long courseId) {
+    public Course getCourseForDashboard(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean refresh) {
         long start = System.currentTimeMillis();
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
-        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user);
+        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
         return course;
     }

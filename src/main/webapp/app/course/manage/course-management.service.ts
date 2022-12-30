@@ -142,8 +142,17 @@ export class CourseManagementService {
         );
     }
 
-    findOneForDashboard(courseId: number): Observable<EntityResponseType> {
-        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/for-dashboard`, { observe: 'response' }).pipe(
+    /**
+     * finds one course using a GET request
+     * @param courseId the course to fetch
+     * @param userRefresh whether this is a user-initiated refresh (default: false)
+     */
+    findOneForDashboard(courseId: number, userRefresh = false): Observable<EntityResponseType> {
+        let params = new HttpParams();
+        if (userRefresh) {
+            params = params.set('refresh', String(true));
+        }
+        return this.http.get<Course>(`${this.resourceUrl}/${courseId}/for-dashboard`, { params, observe: 'response' }).pipe(
             map((res: EntityResponseType) => this.processCourseEntityResponseType(res)),
             map((res: EntityResponseType) => this.setParticipationStatusForExercisesInCourse(res)),
             tap((res: EntityResponseType) => this.courseWasUpdated(res.body)),
