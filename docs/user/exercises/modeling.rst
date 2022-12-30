@@ -5,7 +5,7 @@ Modeling exercise
     :depth: 3
 
 .. note::
-   - Artemis uses an npm library called `Apollon`_ as its modeling editor.
+   - Artemis uses an npm package called `Apollon`_ as its modeling editor.
    - It has its standalone version which can be accessed via https://apollon.ase.in.tum.de/.
    - The standalone version is free to use without the necessity of creating an account.
    - It offers additional features, including but not limited to, sharing and exporting the diagram.
