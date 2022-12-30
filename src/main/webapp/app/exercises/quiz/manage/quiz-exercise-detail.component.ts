@@ -43,6 +43,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
 import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { QuizManageUtil } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -129,6 +130,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         public changeDetector: ChangeDetectorRef,
         private exerciseGroupService: ExerciseGroupService,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private quizManageUtil: QuizManageUtil,
     ) {
         super();
     }
@@ -199,6 +201,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.init();
+                if (!this.quizExercise.isEditable) {
+                    this.alertService.error('error.http.403');
+                }
                 if (this.testRunExistsAndShouldNotBeIgnored()) {
                     this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
                 }
@@ -222,6 +227,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         newQuiz.quizQuestions = [];
         newQuiz.quizMode = QuizMode.SYNCHRONIZED;
         newQuiz.allowedNumberOfAttempts = 1;
+        newQuiz.isEditable = true;
         this.prepareEntity(newQuiz);
         return newQuiz;
     }
@@ -232,6 +238,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     init(): void {
         if (!this.quizExercise) {
             this.quizExercise = this.initializeNewQuizExercise();
+        } else {
+            this.quizExercise.isEditable = this.quizManageUtil.isQuizEditable(this.quizExercise);
         }
 
         if (this.isImport || this.isExamMode) {
@@ -891,6 +899,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.pendingChangesCache = false;
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
+        this.quizExercise.isEditable = this.quizManageUtil.isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(quizExercise);
         this.changeDetector.detectChanges();
