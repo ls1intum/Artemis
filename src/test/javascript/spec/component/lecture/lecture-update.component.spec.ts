@@ -1,9 +1,10 @@
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { AlertService } from 'app/core/util/alert.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUpdateComponent } from 'app/lecture/lecture-update.component';
 import { LectureComponent } from 'app/lecture/lecture.component';
@@ -73,6 +74,7 @@ describe('Lecture', () => {
                         },
                     },
                 },
+                MockProvider(AlertService),
                 MockProvider(LectureService),
             ],
         })
@@ -127,6 +129,26 @@ describe('Lecture', () => {
         expect(createSpy).toHaveBeenCalledWith({ title: 'test1' });
         expect(lectureServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
+
+    it('should give error when creating lecture', async () => {
+        lectureComponentFixture.detectChanges();
+        lectureUpdateComponent.lecture = {} as Lecture;
+
+        // const onErrorSpy = jest.spyOn(lectureUpdateComponent, 'onSaveError');
+        const createSpy = jest.spyOn(lectureService, 'create').mockImplementationOnce(() => {
+            // @ts-ignore
+            throw new HttpErrorResponse('Error');
+        });
+        jest.spyOn(console, 'error');
+        const meth = lectureUpdateComponent.saveLectureFunction();
+        await expect(meth).rejects.toThrow('Error');
+        expect(console.error).toHaveBeenCalledOnce();
+
+        // lectureUpdateComponentFixture.detectChanges();
+        //
+        // expect(createSpy).toHaveBeenCalledOnce();
+        // expect(createSpy).toHaveBeenCalledWith({});
+    });
 
     it('should edit a lecture', fakeAsync(() => {
         lectureComponentFixture.detectChanges();

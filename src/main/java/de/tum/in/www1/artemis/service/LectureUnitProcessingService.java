@@ -36,6 +36,7 @@ public class LectureUnitProcessingService {
         List<LectureUnitsDTO> units = new ArrayList<>();
         Splitter pdfSplitter = new Splitter();
         PDDocument document = PDDocument.load(file.getBytes());
+        PDDocument breakRemoved = removeBreakSlidesFromFile(document);
         List<PDDocument> documentUnits;
 
         for (LectureUnitSplitDTO lectureUnit : lectureUnitSplitDTOs) {
@@ -48,7 +49,7 @@ public class LectureUnitProcessingService {
             pdfSplitter.setEndPage(Integer.parseInt(lectureUnit.endPage));
             pdfSplitter.setSplitAtPage(Integer.parseInt(lectureUnit.endPage));
 
-            documentUnits = pdfSplitter.split(document);
+            documentUnits = pdfSplitter.split(breakRemoved);
             pdDocumentInformation.setTitle(lectureUnit.getUnitName());
             documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
             documentUnits.get(0).save(outputStream);
@@ -84,9 +85,31 @@ public class LectureUnitProcessingService {
             tempFile.deleteOnExit();
             documentUnits.get(0).close();
         }
-
+        breakRemoved.close();
         document.close();
         return units;
+    }
+
+    private PDDocument removeBreakSlidesFromFile(PDDocument document) throws IOException {
+        Splitter pdfSplitter = new Splitter();
+        PDFTextStripper pdfStripper = new PDFTextStripper();
+        List<PDDocument> Pages = pdfSplitter.split(document);
+
+        PDDocument newDocument = new PDDocument();
+
+        for (PDDocument pd : Pages) {
+            String slideText = pdfStripper.getText(pd);
+            // System.out.println(slideText);
+            // String pageNumber = StringUtils.right(slideText, 4);
+            // pageNumber = StringUtils.deleteWhitespace(pageNumber);
+            // System.out.println(pageNumber);
+            // System.out.println(slideText.substring(slideText.length() - 2));
+            if (slideText.contains("Break")) {
+                continue;
+            }
+            newDocument.addPage(pdfStripper.getCurrentPage());
+        }
+        return newDocument;
     }
 
     public Optional<List<LectureUnitSplitDTO>> getSplitUnitData(MultipartFile file) throws IOException {
@@ -94,7 +117,10 @@ public class LectureUnitProcessingService {
         List<LectureUnitSplitDTO> units = new ArrayList<>();
 
         PDDocument document = PDDocument.load(file.getBytes());
-        Map<Integer, Tuple<String, Tuple<Integer, Integer>>> unitsDocumentMap = separateIntoUnits(document);
+        System.out.println(document.getNumberOfPages());
+        PDDocument breakRemoved = removeBreakSlidesFromFile(document);
+        System.out.println(breakRemoved.getNumberOfPages());
+        Map<Integer, Tuple<String, Tuple<Integer, Integer>>> unitsDocumentMap = separateIntoUnits(breakRemoved);
 
         unitsDocumentMap.forEach((k, v) -> {
             LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO();
@@ -104,6 +130,7 @@ public class LectureUnitProcessingService {
             units.add(newLectureUnit);
         });
 
+        breakRemoved.close();
         document.close();
         return Optional.of(units);
     }
@@ -143,8 +170,7 @@ public class LectureUnitProcessingService {
                     int previousOutlineCount = outlineCount - 1;
                     int previousStart = outlineMap.get(previousOutlineCount).y().x();
                     outlineMap.remove(previousOutlineCount);
-                    outlineMap.put(previousOutlineCount,
-                            new Tuple<>(lines[previousOutlineCount + 1], new Tuple<>(previousStart, previousSlideText.contains("Break") ? index - 2 : index - 1)));
+                    outlineMap.put(previousOutlineCount, new Tuple<>(lines[previousOutlineCount + 1], new Tuple<>(previousStart, index - 1)));
                 }
             }
             index++;
