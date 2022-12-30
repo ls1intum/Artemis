@@ -19,9 +19,10 @@ import { Directive, EventEmitter, Input, Output } from '@angular/core';
 const examples: ConversationDto[] = [generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 @Directive({
+    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: '[infiniteScroll], [infinite-scroll], [data-infinite-scroll]',
 })
-class InfiniteScrollDirectiveStub {
+class InfiniteScrollStubDirective {
     @Output() scrolled = new EventEmitter<void>();
     @Output() scrolledUp = new EventEmitter<void>();
 
@@ -50,7 +51,7 @@ examples.forEach((activeConversation) => {
                 imports: [FormsModule, ReactiveFormsModule],
                 declarations: [
                     ConversationMessagesComponent,
-                    InfiniteScrollDirectiveStub,
+                    InfiniteScrollStubDirective,
                     MockPipe(ArtemisTranslatePipe),
                     MockComponent(ButtonComponent),
                     MockComponent(FaIconComponent),

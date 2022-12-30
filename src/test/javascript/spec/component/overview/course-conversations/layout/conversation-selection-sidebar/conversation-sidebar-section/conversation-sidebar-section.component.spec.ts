@@ -13,6 +13,7 @@ import { LocalStorageService } from 'ngx-webstorage';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 @Component({
+    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-conversation-sidebar-entry]',
     template: '',
 })
