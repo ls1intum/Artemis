@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,7 +11,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
@@ -100,25 +98,8 @@ public class TextUnitResource {
         }
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
 
-        // Unlink all current learning goals
-        var learningGoals = textUnit.getLearningGoals().stream().map(learningGoal -> {
-            learningGoal.getLectureUnits().remove(textUnit);
-            return learningGoal;
-        }).collect(Collectors.toList());
-
-        // Link the text unit to newly added learning goals
-        // (we have to do it this way because we don't want to use a transactional context)
-        learningGoals.addAll(textUnitForm.getLearningGoals().stream().map(LearningGoal::getId).map(learningGoalId -> {
-            var learningGoal = learningGoalRepository.findByIdWithLectureUnits(learningGoalId).get();
-            learningGoal.getLectureUnits().add(textUnit);
-            return learningGoal;
-        }).toList());
-
-        learningGoalRepository.saveAll(learningGoals);
-
-        textUnit.setReleaseDate(textUnitForm.getReleaseDate());
-        textUnit.setContent(textUnitForm.getContent());
-
+        textUnitForm.setId(textUnit.getId());
+        textUnitForm.setLecture(textUnit.getLecture());
         TextUnit result = textUnitRepository.save(textUnitForm);
         return ResponseEntity.ok(result);
     }

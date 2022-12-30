@@ -259,7 +259,7 @@ public class ParticipantScoreScheduleService {
             if (participantScore.isPresent()) {
                 var lastModified = participantScore.get().getLastModifiedDate();
                 if (lastModified != null && lastModified.isAfter(resultLastModified)) {
-                    // The participant score was already updated after the last modified date of the result that this task
+                    // The participant score was already updated after the last modified date of the result that initiated this task
                     // We assume we already processed the result with the last task that ran and therefore skip the processing
                     logger.debug("Participant score {} is already up-to-date, skipping.", participantScore.get().getId());
                     return;
@@ -304,7 +304,7 @@ public class ParticipantScoreScheduleService {
             }
 
             // Update the progress for learning goals linked to this exercise
-            learningGoalProgressService.updateProgressByLearningObject(score.getExercise(), score.getParticipant());
+            learningGoalProgressService.updateProgressByLearningObject(score.getExercise(), score.getParticipant().getParticipants());
         }
         catch (Exception e) {
             logger.error("Exception while processing participant score for exercise {} and participant {} for participant scores:", exerciseId, participantId, e);

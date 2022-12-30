@@ -71,6 +71,7 @@ export class EditLearningGoalComponent implements OnInit {
                         description: this.learningGoal.description,
                         connectedLectureUnits: this.learningGoal.lectureUnits,
                         taxonomy: this.learningGoal.taxonomy,
+                        masteryThreshold: this.learningGoal.masteryThreshold,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -78,11 +79,12 @@ export class EditLearningGoalComponent implements OnInit {
     }
 
     updateLearningGoal(formData: LearningGoalFormData) {
-        const { title, description, taxonomy, connectedLectureUnits } = formData;
+        const { title, description, taxonomy, masteryThreshold, connectedLectureUnits } = formData;
 
         this.learningGoal.title = title;
         this.learningGoal.description = description;
         this.learningGoal.taxonomy = taxonomy;
+        this.learningGoal.masteryThreshold = masteryThreshold;
         this.learningGoal.lectureUnits = connectedLectureUnits;
 
         this.isLoading = true;

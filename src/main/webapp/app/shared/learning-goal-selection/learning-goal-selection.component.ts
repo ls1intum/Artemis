@@ -40,12 +40,12 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
         if (this.learningGoals == undefined && courseId) {
             const course = this.courseCalculationService.getCourse(courseId);
             if (course?.learningGoals) {
-                this.learningGoals = course.learningGoals;
+                this.setLearningGoals(course.learningGoals!);
                 this.isLoading = false;
             } else {
                 this.learningGoalService.getAllForCourse(courseId).subscribe({
                     next: (response) => {
-                        this.learningGoals = response.body!;
+                        this.setLearningGoals(response.body!);
                         this.writeValue(this.value);
                         this.isLoading = false;
                     },
@@ -56,10 +56,23 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
                 });
             }
         } else {
-            this.learningGoals = [];
+            this.setLearningGoals([]);
             this.disabled = true;
             this.isLoading = false;
         }
+    }
+
+    /**
+     * Set the available learning goals for selection
+     * @param learningGoals The learning goals of the course
+     */
+    setLearningGoals(learningGoals: LearningGoal[]) {
+        this.learningGoals = learningGoals.map((learningGoal) => {
+            // Remove unnecessary properties
+            learningGoal.course = undefined;
+            learningGoal.userProgress = undefined;
+            return learningGoal;
+        });
     }
 
     updateField(newValue: LearningGoal[]) {

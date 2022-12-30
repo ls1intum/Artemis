@@ -63,7 +63,10 @@ public abstract class Exercise extends BaseExercise implements ILearningObject {
     @Column(name = "grading_instructions")
     private String gradingInstructions;
 
-    @ManyToMany(mappedBy = "exercises")
+    @ManyToMany
+    @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
+    @JsonIgnoreProperties({ "exercises", "course" })
+    @JsonView(QuizView.Before.class)
     private Set<LearningGoal> learningGoals = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)

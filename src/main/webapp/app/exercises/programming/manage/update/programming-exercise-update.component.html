@@ -375,7 +375,8 @@
             <jhi-learning-goal-selection
                 id="learning-goals"
                 [labelName]="'artemisApp.learningGoal.title' | artemisTranslate"
-                formControlName="learningGoals"
+                [(ngModel)]="programmingExercise.learningGoals"
+                name="learningGoals"
             ></jhi-learning-goal-selection>
         </div>
         <div *ngIf="programmingExercise.assessmentType === AssessmentType.SEMI_AUTOMATIC" class="form-group">

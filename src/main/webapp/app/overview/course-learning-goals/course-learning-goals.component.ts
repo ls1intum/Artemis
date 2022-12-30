@@ -44,10 +44,6 @@ export class CourseLearningGoalsComponent implements OnInit {
         }
     }
 
-    getProgressOfLearningGoal(learningGoal: LearningGoal): number {
-        return learningGoal.userProgress?.first()?.progress || 0;
-    }
-
     /**
      * Loads all prerequisites and learning goals for the course
      */

@@ -17,8 +17,6 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     @Input()
     learningGoal: LearningGoal;
     @Input()
-    progress?: number;
-    @Input()
     isPrerequisite: boolean;
     @Input()
     displayOnly: boolean;
@@ -49,9 +47,21 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
         return { progress: 0, confidence: 0 } as LearningGoalProgress;
     }
 
-    get masteryProgress(): number {
-        const weight = 0.66;
-        return (1 - weight) * this.getUserProgress().progress! + (weight * this.getUserProgress().confidence! * (this.learningGoal.masteryThreshold ?? 100)) / 100;
+    get progress(): number {
+        // The percentage of completed lecture units and participated exercises
+        return this.getUserProgress().progress ?? 0;
+    }
+
+    get confidence(): number {
+        // Confidence level (average score in exercises) in proportion to the threshold value
+        // Example: If the student’s latest confidence level equals 60 % and the mastery threshold is set to 80 %, the ring would be 75 % full.
+        return ((this.getUserProgress().confidence ?? 0) / (this.learningGoal.masteryThreshold ?? 100)) * 100;
+    }
+
+    get mastery(): number {
+        // Advancement towards mastery as a weighted function of progress and confidence
+        const weight = 2 / 3;
+        return (1 - weight) * this.progress + weight * this.confidence;
     }
 
     getIcon(learningGoalTaxonomy?: LearningGoalTaxonomy): IconProp {

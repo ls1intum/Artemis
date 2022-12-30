@@ -131,15 +131,6 @@ public class ExerciseDeletionService {
             modelingExerciseService.cancelScheduledOperations(exerciseId);
         }
 
-        // Remove the connection to learning goals
-        var updatedLearningGoals = new HashSet<LearningGoal>();
-        for (LearningGoal learningGoal : exercise.getLearningGoals()) {
-            learningGoal = learningGoalRepository.findByIdWithExercisesElseThrow(learningGoal.getId());
-            learningGoal.removeExercise(exercise);
-            updatedLearningGoals.add(learningGoal);
-        }
-        learningGoalRepository.saveAll(updatedLearningGoals);
-
         // delete all exercise units linking to the exercise
         List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);
         for (ExerciseUnit exerciseUnit : exerciseUnits) {

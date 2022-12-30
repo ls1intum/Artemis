@@ -55,8 +55,10 @@ public abstract class LectureUnit extends DomainObject implements ILearningObjec
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Lecture lecture;
 
-    @ManyToMany(mappedBy = "lectureUnits")
+    @ManyToMany
+    @JoinTable(name = "learning_goal_lecture_unit", joinColumns = @JoinColumn(name = "lecture_unit_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
     @OrderBy("title")
+    @JsonIgnoreProperties({ "lectureUnits", "course" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     protected Set<LearningGoal> learningGoals = new HashSet<>();
 

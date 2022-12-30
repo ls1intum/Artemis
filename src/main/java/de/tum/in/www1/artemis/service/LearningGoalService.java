@@ -4,6 +4,8 @@ import java.util.*;
 
 import javax.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -15,13 +17,25 @@ import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 @Service
 public class LearningGoalService {
 
+    private final Logger log = LoggerFactory.getLogger(LearningGoalService.class);
+
     private final LearningGoalRepository learningGoalRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    public LearningGoalService(LearningGoalRepository learningGoalRepository, AuthorizationCheckService authCheckService) {
+    private final ExerciseRepository exerciseRepository;
+
+    private final LectureUnitRepository lectureUnitRepository;
+
+    private final LearningGoalProgressService learningGoalProgressService;
+
+    public LearningGoalService(LearningGoalRepository learningGoalRepository, AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository,
+            LectureUnitRepository lectureUnitRepository, LearningGoalProgressService learningGoalProgressService) {
         this.learningGoalRepository = learningGoalRepository;
         this.authCheckService = authCheckService;
+        this.exerciseRepository = exerciseRepository;
+        this.lectureUnitRepository = lectureUnitRepository;
+        this.learningGoalProgressService = learningGoalProgressService;
     }
 
     /**
@@ -68,4 +82,23 @@ public class LearningGoalService {
         return new SearchResultPageDTO<>(lecturePage.getContent(), lecturePage.getTotalPages());
     }
 
+    /**
+     * Update the linked learning goals for a learning object (exercise or lecture unit)
+     * @param learningObject The learning object for which to update the learning goals
+     * @param learningGoals The new learning goals to link to this learning object
+     */
+    /*
+     * public void updateLearningGoals(ILearningObject learningObject, Set<LearningGoal> learningGoals) { Set<LearningGoal> existingLearningGoals; if (learningObject instanceof
+     * Exercise) { existingLearningGoals = exerciseRepository.findByIdWithLearningGoalsBidirectionalElseThrow(learningObject.getId()).getLearningGoals(); } else if (learningObject
+     * instanceof LectureUnit) { existingLearningGoals = lectureUnitRepository.findByIdWithLearningGoalsBidirectionalElseThrow(learningObject.getId()).getLearningGoals(); } else {
+     * throw new IllegalArgumentException("Learning object must either be an exercise or lecture unit!"); } if (existingLearningGoals.size() == learningGoals.size() &&
+     * existingLearningGoals.containsAll(learningGoals)) { log.debug("Learning goals of {} with id {} are already up-to-date, skipping.", learningObject.getClass().getSimpleName(),
+     * learningObject.getId()); return; } // Unlink all current learning goals var updatedLearningGoals = existingLearningGoals.stream().map(learningGoal -> { if (learningObject
+     * instanceof Exercise exercise) { learningGoal.getExercises().remove(exercise); } else if (learningObject instanceof LectureUnit lectureUnit) {
+     * learningGoal.getLectureUnits().remove(lectureUnit); } return learningGoal; }).collect(Collectors.toList()); // Link the learning object to newly added learning goals
+     * updatedLearningGoals.addAll(learningGoals.stream().map(LearningGoal::getId).map(learningGoalId -> { var learningGoal =
+     * learningGoalRepository.findByIdWithExercisesAndLectureUnits(learningGoalId).get(); if (learningObject instanceof Exercise exercise) {
+     * learningGoal.getExercises().add(exercise); } else if (learningObject instanceof LectureUnit lectureUnit) { learningGoal.getLectureUnits().add(lectureUnit); } return
+     * learningGoal; }).toList()); learningGoalRepository.saveAll(updatedLearningGoals); learningGoalProgressService.updateProgressByLearningObjectAsync(learningObject); }
+     */
 }

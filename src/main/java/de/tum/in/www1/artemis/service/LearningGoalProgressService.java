@@ -41,15 +41,18 @@ public class LearningGoalProgressService {
 
     private final LectureUnitRepository lectureUnitRepository;
 
+    private final UserRepository userRepository;
+
     public LearningGoalProgressService(LearningGoalRepository learningGoalRepository, LearningGoalProgressRepository learningGoalProgressRepository,
             StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ExerciseRepository exerciseRepository,
-            LectureUnitRepository lectureUnitRepository) {
+            LectureUnitRepository lectureUnitRepository, UserRepository userRepository) {
         this.learningGoalRepository = learningGoalRepository;
         this.learningGoalProgressRepository = learningGoalProgressRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureUnitRepository = lectureUnitRepository;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -59,19 +62,38 @@ public class LearningGoalProgressService {
      */
     @Async
     public void updateProgressByLearningObjectAsync(ILearningObject learningObject, @NotNull Participant participant) {
-        updateProgressByLearningObject(learningObject, participant);
+        SecurityUtils.setAuthorizationObject();
+        updateProgressByLearningObject(learningObject, participant.getParticipants());
+    }
+
+    /**
+     * Asynchronously update the progress for all learning goals linked to the given learning object
+     * @param learningObject The learning object for which to fetch the learning goals
+     */
+    @Async
+    public void updateProgressByLearningObjectAsync(ILearningObject learningObject) {
+        SecurityUtils.setAuthorizationObject();
+        Course course;
+        if (learningObject instanceof Exercise exercise) {
+            course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        }
+        else if (learningObject instanceof LectureUnit lectureUnit) {
+            course = lectureUnit.getLecture().getCourse();
+        }
+        else {
+            throw new IllegalArgumentException("Learning object must be either LectureUnit or Exercise");
+        }
+        updateProgressByLearningObject(learningObject, new HashSet<>(userRepository.getStudents(course)));
     }
 
     /**
      * Update the progress for all learning goals linked to the given learning object
      * @param learningObject The learning object for which to fetch the learning goals
-     * @param participant The participant (user or team) for which to update the progress
+     * @param users A list of users for which to update the progress
      */
-    public void updateProgressByLearningObject(ILearningObject learningObject, @NotNull Participant participant) {
-        logger.debug("Updating learning goal progress for participant {}.", participant.getName());
+    public void updateProgressByLearningObject(ILearningObject learningObject, @NotNull Set<User> users) {
+        logger.debug("Updating learning goal progress for {} users.", users.size());
         try {
-            SecurityUtils.setAuthorizationObject();
-
             Set<LearningGoal> learningGoals;
             if (learningObject instanceof Exercise exercise) {
                 learningGoals = exerciseRepository.findByIdWithLearningGoals(exercise.getId()).map(Exercise::getLearningGoals).orElse(null);
@@ -89,8 +111,7 @@ public class LearningGoalProgressService {
                 return;
             }
 
-            // The participant is normally a single user, but we need to support teams as well
-            participant.getParticipants().forEach(user -> {
+            users.forEach(user -> {
                 learningGoals.forEach(learningGoal -> {
                     updateProgress(learningGoal.getId(), user);
                 });
