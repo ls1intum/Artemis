@@ -20,7 +20,6 @@ import { mockedActivatedRoute } from '../../helpers/mocks/activated-route/mock-a
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
@@ -64,7 +63,6 @@ describe('Course LTI Configuration Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(SortDirective),
                 MockDirective(SortByDirective),
-                MockComponent(FaIconComponent),
                 MockComponent(HelpIconComponent),
                 MockComponent(CopyIconButtonComponent),
                 MockRouterLinkDirective,
