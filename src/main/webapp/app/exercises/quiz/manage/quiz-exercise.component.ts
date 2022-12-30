@@ -67,6 +67,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                     exercise.quizBatches = exercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+                    exercise.isEditable = this.isQuizEditable(exercise);
                 });
                 this.setQuizExercisesStatus();
                 this.emitExerciseCount(this.quizExercises.length);
@@ -225,6 +226,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
         newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course);
         newQuizExercise.status = this.quizExerciseService.getStatus(newQuizExercise);
         newQuizExercise.quizBatches = newQuizExercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
+        newQuizExercise.isEditable = this.isQuizEditable(newQuizExercise);
         if (index === -1) {
             this.quizExercises.push(newQuizExercise);
         } else {
@@ -313,5 +315,17 @@ export class QuizExerciseComponent extends ExerciseComponent {
             },
             () => {},
         );
+    }
+
+    /**
+     * Check if quiz is editable
+     * @param quizExercise the quiz exercise which will be checked
+     * @return {boolean} true if the quiz is editable and false otherwise
+     */
+    isQuizEditable(quizExercise: QuizExercise): boolean {
+        if (quizExercise.quizMode === QuizMode.BATCHED && quizExercise.quizBatches?.length) {
+            return false;
+        }
+        return quizExercise.status !== QuizStatus.ACTIVE && !this.quizIsOver(quizExercise);
     }
 }
