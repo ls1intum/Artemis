@@ -615,7 +615,7 @@ public class QuizScheduleService {
                 participation.setInitializationDate(quizSubmission.getSubmissionDate());
                 Optional<User> user = userRepository.findOneByLogin(username);
                 if (user.isEmpty()) {
-                    log.error("Cannot find the user for username " + username);
+                    log.error("Cannot find the user for username {}", username);
                 } else {
                     participation.setParticipant(user.get());
                 }

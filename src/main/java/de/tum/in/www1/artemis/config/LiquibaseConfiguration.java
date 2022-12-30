@@ -107,7 +107,7 @@ public class LiquibaseConfiguration {
         }
         if (currentVersion.isGreaterThanOrEqualTo(version600) && currentVersion.isLowerThan(version700)) {
             previousVersionString = getPreviousVersionElseThrow();
-            log.info("The previous version was " + previousVersionString);
+            log.info("The previous version was {}", previousVersionString);
             if (previousVersionString == null) {
                 // this means Artemis was never started before and no DATABASECHANGELOG exists, we can simply proceed
                 return;
