@@ -3,7 +3,6 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
@@ -129,7 +128,6 @@ describe('StudentExamDetailComponent', () => {
                 MockComponent(StudentExamWorkingTimeComponent),
                 MockDirective(NgForm),
                 MockDirective(NgModel),
-                MockPipe(ArtemisDurationFromSecondsPipe),
                 MockPipe(ArtemisDatePipe),
                 MockTranslateValuesDirective,
                 MockPipe(ArtemisTranslatePipe),
@@ -154,7 +152,6 @@ describe('StudentExamDetailComponent', () => {
                         );
                     },
                 }),
-                MockPipe(ArtemisDurationFromSecondsPipe),
                 MockProvider(AlertService),
                 MockDirective(TranslateDirective),
                 {
