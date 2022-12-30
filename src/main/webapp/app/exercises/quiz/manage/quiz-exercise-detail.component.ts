@@ -244,6 +244,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
         if (this.isImport || this.isExamMode) {
             this.quizExercise.quizBatches = [];
+            this.quizExercise.isEditable = true;
             resetDates(this.quizExercise);
         }
 
