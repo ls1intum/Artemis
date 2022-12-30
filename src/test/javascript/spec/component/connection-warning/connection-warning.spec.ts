@@ -6,7 +6,7 @@ import { CloseCircleComponent } from 'app/shared/close-circle/close-circle.compo
 import { ConnectionState, JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { By } from '@angular/platform-browser';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ConnectionWarning', () => {
     let fixture: ComponentFixture<JhiConnectionWarningComponent>;
@@ -16,7 +16,7 @@ describe('ConnectionWarning', () => {
     beforeEach(() => {
         subject = new BehaviorSubject<ConnectionState>(new ConnectionState(true, true, false));
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbPopover],
+            imports: [ArtemisTestModule, NgbPopoverModule],
             declarations: [JhiConnectionWarningComponent, CloseCircleComponent, TranslatePipeMock],
             providers: [
                 {
