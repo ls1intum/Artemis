@@ -15,7 +15,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faEye, faFileExport, faPlayCircle, faPlus, faSignal, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { QuizExerciseImportComponent } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
-import { QuizManageUtil } from 'app/exercises/quiz/shared/quiz-manage-util.service';
+import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -48,7 +48,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
         private modalService: NgbModal,
         private router: Router,
         private sortService: SortService,
-        private quizManageUtil: QuizManageUtil,
         public exerciseService: ExerciseService,
         courseService: CourseManagementService,
         translateService: TranslateService,
@@ -69,7 +68,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                     exercise.quizBatches = exercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
-                    exercise.isEditable = this.quizManageUtil.isQuizEditable(exercise);
+                    exercise.isEditable = isQuizEditable(exercise);
                 });
                 this.setQuizExercisesStatus();
                 this.emitExerciseCount(this.quizExercises.length);
@@ -219,7 +218,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
         newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course);
         newQuizExercise.status = this.quizExerciseService.getStatus(newQuizExercise);
         newQuizExercise.quizBatches = newQuizExercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
-        newQuizExercise.isEditable = this.quizManageUtil.isQuizEditable(newQuizExercise);
+        newQuizExercise.isEditable = isQuizEditable(newQuizExercise);
         if (index === -1) {
             this.quizExercises.push(newQuizExercise);
         } else {

@@ -43,7 +43,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
 import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { QuizManageUtil } from 'app/exercises/quiz/shared/quiz-manage-util.service';
+import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -130,7 +130,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         public changeDetector: ChangeDetectorRef,
         private exerciseGroupService: ExerciseGroupService,
         private navigationUtilService: ArtemisNavigationUtilService,
-        private quizManageUtil: QuizManageUtil,
     ) {
         super();
     }
@@ -239,7 +238,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         if (!this.quizExercise) {
             this.quizExercise = this.initializeNewQuizExercise();
         } else {
-            this.quizExercise.isEditable = this.quizManageUtil.isQuizEditable(this.quizExercise);
+            this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         }
 
         if (this.isImport || this.isExamMode) {
@@ -900,7 +899,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.pendingChangesCache = false;
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
-        this.quizExercise.isEditable = this.quizManageUtil.isQuizEditable(this.quizExercise);
+        this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(quizExercise);
         this.changeDetector.detectChanges();
