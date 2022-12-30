@@ -34,7 +34,6 @@ import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ResizeableContainerComponent } from 'app/shared/resizeable-container/resizeable-container.component';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { HeaderParticipationPageComponent } from 'app/exercises/shared/exercise-headers/header-participation-page.component';
@@ -67,7 +66,6 @@ describe('FileUploadSubmissionComponent', () => {
                 MockComponent(RatingComponent),
                 MockComponent(ComplaintsStudentViewComponent),
                 MockComponent(HeaderParticipationPageComponent),
-                MockComponent(FaIconComponent),
                 MockPipe(HtmlForMarkdownPipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(ArtemisTimeAgoPipe),
@@ -82,7 +80,6 @@ describe('FileUploadSubmissionComponent', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(FileUploadSubmissionComponent);
