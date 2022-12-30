@@ -39,7 +39,6 @@ import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component'
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { RatingComponent } from 'app/exercises/shared/rating/rating.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ComplaintsStudentViewComponent } from 'app/complaints/complaints-for-students/complaints-student-view.component';
 import { HttpResponse } from '@angular/common/http';
 import { GradingInstruction } from 'app/exercises/shared/structured-grading-criterion/grading-instruction.model';
@@ -82,7 +81,6 @@ describe('ModelingSubmission Management Component', () => {
                 MockComponent(AdditionalFeedbackComponent),
                 MockComponent(RatingComponent),
                 MockComponent(ComplaintsStudentViewComponent),
-                MockComponent(FaIconComponent),
             ],
             providers: [
                 MockProvider(ChangeDetectorRef),
@@ -94,7 +92,6 @@ describe('ModelingSubmission Management Component', () => {
                 { provide: ParticipationWebsocketService, useClass: MockParticipationWebsocketService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ModelingSubmissionComponent);

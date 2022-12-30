@@ -43,7 +43,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -98,7 +97,6 @@ describe('ParticipationSubmissionComponent', () => {
                 MockPipe(ArtemisTimeAgoPipe),
                 MockDirective(DeleteButtonDirective),
                 MockComponent(ResultComponent),
-                MockComponent(FaIconComponent),
             ],
             providers: [
                 JhiLanguageHelper,
@@ -110,7 +108,6 @@ describe('ParticipationSubmissionComponent', () => {
                 { provide: ActivatedRoute, useValue: route() },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ParticipationSubmissionComponent);
