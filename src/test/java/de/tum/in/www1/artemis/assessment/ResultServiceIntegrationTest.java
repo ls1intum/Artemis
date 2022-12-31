@@ -247,7 +247,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         programmingExercise.setDueDate(dueDate);
         programmingExerciseRepository.save(programmingExercise);
 
-        result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission, programmingSubmission.getParticipation());
+        result.setRatedIfNotAfterDueDate(programmingSubmission, programmingSubmission.getParticipation());
         assertThat(result.isRated()).isSameAs(shouldBeRated);
     }
 

@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.listeners.ResultListener;
 
 /**
@@ -45,7 +46,7 @@ public class Result extends DomainObject {
      * This constant determines how many seconds after the exercise due dates submissions will stil be considered valid
      * (rated will be set to true)
      *
-     * @see Result#setRatedIfNotExceeded(ZonedDateTime, ZonedDateTime)
+     * @see Result#setRatedIfNotAfterDueDate(ZonedDateTime, ZonedDateTime)
      */
     private static final int GRACE_PERIOD_SECONDS = 15;
 
@@ -187,7 +188,7 @@ public class Result extends DomainObject {
      * 1. set score and round it to the specified accuracy in the course
      * 2. set successful = true, if score >= 100 or false if not
      *
-     * @param score new score
+     * @param score  new score
      * @param course the course that specifies the accuracy
      */
     public void setScore(Double score, Course course) {
@@ -201,7 +202,7 @@ public class Result extends DomainObject {
      *
      * @param totalPoints total amount of points between 0 and maxPoints
      * @param maxPoints   maximum points reachable at corresponding exercise
-     * @param course the course that specifies the accuracy
+     * @param course      the course that specifies the accuracy
      */
     public void setScore(double totalPoints, double maxPoints, Course course) {
         setScore(totalPoints / maxPoints * 100, course);
@@ -225,15 +226,15 @@ public class Result extends DomainObject {
      * A result is rated if the submission was done before the due date. A small grace period of
      * {GRACE_PERIOD_SECONDS} seconds gets applied
      *
-     * @param exerciseDueDate The due date of the corresponding exercise or the individual due date if applicable
-     * @param submissionDate  the date of the corresponding submission
+     * @param dueDate        The due date of the corresponding exercise or the individual due date if applicable
+     * @param submissionDate the date of the corresponding submission
      */
-    public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, @NotNull ZonedDateTime submissionDate) {
-        if (exerciseDueDate == null) {
+    private void setRatedIfNotAfterDueDate(@Nullable ZonedDateTime dueDate, @NotNull ZonedDateTime submissionDate) {
+        if (dueDate == null) {
             this.rated = true;
         }
         else {
-            ZonedDateTime dueDateWithGracePeriod = exerciseDueDate.plus(GRACE_PERIOD_SECONDS, ChronoUnit.SECONDS);
+            ZonedDateTime dueDateWithGracePeriod = dueDate.plus(GRACE_PERIOD_SECONDS, ChronoUnit.SECONDS);
             this.rated = dueDateWithGracePeriod.isAfter(submissionDate);
         }
     }
@@ -243,11 +244,11 @@ public class Result extends DomainObject {
      * - the submission date is before the due date OR
      * - no due date is set OR
      * - the submission type is INSTRUCTOR / TEST
-     * @param exerciseDueDate date after which no normal submission is considered rated.
+     *
+     * @param dueDate    due date of the exercise or individual due date if applicable
      * @param submission to which the result belongs.
-     * @param participation to wich the submission belongs
      */
-    public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, @NotNull Submission submission, @NotNull Participation participation) {
+    public void setRatedIfNotAfterDueDate(@Nullable ZonedDateTime dueDate, @NotNull Submission submission) {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
         }
@@ -255,8 +256,31 @@ public class Result extends DomainObject {
             this.rated = false;
         }
         else {
-            setRatedIfNotExceeded(exerciseDueDate, submission.getSubmissionDate());
+            setRatedIfNotAfterDueDate(dueDate, submission.getSubmissionDate());
         }
+    }
+
+    /**
+     * Sets the rated attribute depending on the submission type and date.
+     * This method takes the individual due date specified by the participation attribute into account
+     *
+     * @param submission    to which the result belongs.
+     * @param participation to wich the submission belongs
+     */
+    public void setRatedIfNotAfterDueDate(@NotNull Submission submission, @NotNull Participation participation) {
+        setRatedIfNotAfterDueDate(ExerciseDateService.getDueDate(participation).orElse(null), submission);
+    }
+
+    /**
+     * Sets the rated attribute depending on the submission type and date.
+     * This method takes the individual due date specified by the participation attribute into account
+     *
+     * @param submissionDate The date of the submission of this result
+     * @see Result#setRatedIfNotAfterDueDate(ZonedDateTime, Submission)
+     */
+    public void setRatedIfNotAfterDueDate(@NotNull ZonedDateTime submissionDate) {
+        ZonedDateTime dueDate = ExerciseDateService.getDueDate(getParticipation()).orElse(null);
+        setRatedIfNotAfterDueDate(dueDate, submissionDate);
     }
 
     public Submission getSubmission() {
@@ -304,7 +328,7 @@ public class Result extends DomainObject {
      * Assigns the given feedback list to the result. It first sets the positive flag and the feedback type of every feedback element, clears the existing list of feedback and
      * assigns the new feedback afterwards. IMPORTANT: This method should not be used for Quiz and Programming exercises with completely automatic assessments!
      *
-     * @param feedbacks the new feedback list
+     * @param feedbacks            the new feedback list
      * @param skipAutomaticResults if true automatic results won't be updated
      */
     public void updateAllFeedbackItems(List<Feedback> feedbacks, boolean skipAutomaticResults) {
@@ -410,6 +434,7 @@ public class Result extends DomainObject {
 
     /**
      * `hasComplaint` could be null in the database
+     *
      * @return hasComplaint property value
      */
     public Optional<Boolean> getHasComplaint() {
@@ -493,6 +518,7 @@ public class Result extends DomainObject {
 
     /**
      * Remove all feedbacks marked with visibility never.
+     *
      * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
      */
     public void filterSensitiveFeedbacks(boolean isBeforeDueDate) {
@@ -535,6 +561,7 @@ public class Result extends DomainObject {
 
     /**
      * Calculates the total score for programming exercises. Do not use it for other exercise types
+     *
      * @return calculated totalScore
      */
     public Double calculateTotalPointsForProgrammingExercises() {
@@ -582,6 +609,7 @@ public class Result extends DomainObject {
 
     /**
      * calculates the score for programming exercises
+     *
      * @param exercise the exercise
      */
     public void calculateScoreForProgrammingExercise(ProgrammingExercise exercise) {
@@ -591,6 +619,7 @@ public class Result extends DomainObject {
 
     /**
      * Copies the relevant counters for programming exercises i.e. amount of (passed) test cases and code issues into this result
+     *
      * @param originalResult the source for the values
      */
     public void copyProgrammingExerciseCounters(Result originalResult) {
