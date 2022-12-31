@@ -22,7 +22,7 @@ import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { NgbPopover, NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('JhiCloneRepoButtonComponent', () => {
     let component: CloneRepoButtonComponent;
@@ -78,7 +78,7 @@ describe('JhiCloneRepoButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, ClipboardModule, MockDirective(NgbPopover), NgbPopoverModule],
+            imports: [ArtemisTestModule, ClipboardModule, NgbPopoverModule],
             declarations: [
                 CloneRepoButtonComponent,
                 MockComponent(ExerciseActionButtonComponent),

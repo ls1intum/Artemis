@@ -68,14 +68,14 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
         modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
         modelingExercise.setMode(ExerciseMode.TEAM);
         modelingExercise = exerciseRepo.save(modelingExercise);
-        team = database.addTeamForExercise(modelingExercise, database.getUserByLogin(TEST_PREFIX + "tutor1"));
+        team = database.addTeamForExercise(modelingExercise, database.getUserByLogin(TEST_PREFIX + "tutor1"), TEST_PREFIX);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
     }
 
     @Test
-    @WithMockUser(username = "team1student1")
+    @WithMockUser(username = "team1" + TEST_PREFIX + "1")
     void submitComplaintAboutModellingAssessment_complaintLimitNotReached() throws Exception {
         database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
@@ -91,7 +91,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "team1student1")
+    @WithMockUser(username = "team1" + TEST_PREFIX + "1")
     void submitComplaintAboutModelingAssessment_complaintLimitReached() throws Exception {
         database.addTeamComplaints(team, modelingAssessment.getParticipation(), 3, ComplaintType.COMPLAINT);
 
@@ -103,7 +103,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "team1student1")
+    @WithMockUser(username = "team1" + TEST_PREFIX + "1")
     void requestMoreFeedbackAboutModelingAssessment_noLimit() throws Exception {
         database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(2));
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusDays(1));
@@ -122,7 +122,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "team1student1")
+    @WithMockUser(username = "team1" + TEST_PREFIX + "1")
     void submitComplaintAboutModelingAssessment_validDeadline() throws Exception {
         // Mock object initialized with 2 weeks deadline. One week after result date is fine.
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(1));
@@ -136,7 +136,7 @@ class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "team1student1")
+    @WithMockUser(username = "team1" + TEST_PREFIX + "1")
     void submitComplaintAboutModelingAssessment_assessmentTooOld() throws Exception {
         // 3 weeks is already past the deadline
         database.updateExerciseDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(3));

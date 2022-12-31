@@ -559,19 +559,19 @@ public class DatabaseUtilService {
         if (authorityRepository.count() == 0) {
             authorityRepository.saveAll(adminAuthorities);
         }
-        log.debug("Generate " + numberOfStudents + " students...");
+        log.debug("Generate {} students...", numberOfStudents);
         var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(USER_PASSWORD), new String[] { "tumuser", "testgroup", prefix + "tumuser" },
                 studentAuthorities, numberOfStudents);
-        log.debug(numberOfStudents + " students generated. Generate " + numberOfTutors + " tutors...");
+        log.debug("{} students generated. Generate {} tutors...", numberOfStudents, numberOfTutors);
         var tutors = generateActivatedUsers(prefix + "tutor", passwordService.hashPassword(USER_PASSWORD), new String[] { "tutor", "testgroup", prefix + "tutor" },
                 tutorAuthorities, numberOfTutors);
-        log.debug(numberOfTutors + " tutors generated. Generate " + numberOfEditors + " editors...");
+        log.debug("{} tutors generated. Generate {} editors...", numberOfTutors, numberOfEditors);
         var editors = generateActivatedUsers(prefix + "editor", passwordService.hashPassword(USER_PASSWORD), new String[] { "editor", "testgroup", prefix + "editor" },
                 editorAuthorities, numberOfEditors);
-        log.debug(numberOfEditors + " editors generated. Generate " + numberOfInstructors + " instructors...");
+        log.debug("{} editors generated. Generate {} instructors...", numberOfEditors, numberOfInstructors);
         var instructors = generateActivatedUsers(prefix + "instructor", passwordService.hashPassword(USER_PASSWORD),
                 new String[] { "instructor", "testgroup", prefix + "instructor" }, instructorAuthorities, numberOfInstructors);
-        log.debug(numberOfInstructors + " instructors generated");
+        log.debug("{} instructors generated", numberOfInstructors);
 
         List<User> usersToAdd = new ArrayList<>();
         usersToAdd.addAll(students);
@@ -589,9 +589,9 @@ public class DatabaseUtilService {
         }
 
         if (usersToAdd.size() > 0) {
-            log.debug("Save " + usersToAdd.size() + " users to database...");
+            log.debug("Save {} users to database...", usersToAdd.size());
             usersToAdd = userRepo.saveAll(usersToAdd);
-            log.debug("Save " + usersToAdd.size() + " users to database. Done");
+            log.debug("Save {} users to database. Done", usersToAdd.size());
         }
 
         return usersToAdd;
@@ -635,6 +635,10 @@ public class DatabaseUtilService {
 
     public Team addTeamForExercise(Exercise exercise, User owner) {
         return addTeamsForExercise(exercise, 1, owner).get(0);
+    }
+
+    public Team addTeamForExercise(Exercise exercise, User owner, String loginPrefix) {
+        return addTeamsForExercise(exercise, "team", loginPrefix, 1, owner).get(0);
     }
 
     public Result addProgrammingParticipationWithResultForExercise(ProgrammingExercise exercise, String login) {

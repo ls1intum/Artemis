@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.metis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
@@ -132,7 +133,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         ConversationParticipant conversationParticipant2 = new ConversationParticipant();
         conversationParticipant2.setUser(conversatingUser);
-        conversationParticipant2.setLastRead(conversation.getCreationDate());
+        conversationParticipant2.setLastRead(ZonedDateTime.now().minusYears(2));
 
         conversation.getConversationParticipants().add(conversationParticipant2);
         conversation.setCourse(course);

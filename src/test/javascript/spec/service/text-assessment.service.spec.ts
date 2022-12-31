@@ -92,12 +92,12 @@ describe('TextAssessment Service', () => {
 
     it('should save example assessment', async () => {
         service
-            .saveExampleAssessment(exercise.id!, mockResponse.submissions[0].id, result.feedbacks!, mockResponse.submissions[0].blocks)
+            .saveExampleAssessment(exercise.id!, mockResponse.id, result.feedbacks!, mockResponse.submissions[0].blocks)
             .pipe(take(1))
             .subscribe((resp) => (actualResponse = resp.body));
 
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/exercises/${exercise.id}/example-submissions/${mockResponse.submissions[0].id}/example-text-assessment`,
+            url: `${SERVER_API_URL}api/exercises/${exercise.id}/example-submissions/${mockResponse.id}/example-text-assessment`,
             method: 'PUT',
         });
         req.flush(result);
