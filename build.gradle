@@ -96,11 +96,6 @@ test {
     maxHeapSize = "3072m" // maximum heap size
 }
 
-task testReport(type: TestReport) {
-    destinationDirectory = file("$buildDir/reports/tests")
-    reportOn test
-}
-
 jacoco {
     toolVersion = "0.8.8"
 }
