@@ -43,12 +43,21 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @Query("""
             SELECT DISTINCT qe
             FROM QuizExercise qe
-            LEFT JOIN qe.quizBatches b
+                LEFT JOIN qe.quizBatches b
             WHERE b.startTime > :#{#earliestReleaseDate}
             """)
     List<QuizExercise> findAllPlannedToStartAfter(ZonedDateTime earliestReleaseDate);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
+    @Query("""
+            SELECT DISTINCT qe
+            FROM QuizExercise qe
+                LEFT JOIN FETCH qe.quizPointStatistic
+                LEFT JOIN FETCH qe.categories
+                LEFT JOIN FETCH qe.quizBatches
+                LEFT JOIN FETCH qe.quizQuestions qq
+                LEFT JOIN FETCH qq.quizQuestionStatistic
+            WHERE qe.id = :quizExerciseId
+            """)
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })

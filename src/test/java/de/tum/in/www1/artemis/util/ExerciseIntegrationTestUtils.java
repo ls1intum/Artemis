@@ -57,7 +57,7 @@ public class ExerciseIntegrationTestUtils {
         examFilterParams.add("isExamFilter", "true");
         final var resultWithOnlyExamFilterActive = request.getSearchResult(apiPath, HttpStatus.OK, searchType, examFilterParams);
         assertThat(resultWithOnlyExamFilterActive.getResultsOnPage()).hasSize(1);
-        String examFilterExerciseTitle = resultWithOnlyCoursesFilterActive.getResultsOnPage().get(0).getTitle();
+        String examFilterExerciseTitle = resultWithOnlyExamFilterActive.getResultsOnPage().get(0).getTitle();
         assertThat(examFilterExerciseTitle).isEqualTo(searchTerm + "-Morpork");
     }
 

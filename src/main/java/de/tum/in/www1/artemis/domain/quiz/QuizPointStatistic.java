@@ -23,7 +23,7 @@ public class QuizPointStatistic extends QuizStatistic {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<PointCounter> pointCounters = new HashSet<>();
 
-    @OneToOne(mappedBy = "quizPointStatistic", fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "quizPointStatistic")
     @JsonIgnore
     private QuizExercise quiz;
 
@@ -118,10 +118,8 @@ public class QuizPointStatistic extends QuizStatistic {
      * @param countChange the int-value, which will be added to the Counter and participants
      */
     private void changeStatisticBasedOnResult(double score, Boolean rated, int countChange) {
-        /**
-          {@link de.tum.in.www1.artemis.service.util.RoundingUtil#roundScoreSpecifiedByCourseSettings}
-          is not applicable here, as we need to sort the points into existing integer buckets
-         */
+        // Note: {@link de.tum.in.www1.artemis.service.util.RoundingUtil#roundScoreSpecifiedByCourseSettings} is not applicable here, as we need to sort the points into existing
+        // integer buckets
         double points = Math.round(quiz.getOverallQuizPoints() * (score / 100));
 
         if (Boolean.TRUE.equals(rated)) {

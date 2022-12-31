@@ -109,9 +109,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private final PointCounter pc60 = pc(6, 0);
 
+    // TODO: reduce number of users
+    private final int numberOfStudents = 15;
+
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 15, 5, 1, 1);
+        database.addUsers(TEST_PREFIX, numberOfStudents, 1, 1, 1);
         quizScheduleService.startSchedule(5 * 1000);
     }
 
@@ -880,7 +883,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var now = ZonedDateTime.now();
 
         // generate submissions for each student
-        int numberOfParticipants = 10;
+        int numberOfParticipants = numberOfStudents - 5;
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, true, now.minusHours(3));
@@ -957,7 +960,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
 
         // generate rated submissions for each student
-        int numberOfParticipants = 10;
+        int numberOfParticipants = numberOfStudents - 5;
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {
@@ -1068,7 +1071,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise = request.putWithResponseBody("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK);
 
         // generate unrated submissions for each student
-        int numberOfParticipants = 10;
+        int numberOfParticipants = numberOfStudents - 5;
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {
