@@ -110,9 +110,14 @@ public class AccountResource {
         if (isRegistrationDisabled()) {
             throw new AccessForbiddenException("User Registration is disabled");
         }
+        // TODO: the key should be 20 characters long according to jhipsters RandomUtil.DEF_COUNT, we should improve the following input validation
+        // Idea: the key follows the same ideas as e.g. JWT: it should only be valid for a short time (i.e. the key should expire e.g. after 2 days)
+        if (StringUtils.isBlank(key) || key.length() < 10) {
+            throw new BadRequestAlertException("Invalid activation key", "User Activation", "invalidActivationKey");
+        }
         Optional<User> user = userService.activateRegistration(key);
         if (user.isEmpty()) {
-            throw new InternalServerErrorException("No user was found for this activation key");
+            throw new BadRequestAlertException("No user was found for this activation key", "User Activation", "noActivationKey");
         }
     }
 
@@ -244,7 +249,7 @@ public class AccountResource {
         }
         // TODO: the key should be 20 characters long according to jhipsters RandomUtil.DEF_COUNT, we should improve the following input validation
         // Idea: the key follows the same ideas as e.g. JWT: it should only be valid for a short time (i.e. the key should expire e.g. after 2 days)
-        if (StringUtils.isEmpty(keyAndPassword.getKey()) || keyAndPassword.getKey().length() < 10) {
+        if (StringUtils.isBlank(keyAndPassword.getKey()) || keyAndPassword.getKey().length() < 10) {
             throw new AccessForbiddenException("Invalid key for password reset");
         }
         Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey());

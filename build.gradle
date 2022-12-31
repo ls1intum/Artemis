@@ -243,9 +243,7 @@ dependencies {
     implementation "com.vdurmont:semver4j:3.1.0"
 
     // import JHipster dependencies BOM
-    implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}"){
-        exclude module: "spring-boot-starter-mail"      // excluded because it still uses jakarta.mail which has security issues and is not needed by this project
-    }
+    implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
@@ -272,6 +270,7 @@ dependencies {
     implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-data-jpa:${spring_boot_version}"
+    implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-security:${spring_boot_version}"
     implementation ("org.springframework.boot:spring-boot-starter-web:${spring_boot_version}") {
         exclude module: "spring-boot-starter-undertow"
