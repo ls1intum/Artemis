@@ -1,4 +1,4 @@
-<div class="row" *ngIf="quizExercise">
+<div class="row" *ngIf="quizExercise && quizExercise.isEditable">
     <div class="col-lg-12">
         <h4 class="title">
             <h4 *ngIf="!quizExercise.id" id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.quizExercise.home.createLabel">Create a new Quiz Exercise</h4>
