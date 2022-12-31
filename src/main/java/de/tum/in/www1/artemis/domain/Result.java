@@ -10,6 +10,7 @@ import java.util.*;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -227,7 +228,7 @@ public class Result extends DomainObject {
      * @param exerciseDueDate The due date of the corresponding exercise or the individual due date if applicable
      * @param submissionDate  the date of the corresponding submission
      */
-    public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
+    public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, @NotNull ZonedDateTime submissionDate) {
         if (exerciseDueDate == null) {
             this.rated = true;
         }
@@ -246,7 +247,7 @@ public class Result extends DomainObject {
      * @param submission to which the result belongs.
      * @param participation to wich the submission belongs
      */
-    public void setRatedIfNotExceeded(ZonedDateTime exerciseDueDate, Submission submission, Participation participation) {
+    public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, @NotNull Submission submission, @NotNull Participation participation) {
         if (submission.getType() == SubmissionType.INSTRUCTOR || submission.getType() == SubmissionType.TEST) {
             this.rated = true;
         }
