@@ -25,13 +25,11 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
+import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
-import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
+import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
-import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -65,6 +63,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Autowired
     private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
+
+    @Autowired
+    private TutorParticipationRepository tutorParticipationRepository;
 
     private ModelingExercise classExercise;
 
@@ -301,7 +302,28 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testDeleteModelingExercise_asInstructor() throws Exception {
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
+        assertThat(modelingExerciseRepository.findById(classExercise.getId())).as("exercise was deleted").isEmpty();
         request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testDeleteModelingExerciseWithTutorParticipations() throws Exception {
+        TutorParticipation tutorParticipation = new TutorParticipation().tutor(database.getUserByLogin("tutor1")).status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)
+                .assessedExercise(classExercise);
+
+        String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
+        ExampleSubmission exampleSubmission = database.generateExampleSubmission(validModel, classExercise, true);
+        exampleSubmission.addTutorParticipations(tutorParticipation);
+        database.addExampleSubmission(exampleSubmission);
+        tutorParticipationRepository.save(tutorParticipation);
+
+        assertThat(tutorParticipationRepository.findByAssessedExercise(classExercise)).isNotEmpty();
+
+        request.delete("/api/modeling-exercises/" + classExercise.getId(), HttpStatus.OK);
+
+        assertThat(modelingExerciseRepository.findById(classExercise.getId())).as("exercise was deleted").isEmpty();
+        assertThat(tutorParticipationRepository.findByAssessedExercise(classExercise)).isEmpty();
     }
 
     @Test
