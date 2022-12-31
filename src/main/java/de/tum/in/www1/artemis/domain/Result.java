@@ -219,6 +219,14 @@ public class Result extends DomainObject {
         this.rated = rated;
     }
 
+    /**
+     * Set the rated attribute according to the time of the submission and the due date of the exercise.
+     * A result is rated if the submission was done before the due date. A small grace period of
+     * {GRACE_PERIOD_SECONDS} seconds gets applied
+     *
+     * @param exerciseDueDate The due date of the corresponding exercise or the individual due date if applicable
+     * @param submissionDate  the date of the corresponding submission
+     */
     public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
         if (exerciseDueDate == null) {
             this.rated = true;
