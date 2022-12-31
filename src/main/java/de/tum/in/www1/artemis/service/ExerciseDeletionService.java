@@ -124,10 +124,10 @@ public class ExerciseDeletionService {
         var exercise = exerciseRepository.findByIdWithLearningGoalsElseThrow(exerciseId);
 
         log.debug("Checking if exercise {} is modeling exercise", exercise.getId());
-        if (exercise instanceof ModelingExercise) {
+        if (exercise instanceof ModelingExercise modelingExercise) {
             log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());
 
-            modelingExerciseService.deleteClustersAndElements((ModelingExercise) exercise);
+            modelingExerciseService.deleteClustersAndElements(modelingExercise);
             modelingExerciseService.cancelScheduledOperations(exerciseId);
         }
 
