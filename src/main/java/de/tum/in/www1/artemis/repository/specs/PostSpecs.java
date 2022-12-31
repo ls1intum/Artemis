@@ -31,7 +31,7 @@ public class PostSpecs {
                 Join<Post, Lecture> joinedLectures = root.join(Post_.LECTURE, JoinType.LEFT);
                 Join<Post, Exercise> joinedExercises = root.join(Post_.EXERCISE, JoinType.LEFT);
 
-                Predicate coursePosts = criteriaBuilder.equal(root.get(Post_.COURSE), courseId);
+                Predicate coursePosts = criteriaBuilder.equal(root.get(Post_.COURSE).get(Course_.ID), courseId);
                 Predicate coursePostsWithLectureContext = criteriaBuilder.equal(joinedLectures.get(Lecture_.COURSE).get(Course_.ID), courseId);
                 Predicate coursePostsWithExerciseContext = criteriaBuilder.equal(joinedExercises.get(Exercise_.COURSE).get(Course_.ID), courseId);
                 return criteriaBuilder.or(coursePosts, coursePostsWithLectureContext, coursePostsWithExerciseContext);
@@ -103,7 +103,7 @@ public class PostSpecs {
                 return null;
             }
             else {
-                return criteriaBuilder.equal(root.get(Post_.AUTHOR), userId);
+                return criteriaBuilder.equal(root.get(Post_.AUTHOR).get(User_.ID), userId);
             }
         });
     }
@@ -127,8 +127,8 @@ public class PostSpecs {
                 Join<Post, AnswerPost> joinedReactions = root.join(Post_.REACTIONS, JoinType.LEFT);
                 joinedReactions.on(criteriaBuilder.equal(root.get(Post_.ID), joinedReactions.get(Reaction_.POST).get(Post_.ID)));
 
-                Predicate answered = criteriaBuilder.equal(joinedAnswers.get(AnswerPost_.AUTHOR), userId);
-                Predicate reacted = criteriaBuilder.equal(joinedReactions.get(Reaction_.USER), userId);
+                Predicate answered = criteriaBuilder.equal(joinedAnswers.get(AnswerPost_.AUTHOR).get(User_.ID), userId);
+                Predicate reacted = criteriaBuilder.equal(joinedReactions.get(Reaction_.USER).get(User_.ID), userId);
 
                 return criteriaBuilder.or(answered, reacted);
             }
@@ -161,18 +161,18 @@ public class PostSpecs {
 
     /**
      * Specification which filters Posts according to a search string in a match-all-manner
-     * post is only kept if the search string (which is not a #id pattern) is included in either the post title, content or tag (all strings lowercased)
+     * post is only kept if the search string (which is not a #id pattern) is included in either the post title, content or tag (all strings are lowercase)
      *
      * @param searchText Text to be searched within posts
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getSearchTextSpecification(String searchText) {
-        return ((root, query, criteriaBuilder) -> {
+        return (root, query, criteriaBuilder) -> {
             if (searchText == null || searchText.isBlank()) {
                 return null;
             }
             // search by text or #post
-            else if (searchText.startsWith("#") && (searchText.substring(1) != null && !searchText.substring(1).isBlank())) {
+            else if (searchText.startsWith("#") && (searchText.length() > 1 && !searchText.substring(1).isBlank())) {
                 // if searchText starts with a # and is followed by a post id, filter for post with id
                 return criteriaBuilder.equal(root.get(Post_.ID), Integer.parseInt(searchText.substring(1)));
             }
@@ -186,7 +186,7 @@ public class PostSpecs {
 
                 return criteriaBuilder.or(searchInPostTitle, searchInPostContent, searchInPostTags);
             }
-        });
+        };
     }
 
     /**
@@ -242,9 +242,9 @@ public class PostSpecs {
     /**
      * Creates the specification to get distinct Posts
      *
-     * @return  specification that adds the keyword GROUP BY to the query since DISTINCT and ORDER BY keywords are
+     * @return specification that adds the keyword GROUP BY to the query since DISTINCT and ORDER BY keywords are
      *          incompatible with each other at server tests
-     *          https://github.com/h2database/h2database/issues/408
+     *          <a href="https://github.com/h2database/h2database/issues/408">https://github.com/h2database/h2database/issues/408</a>
      */
     public static Specification<Post> distinct() {
         return (root, query, criteriaBuilder) -> {
