@@ -145,6 +145,8 @@ public class SecurityConfiguration {
             .requestMatchers("/", "/index.html", "/*.js", "/*.map", "/*.css").permitAll()
             .requestMatchers("/*.ico", "/*.png", "/*.svg", "/*.webapp").permitAll()
             .requestMatchers("/public/**").permitAll()
+            .requestMatchers("/logo/*.svg", "/logo/*.png", "/logo/*.ico", "/logo/browserconfig.xml").permitAll()    // for favicons and logos
+            .requestMatchers("/ngsw.json").permitAll()    // for the service worker
             .requestMatchers("/app/**").permitAll() //TODO: this might not work for us, because we don't use the app prefix
             .requestMatchers("/i18n/**").permitAll()
             .requestMatchers("/content/**").permitAll()
