@@ -180,6 +180,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
 
         if (this.resultId > 0) {
             this.result = getSubmissionResultById(this.submission, this.resultId);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             this.correctionRound = this.submission.results?.findIndex((result) => result.id === this.resultId)!;
         } else {
             this.result = getSubmissionResultByCorrectionRound(this.submission, this.correctionRound);
@@ -360,6 +361,7 @@ export class TextSubmissionAssessmentComponent extends TextAssessmentBaseCompone
         }
 
         this.assessmentsService
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             .updateAssessmentAfterComplaint(this.assessments, this.textBlocksWithFeedback, complaintResponse, this.submission?.id!, this.participation?.id!)
             .subscribe({
                 next: (response) => this.handleSaveOrSubmitSuccessWithAlert(response, 'artemisApp.textAssessment.updateAfterComplaintSuccessful'),

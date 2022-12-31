@@ -21,6 +21,7 @@ export class ComplaintsFormComponent implements OnInit {
     @Input() remainingNumberOfComplaints: number;
     @Input() complaintType: ComplaintType;
     @Input() isCurrentUserSubmissionAuthor = false;
+    // eslint-disable-next-line @angular-eslint/no-output-native
     @Output() submit: EventEmitter<void> = new EventEmitter();
     maxComplaintsPerCourse = 1;
     complaintText?: string;

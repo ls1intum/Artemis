@@ -1,8 +1,8 @@
 import { Component, Input, OnDestroy } from '@angular/core';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { Subject, from } from 'rxjs';
-import { finalize, map, takeUntil } from 'rxjs/operators';
+import { EMPTY, Subject, from } from 'rxjs';
+import { catchError, finalize, map, takeUntil } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -82,7 +82,10 @@ export class TutorialGroupSessionsManagementComponent implements OnDestroy {
         modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe(() => {
                 this.loadAll();
             });

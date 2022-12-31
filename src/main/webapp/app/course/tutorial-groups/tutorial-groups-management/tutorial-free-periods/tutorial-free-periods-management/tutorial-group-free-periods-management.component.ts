@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { Subject, combineLatest, finalize, from, switchMap, take } from 'rxjs';
+import { EMPTY, Subject, combineLatest, finalize, from, switchMap, take } from 'rxjs';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,7 +13,7 @@ import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
-import { takeUntil } from 'rxjs/operators';
+import { catchError, takeUntil } from 'rxjs/operators';
 
 @Component({
     selector: 'jhi-tutorial-free-periods',
@@ -92,7 +92,10 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
         modalRef.componentInstance.tutorialGroupConfigurationId = this.tutorialGroupsConfiguration.id!;
         modalRef.componentInstance.initialize();
         from(modalRef.result)
-            .pipe(takeUntil(this.ngUnsubscribe))
+            .pipe(
+                catchError(() => EMPTY),
+                takeUntil(this.ngUnsubscribe),
+            )
             .subscribe(() => {
                 this.loadAll();
             });

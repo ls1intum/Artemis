@@ -314,7 +314,7 @@ describe('ExamParticipationComponent', () => {
             const studentParticipation = new StudentParticipation();
             if (withSubmission) {
                 let submission = new ProgrammingSubmission();
-                if ('modeling') {
+                if (type == 'modeling') {
                     submission = new ModelingSubmission();
                 }
                 studentParticipation.submissions = [submission];
