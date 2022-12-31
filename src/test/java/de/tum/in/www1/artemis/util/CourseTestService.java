@@ -1074,26 +1074,32 @@ public class CourseTestService {
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
         String suffix = "assessStatsLarge";
         adjustUserGroupsToCustomGroups(suffix);
-        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 9, 8, 8, 5, true, 5, validModel);
+
+        int exercises = 9;
+        int submissions = 5;
+        int assessments = 5;
+        int complaints = 3;
+
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, suffix, exercises, submissions, assessments, complaints, true, complaints, validModel);
 
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
-        // the first two tutors did assess 8 submissions of 3 exercises. The rest two only 8 of two exercises.
-        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(3 * 8);
-        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(2 * 8);
-        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfAssessments()).isEqualTo(2 * 8);
-        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAssessments()).isEqualTo(2 * 8);
+        // the first two tutors did assess 5 submissions of 3 exercises. The rest two only 5 of two exercises.
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(3 * submissions);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAssessments()).isEqualTo(2 * submissions);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfAssessments()).isEqualTo(2 * submissions);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAssessments()).isEqualTo(2 * submissions);
         assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfAssessments()).isZero();
 
-        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfTutorComplaints()).isEqualTo(3 * 5);
-        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfTutorComplaints()).isEqualTo(2 * 5);
-        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfTutorComplaints()).isEqualTo(2 * 5);
-        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfTutorComplaints()).isEqualTo(2 * 5);
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfTutorComplaints()).isEqualTo(3 * complaints);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfTutorComplaints()).isEqualTo(2 * complaints);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfTutorComplaints()).isEqualTo(2 * complaints);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfTutorComplaints()).isEqualTo(2 * complaints);
         assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfTutorComplaints()).isZero();
 
-        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAcceptedComplaints()).isEqualTo(3 * 5);
-        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAcceptedComplaints()).isEqualTo(2 * 5);
-        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfAcceptedComplaints()).isEqualTo(2 * 5);
-        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAcceptedComplaints()).isEqualTo(2 * 5);
+        assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAcceptedComplaints()).isEqualTo(3 * complaints);
+        assertThat(stats.getTutorLeaderboardEntries().get(1).getNumberOfAcceptedComplaints()).isEqualTo(2 * complaints);
+        assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfAcceptedComplaints()).isEqualTo(2 * complaints);
+        assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfAcceptedComplaints()).isEqualTo(2 * complaints);
         assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfAcceptedComplaints()).isZero();
 
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfComplaintResponses()).isZero();
@@ -1101,7 +1107,7 @@ public class CourseTestService {
         assertThat(stats.getTutorLeaderboardEntries().get(2).getNumberOfComplaintResponses()).isZero();
         assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfComplaintResponses()).isZero();
         // 9 exercises, for each one there are 5 complaintResponses
-        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfComplaintResponses()).isEqualTo(9 * 5);
+        assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfComplaintResponses()).isEqualTo(exercises * complaints);
     }
 
     private void updateCourseGroups(Course course, String suffix) {
