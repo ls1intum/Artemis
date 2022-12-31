@@ -78,7 +78,7 @@ public class ConversationService {
                 conversationParticipant -> conversationParticipant.getUser().getId().equals(conversation.getConversationParticipants().iterator().next().getUser().getId())))
                 .findAny();
 
-        if (!existingConversation.isPresent()) {
+        if (existingConversation.isEmpty()) {
             conversation.setCourse(course);
 
             Conversation savedConversation = conversationRepository.save(conversation);
@@ -172,7 +172,9 @@ public class ConversationService {
      */
     private ConversationParticipant conversationParticipantToCreate(ConversationParticipant conversationParticipant, Conversation conversation) {
         conversationParticipant.setConversation(conversation);
-        conversationParticipant.setLastRead(conversation.getLastMessageDate());
+        // set the last reading time of a participant in the past when creating conversation for the first time!
+        conversationParticipant.setLastRead(ZonedDateTime.now().minusYears(2));
+        conversationParticipant.setUnreadMessagesCount(0L);
         return conversationParticipant;
     }
 
@@ -212,7 +214,6 @@ public class ConversationService {
         ConversationParticipant readingParticipant = conversation.getConversationParticipants().stream()
                 .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId())).findAny().get();
         readingParticipant.setLastRead(ZonedDateTime.now());
-        conversationParticipantRepository.save(readingParticipant);
         return readingParticipant.getLastRead();
     }
 }

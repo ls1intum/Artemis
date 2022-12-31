@@ -14,11 +14,13 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Conversation;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.MessageRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
@@ -35,10 +37,13 @@ public class MessageService extends PostingService {
 
     private final MessageRepository messageRepository;
 
-    protected MessageService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, MessageRepository messageRepository,
-            AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
-            ConversationService conversationService) {
+    private final ConversationParticipantRepository conversationParticipantRepository;
+
+    protected MessageService(ConversationParticipantRepository conversationParticipantRepository, CourseRepository courseRepository, ExerciseRepository exerciseRepository,
+            LectureRepository lectureRepository, MessageRepository messageRepository, AuthorizationCheckService authorizationCheckService,
+            SimpMessageSendingOperations messagingTemplate, UserRepository userRepository, ConversationService conversationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
+        this.conversationParticipantRepository = conversationParticipantRepository;
         this.conversationService = conversationService;
         this.messageRepository = messageRepository;
     }
@@ -80,6 +85,8 @@ public class MessageService extends PostingService {
             savedMessage.setConversation(conversation);
 
             conversationService.updateConversation(conversation);
+            conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
+            conversation = conversationService.getConversationById(conversation.getId());
 
             broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
             conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.UPDATE), null);
@@ -114,6 +121,12 @@ public class MessageService extends PostingService {
             setAuthorRoleOfPostings(conversationPosts.getContent());
 
             conversationService.auditConversationReadTimeOfUser(conversation, user);
+
+            ConversationParticipant readingParticipant = conversation.getConversationParticipants().stream()
+                    .filter(conversationParticipant -> Objects.equals(conversationParticipant.getUser().getId(), user.getId())).findAny().orElseThrow();
+            readingParticipant.setUnreadMessagesCount(0L);
+            conversationParticipantRepository.save(readingParticipant);
+
             conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION), user);
         }
         else {
@@ -169,10 +182,15 @@ public class MessageService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = messageRepository.findMessagePostByIdElseThrow(postId);
-        post.setConversation(mayUpdateOrDeleteMessageElseThrow(post, user));
+        Conversation conversation = mayUpdateOrDeleteMessageElseThrow(post, user);
+        post.setConversation(conversation);
 
         // delete
         messageRepository.deleteById(postId);
+        conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
+        conversation = conversationService.getConversationById(conversation.getId());
+
+        conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.UPDATE), null);
         broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course);
     }
 
