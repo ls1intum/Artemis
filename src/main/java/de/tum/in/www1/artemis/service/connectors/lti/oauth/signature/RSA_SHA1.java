@@ -68,11 +68,11 @@ import de.tum.in.www1.artemis.service.connectors.lti.oauth.signature.pem.PKCS1En
  */
 public class RSA_SHA1 extends OAuthSignatureMethod {
 
-    final static public String PRIVATE_KEY = "RSA-SHA1.PrivateKey";
+    public static final String PRIVATE_KEY = "RSA-SHA1.PrivateKey";
 
-    final static public String PUBLIC_KEY = "RSA-SHA1.PublicKey";
+    public static final String PUBLIC_KEY = "RSA-SHA1.PublicKey";
 
-    final static public String X509_CERTIFICATE = "RSA-SHA1.X509Certificate";
+    public static final String X509_CERTIFICATE = "RSA-SHA1.X509Certificate";
 
     private PrivateKey privateKey = null;
 

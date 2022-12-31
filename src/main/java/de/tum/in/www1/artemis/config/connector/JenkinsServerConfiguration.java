@@ -27,5 +27,4 @@ public class JenkinsServerConfiguration {
     public JenkinsServer jenkinsServer() throws URISyntaxException {
         return new JenkinsServer(jenkinsServerUrl.toURI(), jenkinsUser, jenkinsPassword);
     }
-
 }

@@ -6,6 +6,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
+import java.util.Base64;
 import java.util.Date;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -15,7 +16,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.http.client.methods.HttpPost;
@@ -57,7 +57,7 @@ public class IMSPOXRequest {
     public static String getBodyHash(String postBody) throws GeneralSecurityException {
         MessageDigest md = MessageDigest.getInstance("SHA1");
         md.update(postBody.getBytes());
-        byte[] output = Base64.encodeBase64(md.digest());
+        byte[] output = Base64.getEncoder().encode(md.digest());
         return new String(output);
     }
 

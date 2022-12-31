@@ -12,6 +12,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -34,7 +35,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Optional;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.*;
 
@@ -287,7 +287,7 @@ public class JenkinsRequestMockProvider {
     public void mockGetFolderJob(String folderName, FolderJob folderJobToReturn) throws IOException {
         final var jobWithDetails = new JobWithDetails();
         doReturn(jobWithDetails).when(jenkinsServer).getJob(folderName);
-        doReturn(com.google.common.base.Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);
+        doReturn(Optional.of(folderJobToReturn)).when(jenkinsServer).getFolderJob(jobWithDetails);
     }
 
     public BuildWithDetails mockGetLatestBuildLogs(ProgrammingExerciseStudentParticipation participation, boolean useLegacyLogs) throws IOException {
