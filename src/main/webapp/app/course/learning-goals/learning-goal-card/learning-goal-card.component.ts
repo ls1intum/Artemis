@@ -1,12 +1,10 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { LearningGoal, LearningGoalProgress, LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
+import { LearningGoal, LearningGoalProgress, LearningGoalTaxonomy, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LearningGoalDetailModalComponent } from 'app/course/learning-goals/learning-goal-detail-modal/learning-goal-detail-modal.component';
 import { LearningGoalCourseDetailModalComponent } from 'app/course/learning-goals/learning-goal-course-detail-modal/learning-goal-course-detail-modal.component';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faBrain, faComments, faCubesStacked, faMagnifyingGlass, faPenFancy, faPlusMinus, faQuestion } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-learning-goal-card',
@@ -14,6 +12,8 @@ import { faBrain, faComments, faCubesStacked, faMagnifyingGlass, faPenFancy, faP
     styleUrls: ['../../../overview/course-exercises/course-exercise-row.scss'],
 })
 export class LearningGoalCardComponent implements OnInit, OnDestroy {
+    @Input()
+    courseId?: number;
     @Input()
     learningGoal: LearningGoal;
     @Input()
@@ -27,6 +27,9 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
 
     public DetailModalComponent = LearningGoalDetailModalComponent;
     public CourseDetailModalComponent = LearningGoalCourseDetailModalComponent;
+
+    getIcon = getIcon;
+    getIconTooltip = getIconTooltip;
 
     constructor(private modalService: NgbModal, public lectureUnitService: LectureUnitService, public translateService: TranslateService) {}
 
@@ -62,39 +65,5 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
         // Advancement towards mastery as a weighted function of progress and confidence
         const weight = 2 / 3;
         return (1 - weight) * this.progress + weight * this.confidence;
-    }
-
-    getIcon(learningGoalTaxonomy?: LearningGoalTaxonomy): IconProp {
-        if (!learningGoalTaxonomy) {
-            return faQuestion as IconProp;
-        }
-
-        const icons = {
-            [LearningGoalTaxonomy.REMEMBER]: faBrain,
-            [LearningGoalTaxonomy.UNDERSTAND]: faComments,
-            [LearningGoalTaxonomy.APPLY]: faPenFancy,
-            [LearningGoalTaxonomy.ANALYZE]: faMagnifyingGlass,
-            [LearningGoalTaxonomy.EVALUATE]: faPlusMinus,
-            [LearningGoalTaxonomy.CREATE]: faCubesStacked,
-        };
-
-        return icons[learningGoalTaxonomy] as IconProp;
-    }
-
-    getIconTooltip(learningGoalTaxonomy?: LearningGoalTaxonomy): string {
-        if (!learningGoalTaxonomy) {
-            return '';
-        }
-
-        const tooltips = {
-            [LearningGoalTaxonomy.REMEMBER]: 'artemisApp.learningGoal.taxonomies.remember',
-            [LearningGoalTaxonomy.UNDERSTAND]: 'artemisApp.learningGoal.taxonomies.understand',
-            [LearningGoalTaxonomy.APPLY]: 'artemisApp.learningGoal.taxonomies.apply',
-            [LearningGoalTaxonomy.ANALYZE]: 'artemisApp.learningGoal.taxonomies.analyze',
-            [LearningGoalTaxonomy.EVALUATE]: 'artemisApp.learningGoal.taxonomies.evaluate',
-            [LearningGoalTaxonomy.CREATE]: 'artemisApp.learningGoal.taxonomies.create',
-        };
-
-        return tooltips[learningGoalTaxonomy];
     }
 }

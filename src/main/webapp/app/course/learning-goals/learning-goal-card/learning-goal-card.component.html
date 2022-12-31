@@ -1,4 +1,5 @@
 <div [id]="'learning-goal-card-' + learningGoal.id" class="course-exercise-row row align-items-center justify-content-between mb-2 mt-2 position-relative">
+    <a *ngIf="courseId" class="stretched-link" [routerLink]="['/courses', courseId, 'learning-goals', learningGoal.id!]"></a>
     <div class="col-auto d-none d-sm-block">
         <a class="exercise-row-icon">
             <fa-icon [icon]="getIcon(learningGoal.taxonomy)" size="2x" [ngbTooltip]="getIconTooltip(learningGoal.taxonomy) | artemisTranslate" container="body"></fa-icon>

@@ -9,6 +9,9 @@
             "description": "Beschreibung",
             "taxonomy": "Taxonomie",
             "masteryThreshold": "Schwellwert zum Erreichen der Kompetenz",
+            "progress": "Fortschritt",
+            "confidence": "Selbstbewertung",
+            "mastery": "Kompetenzbeherrschung",
             "taxonomies": {
                 "remember": "Erinnern",
                 "understand": "Verstehen",
@@ -16,6 +19,10 @@
                 "analyze": "Analysieren",
                 "evaluate": "Evaluieren",
                 "create": "Erstellen"
+            },
+            "table": {
+                "panelHeader": "Dein Fortschritt",
+                "panelDescription": "Dein Weg zum Erwerb dieser Kompetenz."
             },
             "manageLearningGoals": {
                 "title": "Kompetenzmanagement",

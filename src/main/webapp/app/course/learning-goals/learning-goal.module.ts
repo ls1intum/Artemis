@@ -29,6 +29,6 @@ import { LearningGoalRingsComponent } from 'app/course/learning-goals/learning-g
         LearningGoalCourseDetailModalComponent,
         PrerequisiteImportComponent,
     ],
-    exports: [LearningGoalCardComponent, LearningGoalsPopoverComponent, LearningGoalFormComponent],
+    exports: [LearningGoalCardComponent, LearningGoalsPopoverComponent, LearningGoalFormComponent, LearningGoalRingsComponent],
 })
 export class ArtemisLearningGoalsModule {}

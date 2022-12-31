@@ -9,6 +9,9 @@
             "description": "Description",
             "taxonomy": "Taxonomy",
             "masteryThreshold": "Mastery threshold",
+            "progress": "Progress",
+            "confidence": "Confidence",
+            "mastery": "Mastery",
             "taxonomies": {
                 "remember": "Remember",
                 "understand": "Understand",
@@ -16,6 +19,9 @@
                 "analyze": "Analyze",
                 "evaluate": "Evaluate",
                 "create": "Create"
+            },
+            "table": {
+                "panelHeader": "Your progress"
             },
             "manageLearningGoals": {
                 "title": "Competency Management",

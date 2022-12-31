@@ -107,7 +107,12 @@
 
     <div class="container" style="min-height: 100px">
         <div class="row justify-content-center gx-5 gy-2">
-            <jhi-learning-goal-card class="col-12 col-lg-6" *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify" [learningGoal]="learningGoal">
+            <jhi-learning-goal-card
+                class="col-12 col-lg-6"
+                *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
+                [learningGoal]="learningGoal"
+                [courseId]="courseId"
+            >
                 <button
                     *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
                     jhiDeleteButton

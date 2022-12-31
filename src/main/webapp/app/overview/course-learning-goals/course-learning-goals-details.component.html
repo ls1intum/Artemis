@@ -1,0 +1,55 @@
+<div *ngIf="isLoading" class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+    </div>
+</div>
+
+<div *ngIf="learningGoal">
+    <!-- HEADER INFORMATION START -->
+    <div class="course-info-bar">
+        <div class="row">
+            <div class="col general-info">
+                <h4 class="fw-medium">
+                    <fa-icon *ngIf="learningGoal.taxonomy" [icon]="getIcon(learningGoal.taxonomy)"></fa-icon>
+                </h4>
+                <h3>
+                    <span>{{ learningGoal!.title }}</span>
+                </h3>
+            </div>
+        </div>
+    </div>
+    <!-- HEADER INFORMATION END -->
+    <!-- LECTURE START -->
+    <div class="row mt-2">
+        <div class="col-lg-9 col-md-8">
+            <div class="row">
+                <div class="col-11" *ngFor="let lectureUnit of learningGoal.lectureUnits" [ngSwitch]="lectureUnit.type">
+                    <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [course]="learningGoal!.course!"></jhi-exercise-unit>
+                    <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
+                    <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit"></jhi-video-unit>
+                    <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit"></jhi-text-unit>
+                    <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit"></jhi-online-unit>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-4">
+            <div class="w-50 mx-auto my-2">
+                <jhi-learning-goal-rings [progress]="progress" [confidence]="confidence" [mastery]="mastery"></jhi-learning-goal-rings>
+            </div>
+            <jhi-side-panel class="d-block mt-3" [panelHeader]="'artemisApp.learningGoal.table.panelHeader' | artemisTranslate">
+                <div class="row mb-1 g-0">
+                    <div class="col-7">{{ 'artemisApp.learningGoal.progress' | artemisTranslate }}</div>
+                    <div class="col-5">{{ progress }} %</div>
+                </div>
+                <div class="row mb-1 g-0">
+                    <div class="col-7">{{ 'artemisApp.learningGoal.confidence' | artemisTranslate }}</div>
+                    <div class="col-5">{{ confidence }} %</div>
+                </div>
+                <div class="row mb-1 g-0">
+                    <div class="col-7">{{ 'artemisApp.learningGoal.mastery' | artemisTranslate }}</div>
+                    <div class="col-5">{{ mastery }} %</div>
+                </div>
+            </jhi-side-panel>
+        </div>
+    </div>
+</div>
