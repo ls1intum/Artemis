@@ -62,7 +62,7 @@ public abstract class LectureUnit extends DomainObject implements Completable {
     }
 
     public void setName(String name) {
-        this.name = name;
+        this.name = name != null ? name.strip() : null;
     }
 
     public int getOrder() {

@@ -3,13 +3,15 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.*;
 
 import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
 
 import org.assertj.core.data.Percentage;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -36,7 +38,8 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
     @Autowired
     private TextExerciseUtilService textExerciseUtilService;
 
-    private Random random;
+    @Autowired
+    private PlatformTransactionManager transactionManager;
 
     private Percentage errorRate;
 
@@ -46,7 +49,6 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
     void init() {
         database.createAndSaveUser(TEST_PREFIX + "student1");
         course = database.addCourseWithOneReleasedTextExercise();
-        random = new Random();
         errorRate = Percentage.withPercentage(0.0001);
     }
 
@@ -73,10 +75,6 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    // Note: this transaction is necessary, because the method call textSubmissionService.getTextSubmissionsByExerciseId does not eagerly load the text blocks that are
-    // evaluated in the call textAssessmentQueueService.calculateSmallerClusterPercentageBatch
-    // TODO: we should remove transactions in the corresponding production code and make sure to eagerly load text blocks with the submission in such a case
-    @Transactional(readOnly = true) // TODO: remove transactional
     @WithMockUser(username = TEST_PREFIX + "student1")
     void calculateSmallerClusterPercentageTest() {
         int submissionCount = 5;
@@ -88,8 +86,17 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
         List<TextCluster> clusters = textExerciseUtilService.addTextBlocksToCluster(new HashSet<>(textBlocks), clusterSizes, textExercise);
         textClusterRepository.saveAll(clusters);
         textBlockRepository.saveAll(textBlocks);
-        List<TextSubmission> textSubmissions = textSubmissionService.getAllSubmissionsForExercise(textExercise.getId(), true, false);
-        Map<TextBlock, Double> smallerClusterPercentages = textAssessmentQueueService.calculateSmallerClusterPercentageBatch(textSubmissions);
+
+        // Note: this transaction is necessary, because the method call textSubmissionService.getAllSubmissionsForExercise does not eagerly load the text blocks that are
+        // evaluated in the call textAssessmentQueueService.calculateSmallerClusterPercentageBatch
+        // TODO: we should remove transactions in the corresponding production code and make sure to eagerly load text blocks with the submission in such a case
+        TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
+        transactionTemplate.setReadOnly(true);
+        Map<TextBlock, Double> smallerClusterPercentages = transactionTemplate.execute(status -> {
+            List<TextSubmission> textSubmissions = textSubmissionService.getAllSubmissionsForExercise(textExercise.getId(), true, false);
+            return textAssessmentQueueService.calculateSmallerClusterPercentageBatch(textSubmissions);
+        });
+
         textBlocks.forEach(textBlock -> {
             if (textBlock.getCluster() == clusters.get(0)) {
                 // cluster has size 4 Therefore 25% are smaller
@@ -119,7 +126,7 @@ class TextAssessmentQueueServiceTest extends AbstractSpringIntegrationBambooBitb
             clusters.add(new TextCluster());
         }
         // Add all text blocks to a random cluster
-        textBlocks.forEach(textBlock -> clusters.get(random.nextInt(clusterCount)).addBlocks(textBlock));
+        textBlocks.forEach(textBlock -> clusters.get(ThreadLocalRandom.current().nextInt(clusterCount)).addBlocks(textBlock));
         return clusters;
     }
 

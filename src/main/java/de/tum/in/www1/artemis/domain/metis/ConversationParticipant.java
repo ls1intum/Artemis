@@ -31,6 +31,17 @@ public class ConversationParticipant extends DomainObject {
     @Column(name = "last_read")
     private ZonedDateTime lastRead;
 
+    @Column(name = "unread_messages_count")
+    private Long unreadMessagesCount;
+
+    public Long getUnreadMessagesCount() {
+        return unreadMessagesCount;
+    }
+
+    public void setUnreadMessagesCount(Long unreadMessagesCount) {
+        this.unreadMessagesCount = unreadMessagesCount;
+    }
+
     public Conversation getConversation() {
         return conversation;
     }

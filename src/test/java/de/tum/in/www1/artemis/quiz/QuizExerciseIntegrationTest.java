@@ -10,7 +10,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -185,7 +184,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         }
     }
 
-    @Disabled("TODO FIX SERVER TEST")
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCreateQuizExerciseForExam() throws Exception {
@@ -213,7 +211,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 assertThat(answerOptions.get(1).getHint()).as("Hint for answer option is correct").isEqualTo("H2");
                 assertThat(answerOptions.get(1).getExplanation()).as("Explanation for answer option is correct").isEqualTo("E2");
                 assertThat(answerOptions.get(1).isIsCorrect()).as("Is correct for answer option is correct").isFalse();
-                assertThat(answerOptions.get(1).getQuestion()).isNotNull();
             }
             else if (question instanceof DragAndDropQuestion dragAndDropQuestion) {
                 assertThat(dragAndDropQuestion.getDropLocations()).as("Drag and drop question drop locations were saved").hasSize(3);

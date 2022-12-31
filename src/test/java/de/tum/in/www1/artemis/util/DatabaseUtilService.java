@@ -620,6 +620,10 @@ public class DatabaseUtilService {
         return addTeamsForExercise(exercise, 1, owner).get(0);
     }
 
+    public Team addTeamForExercise(Exercise exercise, User owner, String loginPrefix) {
+        return addTeamsForExercise(exercise, "team", loginPrefix, 1, owner).get(0);
+    }
+
     public Result addProgrammingParticipationWithResultForExercise(ProgrammingExercise exercise, String login) {
         var storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
         final StudentParticipation studentParticipation;

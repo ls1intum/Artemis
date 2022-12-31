@@ -78,7 +78,7 @@ public class UserTestService {
 
     public User student;
 
-    private static final int numberOfStudents = 50;
+    private static final int numberOfStudents = 2;
 
     private static final int numberOfTutors = 1;
 
@@ -591,7 +591,7 @@ public class UserTestService {
     public void searchUsers_asInstructor_isSuccessful() throws Exception {
         final String loginOrName = TEST_PREFIX + "student1";
         List<UserDTO> users = request.getList("/api/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
-        assertThat(users).hasSize(11); // size([student1, student10, ... student19]) = 11
+        assertThat(users).hasSize(1); // size([student1]) = 1
     }
 
     // Test

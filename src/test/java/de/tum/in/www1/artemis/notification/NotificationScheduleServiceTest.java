@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.notification;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED;
 import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsService.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED;
 import static java.time.ZonedDateTime.now;
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Mockito.*;
 
@@ -50,28 +49,28 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
         final Course course = database.addCourseWithModelingAndTextExercise();
         exercise = database.getFirstExerciseWithType(course, TextExercise.class);
         exercise.setReleaseDate(now().plus(500, ChronoUnit.MILLIS));
-        exercise.setAssessmentDueDate(now().plus(1000, ChronoUnit.MILLIS));
+        exercise.setAssessmentDueDate(now().plus(2, ChronoUnit.SECONDS));
         exerciseRepository.save(exercise);
-        notificationRepository.deleteAll();
-        assertThat(notificationRepository.count()).isZero();
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
     @Test
-    @Timeout(5)
+    @Timeout(10)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtReleaseDate() {
+        long sizeBefore = notificationRepository.count();
         notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED));
         instanceMessageReceiveService.processScheduleExerciseReleasedNotification(exercise.getId());
-        await().until(() -> notificationRepository.count() > 0);
+        await().until(() -> notificationRepository.count() > sizeBefore);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(exercise);
-        verify(javaMailSender, timeout(2000).times(1)).send(any(MimeMessage.class));
+        verify(javaMailSender, timeout(4000).times(1)).send(any(MimeMessage.class));
     }
 
     @Test
     @Timeout(10)
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldCreateNotificationAndEmailAtAssessmentDueDate() {
+        long sizeBefore = notificationRepository.count();
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.text("Text");
         textSubmission.submitted(true);
@@ -81,7 +80,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
 
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exercise.getId());
 
-        await().until(() -> notificationRepository.count() > 0);
+        await().until(() -> notificationRepository.count() > sizeBefore);
         verify(singleUserNotificationService, times(1)).notifyUsersAboutAssessedExerciseSubmission(exercise);
         verify(javaMailSender, timeout(4000).times(1)).send(any(MimeMessage.class));
     }

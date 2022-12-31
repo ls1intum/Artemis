@@ -135,11 +135,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private final List<LocalRepository> studentRepos = new ArrayList<>();
 
-    private final int students = 10;
+    private static final int NUMBER_OF_STUDENTS = 5;
 
     @BeforeEach
     void initTestCase() throws Exception {
-        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, students, 1, 0, 2);
+        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 1);
         var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
         course1 = database.addEmptyCourse();
@@ -258,7 +258,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private List<StudentExam> prepareStudentExamsForConduction(boolean early, boolean setFields) throws Exception {
-        for (int i = 1; i <= students + 5; i++) {
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
             bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
         }
 
@@ -282,7 +282,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
-        Set<User> registeredStudents = getRegisteredStudents(10);
+        Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
         // register users
         exam.setRegisteredUsers(registeredStudents);
         exam.setRandomizeExerciseOrder(false);
@@ -591,7 +591,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register user
-        Set<User> registeredStudents = getRegisteredStudents(10);
+        Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
         exam.setRegisteredUsers(new HashSet<>(registeredStudents));
         exam.setNumberOfExercisesInExam(2);
         exam.setRandomizeExerciseOrder(false);
@@ -616,7 +616,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register user
-        Set<User> registeredStudents = getRegisteredStudents(10);
+        Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
         exam.setRegisteredUsers(new HashSet<>(registeredStudents));
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
@@ -1039,7 +1039,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.CONFLICT);
 
         // assert that all repositories of programming exercises have been locked
-        assertThat(exercisesToBeLocked).hasSize(studentProgrammingParticipations.size());
+        assertThat(exercisesToBeLocked).hasSameSizeAs(studentProgrammingParticipations);
         for (int i = 0; i < exercisesToBeLocked.size(); i++) {
             verify(programmingExerciseParticipationService, atLeastOnce()).lockStudentRepository(exercisesToBeLocked.get(i), studentProgrammingParticipations.get(i));
         }
