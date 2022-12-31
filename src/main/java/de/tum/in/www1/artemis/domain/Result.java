@@ -46,7 +46,7 @@ public class Result extends DomainObject {
      *
      * @see Result#setRatedIfNotExceeded(ZonedDateTime, ZonedDateTime)
      */
-    private static final int GRACE_PERIOD_SECONDS = 20;
+    private static final int GRACE_PERIOD_SECONDS = 15;
 
     @Column(name = "completion_date")
     @JsonView(QuizView.Before.class)
