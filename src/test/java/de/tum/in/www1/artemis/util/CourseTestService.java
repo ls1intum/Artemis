@@ -189,6 +189,14 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups("");
     }
 
+    private void adjustCourseGroups(Course course, String suffix) {
+        course.setStudentGroupName(userPrefix + "student" + suffix);
+        course.setTeachingAssistantGroupName(userPrefix + "tutor" + suffix);
+        course.setEditorGroupName(userPrefix + "editor" + suffix);
+        course.setInstructorGroupName(userPrefix + "instructor" + suffix);
+        courseRepo.save(course);
+    }
+
     // Test
     public void testCreateCourseWithPermission() throws Exception {
         assertThrows(EntityNotFoundException.class, () -> courseRepo.findByIdWithLecturesAndExamsElseThrow(Long.MAX_VALUE));
@@ -929,8 +937,9 @@ public class CourseTestService {
     // Test
     public void testGetAssessmentDashboardStats_withAssessments() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        adjustUserGroupsToCustomGroups();
-        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 2, 0, true, 0, validModel);
+        String suffix = "statswithassessments";
+        adjustUserGroupsToCustomGroups(suffix);
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 2, 0, true, 0, validModel);
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(4);
@@ -942,8 +951,9 @@ public class CourseTestService {
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndComplaints() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        adjustUserGroupsToCustomGroups();
-        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 4, 2, true, 0, validModel);
+        String suffix = "dashboardstatswithcomplaints";
+        adjustUserGroupsToCustomGroups(suffix);
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, true, 0, validModel);
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
@@ -965,8 +975,9 @@ public class CourseTestService {
     // Test
     public void testGetAssessmentDashboardStats_withAssessmentsAndFeedbackRequests() throws Exception {
         String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        adjustUserGroupsToCustomGroups();
-        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, "", 6, 4, 4, 2, false, 0, validModel);
+        String suffix = "statsfeedbackrequests";
+        adjustUserGroupsToCustomGroups(suffix);
+        Course testCourse = database.addCourseWithExercisesAndSubmissions(userPrefix, suffix, 6, 4, 4, 2, false, 0, validModel);
         StatsForDashboardDTO stats = request.get("/api/courses/" + testCourse.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK, StatsForDashboardDTO.class);
         // the first two tutors did assess 2 submissions in 2 exercises. The second two only 2 in one exercise.
         assertThat(stats.getTutorLeaderboardEntries().get(0).getNumberOfAssessments()).isEqualTo(8);
@@ -1843,15 +1854,14 @@ public class CourseTestService {
 
     // Test
     public void testGetExerciseStatsForCourseOverview() throws Exception {
-        adjustUserGroupsToCustomGroups();
+        String testSuffix = "exercisestatsoverview";
+        adjustUserGroupsToCustomGroups(testSuffix);
         // Add a course and set the instructor group name
         var instructorsCourse = database.createCourse();
+        adjustCourseGroups(instructorsCourse, testSuffix);
+
         instructorsCourse.setStartDate(ZonedDateTime.now().minusWeeks(1).with(DayOfWeek.MONDAY));
         instructorsCourse.setEndDate(ZonedDateTime.now().minusWeeks(1).with(DayOfWeek.WEDNESDAY));
-        instructorsCourse.setInstructorGroupName(userPrefix + "instructor");
-        instructorsCourse.setEditorGroupName(userPrefix + "editor");
-        instructorsCourse.setTeachingAssistantGroupName(userPrefix + "tutor");
-        instructorsCourse.setStudentGroupName(userPrefix + "student");
 
         var instructor = database.getUserByLogin(userPrefix + "instructor1");
 
@@ -1909,12 +1919,13 @@ public class CourseTestService {
         courseRepo.save(instructorsCourse);
 
         TextExercise finalExerciseInAssessment = exerciseInAssessment;
-        await().until(() -> participantScoreRepository.findAllByExercise(finalExerciseInAssessment).size() == 1);
+        await().until(() -> !participantScoreRepository.findAllByExercise(finalExerciseInAssessment).isEmpty());
         TextExercise finalExerciseAssessmentDone = exerciseAssessmentDone;
-        await().until(() -> participantScoreRepository.findAllByExercise(finalExerciseAssessmentDone).size() == 1);
+        await().until(() -> !participantScoreRepository.findAllByExercise(finalExerciseAssessmentDone).isEmpty());
 
-        // We only added one course, so expect one dto
         var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
+        // We only added one course, so expect one dto
+        assertThat(courseDtos).hasSize(1);
 
         Optional<CourseManagementOverviewStatisticsDTO> optionalCourseDTO = courseDtos.stream().filter(dto -> Objects.equals(dto.getCourseId(), instructorsCourse.getId()))
                 .findFirst();
@@ -1977,9 +1988,13 @@ public class CourseTestService {
 
     // Test
     public void testGetExerciseStatsForCourseOverviewWithPastExercises() throws Exception {
-
         // Add a single course with six past exercises, from which only five are returned
+        String testSuffix = "statspast";
+        adjustUserGroupsToCustomGroups(testSuffix);
+
         var instructorsCourse = database.createCourse();
+        adjustCourseGroups(instructorsCourse, testSuffix);
+
         var releaseDate = ZonedDateTime.now().minusDays(7);
         var dueDate = ZonedDateTime.now().minusDays(4);
         var olderDueDate = ZonedDateTime.now().minusDays(4);
@@ -2001,11 +2016,11 @@ public class CourseTestService {
         instructorsCourse.addExercises(exerciseNotReturned);
         courseRepo.save(instructorsCourse);
 
-        // We only added one course, so expect one dto
         var courseDtos = request.getList("/api/courses/stats-for-management-overview", HttpStatus.OK, CourseManagementOverviewStatisticsDTO.class);
+        // We only added one course, so expect one dto
+        assertThat(courseDtos).hasSize(1);
 
-        Optional<CourseManagementOverviewStatisticsDTO> optionalCourseDTO = courseDtos.stream().filter(dto -> Objects.equals(dto.getCourseId(), instructorsCourse.getId()))
-                .findFirst();
+        var optionalCourseDTO = courseDtos.stream().filter(dto -> Objects.equals(dto.getCourseId(), instructorsCourse.getId())).findFirst();
         assertThat(optionalCourseDTO).as("Active course was not filtered").isPresent();
         CourseManagementOverviewStatisticsDTO dto = optionalCourseDTO.get();
 
