@@ -1111,11 +1111,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
                 TextSubmission.class, parameters);
 
-        textSubmissionWithoutAssessment.getBlocks()
-                .forEach(block -> assertThat(block).isEqualToIgnoringGivenFields(blocksSubmission1.get(block.getId()), "positionInCluster", "submission", "cluster"));
+        assertThat(textSubmissionWithoutAssessment.getBlocks()).isNotEmpty()
+                .allSatisfy(block -> assertThat(block).isEqualToIgnoringGivenFields(blocksSubmission1.get(block.getId()), "positionInCluster", "submission", "cluster"));
 
-        textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId())
-                .forEach(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
+        assertThat(textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId())).isNotEmpty()
+                .allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
 
         final var newTextBlocksToSimulateAngularSerialization = textSubmissionWithoutAssessment.getBlocks().stream().map(oldBlock -> {
             var newBlock = new TextBlock();
@@ -1133,8 +1133,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.putWithResponseBody("/api/participations/" + textSubmissionWithoutAssessment.getParticipation().getId() + "/results/"
                 + textSubmissionWithoutAssessment.getLatestResult().getId() + "/text-assessment", dto, Result.class, HttpStatus.OK);
 
-        textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId())
-                .forEach(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
+        Set<TextBlock> textBlocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId());
+        assertThat(textBlocks).isNotEmpty().allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
     }
 
     @Test
@@ -1556,9 +1556,8 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.postWithResponseBody("/api/participations/" + submissionWithoutAssessment.getParticipation().getId() + "/results/"
                 + submissionWithoutAssessment.getLatestResult().getId() + "/submit-text-assessment", textAssessmentDTO, Result.class, HttpStatus.OK);
 
-        textBlockRepository.findAllBySubmissionId(submissionWithoutAssessment.getId()).forEach(textBlock -> {
-            assertThat(textBlock.getFeedback().getId()).isNotNull();
-        });
+        Set<TextBlock> textBlocks = textBlockRepository.findAllBySubmissionId(submissionWithoutAssessment.getId());
+        assertThat(textBlocks).isNotEmpty().allMatch(textBlock -> textBlock.getId() != null);
     }
 
     @Test
@@ -1612,7 +1611,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // however the intergration tests use H2 in-memory database so same code did not produce the same error.
         verify(textBlockService, times(irrelevantCallCount + 3)).findAllBySubmissionId(textSubmission.getId());
 
-        textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId())
-                .forEach(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
+        Set<TextBlock> textBlocks = textBlockRepository.findAllWithEagerClusterBySubmissionId(textSubmissionWithoutAssessment.getId());
+        assertThat(textBlocks).allSatisfy(block -> assertThat(block).isEqualToComparingFieldByField(blocksSubmission1.get(block.getId())));
     }
 }
