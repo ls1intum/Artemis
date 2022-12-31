@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.*;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import javax.annotation.Nullable;
@@ -38,6 +39,14 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result extends DomainObject {
+
+    /**
+     * This constant determines how many seconds after the exercise due dates submissions will stil be considered valid
+     * (rated will be set to true)
+     *
+     * @see Result#setRatedIfNotExceeded(ZonedDateTime, ZonedDateTime)
+     */
+    private static final int GRACE_PERIOD_SECONDS = 20;
 
     @Column(name = "completion_date")
     @JsonView(QuizView.Before.class)
@@ -211,7 +220,13 @@ public class Result extends DomainObject {
     }
 
     public void setRatedIfNotExceeded(@Nullable ZonedDateTime exerciseDueDate, ZonedDateTime submissionDate) {
-        this.rated = exerciseDueDate == null || submissionDate.isBefore(exerciseDueDate) || submissionDate.isEqual(exerciseDueDate);
+        if (exerciseDueDate == null) {
+            this.rated = true;
+        }
+        else {
+            ZonedDateTime dueDateWithGracePeriod = exerciseDueDate.plus(20, ChronoUnit.SECONDS); // move to constant
+            this.rated = dueDateWithGracePeriod.isAfter(submissionDate);
+        }
     }
 
     /**
