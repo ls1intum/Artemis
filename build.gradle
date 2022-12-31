@@ -171,7 +171,16 @@ dependencies {
     implementation "org.apache.httpcomponents:httpclient:4.5.14"
     implementation "org.apache.httpcomponents:httpcore:4.4.16"
     implementation "org.apache.httpcomponents:httpmime:4.5.14"
-    implementation "org.dom4j:dom4j:2.1.3"
+    implementation ("org.dom4j:dom4j:2.1.3") {
+        // Note: avoid org.xml.sax.SAXNotRecognizedException: unrecognized feature http://xml.org/sax/features/external-general-entities
+        // also see https://github.com/dom4j/dom4j/issues/99
+        exclude module: 'pull-parser'
+        exclude module: 'jaxen'
+        exclude module: 'xpp3'
+        exclude module: 'xsdlib'
+        exclude module: 'stax-api'
+        exclude module: 'jaxb-api'
+    }
 
     // Note: gitlab4j-api does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
 //    implementation "org.gitlab4j:gitlab4j-api:5.0.1"
