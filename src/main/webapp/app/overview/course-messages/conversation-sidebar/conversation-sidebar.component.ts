@@ -2,7 +2,7 @@ import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, Output } fro
 import interact from 'interactjs';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical, faMessage } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
 
 import { MessagingService } from 'app/shared/metis/messaging.service';
 import { Observable, Subscription, combineLatest, of } from 'rxjs';
