@@ -69,7 +69,7 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     protected GitlabRequestMockProvider gitlabRequestMockProvider;
 
     @AfterEach
-    public void resetSpyBeans() {
+    protected void resetSpyBeans() {
         Mockito.reset(continuousIntegrationService, versionControlService, jenkinsServer);
         super.resetSpyBeans();
     }
