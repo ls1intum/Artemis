@@ -622,20 +622,33 @@ class ProgrammingExerciseIntegrationTestService {
         database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "instructor1");
         final var path = ROOT + PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
-        assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
+        checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
         assertThat(programmingExerciseServer.getStudentParticipations()).isNotEmpty();
-        assertThat(programmingExerciseServer.getTemplateParticipation()).isNotNull();
-        assertThat(programmingExerciseServer.getSolutionParticipation()).isNotNull();
         // TODO add more assertions
     }
 
-    void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation() throws Exception {
+    void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation(boolean withSubmissionResults) throws Exception {
         database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "tutor1");
-        final var path = ROOT + PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var path = ROOT + PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION.replace("{exerciseId}", String.valueOf(programmingExercise.getId()))
+                + "?withSubmissionResults=" + withSubmissionResults;
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
+        checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
+        assertThat(programmingExerciseServer.getStudentParticipations()).isEmpty();
+    }
+
+    void testGetProgrammingExerciseWithTemplateAndSolutionParticipationAndAuxiliaryRepositories(boolean withSubmissionResults) throws Exception {
+        AuxiliaryRepository auxiliaryRepository = database.addAuxiliaryRepositoryToExercise(programmingExercise);
+        var path = ROOT + PROGRAMMING_EXERCISE_WITH_TEMPLATE_AND_SOLUTION_PARTICIPATION.replace("{exerciseId}", String.valueOf(programmingExercise.getId()))
+                + "?withSubmissionResults=" + withSubmissionResults;
+        var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
+        checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
+        assertThat(programmingExerciseServer.getAuxiliaryRepositories()).hasSize(1).containsExactly(auxiliaryRepository);
+    }
+
+    private void checkTemplateAndSolutionParticipationsFromServer(ProgrammingExercise programmingExerciseServer) {
         assertThat(programmingExerciseServer.getTitle()).isEqualTo(programmingExercise.getTitle());
-        assertThat(programmingExerciseServer.getSolutionParticipation().getId()).isNotNull();
-        assertThat(programmingExerciseServer.getTemplateParticipation().getId()).isNotNull();
+        assertThat(programmingExerciseServer.getTemplateParticipation()).isNotNull().extracting(DomainObject::getId).isNotNull();
+        assertThat(programmingExerciseServer.getSolutionParticipation()).isNotNull().extracting(DomainObject::getId).isNotNull();
     }
 
     void testGetProgrammingExerciseWithSetupParticipations_instructorNotInCourse_forbidden() throws Exception {
@@ -1364,7 +1377,7 @@ class ProgrammingExerciseIntegrationTestService {
         testCasesResponse.forEach(testCase -> testCase.setExercise(programmingExercise));
         final var testCasesInDB = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
 
-        assertThat(new HashSet<>(testCasesResponse)).usingElementComparatorIgnoringFields("exercise", "tasks", "solutionEntries", "coverageEntries")
+        assertThat(new HashSet<>(testCasesResponse)).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(testCasesInDB);
         assertThat(testCasesResponse).allSatisfy(testCase -> {
             assertThat(testCase.isAfterDueDate()).isTrue();

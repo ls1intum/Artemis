@@ -94,11 +94,11 @@ public class LiquibaseConfiguration {
         return liquibase;
     }
 
-    String migrationPathVersion5_12_8_String = "5.12.8";
+    String migrationPathVersion5_12_9_String = "5.12.9";
 
     private void checkMigrationPath() {
         var currentVersion = new Semver(currentVersionString);
-        var migrationPathVersion = new Semver(migrationPathVersion5_12_8_String);
+        var migrationPathVersion = new Semver(migrationPathVersion5_12_9_String);
         var version600 = new Semver("6.0.0");
         var version700 = new Semver("7.0.0");
         if (currentVersion.isLowerThan(version600)) {
@@ -106,14 +106,14 @@ public class LiquibaseConfiguration {
         }
         if (currentVersion.isGreaterThanOrEqualTo(version600) && currentVersion.isLowerThan(version700)) {
             previousVersionString = getPreviousVersionElseThrow();
-            log.info("The previous version was " + previousVersionString);
+            log.info("The previous version was {}", previousVersionString);
             if (previousVersionString == null) {
                 // this means Artemis was never started before and no DATABASECHANGELOG exists, we can simply proceed
                 return;
             }
             var previousVersion = new Semver(previousVersionString);
             if (previousVersion.isLowerThan(migrationPathVersion)) {
-                log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_12_8_String);
+                log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_12_9_String);
             }
             else if (previousVersion.isEqualTo(migrationPathVersion)) {
                 // this means this is the first start after the mandatory previous update, we need to set the checksum of the initial schema to null
@@ -125,7 +125,7 @@ public class LiquibaseConfiguration {
     }
 
     private String getPreviousVersionElseThrow() {
-        String error = "Cannot start Artemis because version table does not exist, but a migration path is necessary! Please start the release " + migrationPathVersion5_12_8_String
+        String error = "Cannot start Artemis because version table does not exist, but a migration path is necessary! Please start the release " + migrationPathVersion5_12_9_String
                 + " first, otherwise the migration will fail";
         try (var statement = createStatement()) {
             statement.executeQuery("SELECT * FROM DATABASECHANGELOG;");
@@ -177,11 +177,11 @@ public class LiquibaseConfiguration {
         }
         try (var statement = createStatement()) {
             if (previousVersionString == null) {
-                log.info("Insert latest version " + currentVersionString + " into database");
+                log.info("Insert latest version {} into database", currentVersionString);
                 statement.executeUpdate("INSERT INTO artemis_version (latest_version) VALUES('" + currentVersionString + "');");
             }
             else {
-                log.info("Update latest version to " + currentVersionString + " in database");
+                log.info("Update latest version to {} in database", currentVersionString);
                 statement.executeUpdate("UPDATE artemis_version SET latest_version = '" + currentVersionString + "';");
             }
             statement.getConnection().commit();

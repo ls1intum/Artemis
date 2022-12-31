@@ -78,13 +78,13 @@ public class UserTestService {
 
     public User student;
 
-    private final static int numberOfStudents = 50;
+    private static final int numberOfStudents = 2;
 
-    private final static int numberOfTutors = 1;
+    private static final int numberOfTutors = 1;
 
-    private final static int numberOfEditors = 1;
+    private static final int numberOfEditors = 1;
 
-    private final static int numberOfInstructors = 1;
+    private static final int numberOfInstructors = 1;
 
     public void setup(String testPrefix, MockDelegate mockDelegate) throws Exception {
         this.TEST_PREFIX = testPrefix;
@@ -592,7 +592,7 @@ public class UserTestService {
     public void searchUsers_asInstructor_isSuccessful() throws Exception {
         final String loginOrName = TEST_PREFIX + "student1";
         List<UserDTO> users = request.getList("/api/users/search?loginOrName=" + loginOrName, HttpStatus.OK, UserDTO.class);
-        assertThat(users).hasSize(11); // size([student1, student10, ... student19]) = 11
+        assertThat(users).hasSize(1); // size([student1]) = 1
     }
 
     // Test
