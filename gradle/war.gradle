@@ -13,9 +13,9 @@ bootWar {
 // Command for production build: ./gradlew -Pprod -Pwar clean bootWar
 
 war {
-    webAppDirName = "build/resources/main/static/"
+    webAppDirectory = file("build/resources/main/static/")
     webXml = file("${project.rootDir}/src/main/webapp/WEB-INF/web.xml")
     enabled = true
-    extension = "war.original"
+    archiveExtension = "war.original"
     includes = ["WEB-INF/**", "META-INF/**"]
 }
