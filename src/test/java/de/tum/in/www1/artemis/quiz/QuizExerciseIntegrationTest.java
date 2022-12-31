@@ -23,7 +23,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.TeamAssignmentConfig;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.quiz.*;
@@ -34,7 +37,6 @@ import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.QuizUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -833,22 +835,22 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var exerciseId = exercise.getId();
 
         final var searchTerm = database.configureSearch(exerciseId.toString());
-        final var searchResult = request.get("/api/quiz-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
-        assertThat(searchResult.getResultsOnPage().stream().filter(result -> ((int) ((LinkedHashMap<String, ?>) result).get("id")) == exerciseId.intValue())).hasSize(1);
+        final var searchResult = request.getSearchResult("/api/quiz-exercises", HttpStatus.OK, QuizExercise.class, database.searchMapping(searchTerm));
+        assertThat(searchResult.getResultsOnPage().stream().filter(quizExercise -> Objects.equals(quizExercise.getId(), exerciseId))).hasSize(1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
         String randomString = setupFilterTestCase();
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises", randomString);
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises", randomString, QuizExercise.class);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
         String randomString = setupFilterTestCase();
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises", randomString);
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises", randomString, QuizExercise.class);
     }
 
     private String setupFilterTestCase() {

@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -533,7 +532,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
-        final var result = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/modeling-exercises", HttpStatus.OK, ModelingExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -560,8 +559,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         exercise = modelingExerciseRepository.save(exercise);
 
         final var searchTerm = database.configureSearch(exercise.getTitle());
-        final var searchResult = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
+        final var searchResult = request.getSearchResult("/api/modeling-exercises", HttpStatus.OK, ModelingExercise.class, database.searchMapping(searchTerm));
         assertThat(searchResult.getResultsOnPage()).hasSize(1);
+        // TODO improve assertion
     }
 
     @Test
@@ -571,12 +571,13 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         database.addCourseWithOneModelingExercise("ClassDiagram" + uuid);
         database.addCourseWithOneModelingExercise("Activity Diagram" + uuid);
         final var searchClassDiagram = database.configureSearch("ClassDiagram" + uuid);
-        final var resultClassDiagram = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchClassDiagram));
+        final var resultClassDiagram = request.getSearchResult("/api/modeling-exercises", HttpStatus.OK, ModelingExercise.class, database.searchMapping(searchClassDiagram));
         assertThat(resultClassDiagram.getResultsOnPage()).hasSize(1);
 
         final var searchActivityDiagram = database.configureSearch("Activity Diagram" + uuid);
-        final var resultActivityDiagram = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchActivityDiagram));
+        final var resultActivityDiagram = request.getSearchResult("/api/modeling-exercises", HttpStatus.OK, ModelingExercise.class, database.searchMapping(searchActivityDiagram));
         assertThat(resultActivityDiagram.getResultsOnPage()).hasSize(1);
+        // TODO improve assertion
     }
 
     @Test
@@ -585,10 +586,11 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         final String uuid = UUID.randomUUID().toString();
         String searchTerm = "ClassDiagram" + uuid;
         final var search = database.configureSearch(searchTerm);
-        final var oldResult = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var oldResult = request.getSearchResult("/api/modeling-exercises", HttpStatus.OK, ModelingExercise.class, database.searchMapping(search));
         database.addCourseInOtherInstructionGroupAndExercise(searchTerm);
-        final var result = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/modeling-exercises", HttpStatus.OK, ModelingExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(oldResult.getResultsOnPage().size() + 1);
+        // TODO improve assertion
     }
 
     @Test
@@ -597,7 +599,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         String randomString = UUID.randomUUID().toString();
         database.addCourseWithOneReleasedModelExerciseWithKnowledge(randomString);
         database.addCourseExamExerciseGroupWithOneModelingExercise(randomString + "-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises", randomString);
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises", randomString, ModelingExercise.class);
     }
 
     @Test
@@ -606,7 +608,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         String randomString = UUID.randomUUID().toString();
         database.addCourseWithOneReleasedModelExerciseWithKnowledge(randomString);
         database.addCourseExamExerciseGroupWithOneModelingExercise(randomString + "-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises", randomString);
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises", randomString, ModelingExercise.class);
     }
 
     @Test

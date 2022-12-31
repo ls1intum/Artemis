@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -87,9 +88,9 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
         complaintWithResult.setResult(new Result());
         User user = new User();
 
-        assertThatThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithResult, null)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(null, user)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithoutResult, user)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithResult, null)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(null, user)).isInstanceOf(BadRequestAlertException.class);
+        assertThatThrownBy(() -> complaintResponseService.isUserAuthorizedToRespondToComplaint(complaintWithoutResult, user)).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test

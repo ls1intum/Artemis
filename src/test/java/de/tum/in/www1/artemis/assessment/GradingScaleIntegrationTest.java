@@ -17,12 +17,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradeType;
 import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -385,20 +385,25 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         exam.setTitle("abcdefghijklmnop");
         examRepository.save(exam);
 
-        String url = "/api/grading-scales?pageSize=100&page=1&sortingOrder=DESCENDING&searchTerm=abcdefghijklmnop&sortedColumn=ID";
-        var result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        var search = database.configureSearch("abcdefghijklmnop");
+        search.setPage(100);
+        search.setSortingOrder(SortingOrder.DESCENDING);
+        search.setSortedColumn("ID");
+        var searchMapping = database.searchMapping(search);
+
+        var result = request.getSearchResult("/api/grading-scales", HttpStatus.OK, GradingScale.class, searchMapping);
         assertThat(result.getResultsOnPage()).isEmpty();
 
         courseGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(courseGradingScale);
 
-        result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        result = request.getSearchResult("/api/grading-scales", HttpStatus.OK, GradingScale.class, searchMapping);
         assertThat(result.getResultsOnPage()).hasSize(1);
 
         examGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(examGradingScale);
 
-        result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        result = request.getSearchResult("/api/grading-scales", HttpStatus.OK, GradingScale.class, searchMapping);
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 
@@ -406,20 +411,25 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllGradingScalesInInstructorGroupOnPageWithInstructor() throws Exception {
 
-        String url = "/api/grading-scales?pageSize=100&page=1&sortingOrder=DESCENDING&searchTerm=&sortedColumn=ID";
-        var result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        var search = database.configureSearch("abcdefghijklmnop");
+        search.setPage(100);
+        search.setSortingOrder(SortingOrder.DESCENDING);
+        search.setSortedColumn("ID");
+        var searchMapping = database.searchMapping(search);
+
+        var result = request.getSearchResult("/api/grading-scales", HttpStatus.OK, GradingScale.class, searchMapping);
         assertThat(result.getResultsOnPage()).isEmpty();
 
         courseGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(courseGradingScale);
 
-        result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        result = request.getSearchResult("/api/grading-scales", HttpStatus.OK, GradingScale.class, searchMapping);
         assertThat(result.getResultsOnPage()).hasSize(1);
 
         examGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(examGradingScale);
 
-        result = request.get(url, HttpStatus.OK, SearchResultPageDTO.class);
+        result = request.getSearchResult("/api/grading-scales", HttpStatus.OK, GradingScale.class, searchMapping);
         assertThat(result.getResultsOnPage()).hasSize(2);
     }
 

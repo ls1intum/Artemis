@@ -5,7 +5,7 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.LinkedHashMap;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasic
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -146,7 +145,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = TEST_PREFIX + "instructorother1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -154,8 +153,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final var search = database.configureSearch("Programming");
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNotEmpty();
+        // TODO: better assertions
     }
 
     @Test
@@ -181,8 +181,8 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         var exerciseId = exercise.getId();
 
         final var searchTerm = database.configureSearch(exerciseId.toString());
-        final var searchResult = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
-        assertThat(searchResult.getResultsOnPage().stream().filter(result -> ((int) ((LinkedHashMap<String, ?>) result).get("id")) == exerciseId.intValue())).hasSize(1);
+        final var searchResult = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(searchTerm));
+        assertThat(searchResult.getResultsOnPage().stream().filter(programmingExercise -> Objects.equals(programmingExercise.getId(), exerciseId))).hasSize(1);
     }
 
     @Test
@@ -191,7 +191,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         String randomString = UUID.randomUUID().toString();
         database.addCourseWithNamedProgrammingExerciseAndTestCases(randomString);
         database.addCourseExamExerciseGroupWithOneProgrammingExercise(randomString + "-Morpork", randomString + "Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises", randomString);
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises", randomString, ProgrammingExercise.class);
     }
 
     @Test
@@ -200,7 +200,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         String randomString = UUID.randomUUID().toString();
         database.addCourseWithNamedProgrammingExerciseAndTestCases(randomString);
         database.addCourseExamExerciseGroupWithOneProgrammingExercise(randomString + "-Morpork", randomString + "Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises", randomString);
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises", randomString, ProgrammingExercise.class);
     }
 
     @Test
@@ -210,16 +210,18 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         database.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
         database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
         final var searchPython = database.configureSearch("Python");
-        final var resultPython = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchPython));
+        final var resultPython = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(searchPython));
         assertThat(resultPython.getResultsOnPage()).hasSize(1);
 
         final var searchJava = database.configureSearch("Java");
-        final var resultJava = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchJava));
+        final var resultJava = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(searchJava));
         assertThat(resultJava.getResultsOnPage()).hasSize(2);
 
         final var searchSwift = database.configureSearch("Swift");
-        final var resultSwift = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchSwift));
+        final var resultSwift = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(searchSwift));
         assertThat(resultSwift.getResultsOnPage()).isNullOrEmpty();
+
+        // TODO: better assertions
     }
 
     @Test
@@ -236,8 +238,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         programmingExerciseRepository.save(otherProgrammingExercise);
 
         final var search = database.configureSearch(title);
-        final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult(BASE_RESOURCE, HttpStatus.OK, ProgrammingExercise.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
+        // TODO: better assertions
     }
 
     private ProgrammingExercise importExerciseBase() {

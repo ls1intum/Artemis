@@ -3,7 +3,10 @@ package de.tum.in.www1.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,11 +15,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.lecture.*;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.AttachmentRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -320,7 +328,7 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
-        final var result = request.get("/api/lectures", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/lectures", HttpStatus.OK, Lecture.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
     }
 
@@ -328,8 +336,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final var search = database.configureSearch(lecture1.getTitle());
-        final var result = request.get("/api/lectures", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        final var result = request.getSearchResult("/api/lectures", HttpStatus.OK, Lecture.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(10);
+        // TODO: better assertion
     }
 
     @Test
