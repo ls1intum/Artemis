@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.ExerciseType.MODELING;
 
 import java.time.ZonedDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -78,6 +79,7 @@ public class ModelingExercise extends Exercise {
     }
 
     @Override
+    @JsonIgnore
     public ExerciseType getExerciseType() {
         return MODELING;
     }

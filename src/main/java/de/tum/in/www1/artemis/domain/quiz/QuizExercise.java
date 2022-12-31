@@ -399,6 +399,7 @@ public class QuizExercise extends Exercise {
     }
 
     @Override
+    @JsonIgnore
     public ExerciseType getExerciseType() {
         return QUIZ;
     }

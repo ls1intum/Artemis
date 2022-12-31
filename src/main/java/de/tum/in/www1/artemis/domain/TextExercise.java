@@ -51,6 +51,7 @@ public class TextExercise extends Exercise {
     }
 
     @Override
+    @JsonIgnore
     public ExerciseType getExerciseType() {
         return TEXT;
     }

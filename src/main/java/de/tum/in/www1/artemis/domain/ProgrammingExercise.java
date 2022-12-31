@@ -383,6 +383,7 @@ public class ProgrammingExercise extends Exercise {
     }
 
     @Override
+    @JsonIgnore
     public ExerciseType getExerciseType() {
         return PROGRAMMING;
     }

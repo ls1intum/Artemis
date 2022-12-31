@@ -918,5 +918,6 @@ public abstract class Exercise extends BaseExercise implements Completable {
         }
     }
 
+    @JsonIgnore
     public abstract ExerciseType getExerciseType();
 }
