@@ -6,7 +6,6 @@ import { of, throwError } from 'rxjs';
 import { AssessmentLayoutComponent } from 'app/assessment/assessment-layout/assessment-layout.component';
 import { TextAssessmentAreaComponent } from 'app/exercises/text/assess/text-assessment-area/text-assessment-area.component';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TextblockAssessmentCardComponent } from 'app/exercises/text/assess/textblock-assessment-card/textblock-assessment-card.component';
 import { TextblockFeedbackEditorComponent } from 'app/exercises/text/assess/textblock-feedback-editor/textblock-feedback-editor.component';
 import { ExerciseType } from 'app/entities/exercise.model';
@@ -134,7 +133,6 @@ describe('TextSubmissionAssessmentComponent', () => {
                 MockComponent(ConfirmIconComponent),
                 MockComponent(AssessmentLayoutComponent),
                 MockComponent(ScoreDisplayComponent),
-                MockComponent(FaIconComponent),
                 MockComponent(AssessmentInstructionsComponent),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(UnreferencedFeedbackComponent),
@@ -147,14 +145,7 @@ describe('TextSubmissionAssessmentComponent', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 MockProvider(Router),
             ],
-        })
-            .overrideModule(ArtemisTestModule, {
-                remove: {
-                    declarations: [MockComponent(FaIconComponent)],
-                    exports: [MockComponent(FaIconComponent)],
-                },
-            })
-            .compileComponents();
+        }).compileComponents();
     });
 
     beforeEach(() => {

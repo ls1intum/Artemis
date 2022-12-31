@@ -42,8 +42,10 @@
                             <span class="conversation-list-item-user">
                                 {{ getNameOfConversationParticipant(conversation) }}
                             </span>
-                            <span *ngIf="isConversationUnread(conversation)">
-                                <fa-icon [icon]="faMessage"></fa-icon>
+                            <span *ngIf="(conversation | unreadMessages) > 0">
+                                <span class="badge bg-danger">
+                                    {{ conversation | unreadMessages }}
+                                </span>
                             </span>
                         </li>
                     </ul>
