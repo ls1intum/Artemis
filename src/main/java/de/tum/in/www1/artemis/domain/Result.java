@@ -224,7 +224,7 @@ public class Result extends DomainObject {
             this.rated = true;
         }
         else {
-            ZonedDateTime dueDateWithGracePeriod = exerciseDueDate.plus(20, ChronoUnit.SECONDS); // move to constant
+            ZonedDateTime dueDateWithGracePeriod = exerciseDueDate.plus(GRACE_PERIOD_SECONDS, ChronoUnit.SECONDS);
             this.rated = dueDateWithGracePeriod.isAfter(submissionDate);
         }
     }
