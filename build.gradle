@@ -234,7 +234,9 @@ dependencies {
     implementation "com.vdurmont:semver4j:3.1.0"
 
     // import JHipster dependencies BOM
-    implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
+    implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}"){
+        exclude module: "spring-boot-starter-mail"      // excluded because it still uses jakarta.mail which has security issues and is not needed by this project
+    }
 
     implementation "tech.jhipster:jhipster-framework:${jhipster_dependencies_version}"
     implementation "org.springframework.boot:spring-boot-starter-cache:${spring_boot_version}"
@@ -257,7 +259,6 @@ dependencies {
     implementation "org.liquibase:liquibase-core:4.18.0"
     implementation "org.springframework.boot:spring-boot-starter-validation:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-loader-tools:${spring_boot_version}"
-    implementation "org.springframework.boot:spring-boot-starter-mail:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-logging:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-actuator:${spring_boot_version}"
     implementation "org.springframework.boot:spring-boot-starter-aop:${spring_boot_version}"
