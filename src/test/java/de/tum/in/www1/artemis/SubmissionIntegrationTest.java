@@ -140,7 +140,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"));
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
 
-        var resultPage = request.getSearchResult("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, TextExercise.class,
+        var resultPage = request.getSearchResult("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, Submission.class,
                 database.searchMapping(search));
         assertThat(resultPage.getResultsOnPage()).hasSize(1);
     }
