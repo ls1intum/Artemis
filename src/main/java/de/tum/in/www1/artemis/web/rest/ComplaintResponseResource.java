@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ComplaintResponseService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 import tech.jhipster.web.util.ResponseUtil;
 
 /**
@@ -59,6 +60,7 @@ public class ComplaintResponseResource {
      * @param complaintId - id of the complaint to lock
      * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
+    // TODO: change URL to /complaint/{complaintId}/response
     @PostMapping("/complaint-responses/complaint/{complaintId}/create-lock")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ComplaintResponse> lockComplaint(@PathVariable long complaintId) {
@@ -76,6 +78,7 @@ public class ComplaintResponseResource {
      * @param complaintId - id of the complaint to lock again
      * @return the ResponseEntity with status 201 (Created) and with body the empty complaint response
      */
+    // TODO: change URL to /complaint/{complaintId}/refresh-lock
     @PostMapping("/complaint-responses/complaint/{complaintId}/refresh-lock")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ComplaintResponse> refreshLockOnComplaint(@PathVariable long complaintId) {
@@ -93,6 +96,7 @@ public class ComplaintResponseResource {
      * @param complaintId - id of the complaint to remove the lock for
      * @return the ResponseEntity with status 200 (Ok)
      */
+    // TODO: change URL to /complaint/{complaintId}/response
     @DeleteMapping("/complaint-responses/complaint/{complaintId}/remove-lock")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> removeLockFromComplaint(@PathVariable long complaintId) {
@@ -109,10 +113,12 @@ public class ComplaintResponseResource {
      * @param complaintResponse the complaint response used for resolving the complaint
      * @return the ResponseEntity with status 200 (Ok) and with body the complaint response used for resolving the complaint
      */
+    // TODO: change URL to /complaint/{complaintId}/response
     @PutMapping("/complaint-responses/complaint/{complaintId}/resolve")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ComplaintResponse> resolveComplaint(@RequestBody ComplaintResponse complaintResponse, @PathVariable long complaintId) {
         log.debug("REST request to resolve the complaint with id: {}", complaintId);
+        // we only need the checks in this method
         getComplaintFromDatabaseAndCheckAccessRights(complaintId);
         ComplaintResponse updatedComplaintResponse = complaintResponseService.resolveComplaint(complaintResponse);
         // always remove the student from the complaint as we don't need it in the corresponding client use case
@@ -127,7 +133,7 @@ public class ComplaintResponseResource {
      * @param principal the user who called the method
      * @return the ResponseEntity with status 200 (OK) and with body the complaint response, or with status 404 (Not Found)
      */
-    // TODO: change URL to /complaint-responses?complaintId={complaintId}
+    // TODO: change URL to /complaint/{complaintId}/response
     @GetMapping("/complaint-responses/complaint/{complaintId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ComplaintResponse> getComplaintResponseByComplaintId(@PathVariable long complaintId, Principal principal) {
@@ -183,12 +189,9 @@ public class ComplaintResponseResource {
         }
     }
 
+    @NotNull
     private Complaint getComplaintFromDatabaseAndCheckAccessRights(long complaintId) {
-        Optional<Complaint> complaintFromDatabaseOptional = complaintRepository.findByIdWithEagerAssessor(complaintId);
-        if (complaintFromDatabaseOptional.isEmpty()) {
-            throw new IllegalArgumentException("Complaint was not found in database");
-        }
-        Complaint complaint = complaintFromDatabaseOptional.get();
+        var complaint = complaintRepository.findByIdWithEagerAssessor(complaintId).orElseThrow(() -> new EntityNotFoundException("Complaint", complaintId));
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (!complaintResponseService.isUserAuthorizedToRespondToComplaint(complaint, user)) {
             throw new AccessForbiddenException("Insufficient permission for modifying the lock on the complaint");

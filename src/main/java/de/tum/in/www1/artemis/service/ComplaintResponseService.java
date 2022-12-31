@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,10 +9,14 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.ComplaintRepository;
+import de.tum.in.www1.artemis.repository.ComplaintResponseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ComplaintResponseLockedException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Service for managing complaint responses.
@@ -49,10 +52,7 @@ public class ComplaintResponseService {
      *
      * @param complaint the complaint for which to remove the empty response for
      */
-    public void removeComplaintResponseRepresentingLock(Complaint complaint) {
-        if (complaint == null) {
-            throw new IllegalArgumentException("Complaint should not be null");
-        }
+    public void removeComplaintResponseRepresentingLock(@NotNull Complaint complaint) {
         ComplaintResponse complaintResponseRepresentingLock = getComplaintResponseRepresentingALock(complaint);
 
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -69,13 +69,13 @@ public class ComplaintResponseService {
 
     private ComplaintResponse getComplaintResponseRepresentingALock(Complaint complaint) {
         if (complaint.isAccepted() != null) {
-            throw new IllegalArgumentException("Complaint is already handled, thus no locks exists");
+            throw new BadRequestAlertException("Complaint is already handled, thus no locks exists", ENTITY_NAME, "noDecision");
         }
         if (complaint.getComplaintResponse() == null) {
-            throw new IllegalArgumentException("Complaint response does not exists for given complaint, thus no lock exists");
+            throw new BadRequestAlertException("Complaint response does not exists for given complaint, thus no lock exists", ENTITY_NAME, "noLock");
         }
         if (complaint.getComplaintResponse().getSubmittedTime() != null) {
-            throw new IllegalArgumentException("Complaint response is already submitted, thus not representing a lock");
+            throw new BadRequestAlertException("Complaint response is already submitted, thus not representing a lock", ENTITY_NAME, "noLock");
         }
         return complaint.getComplaintResponse();
     }
@@ -95,10 +95,7 @@ public class ComplaintResponseService {
      * @param complaint the complaint for which to refresh the empty response for
      * @return refreshed empty complaint response
      */
-    public ComplaintResponse refreshComplaintResponseRepresentingLock(Complaint complaint) {
-        if (complaint == null) {
-            throw new IllegalArgumentException("Complaint should not be null");
-        }
+    public ComplaintResponse refreshComplaintResponseRepresentingLock(@NotNull Complaint complaint) {
         ComplaintResponse complaintResponseRepresentingLock = getComplaintResponseRepresentingALock(complaint);
 
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -131,15 +128,12 @@ public class ComplaintResponseService {
      * @param complaint complaint for which to create an empty complaint response for
      * @return persisted empty complaint response
      */
-    public ComplaintResponse createComplaintResponseRepresentingLock(Complaint complaint) {
-        if (complaint == null) {
-            throw new IllegalArgumentException("Complaint should not be null");
-        }
+    public ComplaintResponse createComplaintResponseRepresentingLock(@NotNull Complaint complaint) {
         if (complaint.isAccepted() != null) {
-            throw new IllegalArgumentException("Complaint is already handled");
+            throw new BadRequestAlertException("Complaint is already handled", "Complaint", "complaintAlreadyHandled");
         }
         if (complaint.getComplaintResponse() != null) {
-            throw new IllegalArgumentException("Complaint response already exists for given complaint");
+            throw new BadRequestAlertException("Complaint response already exists for given complaint", "Complaint", "complaintResponseExists");
         }
         User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (!isUserAuthorizedToRespondToComplaint(complaint, user)) {
@@ -166,26 +160,20 @@ public class ComplaintResponseService {
      */
     public ComplaintResponse resolveComplaint(ComplaintResponse updatedComplaintResponse) {
         if (updatedComplaintResponse.getId() == null) {
-            throw new IllegalArgumentException("The complaint response needs to have an id");
+            throw new BadRequestAlertException("The complaint response needs to have an id", ENTITY_NAME, "noId");
         }
-        Optional<ComplaintResponse> complaintResponseFromDatabaseOptional = complaintResponseRepository.findById(updatedComplaintResponse.getId());
-        if (complaintResponseFromDatabaseOptional.isEmpty()) {
-            throw new IllegalArgumentException("The complaint response was not found in the database");
-        }
-        ComplaintResponse emptyComplaintResponseFromDatabase = complaintResponseFromDatabaseOptional.get();
+        var emptyComplaintResponseFromDatabase = complaintResponseRepository.findById(updatedComplaintResponse.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Complaint Response", updatedComplaintResponse.getId()));
         if (emptyComplaintResponseFromDatabase.getSubmittedTime() != null || emptyComplaintResponseFromDatabase.getResponseText() != null) {
-            throw new IllegalArgumentException("The complaint response is not empty");
+            throw new BadRequestAlertException("The complaint response is not empty", ENTITY_NAME, "noId");
         }
-        Optional<Complaint> originalComplaintOptional = complaintRepository.findByIdWithEagerAssessor(emptyComplaintResponseFromDatabase.getComplaint().getId());
-        if (originalComplaintOptional.isEmpty()) {
-            throw new IllegalArgumentException("The complaint was not found in the database");
-        }
-        Complaint originalComplaint = originalComplaintOptional.get();
+        var originalComplaint = complaintRepository.findByIdWithEagerAssessor(emptyComplaintResponseFromDatabase.getComplaint().getId())
+                .orElseThrow(() -> new EntityNotFoundException("Complaint", emptyComplaintResponseFromDatabase.getComplaint().getId()));
         if (originalComplaint.isAccepted() != null) {
-            throw new IllegalArgumentException("You can not update the response to an already answered complaint");
+            throw new BadRequestAlertException("You can not update the response to an already answered complaint", ENTITY_NAME, "updateNotPossible");
         }
         if (updatedComplaintResponse.getComplaint().isAccepted() == null) {
-            throw new IllegalArgumentException("You need to either accept or reject a complaint");
+            throw new BadRequestAlertException("You need to either accept or reject a complaint", ENTITY_NAME, "noDecision");
         }
 
         if (updatedComplaintResponse.getResponseText() != null) {
@@ -229,7 +217,7 @@ public class ComplaintResponseService {
     public boolean blockedByLock(ComplaintResponse complaintResponseRepresentingLock, User user) {
         if (user == null || complaintResponseRepresentingLock == null || complaintResponseRepresentingLock.getComplaint() == null
                 || complaintResponseRepresentingLock.getComplaint().getResult() == null) {
-            throw new IllegalArgumentException();
+            throw new BadRequestAlertException("Invalid input", ENTITY_NAME, "invalidInput");
         }
 
         Result originalResult = complaintResponseRepresentingLock.getComplaint().getResult();
@@ -257,7 +245,7 @@ public class ComplaintResponseService {
      */
     public boolean isUserAuthorizedToRespondToComplaint(Complaint complaint, User user) {
         if (user == null || complaint == null || complaint.getResult() == null) {
-            throw new IllegalArgumentException();
+            throw new BadRequestAlertException("Invalid input", ENTITY_NAME, "invalidInput");
         }
 
         Result originalResult = complaint.getResult();

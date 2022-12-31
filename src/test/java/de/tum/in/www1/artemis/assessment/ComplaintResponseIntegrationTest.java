@@ -54,7 +54,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
     private Complaint complaint;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         log.debug("Test setup start");
         // creating the users student1, tutor1-tutor3 and instructor1
         this.database.addUsers(TEST_PREFIX, 1, 3, 0, 1);
@@ -160,8 +160,8 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
-    void createLock_complaintDoesNotExistInDb_shouldThrowIllegalArgumentException() throws Exception {
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + 0 + "/create-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+    void createLock_complaintDoesNotExistInDb() throws Exception {
+        request.postWithoutLocation("/api/complaint-responses/complaint/" + 0 + "/create-lock", null, HttpStatus.NOT_FOUND, null);
     }
 
     @Test
@@ -169,7 +169,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
     void createLock_alreadyResolved_shouldThrowIllegalArgumentException() throws Exception {
         complaint.setAccepted(true);
         complaint = complaintRepository.saveAndFlush(complaint);
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/create-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/create-lock", null, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -178,7 +178,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         ComplaintResponse complaintResponse = new ComplaintResponse();
         complaintResponse.setComplaint(complaint);
         complaintResponseRepository.saveAndFlush(complaintResponse);
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/create-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/create-lock", null, HttpStatus.BAD_REQUEST, null);
     }
 
     // === TESTING REFRESH LOCK ===
@@ -237,15 +237,15 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
     void refreshLock_noinitialLockComplaintResponseExists_shouldThrowIllegalArgumentException() throws Exception {
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor3", roles = "TA")
-    void refreshLock_complaintDoesNotExist_shouldThrowIllegalArgumentException() throws Exception {
+    void refreshLock_complaintDoesNotExist_notFound() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", true);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + 0 + "/refresh-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        request.postWithoutLocation("/api/complaint-responses/complaint/" + 0 + "/refresh-lock", null, HttpStatus.NOT_FOUND, null);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
@@ -256,7 +256,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
         complaint.setAccepted(true);
         complaint = complaintRepository.saveAndFlush(complaint);
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.BAD_REQUEST, null);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
@@ -276,7 +276,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isFalse();
         initialLockComplaintResponse.setSubmittedTime(ZonedDateTime.now());
         complaintResponseRepository.saveAndFlush(initialLockComplaintResponse);
-        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.INTERNAL_SERVER_ERROR, null);
+        request.postWithoutLocation("/api/complaint-responses/complaint/" + complaint.getId() + "/refresh-lock", null, HttpStatus.BAD_REQUEST, null);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
@@ -320,10 +320,10 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
-    void removeLock_ComplaintNotFoundInDatabase_shouldThrowIllegalArgumentException() throws Exception {
+    void removeLock_ComplaintNotFoundInDatabase() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
-        request.delete("/api/complaint-responses/complaint/" + 0 + "/remove-lock", HttpStatus.INTERNAL_SERVER_ERROR);
+        request.delete("/api/complaint-responses/complaint/" + 0 + "/remove-lock", HttpStatus.NOT_FOUND);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
@@ -334,14 +334,14 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
         complaint.setAccepted(true);
         complaintRepository.saveAndFlush(complaint);
-        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.INTERNAL_SERVER_ERROR);
+        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.BAD_REQUEST);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
     void removeLock_noComplaintResponseExists_shouldThrowIllegalArgumentException() throws Exception {
-        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.INTERNAL_SERVER_ERROR);
+        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -351,7 +351,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
         initialLockComplaintResponse.setSubmittedTime(ZonedDateTime.now());
         complaintResponseRepository.saveAndFlush(initialLockComplaintResponse);
-        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.INTERNAL_SERVER_ERROR);
+        request.delete("/api/complaint-responses/complaint/" + complaint.getId() + "/remove-lock", HttpStatus.BAD_REQUEST);
         assertThat(complaintResponseRepository.existsById(initialLockComplaintResponse.getId())).isTrue();
     }
 
@@ -405,7 +405,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
-    void resolveComplaint_emptyComplaintResponseNotFoundInDatabase_shouldThrowIllegalArgumentException() throws Exception {
+    void resolveComplaint_emptyComplaintResponseNotFoundInDatabase() throws Exception {
         ComplaintResponse initialLockComplaintResponse = createLockOnComplaint(TEST_PREFIX + "tutor2", false);
         assertThat(initialLockComplaintResponse.isCurrentlyLocked()).isTrue();
 
@@ -413,7 +413,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         initialLockComplaintResponse.getComplaint().setAccepted(true);
         initialLockComplaintResponse.setId(0L);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -429,7 +429,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         complaintResponseToBeUsedInResolve.setResponseText("Accepted");
         complaintResponseToBeUsedInResolve.getComplaint().setAccepted(true);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponseToBeUsedInResolve, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", complaintResponseToBeUsedInResolve, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -443,7 +443,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         initialLockComplaintResponse.setResponseText("Accepted");
         initialLockComplaintResponse.getComplaint().setAccepted(true);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -455,7 +455,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         initialLockComplaintResponse.setResponseText("Accepted");
         initialLockComplaintResponse.getComplaint().setAccepted(null);
 
-        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.INTERNAL_SERVER_ERROR);
+        request.put("/api/complaint-responses/complaint/" + complaint.getId() + "/resolve", initialLockComplaintResponse, HttpStatus.BAD_REQUEST);
     }
 
     @Test
