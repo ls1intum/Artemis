@@ -20,8 +20,8 @@ import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.service.util.Tuple;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
-import de.tum.in.www1.artemis.web.rest.dto.LectureUnitsDTO;
 
 @Service
 public class LectureUnitProcessingService {
@@ -32,10 +32,10 @@ public class LectureUnitProcessingService {
      * @param file The file (lecture slide) to be split
      * @return The prepared units to be saved
      */
-    public List<LectureUnitsDTO> splitUnits(List<LectureUnitSplitDTO> lectureUnitSplitDTOs, MultipartFile file) throws IOException {
+    public List<LectureUnitDTO> splitUnits(List<LectureUnitSplitDTO> lectureUnitSplitDTOs, MultipartFile file) throws IOException {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        List<LectureUnitsDTO> units = new ArrayList<>();
+        List<LectureUnitDTO> units = new ArrayList<>();
         Splitter pdfSplitter = new Splitter();
         PDDocument document = PDDocument.load(file.getBytes());
         // PDDocument breakRemoved = removeBreakSlidesFromFile(document);
@@ -78,7 +78,7 @@ public class LectureUnitProcessingService {
             IOUtils.copy(input, os);
             MultipartFile multipartFile = new CommonsMultipartFile(fileItem);
 
-            LectureUnitsDTO lectureUnitsDTO = new LectureUnitsDTO(attachmentUnit, attachment, multipartFile);
+            LectureUnitDTO lectureUnitsDTO = new LectureUnitDTO(attachmentUnit, attachment, multipartFile);
 
             units.add(lectureUnitsDTO);
             tempFile.deleteOnExit();

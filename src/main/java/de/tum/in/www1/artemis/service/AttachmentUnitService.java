@@ -15,8 +15,8 @@ import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
-import de.tum.in.www1.artemis.web.rest.dto.LectureUnitsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 @Service
@@ -83,7 +83,7 @@ public class AttachmentUnitService {
      */
     public List<AttachmentUnit> createAttachmentUnits(List<LectureUnitSplitDTO> lectureUnitSplitDTOs, Lecture lecture, MultipartFile file) throws IOException {
         List<Long> ids = new ArrayList<>();
-        List<LectureUnitsDTO> lectureUnitsDTO = lectureUnitProcessingService.splitUnits(lectureUnitSplitDTOs, file);
+        List<LectureUnitDTO> lectureUnitsDTO = lectureUnitProcessingService.splitUnits(lectureUnitSplitDTOs, file);
         lectureUnitsDTO.forEach(lectureUnit -> {
             lectureUnit.attachmentUnit().setLecture(null);
             AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(lectureUnit.attachmentUnit());
