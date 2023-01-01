@@ -47,7 +47,7 @@ class ClientForwardTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Test
     void getUnmappedNestedDottedEndpoint() throws Exception {
-        request.getMvc().perform(get("/foo/bar.js")).andExpect(status().isNotFound());
+        request.getMvc().perform(get("/foo/bar.js")).andExpect(status().isUnauthorized());
     }
 
     @Test

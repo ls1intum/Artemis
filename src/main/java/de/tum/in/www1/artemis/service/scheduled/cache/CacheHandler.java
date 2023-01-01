@@ -120,7 +120,7 @@ public abstract class CacheHandler<K> {
     public void performCacheWrite(K key, UnaryOperator<Cache> writeOperation) {
         cache.lock(key);
         try {
-            logger.info("Write cache {}", key);
+            logger.trace("Write cache {}", key);
             cache.set(key, writeOperation.apply(getTransientWriteCacheFor(key)));
             // We do this get here to deserialize and load the newly written instance into the near cache directly after the writing operation
             cache.get(key);
@@ -144,7 +144,7 @@ public abstract class CacheHandler<K> {
         try {
             Cache cached = cache.get(key);
             if (cached != null) {
-                logger.info("Write cache {}", key);
+                logger.trace("Write cache {}", key);
                 cache.set(key, writeOperation.apply(cached));
                 // We do this get here to deserialize and load the newly written instance into the near cache directly after the write
                 cache.get(key);

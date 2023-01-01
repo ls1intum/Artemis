@@ -584,7 +584,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
             assertThat(question.getPoints()).as("Question scores are correct").isEqualTo(questionDatabase.getPoints());
             assertThat(question.getPoints()).as("Question scores are correct").isEqualTo(questionServer.getPoints());
         }
-        return quizExerciseDatabase; // TODO: @sleiss: Check if this is fine
+        return quizExerciseDatabase;
     }
 
     private QuizExercise createQuizOnServerForExam() throws Exception {

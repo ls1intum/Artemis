@@ -203,7 +203,7 @@ public class QuizScheduleService {
      * @param quizExercise should include questions and statistics without Hibernate proxies!
      */
     public void updateQuizExercise(@NotNull QuizExercise quizExercise) {
-        log.info("updateQuizExercise invoked for {}", quizExercise.getId());
+        log.debug("updateQuizExercise invoked for quiz {}", quizExercise.getId());
         quizCache.updateQuizExercise(quizExercise);
     }
 
@@ -334,11 +334,11 @@ public class QuizScheduleService {
                 }
                 scheduledFuture.dispose();
                 if (taskNotDone) {
-                    log.info("Stop scheduled quiz start for quiz {} was successful: {}", quizExerciseId, cancelSuccess);
+                    log.trace("Stop scheduled quiz start for quiz {} was successful: {}", quizExerciseId, cancelSuccess);
                 }
             }
             catch (@SuppressWarnings("unused") StaleTaskException e) {
-                log.info("Stop scheduled quiz start for quiz {} already disposed/cancelled", quizExerciseId);
+                log.trace("Stop scheduled quiz start for quiz {} already disposed/cancelled", quizExerciseId);
                 // has already been disposed (sadly there is no method to check that)
             }
         });

@@ -140,6 +140,7 @@ public class SecurityConfiguration {
             .requestMatchers("/management/prometheus/**").access((authentication, context) ->
                     new AuthorizationDecision(context.getRequest().getRemoteAddr().equals(monitoringIpAddress.orElse("127.0.0.1"))))
             .requestMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
+            .requestMatchers("/admin/**").hasAuthority(Role.ADMIN.getAuthority())
             // others
             .requestMatchers("/time").permitAll()
             .requestMatchers("/", "/index.html", "/*.js", "/*.map", "/*.css").permitAll()

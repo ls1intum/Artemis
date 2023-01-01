@@ -77,7 +77,7 @@ final class QuizExerciseDistributedCache extends QuizExerciseCache implements Ha
         super(Objects.requireNonNull(exerciseId, "exerciseId must not be null"));
         setQuizStart(quizStart);
         setExercise(exercise);
-        log.debug("Creating new QuizExerciseDistributedCache, id {}", getExerciseId());
+        log.trace("Creating new QuizExerciseDistributedCache, id {}", getExerciseId());
     }
 
     QuizExerciseDistributedCache(Long exerciseId, List<ScheduledTaskHandler> quizStart) {

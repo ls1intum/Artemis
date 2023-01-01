@@ -108,7 +108,7 @@ final class QuizCache extends CacheHandler<Long> {
      * @param quizExercise the new quiz exercise object
      */
     private void updateQuizExerciseLocally(QuizExercise quizExercise) {
-        logger.debug("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
+        logger.trace("Quiz exercise {} updated in quiz exercise map: {}", quizExercise.getId(), quizExercise);
         ((QuizExerciseCache) getTransientWriteCacheFor(quizExercise.getId())).setExercise(quizExercise);
     }
 }
