@@ -143,6 +143,7 @@ public class LectureUnitProcessingService {
      */
     private Map<Integer, Tuple<String, Tuple<Integer, Integer>>> separateIntoUnits(PDDocument document) throws IOException {
         Map<Integer, Tuple<String, Tuple<Integer, Integer>>> outlineMap = new HashMap<>();
+        outlineMap.put(0, new Tuple<>("One Unit", new Tuple<>(1, document.getNumberOfPages())));
 
         Splitter pdfSplitter = new Splitter();
         PDFTextStripper pdfStripper = new PDFTextStripper();

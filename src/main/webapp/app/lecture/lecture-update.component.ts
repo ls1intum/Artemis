@@ -129,15 +129,12 @@ export class LectureUpdateComponent implements OnInit {
     toggleWizardMode() {
         this.isShowingWizardMode = !this.isShowingWizardMode;
     }
-
     proceedToUnitSplit() {
         this.save();
     }
-
     onSelectProcessUnit() {
         this.processUnitMode = !this.processUnitMode;
     }
-
     onFileChange(event: any): void {
         if (event.target.files.length) {
             const fileList = event.target.files;
@@ -171,7 +168,6 @@ export class LectureUpdateComponent implements OnInit {
                 },
             });
         } else if (this.processUnitMode) {
-            console.log('test Unit mode');
             this.isSaving = false;
             this.isProcessing = false;
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {

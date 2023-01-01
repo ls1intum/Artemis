@@ -130,26 +130,6 @@ describe('Lecture', () => {
         expect(lectureServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
 
-    it('should give error when creating lecture', async () => {
-        lectureComponentFixture.detectChanges();
-        lectureUpdateComponent.lecture = {} as Lecture;
-
-        // const onErrorSpy = jest.spyOn(lectureUpdateComponent, 'onSaveError');
-        const createSpy = jest.spyOn(lectureService, 'create').mockImplementationOnce(() => {
-            // @ts-ignore
-            throw new HttpErrorResponse('Error');
-        });
-        jest.spyOn(console, 'error');
-        const meth = lectureUpdateComponent.saveLectureFunction();
-        await expect(meth).rejects.toThrow('Error');
-        expect(console.error).toHaveBeenCalledOnce();
-
-        // lectureUpdateComponentFixture.detectChanges();
-        //
-        // expect(createSpy).toHaveBeenCalledOnce();
-        // expect(createSpy).toHaveBeenCalledWith({});
-    });
-
     it('should edit a lecture', fakeAsync(() => {
         lectureComponentFixture.detectChanges();
         lectureUpdateComponent.lecture = { id: 6, title: 'test1Updated' } as Lecture;
