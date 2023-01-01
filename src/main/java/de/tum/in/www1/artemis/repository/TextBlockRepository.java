@@ -26,9 +26,9 @@ public interface TextBlockRepository extends JpaRepository<TextBlock, String> {
     Optional<Set<TextBlock>> findAllByCluster(TextCluster textCluster);
 
     @EntityGraph(type = LOAD, attributePaths = { "cluster" })
-    Set<TextBlock> findAllWithEagerClusterBySubmissionId(Long id);
+    Set<TextBlock> findAllWithEagerClusterBySubmissionId(Long submissionId);
 
-    Set<TextBlock> findAllBySubmissionId(Long id);
+    Set<TextBlock> findAllBySubmissionId(Long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submission" })
     Set<TextBlock> findAllBySubmissionIdIn(Set<Long> submissionIdList);

@@ -74,13 +74,13 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Optional<User> findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(String login, boolean isInternal);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Optional<User> findOneWithGroupsAndAuthoritiesById(Long id);
+    Optional<User> findOneWithGroupsAndAuthoritiesById(Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    Set<User> findAllWithGroupsAndAuthoritiesByIdIn(Set<Long> ids);
+    Set<User> findAllWithGroupsAndAuthoritiesByIdIn(Set<Long> userIds);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
-    Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsById(Long id);
+    Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsById(Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities", "organizations" })
     Optional<User> findOneWithGroupsAndAuthoritiesAndOrganizationsByLogin(String userLogin);

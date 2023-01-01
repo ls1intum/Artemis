@@ -30,7 +30,7 @@ import jakarta.validation.constraints.NotNull;
 public interface StudentExamRepository extends JpaRepository<StudentExam, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "exercises" })
-    Optional<StudentExam> findWithExercisesById(Long id);
+    Optional<StudentExam> findWithExercisesById(Long studentExamId);
 
     @Query("""
             SELECT DISTINCT se FROM StudentExam se

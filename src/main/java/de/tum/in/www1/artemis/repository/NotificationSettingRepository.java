@@ -23,8 +23,8 @@ public interface NotificationSettingRepository extends JpaRepository<Notificatio
     @Query("""
             SELECT notificationSetting
             FROM NotificationSetting notificationSetting
-            LEFT JOIN FETCH notificationSetting.user user
-            WHERE user.id = :#{#userId}
+                LEFT JOIN FETCH notificationSetting.user user
+            WHERE user.id = :userId
             """)
     Set<NotificationSetting> findAllNotificationSettingsForRecipientWithId(@Param("userId") long userId);
 
@@ -32,7 +32,7 @@ public interface NotificationSettingRepository extends JpaRepository<Notificatio
     @Query("""
             SELECT setting
             FROM NotificationSetting setting
-            WHERE setting.settingId = :#{#settingId}
+            WHERE setting.settingId = :settingId
                 AND setting.email = TRUE
             """)
     Set<NotificationSetting> findAllNotificationSettingsForUsersWhoEnabledSpecifiedEmailSettingWithEagerGroupsAndAuthorities(@Param("settingId") String settingId);

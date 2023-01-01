@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -44,9 +45,17 @@ public class QuizExerciseService {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final MultipleChoiceQuestionStatisticRepository multipleChoiceQuestionStatisticRepository;
+
+    private final DragAndDropQuestionStatisticRepository dragAndDropQuestionStatisticRepository;
+
+    private final ShortAnswerQuestionStatisticRepository shortAnswerQuestionStatisticRepository;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository, ResultRepository resultRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService,
-            QuizStatisticService quizStatisticService, QuizBatchService quizBatchService, AuthorizationCheckService authCheckService) {
+            QuizStatisticService quizStatisticService, QuizBatchService quizBatchService, AuthorizationCheckService authCheckService,
+            MultipleChoiceQuestionStatisticRepository multipleChoiceQuestionStatisticRepository, DragAndDropQuestionStatisticRepository dragAndDropQuestionStatisticRepository,
+            ShortAnswerQuestionStatisticRepository shortAnswerQuestionStatisticRepository) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
@@ -56,6 +65,9 @@ public class QuizExerciseService {
         this.quizStatisticService = quizStatisticService;
         this.quizBatchService = quizBatchService;
         this.authCheckService = authCheckService;
+        this.multipleChoiceQuestionStatisticRepository = multipleChoiceQuestionStatisticRepository;
+        this.dragAndDropQuestionStatisticRepository = dragAndDropQuestionStatisticRepository;
+        this.shortAnswerQuestionStatisticRepository = shortAnswerQuestionStatisticRepository;
     }
 
     /**
@@ -86,6 +98,11 @@ public class QuizExerciseService {
                     mcQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
                     quizQuestionStatistic.setQuizQuestion(mcQuestion);
                 }
+                else if (!Hibernate.isInitialized(quizQuestionStatistic) || !Hibernate.isInitialized(quizQuestionStatistic.getAnswerCounters())) {
+                    // Note: load the quizQuestionStatistic from database with answerCounters
+                    quizQuestionStatistic = multipleChoiceQuestionStatisticRepository.findByIdWithAnswerCounters(quizQuestionStatistic.getId());
+                    mcQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                }
 
                 for (var answerOption : mcQuestion.getAnswerOptions()) {
                     quizQuestionStatistic.addAnswerOption(answerOption);
@@ -109,6 +126,11 @@ public class QuizExerciseService {
                     quizQuestionStatistic = new DragAndDropQuestionStatistic();
                     dndQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
                     quizQuestionStatistic.setQuizQuestion(dndQuestion);
+                }
+                else if (!Hibernate.isInitialized(quizQuestionStatistic) || !Hibernate.isInitialized(quizQuestionStatistic.getDropLocationCounters())) {
+                    // Note: load the quizQuestionStatistic from database with dropLocationCounters
+                    quizQuestionStatistic = dragAndDropQuestionStatisticRepository.findByIdWithDropLocationCounters(quizQuestionStatistic.getId());
+                    dndQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
                 }
 
                 for (var dropLocation : dndQuestion.getDropLocations()) {
@@ -136,6 +158,11 @@ public class QuizExerciseService {
                     quizQuestionStatistic = new ShortAnswerQuestionStatistic();
                     saQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
                     quizQuestionStatistic.setQuizQuestion(quizQuestion);
+                }
+                else if (!Hibernate.isInitialized(quizQuestionStatistic) || !Hibernate.isInitialized(quizQuestionStatistic.getShortAnswerSpotCounters())) {
+                    // Note: load the quizQuestionStatistic from database with shortAnswerSpotCounters
+                    quizQuestionStatistic = shortAnswerQuestionStatisticRepository.findByIdWithShortAnswerSpotCounters(quizQuestionStatistic.getId());
+                    saQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
                 }
 
                 for (var spot : saQuestion.getSpots()) {
@@ -418,6 +445,7 @@ public class QuizExerciseService {
         quizExercise.setDueDate(null);
         quizExercise.setQuizBatches(Set.of());
 
+        // TODO: this might be problematic
         quizExercise = save(quizExercise);
 
         // in case the quiz has not yet started or the quiz is currently running, we have to clean up

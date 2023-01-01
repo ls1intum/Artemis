@@ -61,7 +61,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     Optional<Exam> findWithRegisteredUsersAndExerciseGroupsAndExercisesById(long examId);
 
     @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises" })
-    Optional<Exam> findWithStudentExamsExercisesById(long id);
+    Optional<Exam> findWithStudentExamsExercisesById(long examId);
 
     @Query("""
             SELECT DISTINCT e
