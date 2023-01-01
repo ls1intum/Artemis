@@ -2,35 +2,29 @@ import { Component, Directive, EventEmitter, Input, NgModule, Output } from '@an
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'ng-template[ngbPaginationLast]' })
-// eslint-disable-next-line @angular-eslint/directive-class-suffix
-export class NgbPaginationLastMock {}
+export class NgbPaginationLastMockDirective {}
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'ng-template[ngbPaginationNext]' })
-// eslint-disable-next-line @angular-eslint/directive-class-suffix
-export class NgbPaginationNextMock {}
+export class NgbPaginationNextMockDirective {}
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'ng-template[ngbPaginationNumber]' })
-// eslint-disable-next-line @angular-eslint/directive-class-suffix
-export class NgbPaginationNumberMock {}
+export class NgbPaginationNumberMockDirective {}
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'ng-template[ngbPaginationPrevious]' })
-// eslint-disable-next-line @angular-eslint/directive-class-suffix
-export class NgbPaginationPreviousMock {}
+export class NgbPaginationPreviousMockDirective {}
 
 // eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: 'ng-template[ngbPaginationPages]' })
-// eslint-disable-next-line @angular-eslint/directive-class-suffix
-export class NgbPaginationPagesMock {}
+export class NgbPaginationPagesMockDirective {}
 
 @Component({
     // eslint-disable-next-line @angular-eslint/component-selector
     selector: 'ngb-pagination',
     template: '',
 })
-// eslint-disable-next-line @angular-eslint/component-class-suffix
-export class NgbPaginationMock {
+export class NgbPaginationMockComponent {
     @Input() disabled: boolean;
 
     @Input() boundaryLinks: boolean;
@@ -53,7 +47,21 @@ export class NgbPaginationMock {
 }
 
 @NgModule({
-    declarations: [NgbPaginationMock, NgbPaginationPagesMock, NgbPaginationLastMock, NgbPaginationNextMock, NgbPaginationNumberMock, NgbPaginationPreviousMock],
-    exports: [NgbPaginationMock, NgbPaginationPagesMock, NgbPaginationLastMock, NgbPaginationNextMock, NgbPaginationNumberMock, NgbPaginationPreviousMock],
+    declarations: [
+        NgbPaginationMockComponent,
+        NgbPaginationPagesMockDirective,
+        NgbPaginationLastMockDirective,
+        NgbPaginationNextMockDirective,
+        NgbPaginationNumberMockDirective,
+        NgbPaginationPreviousMockDirective,
+    ],
+    exports: [
+        NgbPaginationMockComponent,
+        NgbPaginationPagesMockDirective,
+        NgbPaginationLastMockDirective,
+        NgbPaginationNextMockDirective,
+        NgbPaginationNumberMockDirective,
+        NgbPaginationPreviousMockDirective,
+    ],
 })
 export class NgbPaginationMocksModule {}
