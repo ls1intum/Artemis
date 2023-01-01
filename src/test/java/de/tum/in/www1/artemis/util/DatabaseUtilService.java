@@ -3706,7 +3706,7 @@ public class DatabaseUtilService {
             }
             return submittedAnswer;
         }
-        return null;
+        throw new IllegalArgumentException("Quiz Question unknown: " + question.getClass().getSimpleName());
     }
 
     public SubmittedAnswer generateSubmittedAnswerForQuizWithCorrectAndFalseAnswers(QuizQuestion question) {
@@ -3937,12 +3937,12 @@ public class DatabaseUtilService {
      */
     public QuizSubmission generateSubmissionForThreeQuestions(QuizExercise quizExercise, int studentID, boolean submitted, ZonedDateTime submissionDate) {
         QuizSubmission quizSubmission = new QuizSubmission();
-        QuizQuestion quizQuestion1 = quizExercise.getQuizQuestions().get(0);
-        QuizQuestion quizQuestion2 = quizExercise.getQuizQuestions().get(1);
-        QuizQuestion quizQuestion3 = quizExercise.getQuizQuestions().get(2);
-        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(quizQuestion1, studentID % 2 == 0));
-        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(quizQuestion2, studentID % 3 == 0));
-        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(quizQuestion3, studentID % 4 == 0));
+        QuizQuestion mcQuestion = quizExercise.getQuizQuestions().get(0);
+        QuizQuestion dndQuestion = quizExercise.getQuizQuestions().get(1);
+        QuizQuestion saQuestion = quizExercise.getQuizQuestions().get(2);
+        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(mcQuestion, studentID % 2 == 0)); // every second answer is correct
+        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(dndQuestion, studentID % 3 == 0));// every third answer is correct
+        quizSubmission.addSubmittedAnswers(generateSubmittedAnswerFor(saQuestion, studentID % 4 == 0)); // every fourth answer is correct
         quizSubmission.submitted(submitted);
         quizSubmission.submissionDate(submissionDate);
 
