@@ -74,27 +74,31 @@ public class AttachmentUnitService {
         return savedAttachmentUnit;
     }
 
+    /**
+     * Creates new attachment units for the given lecture.
+     * @param lectureUnitSplitDTOs The split information
+     * @param lecture The lecture linked to the attachmentUnits
+     * @param file The file (lecture slide) to be split
+     * @return The created attachment units
+     */
     public List<AttachmentUnit> createAttachmentUnits(List<LectureUnitSplitDTO> lectureUnitSplitDTOs, Lecture lecture, MultipartFile file) throws IOException {
-
         List<Long> ids = new ArrayList<>();
-
         List<LectureUnitsDTO> lectureUnitsDTO = lectureUnitProcessingService.splitUnits(lectureUnitSplitDTOs, file);
         lectureUnitsDTO.forEach(lectureUnit -> {
-            lectureUnit.getAttachmentUnit().setLecture(null);
-            AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(lectureUnit.getAttachmentUnit());
+            lectureUnit.attachmentUnit().setLecture(null);
+            AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(lectureUnit.attachmentUnit());
             ids.add(savedAttachmentUnit.getId());
-            lectureUnit.getAttachmentUnit().setLecture(lecture);
+            lectureUnit.attachmentUnit().setLecture(lecture);
             lecture.addLectureUnit(savedAttachmentUnit);
             lectureRepository.save(lecture);
 
-            lectureUnit.getAttachment().setVersion(0);
+            lectureUnit.attachment().setVersion(0);
 
-            handleFile(lectureUnit.getFile(), lectureUnit.getAttachment(), true);
-            lectureUnit.getAttachment().setAttachmentUnit(savedAttachmentUnit);
-            Attachment savedAttachment = attachmentRepository.saveAndFlush(lectureUnit.getAttachment());
-            lectureUnit.getAttachmentUnit().setAttachment(savedAttachment);
-
-            evictCache(lectureUnit.getFile(), savedAttachmentUnit);
+            handleFile(lectureUnit.file(), lectureUnit.attachment(), true);
+            lectureUnit.attachment().setAttachmentUnit(savedAttachmentUnit);
+            Attachment savedAttachment = attachmentRepository.saveAndFlush(lectureUnit.attachment());
+            lectureUnit.attachmentUnit().setAttachment(savedAttachment);
+            evictCache(lectureUnit.file(), savedAttachmentUnit);
         });
 
         return attachmentUnitRepository.findAllById(ids);

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -154,6 +153,15 @@ public class AttachmentUnitResource {
         return ResponseEntity.created(new URI("/api/attachment-units/" + savedAttachmentUnit.getId())).body(savedAttachmentUnit);
     }
 
+    /**
+     * POST lectures/:lectureId/attachment-units/split : creates new attachment units.
+     *
+     * @param lectureId            the id of the lecture to which the attachment units should be added
+     * @param lectureUnitSplitDTOs the units that should be created
+     * @param file                 the file to be splitted
+     * @return the ResponseEntity with status 200 (ok) and with body the new attachment units
+     * @throws IOException
+     */
     @PostMapping(value = "lectures/{lectureId}/attachment-units/split")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestPart List<LectureUnitSplitDTO> lectureUnitSplitDTOs,
@@ -169,13 +177,20 @@ public class AttachmentUnitResource {
         return ResponseEntity.ok().body(savedAttachmentUnits);
     }
 
+    /**
+     * POST lectures/:lectureId/process-units : gets units data to be split.
+     *
+     * @param file       the file to get the units data
+     * @param lectureId  the id of the lecture to which the file is going to be splitted
+     * @return the ResponseEntity with status 200 (ok) and with body the new list of LectureUnitSplitDTO
+     * @throws IOException
+     */
     @PostMapping("lectures/{lectureId}/process-units")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Optional<List<LectureUnitSplitDTO>>> getAttachmentUnitsData(@RequestParam(value = "file") MultipartFile file, @PathVariable String lectureId)
-            throws IOException {
+    public ResponseEntity<List<LectureUnitSplitDTO>> getAttachmentUnitsData(@RequestParam(value = "file") MultipartFile file, @PathVariable String lectureId) throws IOException {
         log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
 
-        Optional<List<LectureUnitSplitDTO>> attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(file);
+        List<LectureUnitSplitDTO> attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(file);
         if (attachmentUnitsData.isEmpty()) {
             log.error("Failed to retrieve split PDF lecture units data for lecture with id {}", lectureId);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
