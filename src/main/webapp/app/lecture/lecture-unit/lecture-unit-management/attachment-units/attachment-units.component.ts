@@ -113,7 +113,6 @@ export class AttachmentUnitsComponent implements OnInit {
             endPage: 0,
         };
         this.units.push(unitDynamic);
-        console.log(unitDynamic);
         return true;
     }
 

@@ -46,9 +46,9 @@ public class LectureUnitProcessingService {
             Attachment attachment = new Attachment();
             PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
 
-            pdfSplitter.setStartPage(Integer.parseInt(lectureUnit.startPage()));
-            pdfSplitter.setEndPage(Integer.parseInt(lectureUnit.endPage()));
-            pdfSplitter.setSplitAtPage(Integer.parseInt(lectureUnit.endPage()));
+            pdfSplitter.setStartPage(lectureUnit.startPage());
+            pdfSplitter.setEndPage(lectureUnit.endPage());
+            pdfSplitter.setSplitAtPage(lectureUnit.endPage());
 
             documentUnits = pdfSplitter.split(document);
             pdDocumentInformation.setTitle(lectureUnit.unitName());
@@ -124,7 +124,7 @@ public class LectureUnitProcessingService {
         Map<Integer, Tuple<String, Tuple<Integer, Integer>>> unitsDocumentMap = separateIntoUnits(document);
 
         unitsDocumentMap.forEach((k, v) -> {
-            LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO(v.x(), ZonedDateTime.now(), v.y().x().toString(), v.y().y().toString());
+            LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO(v.x(), ZonedDateTime.now(), v.y().x(), v.y().y());
             units.add(newLectureUnit);
         });
 
