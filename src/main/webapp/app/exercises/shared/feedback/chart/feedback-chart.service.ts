@@ -9,9 +9,6 @@ import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-da
 @Injectable({ providedIn: 'root' })
 export class FeedbackChartService {
     create = (feedbackNodes: FeedbackNode[], exercise: Exercise): ChartData => {
-        const maxPoints = exercise.maxPoints! + (exercise.bonusPoints ?? 0);
-        const xScaleMax = Math.max(100, maxPoints);
-
         const summarizedNodes = this.summarizePoints(feedbackNodes);
         const results: NgxChartsMultiSeriesDataEntry[] = [
             {
@@ -30,7 +27,7 @@ export class FeedbackChartService {
         };
 
         return {
-            xScaleMax,
+            xScaleMax: 100,
             results,
             scheme,
         };
