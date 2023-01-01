@@ -68,11 +68,11 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
     }
 
     @Modifying
-    @Transactional
+    @Transactional // ok because of delete
     void deleteByTutorialGroupCourse(Course course);
 
     @Modifying
-    @Transactional
+    @Transactional // ok because of delete
     void deleteByTutorialGroupSchedule(TutorialGroupSchedule tutorialGroupSchedule);
 
 }

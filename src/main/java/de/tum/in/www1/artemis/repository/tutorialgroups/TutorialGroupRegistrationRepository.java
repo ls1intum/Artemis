@@ -13,7 +13,6 @@ import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupReg
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import jakarta.transaction.Transactional;
-import jakarta.validation.constraints.NotNull;
 
 @Repository
 public interface TutorialGroupRegistrationRepository extends JpaRepository<TutorialGroupRegistration, Long> {
@@ -24,16 +23,15 @@ public interface TutorialGroupRegistrationRepository extends JpaRepository<Tutor
     Set<TutorialGroupRegistration> findAllByTutorialGroupAndType(TutorialGroup tutorialGroup, TutorialGroupRegistrationType type);
 
     @Modifying
-    @Transactional
-    // ok because of delete
+    @Transactional // ok because of delete
     void deleteAllByStudent(User student);
 
-    @Transactional
     @Modifying
-    void deleteById(@NotNull Long tutorialGroupRegistrationId);
+    @Transactional // ok because of delete
+    void deleteById(long tutorialGroupRegistrationId);
 
     @Modifying
-    @Transactional
+    @Transactional // ok because of delete
     void deleteAllByStudentIsInAndTypeAndTutorialGroupCourse(Set<User> students, TutorialGroupRegistrationType type, Course course);
 
     boolean existsByTutorialGroupTitleAndStudentAndType(String title, User student, TutorialGroupRegistrationType type);

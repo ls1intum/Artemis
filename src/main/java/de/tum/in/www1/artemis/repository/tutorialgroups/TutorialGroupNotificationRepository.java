@@ -10,7 +10,7 @@ import jakarta.transaction.Transactional;
 @Repository
 public interface TutorialGroupNotificationRepository extends JpaRepository<TutorialGroupNotification, Long> {
 
-    @Transactional
     @Modifying
+    @Transactional // ok because of modifying query
     void deleteAllByTutorialGroupId(Long tutorialGroupId);
 }
