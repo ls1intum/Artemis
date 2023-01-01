@@ -28,7 +28,7 @@ export class FeedbackNodeComponent implements OnInit {
         if (isFeedbackGroup(this.feedbackItemNode)) {
             this.feedbackItemGroup = this.feedbackItemNode;
         } else {
-            this.feedbackItem = <FeedbackItem>this.feedbackItemNode;
+            this.feedbackItem = this.feedbackItemNode as FeedbackItem;
         }
     }
 }

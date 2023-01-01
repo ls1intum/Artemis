@@ -23,7 +23,7 @@
 
     <!-- Feedbacks container -->
     <ng-template #feedbackContainer>
-        <div *ngIf="!loadingFailed && feedbackItemNodes && feedbackItemNodes.length; else buildLogsContainer" class="result-detail-container">
+        <div *ngIf="!loadingFailed && feedbackItemNodes?.length; else buildLogsContainer" class="result-detail-container">
             <div>
                 <div class="d-flex justify-content-between align-items-start">
                     <h4>

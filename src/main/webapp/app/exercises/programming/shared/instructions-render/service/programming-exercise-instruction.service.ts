@@ -51,7 +51,7 @@ export class ProgrammingExerciseInstructionService {
     private separateTests(tests: string[], latestResult: Result) {
         return tests.reduce(
             (acc, testName) => {
-                const feedback = latestResult ? latestResult.feedbacks?.find(({ text }) => text === testName) : undefined;
+                const feedback = latestResult?.feedbacks?.find(({ text }) => text === testName);
                 const resultIsLegacy = isLegacyResult(latestResult!);
 
                 // If there is no feedback item, we assume that the test was successful (legacy check).

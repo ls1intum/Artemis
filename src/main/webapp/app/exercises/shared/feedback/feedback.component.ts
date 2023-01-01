@@ -141,7 +141,6 @@ export class FeedbackComponent implements OnInit {
 
     /**
      * Sets up the information related to the exercise.
-     * @private
      */
     private initializeExerciseInformation() {
         this.exercise ??= this.result.participation?.exercise;
