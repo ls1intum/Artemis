@@ -52,7 +52,7 @@ export class ProgrammingExerciseCreationPage {
      * @returns the chainable of the request to make further verifications
      */
     generate() {
-        cy.intercept(POST, PROGRAMMING_EXERCISE_BASE + 'setup').as('createProgrammingExercise');
+        cy.intercept(POST, PROGRAMMING_EXERCISE_BASE + '/setup').as('createProgrammingExercise');
         cy.get('#save-entity').click();
         // Creating a programming exercise can take quite a while so we increase the default timeout here
         return cy.wait('@createProgrammingExercise', { timeout: 60000 });

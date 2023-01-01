@@ -21,12 +21,12 @@ import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling
 import lectureTemplate from '../../fixtures/lecture/lecture_template.json';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
-export const COURSE_BASE = BASE_API + 'courses/';
+export const COURSE_BASE = BASE_API + 'courses';
 export const COURSE_ADMIN_BASE = BASE_API + 'admin/courses';
-export const EXERCISE_BASE = BASE_API + 'exercises/';
-export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
-export const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
-export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
+export const EXERCISE_BASE = BASE_API + 'exercises';
+export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises';
+export const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises';
+export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises';
 export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 
 /**
@@ -140,7 +140,7 @@ export class CourseManagementRequests {
         exercise.testwiseCoverageEnabled = recordTestwiseCoverage;
 
         return cy.request({
-            url: PROGRAMMING_EXERCISE_BASE + 'setup',
+            url: PROGRAMMING_EXERCISE_BASE + '/setup',
             method: POST,
             body: exercise,
         });
@@ -213,7 +213,7 @@ export class CourseManagementRequests {
     }
 
     private addUserToCourse(courseId: number, username: string, roleIdentifier: string) {
-        return cy.request({ method: POST, url: `${COURSE_BASE}${courseId}/${roleIdentifier}/${username}` });
+        return cy.request({ method: POST, url: `${COURSE_BASE}/${courseId}/${roleIdentifier}/${username}` });
     }
 
     /**
@@ -222,7 +222,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     createExam(exam: Exam) {
-        return cy.request({ url: COURSE_BASE + exam.course!.id + '/exams', method: POST, body: exam });
+        return cy.request({ url: COURSE_BASE + '/' + exam.course!.id + '/exams', method: POST, body: exam });
     }
 
     /**
@@ -230,7 +230,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      * */
     deleteExam(exam: Exam) {
-        return cy.request({ method: DELETE, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id });
+        return cy.request({ method: DELETE, url: COURSE_BASE + '/' + exam.course!.id + '/exams/' + exam.id });
     }
 
     /**
@@ -238,7 +238,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     registerStudentForExam(exam: Exam, student: CypressCredentials) {
-        return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/students/' + student.username });
+        return cy.request({ method: POST, url: COURSE_BASE + '/' + exam.course!.id + '/exams/' + exam.id + '/students/' + student.username });
     }
 
     /**
@@ -250,7 +250,7 @@ export class CourseManagementRequests {
         exerciseGroup.exam = exam;
         exerciseGroup.title = title;
         exerciseGroup.isMandatory = mandatory;
-        return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/exerciseGroups', body: exerciseGroup });
+        return cy.request({ method: POST, url: COURSE_BASE + '/' + exam.course!.id + '/exams/' + exam.id + '/exerciseGroups', body: exerciseGroup });
     }
 
     /**
@@ -268,7 +268,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     generateMissingIndividualExams(exam: Exam) {
-        return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/generate-missing-student-exams' });
+        return cy.request({ method: POST, url: COURSE_BASE + '/' + exam.course!.id + '/exams/' + exam.id + '/generate-missing-student-exams' });
     }
 
     /**
@@ -276,7 +276,7 @@ export class CourseManagementRequests {
      * @returns <Chainable> request response
      */
     prepareExerciseStartForExam(exam: Exam) {
-        return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
+        return cy.request({ method: POST, url: COURSE_BASE + '/' + exam.course!.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
     }
 
     createModelingExercise(
@@ -323,7 +323,7 @@ export class CourseManagementRequests {
 
     makeModelingExerciseSubmission(exerciseID: number, participation: Participation) {
         return cy.request({
-            url: `${EXERCISE_BASE}${exerciseID}/modeling-submissions`,
+            url: `${EXERCISE_BASE}/${exerciseID}/modeling-submissions`,
             method: PUT,
             body: {
                 ...modelingExerciseSubmissionTemplate,
@@ -335,7 +335,7 @@ export class CourseManagementRequests {
 
     deleteQuizExercise(exerciseId: number) {
         return cy.request({
-            url: QUIZ_EXERCISE_BASE + exerciseId,
+            url: QUIZ_EXERCISE_BASE + '/' + exerciseId,
             method: DELETE,
         });
     }
@@ -381,28 +381,28 @@ export class CourseManagementRequests {
 
     setQuizVisible(quizId: number) {
         return cy.request({
-            url: `${QUIZ_EXERCISE_BASE}${quizId}/set-visible`,
+            url: `${QUIZ_EXERCISE_BASE}/${quizId}/set-visible`,
             method: PUT,
         });
     }
 
     startQuizNow(quizId: number) {
         return cy.request({
-            url: `${QUIZ_EXERCISE_BASE}${quizId}/start-now`,
+            url: `${QUIZ_EXERCISE_BASE}/${quizId}/start-now`,
             method: PUT,
         });
     }
 
     evaluateExamQuizzes(exam: Exam) {
         return cy.request({
-            url: `${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`,
+            url: `${COURSE_BASE}/${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`,
             method: POST,
         });
     }
 
     makeTextExerciseSubmission(exerciseId: number, text: string) {
         return cy.request({
-            url: `${EXERCISE_BASE}${exerciseId}/text-submissions`,
+            url: `${EXERCISE_BASE}/${exerciseId}/text-submissions`,
             method: PUT,
             body: { submissionExerciseType: 'text', text, id: null },
         });
@@ -426,7 +426,7 @@ export class CourseManagementRequests {
             submittedAnswers,
         };
         return cy.request({
-            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            url: EXERCISE_BASE + '/' + quizExercise.id + '/submissions/live',
             method: POST,
             body: multipleChoiceSubmission,
         });
@@ -461,7 +461,7 @@ export class CourseManagementRequests {
             submittedAnswers,
         };
         return cy.request({
-            url: EXERCISE_BASE + quizExercise.id + '/submissions/live',
+            url: EXERCISE_BASE + '/' + quizExercise.id + '/submissions/live',
             method: POST,
             body: shortAnswerSubmission,
         });
@@ -469,14 +469,14 @@ export class CourseManagementRequests {
 
     getExerciseParticipation(exerciseId: number) {
         return cy.request({
-            url: EXERCISE_BASE + exerciseId + '/participation',
+            url: EXERCISE_BASE + '/' + exerciseId + '/participation',
             method: GET,
         });
     }
 
     startExerciseParticipation(exerciseId: number) {
         return cy.request({
-            url: EXERCISE_BASE + exerciseId + '/participations',
+            url: EXERCISE_BASE + '/' + exerciseId + '/participations',
             method: POST,
         });
     }

@@ -52,7 +52,7 @@ describe('Course management', () => {
             navigationBar.openCourseManagement();
             courseManagementPage.openStudentOverviewOfCourse(courseId);
             cy.intercept(GET, BASE_API + 'users/search*').as('getStudentQuery');
-            cy.intercept(POST, COURSE_BASE + '*/students/' + username).as('addStudentQuery');
+            cy.intercept(POST, COURSE_BASE + '/*/students/' + username).as('addStudentQuery');
             cy.get('#typeahead-basic').type(username);
             cy.wait('@getStudentQuery');
             cy.get('#ngb-typeahead-0')

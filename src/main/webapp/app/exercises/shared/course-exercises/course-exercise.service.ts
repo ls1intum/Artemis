@@ -34,7 +34,7 @@ export class CourseExerciseService {
      */
     findAllProgrammingExercisesForCourse(courseId: number): Observable<HttpResponse<ProgrammingExercise[]>> {
         return this.http
-            .get<ProgrammingExercise[]>(`${this.resourceUrl}/${courseId}/programming-exercises/`, { observe: 'response' })
+            .get<ProgrammingExercise[]>(`${this.resourceUrl}/${courseId}/programming-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ProgrammingExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
@@ -45,7 +45,7 @@ export class CourseExerciseService {
      */
     findAllModelingExercisesForCourse(courseId: number): Observable<HttpResponse<ModelingExercise[]>> {
         return this.http
-            .get<ModelingExercise[]>(`${this.resourceUrl}/${courseId}/modeling-exercises/`, { observe: 'response' })
+            .get<ModelingExercise[]>(`${this.resourceUrl}/${courseId}/modeling-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<ModelingExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
@@ -56,7 +56,7 @@ export class CourseExerciseService {
      */
     findAllTextExercisesForCourse(courseId: number): Observable<HttpResponse<TextExercise[]>> {
         return this.http
-            .get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises/`, { observe: 'response' })
+            .get<TextExercise[]>(`${this.resourceUrl}/${courseId}/text-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<TextExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
@@ -67,7 +67,7 @@ export class CourseExerciseService {
      */
     findAllFileUploadExercisesForCourse(courseId: number): Observable<HttpResponse<FileUploadExercise[]>> {
         return this.http
-            .get<FileUploadExercise[]>(`${this.resourceUrl}/${courseId}/file-upload-exercises/`, { observe: 'response' })
+            .get<FileUploadExercise[]>(`${this.resourceUrl}/${courseId}/file-upload-exercises`, { observe: 'response' })
             .pipe(map((res: HttpResponse<FileUploadExercise[]>) => this.processExercisesHttpResponses(res)));
     }
 
