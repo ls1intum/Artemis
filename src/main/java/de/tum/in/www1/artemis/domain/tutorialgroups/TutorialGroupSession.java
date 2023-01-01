@@ -56,7 +56,6 @@ public class TutorialGroupSession extends DomainObject {
      */
     @Column(name = "location")
     @Size(max = 2000)
-    @Lob
     private String location;
 
     /**

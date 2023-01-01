@@ -35,7 +35,6 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MockComponent } from 'ng-mocks';
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
@@ -59,7 +58,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 ProgrammingExerciseInstructionStepWizardComponent,
                 ProgrammingExerciseInstructionTaskStatusComponent,
                 TranslatePipeMock,
-                MockComponent(FaIconComponent),
             ],
             providers: [
                 ProgrammingExerciseTaskExtensionWrapper,
@@ -74,7 +72,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent, ProgrammingExerciseInstructionTaskStatusComponent] } })
             .compileComponents()
             .then(() => {

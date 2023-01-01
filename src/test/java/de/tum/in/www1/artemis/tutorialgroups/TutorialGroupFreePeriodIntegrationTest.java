@@ -8,8 +8,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -17,9 +19,23 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupFreePeriodResource;
 
 class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegrationTest {
+
+    Long exampleTutorialGroupId;
+
+    @BeforeEach
+    void setupTestScenario() {
+        super.setupTestScenario();
+        this.database.addUsers(this.testPrefix, 1, 1, 1, 1);
+        if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
+            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "instructor42"));
+        }
+        this.exampleTutorialGroupId = databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
+                userRepository.findOneByLogin(testPrefix + "tutor1").get(), Collections.emptySet()).getId();
+    }
 
     private static final String TEST_PREFIX = "tutorialgroupfreeperiod";
 
@@ -100,7 +116,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_overlapsWithExistingScheduledSession_shouldCancelSession() throws Exception {
         // given
-        TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId);
+        TutorialGroup tutorialGroup = this.setUpTutorialGroupWithSchedule(this.exampleCourseId, "tutor1");
         var persistedSchedule = tutorialGroupScheduleRepository.findByTutorialGroupId(tutorialGroup.getId()).get();
 
         var dto = createTutorialGroupFreePeriodDTO(firstAugustMonday, "Holiday");
@@ -120,16 +136,16 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void create_overlapsWithExistingIndividualSession_shouldCancelSession() throws Exception {
         // given
-        var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleOneTutorialGroupId, firstAugustMonday);
+        var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
         var dto = createTutorialGroupFreePeriodDTO(firstAugustMonday, "Holiday");
 
         // when
         var createdPeriod = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), dto, TutorialGroupFreePeriod.class, HttpStatus.CREATED);
 
         // then
-        var sessions = this.getTutorialGroupSessionsAscending(exampleOneTutorialGroupId);
+        var sessions = this.getTutorialGroupSessionsAscending(exampleTutorialGroupId);
         var firstMondayOfAugustSession = sessions.get(0);
-        assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, firstAugustMonday, exampleOneTutorialGroupId, null);
+        assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, firstAugustMonday, exampleTutorialGroupId, null);
         assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod()).isNotNull();
 
         // cleanup
@@ -239,14 +255,14 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void delete_asInstructor_shouldActivatePreviouslyCancelledSessionsOnThatDate() throws Exception {
         // given
-        var firstMondayOfAugustSession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleOneTutorialGroupId, firstAugustMonday);
+        var firstMondayOfAugustSession = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
 
         var firstOfAugustFreeDayDTO = createTutorialGroupFreePeriodDTO(firstAugustMonday, "Holiday");
         var periodId = request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), firstOfAugustFreeDayDTO, TutorialGroupFreePeriod.class, HttpStatus.CREATED).getId();
 
         firstMondayOfAugustSession = this.tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
 
-        assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, firstAugustMonday, exampleOneTutorialGroupId, null);
+        assertIndividualSessionIsCancelledOnDate(firstMondayOfAugustSession, firstAugustMonday, exampleTutorialGroupId, null);
         assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod()).isNotNull();
 
         // when
@@ -254,7 +270,7 @@ class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegr
 
         // then
         firstMondayOfAugustSession = tutorialGroupSessionRepository.findByIdElseThrow(firstMondayOfAugustSession.getId());
-        assertIndividualSessionIsActiveOnDate(firstMondayOfAugustSession, firstAugustMonday, exampleOneTutorialGroupId);
+        assertIndividualSessionIsActiveOnDate(firstMondayOfAugustSession, firstAugustMonday, exampleTutorialGroupId);
         assertThat(firstMondayOfAugustSession.getTutorialGroupFreePeriod()).isNull();
 
         // cleanup
