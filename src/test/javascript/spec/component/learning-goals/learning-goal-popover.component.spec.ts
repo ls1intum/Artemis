@@ -1,14 +1,14 @@
 import { Location } from '@angular/common';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { RouterTestingModule } from '@angular/router/testing';
 import { LearningGoalsPopoverComponent } from 'app/course/learning-goals/learning-goals-popover/learning-goals-popover.component';
 import { By } from '@angular/platform-browser';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Component } from '@angular/core';
-import { NgbPopover, NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     template: '',
@@ -32,7 +32,6 @@ describe('LearningGoalPopoverComponent', () => {
                     { path: 'courses/:courseId/learning-goals', component: DummyStatisticsComponent },
                     { path: 'course-management/:courseId/goal-management', component: DummyManagementComponent },
                 ]),
-                MockDirective(NgbPopover),
             ],
             declarations: [LearningGoalsPopoverComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent), DummyStatisticsComponent, DummyManagementComponent],
             providers: [],
