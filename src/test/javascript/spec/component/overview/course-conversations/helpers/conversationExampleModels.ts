@@ -23,6 +23,7 @@ export const generateExampleChannelDTO = ({
     isHidden = false,
     isMember = true,
     isAnnouncementChannel = false,
+    unreadMessagesCount = 0,
 }: ChannelDTO) => {
     const exampleChannelDto = new ChannelDTO();
     exampleChannelDto.id = id;
@@ -43,6 +44,7 @@ export const generateExampleChannelDTO = ({
     exampleChannelDto.isHidden = isHidden;
     exampleChannelDto.isMember = isMember;
     exampleChannelDto.isAnnouncementChannel = isAnnouncementChannel;
+    exampleChannelDto.unreadMessagesCount = unreadMessagesCount;
 
     return exampleChannelDto;
 };
@@ -63,6 +65,7 @@ export const generateExampleGroupChatDTO = ({
     isFavorite = false,
     isHidden = false,
     isMember = true,
+    unreadMessagesCount = 0,
 }: GroupChatDto) => {
     const exampleGroupChatDTO = new GroupChatDto();
     exampleGroupChatDTO.id = id;
@@ -77,6 +80,7 @@ export const generateExampleGroupChatDTO = ({
     exampleGroupChatDTO.isHidden = isHidden;
     exampleGroupChatDTO.members = members;
     exampleGroupChatDTO.isMember = isMember;
+    exampleGroupChatDTO.unreadMessagesCount = unreadMessagesCount;
 
     return exampleGroupChatDTO;
 };
@@ -96,6 +100,7 @@ export const generateOneToOneChatDTO = ({
     isFavorite = false,
     isHidden = false,
     isMember = true,
+    unreadMessagesCount = 0,
 }: GroupChatDto) => {
     const exampleOneToOneChatDTO = new OneToOneChatDTO();
     exampleOneToOneChatDTO.id = id;
@@ -109,5 +114,6 @@ export const generateOneToOneChatDTO = ({
     exampleOneToOneChatDTO.isHidden = isHidden;
     exampleOneToOneChatDTO.members = members;
     exampleOneToOneChatDTO.isMember = isMember;
+    exampleOneToOneChatDTO.unreadMessagesCount = unreadMessagesCount;
     return exampleOneToOneChatDTO;
 };
