@@ -497,10 +497,10 @@ public class QuizScheduleService {
                 start = System.nanoTime();
 
                 if (hasNewResults) {
-                    // Fetch a new quiz exercise here including deeper attribute paths (this is relatively expensive, so we only do that if necessary)
                     try {
-                        // Get a Set because QuizStatisticService needs one (currently)
-                        Set<Result> newResultsForQuiz = Set.copyOf(cachedQuiz.getResults().values());
+                        Collection<Result> newResultsForQuiz = cachedQuiz.getResults().values();
+                        // load lazy objects in question statistics
+                        quizStatisticService.loadQuestionStatisticDetails(quizExercise);
                         // Update the statistics
                         quizStatisticService.updateStatistics(newResultsForQuiz, quizExercise);
                         log.info("Updated statistics with {} new results in {} for quiz {}", newResultsForQuiz.size(), formatDurationFrom(start), quizExercise.getTitle());

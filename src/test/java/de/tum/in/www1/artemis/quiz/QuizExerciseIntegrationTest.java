@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
+import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.QuizUtilService;
@@ -81,6 +82,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
+
+    @Autowired
+    private QuizStatisticService quizStatisticService;
 
     private QuizExercise quizExercise;
 
@@ -997,6 +1001,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // reevaluate without changing anything and check if statistics are still correct (i.e. unchanged)
         QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise,
                 QuizExercise.class, HttpStatus.OK);
+        quizStatisticService.loadQuestionStatisticDetails(quizExercise);
         checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
 
         System.out.println("QuizPointStatistic after re-evaluate (without changes): " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
@@ -1006,10 +1011,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         multipleChoiceQuestion.getAnswerOptions().remove(1);
 
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, QuizExercise.class, HttpStatus.OK);
-
+        quizStatisticService.loadQuestionStatisticDetails(quizExercise);
         // load the exercise again after it was re-evaluated
         quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
-
+        quizStatisticService.loadQuestionStatisticDetails(quizExerciseWithReevaluatedStatistics);
         var multipleChoiceQuestionAfterReevaluate = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(0);
         assertThat(multipleChoiceQuestionAfterReevaluate.getAnswerOptions()).hasSize(1);
 
@@ -1096,12 +1101,13 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // calculate statistics
         quizExercise = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
-
+        quizStatisticService.loadQuestionStatisticDetails(quizExercise);
         System.out.println("QuizPointStatistic before re-evaluate: " + quizExercise.getQuizPointStatistic());
 
         // reevaluate without changing anything and check if statistics are still correct
         QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise,
                 QuizExercise.class, HttpStatus.OK);
+        quizStatisticService.loadQuestionStatisticDetails(quizExerciseWithReevaluatedStatistics);
         checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
 
         System.out.println("QuizPointStatistic after re-evaluate (without changes): " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
@@ -1113,6 +1119,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExerciseWithReevaluatedStatistics.getId() + "/re-evaluate",
                 quizExerciseWithReevaluatedStatistics, QuizExercise.class, HttpStatus.OK);
 
+        quizStatisticService.loadQuestionStatisticDetails(quizExerciseWithReevaluatedStatistics);
         // one student should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
 
@@ -1126,6 +1133,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExerciseWithReevaluatedStatistics.getId() + "/re-evaluate",
                 quizExerciseWithReevaluatedStatistics, QuizExercise.class, HttpStatus.OK);
 
+        quizStatisticService.loadQuestionStatisticDetails(quizExerciseWithReevaluatedStatistics);
         // several students should get a higher score
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
         System.out.println("QuizPointStatistic after 2nd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
@@ -1138,6 +1146,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExerciseWithReevaluatedStatistics.getId() + "/re-evaluate",
                 quizExerciseWithReevaluatedStatistics, QuizExercise.class, HttpStatus.OK);
 
+        quizStatisticService.loadQuestionStatisticDetails(quizExerciseWithReevaluatedStatistics);
         // max score should be less
         System.out.println("QuizPointStatistic after 3rd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);

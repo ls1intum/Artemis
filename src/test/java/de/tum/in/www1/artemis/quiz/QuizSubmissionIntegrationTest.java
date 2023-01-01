@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizBatchService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
+import de.tum.in.www1.artemis.service.QuizStatisticService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
@@ -73,6 +74,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Autowired
     private QuizBatchService quizBatchService;
+
+    @Autowired
+    private QuizStatisticService quizStatisticService;
 
     int numberOfStudentsInTest = 10;
 
@@ -246,10 +250,11 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizScheduleService.processCachedQuizSubmissions();
 
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
-        var quizPointStatistic = quizExerciseWithStatistic.getQuizPointStatistic();
         assertThat(quizExerciseWithStatistic).isNotNull();
 
-        for (var pointCounter : quizPointStatistic.getPointCounters()) {
+        // TODO: something is wrong here, it cannot be the case that all point counters are 0
+
+        for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
             assertThat(pointCounter.getUnRatedCounter()).as("Unrated counter is always 0").isZero();
             if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 0 rated submission -> 0.33 points").isEqualTo(1);
@@ -435,6 +440,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizStatisticService.loadQuestionStatisticDetails(quizExerciseWithStatistic);
         assertThat(quizExerciseWithStatistic).isNotNull();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isZero();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(numberOfStudentsInTest);
@@ -720,7 +726,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizExercise = exerciseRepository.saveAndFlush(quizExercise);
         quizScheduleService.updateQuizExercise(quizExercise);
         // ... directly delete the quiz
-        exerciseRepository.delete(quizExercise);
+        exerciseRepository.deleteById(quizExercise.getId());
 
         sleep(500);
 

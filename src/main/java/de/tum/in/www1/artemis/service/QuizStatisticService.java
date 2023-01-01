@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -147,7 +147,7 @@ public class QuizStatisticService {
      * @param results the results, which will be added to the statistics
      * @param quiz    the quizExercise with Questions where the results should contain to
      */
-    public void updateStatistics(Set<Result> results, QuizExercise quiz) {
+    public void updateStatistics(Collection<Result> results, QuizExercise quiz) {
 
         if (results != null && quiz != null && quiz.getQuizQuestions() != null) {
             log.debug("update statistics with {} new results", results.size());
@@ -158,6 +158,7 @@ public class QuizStatisticService {
                 if (Boolean.FALSE.equals(result.isRated())) {
                     quiz.removeResultFromAllStatistics(getPreviousResult(result));
                 }
+                log.debug("Load quiz submissions with submitted answers");
                 var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
                 quiz.addResultToAllStatistics(result, quizSubmission);
             }
@@ -195,5 +196,28 @@ public class QuizStatisticService {
             }
         }
         return oldResult;
+    }
+
+    /**
+     * Load quiz question statistics for each question together with their lazy relationships to avoid database issues (proxy issue or database constraint issue)
+     * @param quizExercise the quiz exercise for which the question statistic details should be loaded
+     */
+    public void loadQuestionStatisticDetails(QuizExercise quizExercise) {
+        for (var quizQuestion : quizExercise.getQuizQuestions()) {
+            QuizQuestionStatistic statistic = null;
+            if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
+                // Note: load the quizQuestionStatistic from database with answerCounters
+                statistic = multipleChoiceQuestionStatisticRepository.findByIdWithAnswerCounters(mcQuestion.getQuizQuestionStatistic().getId());
+            }
+            else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
+                // Note: load the quizQuestionStatistic from database with dropLocationCounters
+                statistic = dragAndDropQuestionStatisticRepository.findByIdWithDropLocationCounters(dndQuestion.getQuizQuestionStatistic().getId());
+            }
+            else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
+                // Note: load the quizQuestionStatistic from database with shortAnswerSpotCounters
+                statistic = shortAnswerQuestionStatisticRepository.findByIdWithShortAnswerSpotCounters(saQuestion.getQuizQuestionStatistic().getId());
+            }
+            quizQuestion.setQuizQuestionStatistic(statistic);
+        }
     }
 }

@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.DragAndDropSubmittedAnswer;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.domain.quiz.SubmittedAnswer;
@@ -111,9 +112,15 @@ public class QuizSubmissionResource {
     public ResponseEntity<Result> submitForPractice(@PathVariable Long exerciseId, @Valid @RequestBody QuizSubmission quizSubmission) {
         log.debug("REST request to submit QuizSubmission for practice : {}", quizSubmission);
 
-        // recreate pointers back to submission in each submitted answer
+        // recreate pointers back from submittedAnswer to submission in each submitted answer so they are saved correctly in the database
         for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
             submittedAnswer.setSubmission(quizSubmission);
+            // recreate pointers back from mapping to submittedAnswer in each mapping so they are saved correctly in the database
+            if (submittedAnswer instanceof DragAndDropSubmittedAnswer dndSubmittedAnswer) {
+                for (var mapping : dndSubmittedAnswer.getMappings()) {
+                    mapping.setSubmittedAnswer(dndSubmittedAnswer);
+                }
+            }
         }
 
         if (quizSubmission.getId() != null) {

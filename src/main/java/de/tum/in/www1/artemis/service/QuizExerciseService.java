@@ -414,6 +414,9 @@ public class QuizExerciseService {
         quizExercise.setMaxPoints(quizExercise.getOverallQuizPoints());
         quizExercise.reconnectJSONIgnoreAttributes();
 
+        // load the existing statistic details from the database, because they might not have been sent by the client which could lead to database issues
+        quizStatisticService.loadQuestionStatisticDetails(quizExercise);
+
         // adjust existing results if an answer or a question was deleted and recalculate them
         updateResultsOnQuizChanges(quizExercise);
 
