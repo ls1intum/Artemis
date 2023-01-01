@@ -13,7 +13,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -92,7 +91,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         // Some futures might already run while all tasks are cancelled. Waiting a bit makes sure the mocks are not called by the futures after the reset.
         // Otherwise, the following test might fail.
-        Thread.sleep(500);  // ok
+        Thread.sleep(800);  // ok
 
         bambooRequestMockProvider.reset();
         bitbucketRequestMockProvider.reset();
@@ -113,7 +112,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
             verify(versionControlService, timeout(timeoutInMs).times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getVcsRepositoryUrl(),
                     programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
-
         }
     }
 
@@ -251,7 +249,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verify(programmingTriggerService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
-    @Disabled("TODO FIX SERVER TEST")
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldUpdateScoresIfHasTestsAfterDueDateAndNoBuildAfterDueDate() throws Exception {
@@ -298,7 +295,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
 
-    @Disabled("TODO FIX SERVER TEST")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -375,7 +371,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verifyLockStudentRepositoryOperation(true, participationIndividualDueDate, 3 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
     }
 
-    @Disabled("TODO FIX SERVER TEST")
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateBetweenDueDateAndBuildAndTestDate() throws Exception {
@@ -495,7 +490,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         }
     }
 
-    @Disabled("TODO FIX SERVER TEST")
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void cancelIndividualSchedulesOnRemovingIndividualDueDate() throws Exception {
