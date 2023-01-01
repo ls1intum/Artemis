@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -31,15 +32,25 @@ public class QuizStatisticService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final MultipleChoiceQuestionStatisticRepository multipleChoiceQuestionStatisticRepository;
+
+    private final DragAndDropQuestionStatisticRepository dragAndDropQuestionStatisticRepository;
+
+    private final ShortAnswerQuestionStatisticRepository shortAnswerQuestionStatisticRepository;
+
     public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SimpMessageSendingOperations messagingTemplate,
             QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository,
-            QuizSubmissionRepository quizSubmissionRepository) {
+            QuizSubmissionRepository quizSubmissionRepository, MultipleChoiceQuestionStatisticRepository multipleChoiceQuestionStatisticRepository,
+            DragAndDropQuestionStatisticRepository dragAndDropQuestionStatisticRepository, ShortAnswerQuestionStatisticRepository shortAnswerQuestionStatisticRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
         this.messagingTemplate = messagingTemplate;
         this.quizSubmissionRepository = quizSubmissionRepository;
+        this.multipleChoiceQuestionStatisticRepository = multipleChoiceQuestionStatisticRepository;
+        this.dragAndDropQuestionStatisticRepository = dragAndDropQuestionStatisticRepository;
+        this.shortAnswerQuestionStatisticRepository = shortAnswerQuestionStatisticRepository;
     }
 
     /**
@@ -62,6 +73,30 @@ public class QuizStatisticService {
         }
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion.getQuizQuestionStatistic() != null) {
+                if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
+                    var quizQuestionStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
+                    if (!Hibernate.isInitialized(quizQuestionStatistic) || !Hibernate.isInitialized(quizQuestionStatistic.getAnswerCounters())) {
+                        // Note: load the quizQuestionStatistic from database with answerCounters
+                        quizQuestionStatistic = multipleChoiceQuestionStatisticRepository.findByIdWithAnswerCounters(quizQuestionStatistic.getId());
+                        mcQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                    }
+                }
+                else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
+                    var quizQuestionStatistic = (DragAndDropQuestionStatistic) dndQuestion.getQuizQuestionStatistic();
+                    if (!Hibernate.isInitialized(quizQuestionStatistic) || !Hibernate.isInitialized(quizQuestionStatistic.getDropLocationCounters())) {
+                        // Note: load the quizQuestionStatistic from database with dropLocationCounters
+                        quizQuestionStatistic = dragAndDropQuestionStatisticRepository.findByIdWithDropLocationCounters(quizQuestionStatistic.getId());
+                        dndQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                    }
+                }
+                else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
+                    var quizQuestionStatistic = (ShortAnswerQuestionStatistic) saQuestion.getQuizQuestionStatistic();
+                    if (!Hibernate.isInitialized(quizQuestionStatistic) || !Hibernate.isInitialized(quizQuestionStatistic.getShortAnswerSpotCounters())) {
+                        // Note: load the quizQuestionStatistic from database with shortAnswerSpotCounters
+                        quizQuestionStatistic = shortAnswerQuestionStatisticRepository.findByIdWithShortAnswerSpotCounters(quizQuestionStatistic.getId());
+                        saQuestion.setQuizQuestionStatistic(quizQuestionStatistic);
+                    }
+                }
                 quizQuestion.getQuizQuestionStatistic().resetStatistic();
             }
         }
@@ -97,12 +132,10 @@ public class QuizStatisticService {
         }
 
         // save changed Statistics
-        quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
-        quizPointStatisticRepository.flush();
+        quizPointStatisticRepository.saveAndFlush(quizExercise.getQuizPointStatistic());
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion.getQuizQuestionStatistic() != null) {
-                quizQuestionStatisticRepository.save(quizQuestion.getQuizQuestionStatistic());
-                quizQuestionStatisticRepository.flush();
+                quizQuestionStatisticRepository.saveAndFlush(quizQuestion.getQuizQuestionStatistic());
             }
         }
     }

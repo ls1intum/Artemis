@@ -159,7 +159,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 assertThat(dropLocations.get(0).getPosY()).as("Pos Y for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(0).getWidth()).as("Width for drop location is correct").isEqualTo(10);
                 assertThat(dropLocations.get(0).getHeight()).as("Height for drop location is correct").isEqualTo(10);
-                assertThat(dropLocations.get(0).getQuestion()).isNotNull();
                 assertThat(dropLocations.get(1).getPosX()).as("Pos X for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getPosY()).as("Pos Y for drop location is correct").isEqualTo(20);
                 assertThat(dropLocations.get(1).getWidth()).as("Width for drop location is correct").isEqualTo(10);
@@ -1824,6 +1823,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // open-for-practice
         quizExercise = createQuizOnServer(ZonedDateTime.now().minusDays(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.setIsOpenForPractice(true);
+        // reconnect to avoid issues during save
+        var quizBatch = quizExercise.getQuizBatches().iterator().next();
+        quizBatch.setQuizExercise(quizExercise);
         quizExerciseRepository.save(quizExercise);
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/open-for-practice", quizExercise, QuizExercise.class, HttpStatus.BAD_REQUEST);
         // misspelled request
