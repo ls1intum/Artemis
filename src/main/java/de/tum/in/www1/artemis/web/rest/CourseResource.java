@@ -215,10 +215,8 @@ public class CourseResource {
         final var oldEditorGroup = existingCourse.getEditorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
 
-        optionalVcsUserManagementService
-                .ifPresent(userManagementService -> userManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
-        optionalCiUserManagementService
-                .ifPresent(ciUserManagementService -> ciUserManagementService.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
+        optionalVcsUserManagementService.ifPresent(service -> service.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
+        optionalCiUserManagementService.ifPresent(service -> service.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         if (timeZoneChanged) {
             tutorialGroupsConfigurationService.onTimeZoneUpdate(result);
         }

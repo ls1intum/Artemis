@@ -31,6 +31,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -298,7 +299,11 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
                 log.warn("Could not remove user {} from group {} since it is not a member.", user.getLogin(), group);
                 return;
             }
-            log.error("Could not delete user {} from group {}; Error: {}", user.getLogin(), group, e.getMessage());
+            log.error("Could not delete user {} from group {}; Artemis Error: {}", user.getLogin(), group, e.getMessage());
+            throw new ArtemisAuthenticationException(String.format("Error while deleting user %s from Jira group %s", user.getLogin(), group), e);
+        }
+        catch (HttpServerErrorException e) {
+            log.error("Could not delete user {} from group {}; Jira Server Error: {}", user.getLogin(), group, e.getMessage());
             throw new ArtemisAuthenticationException(String.format("Error while deleting user %s from Jira group %s", user.getLogin(), group), e);
         }
         catch (URISyntaxException e) {

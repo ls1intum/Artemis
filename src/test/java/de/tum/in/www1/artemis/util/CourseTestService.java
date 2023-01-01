@@ -2415,9 +2415,11 @@ public class CourseTestService {
         course.setOnlineCourseConfiguration(onlineConfig);
         course = courseRepo.save(course);
 
+        var onlineConfigId = onlineConfig.getId();
+
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
-        assertThat(onlineCourseConfigurationRepository.findById(course.getOnlineCourseConfiguration().getId())).isNotPresent();
+        assertThat(onlineCourseConfigurationRepository.findById(onlineConfigId)).isNotPresent();
     }
 
     // Test
@@ -2611,5 +2613,15 @@ public class CourseTestService {
 
     private String getUpdateOnlineCourseConfigurationPath(String courseId) {
         return "/api/courses/" + courseId + "/onlineCourseConfiguration";
+    }
+
+    // Test
+    public void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
+        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        course = courseRepo.save(course);
+
+        var updatedCourse = request.putWithMultipartFile("/api/courses/" + course.getId(), course, "course", null, Course.class, HttpStatus.OK);
+        assertThat(updatedCourse).isNotNull();
+        assertThat(updatedCourse.getId()).isEqualTo(course.getId());
     }
 }

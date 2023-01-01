@@ -320,7 +320,10 @@ public class CourseService {
 
     private void deleteOnlineCourseConfiguration(Course course) {
         if (course.getOnlineCourseConfiguration() != null) {
-            this.onlineCourseConfigurationRepository.delete(course.getOnlineCourseConfiguration());
+            var onlineConfig = course.getOnlineCourseConfiguration();
+            course.setOnlineCourseConfiguration(null);
+            courseRepository.save(course);
+            this.onlineCourseConfigurationRepository.deleteById(onlineConfig.getId());
         }
     }
 

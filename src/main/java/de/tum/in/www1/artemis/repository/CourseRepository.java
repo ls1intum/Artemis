@@ -116,8 +116,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "organizations", "learningGoals", "prerequisites", "tutorialGroupsConfiguration", "onlineCourseConfiguration" })
     Optional<Course> findWithEagerOrganizationsAndLearningGoalsAndOnlineConfigurationById(long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals", "prerequisites" })
-    Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals", "prerequisites", "onlineCourseConfiguration" })
+    Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsAndOnlineConfigurationById(long courseId);
 
     @Query("select distinct course from Course course left join fetch course.organizations organizations left join fetch course.prerequisites prerequisites where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")
     List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
@@ -334,8 +334,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     }
 
     @NotNull
-    default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(long courseId) {
-        return findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+    default Course findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsAndOnlineConfigurationElseThrow(long courseId) {
+        return findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsAndOnlineConfigurationById(courseId)
+                .orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     @NotNull

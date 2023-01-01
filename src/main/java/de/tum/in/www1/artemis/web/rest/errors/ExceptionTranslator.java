@@ -30,6 +30,7 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.socket.sockjs.SockJsMessageDeliveryException;
 import org.zalando.problem.*;
 
+import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -148,8 +149,14 @@ public class ExceptionTranslator {
     }
 
     @ExceptionHandler
-    public ResponseEntity<Problem> handleEntityNotFoundException(AccessForbiddenAlertException ex, NativeWebRequest request) {
+    public ResponseEntity<Problem> handleAccessForbiddenAlertException(AccessForbiddenAlertException ex, NativeWebRequest request) {
         Problem problem = Problem.builder().withStatus(Status.FORBIDDEN).with(MESSAGE_KEY, ErrorConstants.REQ_403_REASON).build();
+        return create(ex, problem, request);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleArtemisAuthenticationException(ArtemisAuthenticationException ex, NativeWebRequest request) {
+        Problem problem = Problem.builder().withStatus(Status.INTERNAL_SERVER_ERROR).with(MESSAGE_KEY, ErrorConstants.ERR_AUTHENTICATION).build();
         return create(ex, problem, request);
     }
 

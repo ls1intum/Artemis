@@ -11,6 +11,7 @@ import java.util.Set;
 import org.gitlab4j.api.GitLabApiException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -542,11 +543,8 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled() throws Exception {
-        var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        course = courseRepo.save(course);
-
-        request.put("/api/courses", course, HttpStatus.OK);
-
+        Mockito.reset(versionControlService);
+        courseTestService.testUpdateCourse_withExternalUserManagement_vcsUserManagementHasNotBeenCalled();
         verifyNoInteractions(versionControlService);
     }
 
