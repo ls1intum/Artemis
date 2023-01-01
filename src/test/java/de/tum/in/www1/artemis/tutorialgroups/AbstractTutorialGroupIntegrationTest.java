@@ -8,6 +8,7 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,6 @@ import de.tum.in.www1.artemis.repository.tutorialgroups.*;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.util.CourseTestService;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 /**
  * Contains useful methods for testing the tutorial groups feature.
@@ -74,10 +74,6 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
 
     Long exampleConfigurationId;
 
-    Long exampleOneTutorialGroupId;
-
-    Long exampleTwoTutorialGroupId;
-
     String exampleTimeZone = "Europe/Bucharest";
 
     String testPrefix = "";
@@ -99,51 +95,11 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
     @BeforeEach
     void setupTestScenario() {
         this.testPrefix = getTestPrefix();
-        this.database.addUsers(this.testPrefix, 9, 2, 2, 2);
-
-        // Add users that are not in the course
-        // only add those if they do not exist yet
-        if (userRepository.findOneByLogin(testPrefix + "student42").isEmpty()) {
-            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "student42"));
-        }
-        if (userRepository.findOneByLogin(testPrefix + "tutor42").isEmpty()) {
-            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "tutor42"));
-        }
-        if (userRepository.findOneByLogin(testPrefix + "editor42").isEmpty()) {
-            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "editor42"));
-        }
-        if (userRepository.findOneByLogin(testPrefix + "instructor42").isEmpty()) {
-            userRepository.save(ModelFactory.generateActivatedUser(testPrefix + "instructor42"));
-        }
-        // Add registration number to student 8
-        User student8 = userRepository.findOneByLogin(testPrefix + "student8").get();
-        // random number with maximal 20 digits
-        student8.setRegistrationNumber(new SecureRandom().nextInt(1000000000) + "");
-        userRepository.save(student8);
-        // Add registration number to student 9
-        User student9 = userRepository.findOneByLogin(testPrefix + "student9").get();
-        student9.setRegistrationNumber(new SecureRandom().nextInt(1000000000) + "");
-        userRepository.save(student9);
-
         var course = this.database.createCourse();
         course.setTimeZone(exampleTimeZone);
         courseRepository.save(course);
-
         exampleCourseId = course.getId();
-
         exampleConfigurationId = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
-
-        exampleOneTutorialGroupId = databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
-                userRepository.findOneByLogin(testPrefix + "tutor1").get(),
-                Set.of(userRepository.findOneByLogin(testPrefix + "student1").get(), userRepository.findOneByLogin(testPrefix + "student2").get(),
-                        userRepository.findOneByLogin(testPrefix + "student3").get(), userRepository.findOneByLogin(testPrefix + "student4").get(),
-                        userRepository.findOneByLogin(testPrefix + "student5").get()))
-                .getId();
-
-        exampleTwoTutorialGroupId = databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum2", 10, true, "LoremIpsum2", Language.GERMAN,
-                userRepository.findOneByLogin(testPrefix + "tutor2").get(),
-                Set.of(userRepository.findOneByLogin(testPrefix + "student6").get(), userRepository.findOneByLogin(testPrefix + "student7").get())).getId();
-
     }
 
     // === Abstract Methods ===
@@ -162,8 +118,8 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         return this.getTutorialGroupsConfigurationPath(exampleCourseId) + exampleConfigurationId + "/tutorial-free-periods/";
     }
 
-    String getSessionsPathOfDefaultTutorialGroup() {
-        return this.getTutorialGroupsPath(this.exampleCourseId) + exampleOneTutorialGroupId + "/sessions/";
+    String getSessionsPathOfDefaultTutorialGroup(Long tutorialGroupId) {
+        return this.getTutorialGroupsPath(this.exampleCourseId) + tutorialGroupId + "/sessions/";
     }
 
     String getSessionsPathOfTutorialGroup(Long tutorialGroupId) {
@@ -195,35 +151,38 @@ abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegr
         return newTutorialGroupSchedule;
     }
 
-    TutorialGroup buildAndSaveTutorialGroupWithoutSchedule() {
+    TutorialGroup buildAndSaveTutorialGroupWithoutSchedule(String tutorLogin, String... studentLogins) {
+        Set<User> students = Set.of();
+        if (studentLogins != null) {
+            students = Arrays.stream(studentLogins).map(login -> userRepository.findOneByLogin(login).get()).collect(Collectors.toSet());
+        }
         return databaseUtilService.createTutorialGroup(exampleCourseId, generateRandomTitle(), "LoremIpsum", 10, false, "Garching", Language.ENGLISH,
-                userRepository.findOneByLogin(testPrefix + "tutor1").get(),
-                Set.of(userRepository.findOneByLogin(testPrefix + "student1").get(), userRepository.findOneByLogin(testPrefix + "student2").get()));
+                userRepository.findOneByLogin(testPrefix + tutorLogin).get(), students);
     }
 
-    TutorialGroup buildTutorialGroupWithoutSchedule() {
+    TutorialGroup buildTutorialGroupWithoutSchedule(String tutorLogin) {
         var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
         var tutorialGroup = new TutorialGroup();
         tutorialGroup.setCourse(course);
         tutorialGroup.setTitle(generateRandomTitle());
-        tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + "tutor1").get());
+        tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).get());
         return tutorialGroup;
     }
 
-    TutorialGroup buildTutorialGroupWithExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive) {
+    TutorialGroup buildTutorialGroupWithExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive, String tutorLogin) {
         var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
         var newTutorialGroup = new TutorialGroup();
         newTutorialGroup.setCourse(course);
         newTutorialGroup.setTitle(generateRandomTitle());
-        newTutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + "tutor1").get());
+        newTutorialGroup.setTeachingAssistant(userRepository.findOneByLogin(testPrefix + tutorLogin).get());
 
         newTutorialGroup.setTutorialGroupSchedule(this.buildExampleSchedule(validFromInclusive, validToInclusive));
 
         return newTutorialGroup;
     }
 
-    TutorialGroup setUpTutorialGroupWithSchedule(Long courseId) throws Exception {
-        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday);
+    TutorialGroup setUpTutorialGroupWithSchedule(Long courseId, String tutorLogin) throws Exception {
+        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday, tutorLogin);
         var scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
         var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(courseId), newTutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
 

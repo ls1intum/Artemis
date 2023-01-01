@@ -26,7 +26,7 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import tech.jhipster.config.JHipsterProperties;
 
-class TokenProviderSecurityMetersTests {
+class TokenProviderSecurityMetersTest {
 
     private static final long ONE_MINUTE = 60000;
 
