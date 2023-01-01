@@ -28,6 +28,7 @@ export abstract class Submission implements BaseEntity {
     public type?: SubmissionType;
     public exampleSubmission?: boolean;
     public submissionExerciseType?: SubmissionExerciseType;
+    public durationInMinutes?: number; // used in HTML files
 
     // results is initialized by the value the server returns
     public results?: Result[];
