@@ -285,8 +285,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 Arguments.of(false, null, SubmissionType.ILLEGAL, dateInPast, now), Arguments.of(false, null, SubmissionType.ILLEGAL, dateInFuture, now));
     }
 
-    // TODO test the same using processNewProgrammingExerciseResult in PE grading service
-
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)

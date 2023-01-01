@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -22,6 +23,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
@@ -86,6 +88,8 @@ public class ProgrammingExerciseResultTestService {
     @Autowired
     private RequestUtilService request;
 
+    private Course course;
+
     private ProgrammingExercise programmingExercise;
 
     private ProgrammingExercise programmingExerciseWithStaticCodeAnalysis;
@@ -105,7 +109,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
-        Course course = database.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
+        course = database.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
@@ -364,6 +368,41 @@ public class ProgrammingExerciseResultTestService {
         // the coverage result attribute is transient in the result and should not be saved to the database
         var resultFromDatabase = resultRepository.findByIdElseThrow(result.getId());
         assertThat(resultFromDatabase.getCoverageFileReportsByTestCaseName()).isNull();
+    }
+
+    // Test
+    public void shouldCreateRatedResultWithGracePeriod(Object resultNotification) {
+        testWithGracePeriod(true, resultNotification, programmingExercise);
+    }
+
+    // Test
+    public void shouldNotUseGracePeriodForExamExercise(Object resultNotification) {
+        Exam exam = database.addExamWithExerciseGroup(course, true);
+        programmingExercise = database.addProgrammingExerciseToExam(exam, 0);
+        testWithGracePeriod(false, resultNotification, programmingExercise);
+    }
+
+    // Test
+    public void shouldNotUseGracePeriodWithoutHiddenTests(Object resultNotification) {
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
+        testWithGracePeriod(false, resultNotification, programmingExercise);
+    }
+
+    private void testWithGracePeriod(boolean expectedRated, Object resultNotification, ProgrammingExercise programmingExercise) {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusSeconds(5));
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
+        programmingExerciseStudentParticipation.setExercise(programmingExercise);
+        participationRepository.save(programmingExerciseStudentParticipation);
+        Submission submission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
+        database.addSubmission(programmingExerciseStudentParticipation, submission);
+
+        Optional<Result> optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
+        assertThat(optionalResult).isPresent();
+        Result createdResult = optionalResult.get();
+
+        Result resultFromDatabase = resultRepository.findByIdElseThrow(createdResult.getId());
+        assertThat(resultFromDatabase.isRated()).isEqualTo(expectedRated);
     }
 
     // Test
