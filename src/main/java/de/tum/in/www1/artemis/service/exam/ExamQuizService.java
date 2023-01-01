@@ -68,6 +68,7 @@ public class ExamQuizService {
         // We have to load the questions and statistics so that we can evaluate and update and we also need the participations and submissions that exist for this exercise so that
         // they can be evaluated
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        quizStatisticService.loadQuestionStatisticDetails(quizExercise);
         Set<Result> createdResults = evaluateSubmissions(quizExercise);
         log.info("Quiz evaluation for quiz {} finished after {} with {} created results", quizExercise.getId(), TimeLogUtil.formatDurationFrom(start), createdResults.size());
         quizStatisticService.updateStatistics(createdResults, quizExercise);
