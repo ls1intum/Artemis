@@ -238,7 +238,7 @@ public class Result extends DomainObject {
             if (withGracePeriod) {
                 dueDate = dueDate.plus(GRACE_PERIOD_SECONDS, ChronoUnit.SECONDS);
             }
-            this.rated = dueDate.isAfter(submissionDate);
+            this.rated = submissionDate.isBefore(dueDate) || submissionDate.isEqual(dueDate);
         }
     }
 
