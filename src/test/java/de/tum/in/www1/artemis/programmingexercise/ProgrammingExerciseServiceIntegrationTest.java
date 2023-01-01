@@ -20,11 +20,11 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
-import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
+import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
@@ -35,16 +35,19 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     private static final String BASE_RESOURCE = "/api/programming-exercises/";
 
     @Autowired
-    ProgrammingExerciseService programmingExerciseService;
+    private ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
     @Autowired
-    ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
-
-    @Autowired
-    ProgrammingExerciseRepository programmingExerciseRepository;
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Autowired
     private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
+
+    @Autowired
+    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
+
+    @Autowired
+    private CodeHintRepository codeHintRepository;
 
     private Course additionalEmptyCourse;
 
@@ -110,21 +113,37 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void importProgrammingExerciseBasis_testsAndHintsHoldTheSameInformation() {
-        final var imported = importExerciseBase();
+        var importedExercise = importExerciseBase();
+        importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
         // All copied hints/tests have the same content are referenced to the new exercise
-        assertThat(imported.getExerciseHints()).allMatch(hint -> programmingExercise.getExerciseHints().stream().anyMatch(
-                oldHint -> oldHint.getContent().equals(hint.getContent()) && oldHint.getTitle().equals(hint.getTitle()) && hint.getExercise().getId().equals(imported.getId())));
-        assertThat(imported.getExerciseHints().stream().filter(eh -> eh instanceof CodeHint).map(eh -> (CodeHint) eh).collect(Collectors.toSet()))
-                .allMatch(codeHint -> programmingExercise.getExerciseHints().stream().filter(eh -> eh instanceof CodeHint).map(eh -> (CodeHint) eh)
-                        .anyMatch(oldHint -> oldHint.getTitle().equals(codeHint.getTitle())
-                                && oldHint.getProgrammingExerciseTask().getTaskName().equals(codeHint.getProgrammingExerciseTask().getTaskName())
-                                && codeHint.getSolutionEntries().size() == 1 && oldHint.getSolutionEntries().stream().findFirst().orElseThrow().getCode()
-                                        .equals(codeHint.getSolutionEntries().stream().findFirst().orElseThrow().getCode())));
+        ProgrammingExercise finalImportedExercise = importedExercise;
+        assertThat(importedExercise.getExerciseHints())
+                .allMatch(hint -> programmingExercise.getExerciseHints().stream().anyMatch(oldHint -> oldHint.getContent().equals(hint.getContent())
+                        && oldHint.getTitle().equals(hint.getTitle()) && hint.getExercise().getId().equals(finalImportedExercise.getId())));
 
-        assertThat(imported.getTestCases()).allMatch(test -> programmingExercise.getTestCases().stream().anyMatch(oldTest -> test.getExercise().getId().equals(imported.getId())
-                && oldTest.getTestName().equalsIgnoreCase(test.getTestName()) && oldTest.getWeight().equals(test.getWeight()) && test.getSolutionEntries().size() == 1
-                && oldTest.getSolutionEntries().stream().findFirst().orElseThrow().getCode().equals(test.getSolutionEntries().stream().findFirst().orElseThrow().getCode())));
+        var importedCodeHints = codeHintRepository.findByExerciseIdWithSolutionEntries(importedExercise.getId());
+        var originalCodeHints = codeHintRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId());
+
+        for (var importedCodeHint : importedCodeHints) {
+            // TODO: simplify the following statement
+            assertThat(importedCodeHint).matches(codeHint -> originalCodeHints.stream()
+                    .anyMatch(originalHint -> originalHint.getTitle().equals(codeHint.getTitle())
+                            && originalHint.getProgrammingExerciseTask().getTaskName().equals(codeHint.getProgrammingExerciseTask().getTaskName())
+                            && codeHint.getSolutionEntries().size() == 1 && originalHint.getSolutionEntries().stream().findFirst().orElseThrow().getCode()
+                                    .equals(codeHint.getSolutionEntries().stream().findFirst().orElseThrow().getCode())));
+        }
+
+        var importedTestCases = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(importedExercise.getId());
+        var originalTestCases = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId());
+
+        for (var importedTestCase : importedTestCases) {
+            // TODO: simplify the following statement
+            assertThat(importedTestCase).matches(test -> originalTestCases.stream()
+                    .anyMatch(originalTest -> test.getExercise().getId().equals(finalImportedExercise.getId()) && originalTest.getTestName().equalsIgnoreCase(test.getTestName())
+                            && originalTest.getWeight().equals(test.getWeight()) && test.getSolutionEntries().size() == 1 && originalTest.getSolutionEntries().stream().findFirst()
+                                    .orElseThrow().getCode().equals(test.getSolutionEntries().stream().findFirst().orElseThrow().getCode())));
+        }
     }
 
     @Test

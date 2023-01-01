@@ -135,9 +135,7 @@ public class ProgrammingExerciseImportBasicService {
             newExercise.addAuxiliaryRepository(newAuxiliaryRepository);
         }
 
-        programmingExerciseRepository.save(newExercise);
-
-        return newExercise;
+        return programmingExerciseRepository.save(newExercise);
     }
 
     /**

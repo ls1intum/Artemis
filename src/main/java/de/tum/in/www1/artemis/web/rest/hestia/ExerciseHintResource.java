@@ -124,7 +124,7 @@ public class ExerciseHintResource {
         // Reload the exercise from the database as we can't trust data from the client
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
-        var hintBeforeSaving = exerciseHintRepository.findByIdWithRelationsElseThrow(exerciseHintId);
+        var hintBeforeSaving = exerciseHintRepository.findByIdWithSolutionEntriesElseThrow(exerciseHintId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, hintBeforeSaving.getExercise(), null);
 
         if (!exerciseHint.getClass().equals(hintBeforeSaving.getClass())) {
@@ -187,7 +187,7 @@ public class ExerciseHintResource {
         }
 
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
-        var exerciseHint = exerciseHintRepository.findByIdWithRelationsElseThrow(exerciseHintId);
+        var exerciseHint = exerciseHintRepository.findByIdWithSolutionEntriesElseThrow(exerciseHintId);
 
         if (!exerciseHint.getExercise().getId().equals(exerciseId)) {
             throw new ConflictException("An exercise hint can only be retrieved if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdsMismatch");
@@ -210,7 +210,7 @@ public class ExerciseHintResource {
         log.debug("REST request to get ExerciseHints : {}", exerciseId);
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
-        var exerciseHints = exerciseHintRepository.findByExerciseIdWithRelations(exerciseId);
+        var exerciseHints = exerciseHintRepository.findByExerciseIdWithSolutionEntries(exerciseId);
         return ResponseEntity.ok(exerciseHints);
     }
 
@@ -278,7 +278,7 @@ public class ExerciseHintResource {
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
 
-        var exerciseHint = exerciseHintRepository.findByIdWithRelationsElseThrow(exerciseHintId);
+        var exerciseHint = exerciseHintRepository.findByIdWithSolutionEntriesElseThrow(exerciseHintId);
 
         if (!exerciseHint.getExercise().getId().equals(exercise.getId())) {
             throw new ConflictException("An exercise hint can only be deleted if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdsMismatch");
@@ -308,7 +308,7 @@ public class ExerciseHintResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
 
-        var exerciseHint = exerciseHintRepository.findByIdWithRelationsElseThrow(exerciseHintId);
+        var exerciseHint = exerciseHintRepository.findByIdWithSolutionEntriesElseThrow(exerciseHintId);
         if (!exerciseHint.getExercise().getId().equals(exercise.getId())) {
             throw new ConflictException("An exercise hint can only be deleted if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdsMismatch");
         }

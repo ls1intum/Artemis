@@ -30,8 +30,8 @@ public interface CodeHintRepository extends JpaRepository<CodeHint, Long> {
     @Query("""
             SELECT h
             FROM CodeHint h
-            LEFT JOIN FETCH h.task t
-            LEFT JOIN FETCH h.solutionEntries tc
+                LEFT JOIN FETCH h.task t
+                LEFT JOIN FETCH h.solutionEntries tc
             WHERE h.id = :codeHintId
             """)
     Optional<CodeHint> findByIdWithSolutionEntries(Long codeHintId);
@@ -39,9 +39,18 @@ public interface CodeHintRepository extends JpaRepository<CodeHint, Long> {
     @Query("""
             SELECT h
             FROM CodeHint h
-            LEFT JOIN FETCH h.task t
-            LEFT JOIN FETCH h.solutionEntries tc
+                LEFT JOIN FETCH h.task t
+                LEFT JOIN FETCH h.solutionEntries tc
             WHERE t.id = :taskId
             """)
     Set<CodeHint> findByTaskIdWithSolutionEntries(Long taskId);
+
+    @Query("""
+            SELECT h
+            FROM CodeHint h
+                LEFT JOIN FETCH h.task t
+                LEFT JOIN FETCH h.solutionEntries tc
+            WHERE h.exercise.id = :exerciseId
+            """)
+    Set<CodeHint> findByExerciseIdWithSolutionEntries(Long exerciseId);
 }

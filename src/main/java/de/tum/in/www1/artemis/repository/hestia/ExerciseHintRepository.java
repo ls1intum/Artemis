@@ -21,14 +21,14 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
     @Query("""
             SELECT h
             FROM ExerciseHint h
-            LEFT JOIN FETCH h.solutionEntries se
+                LEFT JOIN FETCH h.solutionEntries se
             WHERE h.id = :hintId
             """)
-    Optional<ExerciseHint> findByIdWithRelations(Long hintId);
+    Optional<ExerciseHint> findByIdWithSolutionEntries(Long hintId);
 
     @NotNull
-    default ExerciseHint findByIdWithRelationsElseThrow(long hintId) throws EntityNotFoundException {
-        return findByIdWithRelations(hintId).orElseThrow(() -> new EntityNotFoundException("Exercise Hint", hintId));
+    default ExerciseHint findByIdWithSolutionEntriesElseThrow(long hintId) throws EntityNotFoundException {
+        return findByIdWithSolutionEntries(hintId).orElseThrow(() -> new EntityNotFoundException("Exercise Hint", hintId));
     }
 
     @NotNull
@@ -41,10 +41,10 @@ public interface ExerciseHintRepository extends JpaRepository<ExerciseHint, Long
     @Query("""
             SELECT h
             FROM ExerciseHint h
-            LEFT JOIN FETCH h.solutionEntries se
+                LEFT JOIN FETCH h.solutionEntries se
             WHERE h.exercise.id = :exerciseId
             """)
-    Set<ExerciseHint> findByExerciseIdWithRelations(Long exerciseId);
+    Set<ExerciseHint> findByExerciseIdWithSolutionEntries(Long exerciseId);
 
     Set<ExerciseHint> findByTaskId(Long taskId);
 }
