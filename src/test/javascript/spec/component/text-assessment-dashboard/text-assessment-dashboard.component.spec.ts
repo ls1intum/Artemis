@@ -208,7 +208,7 @@ describe('TextAssessmentDashboardComponent', () => {
 
         // check
         expect(cancelAssessmentStub).toHaveBeenCalledOnce();
-        expect(cancelAssessmentStub).toHaveBeenCalledWith(textSubmission.participation.id, textSubmission.id);
+        expect(cancelAssessmentStub).toHaveBeenCalledWith(textSubmission.id);
         expect(windowSpy).toHaveBeenCalledOnce();
     }));
 

@@ -139,7 +139,7 @@ export class TextAssessmentDashboardComponent extends AbstractAssessmentDashboar
     cancelAssessment(submission: Submission) {
         const confirmCancel = window.confirm(this.cancelConfirmationText);
         if (confirmCancel) {
-            this.assessmentsService.cancelAssessment(submission.participation!.id!, submission.id!).subscribe(() => {
+            this.assessmentsService.cancelAssessment(submission.id!).subscribe(() => {
                 this.getSubmissions();
             });
         }

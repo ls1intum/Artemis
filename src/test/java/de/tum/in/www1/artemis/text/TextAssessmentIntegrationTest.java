@@ -349,7 +349,12 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         StudentParticipation participation = request.get(
                 "/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/for-text-assessment", HttpStatus.OK,
                 StudentParticipation.class);
+
+        assertThat(participation).isNotNull();
+
         final Complaint complaint = request.get("/api/complaints/submissions/" + textSubmission.getId(), HttpStatus.OK, Complaint.class);
+
+        // TODO add assertions on participation and complaint
 
         // Accept Complaint and update Assessment
         ComplaintResponse complaintResponse = database.createInitialEmptyResponse(TEST_PREFIX + "tutor2", complaint);
@@ -675,8 +680,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, TEST_PREFIX + "student1", TEST_PREFIX + "tutor1");
         database.addSampleFeedbackToResults(textSubmission.getLatestResult());
-        request.postWithoutLocation("/api/participations/" + textSubmission.getParticipation().getId() + "/submissions/" + textSubmission.getId() + "/cancel-assessment", null,
-                expectedStatus, null);
+        request.put("/api/text-submissions/" + textSubmission.getId() + "/cancel-assessment", null, expectedStatus);
     }
 
     @Test
@@ -706,7 +710,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void cancelAssessment_wrongSubmissionId() throws Exception {
-        request.post("/api/participations/1/submissions/" + 1000000000 + "/cancel-assessment", null, HttpStatus.NOT_FOUND);
+        request.put("/api/text-submissions/" + 1000000000 + "/cancel-assessment", null, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -1043,11 +1047,10 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("lock", "true");
-        TextSubmission textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK,
-                TextSubmission.class, parameters);
+        var textSubmissionWithoutAssessment = request.get("/api/exercises/" + textExercise.getId() + "/text-submission-without-assessment", HttpStatus.OK, TextSubmission.class,
+                parameters);
 
-        request.put("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/" + textSubmissions.get(0).getId() + "/cancel-assessment", null,
-                HttpStatus.OK);
+        request.put("/api/text-submissions/" + textSubmissions.get(0).getId() + "/cancel-assessment", null, HttpStatus.OK);
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("lock", "true");
@@ -1338,9 +1341,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
 
         // assess submission and submit
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> {
-            feedback.setDetailText("Good work here");
-        }).collect(Collectors.toCollection(ArrayList::new));
+        var feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toCollection(ArrayList::new));
         TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(feedbacks);
         Result firstSubmittedManualResult = request.postWithResponseBody("/api/participations/" + submissionWithoutFirstAssessment.getParticipation().getId() + "/results/"

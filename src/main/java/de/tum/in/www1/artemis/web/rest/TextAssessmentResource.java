@@ -285,22 +285,15 @@ public class TextAssessmentResource extends AssessmentResource {
     }
 
     /**
-     * POST participations/:participationId/submissions/:submissionId/cancel-assessment : Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
+     * PUT text-submissions/:submissionId/cancel-assessment : Cancel an assessment of a given submission for the current user, i.e. delete the corresponding result / release the lock. Then the submission is available for assessment
      * again.
      *
      * @param submissionId the id of the submission for which the current assessment should be canceled
-     * @param participationId the participationId of the participation for which the assessment should get canceled
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
-    @PostMapping("participations/{participationId}/submissions/{submissionId}/cancel-assessment")
+    @PutMapping("text-submissions/{submissionId}/cancel-assessment")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<Void> cancelAssessment(@PathVariable Long participationId, @PathVariable Long submissionId) {
-        Submission submission = submissionRepository.findByIdWithResultsElseThrow(submissionId);
-        if (!submission.getParticipation().getId().equals(participationId)) {
-            throw new BadRequestAlertException("participationId in Submission of submissionId " + submissionId + " doesn't match the paths participationId!", "participationId",
-                    "participationIdMismatch");
-        }
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, submission.getParticipation().getExercise(), null);
+    public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
         return super.cancelAssessment(submissionId);
     }
 

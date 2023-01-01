@@ -142,16 +142,15 @@ describe('TextAssessment Service', () => {
     });
 
     it('should cancel assessment', () => {
-        const participationId = 1;
         const submissionId = 1;
 
         service
-            .cancelAssessment(participationId, submissionId)
+            .cancelAssessment(submissionId)
             .pipe(take(1))
             .subscribe((resp) => (actualResponse = resp));
         const req = httpMock.expectOne({
-            url: `${SERVER_API_URL}api/participations/${participationId}/submissions/${submissionId}/cancel-assessment`,
-            method: 'POST',
+            url: `${SERVER_API_URL}api/text-submissions/${submissionId}/cancel-assessment`,
+            method: 'PUT',
         });
         req.flush(result);
 

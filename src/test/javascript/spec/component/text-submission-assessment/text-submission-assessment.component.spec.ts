@@ -341,7 +341,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         expect(windowConfirmStub).toHaveBeenCalledOnce();
         expect(navigateBackSpy).toHaveBeenCalledOnce();
         expect(cancelAssessmentStub).toHaveBeenCalledOnce();
-        expect(cancelAssessmentStub).toHaveBeenCalledWith(participation?.id, submission.id);
+        expect(cancelAssessmentStub).toHaveBeenCalledWith(submission.id);
     });
 
     it('should go to next submission', fakeAsync(() => {

@@ -160,7 +160,7 @@ public class ModelingAssessmentResource extends AssessmentResource {
      * @param submissionId the id of the submission for which the current assessment should be canceled
      * @return 200 Ok response if canceling was successful, 403 Forbidden if current user is not the assessor of the submission
      */
-    @PutMapping("/modeling-submissions/{submissionId}/cancel-assessment")
+    @PutMapping("modeling-submissions/{submissionId}/cancel-assessment")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Void> cancelAssessment(@PathVariable Long submissionId) {
         return super.cancelAssessment(submissionId);
