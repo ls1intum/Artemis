@@ -225,7 +225,10 @@ public class UserSpecs {
 
                 Root<Course> courseRoot = query.from(Course.class);
                 Join<User, String> userToGroupJoin = root.join(User_.GROUPS, JoinType.LEFT);
-                updateAllUsersMatchingCoursesJoin(criteriaBuilder, courseRoot, userToGroupJoin);
+                // TODO: investigate why activating the next line leads to an exception: java.lang.IllegalArgumentException: Already registered a copy:
+                // SqmBasicValuedSimplePath(de.tum.in.www1.artemis.domain.Course(1363924584205500).studentGroupName
+                // and check if the functionality still works correctly with the line being deactivated
+                // updateAllUsersMatchingCoursesJoin(criteriaBuilder, courseRoot, userToGroupJoin);
 
                 query.groupBy(root.get(User_.ID)).having(criteriaBuilder.equal(criteriaBuilder.count(joinedAuthorities), authorities.size()),
                         criteriaBuilder.equal(criteriaBuilder.count(userToGroupJoin), courseIds.size()));

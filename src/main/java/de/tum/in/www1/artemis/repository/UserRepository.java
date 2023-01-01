@@ -267,10 +267,16 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         var noRegistrationNumber = userSearch.getRegistrationNumbers().contains(FILTER_WITHOUT_REG_NO);
         var withRegistrationNumber = userSearch.getRegistrationNumbers().contains(FILTER_WITH_REG_NO);
 
-        Specification<User> specification = Specification.where(distinct()).and(getSearchTermSpecification(searchTerm)).and(getInternalOrExternalSpecification(internal, external))
-                .and(getActivatedOrDeactivatedSpecification(activated, deactivated)).and(getAuthoritySpecification(modifiedAuthorities, courseIds))
-                .and(getCourseSpecification(courseIds, modifiedAuthorities)).and(getAuthorityAndCourseSpecification(courseIds, modifiedAuthorities))
-                .and(getWithOrWithoutRegistrationNumberSpecification(noRegistrationNumber, withRegistrationNumber));
+        // @formatter:off
+        Specification<User> specification = Specification.where(distinct())
+            .and(getSearchTermSpecification(searchTerm))
+            .and(getInternalOrExternalSpecification(internal, external))
+            .and(getActivatedOrDeactivatedSpecification(activated, deactivated))
+            .and(getAuthoritySpecification(modifiedAuthorities, courseIds))
+            .and(getCourseSpecification(courseIds, modifiedAuthorities))
+            .and(getAuthorityAndCourseSpecification(courseIds, modifiedAuthorities))
+            .and(getWithOrWithoutRegistrationNumberSpecification(noRegistrationNumber, withRegistrationNumber));
+        // @formatter:on
 
         return findAll(specification, sorted).map(user -> {
             user.setVisibleRegistrationNumber();
