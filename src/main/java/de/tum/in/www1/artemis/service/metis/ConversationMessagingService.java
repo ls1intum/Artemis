@@ -59,36 +59,40 @@ public class ConversationMessagingService extends PostingService {
     /**
      * Creates a new message in a conversation
      *
-     * @param courseId    the id where the conversation is located
-     * @param messagePost the message to be created includes the conversation id
+     * @param courseId   the id where the conversation is located
+     * @param newMessage the message to be created includes the conversation id
      * @return the created message
      */
-    public Post createMessage(Long courseId, Post messagePost) {
-        if (messagePost.getId() != null) {
+    public Post createMessage(Long courseId, Post newMessage) {
+        if (newMessage.getId() != null) {
             throw new BadRequestAlertException("A new message post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
         }
-        if (messagePost.getConversation() == null || messagePost.getConversation().getId() == null) {
+        if (newMessage.getConversation() == null || newMessage.getConversation().getId() == null) {
             throw new BadRequestAlertException("A new message post must have a conversation", METIS_POST_ENTITY_NAME, "conversationnotset");
         }
 
         var author = this.userRepository.getUserWithGroupsAndAuthorities();
         var course = preCheckUserAndCourse(author, courseId);
-        messagePost.setAuthor(author);
-        messagePost.setDisplayPriority(DisplayPriority.NONE);
+        newMessage.setAuthor(author);
+        newMessage.setDisplayPriority(DisplayPriority.NONE);
 
-        var conversation = conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), author);
-
+        var conversation = conversationService.mayInteractWithConversationElseThrow(newMessage.getConversation().getId(), author);
         // extra checks for channels
         if (conversation instanceof Channel channel) {
             channelAuthorizationService.isAllowedToCreateNewPostInChannel(channel, author);
         }
 
-        // update last message date and conversation read time of user at the same time
-        conversation.setLastMessageDate(conversationService.auditConversationReadTimeOfUser(conversation, author));
-        var savedMessage = conversationMessageRepository.save(messagePost);
-        savedMessage.setConversation(conversation);
+        // update last message date of conversation
+        conversation.setLastMessageDate(ZonedDateTime.now());
         conversation = conversationService.updateConversation(conversation);
-        broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
+        // update last read date and unread message count of author
+        var authorParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversation.getId(), author.getId());
+        authorParticipant.setLastRead(ZonedDateTime.now());
+        authorParticipant.setUnreadMessagesCount(0L);
+        conversationParticipantRepository.save(authorParticipant);
+
+        var createdMessage = conversationMessageRepository.save(newMessage);
+        broadcastForPost(new PostDTO(createdMessage, MetisCrudAction.CREATE), course);
 
         if (conversation instanceof OneToOneChat) {
             var getNumberOfPosts = conversationMessageRepository.countByConversationId(conversation.getId());
@@ -98,10 +102,11 @@ public class ConversationMessagingService extends PostingService {
                 conversationService.broadcastOnConversationMembershipChannel(course, MetisCrudAction.CREATE, conversation, participants);
             }
         }
+        conversationParticipantRepository.incrementUnreadMessagesCountOfParticipants(conversation.getId(), author.getId());
         // ToDo: Optimization Idea: Maybe we can save this websocket call and instead get the last message date from the conversation object in the post somehow?
         // send conversation with updated last message date to participants. This is necessary to show the unread messages badge in the client
         conversationService.notifyAllConversationMembersAboutNewMessage(conversation);
-        return savedMessage;
+        return createdMessage;
     }
 
     /**
@@ -114,24 +119,22 @@ public class ConversationMessagingService extends PostingService {
     public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilter postContextFilter) {
         Page<Post> conversationPosts;
         if (postContextFilter.getConversationId() != null) {
-
-            final User user = userRepository.getUserWithGroupsAndAuthorities();
-
-            Conversation conversation = conversationService.mayInteractWithConversationElseThrow(postContextFilter.getConversationId(), user);
-
+            var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+            var conversation = conversationService.mayInteractWithConversationElseThrow(postContextFilter.getConversationId(), requestingUser);
             conversationPosts = conversationMessageRepository.findMessages(postContextFilter, pageable);
-
             // protect sample solution, grading instructions, etc.
             conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-
             setAuthorRoleOfPostings(conversationPosts.getContent());
 
-            conversationService.auditConversationReadTimeOfUser(conversation, user);
+            var participantOfRequestingUser = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversation.getId(),
+                    requestingUser.getId());
+            participantOfRequestingUser.setLastRead(ZonedDateTime.now());
+            participantOfRequestingUser.setUnreadMessagesCount(0L);
+            conversationParticipantRepository.save(participantOfRequestingUser);
         }
         else {
             throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
-
         return conversationPosts;
     }
 
@@ -191,10 +194,16 @@ public class ConversationMessagingService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = conversationMessageRepository.findMessagePostByIdElseThrow(postId);
-        post.setConversation(mayUpdateOrDeleteMessageElseThrow(post, user));
+        var conversation = mayUpdateOrDeleteMessageElseThrow(post, user);
+        post.setConversation(conversation);
 
         // delete
         conversationMessageRepository.deleteById(postId);
+        conversationParticipantRepository.decrementUnreadMessagesCountOfParticipants(conversation.getId(), user.getId());
+        conversation = conversationService.getConversationById(conversation.getId());
+
+        conversationService.notifyAllConversationMembersAboutUpdate(conversation);
+
         broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course);
     }
 

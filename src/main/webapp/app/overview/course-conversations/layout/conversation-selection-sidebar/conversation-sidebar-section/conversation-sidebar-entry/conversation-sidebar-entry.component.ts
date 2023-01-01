@@ -46,11 +46,11 @@ export class ConversationSidebarEntryComponent implements OnInit, OnDestroy {
     constructor(public conversationService: ConversationService, private alertService: AlertService, private modalService: NgbModal) {}
 
     get isConversationUnread(): boolean {
-        // do not show unread badge for open conversation that the user is currently reading
+        // do not show unread count for open conversation that the user is currently reading
         if (this.isActiveConversation || !this.conversation) {
             return false;
         } else {
-            return !!(this.conversation.lastMessageDate && (!this.conversation.lastReadDate || this.conversation.lastReadDate.isBefore(this.conversation.lastMessageDate)));
+            return !!this.conversation.unreadMessagesCount && this.conversation.unreadMessagesCount > 0;
         }
     }
 

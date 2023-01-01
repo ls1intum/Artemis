@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +64,9 @@ public class OneToOneChatService {
         participant.setIsModerator(false);
         participant.setIsHidden(false);
         participant.setIsFavorite(false);
+        // set the last reading time of a participant in the past when creating conversation for the first time!
+        participant.setLastRead(ZonedDateTime.now().minusYears(2));
+        participant.setUnreadMessagesCount(0L);
         return participant;
     }
 }

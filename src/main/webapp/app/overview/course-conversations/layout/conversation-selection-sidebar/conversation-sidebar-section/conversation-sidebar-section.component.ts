@@ -51,8 +51,8 @@ export class ConversationSidebarSectionComponent implements OnInit {
         let containsUnreadConversation = false;
         for (const conversation of this.allConversations) {
             if (
-                conversation.lastMessageDate &&
-                (!conversation.lastReadDate || conversation.lastReadDate.isBefore(conversation.lastMessageDate)) &&
+                conversation.unreadMessagesCount &&
+                conversation.unreadMessagesCount > 0 &&
                 !(this.activeConversation && this.activeConversation.id === conversation.id) &&
                 this.isCollapsed
             ) {
@@ -68,8 +68,8 @@ export class ConversationSidebarSectionComponent implements OnInit {
         let containsUnreadConversation = false;
         for (const conversation of this.hiddenConversations) {
             if (
-                conversation.lastMessageDate &&
-                (!conversation.lastReadDate || conversation.lastReadDate.isBefore(conversation.lastMessageDate)) &&
+                conversation.unreadMessagesCount &&
+                conversation.unreadMessagesCount > 0 &&
                 !(this.activeConversation && this.activeConversation.id === conversation.id) &&
                 !this.showHiddenConversations
             ) {

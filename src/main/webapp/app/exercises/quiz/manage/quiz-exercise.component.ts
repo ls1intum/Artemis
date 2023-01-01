@@ -15,6 +15,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faEye, faFileExport, faPlayCircle, faPlus, faSignal, faSort, faStopCircle, faTable, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { QuizExerciseImportComponent } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
+import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 
 @Component({
     selector: 'jhi-quiz-exercise',
@@ -67,7 +68,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
                     exercise.isAtLeastEditor = this.accountService.isAtLeastEditorInCourse(exercise.course);
                     exercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(exercise.course);
                     exercise.quizBatches = exercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
-                    exercise.isEditable = this.isQuizEditable(exercise);
+                    exercise.isEditable = isQuizEditable(exercise);
                 });
                 this.setQuizExercisesStatus();
                 this.emitExerciseCount(this.quizExercises.length);
@@ -97,15 +98,6 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     private onError(error: HttpErrorResponse) {
         this.alertService.error(error.headers.get('X-artemisApp-error')!);
-    }
-
-    /**
-     * Checks if the quiz exercise is over
-     * @param quizExercise The quiz exercise we want to know if it's over
-     * @returns {boolean} true if the quiz exercise is over, false if not.
-     */
-    quizIsOver(quizExercise: QuizExercise) {
-        return quizExercise.quizEnded;
     }
 
     /**
@@ -226,7 +218,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
         newQuizExercise.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(newQuizExercise.course);
         newQuizExercise.status = this.quizExerciseService.getStatus(newQuizExercise);
         newQuizExercise.quizBatches = newQuizExercise.quizBatches?.sort((a, b) => (a.id ?? 0) - (b.id ?? 0));
-        newQuizExercise.isEditable = this.isQuizEditable(newQuizExercise);
+        newQuizExercise.isEditable = isQuizEditable(newQuizExercise);
         if (index === -1) {
             this.quizExercises.push(newQuizExercise);
         } else {
@@ -315,17 +307,5 @@ export class QuizExerciseComponent extends ExerciseComponent {
             },
             () => {},
         );
-    }
-
-    /**
-     * Check if quiz is editable
-     * @param quizExercise the quiz exercise which will be checked
-     * @return {boolean} true if the quiz is editable and false otherwise
-     */
-    isQuizEditable(quizExercise: QuizExercise): boolean {
-        if (quizExercise.quizMode === QuizMode.BATCHED && quizExercise.quizBatches?.length) {
-            return false;
-        }
-        return quizExercise.status !== QuizStatus.ACTIVE && !this.quizIsOver(quizExercise);
     }
 }

@@ -77,9 +77,10 @@ export class MetisConversationService implements OnDestroy {
     }
 
     public setActiveConversation = (conversation: ConversationDto | undefined) => {
-        // update last read date of the conversation that is currently active before switching to another conversation
+        // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation
         if (this._activeConversation) {
             this._activeConversation.lastReadDate = dayjs();
+            this._activeConversation.unreadMessagesCount = 0;
         }
         const cachedConversation = this._conversationsOfUser.find((conversationInCache) => conversationInCache.id === conversation?.id);
         if (!cachedConversation) {
@@ -290,8 +291,8 @@ export class MetisConversationService implements OnDestroy {
         const conversationsCopy = [...this._conversationsOfUser];
         const indexOfCachedConversation = conversationsCopy.findIndex((cachedConversation) => cachedConversation.id === conversationWithNewMessage.id);
         if (indexOfCachedConversation !== -1) {
-            // we update just the last message date as the dto here is minimal to save extra db calls and does not contain all the information
             conversationsCopy[indexOfCachedConversation].lastMessageDate = conversationWithNewMessage.lastMessageDate;
+            conversationsCopy[indexOfCachedConversation].unreadMessagesCount = (conversationsCopy[indexOfCachedConversation].unreadMessagesCount ?? 0) + 1;
         }
         this._conversationsOfUser = conversationsCopy;
     }

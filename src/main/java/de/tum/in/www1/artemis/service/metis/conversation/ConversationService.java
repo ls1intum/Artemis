@@ -144,6 +144,9 @@ public class ConversationService {
             conversationParticipant.setIsModerator(false);
             conversationParticipant.setIsHidden(false);
             conversationParticipant.setIsFavorite(false);
+            // set the last reading time of a participant in the past when creating conversation for the first time!
+            conversationParticipant.setLastRead(ZonedDateTime.now().minusYears(2));
+            conversationParticipant.setUnreadMessagesCount(0L);
             newConversationParticipants.add(conversationParticipant);
         }
         if (!newConversationParticipants.isEmpty()) {
@@ -233,7 +236,7 @@ public class ConversationService {
         ConversationDTO dto;
         if (metisCrudAction.equals(MetisCrudAction.NEW_MESSAGE)) {
             // we do not want to recalculate the whole dto for a new message, just the information needed for updating the unread messages
-            dto = conversationDTOService.convertToDTOWithoutExtraDBCalls(conversation);
+            dto = conversationDTOService.convertToDTOWithNoExtraDBCalls(conversation);
         }
         else {
             dto = conversationDTOService.convertToDTO(conversation, user);
@@ -256,22 +259,6 @@ public class ConversationService {
             throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
         return conversation.get();
-    }
-
-    /**
-     * Updates the last read date time of a user for a conversation
-     *
-     * @param conversation the conversation
-     * @param user         the user
-     * @return the new last read date time
-     */
-    public ZonedDateTime auditConversationReadTimeOfUser(Conversation conversation, User user) {
-        // update the last time user has read the conversation
-        ConversationParticipant readingParticipant = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserIdElseThrow(conversation.getId(),
-                user.getId());
-        readingParticipant.setLastRead(ZonedDateTime.now());
-        conversationParticipantRepository.save(readingParticipant);
-        return readingParticipant.getLastRead();
     }
 
     /**

@@ -38,6 +38,7 @@ export abstract class ConversationDto {
     public creationDate?: dayjs.Dayjs;
     public lastMessageDate?: dayjs.Dayjs;
     public lastReadDate?: dayjs.Dayjs;
+    public unreadMessagesCount?: number;
     public isMember?: boolean;
     public numberOfMembers?: number;
     public creator?: ConversationUserDTO;

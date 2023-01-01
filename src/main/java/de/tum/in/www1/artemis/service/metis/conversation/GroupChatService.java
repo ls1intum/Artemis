@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
+import java.time.ZonedDateTime;
 import java.util.Set;
 
 import javax.validation.Valid;
@@ -67,6 +68,9 @@ public class GroupChatService {
         participant.setIsModerator(false);
         participant.setIsFavorite(false);
         participant.setIsHidden(false);
+        // set the last reading time of a participant in the past when creating conversation for the first time!
+        participant.setLastRead(ZonedDateTime.now().minusYears(2));
+        participant.setUnreadMessagesCount(0L);
         return participant;
     }
 

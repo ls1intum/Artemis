@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -119,6 +120,9 @@ public class ChannelService {
         this.channelIsValidOrThrow(course.getId(), channel);
         var savedChannel = channelRepository.save(channel);
         var conversationParticipantOfRequestingUser = new ConversationParticipant();
+        // set the last reading time of a participant in the past when creating conversation for the first time!
+        conversationParticipantOfRequestingUser.setLastRead(ZonedDateTime.now().minusYears(2));
+        conversationParticipantOfRequestingUser.setUnreadMessagesCount(0L);
         conversationParticipantOfRequestingUser.setUser(user);
         conversationParticipantOfRequestingUser.setConversation(savedChannel);
         // Creator is a moderator. Special case, because creator is the only moderator that can not be revoked the role

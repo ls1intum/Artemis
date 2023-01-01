@@ -10,7 +10,9 @@
             {{ getConversationName(conversation) }}
         </span>
         <span [hidden]="!isConversationUnread">
-            <fa-icon [icon]="faMessage"></fa-icon>
+            <span class="badge bg-info">
+                {{ conversation.unreadMessagesCount }}
+            </span>
         </span>
     </div>
     <div class="interaction" (click)="$event.stopPropagation()">

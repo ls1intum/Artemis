@@ -30,6 +30,9 @@ public class ConversationDTO {
     private ZonedDateTime lastReadDate;
 
     // property not taken from entity
+    private Long unreadMessagesCount;
+
+    // property not taken from entity
     private Boolean isFavorite;
 
     // property not taken from entity
@@ -152,10 +155,19 @@ public class ConversationDTO {
         this.lastReadDate = lastReadDate;
     }
 
+    public Long getUnreadMessagesCount() {
+        return unreadMessagesCount;
+    }
+
+    public void setUnreadMessagesCount(Long unreadMessagesCount) {
+        this.unreadMessagesCount = unreadMessagesCount;
+    }
+
     @Override
     public String toString() {
-        return "ConversationDTO{" + "type='" + type + '\'' + ", id=" + id + ", creationDate=" + creationDate + ", lastMessageDate=" + lastMessageDate + ", lastReadDate="
-                + lastReadDate + ", isMember=" + isMember + ", isFavorite=" + isFavorite + ", isHidden=" + isHidden + ", isCreator=" + isCreator + ", numberOfMembers="
-                + numberOfMembers + ", creator=" + (creator != null ? creator.getName() : "") + '}';
+        return "ConversationDTO{" + "type='" + type + '\'' + ", id=" + id + ", creationDate=" + creationDate + ", lastMessageDate=" + lastMessageDate + ", unreadMessageCount="
+                + unreadMessagesCount + ", lastReadDate=" + lastReadDate + ", isMember=" + isMember + ", isFavorite=" + isFavorite + ", isHidden=" + isHidden + ", isCreator="
+                + isCreator + ", numberOfMembers=" + numberOfMembers + ", creator=" + (creator != null ? creator.getName() : "") + '}';
     }
+
 }

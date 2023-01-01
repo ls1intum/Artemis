@@ -69,7 +69,7 @@ public class ConversationDTOService {
      * @param conversation the conversation to create the DTO from
      * @return the created ConversationDTO
      */
-    public ConversationDTO convertToDTOWithoutExtraDBCalls(Conversation conversation) {
+    public ConversationDTO convertToDTOWithNoExtraDBCalls(Conversation conversation) {
         if (conversation instanceof Channel channel) {
             return new ChannelDTO(channel);
         }
@@ -97,6 +97,7 @@ public class ConversationDTOService {
         var participantOptional = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), requestingUser.getId());
         channelDTO.setIsMember(participantOptional.isPresent());
         participantOptional.ifPresent(conversationParticipant -> channelDTO.setLastReadDate(conversationParticipant.getLastRead()));
+        participantOptional.ifPresent(conversationParticipant -> channelDTO.setUnreadMessagesCount(conversationParticipant.getUnreadMessagesCount()));
         channelDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
         channelDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
         if (channel.getCreator() != null) {
@@ -128,6 +129,7 @@ public class ConversationDTOService {
         var oneToOneChatDTO = new OneToOneChatDTO(oneToOneChat);
         oneToOneChatDTO.setIsMember(participantOfRequestingUser.isPresent());
         participantOfRequestingUser.ifPresent(conversationParticipant -> oneToOneChatDTO.setLastReadDate(conversationParticipant.getLastRead()));
+        participantOfRequestingUser.ifPresent(conversationParticipant -> oneToOneChatDTO.setUnreadMessagesCount(conversationParticipant.getUnreadMessagesCount()));
         participantOfRequestingUser.ifPresent(conversationParticipant -> oneToOneChatDTO.setIsFavorite(conversationParticipant.getIsFavorite()));
         participantOfRequestingUser.ifPresent(conversationParticipant -> oneToOneChatDTO.setIsHidden(conversationParticipant.getIsHidden()));
         oneToOneChatDTO.setMembers(chatParticipants);
@@ -159,6 +161,7 @@ public class ConversationDTOService {
         var groupChatDTO = new GroupChatDTO(groupChat);
         groupChatDTO.setIsMember(participantOfRequestingUser.isPresent());
         participantOfRequestingUser.ifPresent(conversationParticipant -> groupChatDTO.setLastReadDate(conversationParticipant.getLastRead()));
+        participantOfRequestingUser.ifPresent(conversationParticipant -> groupChatDTO.setUnreadMessagesCount(conversationParticipant.getUnreadMessagesCount()));
         participantOfRequestingUser.ifPresent(conversationParticipant -> groupChatDTO.setIsFavorite(conversationParticipant.getIsFavorite()));
         participantOfRequestingUser.ifPresent(conversationParticipant -> groupChatDTO.setIsHidden(conversationParticipant.getIsHidden()));
         groupChatDTO.setMembers(chatParticipants);
