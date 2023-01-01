@@ -196,17 +196,19 @@ public class CourseResource {
             courseUpdate.setCourseIcon(pathString);
         }
 
+        courseUpdate.setId(courseId); // Don't persist a wrong ID
+
         if (courseUpdate.isOnlineCourse() != existingCourse.isOnlineCourse()) {
             if (courseUpdate.isOnlineCourse()) {
                 onlineCourseConfigurationService.createOnlineCourseConfiguration(courseUpdate);
             }
             else {
-                courseUpdate.setOnlineCourseConfiguration(null);
+                // this automatically saves the course
+                courseService.deleteOnlineCourseConfiguration(courseUpdate);
             }
         }
 
-        courseUpdate.setId(courseId); // Don't persist a wrong ID
-        Course result = courseRepository.save(courseUpdate);
+        Course updatedCourse = courseRepository.save(courseUpdate);
 
         // Based on the old instructors, editors and TAs, we can update all exercises in the course in the VCS (if necessary)
         // We need the old instructors, editors and TAs, so that the VCS user management service can determine which
@@ -215,12 +217,12 @@ public class CourseResource {
         final var oldEditorGroup = existingCourse.getEditorGroupName();
         final var oldTeachingAssistantGroup = existingCourse.getTeachingAssistantGroupName();
 
-        optionalVcsUserManagementService.ifPresent(service -> service.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
-        optionalCiUserManagementService.ifPresent(service -> service.updateCoursePermissions(result, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
+        optionalVcsUserManagementService.ifPresent(service -> service.updateCoursePermissions(updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
+        optionalCiUserManagementService.ifPresent(service -> service.updateCoursePermissions(updatedCourse, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup));
         if (timeZoneChanged) {
-            tutorialGroupsConfigurationService.onTimeZoneUpdate(result);
+            tutorialGroupsConfigurationService.onTimeZoneUpdate(updatedCourse);
         }
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(updatedCourse);
     }
 
     /**

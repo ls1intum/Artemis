@@ -318,7 +318,11 @@ public class CourseService {
         this.tutorialGroupRepository.deleteAllByCourse(course);
     }
 
-    private void deleteOnlineCourseConfiguration(Course course) {
+    /**
+     * first sets the online config in Course to null, then saves the course and finally deletes the onlineConfig
+     * @param course the course for which the online config should be deleted
+     */
+    public void deleteOnlineCourseConfiguration(Course course) {
         if (course.getOnlineCourseConfiguration() != null) {
             var onlineConfig = course.getOnlineCourseConfiguration();
             course.setOnlineCourseConfiguration(null);

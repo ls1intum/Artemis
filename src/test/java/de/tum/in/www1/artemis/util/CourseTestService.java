@@ -2339,6 +2339,8 @@ public class CourseTestService {
         assertEquals(courseWithOnlineConfiguration.getOnlineCourseConfiguration().getUserPrefix(), courseWithOnlineConfiguration.getShortName());
     }
 
+    // TODO: write test testUpdateToOfflineCourse (reverse of testUpdateToOnlineCourse)
+
     public void testUpdateToOnlineCourse() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         MvcResult result = request.getMvc().perform(buildCreateCourse(course)).andExpect(status().isCreated()).andReturn();
@@ -2347,6 +2349,9 @@ public class CourseTestService {
         createdCourse.setOnlineCourse(true);
         result = request.getMvc().perform(buildUpdateCourse(createdCourse.getId(), createdCourse)).andExpect(status().isOk()).andReturn();
         Course updatedCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
+
+        // load with proxies from database
+        updatedCourse = courseRepo.findWithEagerOnlineCourseConfigurationAndTutorialGroupConfigurationById(updatedCourse.getId());
 
         assertThat(updatedCourse.getOnlineCourseConfiguration()).isNotNull();
         assertThat(updatedCourse.getOnlineCourseConfiguration().getLtiKey()).isNotNull();
