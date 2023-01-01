@@ -8,6 +8,7 @@ import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import jakarta.persistence.*;
@@ -18,8 +19,14 @@ import jakarta.validation.constraints.Size;
  */
 @Entity
 @DiscriminatorValue(value = "T")
+@JsonTypeName("text")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextSubmission extends Submission {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getSubmissionExerciseType() {
+        return "text";
+    }
 
     private static final int MAX_EXCERPT_LENGTH = 100;
 

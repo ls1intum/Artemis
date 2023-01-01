@@ -8,6 +8,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.Submission;
@@ -21,8 +22,14 @@ import jakarta.validation.Valid;
  */
 @Entity
 @DiscriminatorValue(value = "Q")
+@JsonTypeName("quiz")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class QuizSubmission extends Submission {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getSubmissionExerciseType() {
+        return "quiz";
+    }
 
     @Column(name = "score_in_points")
     @JsonView(QuizView.After.class)
