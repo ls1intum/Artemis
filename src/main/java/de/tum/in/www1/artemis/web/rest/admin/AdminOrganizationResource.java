@@ -187,7 +187,7 @@ public class AdminOrganizationResource {
     @EnforceAdmin
     public ResponseEntity<List<Organization>> getAllOrganizations() {
         log.debug("REST request to get all organizations");
-        // TODO: we should avoid findAll() and instead load batches of organizations
+        // TODO: we should avoid findAll() and instead load pages of organizations
         List<Organization> organizations = organizationRepository.findAll();
         return new ResponseEntity<>(organizations, HttpStatus.OK);
     }
@@ -267,6 +267,7 @@ public class AdminOrganizationResource {
      * @param userId the id of the user that the organizations should contain
      * @return ResponseEntity containing a set of organizations containing the given user
      */
+    // TODO: change URL to organizations?userId={userId}
     @GetMapping("organizations/users/{userId}")
     @EnforceAdmin
     public ResponseEntity<Set<Organization>> getAllOrganizationsByUser(@PathVariable Long userId) {

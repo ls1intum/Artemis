@@ -12,8 +12,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
+import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.OrganizationRepository;
+import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 /**
  * REST controller for managing the Organization entities
@@ -26,8 +30,14 @@ public class OrganizationResource {
 
     private final OrganizationRepository organizationRepository;
 
-    public OrganizationResource(OrganizationRepository organizationRepository) {
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final CourseRepository courseRepository;
+
+    public OrganizationResource(OrganizationRepository organizationRepository, AuthorizationCheckService authorizationCheckService, CourseRepository courseRepository) {
         this.organizationRepository = organizationRepository;
+        this.authorizationCheckService = authorizationCheckService;
+        this.courseRepository = courseRepository;
     }
 
     /**
@@ -36,10 +46,13 @@ public class OrganizationResource {
      * @param courseId the id of the course that the organizations should contain
      * @return ResponseEntity containing a set of organizations containing the given course
      */
+    // TODO: change URL to organizations?courseId={courseId}
     @GetMapping("organizations/courses/{courseId}")
-    @PreAuthorize("hasRole('TA')")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Set<Organization>> getAllOrganizationsByCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all organizations of course : {}", courseId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         Set<Organization> organizations = organizationRepository.findAllOrganizationsByCourseId(courseId);
         return new ResponseEntity<>(organizations, HttpStatus.OK);
     }

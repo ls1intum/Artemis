@@ -40,6 +40,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void initTestCase() {
         bitbucketRequestMockProvider.enableMockingOfRequests();
         bambooRequestMockProvider.enableMockingOfRequests();
+        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
     }
 
     @AfterEach
@@ -148,6 +149,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
+        organization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        assertThat(organization.getCourses()).doesNotContain(course1);
 
         request.postWithoutLocation("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), null, HttpStatus.OK, null);
 
@@ -161,21 +164,22 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      */
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testRemoveCourseToOrganization() throws Exception {
+    void testRemoveCourseFromOrganization() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
         Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
         course1 = courseRepo.save(course1);
 
         Organization organization = database.createOrganization();
-        organization.getCourses().add(course1);
         organization = organizationRepo.save(organization);
+        courseRepo.addOrganizationToCourse(course1.getId(), organization);
 
+        organization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
         assertThat(organization.getCourses()).contains(course1);
 
-        request.delete("/api/admin/organizations/course/" + course1.getId() + "/organization/" + organization.getId(), HttpStatus.OK);
-        Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
+        request.delete("/api/admin/organizations/" + organization.getId() + "/courses/" + course1.getId(), HttpStatus.OK);
 
+        Organization updatedOrganization = request.get("/api/admin/organizations/" + organization.getId() + "/full", HttpStatus.OK, Organization.class);
         assertThat(updatedOrganization.getCourses()).doesNotContain(course1);
     }
 
@@ -419,11 +423,12 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      * @throws Exception exception
      */
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllOrganizationByCourse() throws Exception {
         jiraRequestMockProvider.enableMockingOfRequests();
 
-        Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), "testcourse1", "tutor", "editor", "instructor");
+        Course course1 = ModelFactory.generateCourse(null, ZonedDateTime.now(), ZonedDateTime.now(), new HashSet<>(), TEST_PREFIX + "testcourse1", TEST_PREFIX + "tutor",
+                TEST_PREFIX + "editor", TEST_PREFIX + "instructor");
         course1 = courseRepo.save(course1);
 
         Organization organization = database.createOrganization();
