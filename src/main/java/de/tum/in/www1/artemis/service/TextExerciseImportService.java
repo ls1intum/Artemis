@@ -38,7 +38,7 @@ public class TextExerciseImportService extends ExerciseImportService {
     /**
      * Imports a text exercise creating a new entity, copying all basic values and saving it in the database.
      * All basic include everything except Student-, Tutor participations, and student questions. <br>
-     * This method calls {@link #copyTextExerciseBasis(TextExercise)} to set up the basis of the exercise
+     * This method calls {@link #copyTextExerciseBasis(TextExercise, Map)} to set up the basis of the exercise
      * {@link #copyExampleSubmission(Exercise, Exercise, Map)} for a hard copy of the example submissions.
      *
      * @param templateExercise The template exercise which should get imported
@@ -152,12 +152,13 @@ public class TextExerciseImportService extends ExerciseImportService {
             newSubmission.setParticipation(originalSubmission.getParticipation());
             newSubmission.setText(((TextSubmission) originalSubmission).getText());
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
-            newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
+            Set<TextBlock> originalTextBlocks = textBlockRepository.findAllBySubmissionId(originalSubmission.getId());
+            newSubmission.setBlocks(copyTextBlocks(originalTextBlocks, newSubmission));
             newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission, gradingInstructionCopyTracker));
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
             newSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(newSubmission.getId());
 
-            updateFeedbackReferencesWithNewTextBlockIds(((TextSubmission) originalSubmission).getBlocks(), newSubmission);
+            updateFeedbackReferencesWithNewTextBlockIds(originalTextBlocks, newSubmission);
         }
         return newSubmission;
     }
