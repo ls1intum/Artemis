@@ -261,7 +261,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         return Stream.of(
                 // The result was created shortly after the due date and should still be considered rated
                 Arguments.of(true, dateInPast, SubmissionType.MANUAL, dateClosePast, now),
-                // TODO only do this rated change if building after the due date is activated
+                // The grace period should only be applied if building after the due date is activated
                 Arguments.of(false, null, SubmissionType.MANUAL, dateClosePast, now),
                 // The due date has not passed, normal student submission => rated result.
                 Arguments.of(true, null, SubmissionType.MANUAL, dateInFuture, now),

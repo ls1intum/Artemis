@@ -226,16 +226,19 @@ public class Result extends DomainObject {
      * A result is rated if the submission was done before the due date. A small grace period of
      * {GRACE_PERIOD_SECONDS} seconds gets applied
      *
-     * @param dueDate        The due date of the corresponding exercise or the individual due date if applicable
-     * @param submissionDate the date of the corresponding submission
+     * @param dueDate         The due date of the corresponding exercise or the individual due date if applicable
+     * @param submissionDate  the date of the corresponding submission
+     * @param withGracePeriod true if a grace period of {{@link Result#GRACE_PERIOD_SECONDS}} should be applied
      */
-    private void setRatedIfNotAfterDueDate(@Nullable ZonedDateTime dueDate, @NotNull ZonedDateTime submissionDate) {
+    private void setRatedIfNotAfterDueDate(@Nullable ZonedDateTime dueDate, @NotNull ZonedDateTime submissionDate, boolean withGracePeriod) {
         if (dueDate == null) {
             this.rated = true;
         }
         else {
-            ZonedDateTime dueDateWithGracePeriod = dueDate.plus(GRACE_PERIOD_SECONDS, ChronoUnit.SECONDS);
-            this.rated = dueDateWithGracePeriod.isAfter(submissionDate);
+            if (withGracePeriod) {
+                dueDate = dueDate.plus(GRACE_PERIOD_SECONDS, ChronoUnit.SECONDS);
+            }
+            this.rated = dueDate.isAfter(submissionDate);
         }
     }
 
@@ -256,7 +259,12 @@ public class Result extends DomainObject {
             this.rated = false;
         }
         else {
-            setRatedIfNotAfterDueDate(dueDate, submission.getSubmissionDate());
+            Exercise exercise = submission.getParticipation().getExercise();
+            boolean withGracePeriod = false;
+            if (exercise instanceof ProgrammingExercise programmingExercise) {
+                withGracePeriod = !programmingExercise.isExamExercise() && programmingExercise.getBuildAndTestStudentSubmissionsAfterDueDate() != null;
+            }
+            setRatedIfNotAfterDueDate(dueDate, submission.getSubmissionDate(), withGracePeriod);
         }
     }
 
@@ -280,7 +288,7 @@ public class Result extends DomainObject {
      */
     public void setRatedIfNotAfterDueDate(@NotNull ZonedDateTime submissionDate) {
         ZonedDateTime dueDate = ExerciseDateService.getDueDate(getParticipation()).orElse(null);
-        setRatedIfNotAfterDueDate(dueDate, submissionDate);
+        setRatedIfNotAfterDueDate(dueDate, submissionDate, false);
     }
 
     public Submission getSubmission() {
