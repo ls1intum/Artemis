@@ -239,13 +239,15 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void setProgrammingExerciseResultRated(boolean shouldBeRated, ZonedDateTime buildAndTestAfterDueDate, SubmissionType submissionType, ZonedDateTime dueDate,
             ZonedDateTime submissionDate) {
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
+        programmingExercise.setDueDate(dueDate);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
+
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(submissionType).submitted(true)
                 .submissionDate(submissionDate);
         programmingSubmission = database.addProgrammingSubmission(programmingExercise, programmingSubmission, TEST_PREFIX + "student1");
         Result result = database.addResultToParticipation(programmingExerciseStudentParticipation, programmingSubmission);
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
-        programmingExercise.setDueDate(dueDate);
-        programmingExerciseRepository.save(programmingExercise);
 
         result.setRatedIfNotAfterDueDate(programmingSubmission, programmingSubmission.getParticipation());
         assertThat(result.isRated()).isSameAs(shouldBeRated);
