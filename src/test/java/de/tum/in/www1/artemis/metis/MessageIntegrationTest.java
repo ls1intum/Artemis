@@ -1,10 +1,14 @@
 package de.tum.in.www1.artemis.metis;
 
+import static de.tum.in.www1.artemis.metis.AnswerPostIntegrationTest.MAX_POSTS_PER_PAGE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -19,9 +23,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
@@ -52,6 +64,9 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Autowired
     private ConversationParticipantRepository conversationParticipantRepository;
+
+    @Autowired
+    private ObjectMapper objectMapper;
 
     private List<Post> existingPostsAndConversationPosts;
 
@@ -244,6 +259,81 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         verify(messagingTemplate, never()).convertAndSendToUser(anyString(), anyString(), any(PostDTO.class));
     }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testIncreaseUnreadMessageCountAfterMessageSend() throws Exception {
+        Post postToSave = createPostWithOneToOneChat(TEST_PREFIX);
+        Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
+
+        long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost.getConversation().getId()).get().getConversationParticipants()
+                .stream().filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave.getAuthor().getId())).findAny().orElseThrow()
+                .getUnreadMessagesCount();
+        assertThat(unreadMessages).isEqualTo(1L);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDecreaseUnreadMessageCountAfterMessageRead() throws Exception {
+        Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
+
+        ResultActions resultActions = request.getMvc()
+                .perform(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postToSave1)).with(user(TEST_PREFIX + "student1").roles("USER")).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated());
+
+        MvcResult result = resultActions.andReturn();
+        String contentAsString = result.getResponse().getContentAsString();
+        Post createdPost1 = objectMapper.readValue(contentAsString, Post.class);
+
+        request.getMvc()
+                .perform(MockMvcRequestBuilders.get("/api/courses/" + courseId + "/messages").param("conversationId", createdPost1.getConversation().getId().toString())
+                        .param("pagingEnabled", "true").param("size", String.valueOf(MAX_POSTS_PER_PAGE)).with(user(TEST_PREFIX + "student2").roles("USER"))
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk());
+
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+        long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost1.getConversation().getId()).get().getConversationParticipants()
+                .stream().filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
+                .getUnreadMessagesCount();
+
+        assertThat(unreadMessages).isEqualTo(0);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDecreaseUnreadMessageCountWhenDeletingMessage() throws Exception {
+        Post postToSave1 = createPostWithOneToOneChat(TEST_PREFIX);
+        Post postToSave2 = createPostWithOneToOneChat(TEST_PREFIX);
+
+        ResultActions resultActions = request.getMvc()
+                .perform(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postToSave1)).with(user(TEST_PREFIX + "student1").roles("USER")).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated());
+
+        MvcResult result = resultActions.andReturn();
+        String contentAsString = result.getResponse().getContentAsString();
+        Post createdPost1 = objectMapper.readValue(contentAsString, Post.class);
+
+        ResultActions resultActions2 = request.getMvc()
+                .perform(MockMvcRequestBuilders.post("/api/courses/" + courseId + "/messages").contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(postToSave2)).with(user(TEST_PREFIX + "student1").roles("USER")).accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isCreated());
+
+        MvcResult result2 = resultActions2.andReturn();
+        String contentAsString2 = result2.getResponse().getContentAsString();
+        Post createdPost2 = objectMapper.readValue(contentAsString2, Post.class);
+
+        request.getMvc().perform(MockMvcRequestBuilders.delete("/api/courses/" + courseId + "/messages/" + createdPost2.getId()).with(user(TEST_PREFIX + "student1").roles("USER"))
+                .accept(MediaType.APPLICATION_JSON)).andExpect(status().isOk());
+
+        SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
+        long unreadMessages = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(createdPost1.getConversation().getId()).get().getConversationParticipants()
+                .stream().filter(conversationParticipant -> !Objects.equals(conversationParticipant.getUser().getId(), postToSave1.getAuthor().getId())).findAny().orElseThrow()
+                .getUnreadMessagesCount();
+
+        assertThat(unreadMessages).isEqualTo(1);
+    }
+
     private Post createPostWithOneToOneChat(String userPrefix) {
         var student1 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student1").get();
         var student2 = userRepository.findOneWithGroupsAndAuthoritiesByLogin(userPrefix + "student2").get();
@@ -256,10 +346,14 @@ class MessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         var participant1 = new ConversationParticipant();
         participant1.setConversation(chat);
         participant1.setUser(student1);
+        participant1.setUnreadMessagesCount(0L);
+        participant1.setLastRead(ZonedDateTime.now().minusYears(2));
         conversationParticipantRepository.save(participant1);
         var participant2 = new ConversationParticipant();
         participant2.setConversation(chat);
         participant2.setUser(student2);
+        participant2.setUnreadMessagesCount(0L);
+        participant2.setLastRead(ZonedDateTime.now().minusYears(2));
         conversationParticipantRepository.save(participant2);
         chat = oneToOneChatRepository.findByIdWithConversationParticipantsAndUserGroups(chat.getId()).get();
         Post post = new Post();
