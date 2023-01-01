@@ -584,7 +584,8 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
             assertThat(question.getPoints()).as("Question scores are correct").isEqualTo(questionDatabase.getPoints());
             assertThat(question.getPoints()).as("Question scores are correct").isEqualTo(questionServer.getPoints());
         }
-        return quizExerciseDatabase;
+        // Note: it is important to return the server version here, because it contains more data than the one from the database (which potentially includes proxy objects)
+        return quizExerciseServer;
     }
 
     private QuizExercise createQuizOnServerForExam() throws Exception {
@@ -1550,8 +1551,11 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("notificationText", "NotificationTextTEST!");
-        request.putWithResponseBodyAndParams("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK, params);
+
+        var updatedQuizExercise = request.putWithResponseBodyAndParams("/api/quiz-exercises", quizExercise, QuizExercise.class, HttpStatus.OK, params);
         // TODO check if notifications arrived correctly
+        assertThat(updatedQuizExercise.getId()).isEqualTo(quizExercise.getId());
+        // TODO add assertions that the quiz was updated correctly
     }
 
     /**

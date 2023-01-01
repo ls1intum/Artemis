@@ -445,7 +445,6 @@ public class QuizExerciseService {
         quizExercise.setDueDate(null);
         quizExercise.setQuizBatches(Set.of());
 
-        // TODO: this might be problematic
         quizExercise = save(quizExercise);
 
         // in case the quiz has not yet started or the quiz is currently running, we have to clean up

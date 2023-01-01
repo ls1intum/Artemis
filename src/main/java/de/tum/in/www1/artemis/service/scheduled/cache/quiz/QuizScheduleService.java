@@ -203,7 +203,7 @@ public class QuizScheduleService {
      * @param quizExercise should include questions and statistics without Hibernate proxies!
      */
     public void updateQuizExercise(@NotNull QuizExercise quizExercise) {
-        log.debug("updateQuizExercise invoked for quiz {}", quizExercise.getId());
+        log.trace("updateQuizExercise invoked for quiz {}", quizExercise.getId());
         quizCache.updateQuizExercise(quizExercise);
     }
 
