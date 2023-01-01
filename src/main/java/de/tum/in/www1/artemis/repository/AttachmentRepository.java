@@ -8,6 +8,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Attachment;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * Spring Data repository for the Attachment entity.
@@ -29,4 +31,9 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Long> {
             WHERE a.attachmentUnit.lecture.id = :lectureId
             """)
     List<Attachment> findAllByAttachmentUnit_LectureId(@Param("lectureId") Long lectureId);
+
+    @NotNull
+    default Attachment findByIdElseThrow(Long attachmentId) throws EntityNotFoundException {
+        return findById(attachmentId).orElseThrow(() -> new EntityNotFoundException("Attachment", attachmentId));
+    }
 }

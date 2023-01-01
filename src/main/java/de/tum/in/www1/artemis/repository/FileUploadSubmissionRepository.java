@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,15 +21,15 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @param submissionId the submission id we are interested in
      * @return the submission with its feedback and assessor
      */
-    @Query("select distinct submission from FileUploadSubmission submission left join fetch submission.results r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
+    @Query("""
+            SELECT DISTINCT s
+            FROM FileUploadSubmission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.assessor
+            WHERE s.id = :submissionId
+            """)
     Optional<FileUploadSubmission> findByIdWithEagerResultAndAssessorAndFeedback(@Param("submissionId") Long submissionId);
-
-    /**
-     * @param submissionId the submission id we are interested in
-     * @return the submission with its assessor
-     */
-    @Query("select distinct submission from FileUploadSubmission submission left join fetch submission.results r left join fetch r.assessor where submission.id = :#{#submissionId}")
-    Optional<FileUploadSubmission> findByIdWithEagerResult(@Param("submissionId") Long submissionId);
 
     /**
      * Load the file upload submission with the given id together with its result, the feedback list of the result, the assessor of the result, its participation and all results of
@@ -41,7 +38,16 @@ public interface FileUploadSubmissionRepository extends JpaRepository<FileUpload
      * @param submissionId the id of the file upload submission that should be loaded from the database
      * @return the file upload submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "participation", "participation.results" })
+    @Query("""
+            SELECT DISTINCT s
+            FROM FileUploadSubmission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH s.participation p
+                LEFT JOIN FETCH p.results
+            WHERE s.id = :submissionId
+            """)
     Optional<FileUploadSubmission> findWithResultsFeedbacksAssessorAndParticipationResultsById(Long submissionId);
 
     /**

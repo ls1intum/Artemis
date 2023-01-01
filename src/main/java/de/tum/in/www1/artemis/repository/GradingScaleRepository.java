@@ -133,10 +133,11 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     @Query("""
                 SELECT gs
                 FROM GradingScale gs
-                LEFT JOIN gs.course
-                LEFT JOIN gs.exam
-                LEFT JOIN gs.exam.course
-                WHERE gs.gradeType = 'BONUS' AND ((gs.course.instructorGroupName IN :groups AND gs.course.title LIKE %:partialTitle%)
+                    LEFT JOIN gs.course
+                    LEFT JOIN gs.exam
+                    LEFT JOIN gs.exam.course
+                WHERE gs.gradeType = 'BONUS'
+                    AND ((gs.course.instructorGroupName IN :groups AND gs.course.title LIKE %:partialTitle%)
                     OR (gs.exam.course.instructorGroupName IN :groups AND gs.exam.title LIKE %:partialTitle%))
             """)
     // Note: Removing "LEFT JOIN gs.exam.course" part from the query above would cause the query to exclude GradingScales for Courses and just return the
@@ -145,7 +146,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
             Pageable pageable);
 
     /**
-     * Same as the linked method except instructor group check is skipped for ADMINs to allow them access to all eligible
+     * Same as the linked method except instructor group check is skipped for admins to allow them access to all eligible
      * grading scales.
      *
      * @see #findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(String, Set, Pageable)
@@ -157,10 +158,11 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     @Query("""
             SELECT gs
             FROM GradingScale gs
-            LEFT JOIN gs.course
-            LEFT JOIN gs.exam
-            WHERE gs.gradeType = 'BONUS' AND (gs.course.title LIKE %:partialTitle%
-                OR gs.exam.title LIKE %:partialTitle%)
+                LEFT JOIN gs.course
+                LEFT JOIN gs.exam
+            WHERE gs.gradeType = 'BONUS'
+                AND (gs.course.title LIKE %:partialTitle%
+                    OR gs.exam.title LIKE %:partialTitle%)
             """)
     Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(@Param("partialTitle") String partialTitle, Pageable pageable);
 

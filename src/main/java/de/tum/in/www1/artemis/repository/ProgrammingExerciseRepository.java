@@ -78,47 +78,27 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Optional<ProgrammingExercise> findWithSubmissionPolicyById(Long exerciseId);
 
     /**
-     * Returns all programming exercises with its test cases
-     * @return all programming exercises
-     */
-    @Query("SELECT p FROM ProgrammingExercise p LEFT JOIN FETCH p.testCases")
-    Set<ProgrammingExercise> findAllWithEagerTestCases();
-
-    /**
-     * Returns all programming exercises with their hints and tasks
-     * @return all programming exercises
-     */
-    @Query("""
-            SELECT p FROM ProgrammingExercise p
-            LEFT JOIN FETCH p.tasks
-            LEFT JOIN FETCH p.exerciseHints
-            """)
-    Set<ProgrammingExercise> findAllWithEagerTasksAndHints();
-
-    /**
      * Get a programmingExercise with template and solution participation, each with the latest result and feedbacks.
      *
      * @param exerciseId the id of the exercise that should be fetched.
      * @return the exercise with the given ID, if found.
      */
     @Query("""
-            SELECT DISTINCT pe FROM ProgrammingExercise pe
-            LEFT JOIN FETCH pe.templateParticipation tp
-            LEFT JOIN FETCH pe.solutionParticipation sp
-            LEFT JOIN FETCH tp.results AS tpr
-            LEFT JOIN FETCH sp.results AS spr
-            LEFT JOIN FETCH tpr.feedbacks
-            LEFT JOIN FETCH spr.feedbacks
-            LEFT JOIN FETCH tpr.submission
-            LEFT JOIN FETCH spr.submission
-            WHERE pe.id = :#{#exerciseId}
+            SELECT DISTINCT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.templateParticipation tp
+                LEFT JOIN FETCH pe.solutionParticipation sp
+                LEFT JOIN FETCH tp.results AS tpr
+                LEFT JOIN FETCH sp.results AS spr
+                LEFT JOIN FETCH tpr.feedbacks
+                LEFT JOIN FETCH spr.feedbacks
+                LEFT JOIN FETCH tpr.submission
+                LEFT JOIN FETCH spr.submission
+            WHERE pe.id = :exerciseId
                 AND (tpr.id = (SELECT MAX(re1.id) FROM tp.results re1) OR tpr.id IS NULL)
                 AND (spr.id = (SELECT MAX(re2.id) FROM sp.results re2) OR spr.id IS NULL)
             """)
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationLatestResultById(@Param("exerciseId") Long exerciseId);
-
-    @Query("SELECT DISTINCT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.studentParticipations")
-    List<ProgrammingExercise> findAllWithEagerParticipations();
 
     /**
      * Get all programming exercises that need to be scheduled: Those must satisfy one of the following requirements:
@@ -320,20 +300,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("SELECT pe FROM ProgrammingExercise pe LEFT JOIN FETCH pe.exerciseGroup eg LEFT JOIN FETCH eg.exam e WHERE e.endDate > :#{#dateTime}")
     List<ProgrammingExercise> findAllWithEagerExamByExamEndDateAfterDate(@Param("dateTime") ZonedDateTime dateTime);
 
-    @Query("""
-            SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                p.exercise.id,
-                count(DISTINCT p)
-            )
-            FROM ProgrammingExerciseStudentParticipation p
-            JOIN p.submissions s
-            WHERE p.exercise.id IN :exerciseIds
-                AND s.submitted = TRUE
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
-            GROUP BY p.exercise.id
-            """)
-    List<ExerciseMapEntry> countSubmissionsByExerciseIdsSubmitted(@Param("exerciseIds") Set<Long> exerciseIds);
-
     /**
      * In distinction to other exercise types, students can have multiple submissions in a programming exercise.
      * We therefore have to check here that a submission exists, that was submitted before the deadline.
@@ -358,7 +324,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * Should be used for exam dashboard to ignore test run submissions.
      *
      * @param exerciseIds the exercise ids we are interested in
-     * @return the number of distinct submissions belonging to the exercise id
+     * @return exercise map entries to count the number of distinct submissions belonging to the exercise id
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(

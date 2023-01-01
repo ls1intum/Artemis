@@ -570,10 +570,9 @@ public class ModelFactory {
         return course;
     }
 
-    public static OnlineCourseConfiguration generateOnlineCourseConfiguration(Course course, String key, String secret, String userPrefix, String originalUrl) {
+    public static OnlineCourseConfiguration generateOnlineCourseConfiguration(String key, String secret, String userPrefix, String originalUrl) {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
         updateOnlineCourseConfiguration(onlineCourseConfiguration, key, secret, userPrefix, originalUrl, UUID.randomUUID().toString());
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         return onlineCourseConfiguration;
     }
 

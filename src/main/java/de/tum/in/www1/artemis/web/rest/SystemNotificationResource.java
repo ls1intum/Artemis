@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,15 +10,18 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
 import de.tum.in.www1.artemis.service.SystemNotificationService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
-import tech.jhipster.web.util.ResponseUtil;
 
 /** REST controller for managing SystemNotification. */
 @RestController
@@ -53,17 +55,17 @@ public class SystemNotificationResource {
     }
 
     /**
-     * GET /system-notifications/:id : get the "id" system notification.
+     * GET /system-notifications/:notificationId : get the "id" system notification.
      *
-     * @param id the id of the system notification to retrieve
+     * @param notificationId the id of the system notification to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the notification, or with status 404 (Not Found)
      */
-    @GetMapping("system-notifications/{id}")
+    @GetMapping("system-notifications/{notificationId}")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SystemNotification> getSystemNotification(@PathVariable Long id) {
-        log.debug("REST request to get SystemNotification : {}", id);
-        Optional<SystemNotification> systemNotification = systemNotificationRepository.findById(id);
-        return ResponseUtil.wrapOrNotFound(systemNotification);
+    public ResponseEntity<SystemNotification> getSystemNotification(@PathVariable Long notificationId) {
+        log.debug("REST request to get SystemNotification : {}", notificationId);
+        var systemNotification = systemNotificationRepository.findById(notificationId).orElseThrow(() -> new EntityNotFoundException("System Notification", notificationId));
+        return ResponseEntity.ok().body(systemNotification);
     }
 
     /**

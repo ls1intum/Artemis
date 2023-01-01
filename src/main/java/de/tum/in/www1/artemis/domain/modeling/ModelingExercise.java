@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
@@ -17,9 +18,15 @@ import jakarta.persistence.*;
  */
 @Entity
 @DiscriminatorValue(value = "M")
+@JsonTypeName("modeling")
 @SecondaryTable(name = "model_exercise_details")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ModelingExercise extends Exercise {
+
+    // used to distinguish the type when used in collections (e.g. SearchResultPageDTO --> resultsOnPage)
+    public String getType() {
+        return "modeling";
+    }
 
     @Enumerated(EnumType.STRING)
     @Column(name = "diagram_type")

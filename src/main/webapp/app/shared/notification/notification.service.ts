@@ -50,7 +50,7 @@ export class NotificationService {
 
     /**
      * Query all notifications with respect to the current user's notification settings.
-     * @param req request options
+     * @param req request options: should include a paging mechanism compatible with the server
      * @return Observable<HttpResponse<Notification[]>>
      */
     queryNotificationsFilteredBySettings(req?: any): Observable<HttpResponse<Notification[]>> {
@@ -58,15 +58,6 @@ export class NotificationService {
         return this.http
             .get<Notification[]>(this.resourceUrl, { params: options, observe: 'response' })
             .pipe(map((res: HttpResponse<Notification[]>) => this.convertNotificationResponseArrayDateFromServer(res)));
-    }
-
-    /**
-     * Delete notification by id.
-     * @param {number} notificationId
-     * @return Observable<HttpResponse<any>>
-     */
-    delete(notificationId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<any>(`${this.resourceUrl}/${notificationId}`, { observe: 'response' });
     }
 
     /**

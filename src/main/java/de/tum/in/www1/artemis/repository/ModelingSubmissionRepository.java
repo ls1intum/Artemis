@@ -22,10 +22,23 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubmission, Long> {
 
-    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.results r left join fetch r.assessor where submission.id = :#{#submissionId}")
+    @Query("""
+            SELECT DISTINCT s
+            FROM ModelingSubmission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.assessor
+            WHERE s.id = :submissionId
+            """)
     Optional<ModelingSubmission> findByIdWithEagerResult(@Param("submissionId") Long submissionId);
 
-    @Query("select distinct submission from ModelingSubmission submission left join fetch submission.results r left join fetch r.feedbacks left join fetch r.assessor where submission.id = :#{#submissionId}")
+    @Query("""
+            SELECT DISTINCT s
+            FROM ModelingSubmission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.assessor
+            WHERE s.id = :submissionId
+            """)
     Optional<ModelingSubmission> findByIdWithEagerResultAndAssessorAndFeedback(@Param("submissionId") Long submissionId);
 
     /**
@@ -35,7 +48,16 @@ public interface ModelingSubmissionRepository extends JpaRepository<ModelingSubm
      * @param submissionId the id of the modeling submission that should be loaded from the database
      * @return the modeling submission with its result, the feedback list of the result, the assessor of the result, its participation and all results of the participation
      */
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "results.assessor", "participation", "participation.results" })
+    @Query("""
+            SELECT DISTINCT s
+            FROM ModelingSubmission s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH r.assessor
+                LEFT JOIN FETCH s.participation p
+                LEFT JOIN FETCH p.results
+            WHERE s.id = :submissionId
+            """)
     Optional<ModelingSubmission> findWithResultsFeedbacksAssessorAndParticipationResultsById(Long submissionId);
 
     @EntityGraph(type = LOAD, attributePaths = { "results" })

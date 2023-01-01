@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AuditEventService;
 import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
-import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for getting the audit events.
@@ -66,17 +65,5 @@ public class AuditResource {
         Page<AuditEvent> page = auditEventService.findByDates(from, to, pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
-    }
-
-    /**
-     * GET /audits/:id : get an AuditEvent by id.
-     *
-     * @param id the id of the entity to get
-     * @return the ResponseEntity with status 200 (OK) and the AuditEvent in body, or status 404 (Not Found)
-     */
-    @GetMapping("audits/{id:.+}")
-    @EnforceAdmin
-    public ResponseEntity<AuditEvent> get(@PathVariable Long id) {
-        return ResponseUtil.wrapOrNotFound(auditEventService.find(id));
     }
 }

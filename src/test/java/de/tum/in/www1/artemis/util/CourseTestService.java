@@ -2410,7 +2410,9 @@ public class CourseTestService {
     public void testDeleteCourseDeletesOnlineConfiguration() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
-        ModelFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
+        var onlineConfig = ModelFactory.generateOnlineCourseConfiguration("test", "secret", "prefix", null);
+        onlineConfig = onlineCourseConfigurationRepository.save(onlineConfig);
+        course.setOnlineCourseConfiguration(onlineConfig);
         course = courseRepo.save(course);
 
         request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
@@ -2468,7 +2470,10 @@ public class CourseTestService {
     public void testUpdateValidOnlineCourseConfigurationAsStudent_forbidden() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
-        ModelFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
+        var onlineConfig = ModelFactory.generateOnlineCourseConfiguration("test", "secret", "prefix", null);
+        onlineConfig = onlineCourseConfigurationRepository.save(onlineConfig);
+        course.setOnlineCourseConfiguration(onlineConfig);
+
         course = courseRepo.save(course);
 
         String courseId = course.getId().toString();
@@ -2484,7 +2489,8 @@ public class CourseTestService {
         Course createdCourse = objectMapper.readValue(result.getResponse().getContentAsString(), Course.class);
         String courseId = createdCourse.getId().toString();
 
-        OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "prefix", null);
+        var onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration("key", "secret", "prefix", null);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
 
         request.putWithResponseBody(getUpdateOnlineCourseConfigurationPath(courseId), onlineCourseConfiguration, OnlineCourseConfiguration.class, HttpStatus.BAD_REQUEST);
     }
@@ -2505,7 +2511,9 @@ public class CourseTestService {
     public void testUpdateValidOnlineCourseConfiguration() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
         course.setOnlineCourse(true);
-        ModelFactory.generateOnlineCourseConfiguration(course, "test", "secret", "prefix", null);
+        var onlineConfig = ModelFactory.generateOnlineCourseConfiguration("test", "secret", "prefix", null);
+        onlineConfig = onlineCourseConfigurationRepository.save(onlineConfig);
+        course.setOnlineCourseConfiguration(onlineConfig);
         course = courseRepo.save(course);
 
         OnlineCourseConfiguration ocConfiguration = course.getOnlineCourseConfiguration();

@@ -40,12 +40,10 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Autowired
     private FeatureToggleService featureToggleService;
 
-    private PersistentAuditEvent persAuditEvent;
-
     @BeforeEach
     void initTestCase() {
         database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
-        persAuditEvent = new PersistentAuditEvent();
+        PersistentAuditEvent persAuditEvent = new PersistentAuditEvent();
         persAuditEvent.setPrincipal(TEST_PREFIX + "student1");
         persAuditEvent.setAuditEventDate(Instant.now());
         persAuditEvent.setAuditEventType("type");
@@ -53,7 +51,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         data.put("1", "2");
         persAuditEvent.setData(data);
         persistenceAuditEventRepository.deleteAll();
-        persAuditEvent = persistenceAuditEventRepository.save(persAuditEvent);
+        persistenceAuditEventRepository.save(persAuditEvent);
 
         var persAuditEvent2 = new PersistentAuditEvent();
         persAuditEvent2.setPrincipal(TEST_PREFIX + "student2");
@@ -133,14 +131,5 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         var auditEventsInDb = persistenceAuditEventRepository.findAllByAuditEventDateBetween(Instant.now().minus(2, ChronoUnit.DAYS), Instant.now(), Pageable.unpaged());
         assertThat(auditEventsInDb.getTotalElements()).isEqualTo(1);
         assertThat(auditEvent.getPrincipal()).isEqualTo(auditEventsInDb.get().findFirst().get().getPrincipal());
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void getAuditEvent() throws Exception {
-        var auditEvent = request.get("/api/admin/audits/" + persAuditEvent.getId(), HttpStatus.OK, PersistentAuditEvent.class);
-        assertThat(auditEvent).isNotNull();
-        var auditEventInDb = persistenceAuditEventRepository.findById(persAuditEvent.getId()).get();
-        assertThat(auditEventInDb.getPrincipal()).isEqualTo(auditEvent.getPrincipal());
     }
 }

@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.time.Instant;
-import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,8 +18,6 @@ import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 @Service
 public class AuditEventService {
 
-    private final Logger log = LoggerFactory.getLogger(AuditEventService.class);
-
     private final PersistenceAuditEventRepository persistenceAuditEventRepository;
 
     private final AuditEventConverter auditEventConverter;
@@ -38,9 +33,5 @@ public class AuditEventService {
 
     public Page<AuditEvent> findByDates(Instant fromDate, Instant toDate, Pageable pageable) {
         return persistenceAuditEventRepository.findAllByAuditEventDateBetween(fromDate, toDate, pageable).map(auditEventConverter::convertToAuditEvent);
-    }
-
-    public Optional<AuditEvent> find(Long id) {
-        return persistenceAuditEventRepository.findById(id).map(auditEventConverter::convertToAuditEvent);
     }
 }

@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.service.ComplaintResponseService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import jakarta.validation.constraints.NotNull;
-import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing complaints.
@@ -174,7 +173,7 @@ public class ComplaintResponseResource {
             complaintResponse.getComplaint().getResult().setParticipation(null);
             complaintResponse.getComplaint().getResult().setSubmission(null);
         }
-        return ResponseUtil.wrapOrNotFound(optionalComplaintResponse);
+        return ResponseEntity.ok().body(complaintResponse);
     }
 
     private boolean isOriginalAuthor(Principal principal, Participant originalAuthor) {

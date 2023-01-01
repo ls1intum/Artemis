@@ -380,39 +380,24 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetAllGradingScalesInInstructorGroupOnPageWithAdmin() throws Exception {
-        course.setTitle("abcdefghijklmnop");
-        courseRepository.save(course);
-        exam.setTitle("abcdefghijklmnop");
-        examRepository.save(exam);
-
-        var search = database.configureSearch("abcdefghijklmnop");
-        search.setPage(100);
-        search.setSortingOrder(SortingOrder.DESCENDING);
-        search.setSortedColumn("ID");
-        var searchMapping = database.searchMapping(search);
-
-        var result = request.getSearchResult("/api/grading-scales", HttpStatus.OK, GradingScale.class, searchMapping);
-        assertThat(result.getResultsOnPage()).isEmpty();
-
-        courseGradingScale.setGradeType(GradeType.BONUS);
-        gradingScaleRepository.save(courseGradingScale);
-
-        result = request.getSearchResult("/api/grading-scales", HttpStatus.OK, GradingScale.class, searchMapping);
-        assertThat(result.getResultsOnPage()).hasSize(1);
-
-        examGradingScale.setGradeType(GradeType.BONUS);
-        gradingScaleRepository.save(examGradingScale);
-
-        result = request.getSearchResult("/api/grading-scales", HttpStatus.OK, GradingScale.class, searchMapping);
-        assertThat(result.getResultsOnPage()).hasSize(2);
+        testGradingScaleCourseAndExamSearch("abcdefghisdajkljklmnop");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllGradingScalesInInstructorGroupOnPageWithInstructor() throws Exception {
+        testGradingScaleCourseAndExamSearch("zyxkasdisdajkljkabcnde");
+    }
 
-        var search = database.configureSearch("abcdefghijklmnop");
-        search.setPage(100);
+    private void testGradingScaleCourseAndExamSearch(String searchTerm) throws Exception {
+        course.setTitle(searchTerm);
+        courseRepository.save(course);
+        exam.setTitle(searchTerm);
+        examRepository.save(exam);
+
+        var search = database.configureSearch(searchTerm);
+        search.setPage(1);
+        search.setPageSize(100);
         search.setSortingOrder(SortingOrder.DESCENDING);
         search.setSortedColumn("ID");
         var searchMapping = database.searchMapping(search);

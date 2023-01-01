@@ -23,8 +23,8 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.dto.UserInitializationDTO;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import tech.jhipster.web.util.PaginationUtil;
-import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing users.
@@ -106,10 +106,11 @@ public class UserResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<UserDTO> getUser(@PathVariable String login) {
         log.debug("REST request to get User : {}", login);
-        return ResponseUtil.wrapOrNotFound(userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).map(user -> {
+        var userDto = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login).map(user -> {
             user.setVisibleRegistrationNumber();
             return new UserDTO(user);
-        }));
+        }).orElseThrow(() -> new EntityNotFoundException("User", login));
+        return ResponseEntity.ok().body(userDto);
     }
 
     @PutMapping("users/notification-date")

@@ -45,13 +45,14 @@ class OAuth2JWKSIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Course course = new Course();
         course.setId(1L);
         courseRepository.save(course);
-        OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration(course, "key", "secret", "prefix", "url");
+        OnlineCourseConfiguration onlineCourseConfiguration = ModelFactory.generateOnlineCourseConfiguration("key", "secret", "prefix", "url");
         onlineCourseConfiguration.setRegistrationId("registrationId");
         onlineCourseConfiguration.setClientId("clientId");
         onlineCourseConfiguration.setAuthorizationUri("authUri");
         onlineCourseConfiguration.setTokenUri("tokenUri");
 
-        onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
+        onlineCourseConfiguration = onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
+        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
         oAuth2JWKSService.updateKey("registrationId");
 
         String keyset = request.get("/.well-known/jwks.json", HttpStatus.OK, String.class);

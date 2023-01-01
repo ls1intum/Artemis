@@ -15,6 +15,8 @@ import java.util.Objects;
 import java.util.function.Function;
 
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -41,6 +43,8 @@ import jakarta.annotation.Nullable;
 
 @Service
 public class RequestUtilService {
+
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     @Value("${jhipster.clientApp.name}")
     private String APPLICATION_NAME;
@@ -221,7 +225,6 @@ public class RequestUtilService {
      * @param params parameters for multi value
      * @param <T> Request type
      * @return Request content as string
-     * @throws Exception
      */
     public <T> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders,
             @Nullable Map<String, String> expectedResponseHeaders, @Nullable LinkedMultiValueMap<String, String> params) throws Exception {
@@ -256,7 +259,7 @@ public class RequestUtilService {
         return postWithResponseBody(path, body, responseType, expectedStatus, null, null);
     }
 
-    public <T, R> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus) throws Exception {
+    public <T> String postWithResponseBodyString(String path, T body, HttpStatus expectedStatus) throws Exception {
         return postWithResponseBodyString(path, body, expectedStatus, null, null, new LinkedMultiValueMap<>());
     }
 
@@ -503,6 +506,7 @@ public class RequestUtilService {
             return null;
         }
 
+        // log.info("Server response: " + res.getResponse().getContentAsString());
         return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructParametricType(SearchResultPageDTO.class, searchElementType));
     }
 
@@ -573,7 +577,7 @@ public class RequestUtilService {
     }
 
     /**
-     * The Security Context gets cleared by {@link org.springframework.security.web.context.SecurityContextPersistenceFilter} after a REST call.
+     * The Security Context gets cleared by {@link org.springframework.security.web.context.SecurityContextHolderFilter} after a REST call.
      * To prevent issues with further queries and rest calls in a test we restore the security context from the test security context holder
      */
     private void restoreSecurityContext() {
