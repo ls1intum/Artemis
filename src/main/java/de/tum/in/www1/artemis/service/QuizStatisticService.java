@@ -205,19 +205,21 @@ public class QuizStatisticService {
     public void loadQuestionStatisticDetails(QuizExercise quizExercise) {
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
             QuizQuestionStatistic statistic = null;
-            if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
+            if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion && mcQuestion.getQuizQuestionStatistic() != null) {
                 // Note: load the quizQuestionStatistic from database with answerCounters
                 statistic = multipleChoiceQuestionStatisticRepository.findByIdWithAnswerCounters(mcQuestion.getQuizQuestionStatistic().getId());
+                quizQuestion.setQuizQuestionStatistic(statistic);
             }
-            else if (quizQuestion instanceof DragAndDropQuestion dndQuestion) {
+            else if (quizQuestion instanceof DragAndDropQuestion dndQuestion && dndQuestion.getQuizQuestionStatistic() != null) {
                 // Note: load the quizQuestionStatistic from database with dropLocationCounters
                 statistic = dragAndDropQuestionStatisticRepository.findByIdWithDropLocationCounters(dndQuestion.getQuizQuestionStatistic().getId());
+                quizQuestion.setQuizQuestionStatistic(statistic);
             }
-            else if (quizQuestion instanceof ShortAnswerQuestion saQuestion) {
+            else if (quizQuestion instanceof ShortAnswerQuestion saQuestion && saQuestion.getQuizQuestionStatistic() != null) {
                 // Note: load the quizQuestionStatistic from database with shortAnswerSpotCounters
                 statistic = shortAnswerQuestionStatisticRepository.findByIdWithShortAnswerSpotCounters(saQuestion.getQuizQuestionStatistic().getId());
+                quizQuestion.setQuizQuestionStatistic(statistic);
             }
-            quizQuestion.setQuizQuestionStatistic(statistic);
         }
     }
 }
