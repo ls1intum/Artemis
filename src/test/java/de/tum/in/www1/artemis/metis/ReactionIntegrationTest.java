@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,7 @@ import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
+import jakarta.servlet.ServletException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -153,7 +155,10 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
 
         // try again
-        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        ServletException thrown = Assertions.assertThrows(ServletException.class, () -> {
+            request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        });
+        Assertions.assertTrue(thrown.getMessage().contains("Request processing failed: org.springframework.dao.DataIntegrityViolationException:"));
     }
 
     @Test
@@ -180,7 +185,10 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
 
         // try again
-        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        ServletException thrown = Assertions.assertThrows(ServletException.class, () -> {
+            request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        });
+        Assertions.assertTrue(thrown.getMessage().contains("Request processing failed: org.springframework.dao.DataIntegrityViolationException:"));
     }
 
     @Test
