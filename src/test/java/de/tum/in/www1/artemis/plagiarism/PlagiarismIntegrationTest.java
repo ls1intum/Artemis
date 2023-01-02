@@ -189,7 +189,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void testDeletePlagiarismComparisons_instructor() throws Exception {
         request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=false", HttpStatus.OK);
         var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
-        assert result != null;
+        assertThat(result).isNotNull();
         assertThat(result.getComparisons()).hasSize(1);
     }
 

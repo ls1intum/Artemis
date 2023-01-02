@@ -153,7 +153,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetAllGradeStepsForExam() throws Exception {
-        exam.setPublishResultsDate(ZonedDateTime.now());
+        exam.setPublishResultsDate(ZonedDateTime.now().minusMinutes(1));
         examRepository.save(exam);
         GradeStep gradeStep1 = new GradeStep();
         GradeStep gradeStep2 = new GradeStep();
@@ -381,7 +381,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         examGradingScale.setGradeSteps(gradeSteps);
         examGradingScale.setGradeType(GradeType.BONUS);
         gradingScaleRepository.save(examGradingScale);
-        exam.setPublishResultsDate(ZonedDateTime.now());
+        exam.setPublishResultsDate(ZonedDateTime.now().minusMinutes(1));
         examRepository.save(exam);
 
         GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=35", HttpStatus.OK,

@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.text;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZoneId;
@@ -373,7 +374,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         TextSubmission submission = request.putWithResponseBody("/api/exercises/" + releasedTextExercise.getId() + "/text-submissions", textSubmission, TextSubmission.class,
                 HttpStatus.OK);
 
-        assertThat(submission.getSubmissionDate()).isEqualToIgnoringNanos(ZonedDateTime.now());
+        assertThat(submission.getSubmissionDate()).isCloseTo(ZonedDateTime.now(), within(500, ChronoUnit.MILLIS));
         assertThat(submission.getParticipation().getInitializationState()).isEqualTo(InitializationState.FINISHED);
     }
 

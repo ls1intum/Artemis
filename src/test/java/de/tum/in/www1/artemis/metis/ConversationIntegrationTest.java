@@ -3,10 +3,10 @@ package de.tum.in.www1.artemis.metis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,18 +40,12 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private Course course;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(TEST_PREFIX, 5, 5, 0, 1);
         course = database.createCourse(1L);
         existingConversation = database.createConversation(course, TEST_PREFIX);
         doNothing().when(messagingTemplate).convertAndSendToUser(any(), any(), any());
     }
-
-    @AfterEach
-    public void tearDown() {
-    }
-
-    // Conversation
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
@@ -132,7 +126,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         ConversationParticipant conversationParticipant2 = new ConversationParticipant();
         conversationParticipant2.setUser(conversatingUser);
-        conversationParticipant2.setLastRead(conversation.getCreationDate());
+        conversationParticipant2.setLastRead(ZonedDateTime.now().minusYears(2));
 
         conversation.getConversationParticipants().add(conversationParticipant2);
         conversation.setCourse(course);
