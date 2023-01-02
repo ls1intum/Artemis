@@ -1,6 +1,6 @@
 <form>
     <div class="modal-header">
-        <h4 class="modal-title" jhiTranslate="artemisApp.modelingExercise.home.importLabel">Import Modeling Exercise</h4>
+        <h4 class="modal-title" jhiTranslate="{{ titleKey }}">Import an Exercise</h4>
         <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
     </div>
     <div class="modal-body">
@@ -28,6 +28,10 @@
                         <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
+                    <th *ngIf="this.exerciseType === ExerciseType.PROGRAMMING" jhiSortBy="{{ column.PROGRAMMING_LANGUAGE }}" class="col-4">
+                        <span jhiTranslate="artemisApp.exercise.import.table.language">Programming Language</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
                     <th jhiSortBy="{{ column.COURSE_TITLE }}" class="col-4">
                         <span [hidden]="!isCourseFilter" jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
                         <span [hidden]="!(isCourseFilter && isExamFilter)"> | </span>
@@ -48,6 +52,9 @@
                     <td class="text-break col-4">
                         <ngb-highlight [result]="exercise.title" [term]="searchTerm"></ngb-highlight>
                     </td>
+                    <td *ngIf="exerciseType === ExerciseType.PROGRAMMING" class="text-break col-3">
+                        <span>{{ asProgrammingExercise(exercise)?.programmingLanguage }}</span>
+                    </td>
                     <td class="text-break col-4">
                         <ngb-highlight [result]="exercise | courseTitle" [term]="searchTerm"></ngb-highlight>
                     </td>
@@ -62,7 +69,6 @@
                 </tr>
             </tbody>
         </table>
-
         <div class="d-flex justify-content-between p-2">
             <ngb-pagination [maxSize]="10" [rotate]="true" [collectionSize]="total" [(page)]="state.page" [pageSize]="state.pageSize" (pageChange)="onPageChange($event)">
             </ngb-pagination>

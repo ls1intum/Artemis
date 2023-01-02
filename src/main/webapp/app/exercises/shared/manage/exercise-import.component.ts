@@ -1,27 +1,40 @@
-import { Exercise } from 'app/entities/exercise.model';
+import { Component, Injector, Input, OnInit } from '@angular/core';
+import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
 import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
-import { debounceTime, switchMap, tap } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
-import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { SortService } from 'app/shared/service/sort.service';
-import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
+import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
+import { Subject } from 'rxjs';
+import { debounceTime, switchMap, tap } from 'rxjs/operators';
 
 export enum TableColumn {
     ID = 'ID',
     TITLE = 'TITLE',
     COURSE_TITLE = 'COURSE_TITLE',
+    PROGRAMMING_LANGUAGE = 'PROGRAMMING_LANGUAGE',
 }
 
-export abstract class ExerciseImportComponent<T extends Exercise> {
+@Component({
+    selector: 'jhi-exercise-import',
+    templateUrl: './exercise-import.component.html',
+})
+export class ExerciseImportComponent implements OnInit {
+    readonly ExerciseType = ExerciseType;
+    readonly column = TableColumn;
+
+    @Input()
+    exerciseType?: ExerciseType;
+
     private search = new Subject<void>();
     private sort = new Subject<void>();
 
     loading = false;
-    content: SearchResult<T>;
+    content: SearchResult<Exercise>;
     total = 0;
     state: PageableSearch = {
         page: 1,
@@ -38,9 +51,33 @@ export abstract class ExerciseImportComponent<T extends Exercise> {
     isCourseFilter = true;
     isExamFilter = true;
 
-    protected constructor(private sortService: SortService, private activeModal: NgbActiveModal) {}
+    titleKey: string;
 
-    protected init(pagingService: TextExercisePagingService | ProgrammingExercisePagingService | QuizExercisePagingService | ModelingExercisePagingService): void {
+    constructor(private sortService: SortService, private activeModal: NgbActiveModal, private injector: Injector) {}
+
+    ngOnInit(): void {
+        if (!this.exerciseType || this.exerciseType == ExerciseType.FILE_UPLOAD) {
+            return;
+        }
+        let pagingService;
+        switch (this.exerciseType) {
+            case ExerciseType.MODELING:
+                pagingService = this.injector.get(ModelingExercisePagingService);
+                break;
+            case ExerciseType.PROGRAMMING:
+                pagingService = this.injector.get(ProgrammingExercisePagingService);
+                break;
+            case ExerciseType.QUIZ:
+                pagingService = this.injector.get(QuizExercisePagingService);
+                break;
+            case ExerciseType.TEXT:
+                pagingService = this.injector.get(TextExercisePagingService);
+                break;
+            default:
+                throw new Error('Unsupported exercise type: ' + this.exerciseType);
+        }
+
+        this.titleKey = `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
         this.content = { resultsOnPage: [], numberOfPages: 0 };
 
         this.performSearch(this.sort, 0, pagingService);
@@ -64,7 +101,7 @@ export abstract class ExerciseImportComponent<T extends Exercise> {
                 tap(() => (this.loading = true)),
                 switchMap(() => pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter)),
             )
-            .subscribe((resp: SearchResult<T>) => {
+            .subscribe((resp: SearchResult<Exercise>) => {
                 this.content = resp;
                 this.loading = false;
                 this.total = resp.numberOfPages * this.state.pageSize;
@@ -90,7 +127,7 @@ export abstract class ExerciseImportComponent<T extends Exercise> {
      * @param item The exercise itself
      * @returns The ID of the exercise
      */
-    trackId(index: number, item: T): number {
+    trackId(index: number, item: Exercise): number {
         return item.id!;
     }
 
@@ -144,7 +181,7 @@ export abstract class ExerciseImportComponent<T extends Exercise> {
      *
      * @param exercise The exercise which was selected by the user for the import.
      */
-    openImport(exercise: T) {
+    openImport(exercise: Exercise) {
         this.activeModal.close(exercise);
     }
 
@@ -163,5 +200,12 @@ export abstract class ExerciseImportComponent<T extends Exercise> {
         if (pageNumber) {
             this.page = pageNumber;
         }
+    }
+
+    asProgrammingExercise(exercise: Exercise): ProgrammingExercise | undefined {
+        if (exercise.type == ExerciseType.PROGRAMMING) {
+            return exercise as ProgrammingExercise;
+        }
+        return undefined;
     }
 }
