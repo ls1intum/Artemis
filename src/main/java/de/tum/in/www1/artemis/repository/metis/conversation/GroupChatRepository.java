@@ -18,7 +18,7 @@ public interface GroupChatRepository extends JpaRepository<GroupChat, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
-                     SELECT DISTINCT groupChat
+                 SELECT DISTINCT groupChat
                  FROM GroupChat groupChat
                  LEFT JOIN groupChat.conversationParticipants conversationParticipant
                  LEFT JOIN FETCH groupChat.conversationParticipants
