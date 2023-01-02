@@ -31,12 +31,8 @@ import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * Describes the security configuration for SAML2.
- * <p>
- * Since this configuration is annotated with {@link Order} and {@link SecurityConfiguration}
- * is not, this configuration is evaluated first when the SAML2 Profile is active.
  */
 @Configuration
-@Order(1)
 @Profile("saml2")
 public class SAML2Configuration {
 
@@ -143,8 +139,17 @@ public class SAML2Configuration {
         }
     }
 
+    /**
+     * Since this configuration is annotated with {@link Order} and {@link SecurityConfiguration}
+     * is not, this configuration is evaluated first when the SAML2 Profile is active.
+     *
+     * @param http The Spring http security configurer.
+     * @return The configured http security filter chain.
+     * @throws Exception Thrown in case Spring detects an issue with the security configuration.
+     */
     // TODO: double check that the new configuration is correct
     @Bean
+    @Order(1)
     protected SecurityFilterChain saml2FilterChain(final HttpSecurity http) throws Exception {
         // @formatter:off
         http
