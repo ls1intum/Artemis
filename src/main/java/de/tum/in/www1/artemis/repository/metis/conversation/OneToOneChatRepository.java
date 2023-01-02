@@ -32,14 +32,14 @@ public interface OneToOneChatRepository extends JpaRepository<OneToOneChat, Long
 
     @EntityGraph(type = LOAD, attributePaths = { "conversationParticipants.user.groups" })
     @Query("""
-            SELECT DISTINCT  o FROM OneToOneChat o
-            LEFT JOIN FETCH o.conversationParticipants
-            WHERE
-            o.course.id = :#{#courseId}
-            AND
-            EXISTS (SELECT p FROM ConversationParticipant p WHERE p.user.id = :#{#userIdA} AND p.conversation = o)
-            AND
-            EXISTS (SELECT p FROM ConversationParticipant p WHERE p.user.id = :#{#userIdB} AND p.conversation = o)
+                 SELECT o FROM OneToOneChat o
+                 LEFT JOIN FETCH o.conversationParticipants p1
+                 LEFT JOIN FETCH o.conversationParticipants p2
+                 WHERE o.course.id = :courseId
+                 AND p1.user.id = :userIdA
+                 AND p2.user.id = :userIdB
+                 AND p1.conversation = o
+                 AND p2.conversation = o
             """)
     Optional<OneToOneChat> findBetweenUsersWithParticipantsAndUserGroups(@Param("courseId") Long courseId, @Param("userIdA") Long userIdA, @Param("userIdB") Long userIdB);
 
