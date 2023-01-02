@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis.conversation;
 
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -95,18 +96,8 @@ public class ConversationDTOService {
         channelDTO.setIsChannelModerator(channelAuthorizationService.isChannelModerator(channel.getId(), requestingUser.getId()));
         channelDTO.setHasChannelModerationRights(channelAuthorizationService.hasChannelModerationRights(channel.getId(), requestingUser));
         var participantOptional = conversationParticipantRepository.findConversationParticipantByConversationIdAndUserId(channel.getId(), requestingUser.getId());
-        channelDTO.setIsMember(participantOptional.isPresent());
-        participantOptional.ifPresent(conversationParticipant -> channelDTO.setLastReadDate(conversationParticipant.getLastRead()));
-        participantOptional.ifPresent(conversationParticipant -> channelDTO.setUnreadMessagesCount(conversationParticipant.getUnreadMessagesCount()));
-        channelDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
-        channelDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
-        if (channel.getCreator() != null) {
-            channelDTO.setIsCreator(channel.getCreator().getId().equals(requestingUser.getId()));
-        }
-        else {
-            log.error("Unexpected Behaviour: Channel {} has no creator", channel.getId());
-            channelDTO.setIsCreator(false);
-        }
+        setDTOPropertiesBasedOnParticipant(channelDTO, participantOptional);
+        setDTOCreatorProperty(requestingUser, channel, channelDTO);
         channelDTO.setNumberOfMembers(conversationParticipantRepository.countByConversationId(channel.getId()));
         return channelDTO;
     }
@@ -127,19 +118,9 @@ public class ConversationDTOService {
                 .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(requestingUser.getId())).findFirst();
         Set<ConversationUserDTO> chatParticipants = getChatParticipantDTOs(requestingUser, course, conversationParticipants);
         var oneToOneChatDTO = new OneToOneChatDTO(oneToOneChat);
-        oneToOneChatDTO.setIsMember(participantOfRequestingUser.isPresent());
-        participantOfRequestingUser.ifPresent(conversationParticipant -> oneToOneChatDTO.setLastReadDate(conversationParticipant.getLastRead()));
-        participantOfRequestingUser.ifPresent(conversationParticipant -> oneToOneChatDTO.setUnreadMessagesCount(conversationParticipant.getUnreadMessagesCount()));
-        participantOfRequestingUser.ifPresent(conversationParticipant -> oneToOneChatDTO.setIsFavorite(conversationParticipant.getIsFavorite()));
-        participantOfRequestingUser.ifPresent(conversationParticipant -> oneToOneChatDTO.setIsHidden(conversationParticipant.getIsHidden()));
+        setDTOPropertiesBasedOnParticipant(oneToOneChatDTO, participantOfRequestingUser);
+        setDTOCreatorProperty(requestingUser, oneToOneChat, oneToOneChatDTO);
         oneToOneChatDTO.setMembers(chatParticipants);
-        if (oneToOneChat.getCreator() != null) {
-            oneToOneChatDTO.setIsCreator(oneToOneChat.getCreator().getId().equals(requestingUser.getId()));
-        }
-        else {
-            log.warn("Unexpected Behaviour: OneToOneChat {} has no creator. Can happen with db entries before December 2022", oneToOneChat.getId());
-            oneToOneChatDTO.setIsCreator(false);
-        }
         oneToOneChatDTO.setNumberOfMembers(conversationParticipants.size());
         return oneToOneChatDTO;
     }
@@ -159,19 +140,9 @@ public class ConversationDTOService {
                 .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(requestingUser.getId())).findFirst();
         Set<ConversationUserDTO> chatParticipants = getChatParticipantDTOs(requestingUser, course, conversationParticipants);
         var groupChatDTO = new GroupChatDTO(groupChat);
-        groupChatDTO.setIsMember(participantOfRequestingUser.isPresent());
-        participantOfRequestingUser.ifPresent(conversationParticipant -> groupChatDTO.setLastReadDate(conversationParticipant.getLastRead()));
-        participantOfRequestingUser.ifPresent(conversationParticipant -> groupChatDTO.setUnreadMessagesCount(conversationParticipant.getUnreadMessagesCount()));
-        participantOfRequestingUser.ifPresent(conversationParticipant -> groupChatDTO.setIsFavorite(conversationParticipant.getIsFavorite()));
-        participantOfRequestingUser.ifPresent(conversationParticipant -> groupChatDTO.setIsHidden(conversationParticipant.getIsHidden()));
+        setDTOPropertiesBasedOnParticipant(groupChatDTO, participantOfRequestingUser);
+        setDTOCreatorProperty(requestingUser, groupChat, groupChatDTO);
         groupChatDTO.setMembers(chatParticipants);
-        if (groupChat.getCreator() != null) {
-            groupChatDTO.setIsCreator(groupChat.getCreator().getId().equals(requestingUser.getId()));
-        }
-        else {
-            log.error("Unexpected Behaviour: GroupChat {} has no creator", groupChat.getId());
-            groupChatDTO.setIsCreator(false);
-        }
         groupChatDTO.setNumberOfMembers(conversationParticipants.size());
         return groupChatDTO;
     }
@@ -204,5 +175,25 @@ public class ConversationDTOService {
             UserPublicInfoDTO.assignRoleProperties(course, userWithGroups, userDTO);
             return userDTO;
         }).collect(Collectors.toSet());
+    }
+
+    private void setDTOPropertiesBasedOnParticipant(ConversationDTO conversationDTO, Optional<ConversationParticipant> participantOptional) {
+        conversationDTO.setIsMember(participantOptional.isPresent());
+        participantOptional.ifPresent(participant -> {
+            conversationDTO.setLastReadDate(participant.getLastRead());
+            conversationDTO.setUnreadMessagesCount(participant.getUnreadMessagesCount());
+        });
+        conversationDTO.setIsFavorite(participantOptional.map(ConversationParticipant::getIsFavorite).orElse(false));
+        conversationDTO.setIsHidden(participantOptional.map(ConversationParticipant::getIsHidden).orElse(false));
+    }
+
+    private void setDTOCreatorProperty(User requestingUser, Conversation conversation, ConversationDTO conversationDTO) {
+        if (conversation.getCreator() != null) {
+            conversationDTO.setIsCreator(conversation.getCreator().getId().equals(requestingUser.getId()));
+        }
+        else {
+            log.error("Unexpected Behaviour: Conversation {} has no creator", conversation.getId());
+            conversationDTO.setIsCreator(false);
+        }
     }
 }
