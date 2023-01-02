@@ -7,16 +7,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.service.ConsistencyCheckServiceTest;
+import de.tum.in.www1.artemis.service.ConsistencyCheckTestService;
 
 class ConsistencyCheckBitbucketBambooIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private ConsistencyCheckServiceTest consistencyCheckServiceTest;
+    private ConsistencyCheckTestService consistencyCheckTestService;
 
     @BeforeEach
     void setup() throws Exception {
-        consistencyCheckServiceTest.setup(this);
+        consistencyCheckTestService.setup(this);
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }
@@ -35,36 +35,36 @@ class ConsistencyCheckBitbucketBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void checkConsistencyOfProgrammingExercise_noErrors() throws Exception {
-        consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_noErrors();
+        consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_noErrors();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void checkConsistencyOfProgrammingExercise_missingVCSProject() throws Exception {
-        consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_missingVCSProject();
+        consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_missingVCSProject();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void checkConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
-        consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_missingVCSRepos();
+        consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_missingVCSRepos();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void checkConsistencyOfProgrammingExercise_buildPlansMissing() throws Exception {
-        consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_buildPlansMissing();
+        consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_buildPlansMissing();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void checkConsistencyOfProgrammingExercise_isLocalSimulation() throws Exception {
-        consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_isLocalSimulation();
+        consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_isLocalSimulation();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void checkConsistencyOfProgrammingExercise_forbidden() throws Exception {
-        consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_forbidden();
+        consistencyCheckTestService.testCheckConsistencyOfProgrammingExercise_forbidden();
     }
 }
