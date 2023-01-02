@@ -1,3 +1,27 @@
+.bonus-form-start {
+    counter-reset: bonus-step-counter; // Set a custom counter with initial value 0.
+}
+
+$numbering-size: 1.5rem;
+
+.bonus-form-step {
+    &::before {
+        counter-increment: bonus-step-counter;
+        content: counter(bonus-step-counter);
+    }
+
+    border-radius: $numbering-size;
+    width: $numbering-size;
+    height: $numbering-size;
+
+    border: 1px solid;
+    text-align: center;
+}
+
+.bonus-calculated {
+    margin-left: $numbering-size;
+}
+
 .calculation-sign {
     font-size: 3rem;
 }

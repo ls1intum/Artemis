@@ -7,3 +7,12 @@
         color: var(--base-grading-system-input-color);
     }
 }
+
+table {
+    th,
+    td {
+        &:first-child {
+            padding-left: 0;
+        }
+    }
+}

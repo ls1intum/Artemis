@@ -50,7 +50,8 @@
             "updated": "Bonus aktualisiert.",
             "created": "Bonus erstellt.",
             "deleted": "Bonus gelöscht.",
-            "warnStrategyWeightMismatch": "Die von dir gewählte Kombination aus Bonusstrategie und Gewicht würde zu einer schlechteren Note für den Studierenden führen. Bitte überdenke deine Auswahl oben noch einmal."
+            "warnStrategyWeightMismatch": "Die von dir gewählte Kombination aus Bonusstrategie und Gewicht würde zu einer schlechteren Note für den Studierenden führen. Bitte überdenke deine Auswahl oben noch einmal.",
+            "helpTextExplanation": "Die ausführliche Erklärung findest du unten."
         }
     }
 }

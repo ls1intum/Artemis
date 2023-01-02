@@ -1,4 +1,4 @@
-<h2 style="margin-bottom: 0">
+<h2>
     {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
     {{ isExam ? childComponent?.exam?.title : childComponent?.course?.title }}
 </h2>
@@ -14,7 +14,7 @@
                 <span jhiTranslate="artemisApp.gradingSystem.csv.importButton">Import (.csv)</span>
                 <input type="file" accept=".json,.csv" style="display: none" (change)="childComponent.onCSVFileSelect($event)" />
             </label>
-            <button (click)="childComponent.exportGradingStepsToCsv()" class="btn btn-primary me-1 mb-1" type="button">
+            <button (click)="childComponent.exportGradingStepsToCsv()" class="btn btn-primary mb-1" type="button">
                 <span jhiTranslate="artemisApp.gradingSystem.csv.exportButton">Export (.csv)</span>
             </button>
         </div>
@@ -56,10 +56,10 @@
     <div class="col-12 no-indent">
         <div>
             <div class="tab-item interval" routerLink="interval" routerLinkActive="active">
-                <b jhiTranslate="artemisApp.gradingSystem.intervalTab.title">Interval</b>
+                {{ 'artemisApp.gradingSystem.intervalTab.title' | artemisTranslate }}
             </div>
             <div class="tab-item detailed" routerLink="detailed" routerLinkActive="active">
-                <b jhiTranslate="artemisApp.gradingSystem.detailedTab.title">Detailed</b>
+                {{ 'artemisApp.gradingSystem.detailedTab.title' | artemisTranslate }}
             </div>
         </div>
     </div>
