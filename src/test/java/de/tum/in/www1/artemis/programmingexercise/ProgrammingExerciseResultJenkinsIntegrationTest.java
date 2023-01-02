@@ -150,4 +150,30 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
                 List.of(commit), null);
         programmingExerciseResultTestService.shouldCreateResultOnCustomDefaultBranch(customDefaultBranch, notification);
     }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldCreateRatedResultWithGracePeriod() {
+        Object resultNotification = createSimpleBuildResult();
+        programmingExerciseResultTestService.shouldCreateRatedResultWithGracePeriod(resultNotification);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotUseGracePeriodForExamExercise() {
+        Object resultNotification = createSimpleBuildResult();
+        programmingExerciseResultTestService.shouldNotUseGracePeriodForExamExercise(resultNotification);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void shouldNotUseGracePeriodWithoutHiddenTests() {
+        Object resultNotification = createSimpleBuildResult();
+        programmingExerciseResultTestService.shouldNotUseGracePeriodWithoutHiddenTests(resultNotification);
+    }
+
+    private Object createSimpleBuildResult() {
+        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
+        return ModelFactory.generateTestResultDTO(null, TEST_PREFIX + "student1", null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(), List.of(commit), null);
+    }
 }
