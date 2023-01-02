@@ -124,13 +124,23 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         web.ignoring()
             .antMatchers(HttpMethod.POST, "/api/programming-exercises/new-result");
         web.ignoring()
+            .antMatchers(HttpMethod.POST, "/api/{v\\d+}/programming-exercises/new-result");
+        web.ignoring()
             .antMatchers(HttpMethod.POST, "/api/programming-submissions/*");
+        web.ignoring()
+            .antMatchers(HttpMethod.POST, "/api/{v\\d+}/programming-submissions/*");
         web.ignoring()
             .antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*");
         web.ignoring()
+            .antMatchers(HttpMethod.POST, "/api/{v\\d+}/programming-exercises/test-cases-changed/*");
+        web.ignoring()
             .antMatchers(HttpMethod.GET, "/api/system-notifications/active");
         web.ignoring()
+            .antMatchers(HttpMethod.GET, "/api/{v\\d+}/system-notifications/active");
+        web.ignoring()
             .antMatchers(HttpMethod.POST, "/api/athene-result/*");
+        web.ignoring()
+            .antMatchers(HttpMethod.POST, "/api/{v\\d+}/athene-result/*");
         // @formatter:on
     }
 
@@ -165,27 +175,27 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         .and()
             .authorizeRequests()
             .antMatchers("/api/register").permitAll()
-            .antMatchers("/api/{v\\d*}/register").permitAll()
+            .antMatchers("/api/{v\\d+}/register").permitAll()
             .antMatchers("/api/activate").permitAll()
-            .antMatchers("/api/{v\\d*}/activate").permitAll()
+            .antMatchers("/api/{v\\d+}/activate").permitAll()
             .antMatchers("/api/authenticate").permitAll()
-            .antMatchers("/api/{v\\d*}/authenticate").permitAll()
+            .antMatchers("/api/{v\\d+}/authenticate").permitAll()
             .antMatchers("/api/account/reset-password/init").permitAll()
-            .antMatchers("/api/{v\\d*}/account/reset-password/init").permitAll()
+            .antMatchers("/api/{v\\d+}/account/reset-password/init").permitAll()
             .antMatchers("/api/account/reset-password/finish").permitAll()
-            .antMatchers("/api/{v\\d*}/account/reset-password/finish").permitAll()
+            .antMatchers("/api/{v\\d+}/account/reset-password/finish").permitAll()
             .antMatchers("/api/lti/launch/*").permitAll()
-            .antMatchers("/api/{v\\d*}/lti/launch/*").permitAll()
+            .antMatchers("/api/{v\\d+}/lti/launch/*").permitAll()
             .antMatchers("/api/lti13/auth-callback").permitAll()
-            .antMatchers("/api/{v\\d*}/lti13/auth-callback").permitAll()
+            .antMatchers("/api/{v\\d+}/lti13/auth-callback").permitAll()
             .antMatchers("/api/files/attachments/lecture/**").permitAll()
-            .antMatchers("/api/{v\\d*}/files/attachments/lecture/**").permitAll()
+            .antMatchers("/api/{v\\d+}/files/attachments/lecture/**").permitAll()
             .antMatchers("/api/files/attachments/attachment-unit/**").permitAll()
-            .antMatchers("/api/{v\\d*}/files/attachments/attachment-unit/**").permitAll()
+            .antMatchers("/api/{v\\d+}/files/attachments/attachment-unit/**").permitAll()
             .antMatchers("/api/files/file-upload-exercises/**").permitAll()
-            .antMatchers("/api/{v\\d*}/files/file-upload-exercises/**").permitAll()
+            .antMatchers("/api/{v\\d+}/files/file-upload-exercises/**").permitAll()
             .antMatchers("/api/files/markdown/**").permitAll()
-            .antMatchers("/api/{v\\d*}/files/markdown/**").permitAll()
+            .antMatchers("/api/{v\\d+}/files/markdown/**").permitAll()
             .antMatchers("/api/**").authenticated()
             .antMatchers("/websocket/tracker").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/websocket/**").permitAll()
