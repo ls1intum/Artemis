@@ -1,8 +1,9 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
 import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
 import { ExerciseImportComponent, TableColumn } from 'app/exercises/shared/import/exercise-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -22,6 +23,7 @@ describe('ExerciseImportComponent', () => {
 
     let pagingService: QuizExercisePagingService;
     let sortService: SortService;
+    let activeModal: NgbActiveModal;
     let searchForExercisesStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
     let searchResult: SearchResult<Exercise>;
@@ -46,6 +48,7 @@ describe('ExerciseImportComponent', () => {
                 comp = fixture.componentInstance;
                 pagingService = TestBed.get(QuizExercisePagingService);
                 sortService = TestBed.inject(SortService);
+                activeModal = TestBed.inject(NgbActiveModal);
                 searchForExercisesStub = jest.spyOn(pagingService, 'searchForExercises');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
             });
@@ -71,6 +74,94 @@ describe('ExerciseImportComponent', () => {
         };
         searchForExercisesStub.mockReturnValue(of(searchResult));
     });
+
+    it('should initialize the content', () => {
+        // WHEN
+        fixture.detectChanges();
+
+        // THEN
+        expect(comp.content).toEqual({ resultsOnPage: [], numberOfPages: 0 });
+    });
+
+    it('should close the active modal', () => {
+        const dismiss = jest.spyOn(activeModal, 'dismiss');
+
+        // WHEN
+        comp.clear();
+
+        // THEN
+        expect(dismiss).toHaveBeenCalledOnceWith('cancel');
+    });
+
+    it('should close the active modal with result', () => {
+        // GIVEN
+        const activeModalSpy = jest.spyOn(activeModal, 'close');
+        const exercise = { id: 1 } as TextExercise;
+        // WHEN
+        comp.openImport(exercise);
+
+        // THEN
+        expect(activeModalSpy).toHaveBeenCalledOnce();
+        expect(activeModalSpy).toHaveBeenCalledWith(exercise);
+    });
+
+    it('should change the page on active modal', fakeAsync(() => {
+        const defaultPageSize = 10;
+        const numberOfPages = 5;
+        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExercises');
+        pagingServiceSpy.mockReturnValue(of({ numberOfPages } as SearchResult<TextExercise>));
+
+        fixture.detectChanges();
+
+        let expectedPageNumber = 1;
+        comp.onPageChange(expectedPageNumber);
+        tick();
+        expect(comp.page).toBe(expectedPageNumber);
+        expect(comp.total).toBe(numberOfPages * defaultPageSize);
+
+        expectedPageNumber = 2;
+        comp.onPageChange(expectedPageNumber);
+        tick();
+        expect(comp.page).toBe(expectedPageNumber);
+        expect(comp.total).toBe(numberOfPages * defaultPageSize);
+
+        // Page number should be changed unless it is falsy.
+        comp.onPageChange(0);
+        tick();
+        expect(comp.page).toBe(expectedPageNumber);
+
+        // Number of times onPageChange is called with a truthy value.
+        expect(pagingServiceSpy).toHaveBeenCalledTimes(2);
+    }));
+
+    it('should sort rows with default values', () => {
+        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
+
+        fixture.detectChanges();
+        comp.sortRows();
+
+        expect(sortServiceSpy).toHaveBeenCalledOnce();
+        expect(sortServiceSpy).toHaveBeenCalledWith([], comp.column.ID, false);
+    });
+
+    it('should set search term and search', fakeAsync(() => {
+        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExercises');
+        pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<TextExercise>));
+
+        fixture.detectChanges();
+
+        const expectedSearchTerm = 'search term';
+        comp.searchTerm = expectedSearchTerm;
+        tick();
+        expect(comp.searchTerm).toBe(expectedSearchTerm);
+
+        // It should wait first before executing search.
+        expect(pagingServiceSpy).not.toHaveBeenCalled();
+
+        tick(300);
+
+        expect(pagingServiceSpy).toHaveBeenCalledOnce();
+    }));
 
     const setStateAndCallOnInit = (middleExpectation: () => void) => {
         comp.state = { ...state };
