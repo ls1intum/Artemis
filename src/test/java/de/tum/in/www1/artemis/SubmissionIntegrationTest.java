@@ -57,7 +57,6 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var savedSubmission = submissionRepository.save(submission);
         submission = submissionRepository.findWithEagerResultsAndAssessorById(savedSubmission.getId()).orElseThrow();
 
-        assert submission.getResults() != null;
         assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
@@ -88,7 +87,6 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
 
-        assert submission.getResults() != null;
         assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
@@ -125,7 +123,6 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
 
-        assert submission.getResults() != null;
         assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
