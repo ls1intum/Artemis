@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.tutorialgroups;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -13,8 +14,10 @@ import org.springframework.security.test.context.TestSecurityContextHolder;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.*;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
 class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
@@ -66,6 +69,19 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void create_invalidDateFormat_shouldReturnBadRequest() throws Exception {
+        var exampleConfig = buildExampleConfiguration();
+        // not in correct uuuu-MM-dd format
+        exampleConfig.setTutorialPeriodStartInclusive("2022-11-25T23:00:00.000Z");
+        request.postWithResponseBody(getTutorialGroupsConfigurationPath(), exampleConfig, TutorialGroupsConfiguration.class, HttpStatus.BAD_REQUEST);
+        exampleConfig = buildExampleConfiguration();
+        // not in correct uuuu-MM-dd format
+        exampleConfig.setTutorialPeriodEndInclusive("2022-11-25T23:00:00.000Z");
+        request.postWithResponseBody(getTutorialGroupsConfigurationPath(), exampleConfig, TutorialGroupsConfiguration.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void create_configurationAlreadyExists_shouldReturnBadRequest() throws Exception {
         // given
         databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, firstAugustMonday, firstSeptemberMonday);
@@ -87,6 +103,31 @@ class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorialGroupIn
         // then
         configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(configuration.getId());
         this.assertConfigurationStructure(configuration, firstAugustMonday, firstSeptemberMonday);
+    }
+
+    /**
+     * Note: With this test we want to ensure that jackson can deserialize the tutorial group configuration if it is indirectly sent with another entity.
+     * There was a bug that caused the deserialization to fail, as the date format checkers were put directly into the setter of date and time.
+     * The problem was that jackson tried to deserialize the date and time with the date and time format checkers active, which failed. These checkers
+     * should only be active in a direct create / update case to ensure uuuu-MM-dd format in the database.
+     *
+     * @throws Exception
+     */
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void persistEntityWithIndirectConnectionToConfiguration_dateAsFullIsoString_shouldNotThrowDeserializationException() throws Exception {
+        // given
+        databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, firstAugustMonday, firstSeptemberMonday);
+        var course = courseRepository.findByIdWithEagerTutorialGroupConfigurationElseThrow(exampleCourseId);
+        var configuration = course.getTutorialGroupsConfiguration();
+        // this date format should not throw an error here, even though it is not the uuuu-MM-dd format we use in the database as it neither updates nor creates the configuration
+        configuration.setTutorialPeriodStartInclusive("2022-11-25T23:00:00.000Z");
+        configuration.setTutorialPeriodEndInclusive("2022-11-25T23:00:00.000Z");
+
+        TextExercise textExercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now().plusDays(1), ZonedDateTime.now().plusDays(2), course);
+        // the exercise is now indirectly connected to the configuration and jackson will try to deserialize the configuration
+        textExercise.setCourse(course);
+        request.postWithResponseBody("/api/text-exercises/", textExercise, TextExercise.class, HttpStatus.CREATED);
     }
 
     @Test
