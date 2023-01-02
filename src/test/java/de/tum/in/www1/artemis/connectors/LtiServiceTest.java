@@ -159,7 +159,7 @@ class LtiServiceTest {
 
         ltiService.authenticateLtiUser("useremail@tum.de", "userid", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
-        assertEquals(SecurityContextHolder.getContext().getAuthentication(), auth);
+        assertEquals(auth, SecurityContextHolder.getContext().getAuthentication());
     }
 
     @Test
