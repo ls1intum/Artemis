@@ -44,6 +44,7 @@
             </tr>
             <tr
                 [(ngbCollapse)]="isCollapsed"
+                [animation]="false"
                 jhi-session-row
                 *ngFor="let session of upcomingSessions; trackBy: trackSession"
                 [extraColumn]="extraColumn"
@@ -52,7 +53,7 @@
                 [tutorialGroup]="tutorialGroup"
                 [showIdColumn]="showIdColumn"
             ></tr>
-            <tr [(ngbCollapse)]="isCollapsed">
+            <tr [(ngbCollapse)]="isCollapsed" [animation]="false">
                 <td [colSpan]="numberOfColumns">
                     <div class="text-center">
                         <h4>
@@ -66,6 +67,7 @@
             <ng-container *ngIf="pastSessions && pastSessions.length > 0">
                 <tr
                     [(ngbCollapse)]="isCollapsed"
+                    [animation]="false"
                     jhi-session-row
                     *ngFor="let session of pastSessions; trackBy: trackSession"
                     [extraColumn]="extraColumn"
