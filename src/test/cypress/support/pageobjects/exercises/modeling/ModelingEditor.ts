@@ -12,6 +12,7 @@ export class ModelingEditor {
      * */
     addComponentToModel(componentNumber: number, scrollBehavior: scrollBehaviorOptions = 'center') {
         cy.get('#modeling-editor-sidebar').children().eq(componentNumber).drag(`${MODELING_EDITOR_CANVAS}`, { scrollBehavior, timeout: 1000 });
+        cy.get(`${MODELING_EDITOR_CANVAS}`).trigger('mouseup').trigger('pointerup');
     }
 
     submit() {

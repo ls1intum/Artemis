@@ -68,9 +68,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
-    Optional<User> findOneWithAuthoritiesByLogin(String login);
-
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
@@ -104,9 +101,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @Query("select user from User user where :#{#groupName} member of user.groups")
     List<User> findAllInGroup(@Param("groupName") String groupName);
-
-    @Query("select user from User user where user.isInternal = :#{#isInternal}")
-    List<User> findAllByInternal(boolean isInternal);
 
     /**
      * Searches for users in a group by their login or full name.
@@ -490,7 +484,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         updateUserNotificationReadDate(userId, ZonedDateTime.now());
     }
 
-    @Query(value = "SELECT * from jhi_user u where u.email regexp ?1", nativeQuery = true)
+    @Query(value = "SELECT * FROM jhi_user u WHERE REGEXP_LIKE(u.email, :#{#emailPattern})", nativeQuery = true)
     List<User> findAllMatchingEmailPattern(@Param("emailPattern") String emailPattern);
 
     /**
@@ -529,11 +523,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return true if both logins match
      */
     default boolean isCurrentUser(String login) {
-        var currentUserLogin = SecurityUtils.getCurrentUserLogin();
-        if (currentUserLogin.isEmpty()) {
-            return false;
-        }
-        return currentUserLogin.get().equals(login);
+        return SecurityUtils.getCurrentUserLogin().map(currentLogin -> currentLogin.equals(login)).orElse(false);
     }
 
     default User findByIdElseThrow(long userId) throws EntityNotFoundException {

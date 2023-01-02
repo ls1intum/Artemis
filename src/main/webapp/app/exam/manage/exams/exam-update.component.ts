@@ -160,12 +160,13 @@ export class ExamUpdateComponent implements OnInit {
         if (this.exam.testExam) {
             return this.exam.numberOfCorrectionRoundsInExam === 0;
         } else {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             return this.exam?.numberOfCorrectionRoundsInExam! < 3 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
         }
     }
 
     get isValidMaxPoints(): boolean {
-        return this.exam?.maxPoints !== undefined && this.exam?.maxPoints > 0;
+        return this.exam?.examMaxPoints !== undefined && this.exam?.examMaxPoints > 0;
     }
 
     /**
