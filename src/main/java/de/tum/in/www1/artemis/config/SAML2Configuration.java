@@ -67,8 +67,8 @@ public class SAML2Configuration {
     @Bean
     RelyingPartyRegistrationRepository relyingPartyRegistrationRepository() {
         final List<RelyingPartyRegistration> relyingPartyRegistrations = new ArrayList<>();
-        // @formatter:off
         for (SAML2Properties.RelyingPartyProperties config : properties.getIdentityProviders()) {
+            // @formatter:off
             relyingPartyRegistrations.add(RelyingPartyRegistrations
                 .fromMetadataLocation(config.getMetadata())
                 .registrationId(config.getRegistrationId())
@@ -76,6 +76,7 @@ public class SAML2Configuration {
                 .decryptionX509Credentials(credentialsSink -> this.addDecryptionInformation(credentialsSink, config))
                 .signingX509Credentials(credentialsSink -> this.addSigningInformation(credentialsSink, config))
                 .build());
+            // @formatter:on
         }
 
         return new InMemoryRelyingPartyRegistrationRepository(relyingPartyRegistrations);
@@ -89,11 +90,11 @@ public class SAML2Configuration {
         try {
             Saml2X509Credential credentials = Saml2X509Credential.decryption(readPrivateKey(config.getKeyFile()), readPublicCert(config.getCertFile()));
             credentialsSink.add(credentials);
-        } catch (IOException | CertificateException e) {
+        }
+        catch (IOException | CertificateException e) {
             log.error(e.getMessage(), e);
         }
     }
-
 
     private void addSigningInformation(Collection<Saml2X509Credential> credentialsSink, SAML2Properties.RelyingPartyProperties config) {
         if (!this.checkFiles(config)) {
@@ -103,7 +104,8 @@ public class SAML2Configuration {
         try {
             Saml2X509Credential credentials = Saml2X509Credential.signing(readPrivateKey(config.getKeyFile()), readPublicCert(config.getCertFile()));
             credentialsSink.add(credentials);
-        } catch (IOException | CertificateException e) {
+        }
+        catch (IOException | CertificateException e) {
             log.error(e.getMessage(), e);
         }
     }
@@ -146,19 +148,17 @@ public class SAML2Configuration {
     protected SecurityFilterChain saml2FilterChain(final HttpSecurity http) throws Exception {
         // @formatter:off
         http
+            // This filter chain is only applied if the URL matches
+            // Else the request is filtered by {@link SecurityConfiguration}.
+            .securityMatcher("/api/saml2", "/saml2/**", "/login/**")
             .csrf()
                 // Needed for SAML to work properly
                 .disable()
-            .authorizeHttpRequests((auth) -> auth
+            .authorizeHttpRequests(auth -> auth
                 // The request to the api is permitted and checked directly
                 // This allows returning a 401 if the user is not logged in via SAML2
                 // to notify the client that a login is needed.
-
-                // This filter chain is only applied if the URL matches
-                // Else the request is filtered by {@link SecurityConfiguration}.
                 .requestMatchers("/api/saml2").permitAll()
-                .requestMatchers("/saml2/**").authenticated()
-                .requestMatchers("/login/**").authenticated()
                 // Every other request must be authenticated. Any request triggers a SAML2
                 // authentication flow
                 .anyRequest().authenticated()
@@ -168,6 +168,7 @@ public class SAML2Configuration {
                 // Redirect back to the root
                 .defaultSuccessUrl("/", true);
         // @formatter:on
+
         return http.build();
     }
 }
