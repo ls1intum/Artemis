@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { ExerciseImportComponent } from 'app/exercises/shared/manage/exercise-import.component';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { Subject, forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';

@@ -19,7 +19,7 @@ import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.co
 import { FormsModule, NgModel, ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
-import { TableColumn } from 'app/exercises/shared/manage/exercise-import.component';
+import { TableColumn } from 'app/exercises/shared/import/exercise-import.component';
 
 describe('BonusComponent', () => {
     let component: BonusComponent;

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { TableColumn } from 'app/exercises/shared/manage/exercise-import.component';
+import { TableColumn } from 'app/exercises/shared/import/exercise-import.component';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';

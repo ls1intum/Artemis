@@ -4,7 +4,7 @@ import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
 import { ModelingExerciseImportComponent } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
-import { TableColumn } from 'app/exercises/shared/manage/exercise-import.component';
+import { TableColumn } from 'app/exercises/shared/import/exercise-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 import { SortService } from 'app/shared/service/sort.service';

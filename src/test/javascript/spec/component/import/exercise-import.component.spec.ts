@@ -1,11 +1,12 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizExerciseImportComponent } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
 import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
-import { TableColumn } from 'app/exercises/shared/manage/exercise-import.component';
+import { ExerciseImportComponent, TableColumn } from 'app/exercises/shared/import/exercise-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
@@ -15,33 +16,35 @@ import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
 
-describe('QuizExerciseImportComponent', () => {
-    let fixture: ComponentFixture<QuizExerciseImportComponent>;
-    let comp: QuizExerciseImportComponent;
+describe('ExerciseImportComponent', () => {
+    let fixture: ComponentFixture<ExerciseImportComponent>;
+    let comp: ExerciseImportComponent;
+
     let pagingService: QuizExercisePagingService;
     let sortService: SortService;
     let searchForExercisesStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
-    let searchResult: SearchResult<QuizExercise>;
+    let searchResult: SearchResult<Exercise>;
     let state: PageableSearch;
-    let quizExercise: QuizExercise;
+    let exercise: QuizExercise;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
             declarations: [
-                QuizExerciseImportComponent,
+                ExerciseImportComponent,
                 MockPipe(ExerciseCourseTitlePipe),
                 MockComponent(ButtonComponent),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
+                MockDirective(TranslateDirective),
             ],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(QuizExerciseImportComponent);
+                fixture = TestBed.createComponent(ExerciseImportComponent);
                 comp = fixture.componentInstance;
-                pagingService = TestBed.inject(QuizExercisePagingService);
+                pagingService = TestBed.get(QuizExercisePagingService);
                 sortService = TestBed.inject(SortService);
                 searchForExercisesStub = jest.spyOn(pagingService, 'searchForExercises');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
@@ -53,10 +56,11 @@ describe('QuizExerciseImportComponent', () => {
     });
 
     beforeEach(() => {
+        comp.exerciseType = ExerciseType.QUIZ;
         fixture.detectChanges();
-        quizExercise = new QuizExercise(undefined, undefined);
-        quizExercise.id = 5;
-        searchResult = { numberOfPages: 3, resultsOnPage: [quizExercise] };
+        exercise = new QuizExercise(undefined, undefined);
+        exercise.id = 5;
+        searchResult = { numberOfPages: 3, resultsOnPage: [exercise] };
         state = {
             page: 1,
             pageSize: 10,
@@ -121,7 +125,7 @@ describe('QuizExerciseImportComponent', () => {
     }));
 
     it('should return quiz exercise id', () => {
-        expect(comp.trackId(0, quizExercise)).toEqual(quizExercise.id);
+        expect(comp.trackId(0, exercise)).toEqual(exercise.id);
     });
 
     it('should switch courseFilter/examFilter and search', fakeAsync(() => {
