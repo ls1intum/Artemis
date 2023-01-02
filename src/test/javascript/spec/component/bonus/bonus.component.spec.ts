@@ -9,7 +9,6 @@ import { BonusService, EntityResponseType } from 'app/grading-system/bonus/bonus
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { of, throwError } from 'rxjs';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -20,6 +19,7 @@ import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.co
 import { FormsModule, NgModel, ReactiveFormsModule } from '@angular/forms';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { TableColumn } from 'app/exercises/shared/manage/exercise-import.component';
 
 describe('BonusComponent', () => {
     let component: BonusComponent;
