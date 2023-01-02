@@ -32,7 +32,6 @@ import { MockComponent, MockDirective, MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { SecuredImageComponent } from 'app/shared/image/secured-image.component';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -79,7 +78,6 @@ describe('Guided tour integration', () => {
                 FooterComponent,
                 NotificationSidebarComponent,
                 MockHasAnyAuthorityDirective,
-                MockComponent(FaIconComponent),
                 MockComponent(CourseRegistrationComponent),
                 MockComponent(CourseExerciseRowComponent),
                 MockComponent(LoadingNotificationComponent),
@@ -104,7 +102,6 @@ describe('Guided tour integration', () => {
                 { provide: MetisService, useClass: MockMetisService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 guidedTourComponentFixture = TestBed.createComponent(GuidedTourComponent);

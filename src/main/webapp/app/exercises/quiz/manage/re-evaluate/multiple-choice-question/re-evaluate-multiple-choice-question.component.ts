@@ -7,7 +7,7 @@ import { escapeStringForUseInRegex } from 'app/shared/util/global.utils';
 import { cloneDeep } from 'lodash-es';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { generateExerciseHintExplanation, parseExerciseHintExplanation } from 'app/shared/util/markdown.util';
-import { faArrowsAltV, faChevronDown, faChevronUp, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleRight, faArrowsAltV, faChevronDown, faChevronUp, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
@@ -30,12 +30,16 @@ export class ReEvaluateMultipleChoiceQuestionComponent implements OnInit {
     // Create Backup Question for resets
     @Input() backupQuestion: MultipleChoiceQuestion;
 
+    isQuestionCollapsed: boolean;
+
     // Icons
     faTrash = faTrash;
     faUndo = faUndo;
     faChevronUp = faChevronUp;
     faChevronDown = faChevronDown;
     faArrowsAltV = faArrowsAltV;
+    faAngleRight = faAngleRight;
+    faAngleDown = faAngleDown;
 
     ngOnInit(): void {
         this.markdownMap = new Map<number, string>();

@@ -484,7 +484,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         updateUserNotificationReadDate(userId, ZonedDateTime.now());
     }
 
-    @Query(value = "SELECT * from jhi_user u where u.email ~ ?1", nativeQuery = true)
+    @Query(value = "SELECT * FROM jhi_user u WHERE REGEXP_LIKE(u.email, :#{#emailPattern})", nativeQuery = true)
     List<User> findAllMatchingEmailPattern(@Param("emailPattern") String emailPattern);
 
     /**

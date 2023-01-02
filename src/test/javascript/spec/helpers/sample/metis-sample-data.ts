@@ -248,11 +248,11 @@ export const postsWithCreationDate = [
     post7WithCreationDate,
 ];
 
-const conversationParticipantUser1 = { id: 1, user: metisUser1 } as ConversationParticipant;
+const conversationParticipantUser1 = { id: 1, user: metisUser1, unreadMessagesCount: 1 } as ConversationParticipant;
 
-const conversationParticipantUser2 = { id: 2, user: metisUser2 } as ConversationParticipant;
+const conversationParticipantUser2 = { id: 2, user: metisUser2, unreadMessagesCount: 0 } as ConversationParticipant;
 
-const conversationParticipantTutor = { id: 3, user: metisTutor } as ConversationParticipant;
+const conversationParticipantTutor = { id: 3, user: metisTutor, unreadMessagesCount: 0 } as ConversationParticipant;
 
 export const conversationBetweenUser1User2 = {
     id: 1,

@@ -707,7 +707,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(receivedLogs).hasSize(2);
         assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
         // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
-        assertThat(receivedLogs).usingElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
+        assertThat(receivedLogs).usingRecursiveFieldByFieldElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
     }
 
     @Test
@@ -722,7 +722,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(receivedLogs).hasSize(2);
         assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
         // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
-        assertThat(receivedLogs).usingElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
+        assertThat(receivedLogs).usingRecursiveFieldByFieldElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
     }
 
     @Test
