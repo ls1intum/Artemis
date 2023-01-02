@@ -66,7 +66,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
      * @param conversationId conversationId id of the conversation with participants
      */
     @Transactional
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying
     @Query("""
             UPDATE ConversationParticipant conversationParticipant
             SET conversationParticipant.unreadMessagesCount = conversationParticipant.unreadMessagesCount + 1
@@ -83,7 +83,7 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
      * @param conversationId conversationId id of the conversation with participants
      */
     @Transactional
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Modifying
     @Query("""
             UPDATE ConversationParticipant conversationParticipant
             SET conversationParticipant.unreadMessagesCount = conversationParticipant.unreadMessagesCount - 1
