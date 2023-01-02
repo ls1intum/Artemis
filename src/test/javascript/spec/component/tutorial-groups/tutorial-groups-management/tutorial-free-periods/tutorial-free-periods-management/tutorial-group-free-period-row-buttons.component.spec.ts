@@ -16,7 +16,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
-import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 
 describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodRowButtonsComponent>;
@@ -46,6 +45,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
                 configuration = generateExampleTutorialGroupsConfiguration({});
                 tutorialFreePeriod = generateExampleTutorialGroupFreePeriod({});
                 setInputValues();
+                fixture.detectChanges();
             });
     });
 
@@ -60,7 +60,6 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).toBeTruthy();
     });
 
@@ -77,8 +76,6 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
             result: of(),
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-
-        fixture.detectChanges();
         const openDialogSpy = jest.spyOn(component, 'openEditFreeDayDialog');
 
         const button = fixture.debugElement.nativeElement.querySelector('#edit-' + tutorialFreePeriod.id);
@@ -98,7 +95,6 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
         const deleteSpy = jest.spyOn(periodService, 'delete').mockReturnValue(of(new HttpResponse<void>({})));
         const deleteEventSpy = jest.spyOn(component.tutorialFreePeriodDeleted, 'emit');
 
-        fixture.detectChanges();
         component.deleteTutorialFreePeriod();
         expect(deleteSpy).toHaveBeenCalledWith(course.id, configuration.id, tutorialFreePeriod.id);
         expect(deleteEventSpy).toHaveBeenCalledOnce();

@@ -94,7 +94,6 @@ describe('TutorialGroupDetailComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 

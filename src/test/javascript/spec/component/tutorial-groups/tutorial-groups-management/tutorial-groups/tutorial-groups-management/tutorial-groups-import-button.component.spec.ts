@@ -41,8 +41,6 @@ describe('TutorialGroupsImportButtonComponent', () => {
             result: Promise.resolve(),
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-
-        fixture.detectChanges();
         const openDialogSpy = jest.spyOn(component, 'openTutorialGroupImportDialog');
 
         const importFinishSpy = jest.spyOn(component.importFinished, 'emit');

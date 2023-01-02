@@ -91,6 +91,7 @@ describe('TutorialGroupSessionsManagement', () => {
                 component.course = course;
                 component.tutorialGroupId = tutorialGroupId;
                 component.initialize();
+                fixture.detectChanges();
             });
     });
 
@@ -99,7 +100,6 @@ describe('TutorialGroupSessionsManagement', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).toBeTruthy();
         expect(getOneOfCourseSpy).toHaveBeenCalledOnce();
         expect(getOneOfCourseSpy).toHaveBeenCalledWith(course.id!, tutorialGroupId);
@@ -109,7 +109,6 @@ describe('TutorialGroupSessionsManagement', () => {
     });
 
     it('should open create session dialog', fakeAsync(() => {
-        fixture.detectChanges();
         const openSpy = jest
             .spyOn(modalService, 'open')
             .mockReturnValue({ componentInstance: { tutorialGroup: undefined, course: undefined, initialize: () => {} }, result: of() } as any);

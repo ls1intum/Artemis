@@ -14,6 +14,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { BehaviorSubject, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
+import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
 
 @Component({
     selector: 'jhi-course-tutorial-groups-overview',
@@ -141,7 +142,7 @@ describe('CourseTutorialGroupsComponent', () => {
         queryParamsSubject.next({ filter: 'all' });
         expect(component.selectedFilter).toBe('all');
         queryParamsSubject.next({ filter: 'registered' });
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         expect(component.selectedFilter).toBe('registered');
     });
 
