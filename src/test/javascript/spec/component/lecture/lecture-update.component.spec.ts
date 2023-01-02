@@ -171,11 +171,14 @@ describe('Lecture', () => {
         expect(lectureUpdateComponent.isShowingWizardMode).toBeTrue();
     }));
 
+    // TODO: state not covered fix!
     it('should be in wizard mode', fakeAsync(() => {
         activatedRoute = TestBed.inject(ActivatedRoute);
         activatedRoute.snapshot.queryParams = of({
             shouldBeInWizardMode: true,
         });
+
+        lectureUpdateComponent.ngOnInit();
 
         lectureUpdateComponentFixture.detectChanges();
         tick();
