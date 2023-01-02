@@ -279,7 +279,7 @@ public class UserTestService {
         request.put("/api/admin/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
         final var userInDB = userRepository.findById(oldId).get();
         assertThat(userInDB).isNotEqualTo(student);
-        assertThat(userRepository.findById(oldId + 1)).isPresent().get().isNotEqualTo(student);
+        assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
     }
 
     // Test
@@ -292,7 +292,7 @@ public class UserTestService {
         request.put("/api/admin/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
         final var userInDB = userRepository.findById(oldId).get();
         assertThat(userInDB).isNotEqualTo(student);
-        assertThat(userRepository.findById(oldId + 1)).isPresent().get().isNotEqualTo(student);
+        assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
     }
 
     // Test
