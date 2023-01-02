@@ -29,7 +29,6 @@ import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import { Course } from 'app/entities/course.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgModel } from '@angular/forms';
 import { NotReleasedTagComponent } from 'app/shared/components/not-released-tag.component';
 import { ArtemisTimeAgoPipe } from 'app/shared/pipes/artemis-time-ago.pipe';
@@ -150,7 +149,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 MockPipe(ArtemisDatePipe),
                 MockComponent(SecondCorrectionEnableButtonComponent),
                 MockPipe(HtmlForMarkdownPipe),
-                MockComponent(FaIconComponent),
                 MockDirective(SortDirective),
                 MockDirective(NgModel),
                 MockComponent(NotReleasedTagComponent),
@@ -164,7 +162,6 @@ describe('AssessmentDashboardInformationComponent', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(AssessmentDashboardComponent);

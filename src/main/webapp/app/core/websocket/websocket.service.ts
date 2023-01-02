@@ -78,6 +78,7 @@ export class ConnectionState {
 export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     stompClient: Client | null;
     connection: Promise<void>;
+    // eslint-disable-next-line @typescript-eslint/ban-types
     connectedPromise: Function;
     subscribers = new Map<string, StompSubscription>();
     myListeners = new Map<string, Observable<any>>();
@@ -304,6 +305,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * Create a new connection.
      */
     private createConnection(): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/ban-types
         return new Promise((resolve: Function) => (this.connectedPromise = resolve));
     }
 

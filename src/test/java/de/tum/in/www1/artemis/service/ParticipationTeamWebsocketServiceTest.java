@@ -23,6 +23,8 @@ import de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsocketServi
 
 class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "participationteamwebsocket";
+
     @Autowired
     private ParticipationTeamWebsocketService participationTeamWebsocketService;
 
@@ -32,24 +34,28 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
         return "/topic/participations/" + participation.getId() + "/team";
     }
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void init() {
-        database.addUsers(3, 0, 0, 0);
+        database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
         Course course = database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
-        participation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
+        participation = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
 
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         participationTeamWebsocketService.clearDestinationTracker();
     }
 
     @AfterEach
-    void tearDown() {
-        database.resetDatabase();
+    void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSubscribeToParticipationTeamWebsocketTopic() {
         participationTeamWebsocketService.subscribe(participation.getId(), getStompHeaderAccessorMock());
         verify(messagingTemplate, times(1)).convertAndSend(websocketTopic(participation), List.of());
@@ -58,14 +64,14 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testTriggerSendOnlineTeamMembers() {
         participationTeamWebsocketService.triggerSendOnlineTeamStudents(participation.getId());
         verify(messagingTemplate, times(1)).convertAndSend(websocketTopic(participation), List.of());
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUnsubscribeFromParticipationTeamWebsocketTopic() {
         StompHeaderAccessor stompHeaderAccessor1 = getStompHeaderAccessorMock();
         StompHeaderAccessor stompHeaderAccessor2 = getStompHeaderAccessorMock();

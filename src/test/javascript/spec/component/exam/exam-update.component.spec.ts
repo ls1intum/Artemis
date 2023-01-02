@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ExamUpdateComponent } from 'app/exam/manage/exams/exam-update.component';
 import { TranslateModule } from '@ngx-translate/core';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -85,6 +86,7 @@ describe('Exam Update Component', () => {
                     MockComponent(HelpIconComponent),
                     MockDirective(CustomMinDirective),
                     MockDirective(CustomMaxDirective),
+                    MockDirective(FeatureToggleDirective),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -420,7 +422,7 @@ describe('Exam Update Component', () => {
         examForImport.endDate = timeNow.add(1, 'hours');
         examForImport.workingTime = 2 * 60 * 60;
         examForImport.gracePeriod = 90;
-        examForImport.maxPoints = 15;
+        examForImport.examMaxPoints = 15;
         examForImport.numberOfExercisesInExam = 5;
         examForImport.randomizeExerciseOrder = true;
         examForImport.publishResultsDate = timeNow.add(1, 'days');
@@ -462,6 +464,7 @@ describe('Exam Update Component', () => {
                     MockComponent(ButtonComponent),
                     MockComponent(HelpIconComponent),
                     MockComponent(DifficultyBadgeComponent),
+                    MockDirective(FeatureToggleDirective),
                 ],
                 providers: [
                     { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -531,7 +534,7 @@ describe('Exam Update Component', () => {
             expect(component.exam.endDate).toBeUndefined();
             expect(component.exam.workingTime).toBe(0);
             expect(component.exam.gracePeriod).toBe(90);
-            expect(component.exam.maxPoints).toBe(15);
+            expect(component.exam.examMaxPoints).toBe(15);
             expect(component.exam.numberOfExercisesInExam).toBe(5);
             expect(component.exam.randomizeExerciseOrder).toBeTrue();
             expect(component.exam.publishResultsDate).toBeUndefined();

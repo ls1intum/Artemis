@@ -13,10 +13,10 @@
             <column name="day_of_week" type="SMALLINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="start_time" type="TIME">
+            <column name="start_time" type="varchar(30)">
                 <constraints nullable="false"/>
             </column>
-            <column name="end_time" type="TIME">
+            <column name="end_time" type="varchar(30)">
                 <constraints nullable="false"/>
             </column>
             <column name="location" type="LONGTEXT">
@@ -25,10 +25,10 @@
             <column name="repetition_frequency" type="SMALLINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="valid_from_inclusive" type="DATE">
+            <column name="valid_from_inclusive" type="varchar(30)">
                 <constraints nullable="false"/>
             </column>
-            <column name="valid_to_inclusive" type="DATE">
+            <column name="valid_to_inclusive" type="varchar(30)">
                 <constraints nullable="false"/>
             </column>
             <column name="tutorial_group_id" type="BIGINT">
@@ -39,10 +39,10 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_session_PK"/>
             </column>
-            <column name="start" type="DATETIME">
+            <column name="session_start" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="end" type="DATETIME">
+            <column name="session_end" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
             <column name="location" type="LONGTEXT">
@@ -64,11 +64,11 @@
         </createTable>
         <createTable tableName="tutorial_groups_configuration">
             <column autoIncrement="true" name="id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_schedule_PK"/>
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_groups_configuration_PK"/>
             </column>
-            <column name="tutorial_period_start_inclusive" type="DATE">
+            <column name="tutorial_period_start_inclusive" type="varchar(30)">
             </column>
-            <column name="tutorial_period_end_inclusive" type="DATE">
+            <column name="tutorial_period_end_inclusive" type="varchar(30)">
             </column>
         </createTable>
         <createTable tableName="tutorial_group_free_period">
@@ -78,10 +78,10 @@
             <column name="tutorial_groups_configuration_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="start" type="DATETIME">
+            <column name="period_start" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="end" type="DATETIME">
+            <column name="period_end" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
             <column name="reason" type="VARCHAR(255)">

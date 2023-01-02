@@ -1,4 +1,4 @@
-import { EMPTY, Observable, Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { NavigationEnd, RouterEvent, RouterState, UrlTree } from '@angular/router';
 
 // When using the spies, bear in mind jest.resetAllMocks does not affect them, they need to be reset manually

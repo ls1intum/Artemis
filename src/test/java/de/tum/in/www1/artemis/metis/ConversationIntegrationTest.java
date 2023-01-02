@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.metis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +27,8 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
 
 class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "conversationintegration";
+
     @Autowired
     private ConversationRepository conversationRepository;
 
@@ -39,24 +40,17 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private Course course;
 
     @BeforeEach
-    public void initTestCase() {
-        database.addUsers(5, 5, 0, 1);
+    void initTestCase() {
+        database.addUsers(TEST_PREFIX, 5, 5, 0, 1);
         course = database.createCourse(1L);
-        existingConversation = database.createConversation(course);
+        existingConversation = database.createConversation(course, TEST_PREFIX);
         doNothing().when(messagingTemplate).convertAndSendToUser(any(), any(), any());
     }
 
-    @AfterEach
-    public void tearDown() {
-        database.resetDatabase();
-    }
-
-    // Conversation
-
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateConversation() throws Exception {
-        Conversation conversationToSave = conversationToCreate(course, database.getUserByLogin("student2"));
+        Conversation conversationToSave = conversationToCreate(course, database.getUserByLogin(TEST_PREFIX + "student2"));
 
         Conversation createdConversation = request.postWithResponseBody("/api/courses/" + course.getId() + "/conversations/", conversationToSave, Conversation.class,
                 HttpStatus.CREATED);
@@ -71,36 +65,36 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateConversation_badRequest() throws Exception {
         Conversation conversationToSave = new Conversation();
 
         // conversation without required conversationParticipant
         createConversationBadRequest(conversationToSave);
 
-        conversationToSave = conversationToCreate(course, database.getUserByLogin("student2"));
+        conversationToSave = conversationToCreate(course, database.getUserByLogin(TEST_PREFIX + "student2"));
         conversationToSave.setId(1L);
 
         // conversation with existing ID
         createConversationBadRequest(conversationToSave);
 
         // conversation with user's own conversationParticipant object
-        conversationToSave = conversationToCreate(course, database.getUserByLogin("student2"));
+        conversationToSave = conversationToCreate(course, database.getUserByLogin(TEST_PREFIX + "student2"));
         ConversationParticipant conversationParticipant = new ConversationParticipant();
-        conversationParticipant.setUser(database.getUserByLogin("student1"));
+        conversationParticipant.setUser(database.getUserByLogin(TEST_PREFIX + "student1"));
         conversationToSave.getConversationParticipants().add(conversationParticipant);
         createConversationBadRequest(conversationToSave);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetActiveConversationsOfCurrentUser() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
         List<Conversation> conversationsOfUser;
 
         // we need to create a post within the conversation so that it is active and returned by the conversation service
         Post post = new Post();
-        post.setAuthor(database.getUserByLogin("tutor1"));
+        post.setAuthor(database.getUserByLogin(TEST_PREFIX + "tutor1"));
         post.setDisplayPriority(DisplayPriority.NONE);
         post.setConversation(existingConversation);
 
@@ -109,11 +103,11 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         conversationsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations/", HttpStatus.OK, Conversation.class, params);
         assertThat(conversationsOfUser.get(0)).isEqualTo(existingConversation);
 
-        database.changeUser("tutor2");
+        database.changeUser(TEST_PREFIX + "tutor2");
         conversationsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations/", HttpStatus.OK, Conversation.class, params);
         assertThat(conversationsOfUser.get(0)).isEqualTo(existingConversation);
 
-        database.changeUser("tutor3");
+        database.changeUser(TEST_PREFIX + "tutor3");
         conversationsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations/", HttpStatus.OK, Conversation.class, params);
         assertThat(conversationsOfUser).isEmpty();
     }
@@ -132,7 +126,7 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         ConversationParticipant conversationParticipant2 = new ConversationParticipant();
         conversationParticipant2.setUser(conversatingUser);
-        conversationParticipant2.setLastRead(conversation.getCreationDate());
+        conversationParticipant2.setLastRead(ZonedDateTime.now().minusYears(2));
 
         conversation.getConversationParticipants().add(conversationParticipant2);
         conversation.setCourse(course);
@@ -149,8 +143,6 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private void checkCreatedConversationParticipants(Set<ConversationParticipant> conversationParticipants) {
         // check each individual conversationParticipant
-        conversationParticipants.forEach(conversationParticipant -> {
-            assertThat(conversationParticipant.getUser()).isNotNull();
-        });
+        conversationParticipants.forEach(conversationParticipant -> assertThat(conversationParticipant.getUser()).isNotNull());
     }
 }

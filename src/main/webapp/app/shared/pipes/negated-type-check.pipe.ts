@@ -7,6 +7,7 @@ export class NegatedTypeCheckPipe implements PipeTransform {
      * @param items The array of items to filter.
      * @param classType The class' type that array items are checked against.
      */
+    // eslint-disable-next-line @typescript-eslint/ban-types
     transform(items: Array<any>, classType: Function): any[] {
         return items.filter((item) => !(item instanceof classType));
     }

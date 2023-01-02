@@ -96,35 +96,38 @@ public class ProgrammingExerciseResultTestService {
 
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipationStaticCodeAnalysis;
 
-    public void setup() {
-        database.addUsers(10, 2, 0, 2);
+    private String userPrefix;
+
+    public void setup(String userPrefix) {
+        this.userPrefix = userPrefix;
+        database.addUsers(userPrefix, 2, 2, 0, 2);
         setupForProgrammingLanguage(ProgrammingLanguage.JAVA);
     }
 
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
         Course course = database.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
-        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
-        programmingExerciseStudentParticipationStaticCodeAnalysis = database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis, "student2");
+        programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
+        programmingExerciseStudentParticipationStaticCodeAnalysis = database.addStudentParticipationForProgrammingExercise(programmingExerciseWithStaticCodeAnalysis,
+                userPrefix + "student2");
     }
 
     public void tearDown() {
-        database.resetDatabase();
     }
 
     // Test
     public void shouldUpdateFeedbackInSemiAutomaticResult(AbstractBuildResultNotificationDTO buildResultNotification, String loginName) throws Exception {
         // Make sure we only have one participation
-        participationRepository.deleteAll();
+        participationRepository.deleteAll(participationRepository.findByExerciseId(programmingExercise.getId()));
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, loginName);
 
         // Add a student submission with two manual results and a semi automatic result
         var submission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false, TestConstants.COMMIT_HASH_STRING);
-        var accessor = database.getUserByLogin("instructor1");
+        var accessor = database.getUserByLogin(userPrefix + "instructor1");
         database.addResultToSubmission(submission, AssessmentType.MANUAL, accessor);
         database.addResultToSubmission(submission, AssessmentType.MANUAL, accessor);
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC, accessor);
@@ -147,7 +150,7 @@ public class ProgrammingExerciseResultTestService {
         assertThat(resultsWithFeedback.get(2).getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
 
         // Re-trigger the build. We create a notification with feedback of a successful test
-        database.changeUser("instructor1");
+        database.changeUser(userPrefix + "instructor1");
         postResult(buildResultNotification);
 
         // Retrieve updated results
@@ -200,7 +203,7 @@ public class ProgrammingExerciseResultTestService {
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
 
         Set<ProgrammingExerciseTestCase> testCases = programmingExerciseTestCaseService.findByExerciseId(programmingExercise.getId());
-        assertThat(testCases).usingElementComparatorIgnoringFields("exercise", "id", "tasks", "solutionEntries", "coverageEntries")
+        assertThat(testCases).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(expectedTestCases);
         assertThat(optionalResult).isPresent();
         if (withFailedTest) {
@@ -212,18 +215,21 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
-        var latestSubmissions = programmingSubmissionRepository.findAll();
         // One submission from the student participation and the other from solution participation
-        assertThat(latestSubmissions).hasSize(2);
+        var latestSubmissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId());
+        assertThat(latestSubmissions).hasSize(1);
+        var latestSolutionSubmissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(solutionParticipation.getId());
+        assertThat(latestSolutionSubmissions).hasSize(1);
     }
 
     // Test
     public void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(Object resultNotification, ProgrammingLanguage programmingLanguage) {
+        final long participationId = programmingExerciseStudentParticipationStaticCodeAnalysis.getId();
         final var optionalResult = gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         final var savedResult = resultRepository.findByIdWithEagerSubmissionAndFeedbackElseThrow(optionalResult.get().getId());
 
         // Should be one because programmingExerciseStudentParticipationStaticCodeAnalysis doesn't have a submission
-        var submissions = programmingSubmissionRepository.findAll();
+        var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
         assertThat(submissions).hasSize(1);
 
         // Create comparator to explicitly compare feedback attributes (equals only compares id)
@@ -245,7 +251,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSameSizeAs(submissions);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId)).hasSameSizeAs(submissions);
     }
 
     // Test
@@ -260,7 +266,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     // Test
@@ -275,7 +281,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     public void shouldSaveBuildLogsInBuildLogRepository(Object resultNotification) {
@@ -289,7 +295,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     public void shouldNotSaveBuildLogsInBuildLogRepository(Object resultNotification) {
@@ -303,13 +309,13 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and should not re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     // Test
     public void shouldGenerateNewManualResultIfManualAssessmentExists(Object resultNotification) {
         var programmingSubmission = database.createProgrammingSubmission(programmingExerciseStudentParticipation, false);
-        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
+        programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, userPrefix + "student1", userPrefix + "tutor1",
                 AssessmentType.SEMI_AUTOMATIC, true);
 
         List<Feedback> feedback = ModelFactory.generateManualFeedback();
@@ -329,7 +335,7 @@ public class ProgrammingExerciseResultTestService {
 
         // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
-        assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
+        assertThat(programmingSubmissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId())).hasSize(1);
     }
 
     // Test
