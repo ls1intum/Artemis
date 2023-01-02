@@ -1,4 +1,8 @@
 import { Exercise } from 'app/entities/exercise.model';
+import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
+import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
+import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
+import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -36,7 +40,7 @@ export abstract class ExerciseImportComponent<T extends Exercise> {
 
     protected constructor(private sortService: SortService, private activeModal: NgbActiveModal) {}
 
-    protected init(pagingService: any): void {
+    protected init(pagingService: TextExercisePagingService | ProgrammingExercisePagingService | QuizExercisePagingService | ModelingExercisePagingService): void {
         this.content = { resultsOnPage: [], numberOfPages: 0 };
 
         this.performSearch(this.sort, 0, pagingService);
@@ -46,10 +50,14 @@ export abstract class ExerciseImportComponent<T extends Exercise> {
     /** Method to perform the search based on a search subject
      *
      * @param searchSubject The search subject which we use to search.
-     * @param debounce The delay we apply to deley the feedback / wait for input
+     * @param debounce The delay we apply to delay the feedback / wait for input
+     * @param pagingService The paging service of the specific exercise type
      */
-    protected performSearch(searchSubject: Subject<void>, debounce: number, pagingService: any) {
-        // TODO better pagingService type?
+    protected performSearch(
+        searchSubject: Subject<void>,
+        debounce: number,
+        pagingService: TextExercisePagingService | ProgrammingExercisePagingService | QuizExercisePagingService | ModelingExercisePagingService,
+    ) {
         searchSubject
             .pipe(
                 debounceTime(debounce),

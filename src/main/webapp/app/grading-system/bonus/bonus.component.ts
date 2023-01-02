@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { TableColumn } from 'app/exercises/shared/manage/exercise-import.component';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
@@ -11,7 +12,6 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
-import { TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { AlertService } from 'app/core/util/alert.service';
 
