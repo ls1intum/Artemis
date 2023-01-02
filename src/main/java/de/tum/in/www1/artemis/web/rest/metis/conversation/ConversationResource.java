@@ -64,7 +64,7 @@ public class ConversationResource {
     @GetMapping("/{courseId}/conversations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ConversationDTO>> getConversationsOfUser(@PathVariable Long courseId) {
-        var requestingUser = this.userRepository.getUserWithGroupsAndAuthorities();
+        var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), requestingUser);
         var conversations = conversationService.getConversationsOfUser(courseId, requestingUser);
         return ResponseEntity.ok(new ArrayList<>(conversations));
