@@ -126,7 +126,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledWith(CreateTutorialGroupFreePeriodComponent, { backdrop: 'static', scrollable: false, size: 'lg' });
+            expect(modalOpenSpy).toHaveBeenCalledWith(CreateTutorialGroupFreePeriodComponent, { backdrop: 'static', scrollable: false, size: 'lg', animation: false });
             expect(mockModalRef.componentInstance.tutorialGroupConfigurationId).toEqual(configuration.id);
             expect(mockModalRef.componentInstance.course).toEqual(course);
         });

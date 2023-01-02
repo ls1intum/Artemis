@@ -81,7 +81,7 @@ describe('TutorialGroupSessionRowButtonsComponent', () => {
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledWith(EditTutorialGroupSessionComponent, { backdrop: 'static', scrollable: false, size: 'lg' });
+            expect(modalOpenSpy).toHaveBeenCalledWith(EditTutorialGroupSessionComponent, { backdrop: 'static', scrollable: false, size: 'lg', animation: false });
             expect(mockModalRef.componentInstance.tutorialGroupSession).toEqual(tutorialGroupSession);
             expect(mockModalRef.componentInstance.course).toEqual(course);
             expect(mockModalRef.componentInstance.tutorialGroup).toEqual(tutorialGroup);

@@ -69,7 +69,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupSessionsManagementComponent, { backdrop: 'static', scrollable: false, size: 'xl' });
+            expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupSessionsManagementComponent, { backdrop: 'static', scrollable: false, size: 'xl', animation: false });
             expect(mockModalRef.componentInstance.tutorialGroupId).toEqual(tutorialGroup.id);
             expect(mockModalRef.componentInstance.course).toEqual(course);
         });
@@ -92,7 +92,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledWith(RegisteredStudentsComponent, { backdrop: 'static', scrollable: false, size: 'xl' });
+            expect(modalOpenSpy).toHaveBeenCalledWith(RegisteredStudentsComponent, { backdrop: 'static', scrollable: false, size: 'xl', animation: false });
             expect(mockModalRef.componentInstance.tutorialGroupId).toEqual(tutorialGroup.id);
             expect(mockModalRef.componentInstance.course).toEqual(course);
         });

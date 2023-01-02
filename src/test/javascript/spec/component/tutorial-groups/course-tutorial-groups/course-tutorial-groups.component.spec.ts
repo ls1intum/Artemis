@@ -21,7 +21,7 @@ import { Course } from 'app/entities/course.model';
 })
 class MockCourseTutorialGroupsOverviewComponent {
     @Input()
-    courseId: number;
+    course: Course;
     @Input()
     tutorialGroups: TutorialGroup[] = [];
 }
@@ -49,6 +49,8 @@ describe('CourseTutorialGroupsComponent', () => {
     let queryParamsSubject: BehaviorSubject<Params>;
 
     beforeEach(() => {
+        router.navigate.mockImplementation(() => Promise.resolve(true));
+
         queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
         TestBed.configureTestingModule({
             declarations: [CourseTutorialGroupsComponent, MockCourseTutorialGroupsOverviewComponent, MockCourseTutorialGroupsRegisteredComponent, MockPipe(ArtemisTranslatePipe)],

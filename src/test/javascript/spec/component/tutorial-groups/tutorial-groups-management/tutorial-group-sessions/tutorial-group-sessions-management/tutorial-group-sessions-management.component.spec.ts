@@ -119,7 +119,7 @@ describe('TutorialGroupSessionsManagement', () => {
 
         fixture.whenStable().then(() => {
             expect(openSpy).toHaveBeenCalledOnce();
-            expect(openSpy).toHaveBeenCalledWith(CreateTutorialGroupSessionComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+            expect(openSpy).toHaveBeenCalledWith(CreateTutorialGroupSessionComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });
         });
     }));
 });

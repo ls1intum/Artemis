@@ -16,6 +16,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Course } from 'app/entities/course.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
+import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 
 describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodRowButtonsComponent>;
@@ -86,7 +87,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledOnce();
-            expect(modalOpenSpy).toHaveBeenCalledWith(EditTutorialGroupFreePeriodComponent, { backdrop: 'static', scrollable: false, size: 'lg' });
+            expect(modalOpenSpy).toHaveBeenCalledWith(EditTutorialGroupFreePeriodComponent, { backdrop: 'static', scrollable: false, size: 'lg', animation: false });
             expect(mockModalRef.componentInstance.tutorialGroupFreePeriod).toEqual(tutorialFreePeriod);
             expect(mockModalRef.componentInstance.tutorialGroupsConfiguration).toEqual(configuration);
             expect(mockModalRef.componentInstance.course).toEqual(course);
