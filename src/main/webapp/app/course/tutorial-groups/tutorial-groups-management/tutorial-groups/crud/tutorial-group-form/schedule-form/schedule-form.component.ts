@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { NgbDateParserFormatter, NgbTimeAdapter } from '@ng-bootstrap/ng-bootstrap';
@@ -24,6 +24,7 @@ export interface ScheduleFormData {
     templateUrl: './schedule-form.component.html',
     styleUrls: ['./schedule-form.component.scss'],
     providers: [{ provide: NgbTimeAdapter, useClass: NgbTimeStringAdapter }],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScheduleFormComponent implements OnInit {
     @Input() course: Course;
