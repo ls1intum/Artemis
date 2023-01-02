@@ -147,7 +147,6 @@ public class SAML2Configuration {
      * @return The configured http security filter chain.
      * @throws Exception Thrown in case Spring detects an issue with the security configuration.
      */
-    // TODO: double check that the new configuration is correct
     @Bean
     @Order(1)
     protected SecurityFilterChain saml2FilterChain(final HttpSecurity http) throws Exception {
