@@ -41,6 +41,8 @@ const editedExamData = {
     confirmationEndText: 'Edited cypress exam confirmation end text',
 };
 
+const dateFormat = 'MMM D, YYYY HH:mm';
+
 describe('Exam creation/deletion', () => {
     let course: Course;
     let examId: number;
@@ -78,9 +80,9 @@ describe('Exam creation/deletion', () => {
             cy.url().should('contain', `/exams/${examId}`);
         });
         cy.get('#exam-detail-title').should('contain.text', examData.title);
-        cy.get('#exam-visible-date').should('contain.text', examData.visibleDate.format('MMM D, YYYY HH:mm'));
-        cy.get('#exam-start-date').should('contain.text', examData.startDate.format('MMM D, YYYY HH:mm'));
-        cy.get('#exam-end-date').should('contain.text', examData.endDate.format('MMM D, YYYY HH:mm'));
+        cy.get('#exam-visible-date').should('contain.text', examData.visibleDate.format(dateFormat));
+        cy.get('#exam-start-date').should('contain.text', examData.startDate.format(dateFormat));
+        cy.get('#exam-end-date').should('contain.text', examData.endDate.format(dateFormat));
         cy.get('#exam-number-of-exercises').should('contain.text', examData.numberOfExercixses);
         cy.get('#exam-max-points').should('contain.text', examData.maxPoints);
         cy.get('#exam-start-text').should('contain.text', examData.startText);
@@ -141,9 +143,9 @@ describe('Exam creation/deletion', () => {
                 cy.url().should('contain', `/exams/${examId}`);
             });
             cy.get('#exam-detail-title').should('contain.text', editedExamData.title);
-            cy.get('#exam-visible-date').should('contain.text', editedExamData.visibleDate.format('MMM D, YYYY HH:mm'));
-            cy.get('#exam-start-date').should('contain.text', editedExamData.startDate.format('MMM D, YYYY HH:mm'));
-            cy.get('#exam-end-date').should('contain.text', editedExamData.endDate.format('MMM D, YYYY HH:mm'));
+            cy.get('#exam-visible-date').should('contain.text', editedExamData.visibleDate.format(dateFormat));
+            cy.get('#exam-start-date').should('contain.text', editedExamData.startDate.format(dateFormat));
+            cy.get('#exam-end-date').should('contain.text', editedExamData.endDate.format(dateFormat));
             cy.get('#exam-number-of-exercises').should('contain.text', editedExamData.numberOfExercixses);
             cy.get('#exam-max-points').should('contain.text', editedExamData.maxPoints);
             cy.get('#exam-start-text').should('contain.text', editedExamData.startText);
