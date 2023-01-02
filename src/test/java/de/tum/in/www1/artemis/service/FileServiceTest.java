@@ -316,12 +316,12 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
     void testRenameDirectory() {
         // File is deleted automatically after test
         writeFile("some-path/some-file", "some-content");
-        Path source_dir = Path.of("./exportTest/some-path");
-        Path target_dir = Path.of("./exportTest/some-path2");
-        Path target_file = Path.of("./exportTest/some-path2/some-file");
-        assertDoesNotThrow(() -> fileService.renameDirectory(source_dir, target_dir));
-        assertThat(target_file.toFile().exists()).isTrue();
-        assertThat(target_dir.toFile().exists()).isTrue();
-        assertThat(source_dir.toFile().exists()).isFalse();
+        Path sourceDir = Path.of("./exportTest/some-path");
+        Path targetDir = Path.of("./exportTest/some-path2");
+        Path targetFile = Path.of("./exportTest/some-path2/some-file");
+        assertDoesNotThrow(() -> fileService.renameDirectory(sourceDir, targetDir));
+        assertThat(targetFile.toFile().exists()).isTrue();
+        assertThat(targetDir.toFile().exists()).isTrue();
+        assertThat(sourceDir.toFile().exists()).isFalse();
     }
 }
