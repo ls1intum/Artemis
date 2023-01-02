@@ -5,8 +5,12 @@ on:
             - develop
             - main
             - release/*
+        paths:
+            - '**/gradle/**'
     pull_request:
         branches: [develop]
+        paths:
+            - '**/gradle/**'
 
 jobs:
     validation:
