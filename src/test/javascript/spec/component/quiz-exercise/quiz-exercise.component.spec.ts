@@ -316,16 +316,6 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.exportQuiz).toHaveBeenCalledOnce();
     });
 
-    it('should return quiz is over', () => {
-        quizExercise.quizEnded = true;
-        expect(comp.quizIsOver(quizExercise)).toBeTrue();
-    });
-
-    it('should return quiz is not over', () => {
-        quizExercise.quizEnded = false;
-        expect(comp.quizIsOver(quizExercise)).toBeFalse();
-    });
-
     it('should return quiz id', () => {
         expect(comp.trackId(0, quizExercise)).toBe(456);
     });

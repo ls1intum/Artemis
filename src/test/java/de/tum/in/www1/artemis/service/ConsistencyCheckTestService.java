@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.util.RequestUtilService;
  * 2) Jenkins + Gitlab
  */
 @Service
-public class ConsistencyCheckServiceTest {
+public class ConsistencyCheckTestService {
 
     @Autowired
     private DatabaseUtilService database;

@@ -17,7 +17,6 @@ import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -35,6 +34,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "progexgitintegration";
+
+    private static final String COMBINE_COMMITS_ENDPOINT = ProgrammingExerciseResourceEndpoints.ROOT + ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS;
 
     @Autowired
     private GitUtilService gitUtilService;
@@ -121,20 +122,17 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(getAllCommits(localGit)).hasSize(3);
         assertThat(getAllCommits(remoteGit)).hasSize(3);
 
-        final var path = ProgrammingExerciseResourceEndpoints.ROOT
-                + ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var path = COMBINE_COMMITS_ENDPOINT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(path, Void.class, HttpStatus.OK);
         assertThat(getAllCommits(localGit)).hasSize(1);
         assertThat(getAllCommits(remoteGit)).hasSize(1);
     }
 
-    @Disabled("TODO FIX SERVER TEST")
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits_invalidId_notFound() throws Exception {
-        programmingExercise.setId(20L);
-        final var path = ProgrammingExerciseResourceEndpoints.ROOT
-                + ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        programmingExercise.setId(798724305923532L);
+        final var path = COMBINE_COMMITS_ENDPOINT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(path, Void.class, HttpStatus.NOT_FOUND);
     }
 
@@ -142,8 +140,7 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBam
     @WithMockUser(username = TEST_PREFIX + "instructoralt1", roles = "INSTRUCTOR")
     void testCombineTemplateRepositoryCommits_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", TEST_PREFIX + "instructoralt");
-        final var path = ProgrammingExerciseResourceEndpoints.ROOT
-                + ProgrammingExerciseResourceEndpoints.COMBINE_COMMITS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
+        final var path = COMBINE_COMMITS_ENDPOINT.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(path, Void.class, HttpStatus.FORBIDDEN);
     }
 

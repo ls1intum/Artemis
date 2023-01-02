@@ -802,7 +802,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         // End the quiz right now so that results can be processed
         quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
-        assert quizExercise != null;
+        assertThat(quizExercise).isNotNull();
         quizExercise.setDuration((int) Duration.between(quizExercise.getReleaseDate(), ZonedDateTime.now()).getSeconds() - Constants.QUIZ_GRACE_PERIOD_IN_SECONDS);
         exerciseRepository.saveAndFlush(quizExercise);
 
