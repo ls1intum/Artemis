@@ -49,8 +49,8 @@ describe('TextExercise Import Component', () => {
 
         // THEN
         expect(searchSpy).toHaveBeenCalledTimes(2);
-        expect(searchSpy).toHaveBeenCalledWith(expect.any(Subject), 0);
-        expect(searchSpy).toHaveBeenCalledWith(expect.any(Subject), 300);
+        expect(searchSpy).toHaveBeenCalledWith(expect.any(Subject), 0, expect.any(TextExercisePagingService));
+        expect(searchSpy).toHaveBeenCalledWith(expect.any(Subject), 300, expect.any(TextExercisePagingService));
     });
 
     it('should initialize the content', () => {
