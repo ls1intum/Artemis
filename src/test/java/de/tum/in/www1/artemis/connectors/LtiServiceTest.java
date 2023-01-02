@@ -144,7 +144,7 @@ class LtiServiceTest {
 
         assertThat(user.getGroups()).contains(courseStudentGroupName);
         assertThat(user.getGroups()).contains(LtiService.LTI_GROUP_NAME);
-        assertEquals(ltiUserId.getLtiUserId(), "ltiUserId");
+        assertEquals("ltiUserId", ltiUserId.getLtiUserId());
 
         verify(userCreationService, times(1)).saveUser(user);
         verify(artemisAuthenticationProvider, times(1)).addUserToGroup(user, courseStudentGroupName);
@@ -159,7 +159,7 @@ class LtiServiceTest {
 
         ltiService.authenticateLtiUser("useremail@tum.de", "userid", "username", "firstname", "lastname", onlineCourseConfiguration.isRequireExistingUser());
 
-        assertEquals(auth, SecurityContextHolder.getContext().getAuthentication());
+        assertEquals(SecurityContextHolder.getContext().getAuthentication(), auth);
     }
 
     @Test
