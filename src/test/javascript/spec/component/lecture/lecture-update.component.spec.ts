@@ -33,6 +33,7 @@ describe('Lecture', () => {
     let lectureServiceFindAllByLectureIdStub: jest.SpyInstance;
     let location: Location;
     let router: Router;
+    let activatedRoute: ActivatedRoute;
 
     let pastLecture: Lecture;
 
@@ -64,9 +65,11 @@ describe('Lecture', () => {
                     provide: ActivatedRoute,
                     useValue: {
                         parent: {
-                            data: of({ course: { id: 1 }, lecture: { id: 6 } }),
+                            data: of({ course: { id: 1 } }),
                         },
-                        queryParams: of({}),
+                        queryParams: of({
+                            params: {},
+                        }),
                         snapshot: {
                             paramMap: convertToParamMap({
                                 courseId: '1',
@@ -131,6 +134,9 @@ describe('Lecture', () => {
     }));
 
     it('should edit a lecture', fakeAsync(() => {
+        activatedRoute = TestBed.inject(ActivatedRoute);
+        activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6 } });
+
         lectureComponentFixture.detectChanges();
         lectureUpdateComponent.lecture = { id: 6, title: 'test1Updated' } as Lecture;
 
@@ -156,7 +162,7 @@ describe('Lecture', () => {
         expect(updateSpy).toHaveBeenCalledWith({ id: 6, title: 'test1Updated' });
     }));
 
-    it('should show wizard mode', fakeAsync(() => {
+    it('should switch to wizard mode', fakeAsync(() => {
         lectureUpdateComponent.isShowingWizardMode = false;
         const wizardModeButton = jest.spyOn(lectureUpdateComponent, 'toggleWizardMode');
         lectureUpdateComponent.toggleWizardMode();
@@ -165,7 +171,23 @@ describe('Lecture', () => {
         expect(lectureUpdateComponent.isShowingWizardMode).toBeTrue();
     }));
 
-    it('should show process units', fakeAsync(() => {
+    it('should be in wizard mode', fakeAsync(() => {
+        activatedRoute = TestBed.inject(ActivatedRoute);
+        activatedRoute.snapshot.queryParams = of({
+            shouldBeInWizardMode: true,
+        });
+
+        lectureUpdateComponentFixture.detectChanges();
+        tick();
+
+        activatedRoute.snapshot.queryParams.subscribe((par: any) => {
+            lectureUpdateComponent.isShowingWizardMode = par.shouldBeInWizardMode;
+        });
+
+        expect(lectureUpdateComponent.isShowingWizardMode).toBeTrue();
+    }));
+
+    it('should select process units automatically', fakeAsync(() => {
         lectureUpdateComponent.processUnitMode = false;
         const selectProcessUnit = jest.spyOn(lectureUpdateComponent, 'onSelectProcessUnit');
         lectureUpdateComponent.onSelectProcessUnit();
