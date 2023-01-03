@@ -60,6 +60,7 @@ public class LearningGoal extends DomainObject {
     private Set<Course> consecutiveCourses = new HashSet<>();
 
     @OneToMany(mappedBy = "learningGoal", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnoreProperties({ "user", "learningGoal" })
     private Set<LearningGoalProgress> userProgress = new HashSet<>();
 
     public String getTitle() {

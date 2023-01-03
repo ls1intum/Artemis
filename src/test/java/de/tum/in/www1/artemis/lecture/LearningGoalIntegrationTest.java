@@ -147,27 +147,28 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
 
+        createLearningGoal();
+        createPrerequisite();
         createLectureOne(course);
         createLectureTwo(course);
-        textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp);
+        var learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
+        textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(learningGoal));
         createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 50, true);
-        modelingExercise = createModelingExercise(pastTimestamp, pastTimestamp, pastTimestamp);
+        modelingExercise = createModelingExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(learningGoal));
         createParticipationSubmissionAndResult(idOfModelingExercise, student1, 10.0, 0.0, 50, true);
-        teamTextExercise = createTeamTextExercise(pastTimestamp, pastTimestamp, pastTimestamp);
+        teamTextExercise = createTeamTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(learningGoal));
         User tutor = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
         // will also create users
         teams = database.addTeamsForExerciseFixedTeamSize(TEST_PREFIX, "lgi", teamTextExercise, 5, tutor, 3);
 
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 50, true);
 
+        creatingLectureUnitsOfLectureOne();
+        creatingLectureUnitsOfLectureTwo();
+
         await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
         await().until(() -> participantScoreRepository.findAllByExercise(teamTextExercise).size() == 1);
         await().until(() -> participantScoreRepository.findAllByExercise(modelingExercise).size() == 1);
-
-        creatingLectureUnitsOfLectureOne();
-        creatingLectureUnitsOfLectureTwo();
-        createLearningGoal();
-        createPrerequisite();
     }
 
     private void createLearningGoal() {
@@ -177,24 +178,14 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         learningGoal.setDescription("This is an example learning goal");
         learningGoal.setTaxonomy(LearningGoalTaxonomy.UNDERSTAND);
         learningGoal.setCourse(course);
+        learningGoal = learningGoalRepository.save(learningGoal);
+        idOfLearningGoal = learningGoal.getId();
 
         LearningGoal otherLearningGoal = new LearningGoal();
         otherLearningGoal.setTitle("Detailed sub learning goal");
         otherLearningGoal.setDescription("A communi observantia non est recedendum.");
         otherLearningGoal.setCourse(course);
         learningGoalRepository.save(otherLearningGoal);
-
-        var lecture1 = lectureRepository.findByIdWithLectureUnits(idOfLectureOne).get();
-        var lecture2 = lectureRepository.findByIdWithLectureUnits(idOfLectureTwo).get();
-        Set<LectureUnit> connectedLectureUnits = new HashSet<>(lecture1.getLectureUnits());
-        connectedLectureUnits.addAll(lecture2.getLectureUnits());
-
-        learningGoal.setLectureUnits(connectedLectureUnits.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet()));
-        learningGoal.setExercises(connectedLectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
-                .map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).collect(Collectors.toSet()));
-
-        learningGoal = learningGoalRepository.save(learningGoal);
-        idOfLearningGoal = learningGoal.getId();
     }
 
     private void createPrerequisite() {
@@ -207,8 +198,11 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private void creatingLectureUnitsOfLectureOne() {
         // creating lecture units for lecture one
+        var learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
+
         TextUnit textUnit = new TextUnit();
         textUnit.setName("TextUnitOfLectureOne");
+        textUnit.setLearningGoals(Set.of(learningGoal));
         textUnit = textUnitRepository.save(textUnit);
         idOfTextUnitOfLectureOne = textUnit.getId();
 
@@ -274,7 +268,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         idOfLectureTwo = lectureTwo.getId();
     }
 
-    private TextExercise createTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+    private TextExercise createTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp, Set<LearningGoal> learningGoals) {
         Course course;
         // creating text exercise with Result
         course = courseRepository.findWithEagerExercisesById(idOfCourse);
@@ -282,13 +276,15 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
+        textExercise.setLearningGoals(learningGoals);
         textExercise = exerciseRepository.save(textExercise);
         idOfTextExercise = textExercise.getId();
 
         return textExercise;
     }
 
-    private ModelingExercise createModelingExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+    private ModelingExercise createModelingExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp,
+            Set<LearningGoal> learningGoals) {
         Course course;
         // creating text exercise with Result
         course = courseRepository.findWithEagerExercisesById(idOfCourse);
@@ -296,13 +292,14 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         modelingExercise.setMaxPoints(10.0);
         modelingExercise.setBonusPoints(0.0);
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
+        modelingExercise.setLearningGoals(learningGoals);
         modelingExercise = exerciseRepository.save(modelingExercise);
         idOfModelingExercise = modelingExercise.getId();
 
         return modelingExercise;
     }
 
-    private TextExercise createTeamTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+    private TextExercise createTeamTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp, Set<LearningGoal> learningGoals) {
         Course course;
         // creating text exercise with Result
         course = courseRepository.findWithEagerExercisesById(idOfCourse);
@@ -311,6 +308,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
+        textExercise.setLearningGoals(learningGoals);
         textExercise = exerciseRepository.save(textExercise);
         idOfTeamTextExercise = textExercise.getId();
 
@@ -571,13 +569,12 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(2), 10.0, 0.0, 10, true);
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(3), 10.0, 0.0, 50, true);
 
-        await().until(() -> participantScoreRepository.findAll().size() == 4);
         await().until(() -> participantScoreScheduleService.isIdle());
 
         CourseLearningGoalProgressDTO courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.OK,
                 CourseLearningGoalProgressDTO.class);
 
-        // assertThat(courseLearningGoalProgress.averageScoreAchievedInLearningGoal).isEqualTo(30.0);
+        assertThat(courseLearningGoalProgress.averageStudentScore()).isEqualTo(31.5);
     }
 
     @Test
@@ -606,20 +603,18 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         createParticipationSubmissionAndResult(idOfTextExercise, instructor1, 10.0, 0.0, 100, true); // will be ignored as not a student
 
-        await().until(() -> participantScoreRepository.findAll().size() == 5);
         await().until(() -> participantScoreScheduleService.isIdle());
 
         CourseLearningGoalProgressDTO courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.OK,
                 CourseLearningGoalProgressDTO.class);
 
-        // assertThat(courseLearningGoalProgress.averageScoreAchievedInLearningGoal).isEqualTo(44.0);
+        assertThat(courseLearningGoalProgress.averageStudentScore()).isEqualTo(46.3);
     }
 
     private void cleanUpInitialParticipations() {
         participationService.deleteAllByExerciseId(idOfTextExercise, true, true);
         participationService.deleteAllByExerciseId(idOfModelingExercise, true, true);
         participationService.deleteAllByExerciseId(idOfTeamTextExercise, true, true);
-        await().until(() -> participantScoreRepository.findAll().isEmpty());
         await().until(() -> participantScoreScheduleService.isIdle());
     }
 

@@ -197,8 +197,16 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoal> getLearningGoal(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.debug("REST request to get LearningGoal : {}", learningGoalId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(learningGoalId, courseId);
+
+        if (!learningGoal.getCourse().getId().equals(courseId)) {
+            throw new BadRequestException("The learning goal does not belong to the specified course");
+        }
+
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
         // Set completion stations and remove exercise units (redundant as we also return all exercises)
         learningGoal.setLectureUnits(learningGoal.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).peek(lectureUnit -> {
             lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));

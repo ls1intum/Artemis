@@ -148,6 +148,9 @@ public class LearningGoalProgress implements Serializable {
                 return false;
             }
             LearningGoalUserId that = (LearningGoalUserId) obj;
+            if (userId == null || that.userId == null) {
+                return false;
+            }
             return userId.equals(that.userId) && learningGoalId.equals(that.learningGoalId);
         }
 
