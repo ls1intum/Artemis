@@ -57,6 +57,15 @@ export class ExerciseImportComponent implements OnInit {
         if (!this.exerciseType || this.exerciseType == ExerciseType.FILE_UPLOAD) {
             return;
         }
+        this.initPagingService();
+        this.titleKey = `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
+        this.content = { resultsOnPage: [], numberOfPages: 0 };
+
+        this.performSearch(this.sort, 0);
+        this.performSearch(this.search, 300);
+    }
+
+    private initPagingService() {
         switch (this.exerciseType) {
             case ExerciseType.MODELING:
                 this.pagingService = this.injector.get(ModelingExercisePagingService);
@@ -73,12 +82,6 @@ export class ExerciseImportComponent implements OnInit {
             default:
                 throw new Error('Unsupported exercise type: ' + this.exerciseType);
         }
-
-        this.titleKey = `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
-        this.content = { resultsOnPage: [], numberOfPages: 0 };
-
-        this.performSearch(this.sort, 0);
-        this.performSearch(this.search, 300);
     }
 
     /** Method to perform the search based on a search subject
