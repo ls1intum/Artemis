@@ -23,7 +23,6 @@ describe('ModelingExercise Service', () => {
             ],
         });
         service = TestBed.inject(ModelingExercisePagingService);
-        service.resourceUrl = 'resourceUrl';
         httpMock = TestBed.inject(HttpTestingController);
     });
 

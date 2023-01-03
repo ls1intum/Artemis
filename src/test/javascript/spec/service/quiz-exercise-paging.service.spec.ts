@@ -23,7 +23,6 @@ describe('QuizExercise Paging Service', () => {
             ],
         });
         service = TestBed.inject(QuizExercisePagingService);
-        service.resourceUrl = 'resourceUrl';
         httpMock = TestBed.inject(HttpTestingController);
     });
 
