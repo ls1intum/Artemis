@@ -713,4 +713,12 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
         }
         return results;
     }
+
+    @Query("""
+            SELECT DISTINCT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks
+            WHERE r.participation.id = :participationId
+            """)
+    Set<Result> findWithEagerFeedbackByParticipationId(Long participationId);
 }

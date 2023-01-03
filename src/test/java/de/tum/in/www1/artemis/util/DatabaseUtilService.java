@@ -74,15 +74,14 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
-import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AssessmentService;
+import de.tum.in.www1.artemis.service.ModelingSubmissionService;
+import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import jakarta.validation.constraints.NotNull;
@@ -221,15 +220,6 @@ public class DatabaseUtilService {
 
     @Autowired
     private ConversationRepository conversationRepository;
-
-    @Autowired
-    private ChannelRepository channelRepository;
-
-    @Autowired
-    private GroupChatRepository groupChatRepository;
-
-    @Autowired
-    private OneToOneChatRepository oneToOneChatRepository;
 
     @Autowired
     private ConversationParticipantRepository conversationParticipantRepository;
@@ -1931,6 +1921,17 @@ public class DatabaseUtilService {
 
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
         Result result = new Result().participation(participation).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
+        result = resultRepo.save(result);
+        var submission = new ProgrammingSubmission();
+        if (completionDate != null) {
+            submission.setSubmissionDate(completionDate.minusSeconds(10));
+        }
+        submission.setType(SubmissionType.MANUAL);
+        submission.setCommitHash("abceasdkaljsdsakldjaslkdj");
+        submission.setParticipation(participation);
+        submission = submissionRepository.save(submission);
+        result.setSubmission(submission);
+        submission.addResult(result);
         return resultRepo.save(result);
     }
 

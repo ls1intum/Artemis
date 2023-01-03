@@ -161,7 +161,7 @@ class ProgrammingExerciseIntegrationTestService {
         database.addUsers(userPrefix, 3, 2, 2, 2);
         course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
         programmingExerciseInExam = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         programmingExerciseInExam = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseInExam.getId())
                 .orElseThrow();
@@ -618,12 +618,30 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetProgrammingExerciseWithSetupParticipations() throws Exception {
-        database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "instructor1");
+        var studentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "instructor1");
+        var templateResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), programmingExercise.getTemplateParticipation());
+        var solutionResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), programmingExercise.getSolutionParticipation());
+        var studentResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(10), studentParticipation);
+        database.addVariousVisibilityFeedbackToResults(templateResult);
+        database.addVariousVisibilityFeedbackToResults(solutionResult);
+        database.addVariousVisibilityFeedbackToResults(studentResult);
+
         final var path = ROOT + PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         var programmingExerciseServer = request.get(path, HttpStatus.OK, ProgrammingExercise.class);
         checkTemplateAndSolutionParticipationsFromServer(programmingExerciseServer);
-        assertThat(programmingExerciseServer.getStudentParticipations()).isNotEmpty();
-        // TODO add more assertions
+        assertThat(programmingExerciseServer.getStudentParticipations()).hasSize(1);
+        var assignmentParticipation = programmingExerciseServer.getStudentParticipations().iterator().next();
+        assertThat(assignmentParticipation.getParticipantIdentifier()).isEqualTo(userPrefix + "instructor1");
+        assertThat(assignmentParticipation.getResults()).isNotEmpty();
+        assertThat(programmingExerciseServer.getTemplateParticipation().getResults()).isNotEmpty();
+        var templateResultFromServer = programmingExerciseServer.getTemplateParticipation().getResults().iterator().next();
+        assertThat(templateResultFromServer).isEqualTo(templateResult);
+        assertThat(programmingExerciseServer.getTemplateParticipation().getResults()).isNotEmpty();
+        assertThat(programmingExerciseServer.getSolutionParticipation().getResults()).isNotEmpty();
+        var solutionResultFromServer = programmingExerciseServer.getSolutionParticipation().getResults().iterator().next();
+        assertThat(solutionResultFromServer).isEqualTo(solutionResult);
+
+        // TODO add more assertions, in particular we need to make sure that the results are correct
     }
 
     void testGetProgrammingExerciseWithJustTemplateAndSolutionParticipation(boolean withSubmissionResults) throws Exception {
@@ -1611,10 +1629,6 @@ class ProgrammingExerciseIntegrationTestService {
         assertThat(jplagZipArchive).isNotNull();
         assertThat(jplagZipArchive).exists();
         try (ZipFile zipFile = new ZipFile(jplagZipArchive)) {
-            // var entries = zipFile.entries();
-            // while(entries.hasMoreElements()) {
-            // System.out.println(entries.nextElement().getName());
-            // }
             assertThat(zipFile.getEntry("overview.json")).isNotNull();
             assertThat(zipFile.getEntry("submissions/Submission-1.java/Submission-1.java")).isNotNull();
             assertThat(zipFile.getEntry("submissions/Submission-2.java/Submission-2.java")).isNotNull();

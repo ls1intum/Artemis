@@ -167,15 +167,15 @@ public class ExamService {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
         for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
             for (Exercise exercise : exerciseGroup.getExercises()) {
-                if (exercise instanceof ProgrammingExercise) {
+                if (exercise instanceof ProgrammingExercise programmingExercise) {
                     ProgrammingExercise exerciseWithTemplateAndSolutionParticipation = programmingExerciseRepository
-                            .findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(exercise.getId());
-                    ((ProgrammingExercise) exercise).setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
-                    ((ProgrammingExercise) exercise).setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
+                            .findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                    programmingExercise.setTemplateParticipation(exerciseWithTemplateAndSolutionParticipation.getTemplateParticipation());
+                    programmingExercise.setSolutionParticipation(exerciseWithTemplateAndSolutionParticipation.getSolutionParticipation());
                 }
-                if (exercise instanceof QuizExercise) {
-                    QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
-                    ((QuizExercise) exercise).setQuizQuestions(quizExercise.getQuizQuestions());
+                if (exercise instanceof QuizExercise quizExercise) {
+                    QuizExercise quizExerciseWithQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId());
+                    quizExercise.setQuizQuestions(quizExerciseWithQuestions.getQuizQuestions());
                 }
             }
         }

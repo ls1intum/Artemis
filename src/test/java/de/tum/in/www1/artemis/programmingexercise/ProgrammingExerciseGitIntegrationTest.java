@@ -101,12 +101,10 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBam
         assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class,
                 () -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class,
                 () -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(Long.MAX_VALUE));
-        assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(Long.MAX_VALUE));
     }
 
     @Test

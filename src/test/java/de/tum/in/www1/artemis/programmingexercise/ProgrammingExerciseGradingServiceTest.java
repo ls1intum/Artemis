@@ -541,7 +541,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         var testCases = createTestCases(false);
         var testParticipations = createTestParticipations();
@@ -556,26 +556,24 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         // Tests
-        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         // template 0 %
         {
             var participation = programmingExercise.getTemplateParticipation();
-            var results = participation.getResults();
+            var results = resultRepository.findWithEagerFeedbackByParticipationId(participation.getId());
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
         // solution 100 %
         {
             var participation = programmingExercise.getSolutionParticipation();
-            var results = participation.getResults();
+            var results = resultRepository.findWithEagerFeedbackByParticipationId(participation.getId());
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, 3, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
         verifyStudentScoreCalculations(testParticipations);
@@ -600,7 +598,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         final var testCases = createTestCases(true);
         final var testParticipations = createTestParticipations();
@@ -615,28 +613,26 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         // Tests
-        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         // the invisible test case should however be visible for the template and solution repos
 
         // template 0 %
         {
             var participation = programmingExercise.getTemplateParticipation();
-            var results = participation.getResults();
+            var results = resultRepository.findWithEagerFeedbackByParticipationId(participation.getId());
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, 4, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
         // solution 100 %
         {
             var participation = programmingExercise.getSolutionParticipation();
-            var results = participation.getResults();
+            var results = resultRepository.findWithEagerFeedbackByParticipationId(participation.getId());
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 100D, 4, AssessmentType.AUTOMATIC);
-            assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
 
         verifyStudentScoreCalculations(testParticipations);
@@ -648,7 +644,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         final var testCases = createTestCases(false);
         final var testParticipations = createTestParticipations();
@@ -669,7 +665,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         final var testCases = createTestCases(false);
         final var testParticipations = createTestParticipations();
@@ -680,7 +676,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         participationWithIndividualDueDate = studentParticipationRepository.save((StudentParticipation) participationWithIndividualDueDate);
         final Long participationWithIndividualDueDateId = participationWithIndividualDueDate.getId();
 
-        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         final var updated = programmingExerciseGradingService.updateResultsOnlyRegularDueDateParticipations(programmingExercise);
         // four student results + template + solution
@@ -696,7 +692,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
         programmingExercise = (ProgrammingExercise) database.addMaxScoreAndBonusPointsToExercise(programmingExercise);
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
-        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationLatestResultElseThrow(programmingExercise.getId());
+        programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         final var testCases = createTestCases(false);
         createTestParticipations();
