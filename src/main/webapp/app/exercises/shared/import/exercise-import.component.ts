@@ -92,7 +92,7 @@ export class ExerciseImportComponent implements OnInit {
      * @param searchSubject The search subject which we use to search.
      * @param debounce The delay we apply to delay the feedback / wait for input
      */
-    protected performSearch(searchSubject: Subject<void>, debounce: number) {
+    private performSearch(searchSubject: Subject<void>, debounce: number) {
         searchSubject
             .pipe(
                 debounceTime(debounce),
