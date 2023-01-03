@@ -47,7 +47,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private User student1;
 
-    private static final int MAX_POSTS_PER_PAGE = 20;
+    static final int MAX_POSTS_PER_PAGE = 20;
 
     @BeforeEach
     void initTestCase() {
