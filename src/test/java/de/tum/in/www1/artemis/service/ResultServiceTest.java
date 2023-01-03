@@ -80,7 +80,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     private void testGetFeedbacksForResultAsCurrentUser() {
-        Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, programmingExerciseStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
 
         assertThat(resultService.getFeedbacksForResult(result)).isEqualTo(result.getFeedbacks());
@@ -92,7 +92,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         Exam exam = examStudentParticipation.getExercise().getExamViaExerciseGroupOrCourseMember();
         exam.setPublishResultsDate(ZonedDateTime.now().plusDays(2));
         examRepository.save(exam);
-        Result result = database.addResultToParticipation(null, null, examStudentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, examStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
@@ -106,7 +106,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         Exam exam = examStudentParticipation.getExercise().getExamViaExerciseGroupOrCourseMember();
         exam.setPublishResultsDate(ZonedDateTime.now().minusDays(2));
         examRepository.save(exam);
-        Result result = database.addResultToParticipation(null, null, examStudentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, examStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
@@ -119,7 +119,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testGetFeedbacksForResultAsStudent_shouldFilterInCourseBeforeDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, programmingExerciseStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible() && !feedback.isAfterDueDate()).toList();
@@ -132,7 +132,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testGetFeedbacksForResultAsStudent_shouldFilterInCourseAfterDueDate() {
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = database.addResultToParticipation(null, null, programmingExerciseStudentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, programmingExerciseStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
 
         List<Feedback> expectedFeedbacks = result.getFeedbacks().stream().filter(feedback -> !feedback.isInvisible()).toList();
@@ -146,7 +146,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
@@ -162,7 +162,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
@@ -177,7 +177,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         programmingExercise.setDueDate(ZonedDateTime.now().minusDays(4));
         programmingExercise.setAssessmentDueDate(ZonedDateTime.now().minusDays(2));
         programmingExerciseRepository.save(programmingExercise);
-        Result result = database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseStudentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
@@ -198,7 +198,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         participation2.setIndividualDueDate(ZonedDateTime.now().plusDays(2));
         participationRepository.save(participation2);
 
-        Result result = database.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 
@@ -226,7 +226,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         participation2.setIndividualDueDate(ZonedDateTime.now().minusHours(1));
         participationRepository.save(participation2);
 
-        Result result = database.addResultToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(assessmentType, null, programmingExerciseStudentParticipation);
         result = database.addVariousVisibilityFeedbackToResults(result);
         result = database.addFeedbackToResult(ModelFactory.createPositiveFeedback(FeedbackType.MANUAL), result);
 

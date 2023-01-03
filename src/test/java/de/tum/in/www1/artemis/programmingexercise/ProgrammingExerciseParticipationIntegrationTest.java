@@ -108,7 +108,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
         programmingExercise.setAssessmentDueDate(assessmentDueDate);
         programmingExerciseRepository.save(programmingExercise);
         // Add a parameterized second result
-        var secondResult = database.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
+        var secondResult = database.addResultWitSubmissionToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
         StudentParticipation participation = (StudentParticipation) secondResult.getParticipation();
 
         // Expect the request to always be ok because it should at least return the first automatic result
@@ -357,7 +357,7 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void checkIfParticipationHasResult_withResult_returnsTrue() throws Exception {
         addStudentParticipationWithResult(null, null);
-        database.addResultToParticipation(null, null, programmingExerciseParticipation);
+        database.addResultWitSubmissionToParticipation(null, null, programmingExerciseParticipation);
 
         final var response = request.get("/api/programming-exercise-participations/" + programmingExerciseParticipation.getId() + "/has-result", HttpStatus.OK, Boolean.class);
 
@@ -415,20 +415,20 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
         programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        Result result = database.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
         return database.addVariousVisibilityFeedbackToResults(result);
     }
 
     private TemplateProgrammingExerciseParticipation addTemplateParticipationWithResult() {
         programmingExerciseParticipation = database.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
-        Result result = database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
         database.addVariousVisibilityFeedbackToResults(result);
         return (TemplateProgrammingExerciseParticipation) programmingExerciseParticipation;
     }
 
     private SolutionProgrammingExerciseParticipation addSolutionParticipationWithResult() {
         programmingExerciseParticipation = database.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
-        Result result = database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
         database.addVariousVisibilityFeedbackToResults(result);
         return (SolutionProgrammingExerciseParticipation) programmingExerciseParticipation;
     }

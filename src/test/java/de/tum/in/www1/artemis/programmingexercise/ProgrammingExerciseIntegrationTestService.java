@@ -231,7 +231,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = database.createAndSaveParticipationForExercise(programmingExercise, userPrefix + "student1");
-        database.addResultToParticipation(null, null, participation);
+        database.addResultWitSubmissionToParticipation(null, null, participation);
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
@@ -244,7 +244,7 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusHours(5L));
         programmingExerciseRepository.save(programmingExercise);
         StudentParticipation participation = database.createAndSaveParticipationForExercise(programmingExercise, userPrefix + "student1");
-        database.addResultToParticipation(null, null, participation);
+        database.addResultWitSubmissionToParticipation(null, null, participation);
 
         ProgrammingExerciseTestCaseStateDTO releaseStateDTO = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/test-case-state", HttpStatus.OK,
                 ProgrammingExerciseTestCaseStateDTO.class);
@@ -619,9 +619,11 @@ class ProgrammingExerciseIntegrationTestService {
 
     void testGetProgrammingExerciseWithSetupParticipations() throws Exception {
         var studentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "instructor1");
-        var templateResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), programmingExercise.getTemplateParticipation());
-        var solutionResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1), programmingExercise.getSolutionParticipation());
-        var studentResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(10), studentParticipation);
+        var templateResult = database.addResultWitSubmissionToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1),
+                programmingExercise.getTemplateParticipation());
+        var solutionResult = database.addResultWitSubmissionToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1),
+                programmingExercise.getSolutionParticipation());
+        var studentResult = database.addResultWitSubmissionToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusMinutes(10), studentParticipation);
         database.addVariousVisibilityFeedbackToResults(templateResult);
         database.addVariousVisibilityFeedbackToResults(solutionResult);
         database.addVariousVisibilityFeedbackToResults(studentResult);

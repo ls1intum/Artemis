@@ -149,9 +149,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         bambooRequestMockProvider.enableMockingOfRequests();
         doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
         String login = TEST_PREFIX + "student1";
-        StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
-        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
-        bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
+        bambooRequestMockProvider.mockTriggerBuild(participation);
+        bambooRequestMockProvider.mockTriggerBuild(participation);
         request.postWithoutLocation("/api/programming-submissions/" + participation.getId() + "/trigger-build?submissionType=INSTRUCTOR", null, HttpStatus.OK, new HttpHeaders());
 
         List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
@@ -560,7 +560,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         exercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
-        Result result = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
+        Result result = database.addResultWitSubmissionToParticipation(AssessmentType.SEMI_AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
                 programmingExerciseStudentParticipation);
 
         result.setSubmission(submission);
@@ -620,7 +620,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         submission.setParticipation(programmingExerciseStudentParticipation);
         submission = submissionRepository.save(submission);
 
-        Result result = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
+                programmingExerciseStudentParticipation);
 
         result.setSubmission(submission);
         submission.addResult(result);
@@ -643,7 +644,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testLockAndGetProgrammingSubmissionWithoutManualResult() throws Exception {
-        var result = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
+        var result = database.addResultWitSubmissionToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30),
+                programmingExerciseStudentParticipation);
         var submission = database.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         exercise.setAssessmentType(AssessmentType.AUTOMATIC);
         exercise = programmingExerciseRepository.save(exercise);
@@ -685,18 +687,19 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         var newResult = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(2), programmingExerciseStudentParticipation);
         programmingExerciseStudentParticipation.addResult(newResult);
         var submission = database.addProgrammingSubmissionToResultAndParticipation(newResult, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
+        assertThat(submission.getLatestResult()).isNotNull();
 
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment?lock=true";
         ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
+        assertThat(storedSubmission).isNotNull();
 
         assertThat(storedSubmission.getLatestResult()).as("result is set").isNotNull();
         assertThat(storedSubmission.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         var automaticResults = storedSubmission.getLatestResult().getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC).toList();
         assertThat(storedSubmission.getLatestResult().getFeedbacks()).hasSameSizeAs(automaticResults);
         assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
-        assertThat(submission.getLatestResult()).isNotNull();
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAllByParticipationIdWithResults(programmingExerciseStudentParticipation.getId());

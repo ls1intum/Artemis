@@ -1922,12 +1922,18 @@ public class DatabaseUtilService {
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
         Result result = new Result().participation(participation).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
         result = resultRepo.save(result);
+        return resultRepo.save(result);
+    }
+
+    public Result addResultWitSubmissionToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
+        Result result = new Result().participation(participation).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
+        result = resultRepo.save(result);
         var submission = new ProgrammingSubmission();
         if (completionDate != null) {
             submission.setSubmissionDate(completionDate.minusSeconds(10));
         }
         submission.setType(SubmissionType.MANUAL);
-        submission.setCommitHash("abceasdkaljsdsakldjaslkdj");
+        submission.setCommitHash("9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         submission.setParticipation(participation);
         submission = submissionRepository.save(submission);
         result.setSubmission(submission);

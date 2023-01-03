@@ -165,10 +165,11 @@ public class ProgrammingSubmissionResource {
             throw new AccessForbiddenException();
         }
 
+        User user = userRepository.getUserWithGroupsAndAuthorities();
         // The editor is allowed to trigger an instructor build for template and solution participations,
         // but not for student participations. The instructor however, might trigger student participations.
-        if (submissionType == SubmissionType.INSTRUCTOR && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise())
-                && !(authCheckService.isAtLeastEditorForExercise(participation.getExercise())
+        if (submissionType == SubmissionType.INSTRUCTOR && !authCheckService.isAtLeastInstructorForExercise(participation.getExercise(), user)
+                && !(authCheckService.isAtLeastEditorForExercise(participation.getExercise(), user)
                         && (participation instanceof TemplateProgrammingExerciseParticipation || participation instanceof SolutionProgrammingExerciseParticipation))) {
             throw new AccessForbiddenException();
         }

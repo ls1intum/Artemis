@@ -188,7 +188,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void shouldReturnTheResultDetailsForAnInstructorWithoutSensitiveInformationFiltered() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
         result = database.addVariousVisibilityFeedbackToResults(result);
 
@@ -204,7 +204,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnTheResultDetailsForAStudentParticipation_studentForbidden() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
 
         request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
@@ -213,7 +213,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnTheResultDetailsForAProgrammingExerciseStudentParticipation_studentForbidden() throws Exception {
-        Result result = database.addResultToParticipation(null, null, solutionParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, solutionParticipation);
         result = database.addSampleFeedbackToResults(result);
         request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + result.getId() + "/details", HttpStatus.FORBIDDEN, Feedback.class);
     }
@@ -221,7 +221,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnNotFoundForNonExistingResult() throws Exception {
-        Result result = database.addResultToParticipation(null, null, solutionParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, solutionParticipation);
         database.addSampleFeedbackToResults(result);
         request.getList("/api/participations/" + result.getParticipation().getId() + "/results/" + 11667 + "/details", HttpStatus.NOT_FOUND, Feedback.class);
     }
@@ -229,7 +229,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void shouldReturnBadRequestForNonMatchingParticipationId() throws Exception {
-        Result result = database.addResultToParticipation(null, null, solutionParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, solutionParticipation);
         database.addSampleFeedbackToResults(result);
         request.getList("/api/participations/" + 1337 + "/results/" + result.getId() + "/details", HttpStatus.BAD_REQUEST, Feedback.class);
     }
@@ -503,7 +503,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getResult() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
         Result returnedResult = request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK, Result.class);
         assertThat(returnedResult).isNotNull().isEqualTo(result);
@@ -512,7 +512,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getResult_asStudent() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, studentParticipation);
         request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
     }
 
@@ -593,7 +593,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThrows(EntityNotFoundException.class, () -> resultRepository.findByIdWithEagerFeedbacksElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> resultRepository.findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(Long.MAX_VALUE));
 
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
         request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.OK);
         assertThat(resultRepository.existsById(result.getId())).isFalse();
@@ -603,7 +603,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void deleteResult_wrongParticipationId() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
         long randomId = 1653;
         request.delete("/api/participations/" + randomId + "/results/" + result.getId(), HttpStatus.BAD_REQUEST);
@@ -613,7 +613,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void deleteResultStudent() throws Exception {
-        Result result = database.addResultToParticipation(null, null, studentParticipation);
+        Result result = database.addResultWitSubmissionToParticipation(null, null, studentParticipation);
         result = database.addSampleFeedbackToResults(result);
         request.delete("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN);
     }
@@ -744,7 +744,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         course.addExercises(modelingExercise);
         modelingExerciseRepository.save(modelingExercise);
         var participation = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        var result = database.addResultToParticipation(null, null, participation);
+        var result = database.addResultWitSubmissionToParticipation(null, null, participation);
         request.postWithResponseBody(externalResultPath(modelingExercise.getId(), TEST_PREFIX + "student1"), result, Result.class, HttpStatus.BAD_REQUEST);
     }
 

@@ -317,14 +317,14 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteResultWithoutSubmission() throws Exception {
         StudentParticipation studentParticipation = database.createAndSaveParticipationForExercise(modelingExercise, TEST_PREFIX + "student1");
-        database.addResultToParticipation(null, null, studentParticipation);
+        database.addResultWitSubmissionToParticipation(null, null, studentParticipation);
         Long participationId = studentParticipation.getId();
 
         // Participation should now exist.
         assertThat(participationRepo.existsById(participationId)).isTrue();
 
         // There should be a submission and no result assigned to the participation.
-        assertThat(submissionRepository.findAllByParticipationId(participationId)).isEmpty();
+        assertThat(submissionRepository.findAllByParticipationId(participationId)).isNotEmpty();
         assertThat(resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId)).hasSize(1);
 
         request.delete("/api/participations/" + participationId, HttpStatus.OK);
@@ -487,9 +487,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         testParticipation.setTestRun(true);
         participationRepo.save(testParticipation);
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class);
-        assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
-                .allMatch(participation -> participation.getStudent().isPresent()).as("No submissions should exist for participations")
-                .allMatch(participation -> participation.getSubmissionCount() == null || participation.getSubmissionCount() == 0);
+        assertThat(participations).as("Exactly 3 participations are returned").as("Only participation that has student are returned").hasSize(3);
+        assertThat(participations).as("All participations should be connected to a student").allMatch(participation -> participation.getStudent().isPresent());
     }
 
     @Test
@@ -497,7 +496,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void getAllParticipationsForExercise_withLatestResult() throws Exception {
         database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
         var participation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student2");
-        database.addResultToParticipation(null, null, participation);
+        database.addResultWitSubmissionToParticipation(null, null, participation);
         var result = ModelFactory.generateResult(true, 70D).participation(participation);
         resultRepository.save(result);
         StudentParticipation testParticipation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student3");
@@ -506,9 +505,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("withLatestResult", "true");
         var participations = request.getList("/api/exercises/" + textExercise.getId() + "/participations", HttpStatus.OK, StudentParticipation.class, params);
-        assertThat(participations).as("Exactly 3 participations are returned").hasSize(3).as("Only participation that has student are returned")
-                .allMatch(p -> p.getStudent().isPresent()).as("No submissions should exist for participations")
-                .allMatch(p -> p.getSubmissionCount() == null || p.getSubmissionCount() == 0);
+        assertThat(participations).as("Exactly 3 participations are returned").hasSize(3);
+        assertThat(participations).as("Only participation that has student are returned").allMatch(p -> p.getStudent().isPresent());
         var participationWithResult = participations.stream().filter(p -> p.getParticipant().equals(database.getUserByLogin(TEST_PREFIX + "student2"))).findFirst().get();
         assertThat(participationWithResult.getResults()).hasSize(1).contains(result);
     }
@@ -800,7 +798,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getParticipationWithLatestResult() throws Exception {
         var participation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-        database.addResultToParticipation(null, null, participation);
+        database.addResultWitSubmissionToParticipation(null, null, participation);
         var result = ModelFactory.generateResult(true, 70D);
         result.participation(participation).setCompletionDate(ZonedDateTime.now().minusHours(2));
         resultRepository.save(result);
