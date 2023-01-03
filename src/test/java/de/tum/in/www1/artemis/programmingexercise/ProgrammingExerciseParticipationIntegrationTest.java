@@ -44,6 +44,12 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     private ParticipationRepository participationRepository;
 
     @Autowired
+    private TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    @Autowired
+    private SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    @Autowired
     private ResultRepository resultRepository;
 
     private ProgrammingExercise programmingExercise;
@@ -179,50 +185,50 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestResultWithFeedbacksForTemplateParticipationAsTutorShouldReturnForbidden() throws Exception {
-        TemplateProgrammingExerciseParticipation participation = addTemplateParticipationWithResult();
+        var participation = addTemplateParticipationWithResult();
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetLatestResultWithFeedbacksForTemplateParticipationAsTutor() throws Exception {
-        TemplateProgrammingExerciseParticipation participation = addTemplateParticipationWithResult();
+        var participation = addTemplateParticipationWithResult();
+        assertThat(participation.getResults().iterator().next().getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
-
         assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLatestResultWithFeedbacksForTemplateParticipationAsInstructor() throws Exception {
-        TemplateProgrammingExerciseParticipation participation = addTemplateParticipationWithResult();
+        var participation = addTemplateParticipationWithResult();
+        assertThat(participation.getResults().iterator().next().getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
-
         assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetLatestResultWithFeedbacksForSolutionParticipationAsTutorShouldReturnForbidden() throws Exception {
-        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult();
+        var participation = addSolutionParticipationWithResult();
         request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.FORBIDDEN, Result.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetLatestResultWithFeedbacksForSolutionParticipationAsTutor() throws Exception {
-        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult();
+        var participation = addSolutionParticipationWithResult();
+        assertThat(participation.getResults().iterator().next().getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
-
         assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetLatestResultWithFeedbacksForSolutionParticipationAsInstructor() throws Exception {
-        SolutionProgrammingExerciseParticipation participation = addSolutionParticipationWithResult();
+        var participation = addSolutionParticipationWithResult();
+        assertThat(participation.getResults().iterator().next().getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
         var requestedResult = request.get(participationsBaseUrl + participation.getId() + "/latest-result-with-feedbacks", HttpStatus.OK, Result.class);
-
         assertThat(requestedResult.getFeedbacks().stream().filter(Feedback::isInvisible)).hasSize(1);
     }
 
@@ -415,22 +421,22 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
 
     private Result addStudentParticipationWithResult(AssessmentType assessmentType, ZonedDateTime completionDate) {
         programmingExerciseParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        Result result = database.addResultWitSubmissionToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
+        Result result = database.addResultToParticipation(assessmentType, completionDate, programmingExerciseParticipation);
         return database.addVariousVisibilityFeedbackToResults(result);
     }
 
     private TemplateProgrammingExerciseParticipation addTemplateParticipationWithResult() {
         programmingExerciseParticipation = database.addTemplateParticipationForProgrammingExercise(programmingExercise).getTemplateParticipation();
-        Result result = database.addResultWitSubmissionToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
+        Result result = database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
         database.addVariousVisibilityFeedbackToResults(result);
-        return (TemplateProgrammingExerciseParticipation) programmingExerciseParticipation;
+        return templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
     }
 
     private SolutionProgrammingExerciseParticipation addSolutionParticipationWithResult() {
         programmingExerciseParticipation = database.addSolutionParticipationForProgrammingExercise(programmingExercise).getSolutionParticipation();
-        Result result = database.addResultWitSubmissionToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
+        Result result = database.addResultToParticipation(AssessmentType.AUTOMATIC, null, programmingExerciseParticipation);
         database.addVariousVisibilityFeedbackToResults(result);
-        return (SolutionProgrammingExerciseParticipation) programmingExerciseParticipation;
+        return solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).orElseThrow();
     }
 
 }

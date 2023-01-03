@@ -1921,7 +1921,6 @@ public class DatabaseUtilService {
 
     public Result addResultToParticipation(AssessmentType assessmentType, ZonedDateTime completionDate, Participation participation) {
         Result result = new Result().participation(participation).successful(true).rated(true).score(100D).assessmentType(assessmentType).completionDate(completionDate);
-        result = resultRepo.save(result);
         return resultRepo.save(result);
     }
 

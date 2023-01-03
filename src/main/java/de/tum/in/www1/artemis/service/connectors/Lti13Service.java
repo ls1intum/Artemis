@@ -165,16 +165,18 @@ public class Lti13Service {
                 return;
             }
 
-            Optional<Result> result = resultRepository.findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participation.getId());
+            var optionalResult = resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(participation.getId());
 
-            if (result.isEmpty()) {
+            if (optionalResult.isEmpty()) {
                 log.error("onNewResult triggered for participation {} but no result could be found", participation.getId());
                 return;
             }
 
-            String concatenatedFeedbacks = result.get().getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
+            var result = resultRepository.findByIdWithEagerFeedbacks(optionalResult.get().getId()).get();
 
-            launches.forEach(launch -> submitScore(launch, clientRegistration, concatenatedFeedbacks, result.get().getScore()));
+            String concatenatedFeedbacks = result.getFeedbacks().stream().map(Feedback::getDetailText).collect(Collectors.joining(". "));
+
+            launches.forEach(launch -> submitScore(launch, clientRegistration, concatenatedFeedbacks, result.getScore()));
         });
     }
 

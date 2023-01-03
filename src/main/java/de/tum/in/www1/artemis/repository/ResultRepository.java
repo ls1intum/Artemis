@@ -69,12 +69,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
               """)
     List<Result> findLatestAutomaticResultsWithEagerFeedbacksForExercise(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = "feedbacks")
-    Optional<Result> findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(Long participationId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "submission", "feedbacks" })
-    Optional<Result> findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(Long participationId);
-
     Optional<Result> findFirstByParticipationIdOrderByCompletionDateDesc(Long participationId);
 
     @EntityGraph(type = LOAD, attributePaths = "submission")
@@ -89,16 +83,18 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
     Optional<Result> findDistinctWithFeedbackBySubmissionId(Long submissionId);
 
     @Query("""
-            SELECT r FROM Result r
-            LEFT JOIN FETCH r.feedbacks
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.feedbacks
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerFeedbacks(@Param("resultId") Long resultId);
 
     @Query("""
-            SELECT r FROM Result r
-            LEFT JOIN FETCH r.submission
-            LEFT JOIN FETCH r.feedbacks
+            SELECT r
+            FROM Result r
+                LEFT JOIN FETCH r.submission
+                LEFT JOIN FETCH r.feedbacks
             WHERE r.id = :resultId
             """)
     Optional<Result> findByIdWithEagerSubmissionAndFeedbacks(@Param("resultId") Long resultId);
@@ -652,17 +648,18 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
      * @return an optional result (might exist or not).
      */
     default Optional<Result> findLatestResultWithFeedbacksForParticipation(Long participationId, boolean withSubmission) {
-        if (withSubmission) {
-            return findFirstWithSubmissionAndFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
+        // Note: it does not work to use findFirst with entity graphs, so we first try to get the latest result and fetch it again individually in case it exists
+        // This should even be faster because joins are definitely only done for one result (and not potentially 100)
+        Optional<Result> optionalResult = findFirstByParticipationIdOrderByCompletionDateDesc(participationId);
+        if (optionalResult.isPresent()) {
+            if (withSubmission) {
+                optionalResult = findByIdWithEagerSubmissionAndFeedbacks(optionalResult.get().getId());
+            }
+            else {
+                optionalResult = findByIdWithEagerFeedbacks(optionalResult.get().getId());
+            }
         }
-        else {
-            return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId);
-        }
-    }
-
-    default Result findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDescElseThrow(long participationId) {
-        return findFirstWithFeedbacksByParticipationIdOrderByCompletionDateDesc(participationId)
-                .orElseThrow(() -> new EntityNotFoundException("Result by participationId", participationId));
+        return optionalResult;
     }
 
     /**
