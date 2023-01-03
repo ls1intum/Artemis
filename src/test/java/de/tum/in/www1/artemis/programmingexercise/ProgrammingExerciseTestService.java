@@ -1390,7 +1390,7 @@ public class ProgrammingExerciseTestService {
         var logs = List.of(log1, log2, log3, log4, log5, log6, log7, log8, log9, log10);
         // get the failed build log
         mockDelegate.mockGetBuildLogs(participation, logs);
-        var buildLogs = request.get(REPO_BASE_URL + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
+        var buildLogs = request.getList(REPO_BASE_URL + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
 
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
         // some build logs have been filtered out

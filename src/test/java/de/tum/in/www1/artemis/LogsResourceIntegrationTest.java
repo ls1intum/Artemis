@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis;
 
-import java.util.List;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -13,7 +13,9 @@ class LogsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(roles = "ADMIN")
     void testGetList() throws Exception {
-        request.get("/management/logs", HttpStatus.OK, List.class);
+        var logs = request.getList("/management/logs", HttpStatus.OK, LoggerVM.class);
+        assertThat(logs).isNotNull();
+        // TODO: add meaningful assertions
     }
 
     @Test
@@ -23,5 +25,6 @@ class LogsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         logger.setLevel("1");
         logger.setName("logger");
         request.put("/management/logs", logger, HttpStatus.NO_CONTENT);
+        // TODO: add an assertion
     }
 }

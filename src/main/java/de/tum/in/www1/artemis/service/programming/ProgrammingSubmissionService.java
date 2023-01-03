@@ -312,21 +312,14 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param programmingExerciseId ProgrammingExercise id.
      * @param commitHash            last commitHash of the test repository, if null will use the last commitHash of the test repository.
      * @return The created solutionSubmission.
-     * @throws EntityNotFoundException if the programming exercise for the given id does not exist.
-     * @throws IllegalStateException   If no commitHash was no provided and no commitHash could be retrieved from the test repository.
+     * @throws EntityNotFoundException if the programming exercise for the given id does not exist or the commitHash could be retrieved from the test repository.
      */
-    public ProgrammingSubmission createSolutionParticipationSubmissionWithTypeTest(Long programmingExerciseId, @Nullable String commitHash)
-            throws EntityNotFoundException, IllegalStateException {
+    public ProgrammingSubmission createSolutionParticipationSubmissionWithTypeTest(Long programmingExerciseId, @Nullable String commitHash) throws EntityNotFoundException {
         var solutionParticipation = programmingExerciseParticipationService.findSolutionParticipationByProgrammingExerciseId(programmingExerciseId);
         // If no commitHash is provided, use the last commitHash for the test repository.
         if (commitHash == null) {
             ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExerciseId);
-            try {
-                commitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUrl()).getName();
-            }
-            catch (EntityNotFoundException ex) {
-                throw new IllegalStateException("Last commit hash for test repository of programming exercise with id " + programmingExercise.getId() + " could not be retrieved");
-            }
+            commitHash = gitService.getLastCommitHash(programmingExercise.getVcsTestRepositoryUrl()).getName();
         }
         return createSubmissionWithCommitHashAndSubmissionType(solutionParticipation, commitHash, SubmissionType.TEST);
     }

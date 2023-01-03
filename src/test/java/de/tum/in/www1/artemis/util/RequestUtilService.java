@@ -127,26 +127,36 @@ public class RequestUtilService {
     }
 
     public void postStringWithoutLocation(String path, String body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {
-        postWithoutLocation(path, request -> request.content(body), expectedStatus, httpHeaders, MediaType.APPLICATION_JSON_VALUE);
+        postWithoutLocation(path, request -> request.content(body), expectedStatus, httpHeaders, MediaType.APPLICATION_JSON_VALUE, null);
+    }
+
+    public <T> void postWithoutLocation(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders, String expectedErrorMessage) throws Exception {
+        final String jsonBody = mapper.writeValueAsString(body);
+        postWithoutLocation(path, request -> request.content(jsonBody), expectedStatus, httpHeaders, MediaType.APPLICATION_JSON_VALUE, expectedErrorMessage);
     }
 
     public <T> void postWithoutLocation(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {
         final String jsonBody = mapper.writeValueAsString(body);
-        postWithoutLocation(path, request -> request.content(jsonBody), expectedStatus, httpHeaders, MediaType.APPLICATION_JSON_VALUE);
+        postWithoutLocation(path, request -> request.content(jsonBody), expectedStatus, httpHeaders, MediaType.APPLICATION_JSON_VALUE, null);
     }
 
     public void postWithoutLocation(String path, byte[] body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders, String contentType) throws Exception {
-        postWithoutLocation(path, request -> request.content(body), expectedStatus, httpHeaders, contentType);
+        postWithoutLocation(path, request -> request.content(body), expectedStatus, httpHeaders, contentType, null);
     }
 
     private void postWithoutLocation(String path, Function<MockHttpServletRequestBuilder, MockHttpServletRequestBuilder> contentCompletion, HttpStatus expectedStatus,
-            @Nullable HttpHeaders httpHeaders, String contentType) throws Exception {
+            @Nullable HttpHeaders httpHeaders, String contentType, @Nullable String expectedErrorMessage) throws Exception {
         var request = MockMvcRequestBuilders.post(asUri(path)).contentType(contentType);
         contentCompletion.apply(request);
         if (httpHeaders != null) {
             request = request.headers(httpHeaders);
         }
-        mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        var result = mvc.perform(request).andExpect(status().is(expectedStatus.value())).andReturn();
+        if (expectedErrorMessage != null) {
+            var resolvedException = result.getResolvedException();
+            assertThat(resolvedException).isNotNull();
+            assertThat(resolvedException.getMessage()).contains(expectedErrorMessage);
+        }
         restoreSecurityContext();
     }
 

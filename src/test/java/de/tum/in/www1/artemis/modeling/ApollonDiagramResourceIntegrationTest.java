@@ -143,8 +143,8 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBam
     void testGetDiagramsByCourse_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         apollonDiagramRepository.save(apollonDiagram);
-        request.get("/api/course/" + course1.getId() + "/apollon-diagrams", HttpStatus.FORBIDDEN, List.class);
-        request.get("/api/course/" + course2.getId() + "/apollon-diagrams", HttpStatus.FORBIDDEN, List.class);
+        request.getList("/api/course/" + course1.getId() + "/apollon-diagrams", HttpStatus.FORBIDDEN, ApollonDiagram.class);
+        request.getList("/api/course/" + course2.getId() + "/apollon-diagrams", HttpStatus.FORBIDDEN, ApollonDiagram.class);
     }
 
     @Test

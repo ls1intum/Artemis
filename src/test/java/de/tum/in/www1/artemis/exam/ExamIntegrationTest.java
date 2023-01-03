@@ -2473,7 +2473,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             return;
         }
 
-        var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        var lockedSubmissions = request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, Submission.class);
         assertThat(lockedSubmissions).isEmpty();
 
         log.debug("testGetStatsForExamAssessmentDashboard: step 3 done");
@@ -2594,7 +2594,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         log.debug("testGetStatsForExamAssessmentDashboard: step 10 done");
 
         database.changeUser(TEST_PREFIX + "instructor1");
-        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        lockedSubmissions = request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, Submission.class);
         assertThat(lockedSubmissions).hasSize(studentExams.size() * 5);
 
         log.debug("testGetStatsForExamAssessmentDashboard: step 11 done");
@@ -2625,7 +2625,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         log.debug("testGetStatsForExamAssessmentDashboard: step 13 done");
 
-        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        lockedSubmissions = request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, Submission.class);
         assertThat(lockedSubmissions).isEmpty();
         if (numberOfCorrectionRounds == 2) {
             lockAndAssessForSecondCorrection(exam, course, studentExams, exercisesInExam, numberOfCorrectionRounds);
@@ -2691,7 +2691,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         });
 
         database.changeUser(TEST_PREFIX + "instructor1");
-        var lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        var lockedSubmissions = request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, Submission.class);
         assertThat(lockedSubmissions).hasSize(studentExams.size() * 5);
 
         // Finish assessment of all submissions
@@ -2716,7 +2716,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(stats.getNumberOfComplaints()).isZero();
         assertThat(stats.getTotalNumberOfAssessmentLocks()).isZero();
 
-        lockedSubmissions = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, List.class);
+        lockedSubmissions = request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/lockedSubmissions", HttpStatus.OK, Submission.class);
         assertThat(lockedSubmissions).isEmpty();
 
     }

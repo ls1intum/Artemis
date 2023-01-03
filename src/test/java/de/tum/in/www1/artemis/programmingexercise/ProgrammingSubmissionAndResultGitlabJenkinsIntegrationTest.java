@@ -135,8 +135,9 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         jenkinsRequestMockProvider.mockGetLegacyBuildLogs(participation);
         database.changeUser(userLogin);
-        var receivedLogs = request.get("/api/repository/" + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
+        var receivedLogs = request.getList("/api/repository/" + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).isNotEmpty();
+        // TODO: add meaningful assertions
     }
 
     @Test
@@ -400,8 +401,9 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         // Assert that the build logs can be retrieved from the REST API
         var buildWithDetails = jenkinsRequestMockProvider.mockGetLatestBuildLogs(studentParticipationRepository.findById(participationId).orElseThrow(), useLegacyBuildLogs);
         database.changeUser(userLogin);
-        var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
+        var receivedLogs = request.getList("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).isNotNull().isNotEmpty();
+        // TODO: add meaningful assertions
 
         if (useLegacyBuildLogs) {
             verify(buildWithDetails, times(1)).getConsoleOutputHtml();
@@ -411,8 +413,9 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         }
 
         // Call again and it should not call Jenkins::getLatestBuildLogs() since the logs are cached.
-        receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
+        receivedLogs = request.getList("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).isNotNull().isNotEmpty();
+        // TODO: add meaningful assertions
 
         if (useLegacyBuildLogs) {
             verify(buildWithDetails, times(1)).getConsoleOutputHtml();

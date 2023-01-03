@@ -1158,6 +1158,7 @@ public class GitService {
             }
             else {
                 // Normally there always has to be a commit, so we throw an error in case none can be found.
+                // TODO: EntityNotFoundException
                 throw new IllegalStateException();
             }
         }

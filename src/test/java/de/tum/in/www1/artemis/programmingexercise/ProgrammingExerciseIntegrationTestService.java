@@ -1786,7 +1786,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetAuxiliaryRepositoriesMissingExercise() throws Exception {
-        request.get(defaultGetAuxReposEndpoint(-1L), HttpStatus.NOT_FOUND, List.class);
+        request.getList(defaultGetAuxReposEndpoint(-1L), HttpStatus.NOT_FOUND, AuxiliaryRepository.class);
     }
 
     void testGetAuxiliaryRepositoriesOk() throws Exception {
@@ -1795,18 +1795,18 @@ class ProgrammingExerciseIntegrationTestService {
         programmingExercise
                 .addAuxiliaryRepository(auxiliaryRepositoryRepository.save(AuxiliaryRepositoryBuilder.defaults().withDifferentName().withDifferentCheckoutDirectory().get()));
         programmingExerciseRepository.save(programmingExercise);
-        var returnedAuxiliaryRepositories = request.get(defaultGetAuxReposEndpoint(), HttpStatus.OK, List.class);
+        var returnedAuxiliaryRepositories = request.getList(defaultGetAuxReposEndpoint(), HttpStatus.OK, AuxiliaryRepository.class);
         assertThat(returnedAuxiliaryRepositories).hasSize(2);
     }
 
     void testGetAuxiliaryRepositoriesEmptyOk() throws Exception {
         programmingExercise = programmingExerciseRepository.findWithAuxiliaryRepositoriesById(programmingExercise.getId()).orElseThrow();
-        var returnedAuxiliaryRepositories = request.get(defaultGetAuxReposEndpoint(), HttpStatus.OK, List.class);
+        var returnedAuxiliaryRepositories = request.getList(defaultGetAuxReposEndpoint(), HttpStatus.OK, AuxiliaryRepository.class);
         assertThat(returnedAuxiliaryRepositories).isEmpty();
     }
 
     void testGetAuxiliaryRepositoriesForbidden() throws Exception {
-        request.get(defaultGetAuxReposEndpoint(), HttpStatus.FORBIDDEN, List.class);
+        request.getList(defaultGetAuxReposEndpoint(), HttpStatus.FORBIDDEN, AuxiliaryRepository.class);
     }
 
     void testRecreateBuildPlansForbidden() throws Exception {

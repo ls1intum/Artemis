@@ -498,10 +498,10 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         final var templateParticipation = templateProgrammingExerciseParticipationRepository.findById(templateParticipationId).get();
         bambooRequestMockProvider.mockTriggerBuild(templateParticipation);
         setBuildAndTestAfterDueDateForProgrammingExercise(null);
-        postTestRepositorySubmissionWithoutCommit(HttpStatus.INTERNAL_SERVER_ERROR);
+        postTestRepositorySubmissionWithoutCommit(HttpStatus.NOT_FOUND, "Could not retrieve the last commit hash for repoUrl");
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(any())).thenReturn(ObjectId.fromString(dummyHash));
-        postTestRepositorySubmissionWithoutCommit(HttpStatus.OK);
+        postTestRepositorySubmissionWithoutCommit(HttpStatus.OK, null);
     }
 
     /**
@@ -866,7 +866,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Assert that the build logs can be retrieved from the REST API
         database.changeUser(userLogin);
-        var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
+        var receivedLogs = request.getList("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).isNotNull();
         assertThat(receivedLogs).hasSameSizeAs(submissionWithLogs.getBuildLogEntries());
 
@@ -899,11 +899,10 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     /**
      * Simulate a commit to the test repository, this executes a http request from the VCS to Artemis.
      */
-    @SuppressWarnings("unchecked")
-    private void postTestRepositorySubmissionWithoutCommit(HttpStatus status) throws Exception {
+    private void postTestRepositorySubmissionWithoutCommit(HttpStatus status, String expectedErrorMessage) throws Exception {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST_WITHOUT_COMMIT);
-        request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, status, new HttpHeaders());
+        request.postWithoutLocation(TEST_CASE_CHANGED_API_PATH + exerciseId, obj, status, new HttpHeaders(), expectedErrorMessage);
     }
 
     private String getBuildPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationIndex) {
