@@ -198,10 +198,7 @@ export class ExerciseImportComponent implements OnInit {
         }
     }
 
-    asProgrammingExercise(exercise: Exercise): ProgrammingExercise | undefined {
-        if (exercise.type == ExerciseType.PROGRAMMING) {
-            return exercise as ProgrammingExercise;
-        }
-        return undefined;
+    asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
+        return exercise as ProgrammingExercise;
     }
 }
