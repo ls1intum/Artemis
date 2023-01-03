@@ -239,6 +239,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         bitbucketRequestMockProvider.mockGiveWritePermission(programmingExercise, repositoryName, TEST_PREFIX + "student2", HttpStatus.OK);
         bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, repositoryName);
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(3).policy(), HttpStatus.OK);
+        // TODO: add appropriate assertions that the operation was successful
     }
 
     @Test
@@ -256,6 +257,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         mockSetRepositoryPermissionsToReadOnly(participation2.getVcsRepositoryUrl(), programmingExercise.getProjectKey(), Set.of(student2));
         bitbucketRequestMockProvider.mockProtectBranches(programmingExercise, repositoryName);
         request.patch(requestUrl(), SubmissionPolicyBuilder.lockRepo().active(true).limit(2).policy(), HttpStatus.OK);
+        // TODO: add appropriate assertions that the operation was successful
     }
 
     @Test
@@ -329,6 +331,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         addSubmissionPolicyToExercise(SubmissionPolicyBuilder.submissionPenalty().active(activate).penalty(10.0).limit(10).policy());
         request.put(requestUrl() + activate(!activate), SubmissionPolicyBuilder.any(), HttpStatus.OK);
         assertThat(updatedExercise().getSubmissionPolicy().isActive()).isEqualTo(!activate);
+        // TODO: extend the test and setup participations and submissions so that the actual logic in lockParticipationsWhenSubmissionsGreaterLimit is tested
     }
 
     // Beginning of removeSubmissionPolicyFromProgrammingExercise tests

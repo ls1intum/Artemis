@@ -77,12 +77,12 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsOrElseThrow(exercise.getId());
 
         database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student2");
 
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsOrElseThrow(exercise.getId());
     }
 
     @AfterEach
@@ -147,7 +147,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         String userLogin = TEST_PREFIX + "student1";
         Course course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsOrElseThrow(exercise.getId());
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         database.createProgrammingSubmission(participation, false);
 
@@ -178,7 +178,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         String userLogin = TEST_PREFIX + "student1";
         Course course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsOrElseThrow(exercise.getId());
         exercise.setProjectType(ProjectType.GRADLE_GRADLE);
         programmingExerciseRepository.save(exercise);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
@@ -207,7 +207,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         String userLogin = TEST_PREFIX + "student1";
         Course course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsOrElseThrow(exercise.getId());
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         database.createProgrammingSubmission(participation, false);
 

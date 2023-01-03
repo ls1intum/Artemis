@@ -670,8 +670,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             String operationName) {
         log.info("Invoking (scheduled) task '{}' for programming exercise with id {}.", operationName, programmingExerciseId);
 
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", programmingExerciseId));
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsOrElseThrow(programmingExerciseId);
         List<ProgrammingExerciseStudentParticipation> failedOperations = new ArrayList<>();
 
         // TODO: we should think about executing those operations again in batches to avoid issues on the vcs server, however those operations are typically executed

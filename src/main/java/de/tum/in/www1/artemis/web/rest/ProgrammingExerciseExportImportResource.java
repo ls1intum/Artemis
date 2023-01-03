@@ -306,7 +306,8 @@ public class ProgrammingExerciseExportImportResource {
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
+        // load only the exercise for the initial security checks to avoid high database load
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, user);
         if (repositoryExportOptions.isExportAllParticipants()) {
@@ -327,6 +328,8 @@ public class ProgrammingExerciseExportImportResource {
 
         // Select the participations that should be exported
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = new ArrayList<>();
+        // load all data needed for the functionality
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsAndSubmissionsByIdElseThrow(exerciseId);
         for (StudentParticipation studentParticipation : programmingExercise.getStudentParticipations()) {
             ProgrammingExerciseStudentParticipation programmingStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
             if (repositoryExportOptions.isExportAllParticipants() || (programmingStudentParticipation.getRepositoryUrl() != null && studentParticipation.getParticipant() != null
@@ -351,7 +354,8 @@ public class ProgrammingExerciseExportImportResource {
     @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
-        var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
+        // load only the exercise for the initial security checks to avoid high database load
+        var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
 
         // Only instructors or higher may override the anonymization setting
@@ -366,9 +370,11 @@ public class ProgrammingExerciseExportImportResource {
 
         var participationIdSet = new ArrayList<>(Arrays.asList(participationIds.split(","))).stream().map(String::trim).map(Long::parseLong).collect(Collectors.toSet());
 
-        // Select the participations that should be exported
-        List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = programmingExercise.getStudentParticipations().stream()
-                .filter(participation -> participationIdSet.contains(participation.getId())).map(participation -> (ProgrammingExerciseStudentParticipation) participation).toList();
+        // load all data needed for the functionality
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsAndSubmissionsByIdElseThrow(exerciseId);
+        // load all data needed for the functionality
+        var exportedStudentParticipations = programmingExercise.getStudentParticipations().stream().filter(participation -> participationIdSet.contains(participation.getId()))
+                .map(participation -> (ProgrammingExerciseStudentParticipation) participation).toList();
         return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
     }
 

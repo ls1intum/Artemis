@@ -87,7 +87,6 @@ public class SubmissionPolicyResource {
             throws URISyntaxException {
         log.debug("REST request to add submission policy to programming exercise {}", exerciseId);
 
-        SubmissionPolicy addedSubmissionPolicy;
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithSubmissionPolicyElseThrow(exerciseId);
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
 
@@ -102,7 +101,7 @@ public class SubmissionPolicyResource {
         }
         submissionPolicyService.validateSubmissionPolicy(submissionPolicy);
 
-        addedSubmissionPolicy = submissionPolicyService.addSubmissionPolicyToProgrammingExercise(submissionPolicy, programmingExercise);
+        SubmissionPolicy addedSubmissionPolicy = submissionPolicyService.addSubmissionPolicyToProgrammingExercise(submissionPolicy, programmingExercise);
         HttpHeaders responseHeaders = HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, Long.toString(addedSubmissionPolicy.getId()));
 
         return ResponseEntity.created(new URI(PROGRAMMING_EXERCISE_SUBMISSION_POLICY.replace("{exerciseId}", Long.toString(exerciseId)))).headers(responseHeaders)
@@ -202,6 +201,7 @@ public class SubmissionPolicyResource {
      *         More information on submission policy validation can be found at
      *         {@link SubmissionPolicyService#validateSubmissionPolicy(SubmissionPolicy)}.
      */
+    // TODO: I think we should use PUT here
     @PatchMapping(PROGRAMMING_EXERCISE_SUBMISSION_POLICY)
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<SubmissionPolicy> updateSubmissionPolicy(@PathVariable Long exerciseId, @RequestBody SubmissionPolicy updatedSubmissionPolicy) {

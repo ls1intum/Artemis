@@ -51,7 +51,7 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
     public void setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(String userPrefix) {
         Course course = database.addCourseWithOneProgrammingExercise(false, false, JAVA);
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsOrElseThrow(programmingExercise.getId());
         participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, userPrefix + "student1");
     }
 

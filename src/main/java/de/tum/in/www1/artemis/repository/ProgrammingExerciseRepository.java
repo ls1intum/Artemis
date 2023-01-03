@@ -157,10 +157,12 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     List<ProgrammingExercise> findAllWithStudentParticipationByRecentExamEndDate(@Param("endDate1") ZonedDateTime endDate1, @Param("endDate2") ZonedDateTime endDate2);
 
     @Query("""
-            SELECT DISTINCT pe FROM ProgrammingExercise pe
-            LEFT JOIN FETCH pe.studentParticipations pep
-            LEFT JOIN FETCH pep.submissions s
-            WHERE (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            SELECT DISTINCT pe
+            FROM ProgrammingExercise pe
+                LEFT JOIN FETCH pe.studentParticipations pep
+                LEFT JOIN FETCH pep.submissions s
+            WHERE s.type <> 'ILLEGAL'
+                OR s.type IS NULL
             """)
     List<ProgrammingExercise> findAllWithEagerParticipationsAndLegalSubmissions();
 
@@ -170,15 +172,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = "studentParticipations")
     Optional<ProgrammingExercise> findWithEagerStudentParticipationsById(Long exerciseId);
 
-    @Query("""
-            SELECT pe FROM ProgrammingExercise pe
-            LEFT JOIN FETCH pe.studentParticipations pep
-            LEFT JOIN FETCH pep.student
-            LEFT JOIN FETCH pep.submissions s
-            WHERE pe.id = :#{#exerciseId}
-                AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
-            """)
-    Optional<ProgrammingExercise> findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(@Param("exerciseId") Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = "studentParticipations.submissions")
+    Optional<ProgrammingExercise> findWithEagerStudentParticipationsAndSubmissionsById(@Param("exerciseId") Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "studentParticipations" })
     Optional<ProgrammingExercise> findWithAllParticipationsById(Long exerciseId);
@@ -201,7 +196,8 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     Optional<ProgrammingExercise> findByStudentParticipationIdWithTemplateParticipation(@Param("participationId") Long participationId);
 
     @Query("""
-                SELECT exercise FROM ProgrammingExercise exercise
+            SELECT exercise
+            FROM ProgrammingExercise exercise
             WHERE (exercise.id IN
                     (SELECT courseExercise.id FROM ProgrammingExercise courseExercise
                     WHERE (courseExercise.course.instructorGroupName IN :groups OR courseExercise.course.editorGroupName IN :groups)
@@ -489,19 +485,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     /**
-     * Find a programming exercise by its id, including template and solution participation and their latest results.
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     */
-    @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationWithResultsElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationLatestResultById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-    }
-
-    /**
      * Find a programming exercise by its id, including auxiliary repositories, template and solution participation and
      * their latest results.
      *
@@ -512,19 +495,6 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @NotNull
     default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesElseThrow(Long programmingExerciseId) throws EntityNotFoundException {
         Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(programmingExerciseId);
-        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
-    }
-
-    /**
-     * Find a programming exercise by its id, with eagerly loaded template and solution participation and auxiliary repositories
-     *
-     * @param programmingExerciseId of the programming exercise.
-     * @return The programming exercise related to the given id
-     * @throws EntityNotFoundException the programming exercise could not be found.
-     */
-    @NotNull
-    default ProgrammingExercise findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
@@ -679,5 +649,14 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     default void validateCourseSettings(ProgrammingExercise programmingExercise, Course course) {
         validateTitle(programmingExercise, course);
         validateCourseAndExerciseShortName(programmingExercise, course);
+    }
+
+    default ProgrammingExercise findWithEagerStudentParticipationsOrElseThrow(Long programmingExerciseId) {
+        return findWithEagerStudentParticipationsById(programmingExerciseId).orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", programmingExerciseId));
+    }
+
+    default ProgrammingExercise findWithEagerStudentParticipationsAndSubmissionsByIdElseThrow(Long programmingExerciseId) {
+        return findWithEagerStudentParticipationsAndSubmissionsById(programmingExerciseId)
+                .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", programmingExerciseId));
     }
 }

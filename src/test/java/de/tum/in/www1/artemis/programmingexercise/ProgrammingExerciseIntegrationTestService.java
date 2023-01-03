@@ -1699,7 +1699,7 @@ class ProgrammingExerciseIntegrationTestService {
     void testGetPlagiarismResult() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(programmingExercise.getId()).orElseThrow();
+        programmingExercise = programmingExerciseRepository.findByIdElseThrow(programmingExercise.getId());
 
         TextPlagiarismResult expectedResult = database.createTextPlagiarismResultForExercise(programmingExercise);
 

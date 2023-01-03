@@ -450,7 +450,7 @@ public class ProgrammingExerciseExportService {
             return createZipWithAllRepositories(programmingExercise, zippedRepos, outputDir);
         }
         catch (IOException ex) {
-            log.error("Creating zip file for programming exercise {} did not work correctly: {} ", programmingExercise.getTitle(), ex.getMessage());
+            log.error("Creating zip file for programming exercise {} did not work correctly: {} ", programmingExercise.getTitle(), ex.getMessage(), ex);
             return null;
         }
         finally {
@@ -487,9 +487,10 @@ public class ProgrammingExerciseExportService {
                     exportedStudentRepositories.add(zipFile);
                 }
             }
-            catch (Exception e) {
+            catch (Exception ex) {
                 var error = "Failed to export the student repository with participation: " + participation.getId() + " for programming exercise '" + programmingExercise.getTitle()
                         + "' (id: " + programmingExercise.getId() + ") because the repository couldn't be downloaded. ";
+                log.error(error, ex);
                 exportErrors.add(error);
             }
         });

@@ -17,10 +17,11 @@ import jakarta.validation.constraints.NotNull;
 public interface ParticipationRepository extends JpaRepository<Participation, Long> {
 
     @Query("""
-            SELECT DISTINCT p FROM Participation p
-            LEFT JOIN FETCH p.results
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH s.results
+            SELECT DISTINCT p
+            FROM Participation p
+                LEFT JOIN FETCH p.results
+                LEFT JOIN FETCH p.submissions s
+                LEFT JOIN FETCH s.results
             WHERE p.id = :#{#participationId}
             """)
     Optional<Participation> findByIdWithResultsAndSubmissionsResults(@Param("participationId") Long participationId);

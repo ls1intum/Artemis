@@ -147,7 +147,7 @@ public class SubmissionPolicyService {
     }
 
     private SubmissionPolicy enableLockRepositoryPolicy(LockRepositoryPolicy policy) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(policy.getProgrammingExercise().getId());
+        ProgrammingExercise exercise = programmingExerciseRepository.findWithEagerStudentParticipationsOrElseThrow(policy.getProgrammingExercise().getId());
         lockParticipationsWhenSubmissionsGreaterLimit(exercise, policy.getSubmissionLimit());
         policy.setActive(true);
         return submissionPolicyRepository.save(policy);
@@ -176,7 +176,7 @@ public class SubmissionPolicyService {
     }
 
     private void disableLockRepositoryPolicy(LockRepositoryPolicy policy) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(policy.getProgrammingExercise().getId());
+        ProgrammingExercise exercise = programmingExerciseRepository.findWithEagerStudentParticipationsOrElseThrow(policy.getProgrammingExercise().getId());
         unlockParticipationsWhenSubmissionsGreaterLimit(exercise, policy.getSubmissionLimit());
         toggleSubmissionPolicy(policy, false);
     }
@@ -225,7 +225,7 @@ public class SubmissionPolicyService {
     }
 
     private void updateLockRepositoryPolicy(SubmissionPolicy originalPolicy, SubmissionPolicy newPolicy) {
-        ProgrammingExercise exercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(originalPolicy.getProgrammingExercise().getId());
+        ProgrammingExercise exercise = programmingExerciseRepository.findWithEagerStudentParticipationsOrElseThrow(originalPolicy.getProgrammingExercise().getId());
         if (originalPolicy.getSubmissionLimit() < newPolicy.getSubmissionLimit()) {
             unlockParticipationsWhenSubmissionsGreaterLimit(exercise, originalPolicy.getSubmissionLimit());
         }
@@ -292,8 +292,7 @@ public class SubmissionPolicyService {
         int submissions = getParticipationSubmissionCount(participation);
         int allowedSubmissions = lockRepositoryPolicy.getSubmissionLimit();
         if (submissions == allowedSubmissions) {
-            ProgrammingExercise programmingExercise = programmingExerciseRepository
-                    .findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(lockRepositoryPolicy.getProgrammingExercise().getId());
+            var programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsOrElseThrow(lockRepositoryPolicy.getProgrammingExercise().getId());
             programmingExerciseParticipationService.lockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) result.getParticipation());
         }
         // This is the fallback behavior in case the VCS does not lock the repository for whatever reason when the
