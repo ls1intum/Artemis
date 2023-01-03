@@ -108,9 +108,7 @@ describe('ModelingExercise Management Component', () => {
     it('should open import modal', () => {
         const mockReturnValue = {
             result: Promise.resolve({ id: 456 } as ModelingExercise),
-            componentInstance: {
-                exerciseType: undefined,
-            },
+            componentInstance: {},
         } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 

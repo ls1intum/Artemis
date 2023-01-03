@@ -33,6 +33,8 @@ export class ExerciseImportComponent implements OnInit {
     private search = new Subject<void>();
     private sort = new Subject<void>();
 
+    private pagingService: TextExercisePagingService | ProgrammingExercisePagingService | QuizExercisePagingService | ModelingExercisePagingService;
+
     loading = false;
     content: SearchResult<Exercise>;
     total = 0;
@@ -59,19 +61,18 @@ export class ExerciseImportComponent implements OnInit {
         if (!this.exerciseType || this.exerciseType == ExerciseType.FILE_UPLOAD) {
             return;
         }
-        let pagingService;
         switch (this.exerciseType) {
             case ExerciseType.MODELING:
-                pagingService = this.injector.get(ModelingExercisePagingService);
+                this.pagingService = this.injector.get(ModelingExercisePagingService);
                 break;
             case ExerciseType.PROGRAMMING:
-                pagingService = this.injector.get(ProgrammingExercisePagingService);
+                this.pagingService = this.injector.get(ProgrammingExercisePagingService);
                 break;
             case ExerciseType.QUIZ:
-                pagingService = this.injector.get(QuizExercisePagingService);
+                this.pagingService = this.injector.get(QuizExercisePagingService);
                 break;
             case ExerciseType.TEXT:
-                pagingService = this.injector.get(TextExercisePagingService);
+                this.pagingService = this.injector.get(TextExercisePagingService);
                 break;
             default:
                 throw new Error('Unsupported exercise type: ' + this.exerciseType);
@@ -80,26 +81,21 @@ export class ExerciseImportComponent implements OnInit {
         this.titleKey = `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
         this.content = { resultsOnPage: [], numberOfPages: 0 };
 
-        this.performSearch(this.sort, 0, pagingService);
-        this.performSearch(this.search, 300, pagingService);
+        this.performSearch(this.sort, 0);
+        this.performSearch(this.search, 300);
     }
 
     /** Method to perform the search based on a search subject
      *
      * @param searchSubject The search subject which we use to search.
      * @param debounce The delay we apply to delay the feedback / wait for input
-     * @param pagingService The paging service of the specific exercise type
      */
-    protected performSearch(
-        searchSubject: Subject<void>,
-        debounce: number,
-        pagingService: TextExercisePagingService | ProgrammingExercisePagingService | QuizExercisePagingService | ModelingExercisePagingService,
-    ) {
+    protected performSearch(searchSubject: Subject<void>, debounce: number) {
         searchSubject
             .pipe(
                 debounceTime(debounce),
                 tap(() => (this.loading = true)),
-                switchMap(() => pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter)),
+                switchMap(() => this.pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter)),
             )
             .subscribe((resp: SearchResult<Exercise>) => {
                 this.content = resp;

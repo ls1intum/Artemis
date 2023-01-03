@@ -106,9 +106,7 @@ describe('QuizExercise Management Component', () => {
     it('should open import modal', () => {
         const mockReturnValue = {
             result: Promise.resolve({ id: 456 } as QuizExercise),
-            componentInstance: {
-                exerciseType: undefined,
-            },
+            componentInstance: {},
         } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
