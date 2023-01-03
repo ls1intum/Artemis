@@ -52,7 +52,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @BeforeEach
     void initTestCase() {
 
-        database.addUsers(TEST_PREFIX, 5, 5, 4, 4);
+        database.addUsers(TEST_PREFIX, 5, 2, 1, 1);
         student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author

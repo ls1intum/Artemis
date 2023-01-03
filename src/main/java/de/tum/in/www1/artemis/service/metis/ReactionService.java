@@ -69,6 +69,9 @@ public class ReactionService {
             Post post = postService.findPostOrMessagePostById(posting.getId());
             post.setConversation(mayInteractWithConversationIfConversationMessage(user, post));
             reaction.setPost(post);
+            if (reactionRepository.existsByUserAndEmojiIdAndPost(user, reaction.getEmojiId(), post)) {
+                throw new BadRequestAlertException("Reaction already exists for this post and this user", METIS_REACTION_ENTITY_NAME, "reactionExists");
+            }
             // save reaction
             savedReaction = reactionRepository.save(reaction);
 
@@ -85,6 +88,9 @@ public class ReactionService {
             answerPost.getPost().setConversation(mayInteractWithConversationIfConversationMessage(user, answerPost.getPost()));
             reaction.setAnswerPost(answerPost);
             // save reaction
+            if (reactionRepository.existsByUserAndEmojiIdAndAnswerPost(user, reaction.getEmojiId(), answerPost)) {
+                throw new BadRequestAlertException("Reaction already exists for this answer post and this user", METIS_REACTION_ENTITY_NAME, "reactionExists");
+            }
             savedReaction = reactionRepository.save(reaction);
             // save answer post
             answerPostService.updateWithReaction(answerPost, reaction, courseId);

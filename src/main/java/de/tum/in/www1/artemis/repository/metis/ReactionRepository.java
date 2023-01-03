@@ -5,6 +5,9 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -14,6 +17,10 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @SuppressWarnings("unused")
 @Repository
 public interface ReactionRepository extends JpaRepository<Reaction, Long> {
+
+    boolean existsByUserAndEmojiIdAndPost(User user, String emojiId, Post post);
+
+    boolean existsByUserAndEmojiIdAndAnswerPost(User user, String emojiId, AnswerPost answerPost);
 
     List<Reaction> findReactionsByPostId(Long postId);
 

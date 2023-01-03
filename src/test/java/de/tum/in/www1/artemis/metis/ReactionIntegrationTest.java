@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.metis;
 
 import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Collection;
 import java.util.List;
@@ -26,7 +26,6 @@ import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
-import jakarta.servlet.ServletException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -66,7 +65,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         validatorFactory = Validation.buildDefaultValidatorFactory();
         validator = validatorFactory.getValidator();
 
-        database.addUsers(TEST_PREFIX, 5, 5, 4, 4);
+        database.addUsers(TEST_PREFIX, 5, 2, 1, 1);
 
         // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
         // student1)
@@ -144,7 +143,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateMultipleOwnPostReaction_internalServerError() throws Exception {
+    void testCreateMultipleOwnPostReaction_badRequest() throws Exception {
         // student 1 is the author of the post and reacts on this post
         Post postReactedOn = existingPostsWithAnswers.get(0);
         Reaction reactionToSaveOnPost = createReactionOnPost(postReactedOn);
@@ -153,10 +152,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         checkCreatedReaction(reactionToSaveOnPost, createdReaction);
         assertThat(postReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByPostId(postReactedOn.getId()).size() - 1);
 
-        // try again
-        assertThatThrownBy(
-                () -> request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.INTERNAL_SERVER_ERROR))
-                        .isInstanceOf(ServletException.class).hasMessageContaining("Request processing failed: org.springframework.dao.DataIntegrityViolationException:");
+        // try again: bad request --> reaction already exists
+        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -173,7 +170,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void testCreateMultipleOwnAnswerPostReaction_internalServerError() throws Exception {
+    void testCreateMultipleOwnAnswerPostReaction_badRequest() throws Exception {
         // student 1 is the author of the answer post and reacts on this answer post
         AnswerPost answerPostReactedOn = existingAnswerPosts.get(0);
         Reaction reactionToSaveOnAnswerPost = createReactionOnAnswerPost(answerPostReactedOn);
@@ -182,10 +179,8 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         checkCreatedReaction(reactionToSaveOnAnswerPost, createdReaction);
         assertThat(answerPostReactedOn.getReactions()).hasSize(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size() - 1);
 
-        // try again
-        assertThatThrownBy(() -> request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class,
-                HttpStatus.INTERNAL_SERVER_ERROR)).isInstanceOf(ServletException.class)
-                        .hasMessageContaining("Request processing failed: org.springframework.dao.DataIntegrityViolationException:");
+        // try again: bad request --> reaction already exists
+        request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnAnswerPost, Reaction.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -379,9 +374,13 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
         Reaction reactionToBeDeleted = request.postWithResponseBody("/api/courses/" + courseId + "/postings/reactions", reactionToSaveOnPost, Reaction.class, HttpStatus.CREATED);
 
+        var countBefore = reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size();
+        assertThat(countBefore).isEqualTo(1);
         // student 1 deletes their reaction on this post
         request.delete("/api/courses/" + courseId + "/postings/reactions/" + reactionToBeDeleted.getId(), HttpStatus.OK);
-        assertThat(answerPostReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByPostId(answerPostReactedOn.getId()));
+        var countAfterDelete = reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()).size();
+        assertThat(countAfterDelete).isEqualTo(countBefore - 1);
+        assertThat(answerPostReactedOn.getReactions()).hasSameSizeAs(reactionRepository.findReactionsByAnswerPostId(answerPostReactedOn.getId()));
         assertThat(reactionRepository.findById(reactionToBeDeleted.getId())).isEmpty();
     }
 

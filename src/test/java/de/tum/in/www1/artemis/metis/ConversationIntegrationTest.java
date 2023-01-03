@@ -11,7 +11,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
@@ -32,16 +31,13 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private ConversationRepository conversationRepository;
 
-    @Autowired
-    private SimpMessageSendingOperations messagingTemplate;
-
     private Conversation existingConversation;
 
     private Course course;
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 5, 5, 0, 1);
+        database.addUsers(TEST_PREFIX, 5, 2, 0, 1);
         course = database.createCourse(1L);
         existingConversation = database.createConversation(course, TEST_PREFIX);
         doNothing().when(messagingTemplate).convertAndSendToUser(any(), any(), any());
@@ -89,6 +85,9 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "USER")
     void testGetActiveConversationsOfCurrentUser() throws Exception {
+        // for this test, we need one additional user
+        database.createAndSaveUser(TEST_PREFIX + "tutor3");
+
         var params = new LinkedMultiValueMap<String, String>();
         List<Conversation> conversationsOfUser;
 
@@ -108,8 +107,8 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(conversationsOfUser.get(0)).isEqualTo(existingConversation);
 
         database.changeUser(TEST_PREFIX + "tutor3");
-        conversationsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations", HttpStatus.OK, Conversation.class, params);
-        assertThat(conversationsOfUser).isEmpty();
+        // tutor3 is not part of the conversation
+        request.getList("/api/courses/" + course.getId() + "/conversations", HttpStatus.FORBIDDEN, Conversation.class, params);
     }
 
     private void createConversationBadRequest(Conversation conversationToSave) throws Exception {

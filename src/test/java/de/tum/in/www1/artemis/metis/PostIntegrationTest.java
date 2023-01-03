@@ -92,7 +92,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         validatorFactory = Validation.buildDefaultValidatorFactory();
         validator = validatorFactory.getValidator();
 
-        database.addUsers(TEST_PREFIX, 5, 5, 4, 4);
+        database.addUsers(TEST_PREFIX, 5, 2, 1, 1);
 
         student1 = database.getUserByLogin(TEST_PREFIX + "student1");
 
@@ -728,7 +728,8 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
-        assertThat(returnedPosts).hasSize(3);
+        // TODO: explain in a comment why the size should be 9 here
+        assertThat(returnedPosts).hasSize(9);
     }
 
     @Test

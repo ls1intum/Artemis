@@ -1067,18 +1067,18 @@ public class DatabaseUtilService {
         List<Post> posts = new ArrayList<>();
 
         // add posts to exercise
-        posts.addAll(createBasicPosts(textExercise, userPrefix));
+        posts.addAll(createBasicPostsForStudents(textExercise, userPrefix));
 
         // add posts to lecture
-        posts.addAll(createBasicPosts(lecture, userPrefix));
+        posts.addAll(createBasicPostsForTutors(lecture, userPrefix));
 
         // add post to plagiarismCase
-        posts.add(createBasicPost(plagiarismCase, userPrefix));
+        posts.add(createBasicPostForInstructors(plagiarismCase, userPrefix));
 
         // add posts to course with different course-wide contexts provided in input array
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
                 CourseWideContext.ANNOUNCEMENT };
-        posts.addAll(createBasicPosts(course1, courseWideContexts, userPrefix));
+        posts.addAll(createBasicPostsForEditors(course1, courseWideContexts, userPrefix));
         posts.addAll(createBasicPosts(createConversation(course1, userPrefix), userPrefix));
 
         return posts;
@@ -1109,7 +1109,7 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createBasicPosts(Exercise exerciseContext, String userPrefix) {
+    private List<Post> createBasicPostsForStudents(Exercise exerciseContext, String userPrefix) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
             Post postToAdd = createBasicPost(i, userPrefix + "student");
@@ -1120,10 +1120,10 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createBasicPosts(Lecture lectureContext, String userPrefix) {
+    private List<Post> createBasicPostsForTutors(Lecture lectureContext, String userPrefix) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
-            Post postToAdd = createBasicPost(i, userPrefix + "tutor");
+            Post postToAdd = createBasicPost(0, userPrefix + "tutor");
             postToAdd.setLecture(lectureContext);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -1131,19 +1131,19 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts, String userPrefix) {
+    private List<Post> createBasicPostsForEditors(Course courseContext, CourseWideContext[] courseWideContexts, String userPrefix) {
         List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < courseWideContexts.length; i++) {
-            Post postToAdd = createBasicPost(i, userPrefix + "editor");
+        for (CourseWideContext courseWideContext : courseWideContexts) {
+            Post postToAdd = createBasicPost(0, userPrefix + "editor");
             postToAdd.setCourse(courseContext);
-            postToAdd.setCourseWideContext(courseWideContexts[i]);
+            postToAdd.setCourseWideContext(courseWideContext);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
         }
         return posts;
     }
 
-    private Post createBasicPost(PlagiarismCase plagiarismCase, String userPrefix) {
+    private Post createBasicPostForInstructors(PlagiarismCase plagiarismCase, String userPrefix) {
         Post postToAdd = createBasicPost(0, userPrefix + "instructor");
         postToAdd.setPlagiarismCase(plagiarismCase);
         postToAdd.getPlagiarismCase().setExercise(null);
@@ -1169,7 +1169,7 @@ public class DatabaseUtilService {
 
     private List<Post> createBasicPosts(Conversation conversation, String userPrefix) {
         List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 2; i++) {
             Post postToAdd = createBasicPost(i, userPrefix + "tutor");
             postToAdd.setConversation(conversation);
             postRepository.save(postToAdd);

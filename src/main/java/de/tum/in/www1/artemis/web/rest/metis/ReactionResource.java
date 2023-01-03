@@ -32,6 +32,8 @@ public class ReactionResource {
      * @return ResponseEntity with status 201 (Created) containing the created reaction in the response body,
      * or with status 400 (Bad Request) if the checks on user, course or posting validity fail
      */
+    // TODO: improve the URL: postings/{postId}/reactions --> it also does not conform to the JavaDoc
+    // TODO: improve the security: at the moment it is not checked, if the post belongs to the course identified by courseId
     @PostMapping("courses/{courseId}/postings/reactions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Reaction> createReaction(@PathVariable Long courseId, @Valid @RequestBody Reaction reaction) throws URISyntaxException {
@@ -47,9 +49,11 @@ public class ReactionResource {
      * @return ResponseEntity with status 200 (OK),
      * or 400 (Bad Request) if the checks on user, course or posting validity fail
      */
+    // TODO: improve the URL: postings/{postId}/reactions/{reactionId} --> it also does not conform to the JavaDoc
+    // TODO: improve the security: at the moment it is not checked, if the post belongs to the course identified by courseId
     @DeleteMapping("courses/{courseId}/postings/reactions/{reactionId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Void> deleteReaction(@PathVariable Long courseId, @PathVariable Long reactionId) throws URISyntaxException {
+    public ResponseEntity<Void> deleteReaction(@PathVariable Long courseId, @PathVariable Long reactionId) {
         reactionService.deleteReactionById(reactionId, courseId);
         return ResponseEntity.ok().build();
     }
