@@ -428,7 +428,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateTestsAfterDueDateNoBuildAndTestDate() throws Exception {
         mockStudentRepoLocks();
-        final long delayMS = 200;
+        final long delayMS = 500;
         final ZonedDateTime now = ZonedDateTime.now();
 
         // no build and test date, but after_due_date tests ⇒ score update needed
