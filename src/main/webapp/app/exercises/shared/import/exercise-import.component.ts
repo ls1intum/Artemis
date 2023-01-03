@@ -6,6 +6,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
+import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-paging.service';
 import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
@@ -28,7 +29,7 @@ export class ExerciseImportComponent implements OnInit {
     private search = new Subject<void>();
     private sort = new Subject<void>();
 
-    private pagingService: TextExercisePagingService | ProgrammingExercisePagingService | QuizExercisePagingService | ModelingExercisePagingService;
+    private pagingService: ExercisePagingService<Exercise>;
 
     loading = false;
     content: SearchResult<Exercise>;
