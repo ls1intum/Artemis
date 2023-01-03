@@ -310,7 +310,7 @@ public class ParticipationResource {
 
         var currentDate = now();
         var participationIndividualDueDate = participation.getIndividualDueDate();
-        if (Objects.nonNull(participationIndividualDueDate) && currentDate.isAfter(participationIndividualDueDate)) {
+        if (participationIndividualDueDate != null && currentDate.isAfter(participationIndividualDueDate)) {
             throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
         }
 

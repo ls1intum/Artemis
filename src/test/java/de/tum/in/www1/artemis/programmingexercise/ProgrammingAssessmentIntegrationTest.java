@@ -689,24 +689,16 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(firstSubmittedManualResult.getSubmission()).isEqualTo(submissionWithoutFirstAssessment);
         assertThat(firstSubmittedManualResult.getParticipation()).isEqualTo(studentParticipation);
 
-        // verify that the relationship between student participation,
+        // verify that the relationship between student participation, submission and result is correct
         var databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
         assertThat(databaseRelationshipStateOfResultsOverParticipation).isPresent();
         var fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
-        assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutFirstAssessment);
+        assertThat(fetchedParticipation.findLatestSubmission()).hasValue(submissionWithoutFirstAssessment);
         assertThat(fetchedParticipation.findLatestLegalResult()).isEqualTo(firstSubmittedManualResult);
 
-        var databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository
-                .findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
-        assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
-        assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
-        assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
-        // it should contain the latest automatic result, and the lock for the manual result
-        assertThat(fetchedParticipation.findLatestSubmission().get().getResults()).hasSize(2);
-        assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(firstSubmittedManualResult);
+        validateParticipationSubmissionResult(exercise, firstSubmittedManualResult, 2);
 
         // SECOND ROUND OF CORRECTION
         LinkedMultiValueMap<String, String> paramsSecondCorrection = new LinkedMultiValueMap<>();
@@ -725,22 +717,17 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessor().getLogin()).isEqualTo(TEST_PREFIX + "tutor1");
         assertThat(submissionWithoutSecondAssessment.getLatestResult().getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
 
-        // verify that the relationship between student participation,
+        // verify that the relationship between student participation, submission and result is correct
         databaseRelationshipStateOfResultsOverParticipation = studentParticipationRepository.findWithEagerLegalSubmissionsAndResultsAssessorsById(studentParticipation.getId());
         assertThat(databaseRelationshipStateOfResultsOverParticipation).isPresent();
         fetchedParticipation = databaseRelationshipStateOfResultsOverParticipation.get();
 
         assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
         assertThat(fetchedParticipation.findLatestSubmission()).contains(submissionWithoutSecondAssessment);
-        assertThat(fetchedParticipation.getResults().stream().filter(x -> x.getCompletionDate() == null).findFirst()).contains(submissionWithoutSecondAssessment.getLatestResult());
+        assertThat(fetchedParticipation.getResults().stream().filter(res -> res.getCompletionDate() == null).findFirst())
+                .contains(submissionWithoutSecondAssessment.getLatestResult());
 
-        databaseRelationshipStateOfResultsOverSubmission = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
-        assertThat(databaseRelationshipStateOfResultsOverSubmission).hasSize(1);
-        fetchedParticipation = databaseRelationshipStateOfResultsOverSubmission.get(0);
-        assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
-        assertThat(fetchedParticipation.findLatestSubmission()).isPresent();
-        assertThat(fetchedParticipation.findLatestSubmission().get().getResults()).hasSize(3);
-        assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
+        validateParticipationSubmissionResult(exercise, submissionWithoutSecondAssessment.getLatestResult(), 3);
 
         // assess submission and submit
         final var manualResultLockedSecondRound = submissionWithoutSecondAssessment.getLatestResult();
@@ -756,27 +743,36 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(secondSubmittedManualResult).isNotNull();
 
         // make sure that new result correctly appears after the assessment for second correction round
-        LinkedMultiValueMap<String, String> paramsGetAssessedCR2 = new LinkedMultiValueMap<>();
-        paramsGetAssessedCR2.add("assessedByTutor", "true");
-        paramsGetAssessedCR2.add("correction-round", "1");
+        LinkedMultiValueMap<String, String> paramsGetAssessedCR2Tutor1 = new LinkedMultiValueMap<>();
+        paramsGetAssessedCR2Tutor1.add("assessedByTutor", "true");
+        paramsGetAssessedCR2Tutor1.add("correction-round", "1");
         assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
-                paramsGetAssessedCR2);
+                paramsGetAssessedCR2Tutor1);
 
         assertThat(assessedSubmissionList).hasSize(1);
         assertThat(assessedSubmissionList.get(0).getId()).isEqualTo(submissionWithoutSecondAssessment.getId());
         assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(1)).isEqualTo(manualResultLockedSecondRound);
 
         // make sure that they do not appear for the first correction round as the tutor only assessed the second correction round
-        LinkedMultiValueMap<String, String> paramsGetAssessedCR1 = new LinkedMultiValueMap<>();
-        paramsGetAssessedCR1.add("assessedByTutor", "true");
-        paramsGetAssessedCR1.add("correction-round", "0");
         assessedSubmissionList = request.getList("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submissions", HttpStatus.OK, ProgrammingSubmission.class,
-                paramsGetAssessedCR1);
+                paramsGetAssessedCR1Tutor1);
 
         assertThat(assessedSubmissionList).isEmpty();
 
         // Student should not have received a result over WebSocket as manual correction is ongoing
         verify(messagingTemplate, never()).convertAndSendToUser(notNull(), eq(Constants.NEW_RESULT_TOPIC), isA(Result.class));
+    }
+
+    private void validateParticipationSubmissionResult(ProgrammingExercise exercise, Result lastResult, int resultSize) {
+        var participations = studentParticipationRepository.findAllWithEagerSubmissionsAndEagerResultsAndEagerAssessorByExerciseId(exercise.getId());
+        assertThat(participations).hasSize(1);
+        StudentParticipation fetchedParticipation = participations.get(0);
+        assertThat(fetchedParticipation.getSubmissions()).hasSize(3);
+        var latestSubmission = fetchedParticipation.findLatestSubmission();
+        assertThat(latestSubmission).isPresent();
+        // it should contain the latest automatic result, and the lock for the manual result
+        assertThat(latestSubmission.get().getResults()).hasSize(resultSize);
+        assertThat(latestSubmission.get().getLatestResult()).isEqualTo(lastResult);
     }
 
     @Test

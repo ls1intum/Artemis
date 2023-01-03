@@ -136,14 +136,16 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
      * The result list can contain null values when it is called here.
      * So accessing the result list by correctionRound either yields null or a result.
      *
+     * @param assessor The assessor which should be responsible for the result for the given correction round
      * @param correctionRound for which it is checked if the tutor has a result
      * @return true if the tutor has a result in the correctionRound, false otherwise
      */
     @JsonIgnore
-    public boolean hasResultForCorrectionRound(int correctionRound) {
+    public boolean hasResultFromAssessorForCorrectionRound(User assessor, int correctionRound) {
         List<Result> withoutAutomaticResults = filterNonAutomaticResults();
         if (withoutAutomaticResults.size() > correctionRound) {
-            return withoutAutomaticResults.get(correctionRound) != null;
+            var resultForCorrectionRound = withoutAutomaticResults.get(correctionRound);
+            return resultForCorrectionRound != null && Objects.equals(assessor, resultForCorrectionRound.getAssessor());
         }
         return false;
     }
@@ -339,8 +341,8 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
 
     @Override
     public int compareTo(Submission other) {
-        if (getSubmissionDate() == null || other.getSubmissionDate() == null) {
-            // this case should not happen, but in the rare case we can compare the ids
+        if (getSubmissionDate() == null || other.getSubmissionDate() == null || Objects.equals(getSubmissionDate(), other.getSubmissionDate())) {
+            // this case should not happen, but in the rare case we can compare the ids (in tests, the submission dates might be identical as ms are not stored in the database)
             // newer ids are typically later
             return getId().compareTo(other.getId());
         }

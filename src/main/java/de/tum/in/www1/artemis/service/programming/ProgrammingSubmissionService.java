@@ -365,11 +365,9 @@ public class ProgrammingSubmissionService extends SubmissionService {
             int correctionRound) {
         List<Submission> submissions;
         if (examMode) {
-            var participations = studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
-            // Latest submission might be illegal
-            submissions = participations.stream().map(StudentParticipation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
-                    // filter out the submissions that don't have a result (but a null value) for the correctionRound
-                    .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).toList();
+            log.debug("Find participations with latest submitted submissions that are not yet assessed ot assessed by the given user");
+            var participations = studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            submissions = this.submissionRepository.findRelevantSubmissions(participations, tutor, correctionRound);
         }
         else {
             submissions = submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
@@ -514,9 +512,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         // Create a new manual result and try to reuse the existing submission with the latest commit hash
-        ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
-                SubmissionType.MANUAL);
-        Result newResult = saveNewEmptyResult(existingSubmission);
+        Result newResult = saveNewEmptyResult(submission);
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
@@ -541,7 +537,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         log.debug("Assessment locked with result id: {} for assessor: {}", newResult.getId(), newResult.getAssessor().getName());
 
         // Make sure that submission is set back after saving
-        newResult.setSubmission(existingSubmission);
+        newResult.setSubmission(submission);
         return newResult;
     }
 }

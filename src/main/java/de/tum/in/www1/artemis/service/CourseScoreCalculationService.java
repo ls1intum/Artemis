@@ -194,7 +194,7 @@ public class CourseScoreCalculationService {
             }
 
             // sorting in descending order to have the last result at the beginning
-            resultsList.sort(Comparator.comparing(Result::getCompletionDate).reversed());
+            resultsList.sort(Comparator.reverseOrder());
 
             long gracePeriodInSeconds = 10L;
             if (dueDate == null || !dueDate.plusSeconds(gracePeriodInSeconds).isBefore(resultsList.get(0).getCompletionDate())) {

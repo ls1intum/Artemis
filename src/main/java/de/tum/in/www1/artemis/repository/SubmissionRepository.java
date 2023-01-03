@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
@@ -450,5 +451,23 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     default Submission findByIdWithResultsElseThrow(long submissionId) {
         return findWithEagerResultsAndAssessorById(submissionId).orElseThrow(() -> new EntityNotFoundException("Submission", +submissionId));
+    }
+
+    /**
+     * Filters the given participations for the relevant submissions based on the given assessor and the correction round
+     *
+     * @param participations - a list of participations that should be filtered for relevant submissions
+     * @param correctionRound - the correctionRound for which the submissions should be fetched for
+     * @param assessor - the assessor we are interested in
+     * @param <T> the submission type
+     * @return the relevant submissions based on the above described filters in an immutable list
+     */
+    default <T extends Submission> List<T> findRelevantSubmissions(List<StudentParticipation> participations, User assessor, int correctionRound) {
+        // Latest submission might be illegal
+        return participations.stream().map(StudentParticipation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
+                .map(submission -> (T) submission)
+                // filter out the submissions that don't have a result (but a null value) for the correctionRound
+                // only use the submissions for which the given assessor is responsible for the result for the given correction round
+                .filter(submission -> submission.hasResultFromAssessorForCorrectionRound(assessor, correctionRound)).toList();
     }
 }

@@ -144,17 +144,14 @@ public class SubmissionService {
      * @param tutor - the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
      * @param <T> the submission type
-     * @return list of submissions
+     * @return an immutable list of submissions
      */
     public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExerciseIgnoreTestRuns(Long exerciseId, User tutor, boolean examMode,
             int correctionRound) {
         List<T> submissions;
         if (examMode) {
-            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
-            submissions = participations.stream().map(StudentParticipation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
-                    .map(submission -> (T) submission)
-                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null)
-                    .collect(Collectors.toCollection(ArrayList::new));
+            var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
+            submissions = this.submissionRepository.findRelevantSubmissions(participations, tutor, correctionRound);
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(exerciseId, tutor);
@@ -208,8 +205,8 @@ public class SubmissionService {
     public Optional<Submission> getNextAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
         var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
 
-        return assessableSubmissions.stream().filter(a -> Objects.nonNull(a.getParticipation().getIndividualDueDate()))
-                .min(Comparator.comparing(a -> a.getParticipation().getIndividualDueDate()));
+        return assessableSubmissions.stream().filter(submission -> submission.getParticipation().getIndividualDueDate() != null)
+                .min(Comparator.comparing(submission -> submission.getParticipation().getIndividualDueDate()));
     }
 
     /**

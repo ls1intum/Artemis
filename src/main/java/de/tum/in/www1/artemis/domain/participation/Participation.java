@@ -222,14 +222,10 @@ public abstract class Participation extends DomainObject implements Participatio
                     .collect(Collectors.toSet());
         }
 
-        List<Result> sortedResultsWithCompletionDate = results.stream().filter(r -> r.getCompletionDate() != null)
-                .sorted(Comparator.comparing(Result::getCompletionDate).reversed()).toList();
-
-        if (sortedResultsWithCompletionDate.isEmpty()) {
-            return null;
-        }
-        return sortedResultsWithCompletionDate.get(0);
+        return results.stream().filter(result -> result.getCompletionDate() != null).max(Comparator.naturalOrder()).orElse(null);
     }
+
+    // TODO: unify the API: either return a @Nullable object (see findLatestResult above) or an Optional (see findLatestSubmission below)
 
     /**
      * Finds the latest legal submission for the participation. Legal means that ILLEGAL submissions (exam exercise submissions after the end date)

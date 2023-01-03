@@ -100,8 +100,10 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
      * @return List of the exercises that should be scheduled
      */
     @Query("""
-            select distinct exercise from ModelingExercise exercise
-            where (exercise.assessmentType = 'SEMI_AUTOMATIC' and exercise.dueDate > :now)
+            SELECT DISTINCT exercise
+            FROM ModelingExercise exercise
+            WHERE exercise.assessmentType = 'SEMI_AUTOMATIC'
+                AND exercise.dueDate > :now
             """)
     List<ModelingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 

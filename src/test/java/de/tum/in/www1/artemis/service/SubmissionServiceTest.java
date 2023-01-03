@@ -4,10 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -107,18 +104,11 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @AfterEach
     void tearDown() {
-        if (submissionListTutor1CorrectionRound0 != null) {
-            submissionListTutor1CorrectionRound0.clear();
-        }
-        if (submissionListTutor2CorrectionRound0 != null) {
-            submissionListTutor2CorrectionRound0.clear();
-        }
-        if (submissionListTutor1CorrectionRound1 != null) {
-            submissionListTutor1CorrectionRound1.clear();
-        }
-        if (submissionListTutor2CorrectionRound1 != null) {
-            submissionListTutor2CorrectionRound1.clear();
-        }
+        // clear all potentially immutable submission lists
+        submissionListTutor1CorrectionRound0 = new ArrayList<>();
+        submissionListTutor2CorrectionRound0 = new ArrayList<>();
+        submissionListTutor1CorrectionRound1 = new ArrayList<>();
+        submissionListTutor2CorrectionRound1 = new ArrayList<>();
     }
 
     @Test

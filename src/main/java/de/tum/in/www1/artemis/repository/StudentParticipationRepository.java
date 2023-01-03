@@ -680,24 +680,25 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             """)
     List<long[]> countLegalSubmissionsPerParticipationByCourseIdAndTeamShortName(@Param("courseId") long courseId, @Param("teamShortName") String teamShortName);
 
-    // TODO SE Improve - maybe leave out max id line?
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
                 LEFT JOIN FETCH p.submissions s
                 LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.assessor
             WHERE p.exercise.id = :exerciseId
                 AND p.testRun = FALSE
-                AND s.id = (SELECT MAX(s2.id)
-                            FROM p.submissions s2
+                AND s.id = (SELECT MAX(s1.id)
+                            FROM p.submissions s1
                             )
-                AND EXISTS (SELECT s1 FROM p.submissions s1
-                            WHERE s1.participation.id = p.id
-                                AND s1.submitted = TRUE
-                                AND (r.assessor = :assessor OR r.assessor.id IS NULL)
+                AND EXISTS (SELECT s2
+                            FROM p.submissions s2
+                                LEFT JOIN s2.results r2
+                            WHERE s2.submitted = TRUE
+                                AND (r2.assessor = :assessor OR r2.assessor IS NULL)
                             )
             """)
-    List<StudentParticipation> findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(@Param("exerciseId") Long exerciseId,
-            @Param("assessor") User assessor);
+    // Note: this returns only the latest submission in the participation if there is a manually assessed or not yet assessed result for a submitted submission
+    List<StudentParticipation> findAllByParticipationExerciseIdAndResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId, @Param("assessor") User assessor);
 
     @NotNull
     default StudentParticipation findByIdElseThrow(long studentParticipationId) {
