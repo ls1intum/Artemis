@@ -13,12 +13,11 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.TextUnit;
-import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -40,17 +39,14 @@ public class TextUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final LectureUnitRepository lectureUnitRepository;
-
-    private final LearningGoalRepository learningGoalRepository;
+    private final LearningGoalProgressService learningGoalProgressService;
 
     public TextUnitResource(LectureRepository lectureRepository, TextUnitRepository textUnitRepository, AuthorizationCheckService authorizationCheckService,
-            LectureUnitRepository lectureUnitRepository, LearningGoalRepository learningGoalRepository) {
+            LearningGoalProgressService learningGoalProgressService) {
         this.lectureRepository = lectureRepository;
         this.textUnitRepository = textUnitRepository;
         this.authorizationCheckService = authorizationCheckService;
-        this.lectureUnitRepository = lectureUnitRepository;
-        this.learningGoalRepository = learningGoalRepository;
+        this.learningGoalProgressService = learningGoalProgressService;
     }
 
     /**
@@ -101,6 +97,9 @@ public class TextUnitResource {
         textUnitForm.setId(textUnit.getId());
         textUnitForm.setLecture(textUnit.getLecture());
         TextUnit result = textUnitRepository.save(textUnitForm);
+
+        learningGoalProgressService.updateProgressByLearningObjectAsync(result);
+
         return ResponseEntity.ok(result);
     }
 
@@ -134,6 +133,8 @@ public class TextUnitResource {
         lecture.addLectureUnit(textUnit);
         Lecture updatedLecture = lectureRepository.save(lecture);
         TextUnit persistedTextUnit = (TextUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
+
+        learningGoalProgressService.updateProgressByLearningObjectAsync(persistedTextUnit);
 
         return ResponseEntity.created(new URI("/api/text-units/" + persistedTextUnit.getId())).body(persistedTextUnit);
     }

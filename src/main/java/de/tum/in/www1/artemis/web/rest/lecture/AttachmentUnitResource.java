@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AttachmentUnitService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -41,13 +42,16 @@ public class AttachmentUnitResource {
 
     private final AttachmentUnitService attachmentUnitService;
 
+    private final LearningGoalProgressService learningGoalProgressService;
+
     public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService,
-            GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService) {
+            GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService, LearningGoalProgressService learningGoalProgressService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.groupNotificationService = groupNotificationService;
         this.attachmentUnitService = attachmentUnitService;
+        this.learningGoalProgressService = learningGoalProgressService;
     }
 
     /**
@@ -107,6 +111,8 @@ public class AttachmentUnitResource {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment(), notificationText);
         }
 
+        learningGoalProgressService.updateProgressByLearningObjectAsync(savedAttachmentUnit);
+
         return ResponseEntity.ok(savedAttachmentUnit);
     }
 
@@ -141,6 +147,8 @@ public class AttachmentUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, file, keepFilename);
+
+        learningGoalProgressService.updateProgressByLearningObjectAsync(savedAttachmentUnit);
 
         return ResponseEntity.created(new URI("/api/attachment-units/" + savedAttachmentUnit.getId())).body(savedAttachmentUnit);
     }

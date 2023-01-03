@@ -169,8 +169,8 @@ public class LearningGoalProgressService {
 
         if (learningGoalProgress.isPresent()) {
             var lastModified = learningGoalProgress.get().getLastModifiedDate();
-            if (lastModified != null && lastModified.isAfter(Instant.now().minusSeconds(5))) {
-                // If we have updated the progress within the last five seconds, skip it
+            if (lastModified != null && lastModified.isAfter(Instant.now().minusSeconds(1))) {
+                // If we have updated the progress within the last seconds, skip it
                 logger.debug("Learning goal progress has been updated very recently, skipping.");
                 return learningGoalProgress.get();
             }
