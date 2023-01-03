@@ -1,10 +1,8 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { LearningGoal, LearningGoalProgress, LearningGoalTaxonomy, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
+import { LearningGoal, LearningGoalProgress, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { LearningGoalDetailModalComponent } from 'app/course/learning-goals/learning-goal-detail-modal/learning-goal-detail-modal.component';
-import { LearningGoalCourseDetailModalComponent } from 'app/course/learning-goals/learning-goal-course-detail-modal/learning-goal-course-detail-modal.component';
 
 @Component({
     selector: 'jhi-learning-goal-card',
@@ -24,9 +22,6 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     public predicate = 'id';
     public reverse = false;
     public isProgressAvailable = false;
-
-    public DetailModalComponent = LearningGoalDetailModalComponent;
-    public CourseDetailModalComponent = LearningGoalCourseDetailModalComponent;
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;

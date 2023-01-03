@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.service.LearningGoalService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
-import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
+import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -88,11 +88,11 @@ public class LearningGoalResource {
      * @param learningGoalId           the id of the learning goal for which to get the progress
      * @return the ResponseEntity with status 200 (OK) and with the learning goal course performance in the body
      */
-    @GetMapping("/courses/{courseId}/goals/{learningGoalId}/individual-progress")
+    @GetMapping("/courses/{courseId}/goals/{learningGoalId}/student-progress")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<LearningGoalProgress> getLearningGoalProgressOfUser(@PathVariable Long courseId, @PathVariable Long learningGoalId,
+    public ResponseEntity<LearningGoalProgress> getLearningGoalStudentProgress(@PathVariable Long courseId, @PathVariable Long learningGoalId,
             @RequestParam(defaultValue = "false") Boolean refresh) {
-        log.debug("REST request to get student progress for LearningGoal : {}", learningGoalId);
+        log.debug("REST request to get student progress for learning goal: {}", learningGoalId);
         // var course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         if (refresh) {
@@ -112,17 +112,18 @@ public class LearningGoalResource {
      */
     @GetMapping("/courses/{courseId}/goals/{learningGoalId}/course-progress")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<CourseLearningGoalProgress> getLearningGoalProgressOfCourse(@PathVariable Long courseId, @PathVariable Long learningGoalId) {
-        log.debug("REST request to get course progress for LearningGoal : {}", learningGoalId);
+    public ResponseEntity<CourseLearningGoalProgressDTO> getLearningGoalCourseProgress(@PathVariable Long courseId, @PathVariable Long learningGoalId) {
+        log.debug("REST request to get course progress for learning goal: {}", learningGoalId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, course.getId(), true, true);
-        CourseLearningGoalProgress courseLearningGoalProgress = new CourseLearningGoalProgress();
-        courseLearningGoalProgress.courseId = courseId;
-        courseLearningGoalProgress.learningGoalId = learningGoalId;
-        courseLearningGoalProgress.learningGoalTitle = learningGoal.getTitle();
-        courseLearningGoalProgress.averageScoreAchievedInLearningGoal = RoundingUtil
-                .roundScoreSpecifiedByCourseSettings(learningGoalProgressRepository.findAverageConfidenceByLearningGoalId(learningGoalId).orElse(0.0), course);
-        return ResponseEntity.ok().body(courseLearningGoalProgress);
+
+        var numberOfStudents = learningGoalProgressRepository.countByLearningGoal(learningGoal.getId());
+        var numberOfMasteredStudents = learningGoalProgressRepository.countByLearningGoalAndConfidenceGreaterThanEqual(learningGoal.getId(),
+                learningGoal.getMasteryThreshold().doubleValue());
+        var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(learningGoalProgressRepository.findAverageConfidenceByLearningGoalId(learningGoalId).orElse(0.0),
+                course);
+
+        return ResponseEntity.ok().body(new CourseLearningGoalProgressDTO(learningGoal.getId(), numberOfStudents, numberOfMasteredStudents, averageStudentScore));
     }
 
     /**

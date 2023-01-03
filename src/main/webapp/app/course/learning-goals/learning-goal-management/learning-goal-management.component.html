@@ -18,7 +18,7 @@
     <div *ngIf="showRelations" class="container mt-3 mb-3">
         <ngb-accordion [closeOthers]="true">
             <ngb-panel id="panel-1">
-                <ng-template ngbPanelTitle> Learning Goal Relations <span class="badge rounded-pill text-bg-warning ms-1">BETA</span> </ng-template>
+                <ng-template ngbPanelTitle>Competency Relations <span class="badge rounded-pill text-bg-warning ms-1">BETA</span> </ng-template>
                 <ng-template ngbPanelContent>
                     <form class="row p-3 g-3 align-items-center">
                         <div class="col">
@@ -133,7 +133,12 @@
                         </div>
                     </td>
                     <td class="d-none d-lg-table-cell">
-                        <ngb-progressbar type="primary" [value]="25" [showValue]="true"></ngb-progressbar>
+                        <ngb-progressbar
+                            type="primary"
+                            [showValue]="true"
+                            [value]="learningGoal.courseProgress?.numberOfMasteredStudents ?? 0"
+                            [max]="learningGoal.courseProgress?.numberOfStudents ?? 0"
+                        ></ngb-progressbar>
                     </td>
                     <td class="text-end">
                         <a

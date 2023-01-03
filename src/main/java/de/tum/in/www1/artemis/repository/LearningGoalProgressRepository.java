@@ -47,4 +47,19 @@ public interface LearningGoalProgressRepository extends JpaRepository<LearningGo
             """)
     Optional<Double> findAverageConfidenceByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
 
+    @Query("""
+            SELECT count(l)
+            FROM LearningGoalProgress l
+            WHERE l.learningGoal.id = :learningGoalId
+            """)
+    Long countByLearningGoal(@Param("learningGoalId") Long learningGoalId);
+
+    @Query("""
+            SELECT count(l)
+            FROM LearningGoalProgress l
+            WHERE l.learningGoal.id = :learningGoalId
+            AND l.confidence >= :confidence
+            """)
+    Long countByLearningGoalAndConfidenceGreaterThanEqual(@Param("learningGoalId") Long learningGoalId, @Param("confidence") Double confidence);
+
 }

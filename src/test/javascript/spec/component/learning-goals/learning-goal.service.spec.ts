@@ -8,14 +8,14 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
+import { CourseLearningGoalProgressDTO } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 
 describe('LearningGoalService', () => {
     let learningGoalService: LearningGoalService;
     let httpTestingController: HttpTestingController;
     let defaultLearningGoal: LearningGoal;
     let defaultLearningGoalProgress: IndividualLearningGoalProgress;
-    let defaultLearningGoalCourseProgress: CourseLearningGoalProgress;
+    let defaultLearningGoalCourseProgress: CourseLearningGoalProgressDTO;
     let expectedResultLearningGoal: any;
     let expectedResultLearningGoalProgress: any;
     let expectedResultLearningGoalCourseProgress: any;
@@ -49,7 +49,7 @@ describe('LearningGoalService', () => {
         defaultLearningGoalProgress.learningGoalId = 0;
         defaultLearningGoalProgress.learningGoalTitle = 'title';
 
-        defaultLearningGoalCourseProgress = new CourseLearningGoalProgress();
+        defaultLearningGoalCourseProgress = new CourseLearningGoalProgressDTO();
         defaultLearningGoalCourseProgress.learningGoalId = 0;
         defaultLearningGoalCourseProgress.learningGoalTitle = 'title';
     });

@@ -47,7 +47,12 @@
                 </select>
             </div>
             <div class="form-group">
-                <label for="masteryThreshold">{{ 'artemisApp.learningGoal.masteryThreshold' | artemisTranslate }}: {{ masteryThresholdControl!.value ?? 50 }}%</label>
+                <label for="masteryThreshold">
+                    {{ 'artemisApp.learningGoal.masteryThreshold' | artemisTranslate }}: {{ masteryThresholdControl!.value ?? 50 }}%
+                    <small *ngIf="averageStudentScore"
+                        >({{ 'artemisApp.learningGoal.createLearningGoal.averageStudentScore' | artemisTranslate }}: {{ averageStudentScore }}%)</small
+                    >
+                </label>
                 <input type="range" min="0" max="100" class="form-range" id="masteryThreshold" formControlName="masteryThreshold" />
             </div>
             <div>

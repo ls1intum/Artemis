@@ -76,7 +76,8 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     courseId: number;
     @Input()
     lecturesOfCourseWithLectureUnits: Lecture[] = [];
-
+    @Input()
+    averageStudentScore?: number;
     @Input()
     hasCancelButton: boolean;
     @Output()

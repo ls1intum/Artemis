@@ -14,14 +14,14 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { CourseLearningGoalProgress, CourseLectureUnitProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
+import { CourseLearningGoalProgressDTO, CourseLectureUnitProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../test.module';
 
 @Component({ selector: 'jhi-learning-goal-card', template: '<div><ng-content></ng-content></div>' })
 class LearningGoalCardStubComponent {
     @Input() learningGoal: LearningGoal;
-    @Input() learningGoalProgress: CourseLearningGoalProgress;
+    @Input() learningGoalProgress: CourseLearningGoalProgressDTO;
     @Input() isPrerequisite: boolean;
 }
 
@@ -77,7 +77,7 @@ describe('LearningGoalManagementComponent', () => {
         const courseLectureUnitProgress = new CourseLectureUnitProgress();
         courseLectureUnitProgress.lectureUnitId = 1;
         courseLectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = 10;
-        const courseLearningGoalProgress = new CourseLearningGoalProgress();
+        const courseLearningGoalProgress = new CourseLearningGoalProgressDTO();
         courseLearningGoalProgress.courseId = 1;
         courseLearningGoalProgress.learningGoalId = 1;
         courseLearningGoalProgress.learningGoalTitle = 'test';
@@ -88,7 +88,7 @@ describe('LearningGoalManagementComponent', () => {
             body: [learningGoal, new LearningGoal()],
             status: 200,
         });
-        const learningGoalProgressResponse: HttpResponse<CourseLearningGoalProgress> = new HttpResponse({
+        const learningGoalProgressResponse: HttpResponse<CourseLearningGoalProgressDTO> = new HttpResponse({
             body: courseLearningGoalProgress,
             status: 200,
         });

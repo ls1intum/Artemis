@@ -2,12 +2,11 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { LearningGoal, LearningGoalRelation, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
+import { CourseLearningGoalProgress, LearningGoal, LearningGoalRelation, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, forkJoin } from 'rxjs';
-import { CourseLearningGoalProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import { faPencilAlt, faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
@@ -24,7 +23,6 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
     isLoading = false;
     learningGoals: LearningGoal[] = [];
     prerequisites: LearningGoal[] = [];
-    learningGoalIdToLearningGoalCourseProgress = new Map<number, CourseLearningGoalProgress>();
 
     showRelations = false;
     tailLearningGoal?: number;
@@ -90,10 +88,6 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
-    }
-
-    getLearningGoalCourseProgress(learningGoal: LearningGoal): number {
-        return this.learningGoalIdToLearningGoalCourseProgress.get(learningGoal.id!)?.averageScoreAchievedInLearningGoal || 0;
     }
 
     loadData() {
@@ -172,8 +166,8 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
                         );
 
                     for (const learningGoalProgressResponse of learningGoalProgressResponses) {
-                        const learningGoalProgress = learningGoalProgressResponse.body!;
-                        this.learningGoalIdToLearningGoalCourseProgress.set(learningGoalProgress.learningGoalId, learningGoalProgress);
+                        const courseLearningGoalProgress: CourseLearningGoalProgress = learningGoalProgressResponse.body!;
+                        this.learningGoals.find((lg) => lg.id === courseLearningGoalProgress.learningGoalId)!.courseProgress = courseLearningGoalProgress;
                     }
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
