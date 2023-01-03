@@ -8,6 +8,8 @@ import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-s
 import { directMessageUser1, metisPostToCreateUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { throwError } from 'rxjs';
+import { MockSyncStorage } from '../../../../helpers/mocks/service/mock-sync-storage.service';
+import { LocalStorageService } from 'ngx-webstorage';
 
 describe('MessageInlineInputComponent', () => {
     let component: MessageInlineInputComponent;
@@ -20,7 +22,7 @@ describe('MessageInlineInputComponent', () => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
             declarations: [MessageInlineInputComponent, MockPipe(ArtemisTranslatePipe)],
-            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
+            providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }, { provide: LocalStorageService, useClass: MockSyncStorage }],
         })
             .compileComponents()
             .then(() => {

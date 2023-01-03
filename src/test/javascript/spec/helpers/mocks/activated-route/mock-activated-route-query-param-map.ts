@@ -2,7 +2,7 @@ import { Provider } from '@angular/core';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { BehaviorSubject, of } from 'rxjs';
 
-export function mockedActivatedRoute(params: any, queryParams: any = {}, data: any = {}, parentParams: any = {}): Provider {
+export function mockedActivatedRoute(params: any, queryParams: any = {}, data: any = {}, parentParams: any = {}, parentParentParams: any = {}): Provider {
     return {
         provide: ActivatedRoute,
         useValue: {
@@ -11,6 +11,9 @@ export function mockedActivatedRoute(params: any, queryParams: any = {}, data: a
             queryParamMap: new BehaviorSubject(convertToParamMap(queryParams)),
             parent: {
                 paramMap: new BehaviorSubject(convertToParamMap(parentParams)),
+                parent: {
+                    paramMap: new BehaviorSubject(convertToParamMap(parentParentParams)),
+                },
             },
         },
     };
