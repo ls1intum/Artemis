@@ -16,6 +16,7 @@ export enum TableColumn {
     ID = 'ID',
     TITLE = 'TITLE',
     COURSE_TITLE = 'COURSE_TITLE',
+    EXAM_TITLE = 'EXAM_TITLE',
     PROGRAMMING_LANGUAGE = 'PROGRAMMING_LANGUAGE',
 }
 
@@ -26,6 +27,7 @@ export enum TableColumn {
 export class ExerciseImportComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
     readonly column = TableColumn;
+    private readonly DEFAULT_SORT_COLUMN = TableColumn.ID;
 
     @Input()
     exerciseType?: ExerciseType;
@@ -43,7 +45,7 @@ export class ExerciseImportComponent implements OnInit {
         pageSize: 10,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,
-        sortedColumn: TableColumn.ID,
+        sortedColumn: this.DEFAULT_SORT_COLUMN,
     };
 
     // Icons
@@ -146,6 +148,12 @@ export class ExerciseImportComponent implements OnInit {
     }
 
     set sortedColumn(sortedColumn: string) {
+        if (sortedColumn === TableColumn.COURSE_TITLE) {
+            if (this.isExamFilter && !this.isCourseFilter) {
+                sortedColumn = TableColumn.EXAM_TITLE;
+            }
+            // sort by course / exam title is not possible if course and exam exercises are mixed
+        }
         this.setSearchParam({ sortedColumn });
     }
 
@@ -164,12 +172,22 @@ export class ExerciseImportComponent implements OnInit {
 
     onCourseFilterChange() {
         this.isCourseFilter = !this.isCourseFilter;
+        this.resetSortOnFilterChange();
         this.search.next();
     }
 
     onExamFilterChange() {
         this.isExamFilter = !this.isExamFilter;
+        this.resetSortOnFilterChange();
         this.search.next();
+    }
+
+    // reset to default search option when mixing course and exam exercises.
+    // This avoids exercises still being filtered out by the sortedColum even if the filter is not set.
+    private resetSortOnFilterChange() {
+        if (this.sortedColumn === TableColumn.COURSE_TITLE || this.sortedColumn == TableColumn.EXAM_TITLE) {
+            this.sortedColumn = this.DEFAULT_SORT_COLUMN;
+        }
     }
 
     /**

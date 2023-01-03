@@ -28,7 +28,7 @@
                         <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th *ngIf="this.exerciseType === ExerciseType.PROGRAMMING" jhiSortBy="{{ column.PROGRAMMING_LANGUAGE }}" class="col-4">
+                    <th *ngIf="this.exerciseType === ExerciseType.PROGRAMMING" jhiSortBy="{{ column.PROGRAMMING_LANGUAGE }}" class="col-2">
                         <span jhiTranslate="artemisApp.exercise.import.table.language">Programming Language</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
@@ -36,7 +36,7 @@
                         <span [hidden]="!isCourseFilter" jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
                         <span [hidden]="!(isCourseFilter && isExamFilter)"> | </span>
                         <span [hidden]="!isExamFilter" jhiTranslate="artemisApp.exercise.import.table.exam">Course</span>
-                        <fa-icon [icon]="faSort"></fa-icon>
+                        <fa-icon *ngIf="!(isCourseFilter && isExamFilter)" [icon]="faSort"></fa-icon>
                     </th>
                     <th class="col-2" [hidden]="!(isCourseFilter && isExamFilter)">
                         <span jhiTranslate="artemisApp.exercise.import.table.examQuestion">Exam Question</span>
