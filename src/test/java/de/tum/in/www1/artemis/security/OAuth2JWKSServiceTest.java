@@ -43,6 +43,8 @@ class OAuth2JWKSServiceTest {
         when(onlineCourseConfigurationService.getAllClientRegistrations()).thenReturn(Collections.singletonList(clientRegistration));
 
         oAuth2JWKSService = new OAuth2JWKSService(onlineCourseConfigurationService);
+        // post construct not automatically called due to manual instantiation without dependency injection
+        oAuth2JWKSService.init();
     }
 
     @AfterEach

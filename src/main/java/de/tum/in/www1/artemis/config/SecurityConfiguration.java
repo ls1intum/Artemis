@@ -29,6 +29,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.www.BasicAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 
+import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -152,7 +153,8 @@ public class SecurityConfiguration {
             .requestMatchers("/i18n/**").permitAll()
             .requestMatchers("/content/**").permitAll()
             .requestMatchers("/api.html").permitAll()
-            .requestMatchers("/api-docs/**").permitAll())
+            .requestMatchers("/api-docs/**").permitAll()
+            .requestMatchers(CustomLti13Configurer.JWKS_PATH).permitAll())
 //        .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)    //TODO: we use JWTFilter, etc. at the moment, but we should switch to this solution
         .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .exceptionHandling(exceptions -> exceptions
