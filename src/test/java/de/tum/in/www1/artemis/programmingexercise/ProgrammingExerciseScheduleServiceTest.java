@@ -213,7 +213,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldScheduleExercisesWithBuildAndTestDateInFuture() throws Exception {
         mockStudentRepoLocks();
-        long delayMS = 200;
+        long delayMS = 800;
         programmingExercise.setDueDate(plusMillis(ZonedDateTime.now(), delayMS / 2));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(plusMillis(ZonedDateTime.now(), delayMS));
         programmingExerciseRepository.save(programmingExercise);
