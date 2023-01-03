@@ -88,9 +88,13 @@ jobs:
           - name: Print failed tests
             if: success() || failure()
             run: cat tests.log | grep "Test >.*FAILED"
-          - name: Output Error because tests failed
-            if: steps.tests.outcome != 'success'
-            run: exit 1
+          - name: Annotate Server Test Results
+            uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
+            if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
+            with:
+                access-token: ${{ secrets.GITHUB_TOKEN }}
+                path: build/test-results/test/*.xml
+                numFailures: 99
 
   server-tests-postgres:
       runs-on: ubuntu-latest
@@ -109,9 +113,13 @@ jobs:
           - name: Print failed tests
             if: success() || failure()
             run: cat tests.log | grep "Test >.*FAILED"
-          - name: Output Error because tests failed
-            if: steps.tests.outcome != 'success'
-            run: exit 1
+          - name: Annotate Server Test Results
+            uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
+            if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
+            with:
+                access-token: ${{ secrets.GITHUB_TOKEN }}
+                path: build/test-results/test/*.xml
+                numFailures: 99
 
   server-style:
     runs-on: ubuntu-latest
