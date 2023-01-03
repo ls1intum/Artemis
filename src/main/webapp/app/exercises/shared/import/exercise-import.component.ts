@@ -12,13 +12,7 @@ import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pag
 import { Subject } from 'rxjs';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
 
-export enum TableColumn {
-    ID = 'ID',
-    TITLE = 'TITLE',
-    COURSE_TITLE = 'COURSE_TITLE',
-    EXAM_TITLE = 'EXAM_TITLE',
-    PROGRAMMING_LANGUAGE = 'PROGRAMMING_LANGUAGE',
-}
+export type TableColumn = 'ID' | 'TITLE' | 'COURSE_TITLE' | 'EXAM_TITLE' | 'PROGRAMMING_LANGUAGE';
 
 @Component({
     selector: 'jhi-exercise-import',
@@ -26,8 +20,7 @@ export enum TableColumn {
 })
 export class ExerciseImportComponent implements OnInit {
     readonly ExerciseType = ExerciseType;
-    readonly column = TableColumn;
-    private readonly DEFAULT_SORT_COLUMN = TableColumn.ID;
+    private readonly DEFAULT_SORT_COLUMN: TableColumn = 'ID';
 
     @Input()
     exerciseType?: ExerciseType;
@@ -147,18 +140,18 @@ export class ExerciseImportComponent implements OnInit {
         this.sort.next();
     }
 
-    set sortedColumn(sortedColumn: string) {
-        if (sortedColumn === TableColumn.COURSE_TITLE) {
+    set sortedColumn(sortedColumn: TableColumn) {
+        if (sortedColumn === 'COURSE_TITLE') {
             if (this.isExamFilter && !this.isCourseFilter) {
-                sortedColumn = TableColumn.EXAM_TITLE;
+                sortedColumn = 'EXAM_TITLE';
             }
             // sort by course / exam title is not possible if course and exam exercises are mixed
         }
         this.setSearchParam({ sortedColumn });
     }
 
-    get sortedColumn(): string {
-        return this.state.sortedColumn;
+    get sortedColumn(): TableColumn {
+        return this.state.sortedColumn as TableColumn;
     }
 
     set searchTerm(searchTerm: string) {
@@ -185,7 +178,7 @@ export class ExerciseImportComponent implements OnInit {
     // reset to default search option when mixing course and exam exercises.
     // This avoids exercises still being filtered out by the sortedColum even if the filter is not set.
     private resetSortOnFilterChange() {
-        if (this.sortedColumn === TableColumn.COURSE_TITLE || this.sortedColumn == TableColumn.EXAM_TITLE) {
+        if (this.sortedColumn === 'COURSE_TITLE' || this.sortedColumn == 'EXAM_TITLE') {
             this.sortedColumn = this.DEFAULT_SORT_COLUMN;
         }
     }

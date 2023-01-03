@@ -20,19 +20,19 @@
         <table class="table table-striped flex">
             <thead class="thead-dark">
                 <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()" class="flex-row">
-                    <th jhiSortBy="{{ column.ID }}" class="col-1">
+                    <th jhiSortBy="ID" class="col-1">
                         <span>#</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="{{ column.TITLE }}" class="col-4">
+                    <th jhiSortBy="TITLE" class="col-4">
                         <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th *ngIf="this.exerciseType === ExerciseType.PROGRAMMING" jhiSortBy="{{ column.PROGRAMMING_LANGUAGE }}" class="col-2">
+                    <th *ngIf="this.exerciseType === ExerciseType.PROGRAMMING" jhiSortBy="PROGRAMMING_LANGUAGE" class="col-2">
                         <span jhiTranslate="artemisApp.exercise.import.table.language">Programming Language</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th jhiSortBy="{{ column.COURSE_TITLE }}" class="col-4">
+                    <th jhiSortBy="COURSE_TITLE" class="col-4">
                         <span [hidden]="!isCourseFilter" jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
                         <span [hidden]="!(isCourseFilter && isExamFilter)"> | </span>
                         <span [hidden]="!isExamFilter" jhiTranslate="artemisApp.exercise.import.table.exam">Course</span>
