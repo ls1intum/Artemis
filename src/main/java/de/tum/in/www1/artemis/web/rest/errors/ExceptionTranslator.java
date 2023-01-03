@@ -32,6 +32,7 @@ import org.zalando.problem.*;
 
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
+import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -156,6 +157,12 @@ public class ExceptionTranslator {
 
     @ExceptionHandler
     public ResponseEntity<Problem> handleArtemisAuthenticationException(ArtemisAuthenticationException ex, NativeWebRequest request) {
+        Problem problem = Problem.builder().withStatus(Status.INTERNAL_SERVER_ERROR).with(MESSAGE_KEY, ErrorConstants.ERR_AUTHENTICATION).build();
+        return create(ex, problem, request);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<Problem> handleGitException(GitException ex, NativeWebRequest request) {
         Problem problem = Problem.builder().withStatus(Status.INTERNAL_SERVER_ERROR).with(MESSAGE_KEY, ErrorConstants.ERR_AUTHENTICATION).build();
         return create(ex, problem, request);
     }

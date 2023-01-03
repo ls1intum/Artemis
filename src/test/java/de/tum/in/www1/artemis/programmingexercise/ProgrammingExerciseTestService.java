@@ -1124,8 +1124,7 @@ public class ProgrammingExerciseTestService {
         createAndCommitDummyFileInLocalRepository(testRepo, "Tests.java");
         doReturn(testsRepository).when(gitService).getOrCheckoutRepository(eq(exercise.getRepositoryURL(RepositoryType.TESTS)), anyString(), anyBoolean());
 
-        var url = "/api/programming-exercises/" + exercise.getId() + "/export-instructor-exercise";
-        return request.getFile(url, expectedStatus, new LinkedMultiValueMap<>());
+        return request.getFile("/api/programming-exercises/" + exercise.getId() + "/export-instructor-exercise", expectedStatus, new LinkedMultiValueMap<>());
     }
 
     private void generateProgrammingExerciseForExport() {
