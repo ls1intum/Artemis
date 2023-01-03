@@ -2,11 +2,9 @@ package de.tum.in.www1.artemis.repository.specs;
 
 import org.springframework.data.jpa.domain.Specification;
 
-import de.tum.in.www1.artemis.domain.metis.Conversation_;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Post_;
-import jakarta.persistence.criteria.Expression;
-import jakarta.persistence.criteria.Predicate;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation_;
 
 public class MessageSpecs {
 

@@ -1,0 +1,35 @@
+.conversation-info {
+    .info-container {
+        .info-section {
+            padding: 0.5rem;
+
+            .action-button {
+                visibility: hidden;
+                margin: 0.25rem;
+
+                &.right {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                }
+            }
+
+            &.interactive {
+                &:hover {
+                    .action-button {
+                        visibility: visible;
+                    }
+                }
+            }
+
+            .wide-button {
+                width: 50%;
+            }
+
+            textarea {
+                min-height: 5rem;
+                resize: none;
+            }
+        }
+    }
+}
