@@ -122,7 +122,7 @@ public class Lti10Service {
      * @return the username for the LTI user
      */
     @NotNull
-    protected String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest, OnlineCourseConfiguration onlineCourseConfiguration) {
+    public String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username;
 
         if (!StringUtils.isEmpty(launchRequest.getExt_user_username())) {
@@ -158,7 +158,7 @@ public class Lti10Service {
      * @param launchRequest the LTI launch request
      * @return the last name for the LTI user
      */
-    protected String getUserLastNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
+    public String getUserLastNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
         if (!StringUtils.isEmpty(launchRequest.getLis_person_name_family())) {
             return launchRequest.getLis_person_name_family();
         }

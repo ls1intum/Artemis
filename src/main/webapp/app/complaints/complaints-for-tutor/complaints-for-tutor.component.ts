@@ -145,6 +145,7 @@ export class ComplaintsForTutorComponent implements OnInit {
             this.alertService.error('artemisApp.complaintResponse.noText');
             return;
         }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         if (this.complaintResponse.responseText.length > this.course?.maxComplaintResponseTextLimit!) {
             this.alertService.error('artemisApp.complaint.exceededComplaintResponseTextLimit', {
                 maxComplaintRespondTextLimit: this.course?.maxComplaintResponseTextLimit,

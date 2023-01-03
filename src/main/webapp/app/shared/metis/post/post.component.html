@@ -1,4 +1,12 @@
-<jhi-post-header [previewMode]="previewMode" [posting]="posting" [isCourseMessagesPage]="isCourseMessagesPage" (isModalOpen)="displayInlineInput = true"></jhi-post-header>
+<jhi-post-header
+    [previewMode]="previewMode"
+    [readOnlyMode]="readOnlyMode"
+    [posting]="posting"
+    [isCourseMessagesPage]="isCourseMessagesPage"
+    [hasChannelModerationRights]="hasChannelModerationRights"
+    (isModalOpen)="displayInlineInput = true"
+    [lastReadDate]="lastReadDate"
+></jhi-post-header>
 <div class="row align-items-center">
     <div class="col">
         <div class="mb-1">
@@ -51,8 +59,9 @@
         ></jhi-posting-content>
     </div>
 </div>
-<jhi-message-inline-input *ngIf="displayInlineInput" [posting]="posting" (isModalOpen)="displayInlineInput = false"> </jhi-message-inline-input>
+<jhi-message-inline-input *ngIf="displayInlineInput && !readOnlyMode" [posting]="posting" (isModalOpen)="displayInlineInput = false"> </jhi-message-inline-input>
 <jhi-post-footer
+    [readOnlyMode]="readOnlyMode"
     [modalRef]="modalRef"
     [previewMode]="previewMode"
     [posting]="posting"
@@ -60,4 +69,5 @@
     [isCourseMessagesPage]="isCourseMessagesPage"
     [isThreadSidebar]="isThreadSidebar"
     (openThread)="openThread.emit()"
+    [lastReadDate]="lastReadDate"
 ></jhi-post-footer>

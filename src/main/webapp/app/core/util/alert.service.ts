@@ -48,7 +48,7 @@ interface AlertInternal extends AlertBase {
     openedAt?: dayjs.Dayjs;
 }
 
-export interface Alert extends Readonly<AlertInternal> {}
+export type Alert = Readonly<AlertInternal>;
 
 const DEFAULT_TIMEOUT = 15000;
 const DEFAULT_DISMISSIBLE = true;
@@ -267,7 +267,7 @@ export class AlertService {
         });
     }
 
-    private addErrorAlert(message?: any, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
+    addErrorAlert(message?: any, translationKey?: string, translationParams?: { [key: string]: unknown }): void {
         if (message && typeof message !== 'string') {
             message = '' + message;
         }

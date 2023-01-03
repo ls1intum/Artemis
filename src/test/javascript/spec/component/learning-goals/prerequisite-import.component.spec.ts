@@ -11,6 +11,7 @@ import { SortDirective } from 'app/shared/sort/sort.directive';
 import { PrerequisiteImportComponent, TableColumn } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
 import { LearningGoalPagingService } from 'app/course/learning-goals/learning-goal-paging.service';
 import { LearningGoal } from 'app/entities/learningGoal.model';
+import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 
 describe('PrerequisiteImportComponent', () => {
     let fixture: ComponentFixture<PrerequisiteImportComponent>;
@@ -24,7 +25,7 @@ describe('PrerequisiteImportComponent', () => {
     let learningGoal: LearningGoal;
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule],
+            imports: [ArtemisTestModule, FormsModule, MockComponent(NgbPagination)],
             declarations: [PrerequisiteImportComponent, MockComponent(ButtonComponent), MockDirective(SortByDirective), MockDirective(SortDirective)],
         })
             .compileComponents()

@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601DateString;
-import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601TimeString;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -99,7 +96,6 @@ public class TutorialGroupSchedule extends DomainObject {
      */
     @Column(name = "location")
     @Size(max = 2000)
-    @Lob
     private String location;
 
     /**
@@ -159,12 +155,7 @@ public class TutorialGroupSchedule extends DomainObject {
      * @param startTime the start time of a session created from this schedule
      */
     public void setStartTime(String startTime) {
-        if (isIso8601TimeString(startTime)) {
-            this.startTime = startTime;
-        }
-        else {
-            throw new IllegalArgumentException("Start time must be in ISO 8601 format (HH:mm:ss)");
-        }
+        this.startTime = startTime;
     }
 
     /**
@@ -186,12 +177,7 @@ public class TutorialGroupSchedule extends DomainObject {
      * @param endTime the end time of a session created from this schedule
      */
     public void setEndTime(String endTime) {
-        if (isIso8601TimeString(endTime)) {
-            this.endTime = endTime;
-        }
-        else {
-            throw new IllegalArgumentException("End time must be in ISO 8601 format (HH:mm:ss)");
-        }
+        this.endTime = endTime;
     }
 
     public Integer getRepetitionFrequency() {
@@ -212,12 +198,7 @@ public class TutorialGroupSchedule extends DomainObject {
      * @param validFromInclusive start date of the schedule validity
      */
     public void setValidFromInclusive(String validFromInclusive) {
-        if (isIso8601DateString(validFromInclusive)) {
-            this.validFromInclusive = validFromInclusive;
-        }
-        else {
-            throw new IllegalArgumentException("ValidFromInclusive must be in ISO 8601 format (yyyy-MM-dd)");
-        }
+        this.validFromInclusive = validFromInclusive;
     }
 
     public String getValidToInclusive() {
@@ -230,12 +211,7 @@ public class TutorialGroupSchedule extends DomainObject {
      * @param validToInclusive end date of the schedule validity
      */
     public void setValidToInclusive(String validToInclusive) {
-        if (isIso8601DateString(validToInclusive)) {
-            this.validToInclusive = validToInclusive;
-        }
-        else {
-            throw new IllegalArgumentException("ValidToInclusive must be in ISO 8601 format (yyyy-MM-dd)");
-        }
+        this.validToInclusive = validToInclusive;
     }
 
     public String getLocation() {
