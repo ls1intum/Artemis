@@ -152,6 +152,8 @@ public class QuizStatisticService {
         if (results != null && quiz != null && quiz.getQuizQuestions() != null) {
             log.debug("update statistics with {} new results", results.size());
 
+            log.debug("Load quiz point statistic with point counters");
+            quiz.setQuizPointStatistic(quizPointStatisticRepository.findByIdWithPointCounters(quiz.getQuizPointStatistic().getId()));
             for (Result result : results) {
                 // check if the result is rated
                 // NOTE: there is never an old Result if the new result is rated
