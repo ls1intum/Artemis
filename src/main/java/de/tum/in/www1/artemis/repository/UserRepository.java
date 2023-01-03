@@ -143,6 +143,68 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
             + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)")
     Page<User> searchAllByLoginOrNameInGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
 
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+             SELECT DISTINCT user
+             FROM User user
+             LEFT JOIN user.groups userGroup
+             WHERE userGroup IN :#{#groupNames}
+             AND (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)
+             AND user.id <> :#{#idOfUser}
+             ORDER BY concat_ws(' ', user.firstName, user.lastName)
+            """)
+    Page<User> searchAllByLoginOrNameInGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames,
+            @Param("idOfUser") Long idOfUser);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+             SELECT DISTINCT user
+             FROM User user
+             JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+             JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+             WHERE conversation.id = :#{#conversationId}
+             AND (:#{#loginOrName} = '' OR (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%))
+            """)
+    Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+             SELECT DISTINCT user
+             FROM User user
+             JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+             JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+             WHERE conversation.id = :#{#conversationId}
+             AND (:#{#loginOrName} = '' OR (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%))
+             AND  :#{#groupName} member of user.groups
+            """)
+    Page<User> searchAllByLoginOrNameInConversationWithCourseGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId,
+            @Param("groupName") String groupName);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+             SELECT DISTINCT user
+             FROM User user
+             JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+             JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+             WHERE conversation.id = :#{#conversationId}
+             AND (:#{#loginOrName} = '' OR (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%))
+             AND (:#{#groupName} member of user.groups OR :#{#groupName2} member of user.groups)
+            """)
+    Page<User> searchAllByLoginOrNameInConversationWithEitherCourseGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId,
+            @Param("groupName") String groupName, @Param("groupName2") String groupName2);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+            JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+            JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+            WHERE conversation.id = :#{#conversationId}
+            AND (:#{#loginOrName} = '' OR (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%))
+            AND  conversationParticipant.isModerator = true
+               """)
+    Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId);
+
     /**
      * Search for all users by login or name in a group and convert them to {@link UserDTO}
      *
@@ -527,4 +589,5 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     default User findByIdElseThrow(long userId) throws EntityNotFoundException {
         return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
+
 }
