@@ -1,16 +1,23 @@
+import { HttpClient } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-paging.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { take } from 'rxjs/operators';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { take } from 'rxjs';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
-describe('QuizExercise Paging Service', () => {
-    let service: QuizExercisePagingService;
+class DummyPagingService extends ExercisePagingService<any> {
+    constructor(http: HttpClient) {
+        super(http, 'test');
+    }
+}
+
+describe('Exercise Paging Service', () => {
+    let service: ExercisePagingService<any>;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
@@ -22,8 +29,9 @@ describe('QuizExercise Paging Service', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         });
-        service = TestBed.inject(QuizExercisePagingService);
         httpMock = TestBed.inject(HttpTestingController);
+        const httpClient = TestBed.get(HttpClient);
+        service = new DummyPagingService(httpClient);
     });
 
     it('should find an element', fakeAsync(() => {

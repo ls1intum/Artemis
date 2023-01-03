@@ -5,7 +5,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
-import { ExerciseImportComponent, TableColumn } from 'app/exercises/shared/import/exercise-import.component';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
