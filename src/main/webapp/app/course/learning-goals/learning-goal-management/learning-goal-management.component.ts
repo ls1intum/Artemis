@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { LearningGoal, LearningGoalRelation } from 'app/entities/learningGoal.model';
+import { LearningGoal, LearningGoalRelation, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { filter, finalize, map, switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
@@ -36,6 +36,9 @@ export class LearningGoalManagementComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    getIcon = getIcon;
+    getIconTooltip = getIconTooltip;
 
     // Icons
     faPlus = faPlus;

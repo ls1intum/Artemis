@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { LearningGoal, LearningGoalRelation } from 'app/entities/learningGoal.model';
+import { LearningGoal, LearningGoalProgress, LearningGoalRelation } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { map } from 'rxjs/operators';
 import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
@@ -26,8 +26,11 @@ export class LearningGoalService {
         return this.httpClient.get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' });
     }
 
-    getProgress(learningGoalId: number, courseId: number) {
-        return this.httpClient.get<IndividualLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/individual-progress`, {
+    getProgress(learningGoalId: number, courseId: number, refresh = false) {
+        let params = new HttpParams();
+        params = params.set('refresh', refresh.toString());
+        return this.httpClient.get<LearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/individual-progress`, {
+            params,
             observe: 'response',
         });
     }

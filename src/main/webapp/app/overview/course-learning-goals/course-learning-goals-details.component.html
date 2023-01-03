@@ -1,3 +1,5 @@
+<jhi-fireworks *ngIf="showFireworks"></jhi-fireworks>
+
 <div *ngIf="isLoading" class="d-flex justify-content-center">
     <div class="spinner-border" role="status">
         <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
@@ -8,27 +10,31 @@
     <!-- HEADER INFORMATION START -->
     <div class="course-info-bar">
         <div class="row">
-            <div class="col general-info">
-                <h4 class="fw-medium">
-                    <fa-icon *ngIf="learningGoal.taxonomy" [icon]="getIcon(learningGoal.taxonomy)"></fa-icon>
-                </h4>
-                <h3>
-                    <span>{{ learningGoal!.title }}</span>
+            <div class="col-12 general-info">
+                <h3 class="mb-0">
+                    <fa-icon *ngIf="learningGoal.taxonomy" [icon]="getIcon(learningGoal.taxonomy)" [fixedWidth]="true"></fa-icon> <span>{{ learningGoal!.title }}</span>
+                    <span *ngIf="mastery == 100" class="badge text-white text-bg-success" jhiTranslate="artemisApp.learningGoal.mastered">Mastered</span>
                 </h3>
+            </div>
+            <div class="col-12" *ngIf="learningGoal.description">
+                {{ learningGoal.description }}
             </div>
         </div>
     </div>
     <!-- HEADER INFORMATION END -->
-    <!-- LECTURE START -->
     <div class="row mt-2">
         <div class="col-lg-9 col-md-8">
             <div class="row">
                 <div class="col-11" *ngFor="let lectureUnit of learningGoal.lectureUnits" [ngSwitch]="lectureUnit.type">
                     <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [course]="learningGoal!.course!"></jhi-exercise-unit>
-                    <jhi-attachment-unit *ngSwitchCase="LectureUnitType.ATTACHMENT" [attachmentUnit]="lectureUnit"></jhi-attachment-unit>
-                    <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit"></jhi-video-unit>
-                    <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit"></jhi-text-unit>
-                    <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit"></jhi-online-unit>
+                    <jhi-attachment-unit
+                        *ngSwitchCase="LectureUnitType.ATTACHMENT"
+                        [attachmentUnit]="lectureUnit"
+                        (onCompletion)="completeLectureUnit($event)"
+                    ></jhi-attachment-unit>
+                    <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-video-unit>
+                    <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-text-unit>
+                    <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" (onCompletion)="completeLectureUnit($event)"></jhi-online-unit>
                 </div>
             </div>
         </div>

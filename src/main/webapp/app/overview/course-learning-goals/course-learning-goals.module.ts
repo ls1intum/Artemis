@@ -6,6 +6,8 @@ import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals
 import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
+import { FireworksModule } from 'app/shared/fireworks/fireworks.module';
+import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
 
 const routes: Routes = [
     {
@@ -21,7 +23,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [RouterModule.forChild(routes), ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisLearningGoalsModule],
+    imports: [RouterModule.forChild(routes), ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisLearningGoalsModule, FireworksModule],
     declarations: [CourseLearningGoalsComponent],
     exports: [CourseLearningGoalsComponent],
 })

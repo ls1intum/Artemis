@@ -55,11 +55,16 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
     @Query("""
             SELECT learningGoal
             FROM LearningGoal learningGoal
-            LEFT JOIN FETCH learningGoal.exercises
-            LEFT JOIN FETCH learningGoal.lectureUnits lu
+            LEFT JOIN FETCH learningGoal.userProgress progress
+            LEFT JOIN FETCH learningGoal.exercises exercises
+            LEFT JOIN FETCH learningGoal.lectureUnits lectureUnits
+            LEFT JOIN FETCH lectureUnits.completedUsers completions
+            LEFT JOIN FETCH lectureUnits.lecture lecture
+            LEFT JOIN FETCH lectureUnits.exercise exercise
             WHERE learningGoal.id = :learningGoalId
+            AND (progress.user IS NULL OR progress.user.id = :userId)
             """)
-    Optional<LearningGoal> findByIdWithExercisesAndLectureUnits(@Param("learningGoalId") Long learningGoalId);
+    Optional<LearningGoal> findByIdWithExercisesAndLectureUnitsAndProgressForUser(@Param("learningGoalId") Long learningGoalId, @Param("userId") Long userId);
 
     @Query("""
             SELECT learningGoal
@@ -133,6 +138,10 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
 
     default LearningGoal findByIdWithLectureUnitsElseThrow(Long learningGoalId) {
         return findByIdWithLectureUnits(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    }
+
+    default LearningGoal findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(Long learningGoalId, Long userId) {
+        return findByIdWithExercisesAndLectureUnitsAndProgressForUser(learningGoalId, userId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
     }
 
     default LearningGoal findByIdWithExercisesElseThrow(Long learningGoalId) {

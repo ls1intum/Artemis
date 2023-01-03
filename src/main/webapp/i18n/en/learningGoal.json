@@ -9,9 +9,12 @@
             "description": "Description",
             "taxonomy": "Taxonomy",
             "masteryThreshold": "Mastery threshold",
+            "course": "Course",
             "progress": "Progress",
             "confidence": "Confidence",
             "mastery": "Mastery",
+            "masteredStudents": "Mastered students",
+            "mastered": "Mastered",
             "taxonomies": {
                 "remember": "Remember",
                 "understand": "Understand",

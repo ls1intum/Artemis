@@ -95,7 +95,7 @@ public class LearningGoalProgressService {
     public void updateProgressByLearningGoalAsync(LearningGoal learningGoal) {
         SecurityUtils.setAuthorizationObject(); // required for async
         learningGoalProgressRepository.findAllByLearningGoalId(learningGoal.getId()).stream().map(LearningGoalProgress::getUser).forEach(user -> {
-            updateProgress(learningGoal.getId(), user);
+            updateLearningGoalProgress(learningGoal.getId(), user);
         });
     }
 
@@ -107,7 +107,7 @@ public class LearningGoalProgressService {
      */
     public Set<LearningGoal> getLearningGoalsAndUpdateProgressByUserInCourse(User user, Course course) {
         return learningGoalRepository.findAllForCourse(course.getId()).stream().peek(learningGoal -> {
-            var updatedProgress = updateProgress(learningGoal.getId(), user);
+            var updatedProgress = updateLearningGoalProgress(learningGoal.getId(), user);
             if (updatedProgress != null) {
                 learningGoal.setUserProgress(Set.of(updatedProgress));
             }
@@ -141,7 +141,7 @@ public class LearningGoalProgressService {
 
             users.forEach(user -> {
                 learningGoals.forEach(learningGoal -> {
-                    updateProgress(learningGoal.getId(), user);
+                    updateLearningGoalProgress(learningGoal.getId(), user);
                 });
             });
         }
@@ -151,12 +151,12 @@ public class LearningGoalProgressService {
     }
 
     /**
-     * Updates the progress value (and confidence score) of the given learning goal and user
+     * Updates the progress value (and confidence score) of the given learning goal and user, then returns it
      * @param learningGoalId The id of the learning goal to update the progress for
      * @param user The user for which the progress should be updated
-     * @return The updated learning goal progress
+     * @return The updated learning goal progress, which is also persisted to the database
      */
-    private LearningGoalProgress updateProgress(Long learningGoalId, User user) {
+    public LearningGoalProgress updateLearningGoalProgress(Long learningGoalId, User user) {
         var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsAndCompletions(learningGoalId).orElse(null);
 
         if (user == null || learningGoal == null) {

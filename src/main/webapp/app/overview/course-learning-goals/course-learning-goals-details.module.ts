@@ -9,8 +9,8 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { RouterModule, Routes } from '@angular/router';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { CourseLearningGoalsDetailsComponent } from 'app/overview/course-learning-goals/course-learning-goals-details.component';
-import { SidePanelComponent } from 'app/shared/side-panel/side-panel.component';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
+import { FireworksModule } from 'app/shared/fireworks/fireworks.module';
 
 const routes: Routes = [
     {
@@ -33,6 +33,7 @@ const routes: Routes = [
         ArtemisLearningGoalsModule,
         ArtemisMarkdownModule,
         ArtemisSidePanelModule,
+        FireworksModule,
     ],
     declarations: [CourseLearningGoalsDetailsComponent],
     exports: [CourseLearningGoalsDetailsComponent],

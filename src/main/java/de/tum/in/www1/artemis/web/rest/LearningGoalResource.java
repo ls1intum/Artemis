@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.service.LearningGoalService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
@@ -61,10 +62,12 @@ public class LearningGoalResource {
 
     private final LearningGoalProgressService learningGoalProgressService;
 
+    private final ExerciseService exerciseService;
+
     public LearningGoalResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             LearningGoalRepository learningGoalRepository, LearningGoalRelationRepository learningGoalRelationRepository, LectureUnitRepository lectureUnitRepository,
             LearningGoalService learningGoalService, LearningGoalProgressRepository learningGoalProgressRepository, ExerciseRepository exerciseRepository,
-            LearningGoalProgressService learningGoalProgressService) {
+            LearningGoalProgressService learningGoalProgressService, ExerciseService exerciseService) {
         this.courseRepository = courseRepository;
         this.learningGoalRelationRepository = learningGoalRelationRepository;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -75,6 +78,29 @@ public class LearningGoalResource {
         this.learningGoalProgressRepository = learningGoalProgressRepository;
         this.exerciseRepository = exerciseRepository;
         this.learningGoalProgressService = learningGoalProgressService;
+        this.exerciseService = exerciseService;
+    }
+
+    /**
+     * GET /courses/:courseId/goals/:learningGoalId/individual-progress  gets the learning goal progress for the whole course
+     *
+     * @param courseId                 the id of the course to which the learning goal belongs
+     * @param learningGoalId           the id of the learning goal for which to get the progress
+     * @return the ResponseEntity with status 200 (OK) and with the learning goal course performance in the body
+     */
+    @GetMapping("/courses/{courseId}/goals/{learningGoalId}/individual-progress")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<LearningGoalProgress> getLearningGoalProgressOfUser(@PathVariable Long courseId, @PathVariable Long learningGoalId,
+            @RequestParam(defaultValue = "false") Boolean refresh) {
+        log.debug("REST request to get student progress for LearningGoal : {}", learningGoalId);
+        // var course = courseRepository.findByIdElseThrow(courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        if (refresh) {
+            return ResponseEntity.ok().body(learningGoalProgressService.updateLearningGoalProgress(learningGoalId, user));
+        }
+        else {
+            return ResponseEntity.ok().body(learningGoalProgressRepository.findEagerByLearningGoalIdAndUserId(learningGoalId, user.getId()).orElse(null));
+        }
     }
 
     /**
@@ -86,7 +112,7 @@ public class LearningGoalResource {
      */
     @GetMapping("/courses/{courseId}/goals/{learningGoalId}/course-progress")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<CourseLearningGoalProgress> getLearningGoalProgressOfCourse(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
+    public ResponseEntity<CourseLearningGoalProgress> getLearningGoalProgressOfCourse(@PathVariable Long courseId, @PathVariable Long learningGoalId) {
         log.debug("REST request to get course progress for LearningGoal : {}", learningGoalId);
         var course = courseRepository.findByIdElseThrow(courseId);
         var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, course.getId(), true, true);
@@ -170,9 +196,12 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoal> getLearningGoal(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.debug("REST request to get LearningGoal : {}", learningGoalId);
-        var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId, false, true);
-        var lectureUnits = lectureUnitRepository.findAllByLearningGoalId(learningGoalId);
-        learningGoal.setLectureUnits(new HashSet<>(lectureUnits));
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(learningGoalId, courseId);
+        // Set completion stations and remove exercise units (redundant as we also return all exercises)
+        learningGoal.setLectureUnits(learningGoal.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).peek(lectureUnit -> {
+            lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
+        }).collect(Collectors.toSet()));
         return ResponseEntity.ok().body(learningGoal);
     }
 

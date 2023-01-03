@@ -8,9 +8,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { EditLearningGoalComponent } from './edit-learning-goal/edit-learning-goal.component';
 import { LearningGoalManagementComponent } from './learning-goal-management/learning-goal-management.component';
 import { LearningGoalCardComponent } from 'app/course/learning-goals/learning-goal-card/learning-goal-card.component';
-import { LearningGoalDetailModalComponent } from './learning-goal-detail-modal/learning-goal-detail-modal.component';
 import { LearningGoalsPopoverComponent } from './learning-goals-popover/learning-goals-popover.component';
-import { LearningGoalCourseDetailModalComponent } from './learning-goal-course-detail-modal/learning-goal-course-detail-modal.component';
 import { PrerequisiteImportComponent } from 'app/course/learning-goals/learning-goal-management/prerequisite-import.component';
 import { NgxGraphModule } from '@swimlane/ngx-graph';
 import { LearningGoalRingsComponent } from 'app/course/learning-goals/learning-goal-rings/learning-goal-rings.component';
@@ -24,9 +22,7 @@ import { LearningGoalRingsComponent } from 'app/course/learning-goals/learning-g
         EditLearningGoalComponent,
         LearningGoalManagementComponent,
         LearningGoalCardComponent,
-        LearningGoalDetailModalComponent,
         LearningGoalsPopoverComponent,
-        LearningGoalCourseDetailModalComponent,
         PrerequisiteImportComponent,
     ],
     exports: [LearningGoalCardComponent, LearningGoalsPopoverComponent, LearningGoalFormComponent, LearningGoalRingsComponent],

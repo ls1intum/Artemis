@@ -56,14 +56,14 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     }
 
     get confidence(): number {
-        // Confidence level (average score in exercises) in proportion to the threshold value
+        // Confidence level (average score in exercises) in proportion to the threshold value (max. 100 %)
         // Example: If the student’s latest confidence level equals 60 % and the mastery threshold is set to 80 %, the ring would be 75 % full.
-        return ((this.getUserProgress().confidence ?? 0) / (this.learningGoal.masteryThreshold ?? 100)) * 100;
+        return Math.min(Math.round(((this.getUserProgress().confidence ?? 0) / (this.learningGoal.masteryThreshold ?? 100)) * 100), 100);
     }
 
     get mastery(): number {
         // Advancement towards mastery as a weighted function of progress and confidence
         const weight = 2 / 3;
-        return (1 - weight) * this.progress + weight * this.confidence;
+        return Math.round((1 - weight) * this.progress + weight * this.confidence);
     }
 }

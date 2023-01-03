@@ -105,38 +105,61 @@
         </ngb-accordion>
     </div>
 
-    <div class="container" style="min-height: 100px">
-        <div class="row justify-content-center gx-5 gy-2">
-            <jhi-learning-goal-card
-                class="col-12 col-lg-6"
-                *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
-                [learningGoal]="learningGoal"
-                [courseId]="courseId"
-            >
-                <button
-                    *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
-                    jhiDeleteButton
-                    [entityTitle]="learningGoal.title || ''"
-                    [deleteQuestion]="'artemisApp.learningGoal.learningGoalCard.delete.question'"
-                    [deleteConfirmationText]="'artemisApp.learningGoal.learningGoalCard.delete.typeNameToConfirm'"
-                    (delete)="deleteLearningGoal(learningGoal.id!)"
-                    [dialogError]="dialogError$"
-                >
-                    <fa-icon [icon]="faTimes"></fa-icon>
-                </button>
-                <a
-                    *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
-                    class="btn btn-sm btn-primary"
-                    [routerLink]="['/course-management', courseId, 'goal-management', learningGoal.id, 'edit']"
-                >
-                    <fa-icon [icon]="faPencilAlt"></fa-icon>
-                    <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
-                </a>
-            </jhi-learning-goal-card>
-        </div>
+    <div class="container-fluid" style="min-height: 100px">
+        <table class="table table-striped" *ngIf="learningGoals.length">
+            <thead>
+                <tr>
+                    <th><span jhiTranslate="global.field.id">ID</span></th>
+                    <th><span jhiTranslate="artemisApp.learningGoal.title">Title</span></th>
+                    <th><span jhiTranslate="artemisApp.learningGoal.description">Description</span></th>
+                    <th><span jhiTranslate="artemisApp.learningGoal.taxonomy">Taxonomy</span></th>
+                    <th class="d-none d-lg-table-cell"><span jhiTranslate="artemisApp.learningGoal.masteredStudents">Mastered Students</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let learningGoal of learningGoals; trackBy: identify; let i = index" id="learning-goal-row-{{ i }}">
+                    <td>
+                        <a [routerLink]="['/courses', courseId, 'learning-goals', learningGoal.id]">{{ learningGoal.id }}</a>
+                    </td>
+                    <td>
+                        <a [routerLink]="['/courses', courseId, 'learning-goals', learningGoal.id]">{{ learningGoal.title }}</a>
+                    </td>
+                    <td [innerHTML]="learningGoal.description"></td>
+                    <td>
+                        <div *ngIf="learningGoal.taxonomy">
+                            <fa-icon [icon]="getIcon(learningGoal.taxonomy)" [fixedWidth]="true" container="body"></fa-icon>
+                            {{ getIconTooltip(learningGoal.taxonomy) | artemisTranslate }}
+                        </div>
+                    </td>
+                    <td class="d-none d-lg-table-cell">
+                        <ngb-progressbar type="primary" [value]="25" [showValue]="true"></ngb-progressbar>
+                    </td>
+                    <td class="text-end">
+                        <a
+                            *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                            class="btn btn-sm btn-primary"
+                            [routerLink]="['/course-management', courseId, 'goal-management', learningGoal.id, 'edit']"
+                        >
+                            <fa-icon [icon]="faPencilAlt"></fa-icon>
+                            <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
+                        </a>
+                        <button
+                            *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                            jhiDeleteButton
+                            [entityTitle]="learningGoal.title || ''"
+                            [deleteQuestion]="'artemisApp.learningGoal.learningGoalCard.delete.question'"
+                            [deleteConfirmationText]="'artemisApp.learningGoal.learningGoalCard.delete.typeNameToConfirm'"
+                            (delete)="deleteLearningGoal(learningGoal.id!)"
+                            [dialogError]="dialogError$"
+                        >
+                            <fa-icon [icon]="faTimes"></fa-icon>
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
-
-    <hr />
 
     <div class="d-flex flex-wrap">
         <h2 jhiTranslate="artemisApp.learningGoal.prerequisite.managePrerequisites.title">Prerequisite Management</h2>
@@ -148,18 +171,50 @@
         </div>
     </div>
 
-    <div class="container" style="min-height: 100px">
-        <div class="row justify-content-center gx-5 gy-2">
-            <jhi-learning-goal-card
-                class="col-12 col-lg-6"
-                *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
-                [learningGoal]="prerequisite"
-                [isPrerequisite]="true"
-            >
-                <button *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']" id="removeButton" class="btn btn-secondary btn-sm" (click)="removePrerequisite(prerequisite.id!)">
-                    <fa-icon [icon]="faTimes"></fa-icon> {{ 'artemisApp.learningGoal.learningGoalCard.remove' | artemisTranslate }}
-                </button>
-            </jhi-learning-goal-card>
-        </div>
+    <div class="container-fluid" style="min-height: 100px">
+        <table class="table table-striped" *ngIf="prerequisites.length">
+            <thead>
+                <tr>
+                    <th><span jhiTranslate="global.field.id">ID</span></th>
+                    <th><span jhiTranslate="artemisApp.learningGoal.title">Title</span></th>
+                    <th><span jhiTranslate="artemisApp.learningGoal.description">Description</span></th>
+                    <th><span jhiTranslate="artemisApp.learningGoal.taxonomy">Taxonomy</span></th>
+                    <th><span jhiTranslate="artemisApp.learningGoal.course">Course</span></th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let prerequisite of prerequisites; trackBy: identify; let i = index" id="learning-goal-row-{{ i }}">
+                    <td>
+                        {{ prerequisite.id }}
+                    </td>
+                    <td>
+                        {{ prerequisite.title }}
+                    </td>
+                    <td [innerHTML]="prerequisite.description"></td>
+                    <td>
+                        <div *ngIf="prerequisite.taxonomy">
+                            <fa-icon [icon]="getIcon(prerequisite.taxonomy)" [fixedWidth]="true" container="body"></fa-icon>
+                            {{ getIconTooltip(prerequisite.taxonomy) | artemisTranslate }}
+                        </div>
+                    </td>
+                    <td>
+                        <div *ngIf="prerequisite.course">
+                            <a [routerLink]="['/course-management', prerequisite.course!.id, 'goal-management']">{{ prerequisite.course!.title }}</a>
+                        </div>
+                    </td>
+                    <td class="text-end">
+                        <button
+                            *jhiHasAnyAuthority="['ROLE_INSTRUCTOR', 'ROLE_ADMIN']"
+                            id="removeButton"
+                            class="btn btn-secondary btn-sm"
+                            (click)="removePrerequisite(prerequisite.id!)"
+                        >
+                            <fa-icon [icon]="faTimes"></fa-icon> {{ 'artemisApp.learningGoal.learningGoalCard.remove' | artemisTranslate }}
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>

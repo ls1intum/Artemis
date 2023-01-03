@@ -9,9 +9,12 @@
             "description": "Beschreibung",
             "taxonomy": "Taxonomie",
             "masteryThreshold": "Schwellwert zum Erreichen der Kompetenz",
+            "course": "Kurs",
             "progress": "Fortschritt",
             "confidence": "Selbstbewertung",
             "mastery": "Kompetenzbeherrschung",
+            "masteredStudents": "Studierende mit Kompetenz",
+            "mastered": "Abgeschlossen",
             "taxonomies": {
                 "remember": "Erinnern",
                 "understand": "Verstehen",

@@ -12,7 +12,6 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.tum.in.www1.artemis.domain.*;
 
@@ -35,7 +34,6 @@ public abstract class LectureUnit extends DomainObject implements ILearningObjec
     private boolean visibleToStudents;
 
     @Transient
-    @JsonSerialize
     private boolean completed;
 
     @Column(name = "name")
@@ -63,7 +61,7 @@ public abstract class LectureUnit extends DomainObject implements ILearningObjec
     protected Set<LearningGoal> learningGoals = new HashSet<>();
 
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JsonIgnore
+    @JsonIgnore // important!
     private Set<LectureUnitCompletion> completedUsers = new HashSet<>();
 
     public String getName() {
@@ -102,6 +100,8 @@ public abstract class LectureUnit extends DomainObject implements ILearningObjec
         this.learningGoals = learningGoals;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty("completed")
     public boolean isCompleted() {
         return completed;
     }

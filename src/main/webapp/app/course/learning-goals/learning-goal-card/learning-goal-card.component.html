@@ -1,4 +1,8 @@
-<div [id]="'learning-goal-card-' + learningGoal.id" class="course-exercise-row row align-items-center justify-content-between mb-2 mt-2 position-relative">
+<div
+    [id]="'learning-goal-card-' + learningGoal.id"
+    class="course-exercise-row row align-items-center justify-content-between mb-2 mt-2 position-relative"
+    [class.border-success]="mastery == 100"
+>
     <a *ngIf="courseId" class="stretched-link" [routerLink]="['/courses', courseId, 'learning-goals', learningGoal.id!]"></a>
     <div class="col-auto d-none d-sm-block">
         <a class="exercise-row-icon">
@@ -13,7 +17,10 @@
                 </h4>
             </div>
             <div class="col-sm col py-2">
-                <h4>{{ learningGoal.title }}</h4>
+                <h4>
+                    {{ learningGoal.title }}
+                    <span *ngIf="mastery == 100" class="badge text-white text-bg-success" jhiTranslate="artemisApp.learningGoal.mastered">Mastered</span>
+                </h4>
                 <p *ngIf="learningGoal.description" class="m-0">{{ learningGoal.description }}</p>
                 <ng-content></ng-content>
             </div>
