@@ -84,7 +84,7 @@ jobs:
                 cache: 'gradle'
           - name: Java Tests
             id: tests
-            run: SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+            run: set -o pipefail && SPRING_PROFILES_INCLUDE=mysql ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
             if: success() || failure()
             run: cat tests.log | grep "Test >.*FAILED"
@@ -105,7 +105,7 @@ jobs:
                 cache: 'gradle'
           - name: Java Tests
             id: tests
-            run: SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
+            run: set -o pipefail && SPRING_PROFILES_INCLUDE=postgres ./gradlew --console=plain test jacocoTestReport -x webapp jacocoTestCoverageVerification | tee tests.log
           - name: Print failed tests
             if: success() || failure()
             run: cat tests.log | grep "Test >.*FAILED"
