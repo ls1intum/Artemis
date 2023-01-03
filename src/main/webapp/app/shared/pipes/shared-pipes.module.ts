@@ -13,7 +13,6 @@ import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { NegatedTypeCheckPipe } from 'app/shared/pipes/negated-type-check.pipe';
-import { UnreadMessagesPipe } from './unread-messages.pipe';
 
 @NgModule({
     declarations: [
@@ -30,7 +29,6 @@ import { UnreadMessagesPipe } from './unread-messages.pipe';
         SanitizeHtmlPipe,
         AverageByPipe,
         GradeStepBoundsPipe,
-        UnreadMessagesPipe,
     ],
     exports: [
         SafeHtmlPipe,
@@ -46,7 +44,6 @@ import { UnreadMessagesPipe } from './unread-messages.pipe';
         SafeResourceUrlPipe,
         AverageByPipe,
         GradeStepBoundsPipe,
-        UnreadMessagesPipe,
     ],
     providers: [SafeResourceUrlPipe, ArtemisTranslatePipe],
 })
