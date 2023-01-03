@@ -8,6 +8,8 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
     styleUrls: ['./answer-post-footer.component.scss'],
 })
 export class AnswerPostFooterComponent extends PostingFooterDirective<AnswerPost> {
+    @Input()
+    isReadOnlyMode = false;
     @Input() isLastAnswer = false;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
 }
