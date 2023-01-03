@@ -62,6 +62,8 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
         this.sub = this.route.params.subscribe((params) => {
             this.questionIdParam = +params['questionId'];
             if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
+                // TODO: do we need to load the quiz with statistics?
+                // TODO: can we get the quiz from some kind of service because it was already loaded in the other screens (quiz statistic or quiz point statistic)
                 this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
                     this.loadQuiz(res.body!);
                 });

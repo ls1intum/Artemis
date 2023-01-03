@@ -1047,7 +1047,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, QuizExercise.class, HttpStatus.OK);
         // load the exercise again after it was re-evaluated
-        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
+        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/with-statistics", HttpStatus.OK, QuizExercise.class);
 
         assertThat(quizExerciseWithReevaluatedStatistics.getQuizQuestions()).hasSize(2);
 

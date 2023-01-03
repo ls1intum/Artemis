@@ -265,10 +265,33 @@ public class QuizExerciseResource {
     @GetMapping("quiz-exercises/{quizExerciseId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
-        // TODO: Split this route in two: One for normal and one for exam exercises
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        if (quizExercise.isExamExercise()) {
+            authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
+            studentParticipationRepository.checkTestRunsExist(quizExercise);
+        }
+        else if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
+            throw new AccessForbiddenException();
+        }
+        setQuizBatches(user, quizExercise);
+        return ResponseEntity.ok(quizExercise);
+    }
+
+    /**
+     * GET /quiz-exercises/:quizExerciseId/with-statistics : get the quizExercise with statistics
+     *
+     * @param quizExerciseId the id of the quizExercise to retrieve
+     * @return the ResponseEntity with status 200 (OK) and with body the quizExercise, or with status 404 (Not Found)
+     */
+    @GetMapping("quiz-exercises/{quizExerciseId}/with-statistics")
+    @PreAuthorize("hasRole('TA')")
+    public ResponseEntity<QuizExercise> getQuizExerciseWithStatistics(@PathVariable Long quizExerciseId) {
+        log.info("REST request to get quiz exercise with statistics : {}", quizExerciseId);
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        quizStatisticService.loadQuestionStatisticDetails(quizExercise);
         if (quizExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
             studentParticipationRepository.checkTestRunsExist(quizExercise);
@@ -295,8 +318,10 @@ public class QuizExerciseResource {
             throw new AccessForbiddenException();
         }
         quizStatisticService.recalculateStatistics(quizExercise);
+        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        quizStatisticService.loadQuestionStatisticDetails(quizExercise);
         // fetch the quiz exercise again to make sure the latest changes are included
-        return ResponseEntity.ok(quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId()));
+        return ResponseEntity.ok(quizExercise);
     }
 
     /**

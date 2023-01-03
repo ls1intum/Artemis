@@ -63,6 +63,8 @@ public class QuizStatisticService {
 
         // reset all statistics
         if (quizExercise.getQuizPointStatistic() != null) {
+            log.debug("Load quiz point statistic with point counters");
+            quizExercise.setQuizPointStatistic(quizPointStatisticRepository.findByIdWithPointCounters(quizExercise.getQuizPointStatistic().getId()));
             quizExercise.getQuizPointStatistic().resetStatistic();
         }
         else {
@@ -205,8 +207,13 @@ public class QuizStatisticService {
      * @param quizExercise the quiz exercise for which the question statistic details should be loaded
      */
     public void loadQuestionStatisticDetails(QuizExercise quizExercise) {
+
+        if (quizExercise.getQuizPointStatistic() != null) {
+            quizExercise.setQuizPointStatistic(quizPointStatisticRepository.findByIdWithPointCounters(quizExercise.getQuizPointStatistic().getId()));
+        }
+
         for (var quizQuestion : quizExercise.getQuizQuestions()) {
-            QuizQuestionStatistic statistic = null;
+            QuizQuestionStatistic statistic;
             if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion && mcQuestion.getQuizQuestionStatistic() != null) {
                 // Note: load the quizQuestionStatistic from database with answerCounters
                 statistic = multipleChoiceQuestionStatisticRepository.findByIdWithAnswerCounters(mcQuestion.getQuizQuestionStatistic().getId());

@@ -60,12 +60,22 @@ export class QuizExerciseService {
     }
 
     /**
-     * Find the quiz exercise with the given id
+     * Find the quiz exercise for the given id
      * @param quizExerciseId the id of the quiz exercise that should be found
      */
     find(quizExerciseId: number): Observable<EntityResponseType> {
         return this.http
             .get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
+    }
+
+    /**
+     * Find the quiz exercise with statistics for the given id
+     * @param quizExerciseId the id of the quiz exercise that should be found
+     */
+    findWithStatistics(quizExerciseId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/with-statistics`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 

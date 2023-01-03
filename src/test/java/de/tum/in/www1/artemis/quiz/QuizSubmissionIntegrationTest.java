@@ -78,6 +78,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private QuizStatisticService quizStatisticService;
 
+    @Autowired
+    private QuizPointStatisticRepository quizPointStatisticRepository;
+
     int numberOfStudentsInTest = 10;
 
     @BeforeEach
@@ -135,13 +138,16 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         // Test the statistics directly from the database
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic).isNotNull();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfStudentsInTest);
+        assertThat(quizExercise.getQuizPointStatistic()).isNotNull();
+        var quizPointStatistic = quizPointStatisticRepository.findByIdWithPointCounters(quizExercise.getQuizPointStatistic().getId());
+
+        assertThat(quizPointStatistic.getParticipantsUnrated()).isZero();
+        assertThat(quizPointStatistic.getParticipantsRated()).isEqualTo(numberOfStudentsInTest);
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
+        assertThat(quizPointStatistic.getPointCounters()).hasSize(questionScore + 1);
         // check general statistics
-        for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
+        for (var pointCounter : quizPointStatistic.getPointCounters()) {
             log.debug(pointCounter.toString());
             if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(Math.round(numberOfStudentsInTest / 3.0));
@@ -252,9 +258,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(quizExerciseWithStatistic).isNotNull();
 
-        // TODO: something is wrong here, it cannot be the case that all point counters are 0
+        var quizPointStatistic = quizPointStatisticRepository.findByIdWithPointCounters(quizExercise.getQuizPointStatistic().getId());
 
-        for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
+        for (var pointCounter : quizPointStatistic.getPointCounters()) {
             assertThat(pointCounter.getUnRatedCounter()).as("Unrated counter is always 0").isZero();
             if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).as("Bucket 0.0 contains 0 rated submission -> 0.33 points").isEqualTo(1);
@@ -442,13 +448,14 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         quizStatisticService.loadQuestionStatisticDetails(quizExerciseWithStatistic);
         assertThat(quizExerciseWithStatistic).isNotNull();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isZero();
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isEqualTo(numberOfStudentsInTest);
+        var quizPointStatistic = quizPointStatisticRepository.findByIdWithPointCounters(quizExercise.getQuizPointStatistic().getId());
+        assertThat(quizPointStatistic.getParticipantsRated()).isZero();
+        assertThat(quizPointStatistic.getParticipantsUnrated()).isEqualTo(numberOfStudentsInTest);
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
+        assertThat(quizPointStatistic.getPointCounters()).hasSize(questionScore + 1);
         // check general statistics
-        for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
+        for (var pointCounter : quizPointStatistic.getPointCounters()) {
             if (pointCounter.getPoints() == 0.0) {
                 assertThat(pointCounter.getRatedCounter()).isZero();
                 assertThat(pointCounter.getUnRatedCounter()).isEqualTo(3);
@@ -635,8 +642,12 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
         int questionScore = quizExerciseWithStatistic.getQuizQuestions().stream().map(QuizQuestion::getPoints).reduce(0, Integer::sum);
         assertThat(quizExerciseWithStatistic.getMaxPoints()).isEqualTo(questionScore);
-        assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()).hasSize(questionScore + 1);
-        for (var pointCounter : quizExerciseWithStatistic.getQuizPointStatistic().getPointCounters()) {
+
+        assertThat(quizExerciseWithStatistic.getQuizPointStatistic()).isNotNull();
+        var quizPointStatistic = quizPointStatisticRepository.findByIdWithPointCounters(quizExercise.getQuizPointStatistic().getId());
+
+        assertThat(quizPointStatistic.getPointCounters()).hasSize(questionScore + 1);
+        for (var pointCounter : quizPointStatistic.getPointCounters()) {
             assertThat(pointCounter.getRatedCounter()).isZero();
             assertThat(pointCounter.getUnRatedCounter()).isZero();
         }

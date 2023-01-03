@@ -81,9 +81,11 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
         this.sub = this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
-                    this.loadQuizSuccess(res.body!);
-                });
+                if (!this.quizExercise || !this.quizPointStatistic) {
+                    this.quizExerciseService.findWithStatistics(params['exerciseId']).subscribe((res) => {
+                        this.loadQuizSuccess(res.body!);
+                    });
+                }
             }
 
             // subscribe websocket for new statistical data
@@ -97,7 +99,9 @@ export class QuizPointStatisticComponent extends QuizStatistics implements OnIni
                 this.jhiWebsocketService.subscribe(this.quizExerciseChannel);
                 this.jhiWebsocketService.receive(this.quizExerciseChannel).subscribe((quiz) => {
                     if (this.waitingForQuizStart && params['exerciseId'] === quiz.id) {
-                        this.loadQuizSuccess(quiz);
+                        this.quizExerciseService.findWithStatistics(params['exerciseId']).subscribe((res) => {
+                            this.loadQuizSuccess(res.body!);
+                        });
                     }
                 });
             }

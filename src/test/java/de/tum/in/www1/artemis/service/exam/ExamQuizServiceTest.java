@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
+import de.tum.in.www1.artemis.service.QuizStatisticService;
 
 class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -52,6 +53,9 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Autowired
     private StudentExamRepository studentExamRepository;
+
+    @Autowired
+    private QuizStatisticService quizStatisticService;
 
     private QuizExercise quizExercise;
 
@@ -327,7 +331,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             studentExamRepository.save(studentExam);
         }
 
-        Integer numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
+        var numberOfEvaluatedExercises = request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises",
                 Optional.empty(), Integer.class, HttpStatus.OK);
         waitForParticipantScores();
 
@@ -350,6 +354,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private void checkStatistics(QuizExercise quizExercise) {
         QuizExercise quizExerciseWithStatistic = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
+        quizStatisticService.loadQuestionStatisticDetails(quizExerciseWithStatistic);
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsUnrated()).isZero();
         assertThat(quizExerciseWithStatistic.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
 

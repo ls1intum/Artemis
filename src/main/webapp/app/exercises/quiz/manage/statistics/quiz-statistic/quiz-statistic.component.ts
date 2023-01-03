@@ -56,9 +56,11 @@ export class QuizStatisticComponent extends QuizStatistics implements OnInit, On
         this.sub = this.route.params.subscribe((params) => {
             // use different REST-call if the User is a Student
             if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
-                this.quizExerciseService.find(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
-                    this.loadQuizSuccess(res.body!);
-                });
+                if (!this.quizExercise) {
+                    this.quizExerciseService.findWithStatistics(params['exerciseId']).subscribe((res: HttpResponse<QuizExercise>) => {
+                        this.loadQuizSuccess(res.body!);
+                    });
+                }
             }
 
             // subscribe websocket for new statistical data
@@ -68,7 +70,7 @@ export class QuizStatisticComponent extends QuizStatistics implements OnInit, On
             // ask for new Data if the websocket for new statistical data was notified
             this.jhiWebsocketService.receive(this.websocketChannelForData).subscribe(() => {
                 if (this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
-                    this.quizExerciseService.find(params['exerciseId']).subscribe((res) => {
+                    this.quizExerciseService.findWithStatistics(params['exerciseId']).subscribe((res) => {
                         this.loadQuizSuccess(res.body!);
                     });
                 }
