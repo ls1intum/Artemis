@@ -32,6 +32,9 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Autowired
     private LectureRepository lectureRepository;
 
+    @Autowired
+    private LectureService lectureService;
+
     private Lecture lecture1;
 
     private Course course2;
@@ -52,7 +55,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @AfterEach
     void tearDown() {
         // Delete lecture, which removes testing files on disk for associated attachments
-        lectureRepository.delete(this.lecture1);
+        lectureService.delete(this.lecture1);
     }
 
     @Test
@@ -77,6 +80,6 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
         assertThat(lecture2.getAttachments().stream().map(Attachment::getName).toList())
                 .containsExactlyElementsOf(this.lecture1.getAttachments().stream().map(Attachment::getName).toList());
 
-        lectureRepository.delete(lecture2);
+        lectureService.delete(lecture2);
     }
 }
