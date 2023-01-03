@@ -69,7 +69,7 @@ describe('ExerciseImportComponent', () => {
             pageSize: 10,
             searchTerm: 'initialSearchTerm',
             sortingOrder: SortingOrder.DESCENDING,
-            sortedColumn: TableColumn.ID,
+            sortedColumn: 'ID',
             ...searchResult,
         };
         searchForExercisesStub.mockReturnValue(of(searchResult));
@@ -141,7 +141,7 @@ describe('ExerciseImportComponent', () => {
         comp.sortRows();
 
         expect(sortServiceSpy).toHaveBeenCalledOnce();
-        expect(sortServiceSpy).toHaveBeenCalledWith([], comp.column.ID, false);
+        expect(sortServiceSpy).toHaveBeenCalledWith([], 'ID', false);
     });
 
     it('should set search term and search', fakeAsync(() => {
@@ -206,12 +206,12 @@ describe('ExerciseImportComponent', () => {
     }));
 
     it('should set content to paging result on sortedColumn change', fakeAsync(() => {
-        expect(comp.sortedColumn).toEqual(TableColumn.ID);
+        expect(comp.sortedColumn).toBe('ID');
         setStateAndCallOnInit(() => {
-            comp.sortedColumn = TableColumn.TITLE;
+            comp.sortedColumn = 'TITLE';
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE }, true, true);
-            expect(comp.sortedColumn).toEqual(TableColumn.TITLE);
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, true, true);
+            expect(comp.sortedColumn).toBe('TITLE');
         });
     }));
 
