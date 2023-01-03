@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
 import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 
-import java.util.Objects;
 import java.util.Set;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -149,7 +148,7 @@ public class SingleUserNotificationFactory {
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), false, true));
             }
             case TUTORIAL_GROUP_REGISTRATION_TUTOR -> {
-                if (Objects.isNull(tutorialGroup.getTeachingAssistant())) {
+                if (tutorialGroup.getTeachingAssistant() == null) {
                     throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");
                 }
                 var student = users.stream().findAny();
@@ -160,7 +159,7 @@ public class SingleUserNotificationFactory {
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
             }
             case TUTORIAL_GROUP_DEREGISTRATION_TUTOR -> {
-                if (Objects.isNull(tutorialGroup.getTeachingAssistant())) {
+                if (tutorialGroup.getTeachingAssistant() == null) {
                     throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");
                 }
 
@@ -172,7 +171,7 @@ public class SingleUserNotificationFactory {
                 notification.setTransientAndStringTarget(createTutorialGroupTarget(tutorialGroup, tutorialGroup.getCourse().getId(), true, true));
             }
             case TUTORIAL_GROUP_MULTIPLE_REGISTRATION_TUTOR -> {
-                if (Objects.isNull(tutorialGroup.getTeachingAssistant())) {
+                if (tutorialGroup.getTeachingAssistant() == null) {
                     throw new IllegalArgumentException("The tutorial group " + tutorialGroup.getTitle() + " does not have a tutor to which a notification could be sent.");
                 }
                 notification = new SingleUserNotification(tutorialGroup.getTeachingAssistant(), title,

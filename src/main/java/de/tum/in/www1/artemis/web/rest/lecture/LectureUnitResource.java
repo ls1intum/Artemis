@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -147,7 +146,7 @@ public class LectureUnitResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, lectureUnit.getLecture().getCourse(), null);
 
         String lectureUnitName = lectureUnit.getName();
-        if (Objects.isNull(lectureUnitName)) {
+        if (lectureUnitName == null) {
             lectureUnitName = "lectureUnitWithoutName";
         }
         lectureUnitService.removeLectureUnit(lectureUnit);
