@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.User;
@@ -59,9 +58,6 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
 
     @Autowired
     OneToOneChatRepository oneToOneChatRepository;
-
-    @Autowired
-    SimpMessageSendingOperations messagingTemplate;
 
     @Autowired
     ConversationMessageRepository conversationMessageRepository;
@@ -176,7 +172,7 @@ abstract class AbstractConversationTest extends AbstractSpringIntegrationBambooB
 
     GroupChatDTO createGroupChat(String... userLoginsWithoutPrefix) throws Exception {
         var loginsWithPrefix = Arrays.stream(userLoginsWithoutPrefix).map(login -> testPrefix + login).toArray(String[]::new);
-        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats/", Arrays.stream(loginsWithPrefix).toList(), GroupChatDTO.class,
+        var chat = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/group-chats", Arrays.stream(loginsWithPrefix).toList(), GroupChatDTO.class,
                 HttpStatus.CREATED);
         this.resetWebsocketMock();
         return chat;

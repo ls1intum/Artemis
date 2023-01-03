@@ -265,8 +265,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("select user from User user")
     Set<User> findAllWithGroupsAndAuthorities();
 
-    @Modifying
     @Transactional // ok because of modifying query
+    @Modifying
     @Query("Update User user set user.lastNotificationRead = :#{#lastNotificationRead} where user.id = :#{#userId}")
     void updateUserNotificationReadDate(@Param("userId") Long userId, @Param("lastNotificationRead") ZonedDateTime lastNotificationRead);
 
@@ -280,13 +280,13 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param hideNotificationUntil indicates a time that is used to filter all notifications that are prior to it
      *                              (if null -> show all notifications)
      */
-    @Modifying
     @Transactional // ok because of modifying query
+    @Modifying
     @Query("Update User user set user.hideNotificationsUntil = :#{#hideNotificationUntil} where user.id = :#{#userId}")
     void updateUserNotificationVisibility(@Param("userId") Long userId, @Param("hideNotificationUntil") ZonedDateTime hideNotificationUntil);
 
-    @Modifying
     @Transactional // ok because of modifying query
+    @Modifying
     @Query("Update User user set user.langKey = :#{#languageKey} where user.id = :#{#userId}")
     void updateUserLanguageKey(@Param("userId") Long userId, @Param("languageKey") String languageKey);
 

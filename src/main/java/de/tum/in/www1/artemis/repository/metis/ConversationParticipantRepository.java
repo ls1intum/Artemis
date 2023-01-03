@@ -53,9 +53,8 @@ public interface ConversationParticipantRepository extends JpaRepository<Convers
 
     Integer countByConversationId(Long conversationId);
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
-    // ok because of delete
     void deleteAllByConversationId(Long conversationId);
 
     /**

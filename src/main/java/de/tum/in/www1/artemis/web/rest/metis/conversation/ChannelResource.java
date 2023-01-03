@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -95,7 +96,7 @@ public class ChannelResource {
      */
     @PostMapping("/{courseId}/channels")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ChannelDTO> createChannel(@PathVariable Long courseId, @RequestBody ChannelDTO channelDTO) throws URISyntaxException {
+    public ResponseEntity<ChannelDTO> createChannel(@PathVariable Long courseId, @Valid @RequestBody ChannelDTO channelDTO) throws URISyntaxException {
         log.debug("REST request to create channel in course {} with properties : {}", courseId, channelDTO);
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);

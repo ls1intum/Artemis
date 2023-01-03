@@ -17,8 +17,8 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 @Repository
 public interface PlagiarismSubmissionRepository extends JpaRepository<PlagiarismSubmission<?>, Long> {
 
-    @Modifying
     @Transactional // ok because of modifying query
+    @Modifying
     @Query("UPDATE PlagiarismSubmission submission set submission.plagiarismCase = :#{#plagiarismCase} where submission.id = :#{#submissionId}")
     void updatePlagiarismCase(@Param("submissionId") Long submissionId, @Param("plagiarismCase") PlagiarismCase plagiarismCase);
 }

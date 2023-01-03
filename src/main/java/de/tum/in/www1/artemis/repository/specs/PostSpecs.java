@@ -46,14 +46,14 @@ public class PostSpecs {
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getLectureSpecification(Long lectureId) {
-        return ((root, query, criteriaBuilder) -> {
+        return (root, query, criteriaBuilder) -> {
             if (lectureId == null) {
                 return null;
             }
             else {
                 return criteriaBuilder.equal(root.get(Post_.LECTURE).get(Lecture_.ID), lectureId);
             }
-        });
+        };
     }
 
     /**
@@ -63,14 +63,14 @@ public class PostSpecs {
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getExerciseSpecification(Long exerciseId) {
-        return ((root, query, criteriaBuilder) -> {
+        return (root, query, criteriaBuilder) -> {
             if (exerciseId == null) {
                 return null;
             }
             else {
                 return criteriaBuilder.equal(root.get(Post_.EXERCISE).get(Exercise_.ID), exerciseId);
             }
-        });
+        };
     }
 
     /**
@@ -80,14 +80,14 @@ public class PostSpecs {
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getCourseWideContextSpecification(CourseWideContext courseWideContext) {
-        return ((root, query, criteriaBuilder) -> {
+        return (root, query, criteriaBuilder) -> {
             if (courseWideContext == null) {
                 return null;
             }
             else {
                 return criteriaBuilder.equal(root.get(Post_.COURSE_WIDE_CONTEXT), courseWideContext);
             }
-        });
+        };
     }
 
     /**
@@ -98,14 +98,14 @@ public class PostSpecs {
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getOwnSpecification(boolean filterToOwn, Long userId) {
-        return ((root, query, criteriaBuilder) -> {
+        return (root, query, criteriaBuilder) -> {
             if (!filterToOwn) {
                 return null;
             }
             else {
                 return criteriaBuilder.equal(root.get(Post_.AUTHOR).get(User_.ID), userId);
             }
-        });
+        };
     }
 
     /**
@@ -116,7 +116,7 @@ public class PostSpecs {
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getAnsweredOrReactedSpecification(boolean answeredOrReacted, Long userId) {
-        return ((root, query, criteriaBuilder) -> {
+        return (root, query, criteriaBuilder) -> {
             if (!answeredOrReacted) {
                 return null;
             }
@@ -132,7 +132,7 @@ public class PostSpecs {
 
                 return criteriaBuilder.or(answered, reacted);
             }
-        });
+        };
     }
 
     /**
@@ -142,7 +142,7 @@ public class PostSpecs {
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getUnresolvedSpecification(boolean unresolved) {
-        return ((root, query, criteriaBuilder) -> {
+        return (root, query, criteriaBuilder) -> {
             if (!unresolved) {
                 return null;
             }
@@ -156,7 +156,7 @@ public class PostSpecs {
 
                 return criteriaBuilder.and(notAnnouncement, noResolvingAnswer);
             }
-        });
+        };
     }
 
     /**
@@ -202,7 +202,7 @@ public class PostSpecs {
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getSortSpecification(boolean pagingEnabled, PostSortCriterion postSortCriterion, SortingOrder sortingOrder) {
-        return ((root, query, criteriaBuilder) -> {
+        return (root, query, criteriaBuilder) -> {
             if (pagingEnabled && postSortCriterion != null && sortingOrder != null) {
 
                 List<Order> orderList = new ArrayList<>();
@@ -236,7 +236,7 @@ public class PostSpecs {
             }
 
             return null;
-        });
+        };
     }
 
     /**

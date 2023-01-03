@@ -4,10 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import javax.validation.Valid;
-
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
@@ -20,6 +18,7 @@ import de.tum.in.www1.artemis.service.metis.conversation.errors.ChannelNameDupli
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.ChannelDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
+import jakarta.validation.Valid;
 
 @Service
 public class ChannelService {
@@ -110,8 +109,8 @@ public class ChannelService {
      * @return the created channel
      */
     public Channel createChannel(Course course, Channel channel) {
-        if (StringUtils.hasText(channel.getName())) {
-            channel.setName(StringUtils.trimAllWhitespace(channel.getName().toLowerCase()));
+        if (StringUtils.isNotBlank(channel.getName())) {
+            channel.setName(channel.getName().toLowerCase().trim());
         }
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         channel.setCreator(user);

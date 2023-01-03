@@ -1,13 +1,20 @@
 package de.tum.in.www1.artemis.web.rest.metis.conversation.dtos;
 
 import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public class ChannelDTO extends ConversationDTO {
 
+    // Note: the constrains should be consistent with the ones defined in Channel.java
+    @NotNull
+    @Size(min = 1, max = 20)
     private String name;
 
+    @Size(min = 1, max = 250)
     private String description;
 
+    @Size(min = 1, max = 250)
     private String topic;
 
     private Boolean isPublic;

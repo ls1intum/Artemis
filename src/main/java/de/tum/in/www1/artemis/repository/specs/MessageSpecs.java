@@ -5,6 +5,8 @@ import org.springframework.data.jpa.domain.Specification;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Post_;
 import de.tum.in.www1.artemis.domain.metis.conversation.Conversation_;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Predicate;
 
 public class MessageSpecs {
 
@@ -15,10 +17,10 @@ public class MessageSpecs {
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getConversationSpecification(Long conversationId) {
-        return ((root, query, criteriaBuilder) -> {
+        return (root, query, criteriaBuilder) -> {
             query.distinct(true); // get distinct messages
             return criteriaBuilder.equal(root.get(Post_.CONVERSATION).get(Conversation_.ID), conversationId);
-        });
+        };
     }
 
     /**
@@ -29,12 +31,12 @@ public class MessageSpecs {
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getSearchTextSpecification(String searchText) {
-        return ((root, query, criteriaBuilder) -> {
+        return (root, query, criteriaBuilder) -> {
             if (searchText == null || searchText.isBlank()) {
                 return null;
             }
             // search by text or #message
-            else if (searchText.startsWith("#") && (searchText.substring(1) != null && !searchText.substring(1).isBlank())) {
+            else if (searchText.startsWith("#") && (searchText.length() > 1 && !searchText.substring(1).isBlank())) {
                 // if searchText starts with a # and is followed by a message id, filter for message with id
                 return criteriaBuilder.equal(root.get(Post_.ID), Integer.parseInt(searchText.substring(1)));
             }
@@ -46,7 +48,7 @@ public class MessageSpecs {
 
                 return criteriaBuilder.and(searchInMessageContent);
             }
-        });
+        };
     }
 
     /**
@@ -55,16 +57,14 @@ public class MessageSpecs {
      * @return specification used to chain DB operations
      */
     public static Specification<Post> getSortSpecification() {
-        return ((root, query, criteriaBuilder) -> {
-
-            Expression<?> sortCriterion = null;
+        return (root, query, criteriaBuilder) -> {
 
             // sort by creation date
-            sortCriterion = root.get(Post_.CREATION_DATE);
+            Expression<?> sortCriterion = root.get(Post_.CREATION_DATE);
 
             // descending
             query.orderBy(criteriaBuilder.desc(sortCriterion));
             return null;
-        });
+        };
     }
 }

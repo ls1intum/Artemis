@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Objects;
 
 import javax.annotation.Nullable;
-import javax.validation.constraints.NotNull;
 
 import org.springframework.stereotype.Service;
 
@@ -18,6 +17,7 @@ import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class ChannelAuthorizationService extends ConversationAuthorizationService {

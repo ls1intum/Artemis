@@ -67,12 +67,12 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
         return findById(tutorialGroupSessionId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupSession", tutorialGroupSessionId));
     }
 
-    @Modifying
     @Transactional // ok because of delete
+    @Modifying
     void deleteByTutorialGroupCourse(Course course);
 
-    @Modifying
     @Transactional // ok because of delete
+    @Modifying
     void deleteByTutorialGroupSchedule(TutorialGroupSchedule tutorialGroupSchedule);
 
 }
