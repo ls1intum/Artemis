@@ -57,7 +57,7 @@ export class ExerciseImportComponent implements OnInit {
         if (!this.exerciseType || this.exerciseType == ExerciseType.FILE_UPLOAD) {
             return;
         }
-        this.initPagingService();
+        this.pagingService = this.getPagingService();
         this.titleKey = `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
         this.content = { resultsOnPage: [], numberOfPages: 0 };
 
@@ -65,20 +65,16 @@ export class ExerciseImportComponent implements OnInit {
         this.performSearch(this.search, 300);
     }
 
-    private initPagingService() {
+    private getPagingService(): ExercisePagingService<Exercise> {
         switch (this.exerciseType) {
             case ExerciseType.MODELING:
-                this.pagingService = this.injector.get(ModelingExercisePagingService);
-                break;
+                return this.injector.get(ModelingExercisePagingService);
             case ExerciseType.PROGRAMMING:
-                this.pagingService = this.injector.get(ProgrammingExercisePagingService);
-                break;
+                return this.injector.get(ProgrammingExercisePagingService);
             case ExerciseType.QUIZ:
-                this.pagingService = this.injector.get(QuizExercisePagingService);
-                break;
+                return this.injector.get(QuizExercisePagingService);
             case ExerciseType.TEXT:
-                this.pagingService = this.injector.get(TextExercisePagingService);
-                break;
+                return this.injector.get(TextExercisePagingService);
             default:
                 throw new Error('Unsupported exercise type: ' + this.exerciseType);
         }
