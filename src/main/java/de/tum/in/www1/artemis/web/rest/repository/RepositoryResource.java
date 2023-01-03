@@ -39,7 +39,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.repository.util.RepositoryExecutor;
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Abstract class that can be extended to make repository endpoints available that retrieve the repository based on the implemented method getRepository. This way the retrieval of
@@ -151,16 +150,14 @@ public abstract class RepositoryResource {
      *
      * @param domainId that serves as an abstract identifier for retrieving the repository.
      * @param filename of the file to create.
-     * @param request  to retrieve input stream from.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
-    public ResponseEntity<Void> createFile(Long domainId, String filename, HttpServletRequest request) {
+    public ResponseEntity<Void> createFile(Long domainId, String filename) {
         log.debug("REST request to create file {} for domainId : {}", filename, domainId);
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
-            InputStream inputStream = request.getInputStream();
-            repositoryService.createFile(repository, filename, inputStream);
+            repositoryService.createFile(repository, filename);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -170,16 +167,14 @@ public abstract class RepositoryResource {
      *
      * @param domainId   that serves as an abstract identifier for retrieving the repository.
      * @param folderName of the folder to create.
-     * @param request    to retrieve inputStream from.
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
-    public ResponseEntity<Void> createFolder(Long domainId, String folderName, HttpServletRequest request) {
+    public ResponseEntity<Void> createFolder(Long domainId, String folderName) {
         log.debug("REST request to create file {} for domainId : {}", folderName, domainId);
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
-            InputStream inputStream = request.getInputStream();
-            repositoryService.createFolder(repository, folderName, inputStream);
+            repositoryService.createFolder(repository, folderName);
             return new ResponseEntity<>(HttpStatus.OK);
         });
     }
@@ -230,7 +225,6 @@ public abstract class RepositoryResource {
         return executeAndCheckForExceptions(() -> {
             try (Repository repository = getRepository(domainId, RepositoryActionType.READ, true)) {
                 repositoryService.pullChanges(repository);
-
                 return new ResponseEntity<>(HttpStatus.OK);
             }
         });
@@ -328,6 +322,7 @@ public abstract class RepositoryResource {
             throw new EntityNotFoundException("File not found");
         }
         catch (GitAPIException | IOException ex) {
+            log.error("Error in a repository operation", ex);
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return responseEntitySuccess;

@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Executes requested actions on the test repository of a programming exercise. Only available to TAs, Instructors and Admins.
@@ -71,33 +70,38 @@ public class TestRepositoryResource extends RepositoryResource {
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long exerciseId) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
         return super.getFiles(exerciseId);
     }
 
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<byte[]> getFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
         return super.getFile(exerciseId, filename);
     }
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filename, HttpServletRequest request) {
-        return super.createFile(exerciseId, filename, request);
+    public ResponseEntity<Void> createFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
+        return super.createFile(exerciseId, filename);
     }
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderName, HttpServletRequest request) {
-        return super.createFolder(exerciseId, folderName, request);
+    public ResponseEntity<Void> createFolder(@PathVariable Long exerciseId, @RequestParam("folder") String folderName) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
+        return super.createFolder(exerciseId, folderName);
     }
 
     @Override
     @PostMapping(value = "/test-repository/{exerciseId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long exerciseId, @RequestBody FileMove fileMove) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
         return super.renameFile(exerciseId, fileMove);
     }
 
@@ -105,12 +109,14 @@ public class TestRepositoryResource extends RepositoryResource {
     @DeleteMapping(value = "/test-repository/{exerciseId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> deleteFile(@PathVariable Long exerciseId, @RequestParam("file") String filename) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
         return super.deleteFile(exerciseId, filename);
     }
 
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> pullChanges(@PathVariable Long exerciseId) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
         return super.pullChanges(exerciseId);
     }
 
@@ -118,6 +124,7 @@ public class TestRepositoryResource extends RepositoryResource {
     @PostMapping(value = "/test-repository/{exerciseId}/commit", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> commitChanges(@PathVariable Long exerciseId) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
         return super.commitChanges(exerciseId);
     }
 
@@ -125,12 +132,14 @@ public class TestRepositoryResource extends RepositoryResource {
     @PostMapping(value = "/test-repository/{exerciseId}/reset", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> resetToLastCommit(@PathVariable Long exerciseId) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
         return super.resetToLastCommit(exerciseId);
     }
 
     @Override
     @GetMapping(value = "/test-repository/{exerciseId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<RepositoryStatusDTO> getStatus(@PathVariable Long exerciseId) throws GitAPIException {
+        // NOTE: additional security checks are done in the method in the superclass
         return super.getStatus(exerciseId);
     }
 

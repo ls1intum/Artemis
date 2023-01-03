@@ -33,7 +33,6 @@ import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import jakarta.servlet.http.HttpServletRequest;
 
 /**
  * Executes repository actions on repositories related to the participation id transmitted. Available to the owner of the participation, TAs/Instructors of the exercise and Admins.
@@ -188,6 +187,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @GetMapping(value = "/repository/{participationId}/files", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Map<String, FileType>> getFiles(@PathVariable Long participationId) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
         return super.getFiles(participationId);
     }
 
@@ -202,6 +202,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @GetMapping(value = "/repository/{participationId}/files-change", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Map<String, Boolean>> getFilesWithInformationAboutChange(@PathVariable Long participationId) {
+        // NOTE: additional security checks are done in the method {@link #getRepository}
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
             var participation = participationRepository.findByIdElseThrow(participationId);
@@ -216,6 +217,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @GetMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<byte[]> getFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
         return super.getFile(participationId, filename);
     }
 
@@ -230,6 +232,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @GetMapping(value = "/repository/{participationId}/files-content", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Map<String, String>> getFilesWithContent(@PathVariable Long participationId) {
+        // NOTE: additional security checks are done in the method {@link #getRepository}
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
             var filesWithContent = super.repositoryService.getFilesWithContent(repository);
@@ -246,6 +249,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @GetMapping(value = "/repository/{participationId}/file-names", produces = MediaType.APPLICATION_JSON_VALUE)
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<Set<String>> getFileNames(@PathVariable Long participationId) {
+        // NOTE: additional security checks are done in the method {@link #getRepository}
         return super.executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(participationId, RepositoryActionType.READ, true);
             var nonFolderFileNames = super.repositoryService.getFiles(repository).entrySet().stream().filter(mapEntry -> mapEntry.getValue().equals(FileType.FILE))
@@ -258,33 +262,38 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
     @Override
     @PostMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename, HttpServletRequest request) {
-        return super.createFile(participationId, filename, request);
+    public ResponseEntity<Void> createFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
+        return super.createFile(participationId, filename);
     }
 
     @Override
     @PostMapping(value = "/repository/{participationId}/folder", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName, HttpServletRequest request) {
-        return super.createFolder(participationId, folderName, request);
+    public ResponseEntity<Void> createFolder(@PathVariable Long participationId, @RequestParam("folder") String folderName) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
+        return super.createFolder(participationId, folderName);
     }
 
     @Override
     @PostMapping(value = "/repository/{participationId}/rename-file", produces = MediaType.APPLICATION_JSON_VALUE)
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> renameFile(@PathVariable Long participationId, @RequestBody FileMove fileMove) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
         return super.renameFile(participationId, fileMove);
     }
 
     @Override
     @DeleteMapping(value = "/repository/{participationId}/file", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> deleteFile(@PathVariable Long participationId, @RequestParam("file") String filename) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
         return super.deleteFile(participationId, filename);
     }
 
     @Override
     @GetMapping(value = "/repository/{participationId}/pull", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> pullChanges(@PathVariable Long participationId) {
+        // NOTE: additional security checks are done in the method {@link #getRepository} which is invoked in the method in the superclass
         return super.pullChanges(participationId);
     }
 

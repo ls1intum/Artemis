@@ -166,14 +166,12 @@ public class RepositoryService {
      *
      * @param repository in which the file should be created.
      * @param filename of the file to be created.
-     * @param inputStream byte representation of the file to be created.
      * @throws IOException if the inputStream is corrupt, the file can't be stored, the repository is unavailable, etc.
      */
-    public void createFile(Repository repository, String filename, InputStream inputStream) throws IOException {
+    public void createFile(Repository repository, String filename) throws IOException {
         File file = checkIfFileExistsInRepository(repository, filename);
-        Files.copy(inputStream, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.createFile(file.toPath());
         repository.setContent(null); // invalidate cache
-        inputStream.close();
     }
 
     private File checkIfFileExistsInRepository(Repository repository, String filename) throws FileAlreadyExistsException {
@@ -193,17 +191,15 @@ public class RepositoryService {
      *
      * @param repository in which the folder should be created.
      * @param folderName of the folder to be created.
-     * @param inputStream byte representation of the folder to be created.
      * @throws IOException if the inputStream is corrupt, the folder can't be stored, the repository is unavailable, etc.
      */
-    public void createFolder(Repository repository, String folderName, InputStream inputStream) throws IOException {
+    public void createFolder(Repository repository, String folderName) throws IOException {
         checkIfFileExistsInRepository(repository, folderName);
         Files.createDirectory(repository.getLocalPath().resolve(folderName));
         // We need to add an empty keep file so that the folder can be added to the git repository
         File keep = new File(repository.getLocalPath().resolve(folderName).resolve(".keep"), repository);
-        Files.copy(inputStream, keep.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        Files.createFile(keep.toPath());
         repository.setContent(null); // invalidate cache
-        inputStream.close();
     }
 
     /**
