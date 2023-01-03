@@ -121,7 +121,7 @@ public class ProgrammingSubmission extends Submission {
     @Override
     public int compareTo(Submission other) {
         if (getSubmissionDate() == null || other.getSubmissionDate() == null || Objects.equals(getSubmissionDate(), other.getSubmissionDate())
-            || (other instanceof ProgrammingSubmission otherProgrammingSubmission && Objects.equals(getCommitHash(), otherProgrammingSubmission.getCommitHash()))) {
+                || (other instanceof ProgrammingSubmission otherProgrammingSubmission && Objects.equals(getCommitHash(), otherProgrammingSubmission.getCommitHash()))) {
             // this case should not happen, but in the rare case we can compare the ids (in tests, the submission dates might be identical as ms are not stored in the database)
             // newer ids are typically later
             return getId().compareTo(other.getId());
