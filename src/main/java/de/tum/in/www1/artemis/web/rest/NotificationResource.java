@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsCommunicationChannel;
 import de.tum.in.www1.artemis.service.notifications.NotificationSettingsService;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -61,13 +63,16 @@ public class NotificationResource {
 
     private final NotificationSettingsService notificationSettingsService;
 
+    private final TutorialGroupService tutorialGroupService;
+
     public NotificationResource(NotificationRepository notificationRepository, UserRepository userRepository, NotificationSettingRepository notificationSettingRepository,
-            AuthorizationCheckService authorizationCheckService, NotificationSettingsService notificationSettingsService) {
+            AuthorizationCheckService authorizationCheckService, NotificationSettingsService notificationSettingsService, TutorialGroupService tutorialGroupService) {
         this.notificationRepository = notificationRepository;
         this.userRepository = userRepository;
         this.notificationSettingRepository = notificationSettingRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.notificationSettingsService = notificationSettingsService;
+        this.tutorialGroupService = tutorialGroupService;
     }
 
     /**
@@ -100,6 +105,10 @@ public class NotificationResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<Notification>> getAllNotificationsForCurrentUserFilteredBySettings(@ApiParam Pageable pageable) {
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
+        var tutorialGroups = tutorialGroupService.findAllForNotifications(currentUser);
+        HashSet<Long> tutorialGroupIds = new HashSet<>();
+        tutorialGroups.forEach(tutorialGroup -> tutorialGroupIds.add(tutorialGroup.getId()));
+
         log.debug("REST request to get all Notifications for current user {} filtered by settings", currentUser);
         Set<NotificationSetting> notificationSettings = notificationSettingRepository.findAllNotificationSettingsForRecipientWithId(currentUser.getId());
         Set<NotificationType> deactivatedTypes = notificationSettingsService.findDeactivatedNotificationTypes(NotificationSettingsCommunicationChannel.WEBAPP,
@@ -108,11 +117,12 @@ public class NotificationResource {
         final ZonedDateTime hideNotificationsUntilDate = currentUser.getHideNotificationsUntil();
         final Page<Notification> page;
         if (deactivatedTitles.isEmpty()) {
-            page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), hideNotificationsUntilDate, pageable);
+            page = notificationRepository.findAllNotificationsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), hideNotificationsUntilDate, tutorialGroupIds,
+                    pageable);
         }
         else {
             page = notificationRepository.findAllNotificationsFilteredBySettingsForRecipientWithLogin(currentUser.getGroups(), currentUser.getLogin(), hideNotificationsUntilDate,
-                    deactivatedTitles, pageable);
+                    deactivatedTitles, tutorialGroupIds, pageable);
         }
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
