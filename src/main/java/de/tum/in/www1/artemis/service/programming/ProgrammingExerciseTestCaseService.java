@@ -88,10 +88,9 @@ public class ProgrammingExerciseTestCaseService {
      * @throws EntityNotFoundException if the programming exercise could not be found.
      */
     public Set<ProgrammingExerciseTestCase> update(Long exerciseId, Set<ProgrammingExerciseTestCaseDTO> testCaseProgrammingExerciseTestCaseDTOS) throws EntityNotFoundException {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithTestCasesById(exerciseId)
-                .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
+        var exercise = programmingExerciseRepository.findWithTestCasesById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise", exerciseId));
 
-        Set<ProgrammingExerciseTestCase> existingTestCases = programmingExercise.getTestCases();
+        Set<ProgrammingExerciseTestCase> existingTestCases = exercise.getTestCases();
         Set<ProgrammingExerciseTestCase> updatedTests = new HashSet<>();
         for (ProgrammingExerciseTestCaseDTO programmingExerciseTestCaseDTO : testCaseProgrammingExerciseTestCaseDTOS) {
             Optional<ProgrammingExerciseTestCase> matchingTestCaseOpt = existingTestCases.stream()
@@ -110,12 +109,12 @@ public class ProgrammingExerciseTestCaseService {
             updatedTests.add(matchingTestCase);
         }
 
-        if (!isTestCaseWeightSumValid(programmingExercise, existingTestCases)) {
+        if (!isTestCaseWeightSumValid(exercise, existingTestCases)) {
             throw new BadRequestAlertException("The sum of all test case weights is 0 or below.", "TestCaseGrading", "weightSumError", true);
         }
 
         testCaseRepository.saveAll(updatedTests);
-        programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
+        programmingExerciseTaskService.updateTasksFromProblemStatement(exercise);
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
         programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return updatedTests;
