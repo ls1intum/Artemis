@@ -9,8 +9,8 @@ export abstract class ExercisePagingService<T extends Exercise> extends PagingSe
         super();
     }
     public searchForExercises(pageable: PageableSearch, isCourseFilter: boolean, isExamFilter: boolean): Observable<SearchResult<T>> {
-        const params = this.createParams(pageable);
-        params.set('isCourseFilter', String(isCourseFilter)).set('isExamFilter', String(isExamFilter));
+        let params = this.createParams(pageable);
+        params = params.set('isCourseFilter', String(isCourseFilter)).set('isExamFilter', String(isExamFilter));
         return this.http.get(`${this.resourceUrl}`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<SearchResult<T>>) => resp && resp.body!));
     }
 }
