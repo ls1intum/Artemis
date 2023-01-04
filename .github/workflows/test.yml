@@ -158,13 +158,6 @@ jobs:
           run: npm run compile:ts:tests
         - name: TypeScript Test Without Typechecking
           run: npm run test:ci
-        - name: Annotate Client Test Results
-          uses: ashley-taylor/junit-report-annotations-action@562e0277515cae408f30ad1ea2d6dea44fc1df87
-          if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
-          with:
-              access-token: ${{ secrets.GITHUB_TOKEN }}
-              path: junit.xml
-              numFailures: 99
         - name: Upload Code Coverage
           uses: codecov/codecov-action@v3
           with:

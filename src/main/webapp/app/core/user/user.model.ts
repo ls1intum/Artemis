@@ -49,3 +49,18 @@ export class User extends Account {
         this.vcsAccessToken = vcsAccessToken;
     }
 }
+/**
+ * A DTO representing a user with the minimal information allowed to be seen by other users in a course
+ */
+export class UserPublicInfoDTO {
+    public id?: number;
+    public login?: string;
+
+    public name?: string;
+    public firstName?: string;
+    public lastName?: string;
+    public isInstructor?: boolean;
+    public isEditor?: boolean;
+    public isTeachingAssistant?: boolean;
+    public isStudent?: boolean;
+}
