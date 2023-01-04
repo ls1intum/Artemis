@@ -144,7 +144,7 @@ export class ListOfComplaintsComponent implements OnInit {
             return;
         }
         this.correctionRound = this.correctionRound || 0;
-        if (complaint.accepted) {
+        if (this.complaintType == ComplaintType.COMPLAINT && complaint.accepted) {
             this.correctionRound += 1;
         }
         const url = getLinkToSubmissionAssessment(

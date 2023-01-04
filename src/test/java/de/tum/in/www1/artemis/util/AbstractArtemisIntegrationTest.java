@@ -144,7 +144,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         participantScoreScheduleService.shutdown();
     }
 
-    public void resetSpyBeans() {
+    protected void resetSpyBeans() {
         Mockito.reset(lti10Service, gitService, groupNotificationService, tutorialGroupNotificationService, singleUserNotificationService, websocketMessagingService,
                 messagingTemplate, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
                 urlService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService,
