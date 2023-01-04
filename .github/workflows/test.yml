@@ -70,6 +70,13 @@ jobs:
         files: build/reports/jacoco/test/jacocoTestReport.xml
         name: artemis-server
         flags: server
+    - name: Test Report
+      uses: dorny/test-reporter@v1
+      if: success() || failure()    # run this step even if previous step failed
+      with:
+        name: H2 Tests
+        path: build/test-results/test/*.xml
+        reporter: java-junit
 
   server-tests-mysql:
       runs-on: ubuntu-latest
