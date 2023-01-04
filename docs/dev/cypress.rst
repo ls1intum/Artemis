@@ -111,7 +111,7 @@ Automatic flaky test detection based on changed code
 ----------------------------------------------------
 In addition to our regular Cypress execution, we also run a special experimental build plan that attempts to detect
 flaky tests based on the changed code. To do this, we have some special Docker configurations that are specific to this
-`build plan <https://bamboobruegge.in.tum.de/browse/ARTEMIS-AECF>`__.
+`build plan <https://bamboo.ase.in.tum.de/browse/ARTEMIS-AECF>`__.
 
 1. Docker Image Extensions
 
