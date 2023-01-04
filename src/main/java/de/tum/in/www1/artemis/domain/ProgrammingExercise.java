@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -86,6 +87,15 @@ public class ProgrammingExercise extends Exercise {
 
     @Column(name = "project_key", table = "programming_exercise_details", nullable = false)
     private String projectKey;
+
+    @Size(max = 36)
+    @Nullable
+    @Column(name = "build_plan_access_secret", table = "programming_exercise_details", length = 36)
+    private String buildPlanAccessSecret;
+
+    @ManyToOne
+    @JoinColumn(name = "build_plan_id", table = "programming_exercise_details")
+    private BuildPlan buildPlan;
 
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
@@ -370,7 +380,7 @@ public class ProgrammingExercise extends Exercise {
                 return checkForRatedAndAssessedResult(result);
             }
             return this.getDueDate() == null || SubmissionType.INSTRUCTOR.equals(submission.getType()) || SubmissionType.TEST.equals(submission.getType())
-                    || submission.getSubmissionDate().isBefore(getRelevantDueDateForSubmission(submission));
+                || submission.getSubmissionDate().isBefore(getRelevantDueDateForSubmission(submission));
         }).max(Comparator.naturalOrder()).orElse(null);
     }
 
@@ -684,9 +694,9 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public String toString() {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUrl='" + getTemplateRepositoryUrl() + "'" + ", solutionRepositoryUrl='" + getSolutionRepositoryUrl()
-                + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
-                + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
-                + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
+            + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
+            + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
+            + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
     public boolean getIsLocalSimulation() {
@@ -774,7 +784,7 @@ public class ProgrammingExercise extends Exercise {
         // Static code analysis max penalty must only be set if static code analysis is enabled
         if (Boolean.FALSE.equals(isStaticCodeAnalysisEnabled()) && getMaxStaticCodeAnalysisPenalty() != null) {
             throw new BadRequestAlertException("Max static code analysis penalty must only be set if static code analysis is enabled", "Exercise",
-                    "staticCodeAnalysisDisabledButPenaltySet");
+                "staticCodeAnalysisDisabledButPenaltySet");
         }
 
         // Static code analysis max penalty must be positive
@@ -810,5 +820,31 @@ public class ProgrammingExercise extends Exercise {
 
     public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
         this.exerciseHints = exerciseHints;
+    }
+
+    public void setBuildPlan(BuildPlan buildPlan) {
+        this.buildPlan = buildPlan;
+    }
+
+    // TODO: Safe build plan when exercise is created
+    public BuildPlan getBuildPlan() {
+        return buildPlan;
+    }
+
+    public void setBuildPlanAccessSecret(String buildPlanAccessSecret) {
+        this.buildPlanAccessSecret = buildPlanAccessSecret;
+    }
+
+    public boolean isBuildPlanAccessSecretSet() {
+        return buildPlanAccessSecret != null && !buildPlanAccessSecret.isEmpty();
+    }
+
+    public String getBuildPlanAccessSecret() {
+        return buildPlanAccessSecret;
+    }
+
+    public void generateAndSetBuildPlanAccessSecret() {
+        buildPlanAccessSecret = UUID.randomUUID().toString();
+        // SecureRandom.getInstanceStrong();
     }
 }
