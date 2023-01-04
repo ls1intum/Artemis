@@ -17,10 +17,9 @@ import { MockAccountService } from '../../../helpers/mocks/service/mock-account.
 import { User } from 'app/core/user/user.model';
 import { MockUserService } from '../../../helpers/mocks/service/mock-user.service';
 import { UserService } from 'app/core/user/user.service';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
 import { MockUserSettingsService } from '../../../helpers/mocks/service/mock-user-settings.service';
 import { NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
@@ -68,7 +67,7 @@ describe('Notification Sidebar Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockDirective(NgbTooltip)],
-            declarations: [NotificationSidebarComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective, MockComponent(FaIconComponent)],
+            declarations: [NotificationSidebarComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
             providers: [
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -80,7 +79,6 @@ describe('Notification Sidebar Component', () => {
                 { provide: UserSettingsService, useClass: MockUserSettingsService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 notificationSidebarComponentFixture = TestBed.createComponent(NotificationSidebarComponent);

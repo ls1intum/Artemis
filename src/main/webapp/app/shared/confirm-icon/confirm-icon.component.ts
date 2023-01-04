@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { IconProp, SizeProp } from '@fortawesome/fontawesome-svg-core';
 import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 
@@ -6,7 +6,7 @@ import { faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
     selector: 'jhi-confirm-icon',
     templateUrl: './confirm-icon.component.html',
 })
-export class ConfirmIconComponent implements OnInit {
+export class ConfirmIconComponent {
     @Input() initialIcon = <IconProp>faTrash;
     @Input() initialTooltip: string;
     @Input() confirmIcon = <IconProp>faCheck;
@@ -14,11 +14,6 @@ export class ConfirmIconComponent implements OnInit {
     @Input() iconSize = <SizeProp>'md';
     @Output() confirmEvent = new EventEmitter();
     showConfirm = false;
-
-    /**
-     * do nothing
-     */
-    ngOnInit(): void {}
 
     /**
      * call toggle and emit confirmEvent

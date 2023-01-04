@@ -10,8 +10,9 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { Directive, Input } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
+import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 
-// tslint:disable-next-line:directive-selector
+// eslint-disable-next-line @angular-eslint/directive-selector
 @Directive({ selector: '[sortableData]' })
 class MockSortableDataDirective {
     @Input('sortableData') data: any;
@@ -26,7 +27,7 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [ArtemisTestModule, MockModule(NgbModule)],
             declarations: [
                 ReEvaluateMultipleChoiceQuestionComponent,
                 MockComponent(MultipleChoiceQuestionEditComponent),

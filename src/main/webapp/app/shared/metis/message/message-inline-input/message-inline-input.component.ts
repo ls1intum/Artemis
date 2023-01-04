@@ -1,4 +1,4 @@
-import { Component, ViewEncapsulation } from '@angular/core';
+import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
@@ -6,16 +6,23 @@ import { Post } from 'app/entities/metis/post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
+import { LocalStorageService } from 'ngx-webstorage';
 
 @Component({
     selector: 'jhi-message-inline-input',
-    templateUrl: '../message-inline-input.component.html',
-    styleUrls: ['../message-inline-input.component.scss'],
+    templateUrl: './message-inline-input.component.html',
+    styleUrls: ['./message-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> {
-    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
+export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> implements OnInit {
+    warningDismissed = false;
+    constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder, protected localStorageService: LocalStorageService) {
         super(metisService, modalService, formBuilder);
+    }
+
+    ngOnInit(): void {
+        super.ngOnInit();
+        this.warningDismissed = !!this.localStorageService.retrieve('chatWarningDismissed');
     }
 
     /**
@@ -56,5 +63,10 @@ export class MessageInlineInputComponent extends PostingCreateEditDirective<Post
                 this.isLoading = false;
             },
         });
+    }
+
+    closeAlert() {
+        this.warningDismissed = true;
+        this.localStorageService.store('chatWarningDismissed', true);
     }
 }

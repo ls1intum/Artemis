@@ -30,6 +30,7 @@ export class ArtemisQuizService {
                     } else if (question.type === QuizQuestionType.DRAG_AND_DROP) {
                         (question as DragAndDropQuestion).dragItems?.shuffle();
                     } else if (question.type === QuizQuestionType.SHORT_ANSWER) {
+                        // nothing to do here
                     } else {
                         captureException(new Error('Unknown question type: ' + question));
                     }
