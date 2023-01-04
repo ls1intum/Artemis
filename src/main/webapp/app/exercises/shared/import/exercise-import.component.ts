@@ -54,7 +54,7 @@ export class ExerciseImportComponent implements OnInit {
     constructor(private sortService: SortService, private activeModal: NgbActiveModal, private injector: Injector) {}
 
     ngOnInit(): void {
-        if (!this.exerciseType || this.exerciseType == ExerciseType.FILE_UPLOAD) {
+        if (!this.exerciseType || this.exerciseType === ExerciseType.FILE_UPLOAD) {
             return;
         }
         this.pagingService = this.getPagingService();
@@ -178,7 +178,7 @@ export class ExerciseImportComponent implements OnInit {
     // reset to default search option when mixing course and exam exercises.
     // This avoids exercises still being filtered out by the sortedColum even if the filter is not set.
     private resetSortOnFilterChange() {
-        if (this.sortedColumn === 'COURSE_TITLE' || this.sortedColumn == 'EXAM_TITLE') {
+        if (this.sortedColumn === 'COURSE_TITLE' || this.sortedColumn === 'EXAM_TITLE') {
             this.sortedColumn = this.DEFAULT_SORT_COLUMN;
         }
     }
