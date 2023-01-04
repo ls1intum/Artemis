@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 /**
  * Tests for {@link UserJWTController} and {@link SAML2Service}.
  */
-public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
+class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
     private static final String STUDENT_NAME = "student_saml_test";
 
@@ -50,7 +50,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIG
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    void tearDown() throws Exception {
         gitlabRequestMockProvider.reset();
     }
 
