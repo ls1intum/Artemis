@@ -118,7 +118,8 @@ flaky tests based on the changed code. To do this, we have some special Docker c
    We extend the existing `Dockerfile <./src/main/docker/Dockerfile>`__ to create the Docker image for the Artemis
    container. For the flaky test detection build plan, we need to change the Artemis startup and add the :code:`unzip`
    dependency. To do this, we have a special Dockerfile that extends the original one and adds these changes. The
-   Dockerfile can be found `here <./src/main/docker/cypress/Coverage-Dockerfile>`__.
+   Dockerfile can be found `here <./src/main/docker/cypress/Coverage-Dockerfile>`__. To do this, the regular image
+   has to be built and tagged with :code:`artemis:coverage-latest`.
 
    Additionally, we need Java in the Cypress container for the flaky test detection, so we have a special Dockerfile for
    the Cypress container that extends the original one and adds the Java installation. This Dockerfile can be found
