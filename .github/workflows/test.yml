@@ -92,9 +92,8 @@ jobs:
             id: failedTestCounter
             if: success() || failure()
             run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
-          - name: Run the action # You would run your tests before this using the output to set state/desc
+          - name: Report action
             uses: Sibz/github-status-action@v1
-            if: steps.failedTestCounter.outputs.FAILED_TESTS_COUNT != '0'
             with:
                 authToken: ${{secrets.GITHUB_TOKEN}}
                 context: 'Test Run - MySQL'
@@ -130,9 +129,8 @@ jobs:
             id: failedTestCounter
             if: success() || failure()
             run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
-          - name: Run the action # You would run your tests before this using the output to set state/desc
+          - name: Report action
             uses: Sibz/github-status-action@v1
-            if: steps.failedTestCounter.outputs.FAILED_TESTS_COUNT != '0'
             with:
                 authToken: ${{secrets.GITHUB_TOKEN}}
                 context: 'Test Run - PostgreSQL'
