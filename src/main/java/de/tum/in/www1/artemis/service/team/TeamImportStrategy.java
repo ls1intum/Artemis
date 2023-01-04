@@ -14,9 +14,9 @@ public abstract class TeamImportStrategy {
         this.teamRepository = teamRepository;
     }
 
-    abstract public void importTeams(Exercise sourceExercise, Exercise destinationExercise);
+    public abstract void importTeams(Exercise sourceExercise, Exercise destinationExercise);
 
-    abstract public void importTeams(Exercise exercise, List<Team> teams);
+    public abstract void importTeams(Exercise exercise, List<Team> teams);
 
     /**
      * Clones the given original teams via copy constructor, assigns them to the given destination exercise and persists them

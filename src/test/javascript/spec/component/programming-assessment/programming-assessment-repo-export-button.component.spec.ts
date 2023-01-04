@@ -7,7 +7,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -36,7 +35,6 @@ describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
                 ProgrammingAssessmentRepoExportButtonComponent,
                 MockTranslateValuesDirective,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
                 MockComponent(ButtonComponent),
                 MockDirective(TranslateDirective),
             ],
@@ -45,7 +43,6 @@ describe('ProgrammingAssessmentRepoExportButtonComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ProgrammingAssessmentRepoExportButtonComponent);

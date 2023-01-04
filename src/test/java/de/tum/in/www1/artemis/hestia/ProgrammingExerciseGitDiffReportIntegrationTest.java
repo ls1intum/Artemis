@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.hestia;
 
 import java.time.ZonedDateTime;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +22,9 @@ import de.tum.in.www1.artemis.util.ModelFactory;
  */
 class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private final static String FILE_NAME = "test.java";
+    private static final String TEST_PREFIX = "progexgitdiffreport";
+
+    private static final String FILE_NAME = "test.java";
 
     private final LocalRepository solutionRepo = new LocalRepository("main");
 
@@ -40,17 +41,12 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringInte
     @BeforeEach
     void initTestCase() throws Exception {
         Course course = database.addEmptyCourse();
-        database.addUsers(1, 1, 1, 1);
+        database.addUsers(TEST_PREFIX, 1, 1, 1, 1);
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
     }
 
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
-    }
-
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getGitDiffAsAStudent() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
@@ -59,7 +55,7 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getGitDiffAsATutor() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
@@ -68,7 +64,7 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void getGitDiffAsAnEditor() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
@@ -77,7 +73,7 @@ class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringInte
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getGitDiffAsAnInstructor() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);

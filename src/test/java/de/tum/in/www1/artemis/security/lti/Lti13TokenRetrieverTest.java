@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -46,9 +47,11 @@ class Lti13TokenRetrieverTest {
 
     private ClientRegistration clientRegistration;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void init() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
         lti13TokenRetriever = new Lti13TokenRetriever(oAuth2JWKSService, restTemplate);
 
@@ -58,6 +61,14 @@ class Lti13TokenRetrieverTest {
                 .authorizationUri("authUri") //
                 .tokenUri("tokenUri").clientId("clientId") //
                 .build();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
+        reset(oAuth2JWKSService, restTemplate);
     }
 
     @Test

@@ -36,7 +36,6 @@ public abstract class Notification extends DomainObject {
     @Column(name = "title")
     private String title;
 
-    @Lob
     @Column(name = "text")
     private String text;
 
