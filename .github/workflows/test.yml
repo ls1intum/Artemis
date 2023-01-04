@@ -88,13 +88,19 @@ jobs:
           - name: Print failed tests
             if: success() || failure()
             run: cat tests.log | grep "Test >.*FAILED"
-          - name: Annotate Server Test Results
-            uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
-            if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
+          - name: Count failed tests
+            id: failedTestCounter
+            if: success() || failure()
+            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
+          - name: Run the action # You would run your tests before this using the output to set state/desc
+            uses: Sibz/github-status-action@v1
+            if: steps.failedTestCounter.outputs.FAILED_TESTS_COUNT != '0'
             with:
-                access-token: ${{ secrets.GITHUB_TOKEN }}
-                path: build/test-results/test/*.xml
-                numFailures: 99
+                authToken: ${{secrets.GITHUB_TOKEN}}
+                context: 'Test Run - MySQL'
+                description: '${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed tests'
+                state: 'success'
+                sha: ${{github.event.pull_request.head.sha || github.sha}}
 
   server-tests-postgres:
       runs-on: ubuntu-latest
@@ -113,13 +119,19 @@ jobs:
           - name: Print failed tests
             if: success() || failure()
             run: cat tests.log | grep "Test >.*FAILED"
-          - name: Annotate Server Test Results
-            uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
-            if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
+          - name: Count failed tests
+            id: failedTestCounter
+            if: success() || failure()
+            run: echo "FAILED_TESTS_COUNT=$(cat tests.log | grep "Test >.*FAILED" | wc -l)\n" >> $GITHUB_OUTPUT
+          - name: Run the action # You would run your tests before this using the output to set state/desc
+            uses: Sibz/github-status-action@v1
+            if: steps.failedTestCounter.outputs.FAILED_TESTS_COUNT != '0'
             with:
-                access-token: ${{ secrets.GITHUB_TOKEN }}
-                path: build/test-results/test/*.xml
-                numFailures: 99
+                authToken: ${{secrets.GITHUB_TOKEN}}
+                context: 'Test Run - PostgreSQL'
+                description: '${{ steps.failedTestCounter.outputs.FAILED_TESTS_COUNT }} failed tests'
+                state: 'success'
+                sha: ${{github.event.pull_request.head.sha || github.sha}}
 
   server-style:
     runs-on: ubuntu-latest
