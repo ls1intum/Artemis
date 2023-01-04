@@ -56,7 +56,9 @@ public class ResourceLoaderService {
      * File will be loaded from the relative path, if it exists, from the classpath otherwise.
      * @param path the path to load the file from. Must not start with a '/'.
      * @return the loaded resource, which might not exist ({@link Resource#exists()}.
+     * @deprecated Use {@link #getResource(Path)} instead.
      */
+    @Deprecated(forRemoval = true)
     public Resource getResource(String path) {
         Resource resource = null;
         // Try to load from filesystem if override is allowed for path
@@ -76,7 +78,9 @@ public class ResourceLoaderService {
      * File will be loaded from the relative path, if it exists, from the classpath otherwise.
      * @param pathSegments the segments of the path (e.g. ["templates", "java", "pom.xml"]). Will automatically be joined with '/'.
      * @return the loaded resource, which might not exist ({@link Resource#exists()}.
+     * @deprecated Use {@link #getResource(Path)} instead.
      */
+    @Deprecated(forRemoval = true)
     public Resource getResource(String... pathSegments) {
         return getResource(StringUtils.join(pathSegments, File.separator));
     }
@@ -103,7 +107,9 @@ public class ResourceLoaderService {
      * Files will be loaded from the relative path, it is non-empty (at least one resource), from the classpath otherwise.
      * @param path the path to load the file from. Must not start with a '/'.
      * @return the loaded resources, which might be an empty array
+     * @deprecated Use {@link #getResources(Path)} instead.
      */
+    @Deprecated(forRemoval = true)
     public Resource[] getResources(String path) {
         Resource[] resources = null;
         // Try to load from filesystem if override is allowed for path
@@ -132,7 +138,9 @@ public class ResourceLoaderService {
      * Files will be loaded from the relative path, it is non-empty (at least one resource), from the classpath otherwise.
      * @param pathSegments the segments of the path (e.g. ["templates", "java"]). Will automatically be joined with '/'.
      * @return the loaded resources, which might be an empty array
+     * @deprecated Use {@link #getResources(Path)} instead.
      */
+    @Deprecated(forRemoval = true)
     public Resource[] getResources(String... pathSegments) {
         return getResources(StringUtils.join(pathSegments, File.separator));
     }
