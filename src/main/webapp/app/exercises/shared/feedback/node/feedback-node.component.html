@@ -1,7 +1,7 @@
 <div *ngIf="feedbackItem" class="alert feedback-item" [ngClass]="'alert-' + feedbackItem.color">
     <div class="feedback-item__header">
         <h4 class="feedback-item__category">{{ feedbackItem.name }} {{ feedbackItem.title && '· ' + feedbackItem.title }}</h4>
-        <span class="fw-bold" *ngIf="feedbackItem.credits">
+        <span class="fw-bold feedback-item__credits" *ngIf="feedbackItem.credits">
             {{ roundValueSpecifiedByCourseSettings(feedbackItem.credits, course) }}P
             <fa-icon
                 *ngIf="feedbackItem.type === 'Subsequent'"
