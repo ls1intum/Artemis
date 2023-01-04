@@ -144,31 +144,36 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             // TODO: Reduce the number of API calls
 
             updateVariable(repositoryPath, VARIABLE_BUILD_DOCKER_IMAGE_NAME,
-                    programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())), true);
-            updateVariable(repositoryPath, VARIABLE_BUILD_LOGS_FILE_NAME, "build.log", true);
-            updateVariable(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId, true);
-            updateVariable(repositoryPath, VARIABLE_CUSTOM_FEEDBACK_DIR_NAME, "TODO", false); // TODO
-            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME, notificationPluginDockerImage, true);
-            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_SECRET_NAME, artemisAuthenticationTokenValue, true);
-            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + Constants.NEW_RESULT_RESOURCE_API_PATH, false);
-            updateVariable(repositoryPath, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch(), false);
-            updateVariable(repositoryPath, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch(), false);
-            updateVariable(repositoryPath, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, urlService.getRepositorySlugFromRepositoryUrlString(exercise.getTestRepositoryUrl()), true);
+                    programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())));
+            updateVariable(repositoryPath, VARIABLE_BUILD_LOGS_FILE_NAME, "build.log");
+            updateVariable(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId);
+            // TODO: Implement the custom feedback feature
+            updateVariable(repositoryPath, VARIABLE_CUSTOM_FEEDBACK_DIR_NAME, "TODO");
+            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME, notificationPluginDockerImage);
+            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_SECRET_NAME, artemisAuthenticationTokenValue);
+            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + Constants.NEW_RESULT_RESOURCE_API_PATH);
+            updateVariable(repositoryPath, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch());
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch());
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, urlService.getRepositorySlugFromRepositoryUrlString(exercise.getTestRepositoryUrl()));
             // TODO: Use a token that is only valid for the test repository for each programming exercise
-            updateVariable(repositoryPath, VARIABLE_TEST_GIT_TOKEN, gitlabToken, true);
-            // We do not mask this variable because GitLab requires that a masked string to be at least 8 characters long. This is not the case if you use the default user
-            // ('root').
-            updateVariable(repositoryPath, VARIABLE_TEST_GIT_USER, gitlabUser, false);
-            updateVariable(repositoryPath, VARIABLE_TEST_RESULTS_DIR_NAME, "target/surefire-reports", true);
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_TOKEN, gitlabToken);
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_USER, gitlabUser);
+            updateVariable(repositoryPath, VARIABLE_TEST_RESULTS_DIR_NAME, "target/surefire-reports");
         }
         catch (GitLabApiException e) {
             log.error("Error creating variable for " + repositoryURL.toString() + " The variables may already have been created.", e);
         }
     }
 
-    private void updateVariable(String repositoryPath, String key, String value, boolean masked) throws GitLabApiException {
+    private void updateVariable(String repositoryPath, String key, String value) throws GitLabApiException {
         // TODO: We can even define the variables on group level
-        gitlab.getProjectApi().createVariable(repositoryPath, key, value, Variable.Type.ENV_VAR, false, masked);
+        // TODO: If the variable already exists, we should update it
+        gitlab.getProjectApi().createVariable(repositoryPath, key, value, Variable.Type.ENV_VAR, false, canBeMasked(value));
+    }
+
+    private boolean canBeMasked(String value) {
+        // This regex matches which can be masked, c.f. https://docs.gitlab.com/ee/ci/variables/#mask-a-cicd-variable
+        return value.matches("^[a-zA-Z0-9+/=@:.~]{8,}$");
     }
 
     private void addBuildPlanToProgrammingExerciseIfUnset(ProgrammingExercise programmingExercise) {
