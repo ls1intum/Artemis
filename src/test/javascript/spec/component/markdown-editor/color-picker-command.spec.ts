@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
 import { MockComponent } from 'ng-mocks';
-import { FaIconComponent, FaLayersComponent } from '@fortawesome/angular-fontawesome';
+import { FaLayersComponent } from '@fortawesome/angular-fontawesome';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { ArtemisTestModule } from '../../test.module';
@@ -17,7 +17,7 @@ describe('ColorPickerCommand', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, AceEditorModule, ArtemisMarkdownEditorModule],
-            declarations: [MockComponent(FaIconComponent), MockComponent(FaLayersComponent)],
+            declarations: [MockComponent(FaLayersComponent)],
         })
             .compileComponents()
             .then(() => {

@@ -88,7 +88,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.CATEGORIES, programmingExerciseSCAEnabled);
         var categories = request.get(endpoint, HttpStatus.OK, new TypeReference<Set<StaticCodeAnalysisCategory>>() {
         });
-        assertThat(programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
+        assertThat(programmingExerciseSCAEnabled.getStaticCodeAnalysisCategories()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise")
                 .containsExactlyInAnyOrderElementsOf(categories);
     }
 
@@ -165,11 +165,10 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
 
         // The removed category should not be deleted
         programmingExSCAEnabled.getStaticCodeAnalysisCategories().add(removedCategory);
-        assertThat(responseCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
-                .containsExactlyInAnyOrderElementsOf(savedCategories);
-        assertThat(responseCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
+        assertThat(responseCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(savedCategories);
+        assertThat(responseCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise")
                 .containsExactlyInAnyOrderElementsOf(programmingExSCAEnabled.getStaticCodeAnalysisCategories());
-        assertThat(savedCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("exercise")
+        assertThat(savedCategories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise")
                 .containsExactlyInAnyOrderElementsOf(programmingExSCAEnabled.getStaticCodeAnalysisCategories());
     }
 
@@ -215,9 +214,10 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         }, HttpStatus.OK);
         final var categoriesInDB = staticCodeAnalysisCategoryRepository.findByExerciseId(exercise.getId());
 
-        assertThat(categoriesResponse).usingElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(categoriesInDB);
-        assertThat(categoriesInDB).usingElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(originalCategories);
-        assertThat(categoriesInDB).usingElementComparatorIgnoringFields("id", "exercise").isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
+        assertThat(categoriesResponse).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(categoriesInDB);
+        assertThat(categoriesInDB).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise").containsExactlyInAnyOrderElementsOf(originalCategories);
+        assertThat(categoriesInDB).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise")
+                .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
     }
 
     @Test

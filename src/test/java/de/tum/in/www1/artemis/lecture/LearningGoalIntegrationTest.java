@@ -445,7 +445,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    public void deleteLearningGoal_witRelatedGoals_shouldReturnBadRequest() throws Exception {
+    void deleteLearningGoal_witRelatedGoals_shouldReturnBadRequest() throws Exception {
         LearningGoal learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         LearningGoal learningGoal1 = database.createLearningGoal(course);
@@ -475,7 +475,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    public void createLearningGoalRelation() throws Exception {
+    void createLearningGoalRelation() throws Exception {
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         Long idOfOtherLearningGoal = database.createLearningGoal(course).getId();
 
@@ -490,7 +490,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
-    public void createLearningGoalRelation_shouldReturnForbidden() throws Exception {
+    void createLearningGoalRelation_shouldReturnForbidden() throws Exception {
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         Long idOfOtherLearningGoal = database.createLearningGoal(course).getId();
 
@@ -501,7 +501,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    public void getLearningGoalRelations() throws Exception {
+    void getLearningGoalRelations() throws Exception {
         LearningGoal learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         LearningGoal otherLearningGoal = database.createLearningGoal(course);
@@ -520,7 +520,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    public void deleteLearningGoalRelation() throws Exception {
+    void deleteLearningGoalRelation() throws Exception {
         LearningGoal learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         LearningGoal otherLearningGoal = database.createLearningGoal(course);
