@@ -24,32 +24,37 @@ For a production setup of GitLab, also see the documentation of the GitLab and J
 GitLab
 """"""
 
-1. Configure GitLab
+1. Depending on your operating system, it is necessary to update the host file of your machine to include the following line:
+
+   .. code:: text
+
+        127.0.0.1       host.docker.internal
+        ::1             host.docker.internal
+
+2. Configure GitLab
     .. code:: bash
 
         cp src/main/docker/env.example.gitlab-gitlabci.txt src/main/docker/.env
 
-    Now edit the file ``src/main/docker/.env``.
-
-2. Start GitLab and the GitLab Runner
+3. Start GitLab and the GitLab Runner
     .. code:: bash
 
         docker-compose -f src/main/docker/gitlab-gitlabci.yml --env-file src/main/docker/.env up --build -d
 
-3. Get your GitLab root password
+4. Get your GitLab root password
     .. code:: bash
 
         docker exec -it gitlab grep 'Password:' /etc/gitlab/initial_root_password
 
-4. Generate an access token
-    Go to ``http://gitlab/-/profile/personal_access_tokens`` and generate an access token with all scopes.
+5. Generate an access token
+    Go to ``http://host.docker.internal/-/profile/personal_access_tokens`` and generate an access token with all scopes.
     This token is used in the Artemis configuration as ``artemis.version-control.token``.
 
 GitLab Runner
 """""""""""""
 
 1. Register a new runner
-    Login to your GitLab instance and open ``http://gitlab/admin/runners``.
+    Login to your GitLab instance and open ``http://host.docker.internal/admin/runners``.
     Click on ``Register an instance runner`` and copy the registration token.
 
     Then execute this command with the registration token:
@@ -60,7 +65,7 @@ GitLab Runner
         --non-interactive \
         --executor "docker" \
         --docker-image alpine:latest \
-        --url http://gitlab:80 \
+        --url http://host.docker.internal:80 \
         --registration-token "PROJECT_REGISTRATION_TOKEN" \
         --description "docker-runner" \
         --maintenance-note "Test Runner" \
@@ -69,10 +74,7 @@ GitLab Runner
         --locked="false" \
         --access-level="not_protected"
 
-    .. note::
-        For local development, you might add ``--clone-url http://gateway.docker.internal:80`` or ``--clone-url http://172.17.0.1:80`` to the command above.
-
-    You should now find the runner in the list of runners (``http://gitlab/admin/runners``)
+    You should now find the runner in the list of runners (``http://host.docker.internal/admin/runners``)
 
 .. note::
     Adding a runner in a production setup works the same way.
@@ -84,28 +86,28 @@ GitLab Runner
 Artemis
 ^^^^^^^
 
+.. note::
+    Make sure that the database is empty and contains no data from previous Artemis runs.
+
 1. Generate authentication token
     The notification plugin has to authenticate to upload the test results.
     Therefore, a random string has to be generated, e.g., via a password generator.
     This should be used in place of ``notification-plugin-token`` value in the example config below.
 2. Configure Artemis
     For local development, copy the following configuration into the ``application-local.yml`` file and adapt it with the values from the previous steps.
-    Please make sure, that the GitLab Runner can access Artemis via the URL specified under ``artemis.server.url``.
 
     .. code:: yaml
 
         artemis:
-            # Please use the bcrypt benchmark tool to determine the best number of rounds for your system. https://github.com/ls1intum/bcrypt-Benchmark
             user-management:
                 use-external: false
                 internal-admin:
                     username: artemis_admin
-                    password: artemis_admin
-                accept-terms: false
+                    password: gHn7JlggD9YPiarOEJSx19EFp2BDkkq9
                 login:
                     account-name: TUM
             version-control:
-                url: http://gitlab # change this value
+                url: http://host.docker.internal:80
                 user: root
                 password: password # change this value
                 token: gitlab-personal-access-token # change this value
@@ -116,8 +118,11 @@ Artemis
                 name: Artemis
                 email: artemis.in@tum.de
         server:
-            port: 8080
-            url: http://artemis:8080 # change this value
+            url: http://host.docker.internal:8080
+
+.. note::
+    In GitLab, the password of a user must not be the same as the username and must fulfill specific requirements.
+    Therefore, there is a random password in the example above.
 
 3. Start Artemis
     Start Artemis with the ``gitlab`` and ``gitlabci`` profile.
