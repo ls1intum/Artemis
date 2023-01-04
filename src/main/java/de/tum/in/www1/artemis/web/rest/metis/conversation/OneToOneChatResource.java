@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.OneToOneChatDTO;
 
 @RestController
-@RequestMapping("/api/courses")
 public class OneToOneChatResource {
 
     private final Logger log = LoggerFactory.getLogger(OneToOneChatResource.class);
@@ -56,7 +55,7 @@ public class OneToOneChatResource {
      * @param otherChatParticipantLogins logins of other participants (must be 1 for one to one chat) excluding the requesting user
      * @return ResponseEntity with status 201 (Created) and with body containing the created one to one chat
      */
-    @PostMapping("/{courseId}/one-to-one-chats")
+    @PostMapping("courses/{courseId}/one-to-one-chats")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OneToOneChatDTO> startOneToOneChat(@PathVariable Long courseId, @RequestBody List<String> otherChatParticipantLogins) throws URISyntaxException {
         var requestingUser = userRepository.getUserWithGroupsAndAuthorities();
