@@ -9,6 +9,7 @@ import { LectureUnit, LectureUnitType } from 'app/entities/lecture-unit/lectureU
 import { LectureUnitCompletionEvent } from 'app/overview/course-lectures/course-lecture-details.component';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
+import { faPencilAlt } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-learning-goals-details',
@@ -24,6 +25,7 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
 
     readonly LectureUnitType = LectureUnitType;
 
+    faPencilAlt = faPencilAlt;
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
 

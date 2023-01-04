@@ -7,7 +7,6 @@ import { Authority } from 'app/shared/constants/authority.constants';
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { ArtemisLearningGoalsModule } from 'app/course/learning-goals/learning-goal.module';
 import { FireworksModule } from 'app/shared/fireworks/fireworks.module';
-import { FireworksComponent } from 'app/shared/fireworks/fireworks.component';
 
 const routes: Routes = [
     {
