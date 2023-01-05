@@ -374,6 +374,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateBetweenDueDateAndBuildAndTestDate() throws Exception {
+        bitbucketRequestMockProvider.reset();
         mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
