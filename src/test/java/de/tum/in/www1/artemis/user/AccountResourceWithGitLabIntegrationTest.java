@@ -5,8 +5,9 @@ import static org.mockito.Mockito.*;
 
 import java.util.Optional;
 
+import javax.validation.constraints.NotNull;
+
 import org.gitlab4j.api.UserApi;
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
