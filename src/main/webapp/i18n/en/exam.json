@@ -47,6 +47,7 @@
                 "noCommitHash": "No commit was made",
                 "studentSubmissionTo": "{{studentName}}'s submission to {{examTitle}}",
                 "viewResult": " View Result",
+                "viewExampleSolution": " View Example Solution",
                 "missingResultNotice": "There is currently no result for this quiz exercise, although the results have already been published. Please inform your instructor.",
                 "points": {
                     "exercise": "Exercise",
@@ -93,6 +94,7 @@
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
             "studentReviewEnabled": "Review is open",
+            "exampleSolutionPublicationDate": "Example Solution Publication Date",
             "duration": "Duration",
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
@@ -330,7 +332,8 @@
                 "conduction": "Exam Conduction",
                 "assessment": "Exam Assessment and Student Review",
                 "exercises": "Exam Exercises",
-                "text": "Exam Texts"
+                "text": "Exam Texts",
+                "examSolutions": "Exam Solutions"
             },
             "title": "Exam Management",
             "createExam": "Create a new exam",
@@ -355,6 +358,7 @@
             "courseName": "Course name",
             "examStudentReviewStart": "Begin of Student Review",
             "examStudentReviewEnd": "End of Student Review",
+            "exampleSolutionPublicationDateTooltip": "Students can see the example solutions for all exercises in the exam from this time onwards if they participated in the exam. Leave blank to disable.",
             "maxPoints": {
                 "title": "Maximum number of points for exam",
                 "warning": "Updating this field will update the grading scale for the exam if such exists, such that the points values for the grade steps still match the percentages, adjusted for the new maximum points value"
