@@ -187,6 +187,7 @@ public class AdminOrganizationResource {
     @EnforceAdmin
     public ResponseEntity<List<Organization>> getAllOrganizations() {
         log.debug("REST request to get all organizations");
+        // TODO: we should avoid findAll() and instead load batches of organizations
         List<Organization> organizations = organizationRepository.findAll();
         return new ResponseEntity<>(organizations, HttpStatus.OK);
     }
@@ -220,6 +221,7 @@ public class AdminOrganizationResource {
         log.debug("REST request to get number of users and courses of all organizations");
 
         List<OrganizationCountDTO> result = new ArrayList<>();
+        // TODO: we should avoid findAll() and instead calculate the data directly in the database
         List<Organization> organizations = organizationRepository.findAll();
         for (Organization organization : organizations) {
             result.add(new OrganizationCountDTO(organization.getId(), organizationRepository.getNumberOfUsersByOrganizationId(organization.getId()),

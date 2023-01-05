@@ -148,8 +148,8 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.maxPoints.title">Maximum number of points in exam</span></dt>
                 <dd>
-                    <span *ngIf="exam.maxPoints; else maxPointsNotSet">{{ exam.maxPoints }}</span>
-                    <ng-template #maxPointsNotSet><span jhiTranslate="artemisApp.exam.notSet"></span></ng-template>
+                    <span *ngIf="exam.examMaxPoints; else examMaxPointsNotSet">{{ exam.examMaxPoints }}</span>
+                    <ng-template #examMaxPointsNotSet><span jhiTranslate="artemisApp.exam.notSet"></span></ng-template>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.examManagement.numberOfExercisesInExam">Number of exercises in exam</span></dt>
                 <dd>

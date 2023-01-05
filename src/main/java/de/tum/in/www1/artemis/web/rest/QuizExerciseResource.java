@@ -237,7 +237,7 @@ public class QuizExerciseResource {
      * @param examId id of the exam of which all exercises should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
      */
-    @GetMapping("/{examId}/quiz-exercises")
+    @GetMapping("exams/{examId}/quiz-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public List<QuizExercise> getQuizExercisesForExam(@PathVariable Long examId) {
         log.info("REST request to get all quiz exercises for the exam with id : {}", examId);

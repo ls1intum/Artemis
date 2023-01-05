@@ -434,7 +434,7 @@ public interface StatisticsRepository extends JpaRepository<User, Long> {
                 )
             from ParticipantScore p
             where p.exercise IN :exercises
-            group by p.exercise.id
+            group by p.exercise.id, p.exercise.title, p.exercise.releaseDate
             """)
     List<CourseStatisticsAverageScore> findAvgPointsForExercises(@Param("exercises") Set<Exercise> exercises);
 

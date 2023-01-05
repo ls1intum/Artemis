@@ -63,15 +63,15 @@
             </thead>
             <tbody>
                 <tr *ngFor="let quizExercise of filteredQuizExercises; trackBy: trackId" id="exercise-card-{{ quizExercise.id }}">
-                    <td *ngIf="!quizIsOver(quizExercise) || !quizExercise.isAtLeastEditor">
+                    <td *ngIf="!quizExercise.quizEnded || !quizExercise.isAtLeastEditor">
                         <a
-                            *ngIf="quizExercise.status !== QuizStatus.ACTIVE && quizExercise.isAtLeastEditor; else readOnlyId"
+                            *ngIf="quizExercise.isEditable; else readOnlyId"
                             [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
                             >{{ quizExercise.id }}
                         </a>
                         <ng-template #readOnlyId>{{ quizExercise.id }}</ng-template>
                     </td>
-                    <td *ngIf="quizIsOver(quizExercise) && quizExercise.isAtLeastEditor">
+                    <td *ngIf="quizExercise.quizEnded && quizExercise.isAtLeastEditor">
                         <a [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']">{{ quizExercise.id }}</a>
                     </td>
                     <td>{{ quizExercise.title }}</td>
@@ -233,8 +233,8 @@
                                 </button>
                                 <a
                                     *ngIf="quizExercise.isAtLeastEditor"
-                                    [hidden]="quizIsOver(quizExercise)"
-                                    [class.disabled]="quizExercise.status === QuizStatus.ACTIVE || quizIsOver(quizExercise)"
+                                    [hidden]="quizExercise.quizEnded"
+                                    [class.disabled]="!quizExercise.isEditable"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
                                     class="btn btn-warning btn-sm me-1 mb-1"
                                     style="display: flex; justify-content: center; align-items: center"
@@ -246,7 +246,7 @@
                                 </a>
                                 <a
                                     *ngIf="quizExercise.isAtLeastInstructor"
-                                    [hidden]="!quizIsOver(quizExercise)"
+                                    [hidden]="!quizExercise.quizEnded"
                                     [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 're-evaluate']"
                                     class="btn btn-warning btn-sm me-1 mb-1"
                                 >
