@@ -27,6 +27,7 @@
         <modifyDataType tableName="exam" columnName="visible_date" newDataType="datetime(3)"/>
         <modifyDataType tableName="exam" columnName="exam_student_review_end" newDataType="datetime(3)"/>
         <modifyDataType tableName="exam" columnName="exam_student_review_start" newDataType="datetime(3)"/>
+        <modifyDataType tableName="exam" columnName="example_solution_publication_date" newDataType="datetime(3)"/>
         <modifyDataType tableName="exam" columnName="publish_results_date" newDataType="datetime(3)"/>
 
         <modifyDataType tableName="exam_session" columnName="last_modified_date" newDataType="datetime(3)"/>
@@ -89,11 +90,20 @@
 
         <modifyDataType tableName="team" columnName="last_modified_date" newDataType="datetime(3)"/>
 
+        <modifyDataType tableName="tutorial_group_session" columnName="session_start" newDataType="datetime(3)"/>
+        <modifyDataType tableName="tutorial_group_session" columnName="session_end" newDataType="datetime(3)"/>
+        <modifyDataType tableName="tutorial_group_session" columnName="period_start" newDataType="datetime(3)"/>
+        <modifyDataType tableName="tutorial_group_session" columnName="period_end" newDataType="datetime(3)"/>
+
         <!--
         Due to mysql SQL limitations, modifyDataType will lose primary key/autoincrement/not null/comment settings explicitly redefined in the change.
         Therefore, we have to explicitly set not null again for the affected columns!
         -->
         <addNotNullConstraint tableName="conversation" columnName="creation_date" columnDataType="datetime(3)"/>
         <addNotNullConstraint tableName="exercise_hint_activation" columnName="activation_date" columnDataType="datetime(3)"/>
+        <addNotNullConstraint tableName="tutorial_group_session" columnName="session_start" columnDataType="datetime(3)"/>
+        <addNotNullConstraint tableName="tutorial_group_session" columnName="session_end" columnDataType="datetime(3)"/>
+        <addNotNullConstraint tableName="tutorial_group_session" columnName="period_start" columnDataType="datetime(3)"/>
+        <addNotNullConstraint tableName="tutorial_group_session" columnName="period_end" columnDataType="datetime(3)"/>
     </changeSet>
 </databaseChangeLog>
