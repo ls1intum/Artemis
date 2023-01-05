@@ -9,6 +9,37 @@
         <div class="form-group">
             <p class="intro-text" jhiTranslate="artemisApp.importUsers.introText">This dialog can be used to import users.</p>
             <p class="intro-text" jhiTranslate="artemisApp.importUsers.dialogText"></p>
+            <p class="intro-text" jhiTranslate="artemisApp.importUsers.csvExampleText"></p>
+        </div>
+        <div class="d-flex justify-content-center align-items-center">
+            <table class="table table-bordered w-auto">
+                <thead>
+                    <tr>
+                        <th>Login</th>
+                        <th [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
+                        <th [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>user_1</td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td>user_2@artemis.org</td>
+                        <td></td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td>11712345</td>
+                    </tr>
+                </tbody>
+            </table>
+            <fa-icon [icon]="faArrowRight" class="mx-2"></fa-icon>
+            <span>user_1, user_2, user_3</span>
         </div>
         <div class="form-group">
             <div class="d-flex align-items-end">
@@ -20,12 +51,15 @@
             </div>
             <div class="mt-2">
                 <input id="importCSV" type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
-                <div *ngIf="validationError" class="mt-4 mb-2 text-danger">
+                <div *ngIf="validationError || noUsersFoundError" class="mt-4 mb-2 text-danger">
                     <div [jhiTranslate]="'artemisApp.importUsers.usersForImport.importFailed'"></div>
                     <ul class="mt-1">
-                        <li>
+                        <li *ngIf="validationError">
                             <b [jhiTranslate]="'artemisApp.importUsers.usersForImport.failedRows'"></b>
                             <b [innerHTML]="validationError"> </b>
+                        </li>
+                        <li *ngIf="noUsersFoundError">
+                            <b [jhiTranslate]="'artemisApp.importUsers.usersForImport.noUsersFound'"></b>
                         </li>
                     </ul>
                 </div>
@@ -42,6 +76,7 @@
                         <th scope="col">#</th>
                         <th scope="col" style="width: 300px" [jhiTranslate]="'artemisApp.importUsers.registrationNumber'">Matriculation number</th>
                         <th scope="col">Login</th>
+                        <th scope="col" [jhiTranslate]="'artemisApp.importUsers.email'">Email</th>
                         <th scope="col" [jhiTranslate]="'artemisApp.importUsers.firstName'">First name</th>
                         <th scope="col" [jhiTranslate]="'artemisApp.importUsers.lastName'">Last name</th>
                     </tr>
@@ -51,6 +86,7 @@
                         <th scope="row">{{ i + 1 }}</th>
                         <td style="width: 300px">{{ user.registrationNumber }}</td>
                         <td>{{ user.login }}</td>
+                        <td>{{ user.email }}</td>
                         <td>{{ user.firstName }}</td>
                         <td>{{ user.lastName }}</td>
                     </tr>
@@ -78,7 +114,7 @@
             </ng-template>
         </div>
         <div class="flex-grow-1 d-flex justify-content-end">
-            <button *ngIf="!hasImported" type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
+            <button *ngIf="!hasImported" type="button" class="btn btn-default cancel me-2" data-dismiss="modal" (click)="clear()">
                 <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
             </button>
             <button
