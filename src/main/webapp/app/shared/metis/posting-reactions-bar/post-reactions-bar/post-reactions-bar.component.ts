@@ -6,6 +6,7 @@ import { DisplayPriority } from 'app/shared/metis/metis.util';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { faSmile } from '@fortawesome/free-regular-svg-icons';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-post-reactions-bar',
@@ -20,9 +21,13 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
 
     // Icons
     farSmile = faSmile;
+
+    @Input()
+    readOnlyMode = false;
     @Input() showAnswers: boolean;
     @Input() sortedAnswerPosts: AnswerPost[];
     @Input() isCourseMessagesPage: boolean;
+    @Input() lastReadDate?: dayjs.Dayjs;
 
     @Output() showAnswersChange = new EventEmitter<boolean>();
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
@@ -99,6 +104,19 @@ export class PostReactionsBarComponent extends PostingsReactionsBarDirective<Pos
             return 'artemisApp.metis.pinPostTutorTooltip';
         }
         return 'artemisApp.metis.pinnedPostTooltip';
+    }
+
+    getShowNewMessageIcon(): boolean {
+        let showIcon = false;
+        // iterate over all answer posts
+        this.sortedAnswerPosts.forEach((answerPost) => {
+            // check if the answer post is newer than the last read date
+            const isAuthor = this.metisService.metisUserIsAuthorOfPosting(answerPost);
+            if (!isAuthor && !!(!this.lastReadDate || (this.lastReadDate && answerPost.creationDate && answerPost.creationDate.isAfter(this.lastReadDate!)))) {
+                showIcon = true;
+            }
+        });
+        return showIcon;
     }
 
     /**

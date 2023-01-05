@@ -136,11 +136,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private final List<LocalRepository> studentRepos = new ArrayList<>();
 
-    private final int students = 10;
+    private static final int NUMBER_OF_STUDENTS = 5;
 
     @BeforeEach
     void initTestCase() throws Exception {
-        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, students, 1, 0, 2);
+        programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 1);
         var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
         course1 = database.addEmptyCourse();
@@ -259,7 +259,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private List<StudentExam> prepareStudentExamsForConduction(boolean early, boolean setFields) throws Exception {
-        for (int i = 1; i <= students + 5; i++) {
+        for (int i = 1; i <= NUMBER_OF_STUDENTS; i++) {
             bitbucketRequestMockProvider.mockUserExists(TEST_PREFIX + "student" + i);
         }
 
@@ -283,7 +283,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var exam = database.addExam(course, examVisibleDate, examStartDate, examEndDate);
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
-        Set<User> registeredStudents = getRegisteredStudents(10);
+        Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
         // register users
         exam.setRegisteredUsers(registeredStudents);
         exam.setRandomizeExerciseOrder(false);
@@ -592,7 +592,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register user
-        Set<User> registeredStudents = getRegisteredStudents(10);
+        Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
         exam.setRegisteredUsers(new HashSet<>(registeredStudents));
         exam.setNumberOfExercisesInExam(2);
         exam.setRandomizeExerciseOrder(false);
@@ -617,7 +617,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
 
         // register user
-        Set<User> registeredStudents = getRegisteredStudents(10);
+        Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
         exam.setRegisteredUsers(new HashSet<>(registeredStudents));
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
@@ -1040,7 +1040,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.post("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamResponse, HttpStatus.CONFLICT);
 
         // assert that all repositories of programming exercises have been locked
-        assert exercisesToBeLocked.size() == studentProgrammingParticipations.size();
+        assertThat(exercisesToBeLocked).hasSameSizeAs(studentProgrammingParticipations);
         for (int i = 0; i < exercisesToBeLocked.size(); i++) {
             verify(programmingExerciseParticipationService, atLeastOnce()).lockStudentRepository(exercisesToBeLocked.get(i), studentProgrammingParticipations.get(i));
         }
@@ -1282,7 +1282,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     private void assertVersionedSubmission(Submission submission) {
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
         var versionedSubmission = submissionVersionRepository.findLatestVersion(submission.getId());
-        assert versionedSubmission.isPresent();
+        assertThat(versionedSubmission).isPresent();
         if (submission instanceof TextSubmission) {
             assertThat(((TextSubmission) submission).getText()).isEqualTo(versionedSubmission.get().getContent());
         }
@@ -1293,7 +1293,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(((FileUploadSubmission) submission).getFilePath()).isEqualTo(versionedSubmission.get().getContent());
         }
         else {
-            assert submission instanceof QuizSubmission;
+            assertThat(submission).isInstanceOf(QuizSubmission.class);
             String submittedAnswersAsString;
             try {
                 submittedAnswersAsString = objectMapper.writeValueAsString(((QuizSubmission) submission).getSubmittedAnswers());
@@ -1812,10 +1812,48 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusStrategy()).isEqualTo(bonusStrategy);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusFromTitle()).isEqualTo("Real exam 1");
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(0.0);
-        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusGrade()).isEqualTo(GradeStep.PLAGIARISM_GRADE);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusGrade()).isEqualTo(GradingScale.DEFAULT_PLAGIARISM_GRADE);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalPoints()).isEqualTo(22.0);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalGrade()).isEqualTo("3.0");
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().mostSeverePlagiarismVerdict()).isEqualTo(PlagiarismVerdict.PLAGIARISM);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGradedFinalExamSummaryWithPlagiarismAndNotParticipatedBonusExamAsStudent() throws Exception {
+        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false);
+        bambooRequestMockProvider.reset();
+
+        final String noParticipationGrade = "NoParticipation";
+
+        studentExam1.setSubmitted(false);
+        studentExam1.setUser(finalStudentExam.getUser());
+        studentExamRepository.save(studentExam1);
+
+        StudentExam bonusStudentExam = studentExam1;
+
+        BonusStrategy bonusStrategy = BonusStrategy.POINTS;
+
+        Exam finalExam = configureFinalExamWithBonusExam(finalStudentExam, bonusStudentExam, bonusStrategy);
+        var bonusGradingScale = bonusRepository.findAllByBonusToExamId(finalExam.getId()).iterator().next().getSourceGradingScale();
+        bonusGradingScale.setNoParticipationGrade(noParticipationGrade);
+        gradingScaleRepository.save(bonusGradingScale);
+
+        User student = finalStudentExam.getUser();
+
+        // users tries to access exam summary after results are published
+        database.changeUser(student.getLogin());
+
+        var studentExamGradeInfoFromServer = request.get("/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/grade-summary",
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
+
+        assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchieved()).isEqualTo(24.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult().overallGrade()).isEqualTo("3.0");
+
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(0.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusGrade()).isEqualTo(noParticipationGrade);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalPoints()).isEqualTo(24.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalGrade()).isEqualTo("3.0");
     }
 
     @Test

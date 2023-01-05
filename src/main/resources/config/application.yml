@@ -40,6 +40,14 @@ artemis:
         # This `default` option will be overridden by more specific project type
         # definitions.
         build:
+            # currently only supported for Bamboo setups
+            default-docker-flags:
+                cpus: 2
+                # Set `memory-swap` and `memory` to the same value to turn of SWAP.
+                # See -> https://docs.docker.com/config/containers/resource_constraints/#--memory-swap-details
+                memory: 2g
+                memory-swap: 2g
+                pids-limit: 1000
             images:
                 java:
                     # possible overrides: maven, gradle
@@ -56,7 +64,7 @@ artemis:
                     default: "ls1tum/artemis-c-docker:latest"
                     fact: "sharingcodeability/fact:latest"
                 haskell:
-                    default: "ghcr.io/b-fein/artemis-haskell:v19.30.0"
+                    default: "ghcr.io/uni-passau-artemis/artemis-haskell:v19.30.0"
                 vhdl:
                     default: "tizianleonhardt/era-artemis-vhdl:latest"
                 assembler:

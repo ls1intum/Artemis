@@ -5,6 +5,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { ContextInformation, CourseWideContext, PageType } from '../metis.util';
 import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-post',
@@ -12,6 +13,8 @@ import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./post.component.scss', './../metis.component.scss'],
 })
 export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
+    @Input() lastReadDate?: dayjs.Dayjs;
+    @Input() readOnlyMode: boolean;
     @Input() previewMode: boolean;
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
