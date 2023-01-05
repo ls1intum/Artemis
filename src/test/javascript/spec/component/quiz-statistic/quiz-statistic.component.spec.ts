@@ -35,6 +35,7 @@ describe('QuizExercise Statistic Component', () => {
     let accountSpy: jest.SpyInstance;
     let router: Router;
     let quizServiceFindSpy: jest.SpyInstance;
+    let quizServiceFindWithStatisticsSpy: jest.SpyInstance;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -59,6 +60,7 @@ describe('QuizExercise Statistic Component', () => {
                 accountService = fixture.debugElement.injector.get(AccountService);
                 router = fixture.debugElement.injector.get(Router);
                 quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+                quizServiceFindWithStatisticsSpy = jest.spyOn(quizService, 'findWithStatistics').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
 
@@ -80,7 +82,6 @@ describe('QuizExercise Statistic Component', () => {
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
-            comp.quizExercise = quizExercise;
         });
 
         afterEach(() => {
@@ -97,8 +98,8 @@ describe('QuizExercise Statistic Component', () => {
             tick(); // simulate async
 
             // check
-            expect(accountSpy).toHaveBeenCalledOnce();
-            expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
+            expect(accountSpy).toHaveBeenCalledTimes(2);
+            expect(quizServiceFindWithStatisticsSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
         }));
 
@@ -127,7 +128,6 @@ describe('QuizExercise Statistic Component', () => {
                 { quizQuestionStatistic: quizQuestionStatTwo, points: 6, invalid: false, exportQuiz: false, randomizeOrder: true },
             ];
             quizExercise.quizPointStatistic = { participantsRated: 42 };
-            comp.quizExercise = quizExercise;
         });
 
         afterEach(() => {

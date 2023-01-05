@@ -44,6 +44,7 @@ describe('QuizExercise Point Statistic Component', () => {
     let router: Router;
     let translateService: TranslateService;
     let quizServiceFindSpy: jest.SpyInstance;
+    let quizServiceFindWithStatisticsSpy: jest.SpyInstance;
     Date.now = jest.fn(() => new Date(Date.UTC(2017, 0, 1)).valueOf());
 
     beforeEach(() => {
@@ -70,6 +71,7 @@ describe('QuizExercise Point Statistic Component', () => {
                 router = fixture.debugElement.injector.get(Router);
                 translateService = fixture.debugElement.injector.get(TranslateService);
                 quizServiceFindSpy = jest.spyOn(quizService, 'find').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
+                quizServiceFindWithStatisticsSpy = jest.spyOn(quizService, 'findWithStatistics').mockReturnValue(of(new HttpResponse({ body: quizExercise })));
             });
     });
 
@@ -96,8 +98,8 @@ describe('QuizExercise Point Statistic Component', () => {
             jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
             // check
-            expect(accountSpy).toHaveBeenCalledOnce();
-            expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
+            expect(accountSpy).toHaveBeenCalledTimes(2);
+            expect(quizServiceFindWithStatisticsSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
             expect(comp.quizExerciseChannel).toBe('/topic/courses/2/quizExercises');
             expect(updateDisplayedTimesSpy).toHaveBeenCalledOnce();
