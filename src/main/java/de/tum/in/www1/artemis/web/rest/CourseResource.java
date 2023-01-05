@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
@@ -19,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -42,6 +44,7 @@ import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
@@ -747,6 +750,52 @@ public class CourseResource {
         final Page<UserDTO> page = userRepository.searchAllUsersByLoginOrNameInGroupAndConvertToDTO(PageRequest.of(0, 25), loginOrName, course.getStudentGroupName());
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
         return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
+    /**
+     * GET /courses/:courseId/users/search : Search all users by login or name that belong to the specified groups of the course
+     *
+     * @param courseId    the id of the course
+     * @param loginOrName the login or name by which to search users
+     * @param roles       the roles which should be searched in
+     * @return the ResponseEntity with status 200 (OK) and with body all users
+     */
+    @GetMapping("/courses/{courseId}/users/search")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<List<UserPublicInfoDTO>> searchUsersInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName,
+            @RequestParam("roles") List<String> roles) {
+        log.debug("REST request to search users in course : {} with login or name : {}", courseId, loginOrName);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        var requestedRoles = roles.stream().map(Role::fromString).collect(Collectors.toSet());
+        // restrict result size by only allowing reasonable searches if student role is selected
+        if (loginOrName.length() < 3 && requestedRoles.contains(Role.STUDENT)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Query param 'loginOrName' must be three characters or longer if you search for students.");
+        }
+        var groups = new HashSet<String>();
+        if (requestedRoles.contains(Role.STUDENT)) {
+            groups.add(course.getStudentGroupName());
+        }
+        if (requestedRoles.contains(Role.TEACHING_ASSISTANT)) {
+            groups.add(course.getTeachingAssistantGroupName());
+            // searching for tutors also searches for editors
+            groups.add(course.getEditorGroupName());
+        }
+        if (requestedRoles.contains(Role.INSTRUCTOR)) {
+            groups.add(course.getInstructorGroupName());
+        }
+        User searchingUser = userRepository.getUser();
+        var originalPage = userRepository.searchAllByLoginOrNameInGroups(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());
+
+        var resultDTO = new ArrayList<UserPublicInfoDTO>();
+        for (var user : originalPage) {
+            var dto = new UserPublicInfoDTO(user);
+            UserPublicInfoDTO.assignRoleProperties(course, user, dto);
+            resultDTO.add(dto);
+        }
+        var dtoPage = new PageImpl<>(resultDTO, originalPage.getPageable(), originalPage.getTotalElements());
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), dtoPage);
+        return new ResponseEntity<>(dtoPage.getContent(), headers, HttpStatus.OK);
     }
 
     /**

@@ -57,6 +57,8 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.domain.metis.*;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
+import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.*;
@@ -73,8 +75,11 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntry
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
-import de.tum.in.www1.artemis.repository.metis.ConversationRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ChannelRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.ConversationRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.GroupChatRepository;
+import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
@@ -225,6 +230,15 @@ public class DatabaseUtilService {
     private ConversationRepository conversationRepository;
 
     @Autowired
+    private ChannelRepository channelRepository;
+
+    @Autowired
+    private GroupChatRepository groupChatRepository;
+
+    @Autowired
+    private OneToOneChatRepository oneToOneChatRepository;
+
+    @Autowired
     private ConversationParticipantRepository conversationParticipantRepository;
 
     @Autowired
@@ -347,10 +361,10 @@ public class DatabaseUtilService {
     /**
      * Generate users that have registration numbers
      *
-     * @param loginPrefix prefix that will be added in front of every user's login
-     * @param groups groups that the users will be added
-     * @param authorities authorities that the users will have
-     * @param amount amount of users to generate
+     * @param loginPrefix              prefix that will be added in front of every user's login
+     * @param groups                   groups that the users will be added
+     * @param authorities              authorities that the users will have
+     * @param amount                   amount of users to generate
      * @param registrationNumberPrefix prefix that will be added in front of every user
      * @return users that were generated
      */
@@ -410,13 +424,13 @@ public class DatabaseUtilService {
     /**
      * Generate a team
      *
-     * @param exercise exercise of the team
-     * @param name name of the team
-     * @param shortName short name of the team
-     * @param loginPrefix prefix that will be added in front of every user's login
-     * @param numberOfStudents amount of users to generate for team as students
-     * @param owner owner of the team generally a tutor
-     * @param creatorLogin login of user that creates the teams
+     * @param exercise           exercise of the team
+     * @param name               name of the team
+     * @param shortName          short name of the team
+     * @param loginPrefix        prefix that will be added in front of every user's login
+     * @param numberOfStudents   amount of users to generate for team as students
+     * @param owner              owner of the team generally a tutor
+     * @param creatorLogin       login of user that creates the teams
      * @param registrationPrefix prefix that will be added in front of every student's registration number
      * @return team that was generated
      */
@@ -443,11 +457,11 @@ public class DatabaseUtilService {
     /**
      * Generate a team
      *
-     * @param exercise exercise of the team
-     * @param name name of the team
-     * @param shortName short name of the team
+     * @param exercise         exercise of the team
+     * @param name             name of the team
+     * @param shortName        short name of the team
      * @param numberOfStudents amount of users to generate for team as students
-     * @param owner owner of the team generally a tutor
+     * @param owner            owner of the team generally a tutor
      * @return team that was generated
      */
     public Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
@@ -457,12 +471,12 @@ public class DatabaseUtilService {
     /**
      * Generate teams
      *
-     * @param exercise exercise of the teams
+     * @param exercise        exercise of the teams
      * @param shortNamePrefix prefix that will be added in front of every team's short name
-     * @param loginPrefix prefix that will be added in front of every student's login
-     * @param numberOfTeams amount of teams to generate
-     * @param owner owner of the teams generally a tutor
-     * @param creatorLogin login of user that created the teams
+     * @param loginPrefix     prefix that will be added in front of every student's login
+     * @param numberOfTeams   amount of teams to generate
+     * @param owner           owner of the teams generally a tutor
+     * @param creatorLogin    login of user that created the teams
      * @return teams that were generated
      */
     public List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin) {
@@ -472,12 +486,12 @@ public class DatabaseUtilService {
     /**
      * Generate teams
      *
-     * @param exercise exercise of the teams
-     * @param shortNamePrefix prefix that will be added in front of every team's short name
-     * @param loginPrefix prefix that will be added in front of every student's login
-     * @param numberOfTeams amount of teams to generate
-     * @param owner owner of the teams generally a tutor
-     * @param creatorLogin login of user that created the teams
+     * @param exercise           exercise of the teams
+     * @param shortNamePrefix    prefix that will be added in front of every team's short name
+     * @param loginPrefix        prefix that will be added in front of every student's login
+     * @param numberOfTeams      amount of teams to generate
+     * @param owner              owner of the teams generally a tutor
+     * @param creatorLogin       login of user that created the teams
      * @param registrationPrefix prefix that will be added in front of every student's registration number
      * @return teams that were generated
      */
@@ -494,14 +508,14 @@ public class DatabaseUtilService {
     /**
      * Generate teams
      *
-     * @param exercise exercise of the teams
-     * @param shortNamePrefix prefix that will be added in front of every team's short name
-     * @param loginPrefix prefix that will be added in front of every student's login
-     * @param numberOfTeams amount of teams to generate
-     * @param owner owner of the teams generally a tutor
-     * @param creatorLogin login of user that created the teams
+     * @param exercise           exercise of the teams
+     * @param shortNamePrefix    prefix that will be added in front of every team's short name
+     * @param loginPrefix        prefix that will be added in front of every student's login
+     * @param numberOfTeams      amount of teams to generate
+     * @param owner              owner of the teams generally a tutor
+     * @param creatorLogin       login of user that created the teams
      * @param registrationPrefix prefix that will be added in front of every student's registration number
-     * @param teamSize size of each individual team
+     * @param teamSize           size of each individual team
      * @return teams that were generated
      */
     public List<Team> generateTeamsForExerciseFixedTeamSize(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin,
@@ -1092,7 +1106,7 @@ public class DatabaseUtilService {
         CourseWideContext[] courseWideContexts = new CourseWideContext[] { CourseWideContext.ORGANIZATION, CourseWideContext.RANDOM, CourseWideContext.TECH_SUPPORT,
                 CourseWideContext.ANNOUNCEMENT };
         posts.addAll(createBasicPosts(course1, courseWideContexts, userPrefix));
-        posts.addAll(createBasicPosts(createConversation(course1, userPrefix), userPrefix));
+        posts.addAll(createBasicPosts(createOneToOneChat(course1, userPrefix), userPrefix));
 
         return posts;
     }
@@ -1224,28 +1238,6 @@ public class DatabaseUtilService {
         for (int i = 0; i < numberOfCoursesWithLectures; i++) {
             createCoursesWithExercisesAndLecturesAndLectureUnits(true, true);
         }
-    }
-
-    public Conversation createConversation(Course course, String userPrefix) {
-        Conversation conversation = new Conversation();
-        conversation.setCourse(course);
-        conversation = conversationRepository.save(conversation);
-
-        List<ConversationParticipant> conversationParticipants = new ArrayList<>();
-        conversationParticipants.add(createConversationParticipant(conversation, userPrefix + "tutor1"));
-        conversationParticipants.add(createConversationParticipant(conversation, userPrefix + "tutor2"));
-
-        conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
-        return conversationRepository.save(conversation);
-    }
-
-    private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
-        ConversationParticipant conversationParticipant = new ConversationParticipant();
-        conversationParticipant.setConversation(conversation);
-        conversationParticipant.setLastRead(conversation.getLastMessageDate());
-        conversationParticipant.setUser(getUserByLogin(userName));
-
-        return conversationParticipantRepository.save(conversationParticipant);
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(String userPrefix, boolean hasAssessmentDueDatePassed) {
@@ -4561,5 +4553,27 @@ public class DatabaseUtilService {
         course = courseRepo.save(course);
         persistedConfiguration.setCourse(course);
         return persistedConfiguration;
+    }
+
+    public Conversation createOneToOneChat(Course course, String userPrefix) {
+        Conversation conversation = new OneToOneChat();
+        conversation.setCourse(course);
+        conversation = conversationRepository.save(conversation);
+
+        List<ConversationParticipant> conversationParticipants = new ArrayList<>();
+        conversationParticipants.add(createConversationParticipant(conversation, userPrefix + "tutor1"));
+        conversationParticipants.add(createConversationParticipant(conversation, userPrefix + "tutor2"));
+
+        conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
+        return conversationRepository.save(conversation);
+    }
+
+    private ConversationParticipant createConversationParticipant(Conversation conversation, String userName) {
+        ConversationParticipant conversationParticipant = new ConversationParticipant();
+        conversationParticipant.setConversation(conversation);
+        conversationParticipant.setLastRead(conversation.getLastMessageDate());
+        conversationParticipant.setUser(getUserByLogin(userName));
+
+        return conversationParticipantRepository.save(conversationParticipant);
     }
 }

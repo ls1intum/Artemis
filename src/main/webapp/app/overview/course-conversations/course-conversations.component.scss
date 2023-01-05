@@ -1,0 +1,18 @@
+.second-layer-modal-bg {
+    background-color: var(--secondary);
+}
+
+.card-border {
+    border: 1px solid;
+    border-color: var(--bs-card-border-color);
+    border-radius: 0.25rem;
+}
+
+.message-input {
+    border: 1px solid;
+    border-color: var(--bs-card-border-color);
+    border-radius: 1rem;
+    padding-bottom: 0.5rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
