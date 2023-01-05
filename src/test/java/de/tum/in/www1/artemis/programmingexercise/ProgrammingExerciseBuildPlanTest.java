@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +13,8 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
 public class ProgrammingExerciseBuildPlanTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
+
+    private static final String TEST_PREFIX = "programmingexercisebuildplantest";
 
     private static final String BUILD_PLAN = """
             image: ubuntu:20.04
@@ -32,14 +33,9 @@ public class ProgrammingExerciseBuildPlanTest extends AbstractSpringIntegrationG
 
     @BeforeEach
     void init() {
-        database.addUsers(2, 2, 0, 2);
-        database.addCourseWithOneProgrammingExercise();
-        programmingExerciseId = programmingExerciseRepository.findAll().get(0).getId();
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
+        database.addUsers(TEST_PREFIX, 2, 2, 0, 2);
+        var course = database.addCourseWithOneProgrammingExercise();
+        programmingExerciseId = database.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
     @Test

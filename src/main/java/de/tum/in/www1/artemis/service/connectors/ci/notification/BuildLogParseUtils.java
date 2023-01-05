@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.jenkins;
+package de.tum.in.www1.artemis.service.connectors.ci.notification;
 
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -14,13 +14,13 @@ import org.jsoup.nodes.TextNode;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 
-public class JenkinsBuildLogParseUtils {
+public class BuildLogParseUtils {
 
     // Pattern of the DateTime that is included in the logs received from Jenkins
     private static final DateTimeFormatter LOG_DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssX");
 
     /**
-     * Parses build logs from Jenkins into BuildLogEntry objects. The function reads the list
+     * Parses build logs from Jenkins or GitLab CI into BuildLogEntry objects. The function reads the list
      * of log strings and tries to parse lines of the following format:
      *
      * [2021-05-10T15:19:49.741Z] [INFO] BUILD FAILURE
@@ -39,7 +39,7 @@ public class JenkinsBuildLogParseUtils {
      * @param logLines The lines of the Jenkins log
      * @return a list of BuildLogEntries
      */
-    public static List<BuildLogEntry> parseBuildLogsFromJenkinsLogs(List<String> logLines) {
+    public static List<BuildLogEntry> parseBuildLogsFromLogs(List<String> logLines) {
         final List<BuildLogEntry> buildLogs = new ArrayList<>();
         for (final var logLine : logLines) {
             // The build logs that we are interested in are the ones that start with a timestamp

@@ -14,13 +14,12 @@ import org.springframework.util.StreamUtils;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
-import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsBuildPlanCreator;
 
 @Service
 @Profile("gitlabci")
 public class GitLabCIBuildPlanService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JenkinsBuildPlanCreator.class);
+    private static final Logger LOG = LoggerFactory.getLogger(GitLabCIBuildPlanService.class);
 
     private static final String FILE_NAME = ".gitlab-ci.yml";
 
@@ -30,6 +29,12 @@ public class GitLabCIBuildPlanService {
         this.resourceLoaderService = resourceLoaderService;
     }
 
+    /**
+     * Get the default build plan for the project type of the given programming exercise.
+     *
+     * @param programmingExercise the programming exercise for which to get the build plan
+     * @return the default build plan
+     */
     public String getBuildPlan(ProgrammingExercise programmingExercise) {
         Optional<String> projectTypeName;
         if (programmingExercise.getProgrammingLanguage().equals(ProgrammingLanguage.JAVA)) {

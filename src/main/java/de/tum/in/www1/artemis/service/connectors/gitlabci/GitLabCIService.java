@@ -19,6 +19,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -33,7 +34,9 @@ import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
+import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 @Profile("gitlabci")
 @Service
@@ -41,11 +44,31 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(GitLabCIService.class);
 
-    private static final String VARIABLE_DOCKER_IMAGE_NAME = "ARTEMIS_DOCKER_IMAGE";
+    private static final String VARIABLE_BUILD_DOCKER_IMAGE_NAME = "ARTEMIS_BUILD_DOCKER_IMAGE";
 
-    private static final String VARIABLE_BRANCH_NAME = "ARTEMIS_BRANCH";
+    private static final String VARIABLE_BUILD_LOGS_FILE_NAME = "ARTEMIS_BUILD_LOGS_FILE";
 
-    private static final String VARIABLE_ARTEMIS_SERVER_URL_NAME = "ARTEMIS_SERVER_URL";
+    private static final String VARIABLE_BUILD_PLAN_ID_NAME = "ARTEMIS_BUILD_PLAN_ID";
+
+    private static final String VARIABLE_CUSTOM_FEEDBACK_DIR_NAME = "ARTEMIS_CUSTOM_FEEDBACK_DIR";
+
+    private static final String VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME = "ARTEMIS_NOTIFICATION_PLUGIN_DOCKER_IMAGE";
+
+    private static final String VARIABLE_NOTIFICATION_SECRET_NAME = "ARTEMIS_NOTIFICATION_SECRET";
+
+    private static final String VARIABLE_NOTIFICATION_URL_NAME = "ARTEMIS_NOTIFICATION_URL";
+
+    private static final String VARIABLE_SUBMISSION_GIT_BRANCH_NAME = "ARTEMIS_SUBMISSION_GIT_BRANCH";
+
+    private static final String VARIABLE_TEST_GIT_BRANCH_NAME = "ARTEMIS_TEST_GIT_BRANCH";
+
+    private static final String VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME = "ARTEMIS_TEST_GIT_REPOSITORY_SLUG";
+
+    private static final String VARIABLE_TEST_GIT_TOKEN = "ARTEMIS_TEST_GIT_TOKEN";
+
+    private static final String VARIABLE_TEST_GIT_USER = "ARTEMIS_TEST_GIT_USER";
+
+    private static final String VARIABLE_TEST_RESULTS_DIR_NAME = "ARTEMIS_TEST_RESULTS_DIR";
 
     private final GitLabApi gitlab;
 
@@ -65,11 +88,24 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Value("${server.url}")
     private URL artemisServerUrl;
 
+    @Value("${artemis.continuous-integration.notification-plugin}")
+    private String notificationPluginDockerImage;
+
+    @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
+    private String artemisAuthenticationTokenValue;
+
+    @Value("${artemis.version-control.user}")
+    private String gitlabUser;
+
+    @Value("${artemis.version-control.token}")
+    private String gitlabToken;
+
     public GitLabCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
             RestTemplate restTemplate, RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService, ProgrammingExerciseRepository programmingExerciseRepository,
             BuildPlanRepository buildPlanRepository, GitLabCIBuildPlanService buildPlanService, ProgrammingLanguageConfiguration programmingLanguageConfiguration,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate);
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate,
+                testwiseCoverageService);
         this.gitlab = gitlab;
         this.urlService = urlService;
         this.programmingExerciseRepository = programmingExerciseRepository;
@@ -82,11 +118,11 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
         addBuildPlanToProgrammingExerciseIfUnset(exercise);
-        setupGitLabCIConfiguration(repositoryURL, exercise);
+        setupGitLabCIConfiguration(repositoryURL, exercise, planKey);
         // TODO: triggerBuild(repositoryURL, exercise.getBranch());
     }
 
-    private void setupGitLabCIConfiguration(VcsRepositoryUrl repositoryURL, ProgrammingExercise exercise) {
+    private void setupGitLabCIConfiguration(VcsRepositoryUrl repositoryURL, ProgrammingExercise exercise, String buildPlanId) {
         final String repositoryPath = getRepositoryPath(repositoryURL);
         ProjectApi projectApi = gitlab.getProjectApi();
         try {
@@ -105,16 +141,39 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         }
 
         try {
-            // TODO: Update variables
-            projectApi.createVariable(repositoryPath, VARIABLE_DOCKER_IMAGE_NAME,
-                    programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())), Variable.Type.ENV_VAR, false,
-                    true);
-            projectApi.createVariable(repositoryPath, VARIABLE_BRANCH_NAME, exercise.getBranch(), Variable.Type.ENV_VAR, false, true);
-            projectApi.createVariable(repositoryPath, VARIABLE_ARTEMIS_SERVER_URL_NAME, artemisServerUrl.toExternalForm(), Variable.Type.ENV_VAR, false, true);
+            // TODO: Reduce the number of API calls
+
+            updateVariable(repositoryPath, VARIABLE_BUILD_DOCKER_IMAGE_NAME,
+                    programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())));
+            updateVariable(repositoryPath, VARIABLE_BUILD_LOGS_FILE_NAME, "build.log");
+            updateVariable(repositoryPath, VARIABLE_BUILD_PLAN_ID_NAME, buildPlanId);
+            // TODO: Implement the custom feedback feature
+            updateVariable(repositoryPath, VARIABLE_CUSTOM_FEEDBACK_DIR_NAME, "TODO");
+            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_PLUGIN_DOCKER_IMAGE_NAME, notificationPluginDockerImage);
+            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_SECRET_NAME, artemisAuthenticationTokenValue);
+            updateVariable(repositoryPath, VARIABLE_NOTIFICATION_URL_NAME, artemisServerUrl.toExternalForm() + Constants.NEW_RESULT_RESOURCE_API_PATH);
+            updateVariable(repositoryPath, VARIABLE_SUBMISSION_GIT_BRANCH_NAME, exercise.getBranch());
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_BRANCH_NAME, exercise.getBranch());
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_REPOSITORY_SLUG_NAME, urlService.getRepositorySlugFromRepositoryUrlString(exercise.getTestRepositoryUrl()));
+            // TODO: Use a token that is only valid for the test repository for each programming exercise
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_TOKEN, gitlabToken);
+            updateVariable(repositoryPath, VARIABLE_TEST_GIT_USER, gitlabUser);
+            updateVariable(repositoryPath, VARIABLE_TEST_RESULTS_DIR_NAME, "target/surefire-reports");
         }
         catch (GitLabApiException e) {
             log.error("Error creating variable for " + repositoryURL.toString() + " The variables may already have been created.", e);
         }
+    }
+
+    private void updateVariable(String repositoryPath, String key, String value) throws GitLabApiException {
+        // TODO: We can even define the variables on group level
+        // TODO: If the variable already exists, we should update it
+        gitlab.getProjectApi().createVariable(repositoryPath, key, value, Variable.Type.ENV_VAR, false, canBeMasked(value));
+    }
+
+    private boolean canBeMasked(String value) {
+        // This regex matches which can be masked, c.f. https://docs.gitlab.com/ee/ci/variables/#mask-a-cicd-variable
+        return value.matches("^[a-zA-Z0-9+/=@:.~]{8,}$");
     }
 
     private void addBuildPlanToProgrammingExerciseIfUnset(ProgrammingExercise programmingExercise) {
@@ -132,24 +191,28 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         addBuildPlanToProgrammingExerciseIfUnset(exercise);
 
         VcsRepositoryUrl templateUrl = exercise.getVcsTemplateRepositoryUrl();
-        setupGitLabCIConfiguration(templateUrl, exercise);
+        setupGitLabCIConfiguration(templateUrl, exercise, exercise.getTemplateBuildPlanId());
         // TODO: triggerBuild(templateUrl, exercise.getBranch());
 
         VcsRepositoryUrl solutionUrl = exercise.getVcsSolutionRepositoryUrl();
-        setupGitLabCIConfiguration(solutionUrl, exercise);
+        setupGitLabCIConfiguration(solutionUrl, exercise, exercise.getSolutionBuildPlanId());
         // TODO: triggerBuild(solutionUrl, exercise.getBranch());
     }
 
     @Override
     public String copyBuildPlan(String sourceProjectKey, String sourcePlanName, String targetProjectKey, String targetProjectName, String targetPlanName,
             boolean targetProjectExists) {
-        log.error("Unsupported action: GitLabCIService.copyBuildPlan()");
-        return null;
+        // In GitLab CI we don't have to copy the build plan.
+        // Instead, we configure a CI config path leading to the API when enabling the CI.
+
+        // When sending the build results back, the build plan key is used to identify the participation.
+        // Therefore, we return the key here even though GitLab CI does not need it.
+        return targetProjectKey + "-" + targetPlanName.toUpperCase().replaceAll("[^A-Z0-9]", "");
     }
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
-        setupGitLabCIConfiguration(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise());
+        setupGitLabCIConfiguration(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise(), participation.getBuildPlanId());
     }
 
     @Override
@@ -188,14 +251,13 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public String getPlanKey(Object requestBody) throws ContinuousIntegrationException {
-        log.error("Unsupported action: GitLabCIService.getPlanKey()");
-        return null;
+        TestResultsDTO dto = TestResultsDTO.convert(requestBody);
+        return dto.getFullName();
     }
 
     @Override
     public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
-        log.error("Unsupported action: GitLabCIService.convertBuildResult()");
-        return null;
+        return TestResultsDTO.convert(requestBody);
     }
 
     @Override
@@ -284,7 +346,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
         log.error("Unsupported action: GitLabCIService.getWebHookUrl()");
-        // TODO
         return Optional.empty();
     }
 
@@ -320,18 +381,13 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         var testDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(testsStarted, testsFinished);
         var totalJobDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(jobStarted, jobFinished);
 
-        // Set the duration to -1 for the durations, we cannot extract.
+        // Set the duration to 0 for the durations, we cannot extract.
         var time = ZonedDateTime.now();
-        var agentSetupDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time.minusSeconds(1));
-        var scaDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time.minusSeconds(1));
+        var agentSetupDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time);
+        var scaDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time);
 
         buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
                 dependenciesDownloadedCount);
-    }
-
-    @Override
-    protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
-        // TODO
     }
 
     private String generateBuildPlanURL(ProgrammingExercise exercise) {

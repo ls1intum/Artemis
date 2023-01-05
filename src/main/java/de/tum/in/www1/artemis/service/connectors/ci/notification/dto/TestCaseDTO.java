@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service.connectors.jenkins.dto;
+package de.tum.in.www1.artemis.service.connectors.ci.notification.dto;
 
 import java.util.ArrayList;
 import java.util.Collections;
