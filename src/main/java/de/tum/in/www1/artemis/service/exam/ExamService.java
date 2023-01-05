@@ -288,7 +288,7 @@ public class ExamService {
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
         log.info("Try to find quiz submitted answer counts");
         List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
-        log.info("Found " + submittedAnswerCounts.size() + " quiz submitted answer counts");
+        log.info("Found {} quiz submitted answer counts", submittedAnswerCounts.size());
 
         // Counts how many participants each exercise has
         Map<Long, Long> exerciseIdToNumberParticipations = studentParticipations.stream()
