@@ -61,7 +61,7 @@
         <div class="mb-0 ms-2 fs-6 fw-bold no-flex-shrink">
             {{ 'artemisApp.bonus.bonusSource.maxPoints' | artemisTranslate }}: {{ getGradingScaleMaxPoints(bonus.sourceGradingScale) }}
         </div>
-        <div class="fs-6">
+        <div class="mb-4 fs-6">
             <table class="table table-striped">
                 <thead>
                     <tr>
@@ -87,7 +87,7 @@
     <ng-container *ngIf="bonus.bonusStrategy && bonus.sourceGradingScale && bonus.weight">
         <h5 class="mb-0">{{ 'artemisApp.bonus.formula.title' | artemisTranslate }}</h5>
         <div *ngIf="bonus.bonusStrategy && bonus.weight && bonusToGradeStepsDTO" class="fs-3 mb-4">
-            <div class="d-flex py-2 align-items-center">
+            <div class="d-flex pb-2 align-items-center">
                 <div class="pe-2">
                     <strong [innerHTML]="'artemisApp.bonus.formula.' + (bonus.bonusStrategy === BonusStrategy.POINTS ? 'examPoints' : 'examGrade') | artemisTranslate | safeHtml"
                         >Exam<br />Grade</strong
