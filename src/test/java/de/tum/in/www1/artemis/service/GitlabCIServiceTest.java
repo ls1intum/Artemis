@@ -154,7 +154,7 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
         final String repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(participation.getVcsRepositoryUrl());
         mockAddBuildPlanToGitLabRepositoryConfiguration(false);
 
-        continuousIntegrationService.createBuildPlanForExercise(exercise, null, participation.getVcsRepositoryUrl(), null, null);
+        continuousIntegrationService.createBuildPlanForExercise(exercise, "TEST-EXERCISE", participation.getVcsRepositoryUrl(), null, null);
 
         verify(gitlab, atLeastOnce()).getProjectApi();
         verify(gitlab.getProjectApi(), atLeastOnce()).getProject(eq(repositoryPath));
