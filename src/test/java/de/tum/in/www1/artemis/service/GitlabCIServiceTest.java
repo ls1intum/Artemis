@@ -191,7 +191,7 @@ public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlab
         continuousIntegrationService.performEmptySetupCommit(null);
         assertThat(continuousIntegrationService.getWebHookUrl(null, null)).isNotPresent();
         assertThat(continuousIntegrationService.checkIfProjectExists(null, null)).isNull();
-        assertThat(continuousIntegrationService.checkIfBuildPlanExists(null, null)).isFalse();
+        assertThat(continuousIntegrationService.checkIfBuildPlanExists(null, null)).isTrue();
         assertThat(continuousIntegrationService.getLatestBuildLogs(null)).isNull();
         assertThat(continuousIntegrationService.retrieveLatestArtifact(null)).isNull();
     }
