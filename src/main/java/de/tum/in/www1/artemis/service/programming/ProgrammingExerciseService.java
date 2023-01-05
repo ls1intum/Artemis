@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -950,7 +951,7 @@ public class ProgrammingExerciseService {
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
-            final User user) {
+            final Boolean isSCAFilter, final User user) {
         final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
         Page<ProgrammingExercise> exercisePage = Page.empty();
@@ -975,6 +976,10 @@ public class ProgrammingExerciseService {
             else if (isExamFilter) {
                 exercisePage = programmingExerciseRepository.queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
             }
+        }
+        // TODO find a way to do this filter directly in the database without having a complexity explosion above
+        if (Boolean.TRUE.equals(isSCAFilter)) {
+            exercisePage = new PageImpl<>(exercisePage.stream().filter(ProgrammingExercise::isStaticCodeAnalysisEnabled).toList());
         }
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }

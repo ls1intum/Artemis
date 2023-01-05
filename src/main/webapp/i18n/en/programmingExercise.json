@@ -147,6 +147,8 @@
             "configureGrading": {
                 "title": "Configure Grading",
                 "shortTitle": "Grading",
+                "import": "Import Configuration",
+                "importLabel": "Import SCA configuration from exercise",
                 "save": "Save",
                 "reset": "Reset",
                 "status": {

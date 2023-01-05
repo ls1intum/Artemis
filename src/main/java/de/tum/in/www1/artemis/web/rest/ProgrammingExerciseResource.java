@@ -623,9 +623,10 @@ public class ProgrammingExerciseResource {
     @GetMapping(PROGRAMMING_EXERCISES)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
-            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
+            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter,
+            @RequestParam(defaultValue = "false") Boolean isSCAFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
+        return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, isSCAFilter, user));
     }
 
     /**

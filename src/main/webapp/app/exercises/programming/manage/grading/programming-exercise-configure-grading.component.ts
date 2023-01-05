@@ -61,6 +61,8 @@ const DefaultFieldValues = {
     [EditableField.MAX_PENALTY]: 0,
 };
 
+export type GradingTab = 'test-cases' | 'code-analysis' | 'submission-policy';
+
 @Component({
     selector: 'jhi-programming-exercise-configure-grading',
     templateUrl: './programming-exercise-configure-grading.component.html',
@@ -108,7 +110,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     isLoading = false;
     // This flag means that the grading config were edited, but no submission run was triggered yet.
     hasUpdatedGradingConfig = false;
-    activeTab: string;
+    activeTab: GradingTab;
 
     gradingStatistics?: ProgrammingExerciseGradingStatistics;
     maxIssuesPerCategory = 0;
@@ -461,6 +463,29 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         });
     }
 
+    importCategories(sourceExerciseId: number) {
+        this.isSaving = true;
+
+        this.gradingService
+            .importCategoriesFromExercise(this.programmingExercise.id!, sourceExerciseId)
+            .pipe(
+                tap((configuration: StaticCodeAnalysisCategory[]) => {
+                    // TODO refactor, remove duplicates
+                    // Generate the new list of categories.
+                    this.staticCodeAnalysisCategoriesForTable = configuration;
+                    this.setChartAndBackupCategoryView();
+                    // TODO show new categories, show success alert
+                    console.log('imported', configuration);
+                }),
+                catchError(() => {
+                    // TODO show own fail alert
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.resetFailed`);
+                    return of(null);
+                }),
+            )
+            .subscribe(() => (this.isSaving = false));
+    }
+
     /**
      * Reset all test cases.
      */
@@ -667,7 +692,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * Switch tabs
      * @param tab The target tab
      */
-    selectTab(tab: string) {
+    selectTab(tab: GradingTab) {
         const parentUrl = this.router.url.substring(0, this.router.url.lastIndexOf('/'));
         this.location.replaceState(`${parentUrl}/${tab}`);
         this.activeTab = tab;

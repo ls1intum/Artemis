@@ -76,6 +76,20 @@ public class StaticCodeAnalysisCategory extends DomainObject {
         this.exercise = exercise;
     }
 
+    /**
+     * Creates a new object with the same values as this object.
+     * The {exercise} attribute will not be set in the new object.
+     * @return New SCA category object with the same values
+     */
+    public StaticCodeAnalysisCategory copy() {
+        StaticCodeAnalysisCategory category = new StaticCodeAnalysisCategory();
+        category.setName(getName());
+        category.setPenalty(getPenalty());
+        category.setMaxPenalty(getMaxPenalty());
+        category.setState(getState());
+        return category;
+    }
+
     @Override
     public String toString() {
         return "StaticCodeAnalysisCategory{" + "id=" + getId() + ", name='" + name + '\'' + ", penalty=" + penalty + ", maxPenalty=" + maxPenalty + ", state=" + state + '}';

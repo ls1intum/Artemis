@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
@@ -31,11 +32,15 @@ public class StaticCodeAnalysisService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations, ProgrammingTriggerService programmingTriggerService) {
+            Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingExerciseRepository programmingExerciseRepository) {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.staticCodeAnalysisDefaultConfigurations = staticCodeAnalysisDefaultConfigurations;
         this.programmingTriggerService = programmingTriggerService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -140,6 +145,29 @@ public class StaticCodeAnalysisService {
         programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(exercise.getId());
 
         return categories;
+    }
+
+    /**
+     * TODO
+     */
+    public Set<StaticCodeAnalysisCategory> importCategoriesFromExercise(ProgrammingExercise targetExercise, ProgrammingExercise sourceExercise) {
+        var sourceCategories = findByExerciseId(sourceExercise.getId());
+        var oldCategories = findByExerciseId(targetExercise.getId());
+
+        var newCategories = sourceCategories.stream().map(category -> {
+            // TODO check if and what additional validation is necessary, of if we can simply copy everything.
+            var copy = category.copy();
+            copy.setProgrammingExercise(targetExercise);
+            return copy;
+        }).collect(Collectors.toSet());
+
+        staticCodeAnalysisCategoryRepository.deleteAll(oldCategories);
+        staticCodeAnalysisCategoryRepository.saveAll(newCategories);
+
+        // We use this flag to inform the instructor about outdated student results.
+        programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(targetExercise.getId());
+
+        return newCategories;
     }
 
     /**

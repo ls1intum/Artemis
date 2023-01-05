@@ -147,6 +147,8 @@
             "configureGrading": {
                 "title": "Konfiguration der Bewertung",
                 "shortTitle": "Bewertung",
+                "import": "Konfiguration importieren",
+                "importLabel": "Konfiguration einer Aufgabe übernehmen",
                 "save": "Speichern",
                 "reset": "Zurücksetzen",
                 "status": {

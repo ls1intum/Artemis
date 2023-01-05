@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -177,5 +177,10 @@ export class ProgrammingExerciseGradingService implements IProgrammingExerciseGr
      */
     public resetCategories(exerciseId: number): Observable<StaticCodeAnalysisCategory[]> {
         return this.http.patch<StaticCodeAnalysisCategory[]>(`${this.resourceUrl}/${exerciseId}/static-code-analysis-categories/reset`, {});
+    }
+
+    public importCategoriesFromExercise(targetExerciseId: number, sourceExerciseId: number): Observable<StaticCodeAnalysisCategory[]> {
+        const params = new HttpParams().set('sourceExerciseId', sourceExerciseId);
+        return this.http.patch<StaticCodeAnalysisCategory[]>(`${this.resourceUrl}/${targetExerciseId}/static-code-analysis-categories/import`, {}, { params });
     }
 }
