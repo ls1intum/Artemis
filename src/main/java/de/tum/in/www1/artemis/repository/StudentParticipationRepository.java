@@ -389,7 +389,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.feedbacks
             WHERE p.exercise.id = :#{#exerciseId}
-            AND (p.individualDueDate IS NULL OR p.individualDueDate <= :#{#now})
+            AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
             AND p.testRun = false
             AND NOT EXISTS
                 (SELECT prs FROM p.results prs
@@ -927,7 +927,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN s.participation p
             WHERE
                 p.exercise.exerciseGroup.exam.id = :examId
-            GROUP BY s.id
+            GROUP BY s.id, p.id
             """)
     List<QuizSubmittedAnswerCount> findSubmittedAnswerCountForQuizzesInExam(@Param("examId") long examId);
 }

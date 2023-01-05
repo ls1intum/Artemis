@@ -44,10 +44,10 @@ export class ExamCreationPage {
 
     /**
      * Sets the maximum achievable points in the exam.
-     * @param maxPoints the max points
+     * @param examMaxPoints the max points
      */
-    setMaxPoints(maxPoints: number) {
-        cy.get('#maxPoints').clear().type(maxPoints.toString());
+    setExamMaxPoints(examMaxPoints: number) {
+        cy.get('#examMaxPoints').clear().type(examMaxPoints.toString());
     }
 
     /**

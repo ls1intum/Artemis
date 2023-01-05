@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
-import { MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
@@ -11,6 +11,14 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { LectureUpdateWizardStepComponent } from 'app/lecture/wizard-mode/lecture-update-wizard-step.component';
+import { LectureUpdateWizardLearningGoalsComponent } from 'app/lecture/wizard-mode/lecture-wizard-learning-goals.component';
+import { LectureUpdateWizardUnitsComponent } from 'app/lecture/wizard-mode/lecture-wizard-units.component';
+import { LectureUpdateWizardAttachmentsComponent } from 'app/lecture/wizard-mode/lecture-wizard-attachments.component';
+import { LectureUpdateWizardPeriodComponent } from 'app/lecture/wizard-mode/lecture-wizard-period.component';
+import { LectureUpdateWizardTitleComponent } from 'app/lecture/wizard-mode/lecture-wizard-title.component';
+import { TranslateDirective } from 'app/shared/language/translate.directive';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import dayjs from 'dayjs/esm';
 
 describe('LectureWizardComponent', () => {
@@ -20,7 +28,18 @@ describe('LectureWizardComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [LectureUpdateWizardComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [
+                LectureUpdateWizardComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(LectureUpdateWizardStepComponent),
+                MockComponent(LectureUpdateWizardLearningGoalsComponent),
+                MockComponent(LectureUpdateWizardUnitsComponent),
+                MockComponent(LectureUpdateWizardAttachmentsComponent),
+                MockComponent(LectureUpdateWizardPeriodComponent),
+                MockComponent(LectureUpdateWizardTitleComponent),
+                MockComponent(FaIconComponent),
+                MockDirective(TranslateDirective),
+            ],
             providers: [
                 MockProvider(ArtemisNavigationUtilService),
                 MockProvider(CourseManagementService),

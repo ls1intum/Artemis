@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -46,7 +46,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
             .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 
-    delete(modelingExerciseId: number): Observable<HttpResponse<{}>> {
+    delete(modelingExerciseId: number): Observable<HttpResponse<any>> {
         return this.http.delete(`${this.resourceUrl}/${modelingExerciseId}`, { observe: 'response' });
     }
 
@@ -77,10 +77,10 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
             .pipe(map((response: HttpResponse<ModelingPlagiarismResult>) => response.body!));
     }
 
-    convertToPdf(model: string, filename: string): Observable<any> {
+    convertToPdf(model: string, filename: string): Observable<HttpResponse<Blob>> {
         return this.http
-            .post(`${SERVER_API_URL}api/apollon-convert/pdf`, { model }, { observe: 'response', responseType: 'blob' })
-            .pipe(map((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)));
+            .post(`${SERVER_API_URL}api/apollon/convert-to-pdf`, { model }, { observe: 'response', responseType: 'blob' })
+            .pipe(tap((response: HttpResponse<Blob>) => downloadStream(response.body, 'application/pdf', filename)));
     }
 
     /**
@@ -111,7 +111,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * Build the clusters to use in Compass
      * @param modelingExerciseId id of the exercise to build the clusters for
      */
-    buildClusters(modelingExerciseId: number): Observable<{}> {
+    buildClusters(modelingExerciseId: number): Observable<any> {
         return this.http.post(`${this.adminResourceUrl}/${modelingExerciseId}/trigger-automatic-assessment`, { observe: 'response' });
     }
 
@@ -119,8 +119,8 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * Delete the clusters used in Compass
      * @param modelingExerciseId id of the exercise to delete the clusters of
      */
-    deleteClusters(modelingExerciseId: number): Observable<{}> {
-        return this.http.delete(`${this.adminResourceUrl}/${modelingExerciseId}/clusters`, { observe: 'response' });
+    deleteClusters(modelingExerciseId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.adminResourceUrl}/${modelingExerciseId}/clusters`, { observe: 'response' });
     }
 
     /**

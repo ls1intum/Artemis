@@ -228,9 +228,11 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
      * check if there is at least one exam which should be shown
      */
     hasVisibleExams(): boolean {
-        for (const exam of this.course?.exams!) {
-            if (exam.visibleDate && dayjs(exam.visibleDate).isBefore(this.serverDateService.now())) {
-                return true;
+        if (this.course?.exams) {
+            for (const exam of this.course.exams) {
+                if (exam.visibleDate && dayjs(exam.visibleDate).isBefore(this.serverDateService.now())) {
+                    return true;
+                }
             }
         }
         return false;
@@ -244,7 +246,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     /**
-     * Check if the course has an tutorial groups
+     * Check if the course has a tutorial groups
      */
     hasTutorialGroups(): boolean {
         return !!this.course?.tutorialGroups?.length;

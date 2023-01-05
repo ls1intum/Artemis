@@ -218,6 +218,7 @@ describe('ExamMonitoringService', () => {
 
     // url
     it('should get correct exam monitoring update url', () => {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         expect(EXAM_MONITORING_UPDATE_URL(exam.course?.id!, exam.id!)).toBe(`${SERVER_API_URL}/api/courses/${exam.course?.id!}/exams/${exam.id!}/statistics`);
     });
 });

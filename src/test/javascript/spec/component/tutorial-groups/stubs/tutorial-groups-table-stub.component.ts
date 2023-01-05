@@ -32,6 +32,7 @@ export class TutorialGroupsTableStubComponent {
 }
 
 @Component({
+    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-tutorial-group-row]',
     template: `
         <div>

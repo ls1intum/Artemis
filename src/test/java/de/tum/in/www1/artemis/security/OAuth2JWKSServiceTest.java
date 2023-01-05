@@ -2,11 +2,11 @@ package de.tum.in.www1.artemis.security;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 import java.util.Collections;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -29,9 +29,11 @@ class OAuth2JWKSServiceTest {
 
     private String clientRegistrationId;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void init() {
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
 
         clientRegistrationId = "regId";
@@ -41,6 +43,14 @@ class OAuth2JWKSServiceTest {
         when(onlineCourseConfigurationService.getAllClientRegistrations()).thenReturn(Collections.singletonList(clientRegistration));
 
         oAuth2JWKSService = new OAuth2JWKSService(onlineCourseConfigurationService);
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
+        reset(onlineCourseConfigurationService);
     }
 
     @Test

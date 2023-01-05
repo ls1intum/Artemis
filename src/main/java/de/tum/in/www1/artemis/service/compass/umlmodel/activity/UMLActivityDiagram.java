@@ -54,7 +54,7 @@ public class UMLActivityDiagram extends UMLDiagram implements Serializable {
     }
 
     @Override
-    protected List<UMLElement> getModelElements() {
+    public List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = new ArrayList<>();
         modelElements.addAll(activityNodeList);
         modelElements.addAll(activityList);
