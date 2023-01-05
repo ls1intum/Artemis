@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import javax.annotation.PostConstruct;
 
@@ -59,6 +56,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     private static final String REPLACE_STATIC_CODE_ANALYSIS_SCRIPT = "#staticCodeAnalysisScript";
 
     private static final String REPLACE_DOCKER_IMAGE_NAME = "#dockerImage";
+
+    private static final String REPLACE_DOCKER_ARGS = "#dockerArgs";
 
     private static final String REPLACE_JENKINS_TIMEOUT = "#jenkinsTimeout";
 
@@ -124,6 +123,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl);
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
         replacements.put(REPLACE_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getImage(programmingLanguage, projectType));
+        replacements.put(REPLACE_DOCKER_ARGS, String.join(" ", programmingLanguageConfiguration.getDefaultDockerFlags()));
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
         replacements.put(REPLACE_DEFAULT_BRANCH, defaultBranch);
 
