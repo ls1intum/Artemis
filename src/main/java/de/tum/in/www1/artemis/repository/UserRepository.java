@@ -555,7 +555,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param userId       the id of the user to add to the organization
      * @param organization the organization to add to the user
      */
-    @NotNull
     default void addOrganizationToUser(Long userId, Organization organization) {
         User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
         if (!user.getOrganizations().contains(organization)) {
@@ -570,7 +569,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param userId       the id of the user to remove from the organization
      * @param organization the organization to remove from the user
      */
-    @NotNull
     default void removeOrganizationFromUser(Long userId, Organization organization) {
         User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
         if (user.getOrganizations().contains(organization)) {
