@@ -1003,12 +1003,10 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertQuizPointStatisticsPointCounters(quizExercise, Map.of(0.0, pc30, 3.0, pc20, 4.0, pc20, 6.0, pc20, 7.0, pc10));
 
         // reevaluate without changing anything and check if statistics are still correct (i.e. unchanged)
-        QuizExercise quizExerciseWithReevaluatedStatistics = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise,
-                QuizExercise.class, HttpStatus.OK);
-        quizStatisticService.loadQuestionStatisticDetails(quizExercise);
-        checkStatistics(quizExercise, quizExerciseWithReevaluatedStatistics);
+        var quizWithReevaluatedStats = request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, QuizExercise.class, HttpStatus.OK);
+        checkStatistics(quizExercise, quizWithReevaluatedStats);
 
-        System.out.println("QuizPointStatistic after re-evaluate (without changes): " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
+        System.out.println("QuizPointStatistic after re-evaluate (without changes): " + quizWithReevaluatedStats.getQuizPointStatistic());
 
         // remove wrong answer option and reevaluate
         var multipleChoiceQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
@@ -1017,18 +1015,18 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, QuizExercise.class, HttpStatus.OK);
         quizStatisticService.loadQuestionStatisticDetails(quizExercise);
         // load the exercise again after it was re-evaluated
-        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
-        quizStatisticService.loadQuestionStatisticDetails(quizExerciseWithReevaluatedStatistics);
-        var multipleChoiceQuestionAfterReevaluate = (MultipleChoiceQuestion) quizExerciseWithReevaluatedStatistics.getQuizQuestions().get(0);
+        quizWithReevaluatedStats = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
+        quizStatisticService.loadQuestionStatisticDetails(quizWithReevaluatedStats);
+        var multipleChoiceQuestionAfterReevaluate = (MultipleChoiceQuestion) quizWithReevaluatedStats.getQuizQuestions().get(0);
         assertThat(multipleChoiceQuestionAfterReevaluate.getAnswerOptions()).hasSize(1);
 
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic()).isEqualTo(quizExercise.getQuizPointStatistic());
+        assertThat(quizWithReevaluatedStats.getQuizPointStatistic()).isEqualTo(quizExercise.getQuizPointStatistic());
 
         // one student should get a higher score
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
-        System.out.println("QuizPointStatistic after 1st re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
+        assertThat(quizWithReevaluatedStats.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
+        System.out.println("QuizPointStatistic after 1st re-evaluate: " + quizWithReevaluatedStats.getQuizPointStatistic());
 
-        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(0.0, pc20, 3.0, pc20, 4.0, pc30, 6.0, pc20, 7.0, pc10));
+        assertQuizPointStatisticsPointCounters(quizWithReevaluatedStats, Map.of(0.0, pc20, 3.0, pc20, 4.0, pc30, 6.0, pc20, 7.0, pc10));
 
         // set a question invalid and reevaluate
         var shortAnswerQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
@@ -1036,29 +1034,30 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, QuizExercise.class, HttpStatus.OK);
         // load the exercise again after it was re-evaluated
-        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
-
+        quizWithReevaluatedStats = request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.OK, QuizExercise.class);
+        // load all details again, because the simple get call with not include statistics
+        quizStatisticService.loadQuestionStatisticDetails(quizWithReevaluatedStats);
         var shortAnswerQuestionAfterReevaluation = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(2);
         assertThat(shortAnswerQuestionAfterReevaluation.isInvalid()).isTrue();
 
         // several students should get a higher score
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
-        System.out.println("QuizPointStatistic after 2nd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
-        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc20, 5.0, pc20, 6.0, pc50, 9.0, pc10));
+        assertThat(quizWithReevaluatedStats.getQuizPointStatistic().getPointCounters()).hasSameSizeAs(quizExercise.getQuizPointStatistic().getPointCounters());
+        System.out.println("QuizPointStatistic after 2nd re-evaluate: " + quizWithReevaluatedStats.getQuizPointStatistic());
+        assertQuizPointStatisticsPointCounters(quizWithReevaluatedStats, Map.of(2.0, pc20, 5.0, pc20, 6.0, pc50, 9.0, pc10));
 
         // delete a question and reevaluate
         quizExercise.getQuizQuestions().remove(1);
 
         request.putWithResponseBody("/api/quiz-exercises/" + quizExercise.getId() + "/re-evaluate", quizExercise, QuizExercise.class, HttpStatus.OK);
         // load the exercise again after it was re-evaluated
-        quizExerciseWithReevaluatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/with-statistics", HttpStatus.OK, QuizExercise.class);
+        quizWithReevaluatedStats = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/with-statistics", HttpStatus.OK, QuizExercise.class);
 
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizQuestions()).hasSize(2);
+        assertThat(quizWithReevaluatedStats.getQuizQuestions()).hasSize(2);
 
         // max score should be less
-        assertThat(quizExerciseWithReevaluatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
-        System.out.println("QuizPointStatistic after 3rd re-evaluate: " + quizExerciseWithReevaluatedStatistics.getQuizPointStatistic());
-        assertQuizPointStatisticsPointCounters(quizExerciseWithReevaluatedStatistics, Map.of(2.0, pc40, 6.0, pc60));
+        assertThat(quizWithReevaluatedStats.getQuizPointStatistic().getPointCounters()).hasSize(quizExercise.getQuizPointStatistic().getPointCounters().size() - 3);
+        System.out.println("QuizPointStatistic after 3rd re-evaluate: " + quizWithReevaluatedStats.getQuizPointStatistic());
+        assertQuizPointStatisticsPointCounters(quizWithReevaluatedStats, Map.of(2.0, pc40, 6.0, pc60));
     }
 
     @Test

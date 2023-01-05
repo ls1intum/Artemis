@@ -428,7 +428,10 @@ public class QuizExerciseService {
             quizStatisticService.recalculateStatistics(quizExercise);
         }
         // fetch the quiz exercise again to make sure the latest changes are included
-        return quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        // load all details, so the client could immediately display them
+        quizStatisticService.loadQuestionStatisticDetails(quizExercise);
+        return quizExercise;
     }
 
     /**

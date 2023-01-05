@@ -318,9 +318,10 @@ public class QuizExerciseResource {
             throw new AccessForbiddenException();
         }
         quizStatisticService.recalculateStatistics(quizExercise);
-        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
-        quizStatisticService.loadQuestionStatisticDetails(quizExercise);
         // fetch the quiz exercise again to make sure the latest changes are included
+        quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+        // load all details, so the client could immediately display them
+        quizStatisticService.loadQuestionStatisticDetails(quizExercise);
         return ResponseEntity.ok(quizExercise);
     }
 
@@ -570,6 +571,7 @@ public class QuizExerciseResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestBody QuizExercise quizExercise) {
         log.info("REST request to re-evaluate quiz exercise : {}", quizExerciseId);
+        quizExercise.validateScoreSettings();
         QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
 
         if (originalQuizExercise.isExamExercise()) {
@@ -590,7 +592,6 @@ public class QuizExerciseResource {
         quizExercise = quizExerciseService.reEvaluate(quizExercise, originalQuizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
 
-        quizExercise.validateScoreSettings();
         return ResponseEntity.ok().body(quizExercise);
     }
 
