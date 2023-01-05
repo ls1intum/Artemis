@@ -173,7 +173,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private boolean canBeMasked(String value) {
         // This regex matches which can be masked, c.f. https://docs.gitlab.com/ee/ci/variables/#mask-a-cicd-variable
-        return value.matches("^[a-zA-Z0-9+/=@:.~]{8,}$");
+        return value != null && value.matches("^[a-zA-Z0-9+/=@:.~]{8,}$");
     }
 
     private void addBuildPlanToProgrammingExerciseIfUnset(ProgrammingExercise programmingExercise) {
