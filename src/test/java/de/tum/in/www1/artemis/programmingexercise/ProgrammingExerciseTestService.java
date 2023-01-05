@@ -1879,6 +1879,42 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
+    void exportExamSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
+        Exam exam = examExercise.getExerciseGroup().getExam();
+        database.addStudentExamWithUser(exam, userRepo.getUser());
+        exercise = examExercise;
+
+        // Test example solution publication date not set.
+        exam.setExampleSolutionPublicationDate(null);
+        examRepository.save(exam);
+
+        exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
+
+        // Test example solution publication date in the past.
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        examRepository.save(exam);
+
+        String zip = exportStudentRequestedRepository(HttpStatus.OK, false);
+        assertThat(zip).isNotNull();
+
+        // Test include tests but not allowed
+        exportStudentRequestedRepository(HttpStatus.FORBIDDEN, true);
+
+        // Test include tests
+        exercise.setReleaseTestsWithExampleSolution(true);
+        programmingExerciseRepository.save(exercise);
+
+        zip = exportStudentRequestedRepository(HttpStatus.OK, true);
+        assertThat(zip).isNotNull();
+
+        // Test example solution publication date in the future.
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam);
+
+        exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
+    }
+
+    // TEST
     void buildLogStatistics_unauthorized() throws Exception {
         exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
         request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.FORBIDDEN, BuildLogStatisticsDTO.class);
