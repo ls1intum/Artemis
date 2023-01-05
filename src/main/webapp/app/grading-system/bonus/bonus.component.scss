@@ -1,10 +1,11 @@
-.bonus-form-start {
-    counter-reset: bonus-step-counter; // Set a custom counter with initial value 0.
-}
-
 $numbering-size: 1.5rem;
 $numbering-border: 1px;
 $numbering-margin: calc($numbering-size / 2 - $numbering-border); // To make number left borders align with page title.
+
+.bonus-form-start {
+    counter-reset: bonus-step-counter; // Set a custom counter with initial value 0.
+    margin-right: calc($numbering-size + $numbering-margin);
+}
 
 .bonus-form-step {
     &::before {
