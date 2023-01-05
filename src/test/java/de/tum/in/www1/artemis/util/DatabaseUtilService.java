@@ -833,10 +833,6 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations, boolean withFiles) throws Exception {
-        return createCoursesWithExercisesAndLecturesAndLectureUnits("", withParticipations, withFiles);
-    }
-
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles) throws Exception {
         List<Course> courses = this.createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles);
         return courses.stream().peek(course -> {
@@ -1213,7 +1209,7 @@ public class DatabaseUtilService {
             createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(userPrefix, true);
         }
         for (int i = 0; i < numberOfCoursesWithLectures; i++) {
-            createCoursesWithExercisesAndLecturesAndLectureUnits(true, true);
+            createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, true);
         }
     }
 
