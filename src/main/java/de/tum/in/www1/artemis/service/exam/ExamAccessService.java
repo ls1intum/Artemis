@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
@@ -268,6 +269,26 @@ public class ExamAccessService {
         }
         else if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(courseId, examId, currentUser.getId())) {
             throw new AccessForbiddenException("You are not allowed to access this exam!");
+        }
+    }
+
+    /**
+     * Checks if the current user is eligible to access the example solutions for the given exercise and
+     * if the example solution is published.
+     * Eligibility conditions vary based on user roles.
+     *
+     * @param examExercise The exercise which must belong to an exam
+     */
+    public void checkExamExerciseForExampleSolutionAccessElseThrow(Exercise examExercise) {
+        if (!examExercise.isExamExercise()) {
+            throw new ConflictException("Given exercise does not belong to an exam", "Exercise", "notExamExercise");
+        }
+        Exam exam = examExercise.getExerciseGroup().getExam();
+        if (!authorizationCheckService.isAtLeastTeachingAssistantInCourse(exam.getCourse(), null)) {
+            checkCourseAndExamAccessForStudentElseThrow(exam.getCourse().getId(), exam.getId());
+        }
+        if (!examExercise.isExampleSolutionPublished()) {
+            throw new AccessForbiddenException("Example solution for exam is not published yet!");
         }
     }
 

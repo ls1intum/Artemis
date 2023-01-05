@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { Exercise, ExerciseType, IncludedInOverallScore, ParticipationStatus } from 'app/entities/exercise.model';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
 import { ParticipationService } from '../participation/participation.service';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
 import { AccountService } from 'app/core/auth/account.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,9 +18,20 @@ import { ProgrammingExerciseStudentParticipation } from 'app/entities/participat
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { SafeHtml } from '@angular/platform-browser';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
+export type ExampleSolutionInfo = {
+    modelingExercise?: ModelingExercise;
+    exampleSolution?: SafeHtml;
+    exampleSolutionUML: any;
+    programmingExercise?: ProgrammingExercise;
+};
 
 export interface ExerciseServicable<T extends Exercise> {
     create(exercise: T): Observable<HttpResponse<T>>;
@@ -152,6 +163,19 @@ export class ExerciseService {
                     }
                 }
                 return res;
+            }),
+        );
+    }
+
+    /**
+     * Get basic exercise information for the purpose of displaying its example solution. If the example solution is not yet
+     * published, returns error.
+     * @param { number } exerciseId - Id of the exercise to get the example solution
+     */
+    getExerciseForExampleSolution(exerciseId: number): Observable<EntityResponseType> {
+        return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/example-solution`, { observe: 'response' }).pipe(
+            tap((res: EntityResponseType) => {
+                this.processExerciseEntityResponse(res);
             }),
         );
     }
@@ -495,5 +519,50 @@ export class ExerciseService {
         return this.http
             .get<dayjs.Dayjs>(`${this.resourceUrl}/${exerciseId}/latest-due-date`, { observe: 'response' })
             .pipe(map((res: HttpResponse<dayjs.Dayjs>) => (res.body ? dayjs(res.body) : undefined)));
+    }
+
+    /**
+     * Returns an ExampleSolutionInfo object containing the processed example solution and related fields
+     * if exampleSolution exists on the exercise. The example solution is processed (parsed, sanitized, etc.)
+     * depending on the exercise type.
+     *
+     * @param exercise Exercise model that may have an exampleSolution.
+     * @param artemisMarkdown An ArtemisMarkdownService instance so we don't need to include it in the same bundle with ExerciseService when compiling.
+     */
+    static extractExampleSolutionInfo(exercise: Exercise, artemisMarkdown: ArtemisMarkdownService): ExampleSolutionInfo {
+        // ArtemisMarkdownService is expected as a parameter as opposed to a dependency in the constructor because doing
+        // that increased initial bundle size from 2.31 MB to 3.75 MB and caused production build to fail with error since
+        // it exceeded maximum budget.
+
+        let modelingExercise = undefined;
+        let exampleSolution = undefined;
+        let exampleSolutionUML = undefined;
+        let programmingExercise = undefined;
+
+        switch (exercise.type) {
+            case ExerciseType.MODELING:
+                modelingExercise = exercise as ModelingExercise;
+                if (modelingExercise.exampleSolutionModel) {
+                    exampleSolutionUML = JSON.parse(modelingExercise.exampleSolutionModel);
+                }
+                break;
+            case ExerciseType.TEXT:
+            case ExerciseType.FILE_UPLOAD:
+                const textOrFileUploadExercise = exercise as TextExercise & FileUploadExercise;
+                if (textOrFileUploadExercise.exampleSolution) {
+                    exampleSolution = artemisMarkdown.safeHtmlForMarkdown(textOrFileUploadExercise.exampleSolution);
+                }
+                break;
+            case ExerciseType.PROGRAMMING:
+                programmingExercise = exercise as ProgrammingExercise;
+                break;
+        }
+
+        return {
+            modelingExercise,
+            exampleSolution,
+            exampleSolutionUML,
+            programmingExercise,
+        };
     }
 }

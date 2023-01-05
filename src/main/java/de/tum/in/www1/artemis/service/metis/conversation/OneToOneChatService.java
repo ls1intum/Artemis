@@ -3,7 +3,8 @@ package de.tum.in.www1.artemis.service.metis.conversation;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
