@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import jakarta.validation.Valid;
 
 /**
  * REST controller for managing grading scale
@@ -121,7 +122,7 @@ public class GradingScaleResource {
      */
     @PostMapping("/courses/{courseId}/grading-scale")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<GradingScale> createGradingScaleForCourse(@PathVariable Long courseId, @RequestBody GradingScale gradingScale) throws URISyntaxException {
+    public ResponseEntity<GradingScale> createGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScale gradingScale) throws URISyntaxException {
         log.debug("REST request to create a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<GradingScale> existingGradingScale = gradingScaleRepository.findByCourseId(courseId);
@@ -162,7 +163,7 @@ public class GradingScaleResource {
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/grading-scale")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<GradingScale> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody GradingScale gradingScale)
+    public ResponseEntity<GradingScale> createGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScale gradingScale)
             throws URISyntaxException {
         log.debug("REST request to create a grading scale for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -190,7 +191,7 @@ public class GradingScaleResource {
      */
     @PutMapping("/courses/{courseId}/grading-scale")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<GradingScale> updateGradingScaleForCourse(@PathVariable Long courseId, @RequestBody GradingScale gradingScale) {
+    public ResponseEntity<GradingScale> updateGradingScaleForCourse(@PathVariable Long courseId, @Valid @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         GradingScale oldGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
@@ -216,7 +217,7 @@ public class GradingScaleResource {
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/grading-scale")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody GradingScale gradingScale) {
+    public ResponseEntity<GradingScale> updateGradingScaleForExam(@PathVariable Long courseId, @PathVariable Long examId, @Valid @RequestBody GradingScale gradingScale) {
         log.debug("REST request to update a grading scale for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Exam exam = examRepository.findByIdElseThrow(examId);

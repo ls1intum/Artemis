@@ -71,6 +71,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
+    Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(String login, boolean isInternal);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
@@ -467,6 +470,19 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         return findOneWithGroupsAndAuthoritiesByLogin(login);
     }
 
+    /**
+     * Finds a single user with groups and authorities using the email
+     *
+     * @param email user email string
+     * @return the user with groups and authorities
+     */
+    default Optional<User> findUserWithGroupsAndAuthoritiesByEmail(String email) {
+        if (StringUtils.isBlank(email)) {
+            return Optional.empty();
+        }
+        return findOneWithGroupsAndAuthoritiesByEmail(email);
+    }
+
     @NotNull
     default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
         return findOneWithGroupsAndAuthoritiesById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
@@ -560,7 +576,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param userId       the id of the user to add to the organization
      * @param organization the organization to add to the user
      */
-    @NotNull
     default void addOrganizationToUser(Long userId, Organization organization) {
         User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
         if (!user.getOrganizations().contains(organization)) {
@@ -575,7 +590,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param userId       the id of the user to remove from the organization
      * @param organization the organization to remove from the user
      */
-    @NotNull
     default void removeOrganizationFromUser(Long userId, Organization organization) {
         User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
         if (user.getOrganizations().contains(organization)) {

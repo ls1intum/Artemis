@@ -28,10 +28,6 @@ public interface TutorialGroupRegistrationRepository extends JpaRepository<Tutor
 
     @Transactional // ok because of delete
     @Modifying
-    void deleteById(long tutorialGroupRegistrationId);
-
-    @Transactional // ok because of delete
-    @Modifying
     void deleteAllByStudentIsInAndTypeAndTutorialGroupCourse(Set<User> students, TutorialGroupRegistrationType type, Course course);
 
     boolean existsByTutorialGroupTitleAndStudentAndType(String title, User student, TutorialGroupRegistrationType type);

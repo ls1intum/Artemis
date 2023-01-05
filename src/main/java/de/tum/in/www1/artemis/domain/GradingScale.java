@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 import org.hibernate.annotations.Cache;
@@ -12,6 +13,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 /**
  * A grading scale for a course or an exam that consists of grade steps
@@ -22,6 +25,13 @@ import jakarta.persistence.*;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradingScale extends DomainObject {
 
+    /** "U" stands for "Unterschleif" */
+    public static final String DEFAULT_PLAGIARISM_GRADE = "U";  // This should be the same as the corresponding constant in grading-scale.model.ts
+
+    public static final String DEFAULT_NO_PARTICIPATION_GRADE = "X";  // This should be the same as the corresponding constant in grading-scale.model.ts
+
+    private static final int MAX_SPECIAL_GRADE_SIZE = 100;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "grade_type")
     private GradeType gradeType = GradeType.NONE; // default
@@ -29,6 +39,14 @@ public class GradingScale extends DomainObject {
     @Enumerated(EnumType.STRING)
     @Column(name = "bonus_strategy")
     private BonusStrategy bonusStrategy;
+
+    @Size(max = MAX_SPECIAL_GRADE_SIZE)
+    @Column(name = "plagiarism_grade")
+    private String plagiarismGrade;
+
+    @Size(max = MAX_SPECIAL_GRADE_SIZE)
+    @Column(name = "no_participation_grade")
+    private String noParticipationGrade;
 
     @OneToOne
     @JoinColumn(name = "course_id")
@@ -152,6 +170,34 @@ public class GradingScale extends DomainObject {
      */
     GradeStep maxGrade() {
         return getGradeSteps().stream().filter(gradeStep -> gradeStep.isUpperBoundInclusive() && gradeStep.getUpperBoundPercentage() == 100.0).findAny().orElse(null);
+    }
+
+    public String getPlagiarismGrade() {
+        return plagiarismGrade;
+    }
+
+    public void setPlagiarismGrade(String plagiarismGrade) {
+        this.plagiarismGrade = plagiarismGrade;
+    }
+
+    @JsonIgnore
+    @NotNull
+    public String getPlagiarismGradeOrDefault() {
+        return Objects.requireNonNullElse(plagiarismGrade, DEFAULT_PLAGIARISM_GRADE);
+    }
+
+    public String getNoParticipationGrade() {
+        return noParticipationGrade;
+    }
+
+    public void setNoParticipationGrade(String noParticipationGrade) {
+        this.noParticipationGrade = noParticipationGrade;
+    }
+
+    @JsonIgnore
+    @NotNull
+    public String getNoParticipationGradeOrDefault() {
+        return Objects.requireNonNullElse(noParticipationGrade, DEFAULT_NO_PARTICIPATION_GRADE);
     }
 
     /**

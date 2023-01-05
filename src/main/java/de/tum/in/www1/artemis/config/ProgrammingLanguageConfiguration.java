@@ -2,6 +2,8 @@ package de.tum.in.www1.artemis.config;
 
 import java.util.*;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -13,6 +15,8 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 @ConfigurationProperties(prefix = "artemis.continuous-integration.build")
 public class ProgrammingLanguageConfiguration {
 
+    private final Logger log = LoggerFactory.getLogger(ProgrammingLanguageConfiguration.class);
+
     private static final ProjectType DEFAULT_PROJECT_TYPE = ProjectType.PLAIN;
 
     private static final ProjectType MAVEN_PROJECT_TYPE = ProjectType.MAVEN_MAVEN;
@@ -22,7 +26,13 @@ public class ProgrammingLanguageConfiguration {
     private Map<ProgrammingLanguage, Map<ProjectType, String>> images = new EnumMap<>(ProgrammingLanguage.class);
 
     /**
+     * Contains all the docker run arguments optained from the spring properties
+     */
+    private Map<String, String> defaultDockerFlags;
+
+    /**
      * Set the map of languages to build images.
+     * (Method implicitly called by spring with the yaml configs as parameter)
      *
      * @param buildImages the map of languages to build images
      */
@@ -30,6 +40,25 @@ public class ProgrammingLanguageConfiguration {
         final var languageSpecificBuildImages = loadImages(buildImages);
         checkImageForAllProgrammingLanguagesDefined(languageSpecificBuildImages);
         images = languageSpecificBuildImages;
+        log.info("Loaded Docker image configuration: {}", images);
+    }
+
+    /**
+     * @return The list of configured docker run arguments.
+     */
+    public Map<String, String> getDefaultDockerFlags() {
+        return defaultDockerFlags;
+    }
+
+    /**
+     * Sets the default docker run arguments based on the spring configuration
+     * (Method implicitly called by spring with the yaml configs as parameter)
+     *
+     * @param dockerFlags key value pairs of run arguments
+     */
+    public void setDefaultDockerFlags(final Map<String, String> dockerFlags) {
+        log.info("Set Docker flags to {}", dockerFlags);
+        this.defaultDockerFlags = dockerFlags;
     }
 
     /**

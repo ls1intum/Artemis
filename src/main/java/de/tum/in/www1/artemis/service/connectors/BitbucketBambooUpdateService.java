@@ -29,8 +29,8 @@ import de.tum.in.www1.artemis.service.connectors.bamboo.dto.ApplicationLinksDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooRepositoryDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooTriggerDTO;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.BitbucketRepositoryDTO;
-import jakarta.annotation.Nonnull;
 import jakarta.annotation.Nullable;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 // Only activate this service bean, if both Bamboo and Bitbucket are activated (@Profile({"bitbucket","bamboo"}) would activate
@@ -101,7 +101,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
      * @param bitbucketProjectKey the key of the corresponding bitbucket project
      * @param buildPlanKey the complete name of the plan
      */
-    private void updateBambooPlanRepository(@Nonnull BambooRepositoryDTO bambooRepository, String bitbucketRepositoryName, String bitbucketProjectKey, String buildPlanKey,
+    private void updateBambooPlanRepository(@NotNull BambooRepositoryDTO bambooRepository, String bitbucketRepositoryName, String bitbucketProjectKey, String buildPlanKey,
             String branchName) {
 
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();

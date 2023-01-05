@@ -4,7 +4,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -22,6 +21,7 @@ import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.web.rest.metis.conversation.dtos.*;
 import jakarta.persistence.Persistence;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class ConversationDTOService {

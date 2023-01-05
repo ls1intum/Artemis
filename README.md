@@ -178,7 +178,7 @@ The following universities are actively using Artemis or are currently evaluatin
   Main contact person: [Steffen Becker](mailto:steffen.becker@informatik.uni-stuttgart.de)  
   
 * **Universität Passau**  
-  https://artemis.fim.uni-passau.de  
+  https://artemis.fim.uni-passau.de (only accessible via the university network/VPN)  
   Main contact person: [Benedikt Fein](mailto:fein@fim.uni-passau.de)  
   
 * **Karlsruhe Institute of Technology**  

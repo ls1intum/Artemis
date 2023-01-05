@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.service.metis.conversation;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -13,6 +12,7 @@ import de.tum.in.www1.artemis.domain.metis.conversation.OneToOneChat;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.conversation.OneToOneChatRepository;
+import jakarta.validation.constraints.NotNull;
 
 @Service
 public class OneToOneChatService {

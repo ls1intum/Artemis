@@ -143,7 +143,6 @@ public class QuizExerciseImportService extends ExerciseImportService {
      * @param importedExercise The exercise from which to copy the batches
      * @param newExercise The exercise to which the batches are copied
      */
-    @NotNull
     private void copyQuizBatches(QuizExercise importedExercise, QuizExercise newExercise) {
         log.debug("Copying the QuizBatches to new QuizExercise: {}", newExercise);
 

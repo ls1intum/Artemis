@@ -90,12 +90,7 @@ public class ExceptionTranslator {
         return new ResponseEntity<>(builder.build(), entity.getHeaders(), entity.getStatusCode());
     }
 
-    /**
-     * handles requests for which the method is not available
-     * @param ex
-     * @param request
-     * @return the response entity with information about this case (method not available)
-     */
+    @ExceptionHandler
     public ResponseEntity<Problem> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, @NotNull NativeWebRequest request) {
         BindingResult result = ex.getBindingResult();
         List<FieldErrorVM> fieldErrors = result.getFieldErrors().stream().map(f -> new FieldErrorVM(f.getObjectName().replaceFirst("DTO$", ""), f.getField(), f.getCode()))

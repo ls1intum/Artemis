@@ -6,10 +6,27 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.User;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class StudentDTO {
+
+    @Size(max = 50)
+    private String login;
+
+    @Size(max = 50)
+    private String firstName;
+
+    @Size(max = 50)
+    private String lastName;
+
+    @Size(max = 10)
+    private String registrationNumber;
+
+    @Email
+    @Size(max = 100)
+    private String email;
 
     public StudentDTO(String login, String firstName, String lastName, String registrationNumber) {
         this.login = login;
@@ -25,18 +42,6 @@ public class StudentDTO {
     public StudentDTO() {
         // for jackson
     }
-
-    @Size(max = 50)
-    private String login;
-
-    @Size(max = 50)
-    private String firstName;
-
-    @Size(max = 50)
-    private String lastName;
-
-    @Size(max = 10)
-    private String registrationNumber;
 
     public String getLogin() {
         return login;
@@ -70,6 +75,14 @@ public class StudentDTO {
         this.registrationNumber = registrationNumber;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
     public StudentDTO registrationNumber(String registrationNumber) {
         this.registrationNumber = registrationNumber;
         return this;
@@ -84,22 +97,23 @@ public class StudentDTO {
             return false;
         }
         StudentDTO that = (StudentDTO) obj;
-        return Objects.equals(registrationNumber, that.registrationNumber) || Objects.equals(login, that.login);
+        return Objects.equals(registrationNumber, that.registrationNumber) || Objects.equals(login, that.login) || Objects.equals(email, that.email);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(registrationNumber) ^ Objects.hash(login);
+        return Objects.hash(registrationNumber) ^ Objects.hash(login) ^ Objects.hash(email);
     }
 
     @Override
     public String toString() {
         return "StudentDTO{" + "login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber
-                + '\'' + '}';
+                + '\'' + ", email='" + email + '\'' + '}';
     }
 
     @JsonIgnore
     public String toDatabaseString() {
-        return "Student: login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\'';
+        return "Student: login='" + login + '\'' + ", firstName='" + firstName + '\'' + ", lastName='" + lastName + '\'' + ", registrationNumber='" + registrationNumber + '\''
+                + ", email='" + email + '\'';
     }
 }
