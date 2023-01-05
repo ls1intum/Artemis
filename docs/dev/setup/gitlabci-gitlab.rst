@@ -26,7 +26,7 @@ GitLab
 
 1. Depending on your operating system, it is necessary to update the host file of your machine to include the following line:
 
-   .. code:: text
+    .. code:: text
 
         127.0.0.1       host.docker.internal
         ::1             host.docker.internal
