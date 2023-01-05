@@ -11,7 +11,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { NgModel } from '@angular/forms';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -36,7 +35,6 @@ describe('ComplaintsFormComponent', () => {
             declarations: [
                 ComplaintsFormComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
                 MockDirective(NgModel),
                 MockDirective(TranslateDirective),
                 MockComponent(TextareaCounterComponent),
@@ -53,7 +51,6 @@ describe('ComplaintsFormComponent', () => {
                 },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 fixture = TestBed.createComponent(ComplaintsFormComponent);

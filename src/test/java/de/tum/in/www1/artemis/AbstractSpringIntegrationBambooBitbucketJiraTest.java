@@ -96,7 +96,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     protected PasswordService passwordService;
 
     @AfterEach
-    public void resetSpyBeans() {
+    protected void resetSpyBeans() {
         Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer, textBlockService);
         super.resetSpyBeans();
     }

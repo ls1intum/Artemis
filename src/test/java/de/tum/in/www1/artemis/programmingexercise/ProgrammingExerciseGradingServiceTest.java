@@ -122,7 +122,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     /**
      * Test class for COURSE exercises
      */
-    public static class CourseProgrammingExerciseGradingServiceTest extends ProgrammingExerciseGradingServiceTest {
+    static class CourseProgrammingExerciseGradingServiceTest extends ProgrammingExerciseGradingServiceTest {
 
         @Override
         ProgrammingExercise generateDefaultProgrammingExercise() {
@@ -147,7 +147,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
     /**
      * Test class for EXAM exercises
      */
-    public static class ExamProgrammingExerciseGradingServiceTest extends ProgrammingExerciseGradingServiceTest {
+    static class ExamProgrammingExerciseGradingServiceTest extends ProgrammingExerciseGradingServiceTest {
 
         @Override
         ProgrammingExercise generateDefaultProgrammingExercise() {

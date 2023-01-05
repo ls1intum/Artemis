@@ -231,6 +231,7 @@
             },
             "export": {
                 "downloadRepo": "Download Repo",
+                "downloadExampleSolutionRepo": "Download Solution Repo",
                 "downloadExampleSolution": "Download example solution",
                 "downloadTests": "Download tests",
                 "downloadTestsWithExampleSolution": "Download tests with example solution",
