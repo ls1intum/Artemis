@@ -258,7 +258,7 @@ dependencies {
     implementation "com.hazelcast:hazelcast-spring:${hazelcast_version}"
     implementation "com.hazelcast:hazelcast-hibernate53:5.0.0"
     implementation "javax.cache:cache-api:1.1.1"
-    implementation "org.hibernate:hibernate-core:${hibernate_version}"
+    implementation files('libs/hibernate-core-6.1.7-SNAPSHOT.jar')
     implementation "com.zaxxer:HikariCP:5.0.1"
     implementation "org.apache.commons:commons-text:1.10.0"
     implementation "org.apache.commons:commons-math3:3.6.1"
