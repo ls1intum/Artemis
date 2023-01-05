@@ -5,8 +5,6 @@ import java.net.URISyntaxException;
 import java.util.Objects;
 
 // TODO: we might want to rename this class to VcsRepositoryUri
-// TODO: Refactor, merge with UrlService and make independent from environment variables.
-// Maybe also look at LocalRepository
 public class VcsRepositoryUrl {
 
     protected String username;

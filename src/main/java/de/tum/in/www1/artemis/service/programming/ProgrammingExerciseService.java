@@ -107,23 +107,15 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
 
-    public ProgrammingExerciseService(Environment environment,
-            ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
-            Optional<VersionControlService> versionControlService,
-            Optional<ContinuousIntegrationService> continuousIntegrationService,
+    public ProgrammingExerciseService(Environment environment, ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
+            Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ParticipationService participationService,
-            ParticipationRepository participationRepository, ResultRepository resultRepository,
-            UserRepository userRepository, AuthorizationCheckService authCheckService,
-            ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService,
-            GroupNotificationScheduleService groupNotificationScheduleService,
-            InstanceMessageSendService instanceMessageSendService,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
-            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository,
-            ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService,
-            ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository) {
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
+            ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
+            ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, GroupNotificationScheduleService groupNotificationScheduleService,
+            InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository) {
         this.environment = environment;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
@@ -176,8 +168,7 @@ public class ProgrammingExerciseService {
     @Transactional // TODO: apply the transaction on a smaller scope
     // ok because we create many objects in a rather complex way and need a rollback
     // in case of exceptions
-    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise)
-            throws GitAPIException, IOException {
+    public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
 
@@ -254,11 +245,9 @@ public class ProgrammingExerciseService {
 
         continuousIntegrationService.get().createProjectForExercise(programmingExercise);
         // template build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(),
-                exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, TEMPLATE.getName(), exerciseRepoUrl, testsRepoUrl, solutionRepoUrl);
         // solution build plan
-        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, SOLUTION.getName(),
-                solutionRepoUrl, testsRepoUrl, solutionRepoUrl);
+        continuousIntegrationService.get().createBuildPlanForExercise(programmingExercise, SOLUTION.getName(), solutionRepoUrl, testsRepoUrl, solutionRepoUrl);
 
         // Give appropriate permissions for CI projects
         continuousIntegrationService.get().removeAllDefaultProjectPermissions(projectKey);
@@ -284,18 +273,16 @@ public class ProgrammingExerciseService {
     }
 
     private void connectAuxiliaryRepositoriesToExercise(ProgrammingExercise exercise) {
-        List<AuxiliaryRepository> savedRepositories = new ArrayList<>(
-                exercise.getAuxiliaryRepositories().stream().filter(repo -> repo.getId() != null).toList());
-        exercise.getAuxiliaryRepositories().stream().filter(repository -> repository.getId() == null)
-                .forEach(repository -> {
-                    // We have to disconnect the exercise from the auxiliary repository
-                    // since the auxiliary repositories of an exercise are represented as
-                    // a sorted collection (list).
-                    repository.setExercise(null);
-                    repository = auxiliaryRepositoryRepository.save(repository);
-                    repository.setExercise(exercise);
-                    savedRepositories.add(repository);
-                });
+        List<AuxiliaryRepository> savedRepositories = new ArrayList<>(exercise.getAuxiliaryRepositories().stream().filter(repo -> repo.getId() != null).toList());
+        exercise.getAuxiliaryRepositories().stream().filter(repository -> repository.getId() == null).forEach(repository -> {
+            // We have to disconnect the exercise from the auxiliary repository
+            // since the auxiliary repositories of an exercise are represented as
+            // a sorted collection (list).
+            repository.setExercise(null);
+            repository = auxiliaryRepositoryRepository.save(repository);
+            repository.setExercise(exercise);
+            savedRepositories.add(repository);
+        });
         exercise.setAuxiliaryRepositories(savedRepositories);
     }
 
@@ -311,25 +298,15 @@ public class ProgrammingExerciseService {
         final var testRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
 
         templateParticipation.setBuildPlanId(templatePlanId); // Set build plan id to newly created BaseBuild plan
-        templateParticipation.setRepositoryUrl(versionControlService.get()
-                .getCloneRepositoryUrl(projectKey, courseShortName, exerciseRepoName).toString());
+        templateParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, courseShortName, exerciseRepoName).toString());
         solutionParticipation.setBuildPlanId(solutionPlanId);
-        solutionParticipation.setRepositoryUrl(versionControlService.get()
-                .getCloneRepositoryUrl(projectKey, courseShortName, solutionRepoName).toString());
-        programmingExercise.setTestRepositoryUrl(versionControlService.get()
-                .getCloneRepositoryUrl(projectKey, courseShortName, testRepoName).toString());
+        solutionParticipation.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, courseShortName, solutionRepoName).toString());
+        programmingExercise.setTestRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(projectKey, courseShortName, testRepoName).toString());
     }
 
     private void setURLsForAuxiliaryRepositoriesOfExercise(ProgrammingExercise programmingExercise) {
-        programmingExercise.getAuxiliaryRepositories()
-                .forEach(
-                        repo -> repo
-                                .setRepositoryUrl(versionControlService
-                                        .get().getCloneRepositoryUrl(programmingExercise.getProjectKey(),
-                                                programmingExercise.getCourseViaExerciseGroupOrCourseMember()
-                                                        .getShortName(),
-                                                programmingExercise.generateRepositoryName(repo.getName()))
-                                        .toString()));
+        programmingExercise.getAuxiliaryRepositories().forEach(repo -> repo.setRepositoryUrl(versionControlService.get().getCloneRepositoryUrl(programmingExercise.getProjectKey(),
+                programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), programmingExercise.generateRepositoryName(repo.getName())).toString()));
     }
 
     /**
@@ -341,8 +318,7 @@ public class ProgrammingExerciseService {
      * @param exerciseCreator     the User that performed the action (used as Git
      *                            commit author)
      */
-    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User exerciseCreator)
-            throws GitAPIException {
+    private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User exerciseCreator) throws GitAPIException {
 
         // Get URLs for repos
         var exerciseRepoUrl = programmingExercise.getVcsTemplateRepositoryUrl();
@@ -357,8 +333,7 @@ public class ProgrammingExerciseService {
         // Get path, files and prefix for the programming-language dependent files. They
         // are copied first.
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
-        String programmingLanguageTemplate = getProgrammingLanguageTemplatePath(
-                programmingExercise.getProgrammingLanguage());
+        String programmingLanguageTemplate = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage());
         String exercisePath = programmingLanguageTemplate + "/exercise/**/*.*";
         String solutionPath = programmingLanguageTemplate + "/solution/**/*.*";
         String testPath = programmingLanguageTemplate + "/test/**/*.*";
@@ -382,12 +357,10 @@ public class ProgrammingExerciseService {
         String projectTypeSolutionPrefix = null;
 
         // Find the project type specific files if present
-        if (programmingExercise.getProjectType() != null
-                && !ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
+        if (programmingExercise.getProjectType() != null && !ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
             // Get path, files and prefix for the project-type dependent files. They are
             // copied last and can overwrite the resources from the programming language.
-            String programmingLanguageProjectTypePath = getProgrammingLanguageProjectTypePath(
-                    programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType());
+            String programmingLanguageProjectTypePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType());
             String projectType = programmingExercise.getProjectType().name().toLowerCase();
             String projectTypePrefix = programmingLanguage + "/" + projectType;
 
@@ -404,7 +377,8 @@ public class ProgrammingExerciseService {
                 exerciseResources = resourceLoaderService.getResources(exercisePath);
                 testResources = resourceLoaderService.getResources(testPath);
                 solutionResources = resourceLoaderService.getResources(solutionPath);
-            } else {
+            }
+            else {
                 projectTypeExercisePrefix = projectTypePrefix + "/exercise";
                 projectTypeTestPrefix = projectTypePrefix + "/test";
                 projectTypeSolutionPrefix = projectTypePrefix + "/solution";
@@ -416,21 +390,19 @@ public class ProgrammingExerciseService {
         }
 
         try {
-            setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources,
-                    projectTypeExercisePrefix, "Exercise", programmingExercise,
+            setupTemplateAndPush(exerciseRepo, exerciseResources, exercisePrefix, projectTypeExerciseResources, projectTypeExercisePrefix, "Exercise", programmingExercise,
                     exerciseCreator);
             // The template repo can be re-written, so we can unprotect the default branch.
             var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
             String templateBranch = versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
             versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateBranch);
 
-            setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources,
-                    projectTypeSolutionPrefix, "Solution", programmingExercise,
+            setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise,
                     exerciseCreator);
-            setupTestTemplateAndPush(testRepo, testResources, testPrefix, projectTypeTestResources,
-                    projectTypeTestPrefix, "Test", programmingExercise, exerciseCreator);
+            setupTestTemplateAndPush(testRepo, testResources, testPrefix, projectTypeTestResources, projectTypeTestPrefix, "Test", programmingExercise, exerciseCreator);
 
-        } catch (Exception ex) {
+        }
+        catch (Exception ex) {
             // if any exception occurs, try to at least push an empty commit, so that the
             // repositories can be used by the build plans
             log.warn("An exception occurred while setting up the repositories", ex);
@@ -440,8 +412,7 @@ public class ProgrammingExerciseService {
         }
     }
 
-    public String getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage,
-            ProjectType projectType) {
+    public String getProgrammingLanguageProjectTypePath(ProgrammingLanguage programmingLanguage, ProjectType projectType) {
         return getProgrammingLanguageTemplatePath(programmingLanguage) + "/" + projectType.name().toLowerCase();
     }
 
@@ -453,29 +424,23 @@ public class ProgrammingExerciseService {
         final String projectKey = programmingExercise.getProjectKey();
         final String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         versionControlService.get().createProjectForExercise(programmingExercise); // Create project
-        versionControlService.get().createRepository(projectKey, courseShortName,
-                programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template
+        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template
         // repository
-        versionControlService.get().createRepository(projectKey, courseShortName,
-                programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests
+        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests
         // repository
-        versionControlService.get().createRepository(projectKey, courseShortName,
-                programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution
+        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution
         // repository
 
         // Create auxiliary repositories
         createAndInitializeAuxiliaryRepositories(projectKey, courseShortName, programmingExercise);
     }
 
-    private void createAndInitializeAuxiliaryRepositories(String projectKey, String courseShortName,
-            ProgrammingExercise programmingExercise) throws GitAPIException {
+    private void createAndInitializeAuxiliaryRepositories(String projectKey, String courseShortName, ProgrammingExercise programmingExercise) throws GitAPIException {
         for (AuxiliaryRepository repo : programmingExercise.getAuxiliaryRepositories()) {
             String repositoryName = programmingExercise.generateRepositoryName(repo.getName());
             versionControlService.get().createRepository(projectKey, courseShortName, repositoryName, null);
             repo.setRepositoryUrl(versionControlService.get()
-                    .getCloneRepositoryUrl(programmingExercise.getProjectKey(),
-                            programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(),
-                            repositoryName)
+                    .getCloneRepositoryUrl(programmingExercise.getProjectKey(), programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), repositoryName)
                     .toString());
             Repository vcsRepository = gitService.getOrCheckoutRepository(repo.getVcsRepositoryUrl(), true);
             gitService.commitAndPush(vcsRepository, SETUP_COMMIT_MESSAGE, true, null);
@@ -491,21 +456,18 @@ public class ProgrammingExerciseService {
      *                                        notification
      * @return the updates programming exercise from the database
      */
-    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate,
-            ProgrammingExercise updatedProgrammingExercise,
+    public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
             @Nullable String notificationText) {
         setURLsForAuxiliaryRepositoriesOfExercise(updatedProgrammingExercise);
         connectAuxiliaryRepositoriesToExercise(updatedProgrammingExercise);
 
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(updatedProgrammingExercise);
 
-        participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise,
-                programmingExerciseBeforeUpdate.getDueDate());
+        participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(updatedProgrammingExercise.getId());
-        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(
-                programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
     }
 
@@ -555,16 +517,14 @@ public class ProgrammingExerciseService {
      *                             commit author)
      * @throws Exception An exception in case something went wrong
      */
-    private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix,
-            @Nullable Resource[] projectTypeResources, String projectTypePrefix,
+    private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, @Nullable Resource[] projectTypeResources, String projectTypePrefix,
             String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
         if (gitService.listFiles(repository).isEmpty()) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
             // Also copy project type specific files AFTERWARDS (so that they might
             // overwrite the default files)
             if (projectTypeResources != null) {
-                fileService.copyResources(projectTypeResources, projectTypePrefix,
-                        repository.getLocalPath().toAbsolutePath().toString(), true);
+                fileService.copyResources(projectTypeResources, projectTypePrefix, repository.getLocalPath().toAbsolutePath().toString(), true);
             }
 
             replacePlaceholders(programmingExercise, repository);
@@ -588,44 +548,39 @@ public class ProgrammingExerciseService {
      *                            programming exercise
      * @throws Exception If anything goes wrong
      */
-    private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix,
-            Resource[] projectTypeResources, String projectTypePrefix,
+    private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, Resource[] projectTypeResources, String projectTypePrefix,
             String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
         // Only copy template if repo is empty
         if (gitService.listFiles(repository).isEmpty()
-                && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA
-                        || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
+                && (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.JAVA || programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.KOTLIN)) {
             // First get files that are not dependent on the project type
-            String templatePath = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage())
-                    + "/test";
+            String templatePath = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage()) + "/test";
 
             // Java both supports Gradle and Maven as a test template
             String projectTemplatePath = templatePath;
             ProjectType projectType = programmingExercise.getProjectType();
             if (projectType != null && projectType.isGradle()) {
                 projectTemplatePath += "/gradle";
-            } else {
+            }
+            else {
                 projectTemplatePath += "/maven";
             }
             projectTemplatePath += "/projectTemplate/**/*.*";
             Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
             // keep the folder structure
-            fileService.copyResources(projectTemplate, "projectTemplate",
-                    repository.getLocalPath().toAbsolutePath().toString(), true);
+            fileService.copyResources(projectTemplate, "projectTemplate", repository.getLocalPath().toAbsolutePath().toString(), true);
 
             // These resources might override the programming language dependent resources
             // as they are project type dependent.
             if (projectType != null) {
-                String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(
-                        programmingExercise.getProgrammingLanguage(), projectType) + "/test";
+                String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
                 String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*.*";
 
                 try {
-                    Resource[] projectTypeProjectTemplate = resourceLoaderService
-                            .getResources(projectTypeProjectTemplatePath);
-                    fileService.copyResources(projectTypeProjectTemplate, projectTypePrefix,
-                            repository.getLocalPath().toAbsolutePath().toString(), false);
-                } catch (FileNotFoundException ignored) {
+                    Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
+                    fileService.copyResources(projectTypeProjectTemplate, projectTypePrefix, repository.getLocalPath().toAbsolutePath().toString(), false);
+                }
+                catch (FileNotFoundException ignored) {
                 }
             }
 
@@ -633,19 +588,15 @@ public class ProgrammingExerciseService {
 
             // Keep or delete static code analysis configuration in the build configuration
             // file
-            sectionsMap.put("static-code-analysis",
-                    Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
+            sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
 
             // Keep or delete testwise coverage configuration in the build file
-            sectionsMap.put("record-testwise-coverage",
-                    Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()));
+            sectionsMap.put("record-testwise-coverage", Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled()));
 
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles/**/*.*";
                 Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
-                String packagePath = Path
-                        .of(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}")
-                        .toAbsolutePath().toString();
+                String packagePath = Path.of(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
                 sectionsMap.put("non-sequential", true);
                 sectionsMap.put("sequential", false);
@@ -654,24 +605,21 @@ public class ProgrammingExerciseService {
                 String projectFileFileName;
                 if (projectType != null && projectType.isGradle()) {
                     projectFileFileName = "build.gradle";
-                } else {
+                }
+                else {
                     projectFileFileName = "pom.xml";
                 }
-                fileService.replacePlaceholderSections(
-                        Path.of(repository.getLocalPath().toAbsolutePath().toString(), projectFileFileName)
-                                .toAbsolutePath().toString(),
+                fileService.replacePlaceholderSections(Path.of(repository.getLocalPath().toAbsolutePath().toString(), projectFileFileName).toAbsolutePath().toString(),
                         sectionsMap);
 
                 fileService.copyResources(testFileResources, prefix, packagePath, false);
 
                 // Possibly overwrite files if the project type is defined
                 if (projectType != null) {
-                    String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(
-                            programmingExercise.getProgrammingLanguage(), projectType) + "/test";
+                    String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
 
                     try {
-                        Resource[] projectTypeTestFileResources = resourceLoaderService
-                                .getResources(projectTypeTemplatePath);
+                        Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
                         // filter non-existing resources to avoid exceptions
                         List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
                         for (Resource resource : projectTypeTestFileResources) {
@@ -680,22 +628,21 @@ public class ProgrammingExerciseService {
                             }
                         }
                         if (!existingProjectTypeTestFileResources.isEmpty()) {
-                            fileService.copyResources(existingProjectTypeTestFileResources.toArray(new Resource[] {}),
-                                    projectTypePrefix, packagePath, false);
+                            fileService.copyResources(existingProjectTypeTestFileResources.toArray(new Resource[] {}), projectTypePrefix, packagePath, false);
                         }
-                    } catch (FileNotFoundException ignored) {
+                    }
+                    catch (FileNotFoundException ignored) {
                     }
                 }
 
                 // Copy static code analysis config files
                 if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                     String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*.*";
-                    Resource[] staticCodeAnalysisResources = resourceLoaderService
-                            .getResources(staticCodeAnalysisConfigPath);
-                    fileService.copyResources(staticCodeAnalysisResources, prefix,
-                            repository.getLocalPath().toAbsolutePath().toString(), true);
+                    Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
+                    fileService.copyResources(staticCodeAnalysisResources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
                 }
-            } else {
+            }
+            else {
                 // maven configuration should be set for kotlin and older exercises where no
                 // project type has been introduced where no project type is defined
                 boolean isMaven = ProjectType.isMavenProject(projectType);
@@ -705,13 +652,11 @@ public class ProgrammingExerciseService {
                 String projectFileName;
                 if (isMaven) {
                     projectFileName = "pom.xml";
-                } else {
+                }
+                else {
                     projectFileName = "build.gradle";
                 }
-                fileService.replacePlaceholderSections(
-                        Path.of(repository.getLocalPath().toAbsolutePath().toString(), projectFileName).toAbsolutePath()
-                                .toString(),
-                        sectionsMap);
+                fileService.replacePlaceholderSections(Path.of(repository.getLocalPath().toAbsolutePath().toString(), projectFileName).toAbsolutePath().toString(), sectionsMap);
 
                 // staging project files are only required for maven
                 Resource stagePomXml = null;
@@ -738,12 +683,9 @@ public class ProgrammingExerciseService {
                     Resource[] buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
 
                     Files.createDirectory(Path.of(buildStagePath.toAbsolutePath().toString(), "test"));
-                    Files.createDirectory(
-                            Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
+                    Files.createDirectory(Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
 
-                    String packagePath = Path
-                            .of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}")
-                            .toAbsolutePath().toString();
+                    String packagePath = Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
 
                     // staging project files are only required for maven
                     if (isMaven && stagePomXml != null) {
@@ -758,7 +700,8 @@ public class ProgrammingExerciseService {
                         try {
                             buildStageResources = resourceLoaderService.getResources(buildStageResourcesPath);
                             fileService.copyResources(buildStageResources, prefix, packagePath, false);
-                        } catch (FileNotFoundException ignored) {
+                        }
+                        catch (FileNotFoundException ignored) {
                         }
                     }
                 }
@@ -766,11 +709,11 @@ public class ProgrammingExerciseService {
 
             replacePlaceholders(programmingExercise, repository);
             commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", true, user);
-        } else {
+        }
+        else {
             // If there is no special test structure for a programming language, just copy
             // all the test files.
-            setupTemplateAndPush(repository, resources, prefix, projectTypeResources, projectTypePrefix, templateName,
-                    programmingExercise, user);
+            setupTemplateAndPush(repository, resources, prefix, projectTypeResources, projectTypePrefix, templateName, programmingExercise, user);
         }
     }
 
@@ -790,27 +733,21 @@ public class ProgrammingExerciseService {
 
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
-                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(),
-                        "${packageNameFolder}",
+                fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
                         programmingExercise.getPackageFolderName());
                 replacements.put("${packageName}", programmingExercise.getPackageName());
             }
             case SWIFT -> {
                 switch (projectType) {
                     case PLAIN -> {
-                        fileService.replaceVariablesInDirectoryName(
-                                repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
+                        fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFolder}",
                                 programmingExercise.getPackageName());
-                        fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(),
-                                "${packageNameFile}", programmingExercise.getPackageName());
+                        fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${packageNameFile}", programmingExercise.getPackageName());
                         replacements.put("${packageName}", programmingExercise.getPackageName());
                     }
                     case XCODE -> {
-                        fileService.replaceVariablesInDirectoryName(
-                                repository.getLocalPath().toAbsolutePath().toString(), "${appName}",
-                                programmingExercise.getPackageName());
-                        fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(),
-                                "${appName}", programmingExercise.getPackageName());
+                        fileService.replaceVariablesInDirectoryName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
+                        fileService.replaceVariablesInFileName(repository.getLocalPath().toAbsolutePath().toString(), "${appName}", programmingExercise.getPackageName());
                         replacements.put("${appName}", programmingExercise.getPackageName());
                     }
                 }
@@ -824,8 +761,7 @@ public class ProgrammingExerciseService {
         replacements.put("${exerciseName}", programmingExercise.getTitle());
         replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
         replacements.put("${packaging}", programmingExercise.hasSequentialTestRuns() ? "pom" : "jar");
-        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements,
-                List.of("gradle-wrapper.jar"));
+        fileService.replaceVariablesInFileRecursive(repository.getLocalPath().toAbsolutePath().toString(), replacements, List.of("gradle-wrapper.jar"));
     }
 
     /**
@@ -839,8 +775,7 @@ public class ProgrammingExerciseService {
      * @throws GitAPIException If committing, or pushing to the repo throws an
      *                         exception
      */
-    public void commitAndPushRepository(Repository repository, String message, boolean emptyCommit, User user)
-            throws GitAPIException {
+    public void commitAndPushRepository(Repository repository, String message, boolean emptyCommit, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, message, emptyCommit, user);
         repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted
@@ -856,10 +791,8 @@ public class ProgrammingExerciseService {
      *                                   students about the update
      * @return the updated ProgrammingExercise object.
      */
-    public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise,
-            @Nullable String notificationText) {
-        ProgrammingExercise programmingExercise = programmingExerciseRepository
-                .findByIdElseThrow(updatedProgrammingExercise.getId());
+    public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
 
         // create slim copy of programmingExercise before the update - needed for
         // notifications (only release date needed)
@@ -871,17 +804,14 @@ public class ProgrammingExerciseService {
         programmingExercise.setReleaseDate(updatedProgrammingExercise.getReleaseDate());
         programmingExercise.setStartDate(updatedProgrammingExercise.getStartDate());
         programmingExercise.setDueDate(updatedProgrammingExercise.getDueDate());
-        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(
-                updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
+        programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         programmingExercise.setAssessmentType(updatedProgrammingExercise.getAssessmentType());
         programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
-        programmingExercise
-                .setExampleSolutionPublicationDate(updatedProgrammingExercise.getExampleSolutionPublicationDate());
+        programmingExercise.setExampleSolutionPublicationDate(updatedProgrammingExercise.getExampleSolutionPublicationDate());
 
         programmingExercise.validateDates();
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(
-                programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
     }
 
@@ -897,8 +827,7 @@ public class ProgrammingExerciseService {
      * @throws EntityNotFoundException if there is no ProgrammingExercise for the
      *                                 given id.
      */
-    public ProgrammingExercise updateProblemStatement(ProgrammingExercise programmingExercise, String problemStatement,
-            @Nullable String notificationText)
+    public ProgrammingExercise updateProblemStatement(ProgrammingExercise programmingExercise, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException {
 
         programmingExercise.setProblemStatement(problemStatement);
@@ -931,8 +860,7 @@ public class ProgrammingExerciseService {
      *                         paths}
      * @throws GitAPIException If the checkout fails
      */
-    public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL,
-            VcsRepositoryUrl testRepoURL, String testsPath, User user)
+    public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
             throws IOException, GitAPIException {
         Repository solutionRepository = gitService.getOrCheckoutRepository(solutionRepoURL, true);
         Repository exerciseRepository = gitService.getOrCheckoutRepository(exerciseRepoURL, true);
@@ -947,16 +875,13 @@ public class ProgrammingExerciseService {
 
         Path solutionRepositoryPath = solutionRepository.getLocalPath().toRealPath();
         Path exerciseRepositoryPath = exerciseRepository.getLocalPath().toRealPath();
-        Path structureOraclePath = Path.of(testRepository.getLocalPath().toRealPath().toString(), testsPath,
-                "test.json");
+        Path structureOraclePath = Path.of(testRepository.getLocalPath().toRealPath().toString(), testsPath, "test.json");
 
-        String structureOracleJSON = OracleGenerator.generateStructureOracleJSON(solutionRepositoryPath,
-                exerciseRepositoryPath);
+        String structureOracleJSON = OracleGenerator.generateStructureOracleJSON(solutionRepositoryPath, exerciseRepositoryPath);
         return saveAndPushStructuralOracle(user, testRepository, structureOraclePath, structureOracleJSON);
     }
 
-    private boolean saveAndPushStructuralOracle(User user, Repository testRepository, Path structureOraclePath,
-            String structureOracleJSON) throws IOException {
+    private boolean saveAndPushStructuralOracle(User user, Repository testRepository, Path structureOraclePath, String structureOracleJSON) throws IOException {
         // If the oracle file does not already exist, then save the generated string to
         // the file.
         // If it does, check if the contents of the existing file are the same as the
@@ -969,26 +894,29 @@ public class ProgrammingExerciseService {
                 gitService.stageAllChanges(testRepository);
                 gitService.commitAndPush(testRepository, "Generate the structure oracle file.", true, user);
                 return true;
-            } catch (GitAPIException e) {
+            }
+            catch (GitAPIException e) {
                 log.error("An exception occurred while pushing the structure oracle file to the test repository.", e);
                 return false;
             }
-        } else {
+        }
+        else {
             Byte[] existingContents = ArrayUtils.toObject(Files.readAllBytes(structureOraclePath));
             Byte[] newContents = ArrayUtils.toObject(structureOracleJSON.getBytes());
 
             if (Arrays.deepEquals(existingContents, newContents)) {
                 log.info("No changes to the oracle detected.");
                 return false;
-            } else {
+            }
+            else {
                 try {
                     Files.write(structureOraclePath, structureOracleJSON.getBytes());
                     gitService.stageAllChanges(testRepository);
                     gitService.commitAndPush(testRepository, "Update the structure oracle file.", true, user);
                     return true;
-                } catch (GitAPIException e) {
-                    log.error("An exception occurred while pushing the structure oracle file to the test repository.",
-                            e);
+                }
+                catch (GitAPIException e) {
+                    log.error("An exception occurred while pushing the structure oracle file to the test repository.", e);
                     return false;
                 }
             }
@@ -1008,8 +936,7 @@ public class ProgrammingExerciseService {
         // nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks
         // down from the resources to the service methods (e.g. EntityNotFound).
-        var programmingExercise = programmingExerciseRepository
-                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
+        var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
         final var templateRepositoryUrlAsUrl = programmingExercise.getVcsTemplateRepositoryUrl();
         final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
@@ -1028,13 +955,11 @@ public class ProgrammingExerciseService {
             if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
                 final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
                 if (templateBuildPlanId != null) {
-                    continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(),
-                            templateBuildPlanId);
+                    continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
                 }
                 final var solutionBuildPlanId = programmingExercise.getSolutionBuildPlanId();
                 if (solutionBuildPlanId != null) {
-                    continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(),
-                            solutionBuildPlanId);
+                    continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), solutionBuildPlanId);
                 }
                 continuousIntegrationService.get().deleteProject(programmingExercise.getProjectKey());
             }
@@ -1059,14 +984,9 @@ public class ProgrammingExerciseService {
             versionControlService.get().deleteProject(programmingExercise.getProjectKey());
         }
         /*
-         * Always delete the local copies of the repository because they can (in theory)
-         * be restored by cloning again, but they block the creation of new programming
-         * exercises with
-         * the same short name as a deleted one. The instructors might have missed
-         * selecting deleteBaseReposBuildPlans, and delete those manually later. This
-         * however leaves no
-         * chance to remove the Artemis-local repositories on the server. In summary,
-         * they should and can always be deleted.
+         * Always delete the local copies of the repository because they can (in theory) be restored by cloning again, but they block the creation of new programming exercises with
+         * the same short name as a deleted one. The instructors might have missed selecting deleteBaseReposBuildPlans, and delete those manually later. This however leaves no
+         * chance to remove the Artemis-local repositories on the server. In summary, they should and can always be deleted.
          */
         if (programmingExercise.getTemplateRepositoryUrl() != null) {
             gitService.deleteLocalRepository(templateRepositoryUrlAsUrl);
@@ -1086,25 +1006,19 @@ public class ProgrammingExerciseService {
 
         programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExerciseId);
 
-        SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise
-                .getSolutionParticipation();
-        TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise
-                .getTemplateParticipation();
+        SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
+        TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();
         if (solutionProgrammingExerciseParticipation != null) {
-            participationService
-                    .deleteResultsAndSubmissionsOfParticipation(solutionProgrammingExerciseParticipation.getId(), true);
+            participationService.deleteResultsAndSubmissionsOfParticipation(solutionProgrammingExerciseParticipation.getId(), true);
         }
         if (templateProgrammingExerciseParticipation != null) {
-            participationService
-                    .deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation.getId(), true);
+            participationService.deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation.getId(), true);
         }
 
         // Note: we fetch the programming exercise again here with student
         // participations to avoid Hibernate issues during the delete operation below
-        programmingExercise = programmingExerciseRepository
-                .findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(programmingExerciseId);
-        log.debug("Delete programming exercises with student participations: {}",
-                programmingExercise.getStudentParticipations());
+        programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(programmingExerciseId);
+        log.debug("Delete programming exercises with student participations: {}", programmingExercise.getStudentParticipations());
         // This will also delete the template & solution participation: we explicitly
         // use deleteById to avoid potential Hibernate issues during deletion
         programmingExerciseRepository.deleteById(programmingExerciseId);
@@ -1136,32 +1050,31 @@ public class ProgrammingExerciseService {
      * @return A wrapper object containing a list of all found exercises and the
      *         total number of pages
      */
-    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search,
-            final Boolean isCourseFilter, final Boolean isExamFilter,
+    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
             final User user) {
         final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
         Page<ProgrammingExercise> exercisePage = Page.empty();
         if (authCheckService.isAdmin(user)) {
             if (isCourseFilter && isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExams(searchTerm,
-                        pageable);
-            } else if (isCourseFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExams(searchTerm, pageable);
+            }
+            else if (isCourseFilter) {
                 exercisePage = programmingExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
-            } else if (isExamFilter) {
+            }
+            else if (isExamFilter) {
                 exercisePage = programmingExerciseRepository.queryBySearchTermInAllExams(searchTerm, pageable);
             }
-        } else {
+        }
+        else {
             if (isCourseFilter && isExamFilter) {
-                exercisePage = programmingExerciseRepository
-                        .queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(),
-                                pageable);
-            } else if (isCourseFilter) {
-                exercisePage = programmingExerciseRepository
-                        .queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            } else if (isExamFilter) {
-                exercisePage = programmingExerciseRepository
-                        .queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+            else if (isCourseFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+            else if (isExamFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
             }
         }
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
@@ -1188,8 +1101,7 @@ public class ProgrammingExerciseService {
         continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), adminGroups,
                 List.of(CIPermission.CREATE, CIPermission.READ, CIPermission.CREATEREPOSITORY, CIPermission.ADMIN));
         if (teachingAssistantGroup != null) {
-            continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(),
-                    List.of(teachingAssistantGroup), List.of(CIPermission.READ));
+            continuousIntegrationService.get().giveProjectPermissions(exercise.getProjectKey(), List.of(teachingAssistantGroup), List.of(CIPermission.READ));
         }
     }
 
@@ -1229,11 +1141,9 @@ public class ProgrammingExerciseService {
         String projectKey = programmingExercise.getProjectKey();
         String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
         String projectName = programmingExercise.getProjectName();
-        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, courseShortName,
-                projectName);
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, courseShortName, projectName);
         if (projectExists) {
-            var errorMessageVcs = "Project already exists on the Version Control Server: " + projectName
-                    + ". Please choose a different title and short name!";
+            var errorMessageVcs = "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!";
             throw new BadRequestAlertException(errorMessageVcs, "ProgrammingExercise", "vcsProjectExists");
         }
         // TODO: Remove check when local CI is implemented.
@@ -1268,8 +1178,7 @@ public class ProgrammingExerciseService {
         String projectName = courseShortName + " " + programmingExercise.getTitle();
         log.debug("Project Key {}", projectKey);
         log.debug("Project Name {}", projectName);
-        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, courseShortName,
-                projectName);
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, courseShortName, projectName);
         if (projectExists) {
             return true;
         }
@@ -1287,12 +1196,9 @@ public class ProgrammingExerciseService {
      * @param exerciseId of the exercise
      */
     public void deleteTasksWithSolutionEntries(Long exerciseId) {
-        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository
-                .findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
-        Set<ProgrammingExerciseSolutionEntry> solutionEntries = tasks.stream()
-                .map(ProgrammingExerciseTask::getTestCases).flatMap(Collection::stream)
-                .map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream)
-                .collect(Collectors.toSet());
+        Set<ProgrammingExerciseTask> tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCaseAndSolutionEntriesElseThrow(exerciseId);
+        Set<ProgrammingExerciseSolutionEntry> solutionEntries = tasks.stream().map(ProgrammingExerciseTask::getTestCases).flatMap(Collection::stream)
+                .map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).collect(Collectors.toSet());
         programmingExerciseTaskRepository.deleteAll(tasks);
         programmingExerciseSolutionEntryRepository.deleteAll(solutionEntries);
     }
@@ -1306,11 +1212,9 @@ public class ProgrammingExerciseService {
      *                                        values
      * @param updatedProgrammingExercise      the updated exercise with new values
      */
-    public void handleRepoAccessRightChanges(ProgrammingExercise programmingExerciseBeforeUpdate,
-            ProgrammingExercise updatedProgrammingExercise) {
+    public void handleRepoAccessRightChanges(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (!programmingExerciseBeforeUpdate.isReleased()) {
-            if (updatedProgrammingExercise.isReleased()
-                    && !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+            if (updatedProgrammingExercise.isReleased() && !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
                 // There might be some repositories that have to be unlocked
                 unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
             }
@@ -1324,8 +1228,7 @@ public class ProgrammingExerciseService {
             return;
         }
 
-        boolean lockedUnlockedRepos = handleRepoAccessRightChangesDueDates(programmingExerciseBeforeUpdate,
-                updatedProgrammingExercise);
+        boolean lockedUnlockedRepos = handleRepoAccessRightChangesDueDates(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
         if (lockedUnlockedRepos) {
             return;
         }
@@ -1344,27 +1247,21 @@ public class ProgrammingExerciseService {
      * @return true if the repos were locked/unlocked and no further lock/unlocks
      *         should be done; false otherwise
      */
-    private boolean handleRepoAccessRightChangesDueDates(ProgrammingExercise programmingExerciseBeforeUpdate,
-            ProgrammingExercise updatedProgrammingExercise) {
+    private boolean handleRepoAccessRightChangesDueDates(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (!Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
             ZonedDateTime now = ZonedDateTime.now();
 
-            if (programmingExerciseBeforeUpdate.getDueDate() != null
-                    && programmingExerciseBeforeUpdate.getDueDate().isBefore(now)
-                    && (updatedProgrammingExercise.getDueDate() == null
-                            || updatedProgrammingExercise.getDueDate().isAfter(now))) {
+            if (programmingExerciseBeforeUpdate.getDueDate() != null && programmingExerciseBeforeUpdate.getDueDate().isBefore(now)
+                    && (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(now))) {
                 // New due date allows students to continue working on exercise
-                instanceMessageSendService.sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(
-                        programmingExerciseBeforeUpdate.getId());
+                instanceMessageSendService.sendUnlockAllRepositoriesWithoutEarlierIndividualDueDate(programmingExerciseBeforeUpdate.getId());
                 return true;
-            } else if ((programmingExerciseBeforeUpdate.getDueDate() == null
-                    || programmingExerciseBeforeUpdate.getDueDate().isAfter(now))
-                    && updatedProgrammingExercise.getDueDate() != null
-                    && updatedProgrammingExercise.getDueDate().isBefore(now)) {
+            }
+            else if ((programmingExerciseBeforeUpdate.getDueDate() == null || programmingExerciseBeforeUpdate.getDueDate().isAfter(now))
+                    && updatedProgrammingExercise.getDueDate() != null && updatedProgrammingExercise.getDueDate().isBefore(now)) {
                 // New due date forbids students to continue working on exercise, if their
                 // individual due date does not override the new due date
-                instanceMessageSendService
-                        .sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExerciseBeforeUpdate.getId());
+                instanceMessageSendService.sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExerciseBeforeUpdate.getId());
                 return true;
             }
         }
@@ -1382,16 +1279,13 @@ public class ProgrammingExerciseService {
      * @return true if the repos were locked/unlocked and no further lock/unlocks
      *         should be done; false otherwise
      */
-    private boolean handleRepoAccessRightChangesChangesOfflineIDE(ProgrammingExercise programmingExerciseBeforeUpdate,
-            ProgrammingExercise updatedProgrammingExercise) {
-        if (updatedProgrammingExercise.getDueDate() == null
-                || updatedProgrammingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
-            if (Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde())
-                    && !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+    private boolean handleRepoAccessRightChangesChangesOfflineIDE(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
+        if (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
+            if (Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && !Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
                 unlockAllRepositories(programmingExerciseBeforeUpdate.getId());
                 return true;
-            } else if (!Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde())
-                    && Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
+            }
+            else if (!Boolean.FALSE.equals(programmingExerciseBeforeUpdate.isAllowOfflineIde()) && Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
                 lockAllRepositories(programmingExerciseBeforeUpdate.getId());
                 return true;
             }

@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.exception.LocalVCException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
@@ -80,8 +81,8 @@ public class LocalVCFilterUtilService {
 
         User user = authenticateUser(username, password);
 
-        String uri = servletRequest.getRequestURI();
-        LocalVCRepositoryUrl localVCUrl = validateRepositoryUrl(uri);
+        String url = servletRequest.getRequestURL().toString();
+        LocalVCRepositoryUrl localVCUrl = validateRepositoryUrl(url);
 
         String projectKey = localVCUrl.getProjectKey();
         String courseShortName = localVCUrl.getCourseShortName();
@@ -94,9 +95,8 @@ public class LocalVCFilterUtilService {
         authorizeUser(repositoryTypeOrUserName, course, exercise, user, forPush);
 
         if (forPush) {
-            log.debug("Additional checks for push requests.");
+            log.debug("Notifying Artemis about a new push.");
             // TODO: Add Webhooks -> notifies Artemis on Push
-            // TODO: Add branch protection (prevent rewriting the history (force-push) and deletion of branches). + no renaming of the repository.
         }
     }
 
@@ -137,26 +137,18 @@ public class LocalVCFilterUtilService {
         return user;
     }
 
-    private LocalVCRepositoryUrl validateRepositoryUrl(String urlPath) throws LocalVCBadRequestException {
+    private LocalVCRepositoryUrl validateRepositoryUrl(String url) throws LocalVCBadRequestException {
 
-        String[] pathSplit = urlPath.split("/");
+        LocalVCRepositoryUrl localVCRepositoryUrl;
 
-        // Should start with '/git', and end with '.git'.
-        if (!pathSplit[1].equals("git") || !(pathSplit[4].endsWith(".git"))) {
-            throw new LocalVCBadRequestException("Invalid URL.");
+        try {
+            localVCRepositoryUrl = new LocalVCRepositoryUrl(localVCServerUrl, url);
+        }
+        catch (LocalVCException e) {
+            throw new LocalVCBadRequestException("Badly formed Local Git URI: " + url, e);
         }
 
-        String repositorySlug = pathSplit[4].replace(".git", "");
-
-        // TODO: Refactor VcsRepositoryUrl and LocalGitRepositoryUrl properly so I do not have to hand an environment variable to the constructor.
-        LocalVCRepositoryUrl localVCRepo = new LocalVCRepositoryUrl(localVCServerUrl, pathSplit[3], pathSplit[2], repositorySlug);
-
-        // Project key should contain the course short name.
-        if (!localVCRepo.getProjectKey().toLowerCase().contains(localVCRepo.getCourseShortName().toLowerCase())) {
-            throw new LocalVCBadRequestException("Badly formed Local Git URI: " + urlPath + " Expected the repository name to start with the lower case course short name.");
-        }
-
-        return localVCRepo;
+        return localVCRepositoryUrl;
     }
 
     private Course findCourseForRepository(String courseShortName) throws LocalVCNotFoundException, LocalVCInternalException {

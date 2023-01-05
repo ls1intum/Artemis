@@ -22,7 +22,6 @@ import java.util.stream.StreamSupport;
 
 import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
-import javax.servlet.ServletContext;
 import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
@@ -53,8 +52,10 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
+import de.tum.in.www1.artemis.exception.LocalVCException;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ZipFileService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -108,8 +109,6 @@ public class GitService {
 
     private final ZipFileService zipFileService;
 
-    private final ServletContext servletContext;
-
     private TransportConfigCallback sshCallback;
 
     private static final int JGIT_TIMEOUT_IN_SECONDS = 5;
@@ -120,7 +119,7 @@ public class GitService {
 
     private static final String REMOTE_NAME = "origin";
 
-    public GitService(Environment environment, FileService fileService, ZipFileService zipFileService, ServletContext servletContext) {
+    public GitService(Environment environment, FileService fileService, ZipFileService zipFileService) {
         log.info("file.encoding={}", System.getProperty("file.encoding"));
         log.info("sun.jnu.encoding={}", System.getProperty("sun.jnu.encoding"));
         log.info("Default Charset={}", Charset.defaultCharset());
@@ -128,7 +127,6 @@ public class GitService {
         this.environment = environment;
         this.fileService = fileService;
         this.zipFileService = zipFileService;
-        this.servletContext = servletContext;
     }
 
     /**
@@ -266,8 +264,20 @@ public class GitService {
     private URI getGitUri(VcsRepositoryUrl vcsRepositoryUrl) throws URISyntaxException {
         // If the "localvc" profile is active, the repository is cloned from the folder defined in "artemis.version-control.local-vcs-repo-path".
         if (Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
-            Path vcsRepositoryFolderPath = getLocalPathOfRepo(localVCPath, vcsRepositoryUrl).toAbsolutePath();
-            return new URI(vcsRepositoryFolderPath + ".git");
+
+            LocalVCRepositoryUrl localVCRepositoryUrl;
+            try {
+                // Create LocalVCRepositoryUrl from the more generic VcsRepositoryUrl.
+                // This validates that the Url is formed correctly (e.g. contains the gitUrl defined in the environment variables).
+                // It is then easy to get the corresponding local path (the location where the repository is saved locally) from this VcsRepositoryUrl.
+                localVCRepositoryUrl = new LocalVCRepositoryUrl(gitUrl, vcsRepositoryUrl.toString());
+            }
+            catch (LocalVCException e) {
+                throw new URISyntaxException(vcsRepositoryUrl.toString(), "LocalVCRepositoryUrl malformed");
+            }
+
+            Path localVCRepositoryPath = localVCRepositoryUrl.getLocalPath(localVCPath);
+            return localVCRepositoryPath.toUri();
         }
         return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURI();
     }

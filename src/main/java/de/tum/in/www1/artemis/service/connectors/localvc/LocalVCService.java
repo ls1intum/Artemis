@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.localvc;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
@@ -521,14 +522,13 @@ public class LocalVCService extends AbstractVersionControlService {
     private void createRepository(String projectKey, String courseShortName, String repositorySlug) throws LocalVCException {
 
         LocalVCRepositoryUrl localVCUrl = new LocalVCRepositoryUrl(localVCServerUrl, projectKey, courseShortName, repositorySlug);
-        // TODO: Save Url in db.
 
-        String localFilePath = localVCUrl.getLocalPath(localVCPath);
+        Path localFilePath = localVCUrl.getLocalPath(localVCPath);
 
         log.debug("Creating local git repo {} in folder {}", repositorySlug, localFilePath);
 
         try {
-            File remoteDir = new File(localFilePath);
+            File remoteDir = localFilePath.toFile();
 
             if (!remoteDir.mkdirs()) {
                 throw new IOException("Could not create directory " + remoteDir.getPath());
@@ -540,10 +540,6 @@ public class LocalVCService extends AbstractVersionControlService {
             RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
             refUpdate.setForceUpdate(true);
             refUpdate.link("refs/heads/" + defaultBranch);
-
-            // TODO: Check if I can configure the repository here instead of in the repositoryResolver in the JGitServletConfiguration.
-            // Enable pushing without credentials, authentication is handled by the JGitPushFilter.
-            // repository.getConfig().setBoolean("http", null, "receivepack", true);
 
             git.close();
         }

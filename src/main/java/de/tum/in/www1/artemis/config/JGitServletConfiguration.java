@@ -15,11 +15,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import de.tum.in.www1.artemis.security.localVC.LocalVCFetchFilter;
 import de.tum.in.www1.artemis.security.localVC.LocalVCFilterUtilService;
 import de.tum.in.www1.artemis.security.localVC.LocalVCPushFilter;
-import org.springframework.context.annotation.Profile;
 
 /**
  * Configuration of the JGit Servlet that handles fetch and push requests for local Version Control.
@@ -84,8 +84,13 @@ public class JGitServletConfiguration {
                 // Enable pushing without credentials, authentication is handled by the JGitPushFilter.
                 repository.getConfig().setBoolean("http", null, "receivepack", true);
 
-                // TODO: Check whether closing the repository via close() is necessary here or if I need to open it at all before returning.
-                repository.incrementOpen();
+                // Prevent force-pushes.
+                repository.getConfig().setBoolean("receive", null, "denyNonFastForwards", true);
+
+                // Prevent renaming branches.
+                repository.getConfig().setBoolean("receive", null, "denyDeletes", true);
+                repository.getConfig().setBoolean("receive", null, "denyRenames", true);
+
                 return repository;
             });
 
