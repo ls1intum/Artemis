@@ -21,9 +21,9 @@
     </div>
     <div class="dropdown-container">
         <div class="form-group">
-            <span class="colon-suffix no-flex-shrink">
-                {{ isExam ? ('artemisApp.examManagement.maxPoints.title' | artemisTranslate) : ('artemisApp.course.maxPoints.title' | artemisTranslate) }}
-            </span>
+            <span class="colon-suffix no-flex-shrink">{{
+                isExam ? ('artemisApp.examManagement.maxPoints.title' | artemisTranslate) : ('artemisApp.course.maxPoints.title' | artemisTranslate)
+            }}</span>
             <input type="number" class="form-control" [(ngModel)]="childComponent.maxPoints" min="1" (change)="childComponent.onChangeMaxPoints(childComponent.maxPoints)" />
         </div>
         <div class="form-group">
