@@ -15,7 +15,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
@@ -32,15 +31,11 @@ public class StaticCodeAnalysisService {
 
     private final ProgrammingTriggerService programmingTriggerService;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations, ProgrammingTriggerService programmingTriggerService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations, ProgrammingTriggerService programmingTriggerService) {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.staticCodeAnalysisDefaultConfigurations = staticCodeAnalysisDefaultConfigurations;
         this.programmingTriggerService = programmingTriggerService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -148,7 +143,11 @@ public class StaticCodeAnalysisService {
     }
 
     /**
-     * TODO
+     * This method allows users to reuse an already existing SCA configuration by copying it into another exercise.
+     * The previous configuration of the targeted exercise will get removed.
+     * @param targetExercise The exercise into which the configuration gets copied in
+     * @param sourceExercise The exercise to take the existing configuration from
+     * @return the new SCA configuration of the targetExercise
      */
     public Set<StaticCodeAnalysisCategory> importCategoriesFromExercise(ProgrammingExercise targetExercise, ProgrammingExercise sourceExercise) {
         var sourceCategories = findByExerciseId(sourceExercise.getId());

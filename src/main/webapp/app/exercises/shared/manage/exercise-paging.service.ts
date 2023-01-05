@@ -5,7 +5,7 @@ import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { Observable, map } from 'rxjs';
 
 export abstract class ExercisePagingService<T extends Exercise> extends PagingService {
-    protected constructor(protected http: HttpClient, private resourceUrl: string) {
+    protected constructor(private http: HttpClient, private resourceUrl: string) {
         super();
     }
     public searchForExercises(pageable: PageableSearch, isCourseFilter: boolean, isExamFilter: boolean): Observable<SearchResult<T>> {

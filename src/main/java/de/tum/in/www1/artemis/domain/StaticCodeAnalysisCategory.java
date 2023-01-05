@@ -77,9 +77,10 @@ public class StaticCodeAnalysisCategory extends DomainObject {
     }
 
     /**
-     * Creates a new object with the same values as this object.
-     * The {exercise} attribute will not be set in the new object.
+     * Creates a copy of this object with the same values.
+     * As an exception, the {exercise} attribute will not be set and be null.
      * @return New SCA category object with the same values
+     * @see de.tum.in.www1.artemis.service.StaticCodeAnalysisService#importCategoriesFromExercise(ProgrammingExercise, ProgrammingExercise)
      */
     public StaticCodeAnalysisCategory copy() {
         StaticCodeAnalysisCategory category = new StaticCodeAnalysisCategory();

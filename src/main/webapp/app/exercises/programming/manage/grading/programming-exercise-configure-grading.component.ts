@@ -469,17 +469,14 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
         this.gradingService
             .importCategoriesFromExercise(this.programmingExercise.id!, sourceExerciseId)
             .pipe(
-                tap((configuration: StaticCodeAnalysisCategory[]) => {
-                    // TODO refactor, remove duplicates
-                    // Generate the new list of categories.
-                    this.staticCodeAnalysisCategoriesForTable = configuration;
+                tap((newConfiguration: StaticCodeAnalysisCategory[]) => {
+                    this.staticCodeAnalysisCategoriesForTable = newConfiguration;
                     this.setChartAndBackupCategoryView();
-                    // TODO show new categories, show success alert
-                    console.log('imported', configuration);
+
+                    this.alertService.success('artemisApp.programmingExercise.configureGrading.categories.importSuccessful', { exercise: sourceExerciseId });
                 }),
                 catchError(() => {
-                    // TODO show own fail alert
-                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.testCases.resetFailed`);
+                    this.alertService.error(`artemisApp.programmingExercise.configureGrading.categories.importFailed`, { exercise: sourceExerciseId });
                     return of(null);
                 }),
             )

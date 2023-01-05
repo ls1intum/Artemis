@@ -57,9 +57,9 @@ public class StaticCodeAnalysisResource {
         log.debug("REST request to get static code analysis categories for programming exercise {}", exerciseId);
 
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-
         checkSCAEnabledForExerciseElseThrow(programmingExercise);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
+
         Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.findByExerciseId(exerciseId);
         return ResponseEntity.ok(staticCodeAnalysisCategories);
     }
@@ -80,7 +80,6 @@ public class StaticCodeAnalysisResource {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
 
         checkSCAEnabledForExerciseElseThrow(programmingExercise);
-
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, programmingExercise, null);
 
         validateCategories(categories, exerciseId);
@@ -108,9 +107,12 @@ public class StaticCodeAnalysisResource {
     }
 
     /**
-     * TODO
-     * @param exerciseId
-     * @return
+     * PATCH /programming-exercises/:exerciseId/static-code-analysis-categories/import
+     *
+     * @param exerciseId       The exercise to copy the configuration into
+     * @param sourceExerciseId The exercise to take the existing configuration from
+     * @return The newly created SCA configuration
+     * @see StaticCodeAnalysisService#importCategoriesFromExercise(ProgrammingExercise, ProgrammingExercise)
      */
     @PatchMapping(Endpoints.IMPORT)
     @PreAuthorize("hasRole('EDITOR')")

@@ -34,10 +34,7 @@ export class ProgrammingExerciseGradingTableActionsComponent {
         // TODO check if there is a better way for this (maybe via inheritance?)
         modalRef.componentInstance.onlySCA = true;
         modalRef.result.then(
-            (result: ProgrammingExercise) => {
-                console.log(result);
-                this.onCategoryImport.emit(result.id);
-            },
+            (result: ProgrammingExercise) => this.onCategoryImport.emit(result.id),
             () => {},
         );
     }

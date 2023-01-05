@@ -63,7 +63,7 @@ export class ExerciseImportComponent implements OnInit {
         }
         this.pagingService = this.getPagingService();
         if (this.onlySCA) {
-            this.titleKey = 'artemisApp.programmingExercise.configureGrading.importLabel';
+            this.titleKey = 'artemisApp.programmingExercise.configureGrading.categories.importLabel';
         } else {
             this.titleKey = `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
         }
@@ -101,9 +101,7 @@ export class ExerciseImportComponent implements OnInit {
             .pipe(
                 debounceTime(debounce),
                 tap(() => (this.loading = true)),
-                switchMap(() => {
-                    return this.pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter);
-                }),
+                switchMap(() => this.pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter)),
             )
             .subscribe((resp: SearchResult<Exercise>) => {
                 this.content = resp;
