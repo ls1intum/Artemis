@@ -19,11 +19,13 @@ import org.springframework.context.annotation.Configuration;
 import de.tum.in.www1.artemis.security.localVC.LocalVCFetchFilter;
 import de.tum.in.www1.artemis.security.localVC.LocalVCFilterUtilService;
 import de.tum.in.www1.artemis.security.localVC.LocalVCPushFilter;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Configuration of the JGit Servlet that handles fetch and push requests for local Version Control.
  */
 @Configuration
+@Profile("localvc")
 public class JGitServletConfiguration {
 
     private final Logger log = LoggerFactory.getLogger(JGitServletConfiguration.class);
@@ -91,7 +93,7 @@ public class JGitServletConfiguration {
             gitServlet.addReceivePackFilter(new LocalVCPushFilter(localVCFilterUtilService));
 
             log.info("Registering GitServlet");
-            return new ServletRegistrationBean<GitServlet>(gitServlet, "/git/*");
+            return new ServletRegistrationBean<>(gitServlet, "/git/*");
         }
         catch (Exception e) {
             log.error("Something went wrong creating the JGit Servlet.");

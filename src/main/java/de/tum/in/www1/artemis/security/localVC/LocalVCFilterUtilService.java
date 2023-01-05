@@ -11,6 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.AuthenticationException;
@@ -32,6 +33,7 @@ import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Service
+@Profile("localvc")
 public class LocalVCFilterUtilService {
 
     private final Logger log = LoggerFactory.getLogger(LocalVCFilterUtilService.class);
@@ -67,7 +69,7 @@ public class LocalVCFilterUtilService {
     /**
      * @param servletRequest The object containing all information about the incoming request.
      * @param forPush        Whether the method should authenticate a fetch or a push request. For a push request, additional checks are conducted.
-     * @throws LocalVCAuthException
+     * @throws LocalVCAuthException For when the user cannot be authenticated or is not authorized to access the repository.
      */
     public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, boolean forPush) throws LocalVCAuthException {
 
@@ -92,6 +94,7 @@ public class LocalVCFilterUtilService {
         authorizeUser(repositoryTypeOrUserName, course, exercise, user, forPush);
 
         if (forPush) {
+            log.debug("Additional checks for push requests.");
             // TODO: Add Webhooks -> notifies Artemis on Push
             // TODO: Add branch protection (prevent rewriting the history (force-push) and deletion of branches). + no renaming of the repository.
         }
