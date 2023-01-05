@@ -92,8 +92,9 @@
 
         <modifyDataType tableName="tutorial_group_session" columnName="session_start" newDataType="datetime(3)"/>
         <modifyDataType tableName="tutorial_group_session" columnName="session_end" newDataType="datetime(3)"/>
-        <modifyDataType tableName="tutorial_group_session" columnName="period_start" newDataType="datetime(3)"/>
-        <modifyDataType tableName="tutorial_group_session" columnName="period_end" newDataType="datetime(3)"/>
+
+        <modifyDataType tableName="tutorial_group_free_period" columnName="period_start" newDataType="datetime(3)"/>
+        <modifyDataType tableName="tutorial_group_free_period" columnName="period_end" newDataType="datetime(3)"/>
 
         <!--
         Due to mysql SQL limitations, modifyDataType will lose primary key/autoincrement/not null/comment settings explicitly redefined in the change.
@@ -103,7 +104,7 @@
         <addNotNullConstraint tableName="exercise_hint_activation" columnName="activation_date" columnDataType="datetime(3)"/>
         <addNotNullConstraint tableName="tutorial_group_session" columnName="session_start" columnDataType="datetime(3)"/>
         <addNotNullConstraint tableName="tutorial_group_session" columnName="session_end" columnDataType="datetime(3)"/>
-        <addNotNullConstraint tableName="tutorial_group_session" columnName="period_start" columnDataType="datetime(3)"/>
-        <addNotNullConstraint tableName="tutorial_group_session" columnName="period_end" columnDataType="datetime(3)"/>
+        <addNotNullConstraint tableName="tutorial_group_free_period" columnName="period_start" columnDataType="datetime(3)"/>
+        <addNotNullConstraint tableName="tutorial_group_free_period" columnName="period_end" columnDataType="datetime(3)"/>
     </changeSet>
 </databaseChangeLog>
