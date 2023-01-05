@@ -3,6 +3,8 @@
 }
 
 $numbering-size: 1.5rem;
+$numbering-border: 1px;
+$numbering-margin: calc($numbering-size / 2 - $numbering-border); // To make number left borders align with page title.
 
 .bonus-form-step {
     &::before {
@@ -14,12 +16,13 @@ $numbering-size: 1.5rem;
     width: $numbering-size;
     height: $numbering-size;
 
-    border: 1px solid;
+    border: $numbering-border solid;
     text-align: center;
+    margin-left: $numbering-margin;
 }
 
 .bonus-calculated {
-    margin-left: $numbering-size;
+    margin-left: calc($numbering-size + $numbering-margin);
 }
 
 .calculation-sign {

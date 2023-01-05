@@ -20,11 +20,11 @@
             "bonusSource": {
                 "title": "Select bonus source",
                 "helpText": "Exams and courses with \"Bonus\" type grading keys are listed below. The student's grade for the selected course or exam determines the bonus amount.",
-                "selectedBonusSource": "Selected bonus source grading key"
+                "maxPoints": "Max points"
             },
             "examples": {
                 "title": "Examples",
-                "helpText": "(You can try out custom scenarios by editing the last row)",
+                "helpText": "You can try out custom scenarios by editing the last row.",
                 "examPoints": "Exam Points",
                 "examGrade": "Exam Grade",
                 "bonusSourceStudentPoints": "Bonus Source Student Points",
