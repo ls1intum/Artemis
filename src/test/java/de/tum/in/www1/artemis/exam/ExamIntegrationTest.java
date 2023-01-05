@@ -10,12 +10,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1819,7 +1821,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamScore(boolean withCourseBonus) throws Exception {
-        participantScoreRepository.deleteAll();
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // TODO avoid duplicated code with StudentExamIntegrationTest
 
@@ -1962,8 +1963,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             bonusCourseParticipationCount = 5; // Participations from the bonus course should be included in expected participation count.
         }
 
-        final long expectedParticipationCount = 90 + bonusCourseParticipationCount; // 90 participations from the exam.
-        await().until(() -> participantScoreRepository.count() == expectedParticipationCount);
+        Awaitility.setDefaultTimeout(Duration.ofMinutes(1));
+        await().until(() -> {
+            boolean valid = true;
+            for (Exercise exercise : exercisesInExam) {
+                log.debug("participations actual: " + participantScoreRepository.findAllByExercise(exercise).size() + " expected: " + exercise.getStudentParticipations().size());
+                if (participantScoreRepository.findAllByExercise(exercise).size() != exercise.getStudentParticipations().size()) {
+                    valid = false;
+                    break;
+                }
+            }
+            return valid;
+        });
 
         var examScores = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
@@ -2138,6 +2149,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 5L);
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isNull();
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(90L, 90L);
+
+        // TODO: Find appropriate condition for waiting instead of using sleep
+        // Waiting for scheduler to finish processing
+        Thread.sleep(60000);
 
         // change back to instructor user
         database.changeUser(TEST_PREFIX + "instructor1");
