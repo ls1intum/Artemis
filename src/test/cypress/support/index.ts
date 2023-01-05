@@ -56,4 +56,17 @@ Cypress.on('window:before:load', (win) => {
 Cypress.on('uncaught:exception', (err, runnable) => {
     return err.name === 'TypeError' && err?.stack?.includes('sentry');
 });
+
+/**
+ * We want to log our test retries to the console to be able to see how often a test is retried.
+ */
+const config: any = Cypress.config();
+if (!config.isInteractive && config.reporter !== 'spec') {
+    afterEach(() => {
+        const test = (cy as any).state('runnable')?.ctx?.currentTest;
+        if (test?.state === 'failed' && test?._currentRetry < test?._retries) {
+            cy.task('log', ` RERUN: (Attempt ${test._currentRetry + 1} of ${test._retries + 1}) ${test.title}`, { log: false });
+        }
+    });
+}
 /*eslint-enable */

@@ -194,6 +194,24 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     /**
+     * Test post request for grading scale with plagiarism and no-participation special grades
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testSaveGradingScaleWithSpecialGrades() throws Exception {
+        gradeSteps = database.generateGradeStepSet(courseGradingScale, true);
+        courseGradingScale.setGradeSteps(gradeSteps);
+        courseGradingScale.setPlagiarismGrade("Plagiarism");
+        courseGradingScale.setNoParticipationGrade("NoParticipation");
+        GradingScale savedGradingScale = request.postWithResponseBody("/api/courses/" + course.getId() + "/grading-scale", courseGradingScale, GradingScale.class,
+                HttpStatus.CREATED);
+
+        assertThat(savedGradingScale.getGradeSteps()).hasSameSizeAs(courseGradingScale.getGradeSteps());
+        assertThat(savedGradingScale.getGradeSteps()).allMatch(gradeStep -> isGradeStepInSet(courseGradingScale.getGradeSteps(), gradeStep));
+        assertThat(savedGradingScale).usingRecursiveComparison().ignoringFields("id", "exam", "course", "gradeSteps").ignoringCollectionOrder().isEqualTo(courseGradingScale);
+    }
+
+    /**
      * Test post request with invalid grade steps
      */
     @Test
