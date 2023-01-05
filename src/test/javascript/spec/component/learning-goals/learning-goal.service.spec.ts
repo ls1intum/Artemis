@@ -6,16 +6,14 @@ import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learning-goal-individual-progress-dtos.model';
-import { LearningGoal } from 'app/entities/learningGoal.model';
-import { CourseLearningGoalProgressDTO } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
+import { CourseLearningGoalProgress, LearningGoal, LearningGoalProgress } from 'app/entities/learningGoal.model';
 
 describe('LearningGoalService', () => {
     let learningGoalService: LearningGoalService;
     let httpTestingController: HttpTestingController;
     let defaultLearningGoal: LearningGoal;
-    let defaultLearningGoalProgress: IndividualLearningGoalProgress;
-    let defaultLearningGoalCourseProgress: CourseLearningGoalProgressDTO;
+    let defaultLearningGoalProgress: LearningGoalProgress;
+    let defaultLearningGoalCourseProgress: CourseLearningGoalProgress;
     let expectedResultLearningGoal: any;
     let expectedResultLearningGoalProgress: any;
     let expectedResultLearningGoalCourseProgress: any;
@@ -35,7 +33,7 @@ describe('LearningGoalService', () => {
             ],
         });
         expectedResultLearningGoal = {} as HttpResponse<LearningGoal>;
-        expectedResultLearningGoalProgress = {} as HttpResponse<IndividualLearningGoalProgress>;
+        expectedResultLearningGoalProgress = {} as HttpResponse<LearningGoalProgress>;
 
         learningGoalService = TestBed.inject(LearningGoalService);
         httpTestingController = TestBed.inject(HttpTestingController);
@@ -45,13 +43,15 @@ describe('LearningGoalService', () => {
         defaultLearningGoal.title = 'title';
         defaultLearningGoal.description = 'description';
 
-        defaultLearningGoalProgress = new IndividualLearningGoalProgress();
-        defaultLearningGoalProgress.learningGoalId = 0;
-        defaultLearningGoalProgress.learningGoalTitle = 'title';
+        defaultLearningGoalProgress = new LearningGoalProgress();
+        defaultLearningGoalProgress.progress = 20;
+        defaultLearningGoalProgress.confidence = 50;
 
-        defaultLearningGoalCourseProgress = new CourseLearningGoalProgressDTO();
+        defaultLearningGoalCourseProgress = new CourseLearningGoalProgress();
         defaultLearningGoalCourseProgress.learningGoalId = 0;
-        defaultLearningGoalCourseProgress.learningGoalTitle = 'title';
+        defaultLearningGoalCourseProgress.numberOfStudents = 8;
+        defaultLearningGoalCourseProgress.numberOfMasteredStudents = 5;
+        defaultLearningGoalCourseProgress.averageStudentScore = 90;
     });
 
     afterEach(() => {

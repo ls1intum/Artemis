@@ -52,6 +52,7 @@ import '@angular/localize/init';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { By } from '@angular/platform-browser';
 import { NgbAlert, NgbModal, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -94,6 +95,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 MockComponent(ProgrammingExerciseEditableInstructionComponent),
                 MockComponent(GradingInstructionsDetailsComponent),
                 MockComponent(ButtonComponent),
+                MockComponent(LearningGoalSelectionComponent),
                 MockPipe(RemoveKeysPipe),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(CustomMinDirective),

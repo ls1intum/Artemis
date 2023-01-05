@@ -1,4 +1,4 @@
-<jhi-fireworks *ngIf="showFireworks"></jhi-fireworks>
+<jhi-fireworks [active]="showFireworks"></jhi-fireworks>
 
 <div *ngIf="isLoading" class="d-flex justify-content-center">
     <div class="spinner-border" role="status">
@@ -13,7 +13,7 @@
             <div class="col-11 general-info">
                 <h3 class="mb-0">
                     <fa-icon *ngIf="learningGoal.taxonomy" [icon]="getIcon(learningGoal.taxonomy)" [fixedWidth]="true"></fa-icon> <span>{{ learningGoal!.title }}</span>
-                    <span *ngIf="mastery == 100" class="badge text-white text-bg-success" jhiTranslate="artemisApp.learningGoal.mastered">Mastered</span>
+                    <span *ngIf="isMastered" class="badge text-white text-bg-success" jhiTranslate="artemisApp.learningGoal.mastered">Mastered</span>
                 </h3>
                 <div *ngIf="learningGoal.description">{{ learningGoal.description }}</div>
             </div>

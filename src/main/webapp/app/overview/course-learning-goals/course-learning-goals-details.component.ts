@@ -99,6 +99,10 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
         return Math.round((1 - weight) * this.progress + weight * this.confidence);
     }
 
+    get isMastered(): boolean {
+        return this.mastery >= 100;
+    }
+
     completeLectureUnit(event: LectureUnitCompletionEvent): void {
         if (event.lectureUnit.lecture && event.lectureUnit.visibleToStudents && event.lectureUnit.completed !== event.completed) {
             this.lectureUnitService.setCompletion(event.lectureUnit.id!, event.lectureUnit.lecture!.id!, event.completed).subscribe({

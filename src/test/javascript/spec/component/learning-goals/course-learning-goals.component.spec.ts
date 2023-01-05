@@ -6,7 +6,6 @@ import { of } from 'rxjs';
 import { LearningGoal, LearningGoalProgress } from 'app/entities/learningGoal.model';
 import { ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
-import { Component, Input } from '@angular/core';
 import { CourseLearningGoalsComponent } from 'app/overview/course-learning-goals/course-learning-goals.component';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
@@ -15,14 +14,9 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Course } from 'app/entities/course.model';
-
-@Component({ selector: 'jhi-learning-goal-card', template: '<div><ng-content></ng-content></div>' })
-class LearningGoalCardStubComponent {
-    @Input() learningGoal: LearningGoal;
-    @Input() progress?: number;
-    @Input() isPrerequisite: boolean;
-    @Input() displayOnly: boolean;
-}
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { ArtemisTestModule } from '../../test.module';
+import { LearningGoalCardStubComponent } from './learning-goal-card-stub.component';
 
 class MockActivatedRoute {
     parent: any;
@@ -48,7 +42,7 @@ describe('CourseLearningGoals', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
+            imports: [ArtemisTestModule, HttpClientTestingModule],
             declarations: [CourseLearningGoalsComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(AlertService),

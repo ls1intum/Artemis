@@ -1,28 +1,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { of } from 'rxjs';
-import { LearningGoal } from 'app/entities/learningGoal.model';
+import { CourseLearningGoalProgress, LearningGoal } from 'app/entities/learningGoal.model';
 import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
 import { ActivatedRoute } from '@angular/router';
-import { Component, Input } from '@angular/core';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { RouterTestingModule } from '@angular/router/testing';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
-import { By } from '@angular/platform-browser';
-import { CourseLearningGoalProgressDTO, CourseLectureUnitProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../test.module';
-
-@Component({ selector: 'jhi-learning-goal-card', template: '<div><ng-content></ng-content></div>' })
-class LearningGoalCardStubComponent {
-    @Input() learningGoal: LearningGoal;
-    @Input() learningGoalProgress: CourseLearningGoalProgressDTO;
-    @Input() isPrerequisite: boolean;
-}
+import { LearningGoalCardStubComponent } from './learning-goal-card-stub.component';
+import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
 
 describe('LearningGoalManagementComponent', () => {
     let learningGoalManagementComponentFixture: ComponentFixture<LearningGoalManagementComponent>;
@@ -37,6 +29,7 @@ describe('LearningGoalManagementComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
+                MockComponent(NgbProgressbar),
             ],
             providers: [
                 MockProvider(AccountService),
@@ -65,28 +58,24 @@ describe('LearningGoalManagementComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should load learning goal and associated progress and display a card for each of them', () => {
+    it('should load learning goal and associated progress', () => {
         const learningGoalService = TestBed.inject(LearningGoalService);
         const learningGoal = new LearningGoal();
         const textUnit = new TextUnit();
         learningGoal.id = 1;
         learningGoal.description = 'test';
         learningGoal.lectureUnits = [textUnit];
-        const courseLectureUnitProgress = new CourseLectureUnitProgress();
-        courseLectureUnitProgress.lectureUnitId = 1;
-        courseLectureUnitProgress.totalPointsAchievableByStudentsInLectureUnit = 10;
-        const courseLearningGoalProgress = new CourseLearningGoalProgressDTO();
-        courseLearningGoalProgress.courseId = 1;
+        const courseLearningGoalProgress = new CourseLearningGoalProgress();
         courseLearningGoalProgress.learningGoalId = 1;
-        courseLearningGoalProgress.learningGoalTitle = 'test';
-        courseLearningGoalProgress.averageScoreAchievedInLearningGoal = 30;
-        courseLearningGoalProgress.progressInLectureUnits = [courseLectureUnitProgress];
+        courseLearningGoalProgress.numberOfStudents = 8;
+        courseLearningGoalProgress.numberOfMasteredStudents = 5;
+        courseLearningGoalProgress.averageStudentScore = 90;
 
         const learningGoalsOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
             body: [learningGoal, new LearningGoal()],
             status: 200,
         });
-        const learningGoalProgressResponse: HttpResponse<CourseLearningGoalProgressDTO> = new HttpResponse({
+        const learningGoalProgressResponse: HttpResponse<CourseLearningGoalProgress> = new HttpResponse({
             body: courseLearningGoalProgress,
             status: 200,
         });
@@ -102,15 +91,12 @@ describe('LearningGoalManagementComponent', () => {
 
         learningGoalManagementComponentFixture.detectChanges();
 
-        const learningGoalCards = learningGoalManagementComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
-        expect(learningGoalCards).toHaveLength(2);
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getProgressSpy).toHaveBeenCalledTimes(2);
         expect(learningGoalManagementComponent.learningGoals).toHaveLength(2);
-        expect(learningGoalManagementComponent.learningGoalIdToLearningGoalCourseProgress.has(1)).toBeTrue();
     });
 
-    it('should load prerequisites and display a card for each of them', () => {
+    it('should load prerequisites', () => {
         const learningGoalService = TestBed.inject(LearningGoalService);
         const learningGoal = new LearningGoal();
         learningGoal.id = 1;
@@ -130,8 +116,6 @@ describe('LearningGoalManagementComponent', () => {
 
         learningGoalManagementComponentFixture.detectChanges();
 
-        const prerequisiteCards = learningGoalManagementComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
-        expect(prerequisiteCards).toHaveLength(2);
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
         expect(learningGoalManagementComponent.prerequisites).toHaveLength(2);
     });

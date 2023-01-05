@@ -10,4 +10,16 @@
             </div>
         </div>
     </div>
+    <div class="col-12 col-lg-8">
+        <div class="mt-3 position-relative">
+            <div class="exercise-row-container mb-3">
+                <jhi-learning-goal-card
+                    *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
+                    [learningGoal]="prerequisite"
+                    [courseId]="courseId"
+                    [isPrerequisite]="true"
+                ></jhi-learning-goal-card>
+            </div>
+        </div>
+    </div>
 </div>

@@ -1,15 +1,13 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Component, Input } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { LearningGoal, LearningGoalProgress, getIcon, getIconTooltip } from 'app/entities/learningGoal.model';
-import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 
 @Component({
     selector: 'jhi-learning-goal-card',
     templateUrl: './learning-goal-card.component.html',
     styleUrls: ['../../../overview/course-exercises/course-exercise-row.scss'],
 })
-export class LearningGoalCardComponent implements OnInit, OnDestroy {
+export class LearningGoalCardComponent {
     @Input()
     courseId?: number;
     @Input()
@@ -19,24 +17,10 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     @Input()
     displayOnly: boolean;
 
-    public predicate = 'id';
-    public reverse = false;
-    public isProgressAvailable = false;
-
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
 
-    constructor(private modalService: NgbModal, public lectureUnitService: LectureUnitService, public translateService: TranslateService) {}
-
-    ngOnInit(): void {
-        this.isProgressAvailable = !this.isPrerequisite;
-    }
-
-    ngOnDestroy(): void {
-        if (this.modalService.hasOpenModals()) {
-            this.modalService.dismissAll();
-        }
-    }
+    constructor(public translateService: TranslateService) {}
 
     getUserProgress(): LearningGoalProgress {
         if (this.learningGoal.userProgress?.length) {
@@ -60,5 +44,9 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
         // Advancement towards mastery as a weighted function of progress and confidence
         const weight = 2 / 3;
         return Math.round((1 - weight) * this.progress + weight * this.confidence);
+    }
+
+    get isMastered(): boolean {
+        return this.mastery >= 100;
     }
 }
