@@ -66,7 +66,7 @@ services:
             - CYPRESS_editorGroupName
             - CYPRESS_instructorGroupName
         # Wait up to 5 minutes until Artemis has booted
-        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm exec -- wait-on -i 1000 -t 300000 http://artemis-app:${SERVER_PORT} && npm run cypress:run"
+        command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm exec -- wait-on -i 1000 -t 300000 http://artemis-app:${SERVER_PORT} && npm run cypress:run -- --config retries=2"
         volumes:
             - ../../../../:/app/artemis
         networks:
