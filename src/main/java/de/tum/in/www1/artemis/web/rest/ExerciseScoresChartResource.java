@@ -54,7 +54,7 @@ public class ExerciseScoresChartResource {
     }
 
     /**
-     * GET /courses/:courseId/charts/exercise-scores
+     * GET /courses/:courseId/exercise-scores
      * <p>
      * This call returns the information used for the exercise-scores-chart. It will get the score of
      * the requesting user,the average score and the best score in course exercises
@@ -65,7 +65,7 @@ public class ExerciseScoresChartResource {
      * @param courseId id of the course for which to get the exercise scores
      * @return the ResponseEntity with status 200 (OK) and with the exercise scores in the body
      */
-    @GetMapping("courses/{courseId}/charts/exercise-scores")
+    @GetMapping("courses/{courseId}/exercise-scores")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<ExerciseScoresDTO>> getCourseExerciseScores(@PathVariable Long courseId) {
         log.debug("REST request to get exercise scores for course with id: {}", courseId);

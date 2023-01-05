@@ -35,7 +35,7 @@ export class ExerciseScoresChartService {
             throw new Error('Invalid courseId provided: ' + courseId);
         }
 
-        return this.http.get<ExerciseScoresDTO[]>(`${this.resourceUrl}/courses/${courseId}/charts/exercise-scores`, { observe: 'response' }).pipe(
+        return this.http.get<ExerciseScoresDTO[]>(`${this.resourceUrl}/courses/${courseId}/exercise-scores`, { observe: 'response' }).pipe(
             map((response: HttpResponse<ExerciseScoresDTO[]>) => {
                 if (response.body) {
                     for (const exerciseScoreDTO of response.body) {

@@ -1,14 +1,12 @@
 package de.tum.in.www1.artemis;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 
-@Disabled("TODO FIX SERVER TEST: Relies on a database reset since the query count must assume the database is empty. Disabled until we have a performant reset.")
 class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "databasequerycount";
