@@ -40,6 +40,7 @@ artemis:
         # This `default` option will be overridden by more specific project type
         # definitions.
         build:
+            # currently only supported for Bamboo setups
             default-docker-flags:
                 cpus: 2
                 # Set `memory-swap` and `memory` to the same value to turn of SWAP.
