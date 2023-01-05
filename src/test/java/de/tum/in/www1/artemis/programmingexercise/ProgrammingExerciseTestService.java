@@ -1348,7 +1348,7 @@ public class ProgrammingExerciseTestService {
         submission.setSubmitted(true);
         submission.setCommitHash(TestConstants.COMMIT_HASH_STRING);
         submission.setType(SubmissionType.MANUAL);
-        database.addSubmission(participation, submission);
+        database.addSubmissionToDatabase(participation, submission);
 
         return participation;
     }

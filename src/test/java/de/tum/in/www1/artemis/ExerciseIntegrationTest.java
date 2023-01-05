@@ -82,7 +82,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
             textSubmission.text("Text");
             textSubmission.submitted(true);
             textSubmission.submissionDate(ZonedDateTime.now());
-            submissions.add(database.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student" + (i + 1))); // student1 was already used
+            submissions.add(database.addSubmissionToDatabase(textExercise, textSubmission, TEST_PREFIX + "student" + (i + 1))); // student1 was already used
             if (i % 3 == 0) {
                 database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"));
             }

@@ -271,8 +271,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteParticipation() throws Exception {
-        Submission submissionWithResult = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithResult.getParticipation(), new ModelingSubmission());
+        Submission submissionWithResult = database.addSubmissionToDatabase(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
+        database.addSubmissionToDatabase((StudentParticipation) submissionWithResult.getParticipation(), new ModelingSubmission());
         Long participationId = submissionWithResult.getParticipation().getId();
         database.addResultToSubmission(submissionWithResult, null);
 
@@ -294,8 +294,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteSubmissionWithoutResult() throws Exception {
-        Submission submissionWithoutResult = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        Submission submissionWithoutResult = database.addSubmissionToDatabase(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
+        database.addSubmissionToDatabase((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
         Long participationId = submissionWithoutResult.getParticipation().getId();
 
         // Participation should now exist.
@@ -822,8 +822,8 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getSubmissionOfParticipation() throws Exception {
         var participation = database.createAndSaveParticipationForExercise(textExercise, TEST_PREFIX + "student1");
-        var submission1 = database.addSubmission(participation, ModelFactory.generateTextSubmission("text", Language.ENGLISH, true));
-        var submission2 = database.addSubmission(participation, ModelFactory.generateTextSubmission("text2", Language.ENGLISH, true));
+        var submission1 = database.addSubmissionToDatabase(participation, ModelFactory.generateTextSubmission("text", Language.ENGLISH, true));
+        var submission2 = database.addSubmissionToDatabase(participation, ModelFactory.generateTextSubmission("text2", Language.ENGLISH, true));
         var submissions = request.getList("/api/participations/" + participation.getId() + "/submissions", HttpStatus.OK, Submission.class);
         assertThat(submissions).contains(submission1, submission2);
     }
@@ -1027,7 +1027,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var quizEx = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusMinutes(20), ZonedDateTime.now().minusMinutes(20), quizMode, course);
         quizEx = exerciseRepo.save(quizEx);
         var participation = database.createAndSaveParticipationForExercise(quizEx, TEST_PREFIX + "student1");
-        var submission = database.addSubmission(participation, new QuizSubmission().scoreInPoints(11D).submitted(true));
+        var submission = database.addSubmissionToDatabase(participation, new QuizSubmission().scoreInPoints(11D).submitted(true));
         database.addResultToParticipation(participation, submission);
         var actualParticipation = request.get("/api/exercises/" + quizEx.getId() + "/participation", HttpStatus.OK, StudentParticipation.class);
         assertThat(actualParticipation).isEqualTo(participation);

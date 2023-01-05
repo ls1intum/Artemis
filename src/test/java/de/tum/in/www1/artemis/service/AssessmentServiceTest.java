@@ -146,8 +146,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         FileUploadExercise exercise = createFileuploadExerciseWithSGI(course1);
         Submission submissionWithoutResult = new FileUploadSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        submissionWithoutResult = database.addSubmissionToDatabase(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
+        database.addSubmissionToDatabase((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -168,8 +168,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        submissionWithoutResult = database.addSubmissionToDatabase(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
+        database.addSubmissionToDatabase((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -190,8 +190,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         ModelingExercise exercise = createModelingExerciseWithSGI(course1);
         Submission submissionWithoutResult = new ModelingSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        submissionWithoutResult = database.addSubmissionToDatabase(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
+        database.addSubmissionToDatabase((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -214,8 +214,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         Submission submissionWithoutResult = new TextSubmission();
         // comparison of dates including nanos would make this test flaky
         submissionWithoutResult.setSubmissionDate(futureTimestamp.truncatedTo(ChronoUnit.MILLIS));
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        submissionWithoutResult = database.addSubmissionToDatabase(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
+        database.addSubmissionToDatabase((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -251,8 +251,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(futureFutureTimestamp);
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        submissionWithoutResult = database.addSubmissionToDatabase(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
+        database.addSubmissionToDatabase((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();
@@ -273,8 +273,8 @@ class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp);
-        submissionWithoutResult = database.addSubmission(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
-        database.addSubmission((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
+        submissionWithoutResult = database.addSubmissionToDatabase(exercise, submissionWithoutResult, TEST_PREFIX + "student1");
+        database.addSubmissionToDatabase((StudentParticipation) submissionWithoutResult.getParticipation(), submissionWithoutResult);
 
         List<Feedback> feedbacks = createFeedback(exercise);
         var result = new Result();

@@ -62,7 +62,7 @@ class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJira
             final var submission = textSubmissions.get(i);
             submission.setId(null);
             submission.submitted(true);
-            database.addSubmission(exercise, submission, String.format("%sstudent%d", TEST_PREFIX, i + 1));
+            database.addSubmissionToDatabase(exercise, submission, String.format("%sstudent%d", TEST_PREFIX, i + 1));
         }
 
         final var atheneResultBuilder = AtheneResponse.newBuilder();

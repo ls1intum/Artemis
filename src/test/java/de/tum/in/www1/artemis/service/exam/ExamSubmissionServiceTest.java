@@ -150,7 +150,7 @@ class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucket
     void testPreventMultipleSubmissions() {
         StudentParticipation participation = database.createAndSaveParticipationForExercise(exercise, TEST_PREFIX + "student1");
         Submission existingSubmission = ModelFactory.generateTextSubmission("The initial submission", Language.ENGLISH, true);
-        existingSubmission = database.addSubmission(participation, existingSubmission);
+        existingSubmission = database.addSubmissionToDatabase(participation, existingSubmission);
         Submission receivedSubmission = ModelFactory.generateTextSubmission("This is a submission", Language.ENGLISH, true);
         receivedSubmission = examSubmissionService.preventMultipleSubmissions(exercise, receivedSubmission, student1);
         assertThat(receivedSubmission.getId()).isEqualTo(existingSubmission.getId());

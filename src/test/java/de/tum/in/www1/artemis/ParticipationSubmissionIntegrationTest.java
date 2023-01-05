@@ -36,7 +36,7 @@ class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteSubmissionOfParticipation() throws Exception {
-        Submission submissionWithResult = database.addSubmission(textExercise, new TextSubmission(), TEST_PREFIX + "student1");
+        Submission submissionWithResult = database.addSubmissionToDatabase(textExercise, new TextSubmission(), TEST_PREFIX + "student1");
         submissionWithResult = database.addResultToSubmission(submissionWithResult, null);
         Long participationId = submissionWithResult.getParticipation().getId();
         Long submissionId = submissionWithResult.getId();

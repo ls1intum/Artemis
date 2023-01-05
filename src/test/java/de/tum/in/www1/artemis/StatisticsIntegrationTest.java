@@ -101,13 +101,13 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // one submission today
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.submissionDate(ZonedDateTime.now().minusSeconds(1));
-        var submission = database.addSubmission(exercise, textSubmission, TEST_PREFIX + "student1");
+        var submission = database.addSubmissionToDatabase(exercise, textSubmission, TEST_PREFIX + "student1");
         database.addResultToSubmission(submission, AssessmentType.MANUAL);
 
         for (int i = 2; i <= NUMBER_OF_STUDENTS; i++) {
             textSubmission = new TextSubmission();
             textSubmission.submissionDate(ZonedDateTime.now().minusMonths(i - 1).withDayOfMonth(10));
-            submission = database.addSubmission(exercise, textSubmission, TEST_PREFIX + "student" + i);
+            submission = database.addSubmissionToDatabase(exercise, textSubmission, TEST_PREFIX + "student" + i);
             database.addResultToSubmission(submission, AssessmentType.MANUAL);
         }
     }

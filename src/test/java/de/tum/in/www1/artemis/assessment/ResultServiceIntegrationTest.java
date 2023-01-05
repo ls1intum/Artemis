@@ -288,7 +288,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             quizSubmission.setScoreInPoints(2.0);
             quizSubmission.submitted(true);
             quizSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
+            database.addSubmissionToDatabase(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
             if (i % 3 == 0) {
                 database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 10D, true);
             }
@@ -311,7 +311,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             modelingSubmission.model("Text");
             modelingSubmission.submitted(true);
             modelingSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(modelingExercise, modelingSubmission, TEST_PREFIX + "student" + i);
+            database.addSubmissionToDatabase(modelingExercise, modelingSubmission, TEST_PREFIX + "student" + i);
             if (i % 3 == 0) {
                 database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
             }
@@ -338,7 +338,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             textSubmission.text("Text");
             textSubmission.submitted(true);
             textSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student" + i);
+            database.addSubmissionToDatabase(textExercise, textSubmission, TEST_PREFIX + "student" + i);
             if (i % 3 == 0) {
                 database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
             }
@@ -430,7 +430,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
             fileUploadSubmission.submitted(true);
             fileUploadSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student" + i);
+            database.addSubmissionToDatabase(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student" + i);
             fileUploadExercise.addParticipation((StudentParticipation) fileUploadSubmission.getParticipation());
 
             if (i % 3 == 0) {
@@ -565,7 +565,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             modelingSubmission.model("TestingSubmission");
             modelingSubmission.submitted(true);
             modelingSubmission.submissionDate(now.minusHours(2));
-            database.addSubmission(this.examModelingExercise, modelingSubmission, TEST_PREFIX + "student" + i);
+            database.addSubmissionToDatabase(this.examModelingExercise, modelingSubmission, TEST_PREFIX + "student" + i);
             database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 12D, true);
         }
 
@@ -620,7 +620,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExampleResult() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
+        var modelingSubmission = database.addSubmissionToDatabase(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
         var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
         modelingSubmission.setExampleSubmission(true);
@@ -632,7 +632,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExampleResult_wrongExerciseId() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
+        var modelingSubmission = database.addSubmissionToDatabase(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
         var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
         modelingSubmission.setExampleSubmission(true);
@@ -645,7 +645,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createExampleResult_notExampleSubmission() throws Exception {
-        var modelingSubmission = database.addSubmission(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
+        var modelingSubmission = database.addSubmissionToDatabase(modelingExercise, new ModelingSubmission(), TEST_PREFIX + "student1");
         var exampleSubmission = ModelFactory.generateExampleSubmission(modelingSubmission, modelingExercise, false);
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
         modelingSubmission.setExampleSubmission(false);

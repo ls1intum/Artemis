@@ -74,7 +74,7 @@ class NotificationScheduleServiceTest extends AbstractSpringIntegrationBambooBit
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.text("Text");
         textSubmission.submitted(true);
-        database.addSubmission(exercise, textSubmission, TEST_PREFIX + "student1");
+        database.addSubmissionToDatabase(exercise, textSubmission, TEST_PREFIX + "student1");
         database.createParticipationSubmissionAndResult(exercise.getId(), database.getUserByLogin(TEST_PREFIX + "student1"), 10.0, 10.0, 50, true);
         notificationSettingRepository.save(new NotificationSetting(user, true, true, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_SUBMISSION_ASSESSED));
 

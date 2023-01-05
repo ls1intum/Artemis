@@ -497,6 +497,10 @@ public class QuizExercise extends Exercise {
                 maxPoints += quizQuestion.getPoints();
             }
         }
+        else {
+            // fallback: the exercise itself stores the max points as well
+            maxPoints = this.getMaxPoints();
+        }
         return maxPoints;
     }
 

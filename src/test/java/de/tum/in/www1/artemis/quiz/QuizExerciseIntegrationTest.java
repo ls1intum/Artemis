@@ -891,18 +891,22 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         for (int i = 1; i <= numberOfParticipants; i++) {
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, true, now.minusHours(3));
-            database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
-            database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
+            quizSubmission = (QuizSubmission) database.addSubmissionToDatabase(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
+            var score = quizExercise.getScoreForSubmission(quizSubmission);
+            quizSubmission = (QuizSubmission) database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, score, true);
+            assertThat(quizSubmission.getResults()).hasSize(1);
+            var result = quizSubmission.getFirstResult();
+            assertThat(result.isRated()).isTrue();
+            assertThat(result.getScore()).isEqualTo(score);
         }
 
         // calculate statistics
-        QuizExercise quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK,
-                QuizExercise.class);
+        var quizWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
 
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
+        assertThat(quizWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
+        assertThat(quizWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants);
 
-        for (PointCounter pointCounter : quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
+        for (PointCounter pointCounter : quizWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints().equals(0.0)) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(3);
             }
@@ -920,17 +924,17 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         // add more submissions and recalculate
         for (int i = numberOfParticipants; i <= 14; i++) {
             QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, true, now.minusHours(3));
-            database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
+            database.addSubmissionToDatabase(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
             database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
         }
 
         // calculate statistics
-        quizExerciseWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
+        quizWithRecalculatedStatistics = request.get("/api/quiz-exercises/" + quizExercise.getId() + "/recalculate-statistics", HttpStatus.OK, QuizExercise.class);
 
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
-        assertThat(quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants + 4);
+        assertThat(quizWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()).hasSize(10);
+        assertThat(quizWithRecalculatedStatistics.getQuizPointStatistic().getParticipantsRated()).isEqualTo(numberOfParticipants + 4);
 
-        for (PointCounter pointCounter : quizExerciseWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
+        for (PointCounter pointCounter : quizWithRecalculatedStatistics.getQuizPointStatistic().getPointCounters()) {
             if (pointCounter.getPoints().equals(0.0)) {
                 assertThat(pointCounter.getRatedCounter()).isEqualTo(5);
             }
@@ -969,7 +973,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {
                 QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExercise, i, true, ZonedDateTime.now().minusHours(1));
-                database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
+                database.addSubmissionToDatabase(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
                 database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
                 assertThat(submittedAnswerRepository.findBySubmission(quizSubmission)).hasSize(3);
             }
@@ -977,12 +981,12 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         // submission with everything selected
         QuizSubmission quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), true);
-        database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student1");
+        database.addSubmissionToDatabase(quizExercise, quizSubmission, TEST_PREFIX + "student1");
         database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         // submission with nothing selected
         quizSubmission = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now().minusHours(1), false);
-        database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student5");
+        database.addSubmissionToDatabase(quizExercise, quizSubmission, TEST_PREFIX + "student5");
         database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmission), true);
 
         assertThat(studentParticipationRepository.findByExerciseId(quizExercise.getId())).hasSize(numberOfParticipants);
@@ -1081,19 +1085,19 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         for (int i = 1; i <= numberOfParticipants; i++) {
             if (i != 1 && i != 5) {
                 QuizSubmission quizSubmissionPractice = database.generateSubmissionForThreeQuestions(quizExercise, i, true, ZonedDateTime.now());
-                database.addSubmission(quizExercise, quizSubmissionPractice, TEST_PREFIX + "student" + i);
+                database.addSubmissionToDatabase(quizExercise, quizSubmissionPractice, TEST_PREFIX + "student" + i);
                 database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmissionPractice), false);
             }
         }
 
         // submission with everything selected
         QuizSubmission quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now(), true);
-        database.addSubmission(quizExercise, quizSubmissionPractice, TEST_PREFIX + "student1");
+        database.addSubmissionToDatabase(quizExercise, quizSubmissionPractice, TEST_PREFIX + "student1");
         database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmissionPractice), false);
 
         // submission with nothing selected
         quizSubmissionPractice = database.generateSpecialSubmissionWithResult(quizExercise, true, ZonedDateTime.now(), false);
-        database.addSubmission(quizExercise, quizSubmissionPractice, TEST_PREFIX + "student5");
+        database.addSubmissionToDatabase(quizExercise, quizSubmissionPractice, TEST_PREFIX + "student5");
         database.addResultToSubmission(quizSubmissionPractice, AssessmentType.AUTOMATIC, null, quizExercise.getScoreForSubmission(quizSubmissionPractice), false);
 
         assertThat(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(quizExercise.getId(), false)).isEqualTo(10);

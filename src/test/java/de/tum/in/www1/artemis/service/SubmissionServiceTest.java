@@ -135,8 +135,8 @@ class SubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
                 database.addProgrammingSubmission(examProgrammingExercise, (ProgrammingSubmission) submission2, TEST_PREFIX + "student1");
             }
             else {
-                database.addSubmission(exercise, submission1, TEST_PREFIX + "student1");
-                database.addSubmission(exercise, submission2, TEST_PREFIX + "student2");
+                database.addSubmissionToDatabase(exercise, submission1, TEST_PREFIX + "student1");
+                database.addSubmissionToDatabase(exercise, submission2, TEST_PREFIX + "student2");
             }
         }
     }

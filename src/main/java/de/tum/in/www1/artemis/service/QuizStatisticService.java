@@ -134,10 +134,10 @@ public class QuizStatisticService {
         }
 
         // save changed Statistics
-        quizPointStatisticRepository.saveAndFlush(quizExercise.getQuizPointStatistic());
+        quizPointStatisticRepository.save(quizExercise.getQuizPointStatistic());
         for (QuizQuestion quizQuestion : quizExercise.getQuizQuestions()) {
             if (quizQuestion.getQuizQuestionStatistic() != null) {
-                quizQuestionStatisticRepository.saveAndFlush(quizQuestion.getQuizQuestionStatistic());
+                quizQuestionStatisticRepository.save(quizQuestion.getQuizQuestionStatistic());
             }
         }
     }

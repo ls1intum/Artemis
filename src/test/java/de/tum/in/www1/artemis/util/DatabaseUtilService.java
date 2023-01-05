@@ -3165,7 +3165,7 @@ public class DatabaseUtilService {
         return submissionRepository.save(submission);
     }
 
-    public Submission addSubmission(Exercise exercise, Submission submission, String login) {
+    public Submission addSubmissionToDatabase(Exercise exercise, Submission submission, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         participation.addSubmission(submission);
         submission.setParticipation(participation);
@@ -3174,7 +3174,7 @@ public class DatabaseUtilService {
         return submission;
     }
 
-    public Submission addSubmission(StudentParticipation participation, Submission submission) {
+    public Submission addSubmissionToDatabase(StudentParticipation participation, Submission submission) {
         participation.addSubmission(submission);
         submission.setParticipation(participation);
         submissionRepository.save(submission);
@@ -4295,7 +4295,7 @@ public class DatabaseUtilService {
         createAndSaveParticipationForExercise(modelingExercise, loginPrefix + "student1");
         String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyActivityModel, true);
-        addSubmission(modelingExercise, submission, loginPrefix + "student1");
+        addSubmissionToDatabase(modelingExercise, submission, loginPrefix + "student1");
 
         return course;
     }
@@ -4341,7 +4341,7 @@ public class DatabaseUtilService {
         modelingExercise = exerciseRepo.save(modelingExercise);
         String emptyActivityModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-activity-diagram.json");
         var modelingSubmission = ModelFactory.generateModelingSubmission(emptyActivityModel, true);
-        addSubmission(modelingExercise, modelingSubmission, loginPrefix + "student1");
+        addSubmissionToDatabase(modelingExercise, modelingSubmission, loginPrefix + "student1");
         exerciseGroup3.addExercise(modelingExercise);
         exerciseGroupRepository.save(exerciseGroup3);
 
@@ -4370,7 +4370,7 @@ public class DatabaseUtilService {
         if (exercise instanceof ProgrammingExercise) {
             submission = ModelFactory.generateProgrammingSubmission(true);
         }
-        Submission submissionWithParticipation = addSubmission(studentParticipation, submission);
+        Submission submissionWithParticipation = addSubmissionToDatabase(studentParticipation, submission);
         Result result = addResultToParticipation(studentParticipation, submissionWithParticipation);
         resultRepo.save(result);
 
