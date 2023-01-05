@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
-
 import java.util.Optional;
 
-import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -20,15 +17,31 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Repository
 public interface TemplateProgrammingExerciseParticipationRepository extends JpaRepository<TemplateProgrammingExerciseParticipation, Long> {
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "programmingExercise" })
-    @Query("select p from TemplateProgrammingExerciseParticipation p where p.buildPlanId = :#{#buildPlanId}")
-    Optional<TemplateProgrammingExerciseParticipation> findByBuildPlanIdWithResults(@Param("buildPlanId") String buildPlanId);
+    @Query("""
+            SELECT DISTINCT p
+            FROM TemplateProgrammingExerciseParticipation p
+            WHERE p.buildPlanId = :buildPlanId
+            """)
+    Optional<TemplateProgrammingExerciseParticipation> findByBuildPlanId(@Param("buildPlanId") String buildPlanId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "submissions" })
-    Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndSubmissionsByProgrammingExerciseId(Long exerciseId);
+    @Query("""
+            SELECT DISTINCT p
+            FROM TemplateProgrammingExerciseParticipation p
+                LEFT JOIN FETCH p.results
+                LEFT JOIN FETCH p.submissions
+            WHERE p.programmingExercise.id = :exerciseId
+            """)
+    Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndSubmissionsByProgrammingExerciseId(@Param("exerciseId") Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "results", "results.feedbacks", "submissions" })
-    Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(Long exerciseId);
+    @Query("""
+            SELECT DISTINCT p
+            FROM TemplateProgrammingExerciseParticipation p
+                LEFT JOIN FETCH p.results r
+                LEFT JOIN FETCH r.feedbacks
+                LEFT JOIN FETCH p.submissions
+            WHERE p.programmingExercise.id = :exerciseId
+            """)
+    Optional<TemplateProgrammingExerciseParticipation> findWithEagerResultsAndFeedbacksAndSubmissionsByProgrammingExerciseId(@Param("exerciseId") Long exerciseId);
 
     Optional<TemplateProgrammingExerciseParticipation> findByProgrammingExerciseId(Long programmingExerciseId);
 

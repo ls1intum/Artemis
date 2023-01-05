@@ -10,7 +10,10 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import org.eclipse.jgit.lib.ObjectId;
@@ -42,7 +45,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -624,8 +626,6 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var submission = database.createProgrammingSubmission(participation, false);
 
         // Call programming-exercises/new-result which includes build log entries
-        final var buildLog = new BambooBuildLogDTO(ZonedDateTime.now().minusMinutes(1), "[ERROR] COMPILATION ERROR missing something",
-                "[ERROR] COMPILATION ERROR missing something");
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false, false);
 
         var result = assertBuildError(participation.getId(), userLogin, programmingLanguage);

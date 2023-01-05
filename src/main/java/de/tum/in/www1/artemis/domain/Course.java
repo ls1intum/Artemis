@@ -172,12 +172,12 @@ public class Course extends DomainObject {
     @Column(name = "time_zone")
     private String timeZone;
 
-    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "course")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
     private Set<Exercise> exercises = new HashSet<>();
 
-    @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "course")
     @JsonIgnoreProperties(value = "course", allowSetters = true)
     private Set<Lecture> lectures = new HashSet<>();
 
