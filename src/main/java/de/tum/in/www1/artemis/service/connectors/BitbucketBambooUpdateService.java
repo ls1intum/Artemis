@@ -6,8 +6,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -102,7 +102,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
      * @param bitbucketProjectKey the key of the corresponding bitbucket project
      * @param buildPlanKey the complete name of the plan
      */
-    private void updateBambooPlanRepository(@Nonnull BambooRepositoryDTO bambooRepository, String bitbucketRepositoryName, String bitbucketProjectKey, String buildPlanKey,
+    private void updateBambooPlanRepository(@NotNull BambooRepositoryDTO bambooRepository, String bitbucketRepositoryName, String bitbucketProjectKey, String buildPlanKey,
             String branchName) {
 
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();

@@ -2,7 +2,7 @@
     <div class="d-flex flex-column justify-content-center">
         <h4 class="mb-0">{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</h4>
     </div>
-    <div *ngIf="course?.isAtLeastEditor" class="ms-auto d-flex">
+    <div *ngIf="course?.isAtLeastEditor" class="ms-auto d-flex flex-wrap">
         <a class="btn btn-primary me-1" id="import-group" (click)="openExerciseGroupImportModal()">
             <fa-icon [icon]="faPlus"></fa-icon>
             <span class="hidden-sm-down" jhiTranslate="artemisApp.examManagement.exerciseGroup.import"> Import Exercise Group</span>
@@ -17,7 +17,7 @@
     {{ 'artemisApp.examManagement.numberOfExerciseGroups' | artemisTranslate }} {{ exerciseGroups ? exerciseGroups.length : 0 }}
 </div>
 <div *ngFor="let exerciseGroup of exerciseGroups; let i = index" class="exercise-group mt-3" id="{{ 'group-' + i }}">
-    <div class="d-flex p-3 header">
+    <div class="d-flex p-3 header flex-wrap">
         <div class="me-3 d-flex justify-content-center" style="align-items: center">
             <a (click)="moveUp(i)" [class.disabled]="i === 0" class="border-0 p-0 me-1 bg-transparent">
                 <fa-icon [icon]="faAngleUp" style="font-size: 1.3rem"></fa-icon>

@@ -115,6 +115,8 @@ describe('BonusComponent', () => {
         title: 'Title',
         gradeType: GradeType.GRADE,
         maxPoints: 100,
+        plagiarismGrade: GradingScale.DEFAULT_PLAGIARISM_GRADE,
+        noParticipationGrade: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
         gradeSteps: [
             {
                 id: 577,
