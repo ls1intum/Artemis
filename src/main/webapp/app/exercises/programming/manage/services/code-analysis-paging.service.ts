@@ -11,8 +11,8 @@ export class CodeAnalysisPagingService extends ExercisePagingService<Programming
         super(http, ProgrammingExercisePagingService.resourceUrl);
     }
 
-    createParams(pageable: PageableSearch): HttpParams {
-        const params = super.createParams(pageable);
+    createHttpParams(pageable: PageableSearch): HttpParams {
+        const params = super.createHttpParams(pageable);
         return params.set('isSCAFilter', true);
     }
 }
