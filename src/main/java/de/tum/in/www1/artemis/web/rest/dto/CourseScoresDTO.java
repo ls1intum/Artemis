@@ -13,7 +13,7 @@ public record CourseScoresDTO(double maxPoints, double reachablePoints, Integer 
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record StudentScore(Long studentId, double absolutePoints, double relativeScore, double currentRelativeScore, int achievedPresentationScore,
-            boolean presentationScorePassed, PlagiarismVerdict mostSeverePlagiarismVerdict) {
+            boolean presentationScorePassed, PlagiarismVerdict mostSeverePlagiarismVerdict, boolean hasParticipated) {
 
         public double getAbsolutePointsEligibleForBonus() {
             return presentationScorePassed ? absolutePoints : 0.0;
@@ -22,6 +22,6 @@ public record CourseScoresDTO(double maxPoints, double reachablePoints, Integer 
 
     public Map<Long, BonusSourceResultDTO> toBonusSourceResultMap() {
         return studentScores.stream().collect(Collectors.toMap(StudentScore::studentId, studentScore -> new BonusSourceResultDTO(studentScore.getAbsolutePointsEligibleForBonus(),
-                studentScore.mostSeverePlagiarismVerdict(), studentScore.achievedPresentationScore(), presentationScoreThreshold)));
+                studentScore.mostSeverePlagiarismVerdict(), studentScore.achievedPresentationScore(), presentationScoreThreshold, studentScore.hasParticipated)));
     }
 }
