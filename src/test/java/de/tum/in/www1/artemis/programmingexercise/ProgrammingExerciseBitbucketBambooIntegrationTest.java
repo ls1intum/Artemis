@@ -415,6 +415,12 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testExportExamSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
+        programmingExerciseTestService.exportExamSolutionRepository_shouldReturnFileOrForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogStatistics_unauthorized() throws Exception {
         programmingExerciseTestService.buildLogStatistics_unauthorized();
     }

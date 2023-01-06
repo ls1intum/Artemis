@@ -854,6 +854,17 @@ public abstract class Exercise extends BaseExercise implements Completable {
     }
 
     /**
+     * Checks whether students should be able to see the example solution.
+     *
+     * @return true if example solution publication date is in the past, false otherwise (including null case).
+     */
+    public boolean isExampleSolutionPublished() {
+        ZonedDateTime exampleSolutionPublicationDate = this.isExamExercise() ? this.getExamViaExerciseGroupOrCourseMember().getExampleSolutionPublicationDate()
+                : this.getExampleSolutionPublicationDate();
+        return exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(exampleSolutionPublicationDate);
+    }
+
+    /**
      * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
      *
      * @throws BadRequestAlertException if the dates are not valid
