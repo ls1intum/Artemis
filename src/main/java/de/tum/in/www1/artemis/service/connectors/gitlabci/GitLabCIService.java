@@ -286,7 +286,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Override
     public boolean checkIfBuildPlanExists(String projectKey, String buildPlanId) {
         log.error("Unsupported action: GitLabCIService.checkIfBuildPlanExists()");
-        return false;
+        return true;
     }
 
     @Override

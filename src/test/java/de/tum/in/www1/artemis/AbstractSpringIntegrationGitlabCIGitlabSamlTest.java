@@ -75,7 +75,7 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     protected RelyingPartyRegistrationRepository relyingPartyRegistrationRepository;
 
     @AfterEach
-    public void resetSpyBeans() {
+    void reset() {
         Mockito.reset(continuousIntegrationService, versionControlService, relyingPartyRegistrationRepository, mailService, gitlab);
         super.resetSpyBeans();
     }
