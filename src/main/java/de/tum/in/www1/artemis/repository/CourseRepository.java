@@ -291,7 +291,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @param courseId the id of the course to add to the organization
      * @param organization the organization to add to the course
      */
-    @NotNull
     default void addOrganizationToCourse(long courseId, Organization organization) {
         Course course = findWithEagerOrganizationsElseThrow(courseId);
         if (!course.getOrganizations().contains(organization)) {
@@ -305,7 +304,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @param courseId the id of the course to remove from the organization
      * @param organization the organization to remove from the course
      */
-    @NotNull
     default void removeOrganizationFromCourse(long courseId, Organization organization) {
         Course course = findWithEagerOrganizationsElseThrow(courseId);
         if (course.getOrganizations().contains(organization)) {
