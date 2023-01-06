@@ -41,7 +41,7 @@ export class DeleteButtonDirective implements OnInit {
         if (this.renderButtonText) {
             this.deleteTextSpan = this.renderer.createElement('span');
             this.renderer.addClass(this.deleteTextSpan, 'd-none');
-            this.renderer.addClass(this.deleteTextSpan, 'd-md-inline');
+            this.renderer.addClass(this.deleteTextSpan, 'd-xl-inline');
             this.setTextContent();
             this.renderer.appendChild(this.elementRef.nativeElement, this.deleteTextSpan);
 

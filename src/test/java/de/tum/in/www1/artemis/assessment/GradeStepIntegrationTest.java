@@ -13,13 +13,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.GradeStep;
-import de.tum.in.www1.artemis.domain.GradeType;
-import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.GradeStepsDTO;
 
@@ -32,6 +33,12 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Autowired
     private ExamRepository examRepository;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
 
     private Course course;
 
@@ -254,8 +261,9 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetGradeStepByPercentageForCourse() throws Exception {
+        String gradeName = "Name";
         GradeStep gradeStep = new GradeStep();
-        gradeStep.setGradeName("Name");
+        gradeStep.setGradeName(gradeName);
         gradeStep.setLowerBoundPercentage(60);
         gradeStep.setUpperBoundPercentage(100);
         gradeStep.setIsPassingGrade(true);
@@ -265,11 +273,72 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         courseGradingScale.setGradeType(GradeType.GRADE);
         gradingScaleRepository.save(courseGradingScale);
 
+        // Add student participation to course to avoid receiving no-participation special grade.
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        Long individualTextExerciseId = textExercise.getId();
+        database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        database.createParticipationSubmissionAndResult(individualTextExerciseId, student, 10.0, 10.0, 70, true);
+
         GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, GradeDTO.class);
 
-        assertThat(foundGrade.gradeName()).isEqualTo("Name");
+        assertThat(foundGrade.gradeName()).isEqualTo(gradeName);
         assertThat(foundGrade.gradeType()).isEqualTo(GradeType.GRADE);
         assertThat(foundGrade.isPassingGrade()).isTrue();
+    }
+
+    /**
+     * Test get request for a single grade for no participation special grade
+     *
+     * @throws Exception
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetGradeStepForNoParticipationSpecialGradeForCourse() throws Exception {
+        String noParticipationGrade = "noPart.";
+        courseGradingScale.setNoParticipationGrade(noParticipationGrade);
+        courseGradingScale.setGradeType(GradeType.GRADE);
+        gradingScaleRepository.save(courseGradingScale);
+
+        GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=0", HttpStatus.OK, GradeDTO.class);
+
+        assertThat(foundGrade.gradeName()).isEqualTo(noParticipationGrade);
+        assertThat(foundGrade.gradeType()).isEqualTo(GradeType.GRADE);
+        assertThat(foundGrade.isPassingGrade()).isFalse();
+    }
+
+    /**
+     * Test get request for a single grade for plagiarism special grade
+     *
+     * @throws Exception
+     */
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetGradeStepForPlagiarismSpecialGradeForCourse() throws Exception {
+        String plagiarismGrade = "Plag.";
+        courseGradingScale.setPlagiarismGrade(plagiarismGrade);
+        courseGradingScale.setGradeType(GradeType.BONUS);
+        gradingScaleRepository.save(courseGradingScale);
+
+        // Add student participation to course to avoid receiving no-participation special grade.
+        ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
+        TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        Long individualTextExerciseId = textExercise.getId();
+        User student = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
+        database.createParticipationSubmissionAndResult(individualTextExerciseId, student, 10.0, 10.0, 50, true);
+
+        var coursePlagiarismCase = new PlagiarismCase();
+        coursePlagiarismCase.setStudent(student);
+        coursePlagiarismCase.setExercise(textExercise);
+        coursePlagiarismCase.setVerdict(PlagiarismVerdict.PLAGIARISM);
+        plagiarismCaseRepository.save(coursePlagiarismCase);
+
+        GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=50", HttpStatus.OK, GradeDTO.class);
+
+        assertThat(foundGrade.gradeName()).isEqualTo(plagiarismGrade);
+        assertThat(foundGrade.gradeType()).isEqualTo(GradeType.BONUS);
+        assertThat(foundGrade.isPassingGrade()).isFalse();
     }
 
     /**

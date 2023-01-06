@@ -186,20 +186,6 @@ public abstract class BaseExercise extends DomainObject {
     }
 
     /**
-     * Checks whether students should be able to see the example solution.
-     *
-     * @return true if example solution publication date is in the past, false otherwise (including null case).
-     */
-    public boolean isExampleSolutionPublished() {
-        if (this.isExamExercise()) {
-            // This feature is currently not available for exam exercises, this should return false
-            // for exam exercises until the conditions for them is fully implemented.
-            return false;
-        }
-        return this.exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(this.exampleSolutionPublicationDate);
-    }
-
-    /**
      * check if students are allowed to see this exercise
      *
      * @return true, if students are allowed to see this exercise, otherwise false
