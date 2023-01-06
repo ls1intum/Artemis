@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.exception.GitLabCIException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 
-public class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
+class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
     private static final String TEST_PREFIX = "gitlabciservicetest";
 
