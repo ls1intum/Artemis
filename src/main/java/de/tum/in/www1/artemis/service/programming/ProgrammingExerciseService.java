@@ -203,15 +203,12 @@ public class ProgrammingExerciseService {
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
-        // Webhooks must not be created for the local git server. Notifying Artemis on
-        // push is handled in the JGitPushFilter.
-        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
-            // The creation of the webhooks must occur after the initial push, because the
-            // participation is
-            // not yet saved in the database, so we cannot save the submission accordingly
-            // (see ProgrammingSubmissionService.processNewProgrammingSubmission)
-            versionControlService.get().addWebHooksForExercise(programmingExercise);
-        }
+        // The creation of the webhooks must occur after the initial push, because the
+        // participation is
+        // not yet saved in the database, so we cannot save the submission accordingly
+        // (see ProgrammingSubmissionService.processNewProgrammingSubmission)
+        versionControlService.get().addWebHooksForExercise(programmingExercise);
+
         scheduleOperations(programmingExercise.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(programmingExercise);
         return programmingExercise;

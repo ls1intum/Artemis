@@ -60,7 +60,7 @@ public class UrlService {
         if (pathComponents.length < 2) {
             throw new VersionControlException("Repository URL is not a git URL! Can't get repository slug for " + url);
         }
-        // Note: pathComponents[] = "" because the path always starts with "/"
+        // Note: pathComponents[0] = "" because the path always starts with "/"
         // take the last element
         String repositorySlug = pathComponents[pathComponents.length - 1];
         // if the element includes ".git" ...
@@ -85,7 +85,7 @@ public class UrlService {
     /**
      * Gets the project key + repository slug from the given URL
      *
-     * Example: https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git --> TESTADAPTER/testadapter-exercise
+     * Examples: https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git --> TESTADAPTER/testadapter-exercise
      *
      * @param url The complete repository url (including protocol, host and the complete path)
      * @throws VersionControlException if the URL is invalid and no project key could be extracted
@@ -97,7 +97,7 @@ public class UrlService {
         if (pathComponents.length < 2) {
             throw new VersionControlException("Repository URL is not a git URL! Can't get repository slug for " + url);
         }
-        // Note: pathComponents[] = "" because the path always starts with "/"
+        // Note: pathComponents[0] = "" because the path always starts with "/"
         final var last = pathComponents.length - 1;
         return pathComponents[last - 1] + "/" + pathComponents[last].replace(".git", "");
     }
@@ -128,7 +128,7 @@ public class UrlService {
         if (pathComponents.length <= 2) {
             throw new VersionControlException("No project key could be found for " + url);
         }
-        // Note: pathComponents[] = "" because the path always starts with "/"
+        // Note: pathComponents[0] = "" because the path always starts with "/"
         var projectKey = pathComponents[1];
         if ("scm".equals(pathComponents[1]) || "git".equals(pathComponents[1])) {
             // special case for Bitbucket and local Git

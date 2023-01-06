@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -74,8 +75,9 @@ public class LocalVCService extends AbstractVersionControlService {
 
     public LocalVCService(@Qualifier("localVCRestTemplate") RestTemplate restTemplate, UserRepository userRepository, UrlService urlService,
             @Qualifier("shortTimeoutLocalVCRestTemplate") RestTemplate shortTimeoutRestTemplate, GitService gitService, ApplicationContext applicationContext,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
-        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository);
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            Environment environment) {
+        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository, environment);
         this.userRepository = userRepository;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
@@ -83,18 +85,15 @@ public class LocalVCService extends AbstractVersionControlService {
 
     @Override
     public void configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean allowAccess) {
-        for (User user : participation.getStudents()) {
-            if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
-                // only add access to the repository if the offline IDE usage is NOT disallowed
-                // NOTE: null values are interpreted as offline IDE is allowed
-                addMemberToRepository(participation.getVcsRepositoryUrl(), user);
-            }
-        }
+        // For Bitbucket and GitLab, users are added to the respective repository to allow them to fetch from there and push to it if the exercise allows for usage of an offline
+        // IDE.
+        // For local VCS, users are allowed to access the repository by default if they have access to the repository URL.
+        // Instead, the LocalVCFetchFilter and LocalVCPushFilter block requests if offline IDE usage is not allowed.
     }
 
     @Override
     public void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user) {
-        giveWritePermission(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl), user.getLogin());
+        // Members cannot be added for local VCS, they can only be removed.
     }
 
     @Override
@@ -102,45 +101,6 @@ public class LocalVCService extends AbstractVersionControlService {
         removeStudentRepositoryAccess(repositoryUrl, urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), user.getLogin());
     }
 
-    /**
-     * This method protects the repository on the Bitbucket server by using a
-     * REST-call to setup branch protection.
-     * The branch protection is applied to all branches and prevents rewriting the
-     * history (force-pushes) and deletion of branches.
-     * <p>
-     * projectKey     The project key of the repository that should be
-     * protected
-     * repositorySlug The slug of the repository that should be protected
-     */
-    // private void protectBranches(String projectKey, String repositorySlug) {
-    // String baseUrl = bitbucketServerUrl + "/rest/branch-permissions/2.0/projects/" + projectKey + "/repos/" + repositorySlug + "/restrictions";
-    // log.debug("Setting up branch protection for repository {}", repositorySlug);
-    //
-    // // Payload according to
-    // // https://docs.atlassian.com/bitbucket-server/rest/4.2.0/bitbucket-ref-restriction-rest.html
-    // final var type = new BitbucketBranchProtectionDTO.TypeDTO("PATTERN", "Pattern");
-    // // A wildcard (*) ist used to protect all branches
-    // final var matcher = new BitbucketBranchProtectionDTO.MatcherDTO("*", "*", type, true);
-    // // Prevent force-pushes
-    // final var fastForwardOnlyProtection = new BitbucketBranchProtectionDTO("fast-forward-only", matcher);
-    // // Prevent deletion of branches
-    // final var noDeletesProtection = new BitbucketBranchProtectionDTO("no-deletes", matcher);
-    // final var body = List.of(fastForwardOnlyProtection, noDeletesProtection);
-    //
-    // HttpHeaders headers = new HttpHeaders();
-    // headers.setContentType(new MediaType("application", "vnd.atl.bitbucket.bulk+json")); // Set content-type
-    // // manually as required by
-    // // Bitbucket
-    // HttpEntity<?> entity = new HttpEntity<>(body, headers);
-    // try {
-    // restTemplate.exchange(baseUrl, HttpMethod.POST, entity, Object.class);
-    // }
-    // catch (Exception emAll) {
-    // log.error("Exception occurred while protecting repository {}", repositorySlug, emAll);
-    // }
-    //
-    // log.debug("Branch protection for repository {} set up", repositorySlug);
-    // }
     @Override
     protected void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName) {
         // Webhooks must not be added for the local git server. The JGitPushFilter notifies Artemis on every push.
@@ -361,17 +321,6 @@ public class LocalVCService extends AbstractVersionControlService {
                 && exception.getMessage().contains("com.atlassian.bitbucket.user.NoSuchUserException");
     }
 
-    /**
-     * Gives user write permissions for a repository.
-     *
-     * @param projectKey     The project key of the repository's project.
-     * @param repositorySlug The repository's slug.
-     * @param username       The user whom to give write permissions.
-     */
-    private void giveWritePermission(String projectKey, String repositorySlug, String username) throws BitbucketException {
-        // Not implemented.
-    }
-
     @Override
     public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws BitbucketException {
         users.forEach(user -> setStudentRepositoryPermission(repositoryUrl, projectKey, user.getLogin(), VersionControlRepositoryPermission.REPO_READ));
@@ -385,10 +334,10 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public String getDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl) throws LocalVCException {
-        // TODO: Refactor VcsRepositoryUrl
         try {
-            Map<String, Ref> remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localVCPath + File.separator + repositoryUrl.folderNameForRepositoryUrl() + ".git")
-                    .callAsMap();
+            LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(localVCServerUrl, repositoryUrl.toString());
+            String localRepositoryPath = localVCRepositoryUrl.getLocalPath(localVCPath).toString();
+            Map<String, Ref> remoteRepositoryRefs = Git.lsRemoteRepository().setRemote(localRepositoryPath).callAsMap();
             if (remoteRepositoryRefs.containsKey("HEAD")) {
                 return remoteRepositoryRefs.get("HEAD").getTarget().getName();
             }

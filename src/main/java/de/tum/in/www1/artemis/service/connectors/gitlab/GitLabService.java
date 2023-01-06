@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -71,8 +72,9 @@ public class GitLabService extends AbstractVersionControlService {
 
     public GitLabService(UserRepository userRepository, @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate, GitLabApi gitlab, UrlService urlService,
             GitLabUserManagementService gitLabUserManagementService, GitService gitService, ApplicationContext applicationContext,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
-        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository);
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            Environment environment) {
+        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository, environment);
         this.userRepository = userRepository;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.gitlab = gitlab;

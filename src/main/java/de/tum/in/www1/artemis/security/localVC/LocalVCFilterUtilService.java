@@ -190,6 +190,13 @@ public class LocalVCFilterUtilService {
 
         // ---- Requesting one of the participant repositories ----
 
+        // Check that offline IDE usage is allowed
+        if (Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
+            throw new LocalVCAuthException();
+        }
+
+        //
+
         // Check that the user name in the repository name corresponds to the user name used for Basic Auth.
         if (!user.getLogin().equals(repositoryTypeOrUserName)) {
             throw new LocalVCAuthException();
@@ -207,8 +214,8 @@ public class LocalVCFilterUtilService {
         if (participation.isEmpty())
             throw new LocalVCAuthException();
 
-        // Check that the exercise's Release Date is either not set or is in the past.
-        if (exercise.getReleaseDate() != null && exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
+        // Check that the exercise's Participation Start Date is either not set or is in the past.
+        if (exercise.getParticipationStartDate() != null && exercise.getParticipationStartDate().isAfter(ZonedDateTime.now())) {
             throw new LocalVCAuthException();
         }
         if (!forPush)
