@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.TutorParticipationStatus;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -314,6 +315,56 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
                 }
             }
         }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseExerciseForExampleSolution() throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
+        ZonedDateTime now = ZonedDateTime.now();
+        for (Course course : courses) {
+            for (Exercise exercise : course.getExercises()) {
+
+                request.get("/api/exercises/" + exercise.getId() + "/example-solution", HttpStatus.FORBIDDEN, Exercise.class);
+
+                exercise.setExampleSolutionPublicationDate(now.minusHours(1));
+                exerciseRepository.save(exercise);
+
+                Exercise exerciseForExampleSolution = request.get("/api/exercises/" + exercise.getId() + "/example-solution", HttpStatus.OK, Exercise.class);
+                assertThat(exerciseForExampleSolution.getExampleSolutionPublicationDate()).isBeforeOrEqualTo(now);
+                if (exerciseForExampleSolution instanceof FileUploadExercise fileUploadExercise) {
+                    assertThat(fileUploadExercise.getExampleSolution()).isEqualTo("Example Solution");
+                }
+                else if (exerciseForExampleSolution instanceof ModelingExercise modelingExercise) {
+                    assertThat(modelingExercise.getExampleSolutionModel()).isEqualTo("Example solution model");
+                    assertThat(modelingExercise.getExampleSolutionExplanation()).isEqualTo("Example Solution");
+                }
+                else if (exerciseForExampleSolution instanceof TextExercise textExercise) {
+                    assertThat(textExercise.getExampleSolution()).isEqualTo("Example Solution");
+                }
+            }
+        }
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "TA")
+    void testGetExamExerciseForExampleSolution() throws Exception {
+        var user = database.getUserByLogin(TEST_PREFIX + "student1");
+        Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
+        Exam exam = course.getExams().stream().findFirst().orElseThrow();
+        exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+        TextExercise exercise = (TextExercise) exam.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
+        request.get("/api/exercises/" + exercise.getId() + "/example-solution", HttpStatus.FORBIDDEN, Exercise.class);
+
+        ZonedDateTime now = ZonedDateTime.now();
+        exam.setExampleSolutionPublicationDate(now.minusHours(1));
+        database.addStudentExamWithUser(exam, user);
+        examRepository.save(exam);
+
+        TextExercise exerciseForExampleSolution = request.get("/api/exercises/" + exercise.getId() + "/example-solution", HttpStatus.OK, TextExercise.class);
+
+        assertThat(exerciseForExampleSolution.getExampleSolution()).isEqualTo("This is my example solution");
+
     }
 
     @Test

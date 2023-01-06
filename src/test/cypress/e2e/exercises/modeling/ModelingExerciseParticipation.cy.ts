@@ -4,7 +4,6 @@ import { artemis } from '../../../support/ArtemisTesting';
 import { convertCourseAfterMultiPart } from '../../../support/requests/CourseManagementRequests';
 
 // pageobjects
-const courseManagement = artemis.pageobjects.course.management;
 const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
 const courseOverview = artemis.pageobjects.course.overview;
 // requests
@@ -21,8 +20,7 @@ describe('Modeling Exercise Participation Spec', () => {
         cy.login(admin);
         courseManagementRequests.createCourse().then((response: Cypress.Response<Course>) => {
             course = convertCourseAfterMultiPart(response);
-            cy.visit(`/course-management/${course.id}`);
-            courseManagement.addStudentToCourse(student);
+            courseManagementRequests.addStudentToCourse(course, student);
             courseManagementRequests.createModelingExercise({ course }).then((resp: Cypress.Response<ModelingExercise>) => {
                 modelingExercise = resp.body;
             });
@@ -36,6 +34,7 @@ describe('Modeling Exercise Participation Spec', () => {
 
     it('Student can start and submit their model', () => {
         cy.login(student, `/courses/${course.id}`);
+        cy.reloadUntilFound('#start-exercise-' + modelingExercise.id);
         courseOverview.startExercise(modelingExercise.id!);
         cy.get('#open-exercise-' + modelingExercise.id).click();
         modelingEditor.addComponentToModel(1);
