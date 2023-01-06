@@ -12,7 +12,14 @@
         <div class="row align-items-center">
             <div class="col-11 general-info">
                 <h3 class="mb-0">
-                    <fa-icon *ngIf="learningGoal.taxonomy" [icon]="getIcon(learningGoal.taxonomy)" [fixedWidth]="true"></fa-icon> <span>{{ learningGoal!.title }}</span>
+                    <fa-icon
+                        *ngIf="learningGoal.taxonomy"
+                        [icon]="getIcon(learningGoal.taxonomy)"
+                        [fixedWidth]="true"
+                        [ngbTooltip]="getIconTooltip(learningGoal.taxonomy) | artemisTranslate"
+                        container="body"
+                    ></fa-icon>
+                    <span>{{ learningGoal!.title }}</span>
                     <span *ngIf="isMastered" class="badge text-white text-bg-success" jhiTranslate="artemisApp.learningGoal.mastered">Mastered</span>
                 </h3>
                 <div *ngIf="learningGoal.description">{{ learningGoal.description }}</div>
