@@ -55,6 +55,8 @@ describe('Bonus Service', () => {
         title: 'Exam Title',
         gradeType: GradeType.GRADE,
         maxPoints: 200,
+        plagiarismGrade: GradingScale.DEFAULT_PLAGIARISM_GRADE,
+        noParticipationGrade: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
         gradeSteps: generateGradeSteps(
             [
                 { interval: 40, gradeName: '5.0' },
