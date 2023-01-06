@@ -5,5 +5,5 @@ import java.time.ZonedDateTime;
 /**
  * Information of a lecture unit to be splitted
  */
-public record LectureUnitSplitDTO(String unitName, ZonedDateTime releaseDate, Integer startPage, Integer endPage) {
+public record LectureUnitSplitDTO(String unitName, ZonedDateTime releaseDate, Integer startPage, Integer endPage, Integer numberOfPages) {
 }

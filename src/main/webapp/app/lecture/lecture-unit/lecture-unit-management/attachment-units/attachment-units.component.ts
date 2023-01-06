@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { faBan, faClock, faGlobe, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faClock, faExclamationTriangle, faGlobe, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -15,6 +15,7 @@ type UnitResponseType = {
     releaseDate?: dayjs.Dayjs;
     startPage: number;
     endPage: number;
+    numberOfPages?: number;
 };
 
 @Component({
@@ -27,7 +28,8 @@ export class AttachmentUnitsComponent implements OnInit {
     isLoading: boolean;
     isProcessingMode: boolean;
 
-    units: UnitResponseType[];
+    units: UnitResponseType[] = [];
+    numberOfpages: number;
 
     faSave = faSave;
     faBan = faBan;
@@ -35,9 +37,11 @@ export class AttachmentUnitsComponent implements OnInit {
     faClock = faClock;
     faTimes = faTimes;
     faPlus = faPlus;
+    faExclamationTriangle = faExclamationTriangle;
 
     file: File;
     fileName: string;
+    invalidUnitTableMessage?: string;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -65,6 +69,12 @@ export class AttachmentUnitsComponent implements OnInit {
             next: (res: any) => {
                 this.units = res.body;
                 this.isLoading = false;
+
+                if (this.units && this.units.length > 0) {
+                    this.numberOfpages = this.units[0].numberOfPages!;
+                }
+
+                console.log(this.units);
             },
             error: (res: HttpErrorResponse) => {
                 if (res.error.params === 'file' && res?.error?.title) {
@@ -123,6 +133,19 @@ export class AttachmentUnitsComponent implements OnInit {
             this.units.splice(i, 1);
             return true;
         }
+    }
+
+    validUnitInformation(): boolean {
+        console.log(this.units);
+        for (const unit of this.units) {
+            if (unit.unitName === '' || unit.unitName === undefined) {
+                this.invalidUnitTableMessage = 'Name can not be empty';
+                return false;
+            }
+        }
+
+        this.invalidUnitTableMessage = undefined;
+        return true;
     }
 
     get currentTimeZone(): string {
