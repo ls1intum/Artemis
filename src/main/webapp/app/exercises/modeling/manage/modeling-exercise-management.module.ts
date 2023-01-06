@@ -15,6 +15,5 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         ArtemisSharedPipesModule,
         ArtemisMarkdownModule,
     ],
-    declarations: [],
 })
 export class ArtemisModelingExerciseManagementModule {}

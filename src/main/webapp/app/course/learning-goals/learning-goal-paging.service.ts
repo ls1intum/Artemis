@@ -17,7 +17,7 @@ export class LearningGoalPagingService extends PagingService {
     }
 
     searchForLearningGoals(pageable: PageableSearch): Observable<EntityResponseType> {
-        const params = this.createParams(pageable);
+        const params = this.createHttpParams(pageable);
         return this.http.get(`${this.resourceUrl}`, { params, observe: 'response' }).pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));
     }
 }
