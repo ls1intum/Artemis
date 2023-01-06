@@ -22,7 +22,7 @@ export class ExamImportPagingService extends PagingService {
      * @param withExercises if only exams with exercises should be included in the results
      */
     searchForExams(pageable: PageableSearch, withExercises: boolean): Observable<EntityResponseType> {
-        const params = this.createParams(pageable);
+        const params = this.createHttpParams(pageable);
         return this.http
             .get(`${ExamImportPagingService.resourceUrl}?withExercises=${withExercises}`, { params, observe: 'response' })
             .pipe(map((resp: HttpResponse<EntityResponseType>) => resp && resp.body!));

@@ -55,6 +55,7 @@ export class ExerciseImportComponent implements OnInit {
 
     ngOnInit(): void {
         if (!this.exerciseType || this.exerciseType === ExerciseType.FILE_UPLOAD) {
+            // Importing file upload exercises is not supported yet.
             return;
         }
         this.pagingService = this.getPagingService();

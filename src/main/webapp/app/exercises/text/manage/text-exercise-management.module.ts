@@ -6,6 +6,5 @@ import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
     imports: [ArtemisTextExerciseModule, ArtemisSharedLibsModule, ArtemisSharedComponentModule, ArtemisSharedModule],
-    declarations: [],
 })
 export class ArtemisTextExerciseManagementModule {}
