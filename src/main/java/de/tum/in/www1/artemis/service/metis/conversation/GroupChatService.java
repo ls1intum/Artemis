@@ -4,8 +4,8 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
