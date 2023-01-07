@@ -947,6 +947,7 @@ public class ProgrammingExerciseService {
      * @param search         The search query defining the search term and the size of the returned page
      * @param isCourseFilter Whether to search in the courses for exercises
      * @param isExamFilter   Whether to search in the groups for exercises
+     * @param isSCAFilter    Whether to only include exercises with SCA active
      * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */

@@ -65,6 +65,7 @@ import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseTestCaseResource;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryExportOptionsDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.ProgrammingExerciseTestCaseStateDTO;
 
 /**
@@ -124,6 +125,9 @@ class ProgrammingExerciseIntegrationTestService {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
 
     private Course course;
 
@@ -2000,7 +2004,7 @@ class ProgrammingExerciseIntegrationTestService {
         request.put("/api/programming-exercises/" + programmingExercise.getId() + "/re-evaluate", programmingExerciseToBeConflicted, HttpStatus.CONFLICT);
     }
 
-    public void test_redirectGetSolutionRepositoryFilesWithoutContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
+    void test_redirectGetSolutionRepositoryFilesWithoutContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
         setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
 
         var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
@@ -2009,13 +2013,40 @@ class ProgrammingExerciseIntegrationTestService {
                 "/api/repository/" + savedExercise.getSolutionParticipation().getId() + "/file-names");
     }
 
-    public void test_redirectGetTemplateRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
+    void test_redirectGetTemplateRepositoryFilesWithContent(BiFunction<ProgrammingExercise, Map<String, String>, LocalRepository> setupRepositoryMock) throws Exception {
         setupRepositoryMock.apply(programmingExercise, Map.ofEntries(Map.entry("A.java", "abc"), Map.entry("B.java", "cde"), Map.entry("C.java", "efg")));
 
         var savedExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
 
         request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
                 "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
+    }
+
+    void testCourseAndExamFilters(boolean withSCA) throws Exception {
+        String randomString = UUID.randomUUID().toString();
+        String shortName = randomString.substring(0, 5);
+        database.addCourseWithOneProgrammingExercise(withSCA, randomString, shortName);
+        database.addCourseExamExerciseGroupWithOneProgrammingExercise(randomString + "-Morpork", shortName + "exam");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises", randomString);
+        testSCAFilter(randomString, withSCA);
+    }
+
+    private void testSCAFilter(String searchTerm, boolean expectSca) throws Exception {
+        var search = database.configureSearch(searchTerm);
+        var filters = database.searchMapping(search);
+        filters.add("isSCAFilter", "false");
+
+        // We should get both exercises if the filter is false:
+        var result = request.get("/api/programming-exercises", HttpStatus.OK, SearchResultPageDTO.class, filters);
+        assertThat(result.getResultsOnPage()).hasSize(2);
+
+        filters = database.searchMapping(search);
+        filters.add("isSCAFilter", "true");
+
+        // The exam exercise is always created with SCA deactivated
+        // expectSca true -> 1 result, false -> 0 results
+        result = request.get("/api/programming-exercises", HttpStatus.OK, SearchResultPageDTO.class, filters);
+        assertThat(result.getResultsOnPage()).hasSize(expectSca ? 1 : 0);
     }
 
     private long getMaxProgrammingExerciseId() {

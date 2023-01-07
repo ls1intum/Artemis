@@ -42,7 +42,7 @@ public class ExerciseIntegrationTestUtils {
         allFiltersInactiveParams.add("isCourseFilter", "false");
         allFiltersInactiveParams.add("isExamFilter", "false");
         final var resultWithNoFiltersActive = request.get(apiPath, HttpStatus.OK, SearchResultPageDTO.class, allFiltersInactiveParams);
-        assertThat(resultWithNoFiltersActive.getResultsOnPage()).hasSize(0);
+        assertThat(resultWithNoFiltersActive.getResultsOnPage()).isEmpty();
 
         // only course filter set -> should show only the exercise course
         final MultiValueMap<String, String> courseFilterParams = database.searchMapping(search);
@@ -61,6 +61,8 @@ public class ExerciseIntegrationTestUtils {
         assertThat(resultWithOnlyExamFilterActive.getResultsOnPage()).hasSize(1);
         String examFilterExerciseTitle = ((LinkedHashMap<String, String>) resultWithOnlyExamFilterActive.getResultsOnPage().get(0)).get("title");
         assertThat(examFilterExerciseTitle).isEqualTo(searchTerm + "-Morpork");
+
+        // TODO test sorting
     }
 
 }
