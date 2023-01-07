@@ -31,7 +31,6 @@ export class ProgrammingExerciseGradingTableActionsComponent {
     openImportModal() {
         const modalRef = this.modalService.open(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
-        // TODO check if there is a better way for this (maybe via inheritance?)
         modalRef.componentInstance.onlySCA = true;
         modalRef.result.then(
             (result: ProgrammingExercise) => this.onCategoryImport.emit(result.id),

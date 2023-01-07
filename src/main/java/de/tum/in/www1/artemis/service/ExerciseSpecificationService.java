@@ -24,8 +24,7 @@ public class ExerciseSpecificationService {
         this.authCheckService = authCheckService;
     }
 
-    public <T extends Exercise> Specification<T> getExerciseSearchSpecification(String searchTerm, boolean isCourseFilter, final boolean isExamFilter, User user,
-            Pageable pageable) {
+    public <T extends Exercise> Specification<T> getExerciseSearchSpecification(String searchTerm, boolean isCourseFilter, boolean isExamFilter, User user, Pageable pageable) {
         return (root, query, criteriaBuilder) -> {
             Join<T, Course> joinCourse = root.join(Exercise_.COURSE, JoinType.LEFT);
             Join<T, ExerciseGroup> joinExerciseGroup = root.join(Exercise_.EXERCISE_GROUP, JoinType.LEFT);
@@ -82,7 +81,7 @@ public class ExerciseSpecificationService {
         };
     }
 
-    public Specification<ProgrammingExercise> getExerciseSearchSpecification(String searchTerm, boolean isCourseFilter, final boolean isExamFilter, boolean isSCAFilter, User user,
+    public Specification<ProgrammingExercise> getExerciseSearchSpecification(String searchTerm, boolean isCourseFilter, boolean isExamFilter, boolean isSCAFilter, User user,
             Pageable pageable) {
         Specification<ProgrammingExercise> specification = getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         if (isSCAFilter) {
