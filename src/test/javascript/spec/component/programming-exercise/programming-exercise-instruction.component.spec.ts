@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { By } from '@angular/platform-browser';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { BrowserDynamicTestingModule } from '@angular/platform-browser-dynamic/testing';
 import { DebugElement } from '@angular/core';
 import dayjs from 'dayjs/esm';
@@ -379,7 +379,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 1,
             },
-        });
+        } as any);
 
         mergeSortStep.nativeElement.click();
         verifyTask(2, {
@@ -392,7 +392,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
             },
-        });
+        } as any);
     }));
 
     it('should create the steps task icons for the tasks in problem statement markdown (legacy case)', fakeAsync(() => {
@@ -457,7 +457,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 0,
             },
-        });
+        } as any);
 
         mergeSortStep.nativeElement.click();
         verifyTask(2, {
@@ -470,7 +470,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
             },
-        });
+        } as any);
     }));
 
     it('should create the steps task icons for the tasks in problem statement markdown with no inserted tests (non legacy case)', fakeAsync(() => {
@@ -536,7 +536,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 taskName: 'Bubble Sort',
                 numberOfNotExecutedTests: 0,
             },
-        });
+        } as any);
 
         mergeSortStep.nativeElement.click();
         verifyTask(2, {
@@ -549,10 +549,10 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 taskName: 'Merge Sort',
                 numberOfNotExecutedTests: 0,
             },
-        });
+        } as any);
     }));
 
-    const verifyTask = (expectedInvocations: number, expected: { componentInstance: {} }) => {
+    const verifyTask = (expectedInvocations: number, expected: NgbModalRef) => {
         expect(openModalStub).toHaveBeenCalledTimes(expectedInvocations);
         expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
         expect(modalRef).toEqual(expected);

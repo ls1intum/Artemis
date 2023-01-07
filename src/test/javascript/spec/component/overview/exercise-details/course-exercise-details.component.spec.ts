@@ -317,10 +317,10 @@ describe('CourseExerciseDetailsComponent', () => {
         comp.onChildActivate(childComponent);
 
         comp.hasSubmissionPolicy = false;
-        comp.courseId = programmingExercise.course?.id!;
+        comp.courseId = programmingExercise.course!.id!;
 
         comp.handleNewExercise(programmingExercise);
-        expect(comp.baseResource).toBe(`/course-management/${programmingExercise.course?.id!}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
+        expect(comp.baseResource).toBe(`/course-management/${programmingExercise.course!.id!}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
         expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
         expect(comp.hasSubmissionPolicy).toBeTrue();
         expect(submissionPolicyServiceSpy).toHaveBeenCalledOnce();
