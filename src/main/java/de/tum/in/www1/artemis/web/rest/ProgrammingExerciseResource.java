@@ -618,6 +618,7 @@ public class ProgrammingExerciseResource {
      * @param search         The pageable search containing the page size, page number and query string
      * @param isCourseFilter Whether to search in the courses for exercises
      * @param isExamFilter   Whether to search in the groups for exercises
+     * @param isSCAFilter    Whether to search only for exercises with SCA active
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping(PROGRAMMING_EXERCISES)

@@ -450,8 +450,8 @@ public class QuizExerciseService {
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
      * @param search         The search query defining the search term and the size of the returned page
-     * @param isCourseFilter Whether to search in the courses for exercises
-     * @param isExamFilter   Whether to search in the groups for exercises
+     * @param isCourseFilter Whether to search in courses for exercises
+     * @param isExamFilter   Whether to search in exams for exercises
      * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */

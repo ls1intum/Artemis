@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.Exam_;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup_;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 @Service
 public class ExerciseSpecificationService {
@@ -24,6 +25,20 @@ public class ExerciseSpecificationService {
         this.authCheckService = authCheckService;
     }
 
+    /**
+     * Creates a {@link Specification} to find exercises with the matching searchTerm.
+     * Allows to filter course for only course or exam exercises.
+     * Results are paged to reduce database load.
+     *
+     * @param searchTerm     Searches for an exercise id, exercise name or course name matching this input
+     * @param isCourseFilter Whether to search in courses for exercises
+     * @param isExamFilter   Whether to search in exams for exercises
+     * @param user           The user for whom to fetch all available exercises
+     * @param pageable       Defining how to sort the result and on which
+     * @param <T>            The generic exercise type
+     * @return A specification that can get passed to the exercise repository.
+     * @see org.springframework.data.jpa.repository.JpaSpecificationExecutor#findAll(Specification, Pageable)
+     */
     public <T extends Exercise> Specification<T> getExerciseSearchSpecification(String searchTerm, boolean isCourseFilter, boolean isExamFilter, User user, Pageable pageable) {
         return (root, query, criteriaBuilder) -> {
             Join<T, Course> joinCourse = root.join(Exercise_.COURSE, JoinType.LEFT);
@@ -81,6 +96,19 @@ public class ExerciseSpecificationService {
         };
     }
 
+    /**
+     * Creates a specification for finding programming exercises.
+     * This method allows to additionally filter for only exercises with SCA active.
+     *
+     * @param searchTerm     Searches for an exercise id, exercise name or course name matching this input
+     * @param isCourseFilter Whether to search in courses for exercises
+     * @param isExamFilter   Whether to search in exams for exercises
+     * @param isSCAFilter    Whether to search only for exercises with SCA active
+     * @param user           The user for whom to fetch all available exercises
+     * @param pageable       Defining how to sort the result and on which
+     * @return A specification that can get passed to the exercise repository.
+     * @see de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService#getAllOnPageWithSize(PageableSearchDTO, Boolean, Boolean, Boolean, User)
+     */
     public Specification<ProgrammingExercise> getExerciseSearchSpecification(String searchTerm, boolean isCourseFilter, boolean isExamFilter, boolean isSCAFilter, User user,
             Pageable pageable) {
         Specification<ProgrammingExercise> specification = getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
