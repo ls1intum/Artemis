@@ -329,6 +329,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testImportCategories() throws Exception {
         ProgrammingExercise sourceExercise = database.addProgrammingExerciseToCourse(course, true);
+        staticCodeAnalysisService.createDefaultCategories(sourceExercise);
+
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(sourceExercise.getId());
         for (var category : categories) {
             category.setState(CategoryState.GRADED);
@@ -347,7 +349,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, programmingExerciseSCAEnabled);
         var newCategories = request.patchWithResponseBodyList(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, StaticCodeAnalysisCategory.class, HttpStatus.OK);
 
-        assertThat(newCategories).hasSameSizeAs(categories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise").containsAll(categories);
+        assertThat(newCategories).hasSameSizeAs(categories).usingRecursiveFieldByFieldElementComparatorIgnoringFields("exercise", "id").containsAll(categories);
         assertThat(newCategories).allSatisfy(category -> assertThat(category.getExercise().getId()).isEqualTo(programmingExerciseSCAEnabled.getId()));
 
         var savedCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId());
