@@ -1,0 +1,44 @@
+.feedback-item {
+    &__header {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    &__category {
+        margin-bottom: 0;
+        font-size: var(--bs-body-font-size);
+        font-weight: bold;
+    }
+}
+
+.feedback-item-group {
+    &[open] > summary:before {
+        transform: rotate(180deg);
+    }
+
+    &__summary {
+        display: flex;
+        border-radius: 0.15rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        align-items: center;
+
+        // CSS trick to create a triangle
+        &:before {
+            margin-right: 0.5rem;
+            content: '';
+            width: 0;
+            height: 0;
+            border-left: 0.5rem solid transparent;
+            border-right: 0.5rem solid transparent;
+            border-top: 0.5rem solid var(--bs-modal-color);
+            transition-duration: 0.2s;
+        }
+
+        &__content {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
+}
