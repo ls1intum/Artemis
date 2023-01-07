@@ -27,8 +27,6 @@ public class GradeStep extends DomainObject {
 
     private static final Logger log = LoggerFactory.getLogger(GradeStep.class);
 
-    public static final String PLAGIARISM_GRADE = "U";  // "U" stands for "Unterschleif"
-
     @ManyToOne
     @JsonIgnoreProperties(value = "gradeSteps", allowSetters = true)
     private GradingScale gradingScale;
@@ -165,7 +163,7 @@ public class GradeStep extends DomainObject {
             }
         }
         catch (Exception e) {
-            log.debug("getNumericValue failed for: " + this.gradeName, e);
+            log.debug("getNumericValue failed for: {}", this.gradeName, e);
         }
         return null;
     }

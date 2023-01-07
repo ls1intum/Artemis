@@ -65,8 +65,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationById(Long exerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results" })
-    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsById(Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "categories", "teamAssignmentConfig", "templateParticipation.submissions.results", "solutionParticipation.submissions.results",
+            "auxiliaryRepositories" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = "testCases")
     Optional<ProgrammingExercise> findWithTestCasesById(Long exerciseId);
@@ -135,10 +136,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             select distinct pe from ProgrammingExercise pe
             left join pe.studentParticipations participation
-            where pe.releaseDate > :#{#now}
-                or pe.buildAndTestStudentSubmissionsAfterDueDate > :#{#now}
-                or pe.dueDate > :#{#now}
-                or (participation.individualDueDate is not null and participation.individualDueDate > :#{#now})
+            where pe.releaseDate > :now
+                or pe.buildAndTestStudentSubmissionsAfterDueDate > :now
+                or pe.dueDate > :now
+                or (participation.individualDueDate is not null and participation.individualDueDate > :now)
             """)
     List<ProgrammingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
@@ -304,7 +305,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @Query("""
             SELECT DISTINCT pe FROM ProgrammingExercise pe
             LEFT JOIN pe.testCases tc
-            WHERE pe.dueDate > :#{#now}
+            WHERE pe.dueDate > :now
                 AND pe.buildAndTestStudentSubmissionsAfterDueDate IS NULL
                 AND tc.visibility = 'AFTER_DUE_DATE'
             """)
@@ -601,8 +602,9 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * @throws EntityNotFoundException the programming exercise could not be found.
      */
     @NotNull
-    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsElseThrow(long programmingExerciseId) throws EntityNotFoundException {
-        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationSubmissionsAndResultsById(programmingExerciseId);
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesElseThrow(long programmingExerciseId)
+            throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationSubmissionsAndResultsAndAuxiliaryRepositoriesById(programmingExerciseId);
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 

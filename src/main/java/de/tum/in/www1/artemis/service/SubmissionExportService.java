@@ -136,8 +136,7 @@ public abstract class SubmissionExportService {
         // Sort the student participations by id
         exportedStudentParticipations.sort(Comparator.comparing(DomainObject::getId));
 
-        return this.createZipFileFromParticipations(exercise, exportedStudentParticipations, enableFilterAfterDueDate, filterLateSubmissionsDate, outputDir, exportErrors,
-                reportData);
+        return createZipFileFromParticipations(exercise, exportedStudentParticipations, enableFilterAfterDueDate, filterLateSubmissionsDate, outputDir, exportErrors, reportData);
     }
 
     /**

@@ -58,11 +58,9 @@ public abstract class Exercise extends BaseExercise implements Completable {
     private IncludedInOverallScore includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
 
     @Column(name = "problem_statement")
-    @Lob
     private String problemStatement;
 
     @Column(name = "grading_instructions")
-    @Lob
     private String gradingInstructions;
 
     @ManyToMany(mappedBy = "exercises")
@@ -678,7 +676,6 @@ public abstract class Exercise extends BaseExercise implements Completable {
      * @return boolean
      */
     public boolean isReleased() {
-        // Exam
         ZonedDateTime releaseDate = getParticipationStartDate();
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
@@ -854,6 +851,17 @@ public abstract class Exercise extends BaseExercise implements Completable {
             gradingInstructionCopyTracker.put(originalGradingInstruction.getId(), newGradingInstruction);
         }
         return newGradingInstructions;
+    }
+
+    /**
+     * Checks whether students should be able to see the example solution.
+     *
+     * @return true if example solution publication date is in the past, false otherwise (including null case).
+     */
+    public boolean isExampleSolutionPublished() {
+        ZonedDateTime exampleSolutionPublicationDate = this.isExamExercise() ? this.getExamViaExerciseGroupOrCourseMember().getExampleSolutionPublicationDate()
+                : this.getExampleSolutionPublicationDate();
+        return exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(exampleSolutionPublicationDate);
     }
 
     /**
