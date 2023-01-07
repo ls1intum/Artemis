@@ -26,6 +26,10 @@ export default defineConfig({
                     console.error('\x1b[33m', 'WARNING: ', message, '\x1b[0m');
                     return null;
                 },
+                log(message: string) {
+                    console.log('\x1b[37m', 'LOG: ', message, '\x1b[0m');
+                    return null;
+                },
             });
         },
         specPattern: ['init/ImportUsers.cy.ts', 'e2e/**/*.cy.{js,jsx,ts,tsx}'],

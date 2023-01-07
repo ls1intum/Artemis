@@ -41,6 +41,8 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
     private questionEditor: AceEditorComponent;
     @ViewChild('clickLayer', { static: false })
     private clickLayer: ElementRef;
+    @ViewChild('question', { static: false })
+    questionElement: ElementRef;
 
     shortAnswerQuestion: ShortAnswerQuestion;
 
@@ -412,7 +414,7 @@ export class ShortAnswerQuestionEditComponent implements OnInit, OnChanges, Afte
      */
     addSpotAtCursorVisualMode(): void {
         // check if selection is on the correct div
-        const wrapperDiv = document.getElementById('test')!;
+        const wrapperDiv = this.questionElement.nativeElement;
         const selection = window.getSelection()!;
         const child = selection.anchorNode;
 
