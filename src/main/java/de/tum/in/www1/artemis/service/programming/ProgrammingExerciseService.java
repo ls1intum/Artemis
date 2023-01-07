@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,10 +39,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.FileService;
-import de.tum.in.www1.artemis.service.ParticipationService;
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
@@ -104,6 +102,8 @@ public class ProgrammingExerciseService {
 
     private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
 
+    private final ExerciseSpecificationService exerciseSpecificationService;
+
     public ProgrammingExerciseService(ProgrammingExerciseRepository programmingExerciseRepository, FileService fileService, GitService gitService,
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
@@ -112,7 +112,8 @@ public class ProgrammingExerciseService {
             ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
-            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository) {
+            ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
+            ExerciseSpecificationService exerciseSpecificationService) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.fileService = fileService;
         this.gitService = gitService;
@@ -134,6 +135,7 @@ public class ProgrammingExerciseService {
         this.programmingExerciseSolutionEntryRepository = programmingExerciseSolutionEntryRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
         this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
+        this.exerciseSpecificationService = exerciseSpecificationService;
     }
 
     /**
@@ -952,11 +954,15 @@ public class ProgrammingExerciseService {
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
             final Boolean isSCAFilter, final User user) {
+        // TODO while minor, this still is duplicated code. Can we refactor this in such a way that there are still no database calls for this.
+        if (!isCourseFilter && !isExamFilter) {
+            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
+        }
         final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
-        boolean isAdmin = authCheckService.isAdmin(user);
-        Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findProgrammingExercises(searchTerm, isCourseFilter, isExamFilter, isSCAFilter, user, isAdmin,
+        Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, isSCAFilter, user,
                 pageable);
+        Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 
