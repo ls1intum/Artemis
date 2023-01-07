@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
@@ -6,6 +7,7 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { Subject, of } from 'rxjs';
 import { ActivatedRoute, Params, Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { ArtemisTestModule } from '../../test.module';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
@@ -54,7 +56,7 @@ import { SubmissionPolicyUpdateComponent } from 'app/exercises/shared/submission
 import { RemoveKeysPipe } from 'app/shared/pipes/remove-keys.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef, NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let comp: ProgrammingExerciseConfigureGradingComponent;
@@ -64,6 +66,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let route: ActivatedRoute;
     let gradingService: ProgrammingExerciseGradingService;
     let programmingExerciseService: ProgrammingExerciseService;
+    let modalService: NgbModal;
 
     let updateTestCasesStub: jest.SpyInstance;
     let updateCategoriesStub: jest.SpyInstance;
@@ -73,6 +76,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
     let getExerciseTestCaseStateStub: jest.SpyInstance;
     let loadExerciseStub: jest.SpyInstance;
     let loadStatisticsStub: jest.SpyInstance;
+    let importCategoriesFromExerciseStub: jest.SpyInstance;
     let programmingExerciseWebsocketService: ProgrammingExerciseWebsocketService;
 
     let routeSubject: Subject<Params>;
@@ -240,6 +244,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: Router, useClass: MockRouter },
                 { provide: FeatureToggleService, useClass: MockFeatureToggleService },
+                { provide: NgbModal, useClass: MockNgbModalService },
                 MockProvider(AlertService),
             ],
         })
@@ -254,12 +259,14 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
                 const router = debugElement.injector.get(Router);
                 programmingExerciseWebsocketService = debugElement.injector.get(ProgrammingExerciseWebsocketService);
                 programmingExerciseService = debugElement.injector.get(ProgrammingExerciseService);
+                modalService = debugElement.injector.get(NgbModal);
 
                 updateTestCasesStub = jest.spyOn(gradingService, 'updateTestCase');
                 updateCategoriesStub = jest.spyOn(gradingService, 'updateCodeAnalysisCategories');
                 resetTestCasesStub = jest.spyOn(gradingService, 'resetTestCases');
                 resetCategoriesStub = jest.spyOn(gradingService, 'resetCategories');
                 loadStatisticsStub = jest.spyOn(gradingService, 'getGradingStatistics');
+                importCategoriesFromExerciseStub = jest.spyOn(gradingService, 'importCategoriesFromExercise');
 
                 // @ts-ignore
                 (router as MockRouter).setUrl('/');
@@ -694,6 +701,27 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
         expect(comp.staticCodeAnalysisCategoriesForTable).toEqual(codeAnalysisCategories1);
         expect(comp.changedCategoryIds).toHaveLength(0);
+    });
+
+    it('should import a configuration from a different exercise', () => {
+        const mockReturnValue = {
+            result: Promise.resolve({ id: 456 } as ProgrammingExercise),
+            componentInstance: {},
+        } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+
+        initGradingComponent({ tab: 'code-analysis' });
+        fixture.detectChanges();
+
+        const button = debugElement.query(By.css('#import-configuration-button'));
+
+        button.nativeElement.click();
+
+        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.PROGRAMMING);
+        expect(mockReturnValue.componentInstance.onlySCA).toBeTrue();
+
+        expect(importCategoriesFromExerciseStub).toHaveBeenCalledOnce();
+        expect(importCategoriesFromExerciseStub).toHaveBeenCalledWith(exercise.id, 456);
     });
 
     it('should update sca category when an input field is updated', () => {
