@@ -48,7 +48,7 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param user    the user that wants to create the message
      */
     public void isAllowedToCreateNewAnswerPostInChannel(@NotNull Channel channel, @NotNull User user) {
-        var isArchivedChannel = !Objects.isNull(channel.getIsArchived()) && channel.getIsArchived();
+        var isArchivedChannel = channel.getIsArchived() != null && channel.getIsArchived();
         var userToCheck = getUserIfNecessary(user);
         if (isArchivedChannel) {
             throw new AccessForbiddenException("You are not allowed to create a new answer post in an archived channel.");
@@ -66,8 +66,8 @@ public class ChannelAuthorizationService extends ConversationAuthorizationServic
      * @param user    the user that wants to create answer the message
      */
     public void isAllowedToCreateNewPostInChannel(@NotNull Channel channel, @NotNull User user) {
-        var isAnnouncementChannel = !Objects.isNull(channel.getIsAnnouncementChannel()) && channel.getIsAnnouncementChannel();
-        var isArchivedChannel = !Objects.isNull(channel.getIsArchived()) && channel.getIsArchived();
+        var isAnnouncementChannel = channel.getIsAnnouncementChannel() != null && channel.getIsAnnouncementChannel();
+        var isArchivedChannel = channel.getIsArchived() != null && channel.getIsArchived();
         if (isArchivedChannel) {
             throw new AccessForbiddenException("You are not allowed to create a new post in an archived channel.");
         }
