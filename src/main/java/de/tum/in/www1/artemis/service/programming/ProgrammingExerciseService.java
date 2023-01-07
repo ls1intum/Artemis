@@ -21,7 +21,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -955,33 +954,9 @@ public class ProgrammingExerciseService {
             final Boolean isSCAFilter, final User user) {
         final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
-        Page<ProgrammingExercise> exercisePage = Page.empty();
-        if (authCheckService.isAdmin(user)) {
-            if (isCourseFilter && isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExams(searchTerm, pageable);
-            }
-            else if (isCourseFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
-            }
-            else if (isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllExams(searchTerm, pageable);
-            }
-        }
-        else {
-            if (isCourseFilter && isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-            else if (isCourseFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-            else if (isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
-            }
-        }
-        // TODO find a way to do this filter directly in the database without having a complexity explosion above
-        if (Boolean.TRUE.equals(isSCAFilter)) {
-            exercisePage = new PageImpl<>(exercisePage.stream().filter(ProgrammingExercise::isStaticCodeAnalysisEnabled).toList());
-        }
+        boolean isAdmin = authCheckService.isAdmin(user);
+        Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findProgrammingExercises(searchTerm, isCourseFilter, isExamFilter, isSCAFilter, user, isAdmin,
+                pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 

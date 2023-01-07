@@ -11,20 +11,29 @@ import java.util.Set;
 import java.util.regex.Matcher;
 
 import javax.annotation.Nullable;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Predicate;
 import javax.validation.constraints.NotNull;
 
 import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.query.QueryUtils;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.Exam_;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.ExerciseGroup_;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -33,7 +42,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  * Spring Data JPA repository for the ProgrammingExercise entity.
  */
 @Repository
-public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long> {
+public interface ProgrammingExerciseRepository extends JpaRepository<ProgrammingExercise, Long>, JpaSpecificationExecutor<ProgrammingExercise> {
 
     /**
      * Does a max join on the result table for each participation by result id (the newer the result id, the newer the result).
@@ -221,56 +230,73 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             """)
     Optional<ProgrammingExercise> findByStudentParticipationIdWithTemplateParticipation(@Param("participationId") Long participationId);
 
-    @Query("""
-            SELECT exercise FROM ProgrammingExercise exercise
-            WHERE (exercise.id IN
-                (SELECT courseExercise.id FROM ProgrammingExercise courseExercise
-                WHERE (courseExercise.course.instructorGroupName IN :groups OR courseExercise.course.editorGroupName IN :groups)
-                AND (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
-            OR exercise.id IN
-                (SELECT examExercise.id FROM ProgrammingExercise examExercise
-                WHERE (examExercise.exerciseGroup.exam.course.instructorGroupName IN :groups OR examExercise.exerciseGroup.exam.course.editorGroupName IN :groups)
-                AND (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
-                    """)
-    Page<ProgrammingExercise> queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups,
-            Pageable pageable);
+    default Page<ProgrammingExercise> findProgrammingExercises(String searchTerm, boolean isCourseFilter, final boolean isExamFilter, boolean isSCAFilter, User user,
+            boolean isAdmin, Pageable pageable) {
+        if (!isCourseFilter && !isExamFilter) {
+            return Page.empty();
+        }
 
-    @Query("""
-            SELECT courseExercise FROM ProgrammingExercise courseExercise
-            WHERE (courseExercise.course.instructorGroupName IN :groups OR courseExercise.course.editorGroupName IN :groups)
-            AND (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%)
-                """)
-    Page<ProgrammingExercise> queryBySearchTermInAllCoursesWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+        Specification<ProgrammingExercise> specification = (root, query, criteriaBuilder) -> {
+            Join<ProgrammingExercise, Course> joinCourse = root.join(ProgrammingExercise_.COURSE, JoinType.LEFT);
+            Join<ProgrammingExercise, ExerciseGroup> joinExerciseGroup = root.join(ProgrammingExercise_.EXERCISE_GROUP, JoinType.LEFT);
+            Join<ExerciseGroup, Exam> joinExam = joinExerciseGroup.join(ExerciseGroup_.EXAM, JoinType.LEFT);
+            Join<Exam, Course> joinExamCourse = joinExam.join(Exam_.COURSE, JoinType.LEFT);
 
-    @Query("""
-            SELECT examExercise FROM ProgrammingExercise examExercise
-            WHERE (examExercise.exerciseGroup.exam.course.instructorGroupName IN :groups OR examExercise.exerciseGroup.exam.course.editorGroupName IN :groups)
-            AND (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)
-                """)
-    Page<ProgrammingExercise> queryBySearchTermInAllExamsWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+            Predicate idMatchesSearch = criteriaBuilder.equal(criteriaBuilder.concat(root.get(ProgrammingExercise_.ID), ""), searchTerm);
+            Predicate exerciseTitleMatches = criteriaBuilder.like(root.get(ProgrammingExercise_.TITLE), "%" + searchTerm + "%");
+            Predicate courseTitleMatches = criteriaBuilder.like(joinCourse.get(Course_.TITLE), "%" + searchTerm + "%");
+            Predicate examCourseTitleMatches = criteriaBuilder.like(joinExamCourse.get(Course_.TITLE), "%" + searchTerm + "%");
 
-    @Query("""
-            SELECT exercise FROM ProgrammingExercise exercise
-            WHERE (exercise.id IN
-                    (SELECT courseExercise.id FROM ProgrammingExercise courseExercise
-                    WHERE (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
-                OR exercise.id IN
-                    (SELECT examExercise.id FROM ProgrammingExercise examExercise
-                    WHERE (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
-                        """)
-    Page<ProgrammingExercise> queryBySearchTermInAllCoursesAndExams(@Param("searchTerm") String searchTerm, Pageable pageable);
+            Predicate matchingCourseExercise = criteriaBuilder.or(idMatchesSearch, exerciseTitleMatches, courseTitleMatches);
+            Predicate matchingExamExercise = criteriaBuilder.or(idMatchesSearch, exerciseTitleMatches, examCourseTitleMatches);
 
-    @Query("""
-            SELECT courseExercise FROM ProgrammingExercise courseExercise
-            WHERE (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%)
-                """)
-    Page<ProgrammingExercise> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
+            Predicate filter;
 
-    @Query("""
-            SELECT examExercise FROM ProgrammingExercise examExercise
-            WHERE (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)
-                """)
-    Page<ProgrammingExercise> queryBySearchTermInAllExams(@Param("searchTerm") String searchTerm, Pageable pageable);
+            if (!isAdmin) {
+                var groups = user.getGroups();
+                Predicate atLeastEditorInCourse = criteriaBuilder.or(joinCourse.get(Course_.instructorGroupName).in(groups), joinCourse.get(Course_.editorGroupName).in(groups));
+                Predicate atLeastEditorInExam = criteriaBuilder.or(joinExamCourse.get(Course_.instructorGroupName).in(groups),
+                        joinExamCourse.get(Course_.editorGroupName).in(groups));
+
+                Predicate availableCourseExercise = criteriaBuilder.and(matchingCourseExercise, atLeastEditorInCourse);
+                Predicate availableExamExercise = criteriaBuilder.and(matchingExamExercise, atLeastEditorInExam);
+
+                if (isCourseFilter && isExamFilter) {
+                    filter = criteriaBuilder.or(availableCourseExercise, availableExamExercise);
+                }
+                else if (isCourseFilter) {
+                    filter = availableCourseExercise;
+                }
+                else {
+                    filter = availableExamExercise;
+                }
+
+                return filter;
+            }
+            else {
+                Predicate isCourseExercise = joinCourse.isNotNull();
+                Predicate isExamExercise = joinExerciseGroup.isNotNull();
+                if (isCourseFilter && isExamFilter) {
+                    filter = criteriaBuilder.or(matchingCourseExercise, matchingExamExercise);
+                }
+                else if (isCourseFilter) {
+                    filter = criteriaBuilder.and(matchingCourseExercise, isCourseExercise);
+                }
+                else {
+                    filter = criteriaBuilder.and(matchingExamExercise, isExamExercise);
+                }
+            }
+
+            if (isSCAFilter) {
+                Predicate scaActive = criteriaBuilder.isTrue(root.get(ProgrammingExercise_.STATIC_CODE_ANALYSIS_ENABLED));
+                filter = criteriaBuilder.and(filter, scaActive);
+            }
+
+            query.orderBy(QueryUtils.toOrders(pageable.getSort(), root, criteriaBuilder));
+            return filter;
+        };
+        return findAll(specification, pageable);
+    }
 
     @Query("""
             SELECT p FROM ProgrammingExercise p
