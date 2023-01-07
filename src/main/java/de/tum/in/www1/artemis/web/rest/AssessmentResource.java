@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.slf4j.Logger;
@@ -183,7 +182,7 @@ public abstract class AssessmentResource {
         // Therefore we send a result with only the references included, which is needed to tell the tutor which elements he missed to assess
         Result result = assessmentService.getExampleAssessment(submissionId);
 
-        if (!Objects.isNull(result) && !(isAtLeastEditor || (isAtLeastTutor && !exampleSubmission.isUsedForTutorial()))) {
+        if (result != null && !(isAtLeastEditor || (isAtLeastTutor && !exampleSubmission.isUsedForTutorial()))) {
             Result freshResult = new Result();
             freshResult.setId(result.getId());
             if (result.getFeedbacks() != null) {
