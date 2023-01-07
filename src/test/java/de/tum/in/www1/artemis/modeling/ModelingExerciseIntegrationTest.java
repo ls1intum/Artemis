@@ -616,15 +616,16 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
-        String randomString = UUID.randomUUID().toString();
-        database.addCourseWithOneReleasedModelExerciseWithKnowledge(randomString);
-        database.addCourseExamExerciseGroupWithOneModelingExercise(randomString + "-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/", randomString);
+        testCourseAndExamFilters();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
+        testCourseAndExamFilters();
+    }
+
+    private void testCourseAndExamFilters() throws Exception {
         String randomString = UUID.randomUUID().toString();
         database.addCourseWithOneReleasedModelExerciseWithKnowledge(randomString);
         database.addCourseExamExerciseGroupWithOneModelingExercise(randomString + "-Morpork");

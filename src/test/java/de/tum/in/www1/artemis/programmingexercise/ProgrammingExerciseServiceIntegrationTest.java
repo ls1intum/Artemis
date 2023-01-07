@@ -11,6 +11,8 @@ import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -186,22 +188,44 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         assertThat(searchResult.getResultsOnPage().stream().filter(result -> ((int) ((LinkedHashMap<String, ?>) result).get("id")) == exerciseId.intValue())).hasSize(1);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCourseAndExamFiltersAsInstructor() throws Exception {
-        String randomString = UUID.randomUUID().toString();
-        database.addCourseWithNamedProgrammingExerciseAndTestCases(randomString);
-        database.addCourseExamExerciseGroupWithOneProgrammingExercise(randomString + "-Morpork", randomString + "Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/", randomString);
+    void testCourseAndExamFiltersAsInstructor(boolean withSCA) throws Exception {
+        testCourseAndExamFilters(withSCA);
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = { false, true })
     @WithMockUser(username = "admin", roles = "ADMIN")
-    void testCourseAndExamFiltersAsAdmin() throws Exception {
+    void testCourseAndExamFiltersAsAdmin(boolean withSCA) throws Exception {
+        testCourseAndExamFilters(withSCA);
+    }
+
+    private void testCourseAndExamFilters(boolean withSCA) throws Exception {
         String randomString = UUID.randomUUID().toString();
-        database.addCourseWithNamedProgrammingExerciseAndTestCases(randomString);
+        database.addCourseWithNamedProgrammingExerciseAndTestCases(randomString, withSCA);
         database.addCourseExamExerciseGroupWithOneProgrammingExercise(randomString + "-Morpork", randomString + "Morpork");
         exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/", randomString);
+        testSCAFilter(randomString, withSCA);
+    }
+
+    private void testSCAFilter(String searchTerm, boolean expectSca) throws Exception {
+        var search = database.configureSearch(searchTerm);
+        var filters = database.searchMapping(search);
+        filters.add("isSCAFilter", "false");
+
+        // We should get both exercises if the filter is false:
+        var result = request.get("/api/programming-exercises", HttpStatus.OK, SearchResultPageDTO.class, filters);
+        assertThat(result.getResultsOnPage()).hasSize(2);
+
+        filters = database.searchMapping(search);
+        filters.add("isSCAFilter", "true");
+
+        // The exam exercise is always created with SCA deactivated
+        // expectSca true -> 1 result, false -> 0 results
+        result = request.get("/api/programming-exercises", HttpStatus.OK, SearchResultPageDTO.class, filters);
+        assertThat(result.getResultsOnPage()).hasSize(expectSca ? 1 : 0);
     }
 
     @Test

@@ -6,7 +6,6 @@ import javax.persistence.criteria.Predicate;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.repository.query.QueryUtils;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -74,8 +73,6 @@ public class ExerciseSpecificationService {
                 else {
                     filter = availableExamExercise;
                 }
-
-                return filter;
             }
             else {
                 Predicate isCourseExercise = joinCourse.isNotNull();
@@ -90,8 +87,6 @@ public class ExerciseSpecificationService {
                     filter = criteriaBuilder.and(matchingExamExercise, isExamExercise);
                 }
             }
-
-            query.orderBy(QueryUtils.toOrders(pageable.getSort(), root, criteriaBuilder));
             return filter;
         };
     }

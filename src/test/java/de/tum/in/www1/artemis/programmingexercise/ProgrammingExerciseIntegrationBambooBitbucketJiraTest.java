@@ -1008,18 +1008,4 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
             return localRepository;
         });
     }
-
-    @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testCourseAndExamFiltersAsInstructor(boolean withSCA) throws Exception {
-        programmingExerciseIntegrationTestService.testCourseAndExamFilters(withSCA);
-    }
-
-    @ParameterizedTest
-    @ValueSource(booleans = { false, true })
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testCourseAndExamFiltersAsAdmin(boolean withSCA) throws Exception {
-        programmingExerciseIntegrationTestService.testCourseAndExamFilters(withSCA);
-    }
 }

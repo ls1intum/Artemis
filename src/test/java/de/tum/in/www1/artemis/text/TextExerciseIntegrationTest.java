@@ -766,15 +766,16 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
-        String randomString = UUID.randomUUID().toString();
-        database.addCourseWithOneReleasedTextExercise(randomString);
-        database.addCourseExamExerciseGroupWithOneTextExercise(randomString + "-Morpork");
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/text-exercises", randomString);
+        testCourseAndExamFilters();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
+        testCourseAndExamFilters();
+    }
+
+    private void testCourseAndExamFilters() throws Exception {
         String randomString = UUID.randomUUID().toString();
         database.addCourseWithOneReleasedTextExercise(randomString);
         database.addCourseExamExerciseGroupWithOneTextExercise(randomString + "-Morpork");

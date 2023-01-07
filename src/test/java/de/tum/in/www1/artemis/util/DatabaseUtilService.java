@@ -2516,11 +2516,15 @@ public class DatabaseUtilService {
      * @return A course with named exercise
      */
     public Course addCourseWithNamedProgrammingExercise(String programmingExerciseTitle) {
+        return addCourseWithNamedProgrammingExercise(programmingExerciseTitle, false);
+    }
+
+    public Course addCourseWithNamedProgrammingExercise(String programmingExerciseTitle, boolean scaActive) {
         var course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
         var programmingExercise = (ProgrammingExercise) new ProgrammingExercise().course(course);
-        populateProgrammingExercise(programmingExercise, "TSTEXC", programmingExerciseTitle, false);
+        populateProgrammingExercise(programmingExercise, "TSTEXC", programmingExerciseTitle, scaActive);
         programmingExercise.setPresentationScoreEnabled(course.getPresentationScore() != 0);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
@@ -2696,11 +2700,15 @@ public class DatabaseUtilService {
         return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
     }
 
+    public void addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle) {
+        addCourseWithNamedProgrammingExerciseAndTestCases(programmingExerciseTitle, false);
+    }
+
     /**
      * @param programmingExerciseTitle The title of the programming exercise
      */
-    public void addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle) {
-        Course course = addCourseWithNamedProgrammingExercise(programmingExerciseTitle);
+    public void addCourseWithNamedProgrammingExerciseAndTestCases(String programmingExerciseTitle, boolean scaActive) {
+        Course course = addCourseWithNamedProgrammingExercise(programmingExerciseTitle, scaActive);
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), programmingExerciseTitle);
 
         addTestCasesToProgrammingExercise(programmingExercise);
