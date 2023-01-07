@@ -1,0 +1,50 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.9.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.9.xsd">
+    <changeSet id="20230102203648-1" author="stefanwaldhauser">
+        <addColumn tableName="conversation">
+            <column name="discriminator" type="CHAR(1)" defaultValue="O">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="VARCHAR(20)">
+                <constraints nullable="true" />
+            </column>
+            <column name="description" type="VARCHAR(250)">
+                <constraints nullable="true" />
+            </column>
+            <column name="is_public" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="true" />
+            </column>
+            <column name="topic" type="VARCHAR(250)">
+                <constraints nullable="true" />
+            </column>
+            <column name="creator_id" type="BIGINT">
+                <constraints nullable="true" />
+            </column>
+            <column name="is_archived" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="true" />
+            </column>
+            <column name="is_announcement" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="true" />
+            </column>
+        </addColumn>
+        <addColumn tableName="conversation_participant">
+            <column name="is_moderator" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="true" />
+            </column>
+            <column name="is_hidden" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="true" />
+            </column>
+            <column name="is_favorite" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="true" />
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="creator_id" baseTableName="conversation" constraintName="fk_conversation_creator" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <addUniqueConstraint columnNames="conversation_id, user_id" constraintName="conversation_participant_uq" tableName="conversation_participant"/>
+        <sql>update conversation SET discriminator = 'O' WHERE discriminator IS NULL;</sql>
+        <sql>update conversation c SET creator_id = (select cp.user_id from conversation_participant cp where cp.conversation_id = c.id LIMIT 1)
+             where creator_id IS NULL AND discriminator = 'O';</sql>
+        <!-- Reset unread message properties for all users to prevent edge cases -->
+        <sql>update conversation_participant SET unread_messages_count = 0</sql>
+        <sql>update conversation_participant SET last_read = NULL</sql>
+    </changeSet>
+</databaseChangeLog>

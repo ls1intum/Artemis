@@ -40,6 +40,8 @@ export enum GradeEditMode {
 export abstract class BaseGradingSystemComponent implements OnInit {
     GradeType = GradeType;
     ButtonSize = ButtonSize;
+    GradingScale = GradingScale;
+
     gradingScale = new GradingScale();
     lowerBoundInclusivity = true;
     existingGradingScale = false;

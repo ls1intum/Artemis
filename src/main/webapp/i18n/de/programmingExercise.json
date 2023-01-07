@@ -231,6 +231,7 @@
             },
             "export": {
                 "downloadRepo": "Repo Herunterladen",
+                "downloadExampleSolutionRepo": "Lösungs-Repo Herunterladen",
                 "downloadExampleSolution": "Beispiellösung herunterladen",
                 "downloadTests": "Tests herunterladen",
                 "downloadTestsWithExampleSolution": "Tests mit Beispiellösung herunterladen",

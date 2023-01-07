@@ -24,6 +24,12 @@ export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
 export type ResultsWithPointsArrayResponseType = HttpResponse<ResultWithPointsPerGradingCriterion[]>;
 
+export interface Badge {
+    class: string;
+    text: string;
+    tooltip: string;
+}
+
 export interface IResultService {
     find: (resultId: number) => Observable<EntityResponseType>;
     getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
@@ -309,15 +315,15 @@ export class ResultService implements IResultService {
         link.click();
     }
 
-    public static evaluateBadge(participation: Participation, result: Result): { badgeClass: string; text: string; tooltip: string } {
+    public static evaluateBadge(participation: Participation, result: Result): Badge {
         if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
             const studentParticipation = participation as StudentParticipation;
             if (studentParticipation.testRun) {
-                return { badgeClass: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
+                return { class: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' };
             }
         }
         return result.rated
-            ? { badgeClass: 'bg-success', text: 'artemisApp.result.graded', tooltip: 'artemisApp.result.gradedTooltip' }
-            : { badgeClass: 'bg-info', text: 'artemisApp.result.notGraded', tooltip: 'artemisApp.result.notGradedTooltip' };
+            ? { class: 'bg-success', text: 'artemisApp.result.graded', tooltip: 'artemisApp.result.gradedTooltip' }
+            : { class: 'bg-info', text: 'artemisApp.result.notGraded', tooltip: 'artemisApp.result.notGradedTooltip' };
     }
 }
