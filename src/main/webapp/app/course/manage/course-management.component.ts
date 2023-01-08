@@ -113,17 +113,17 @@ export class CourseManagementComponent implements OnInit, OnDestroy, AfterViewIn
 
     /**
      * Sorts the courses into the coursesBySemester map.
-     * Fills the semesterCollapsed map depending on if the semester should be uncollapsed by default.
-     * The first semester is always uncollapsed. The test course group is also uncollapsed.
+     * Fills the semesterCollapsed map depending on if the semester should be expanded by default.
+     * The first semester is always expanded. The test course group is also expanded.
      */
     private sortCoursesIntoSemesters(): void {
         this.semesterCollapsed = {};
         this.coursesBySemester = {};
 
-        let firstUncollapsed = false;
+        let firstExpanded = false;
         for (const semester of this.courseSemesters) {
-            this.semesterCollapsed[semester] = firstUncollapsed;
-            firstUncollapsed = true;
+            this.semesterCollapsed[semester] = firstExpanded;
+            firstExpanded = true;
             this.coursesBySemester[semester] = this.courses.filter((course) => !course.testCourse && (course.semester ?? '') === semester);
         }
 
