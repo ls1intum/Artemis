@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 
@@ -115,6 +116,10 @@ public class Exam extends DomainObject {
 
     @Column(name = "course_name")
     private String courseName;
+
+    @Nullable
+    @Column(name = "example_solution_publication_date")
+    private ZonedDateTime exampleSolutionPublicationDate;
 
     @ManyToOne
     @JoinColumn(name = "course_id")
@@ -450,6 +455,15 @@ public class Exam extends DomainObject {
     @JsonIgnore
     public boolean hasExamArchive() {
         return examArchivePath != null && !examArchivePath.isEmpty();
+    }
+
+    @Nullable
+    public ZonedDateTime getExampleSolutionPublicationDate() {
+        return exampleSolutionPublicationDate;
+    }
+
+    public void setExampleSolutionPublicationDate(@Nullable ZonedDateTime exampleSolutionPublicationDate) {
+        this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
     }
 
     /**
