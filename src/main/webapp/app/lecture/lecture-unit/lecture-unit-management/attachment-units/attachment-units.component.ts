@@ -69,14 +69,11 @@ export class AttachmentUnitsComponent implements OnInit {
 
         this.attachmentUnitService.getSplitUnitsData(this.lectureId, formData).subscribe({
             next: (res: any) => {
-                this.units = res.body;
-                this.isLoading = false;
-
-                if (this.units && this.units.length > 0) {
-                    this.numberOfpages = this.units[0].numberOfPages!;
+                if (res) {
+                    this.units = res.body.lectureUnitDTOS;
+                    this.numberOfpages = res.body.numberOfPages;
+                    this.isLoading = false;
                 }
-
-                console.log(this.units);
             },
             error: (res: HttpErrorResponse) => {
                 if (res.error.params === 'file' && res?.error?.title) {

@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitDTO;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 
 @Service
@@ -87,7 +88,7 @@ public class LectureUnitProcessingService {
      * @param file The file (lecture slide) to be split
      * @return The prepared information of split units as list of LectureUnitSplitDTO
      */
-    public List<LectureUnitSplitDTO> getSplitUnitData(MultipartFile file) throws IOException {
+    public LectureUnitInformationDTO getSplitUnitData(MultipartFile file) throws IOException {
 
         List<LectureUnitSplitDTO> units = new ArrayList<>();
         PDDocument document = PDDocument.load(file.getBytes());
@@ -96,12 +97,12 @@ public class LectureUnitProcessingService {
         int numberOfPages = unitsInformation.y();
 
         unitsDocumentMap.forEach((k, v) -> {
-            LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO(v.x(), ZonedDateTime.now(), v.y().x(), v.y().y(), numberOfPages);
+            LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO(v.x(), ZonedDateTime.now(), v.y().x(), v.y().y());
             units.add(newLectureUnit);
         });
 
         document.close();
-        return units;
+        return new LectureUnitInformationDTO(units, numberOfPages);
     }
 
     /**
@@ -130,6 +131,9 @@ public class LectureUnitProcessingService {
             if (slideText.contains("Outline")) {
                 outlineCount++;
                 String[] lines = slideText.split("\r\n|\r|\n");
+                System.out.println(lines.length);
+                System.out.println(lines[0]);
+                System.out.println(lines[1]);
                 String unitName = lines[outlineCount + 1].replaceAll("[^a-zA-Z0-9\\s()_-]", "").replaceFirst("^\\s*", "");
                 outlineMap.put(outlineCount, new Tuple<>(unitName, new Tuple<>((outlineCount == 1) ? 1 : index, document.getNumberOfPages())));
 

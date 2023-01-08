@@ -7,7 +7,6 @@ import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,6 +23,7 @@ import de.tum.in.www1.artemis.service.AttachmentUnitService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LectureUnitProcessingService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -187,7 +187,7 @@ public class AttachmentUnitResource {
      */
     @PostMapping("lectures/{lectureId}/process-units")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<List<LectureUnitSplitDTO>> getAttachmentUnitsData(@RequestParam(value = "file") MultipartFile file, @PathVariable Long lectureId) throws IOException {
+    public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@RequestParam(value = "file") MultipartFile file, @PathVariable Long lectureId) throws IOException {
         log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
@@ -197,11 +197,7 @@ public class AttachmentUnitResource {
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
-        List<LectureUnitSplitDTO> attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(file);
-        if (attachmentUnitsData.isEmpty()) {
-            log.error("Failed to retrieve split PDF lecture units data for lecture with id {}", lectureId);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        LectureUnitInformationDTO attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(file);
         return ResponseEntity.ok().body(attachmentUnitsData);
     }
 }
