@@ -37,11 +37,12 @@ public interface VersionControlService {
     void addWebHookForParticipation(ProgrammingExerciseParticipation participation);
 
     /**
-     * Deletes the project for the given project key
+     * Deletes the project for the given courseShortName and project key
      *
+     * @param courseShortName of the course the repository belongs to
      * @param projectKey of the project that should be deleted
      */
-    void deleteProject(String projectKey);
+    void deleteProject(String courseShortName, String projectKey);
 
     /**
      * Deletes the repository at the given url

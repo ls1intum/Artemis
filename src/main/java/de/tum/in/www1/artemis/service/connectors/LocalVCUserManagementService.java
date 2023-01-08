@@ -2,36 +2,18 @@ package de.tum.in.www1.artemis.service.connectors;
 
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
-import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Service
 @Profile("localvc")
 public class LocalVCUserManagementService implements VcsUserManagementService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalVCUserManagementService.class);
-
-    private final LocalVCService localVCService;
-
-    private final UserRepository userRepository;
-
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
-    public LocalVCUserManagementService(LocalVCService localVCService, UserRepository userRepository, PasswordService passwordService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
-        this.localVCService = localVCService;
-        this.userRepository = userRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
+    public LocalVCUserManagementService() {
     }
 
     /**
@@ -45,7 +27,7 @@ public class LocalVCUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void createVcsUser(User user, String password) throws VersionControlException {
-        // Not implemented.
+        // Not implemented for local VC.
     }
 
     /**
@@ -66,7 +48,7 @@ public class LocalVCUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void updateVcsUser(String vcsLogin, User user, Set<String> removedGroups, Set<String> addedGroups, String newPassword) {
-        // Not implemented.
+        // Not implemented for local VC.
     }
 
     /**
@@ -76,7 +58,7 @@ public class LocalVCUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void deleteVcsUser(String login) throws VersionControlException {
-        // Not implemented.
+        // Not implemented for local VC.
     }
 
     /**
@@ -87,7 +69,7 @@ public class LocalVCUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void activateUser(String login) throws VersionControlException {
-        // Not supported by Bitbucket
+        // Not implemented for local VC.
     }
 
     /**
@@ -98,7 +80,7 @@ public class LocalVCUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void deactivateUser(String login) throws VersionControlException {
-        // Not supported by Bitbucket
+        // Not implemented for local VC.
     }
 
     /**
@@ -115,6 +97,6 @@ public class LocalVCUserManagementService implements VcsUserManagementService {
      */
     @Override
     public void updateCoursePermissions(Course updatedCourse, String oldInstructorGroup, String oldEditorGroup, String oldTeachingAssistantGroup) {
-        // Not implemented.
+        // Not implemented for local VC.
     }
 }

@@ -978,7 +978,7 @@ public class ProgrammingExerciseService {
                 }
             });
 
-            versionControlService.get().deleteProject(programmingExercise.getProjectKey());
+            versionControlService.get().deleteProject(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), programmingExercise.getProjectKey());
         }
         /*
          * Always delete the local copies of the repository because they can (in theory) be restored by cloning again, but they block the creation of new programming exercises with

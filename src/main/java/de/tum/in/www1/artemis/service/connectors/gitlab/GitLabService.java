@@ -281,7 +281,8 @@ public class GitLabService extends AbstractVersionControlService {
     }
 
     @Override
-    public void deleteProject(String projectKey) {
+    public void deleteProject(String courseShortName, String projectKey) {
+        // courseShortName is only needed for local VC.
         try {
             gitlab.getGroupApi().deleteGroup(projectKey);
         }

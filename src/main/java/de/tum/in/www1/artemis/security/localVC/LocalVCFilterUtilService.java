@@ -17,20 +17,16 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.exception.LocalVCException;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
+import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Service
@@ -52,19 +48,34 @@ public class LocalVCFilterUtilService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final StudentParticipationRepository studentParticipationRepository;
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
+    private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
+
+    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    private final ExamSubmissionService examSubmissionService;
+
+    private final TeamRepository teamRepository;
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
     public LocalVCFilterUtilService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseRepository courseRepository,
             AuthorizationCheckService authorizationCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
-            StudentParticipationRepository studentParticipationRepository) {
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, TeamRepository teamRepository,
+            ExamSubmissionService examSubmissionService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
+        this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.examSubmissionService = examSubmissionService;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -180,58 +191,39 @@ public class LocalVCFilterUtilService {
     private void authorizeUser(String repositoryTypeOrUserName, Course course, ProgrammingExercise exercise, User user, boolean forPush) throws LocalVCAuthException {
         if (isRequestingBaseRepository(repositoryTypeOrUserName)) {
             // ---- Requesting one of the base repositories ("exercise", "tests", or "solution") ----
-            // Check that the user is at least an instructor in the course the repository belongs to.
-            boolean isAtLeastInstructorInCourse = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
-            if (!isAtLeastInstructorInCourse) {
+            if (!isAuthorizedToAccessBaseRepository(course, user, repositoryTypeOrUserName, exercise)) {
                 throw new LocalVCAuthException();
             }
             return;
         }
 
-        // ---- Requesting one of the participant repositories ----
+        // ---- Requesting one of the participant repositories. ----
 
-        // Check that offline IDE usage is allowed
+        // Check that offline IDE usage is allowed.
         if (Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
             throw new LocalVCAuthException();
         }
 
-        //
+        // Check if the repository URL corresponds to a team.
+        Team team = findValidTeam(course.getId(), repositoryTypeOrUserName, user);
 
         // Check that the user name in the repository name corresponds to the user name used for Basic Auth.
-        if (!user.getLogin().equals(repositoryTypeOrUserName)) {
+        if (team == null && !user.getLogin().equals(repositoryTypeOrUserName)) {
             throw new LocalVCAuthException();
         }
 
-        // Check that the user is at least a student in the course.
-        boolean isAtLeastStudentInCourse = authorizationCheckService.isAtLeastStudentInCourse(course, user);
-        if (!isAtLeastStudentInCourse) {
-            throw new LocalVCAuthException();
-        }
+        String userIdentifier = team != null ? team.getShortName() : user.getLogin();
 
-        // Check that the user participates in the exercise the repository belongs to.
-        Optional<StudentParticipation> participation = studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), user.getLogin());
-
-        if (participation.isEmpty())
-            throw new LocalVCAuthException();
-
-        // Check that the exercise's Participation Start Date is either not set or is in the past.
-        if (exercise.getParticipationStartDate() != null && exercise.getParticipationStartDate().isAfter(ZonedDateTime.now())) {
-            throw new LocalVCAuthException();
-        }
-        if (!forPush)
-            return;
-
-        // Additional checks for push request.
-
-        // Check that the exercise's Due Date is either not set or is in the future.
-        if (exercise.getDueDate() != null && exercise.getDueDate().isBefore(ZonedDateTime.now())) {
-            // Students can still commit code and receive feedback after the exercise due date, if manual review and complaints are not activated. The results for these submissions
-            // will not be rated.
-            if (exercise.getAssessmentType() == AssessmentType.MANUAL || exercise.getAllowComplaintsForAutomaticAssessments()) {
+        if (exercise.isExamExercise()) {
+            if (!isAllowedForExamExercise(forPush, exercise, user)) {
                 throw new LocalVCAuthException();
             }
         }
-
+        else {
+            if (!isAllowedForCourseExercise(exercise, userIdentifier, forPush)) {
+                throw new LocalVCAuthException();
+            }
+        }
     }
 
     private boolean isRequestingBaseRepository(String requestedRepositoryType) {
@@ -242,4 +234,87 @@ public class LocalVCFilterUtilService {
         return false;
     }
 
+    private boolean isAuthorizedToAccessBaseRepository(Course course, User user, String repositoryType, Exercise exercise) {
+        // Check that the user is at least an instructor in the course the repository belongs to.
+        boolean isAtLeastInstructorInCourse = authorizationCheckService.isAtLeastInstructorInCourse(course, user);
+        if (!isAtLeastInstructorInCourse) {
+            return false;
+        }
+
+        // Check that there is a template participation or a solution participation for the exercise.
+        if (repositoryType.equals("exercise")) {
+            Optional<TemplateProgrammingExerciseParticipation> participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId());
+            if (participation.isEmpty()) {
+                return false;
+            }
+        }
+
+        if (repositoryType.equals("solution")) {
+            Optional<SolutionProgrammingExerciseParticipation> participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId());
+            if (participation.isEmpty()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private Team findValidTeam(Long courseId, String userNameFromUrl, User user) throws LocalVCInternalException, LocalVCAuthException {
+        List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(courseId, userNameFromUrl);
+        if (teams.size() > 0) {
+            if (teams.size() > 1) {
+                throw new LocalVCInternalException("Multiple teams with the same team short name for one exercise.");
+            }
+
+            // Check that the authenticated user is part of the team.
+            Team team = teams.get(0);
+            if (!team.hasStudent(user)) {
+                throw new LocalVCAuthException();
+            }
+            return team;
+        }
+        return null;
+    }
+
+    private boolean isAllowedForExamExercise(boolean forPush, Exercise exercise, User user) {
+        if (!forPush)
+            return true;
+
+        // ---- Additional checks for push request. ----
+        // Check that the user is allowed to submit in case this is an exam exercise.
+        return examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false);
+    }
+
+    private boolean isAllowedForCourseExercise(Exercise exercise, String userIdentifier, boolean forPush) {
+        // Check that the user or team participates in the exercise the repository belongs to.
+        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(),
+                userIdentifier);
+
+        if (participation.isEmpty())
+            return false;
+
+        // Check that the exercise's Participation Start Date is either not set or is in the past.
+        if (exercise.getParticipationStartDate() != null && exercise.getParticipationStartDate().isAfter(ZonedDateTime.now())) {
+            return false;
+        }
+        if (!forPush)
+            return true;
+
+        // ---- Additional checks for push request. ----
+
+        // Check that pushes are allowed for the authenticated user (i.e. they have write permission).
+        // TODO
+
+        // Check that the exercise's Due Date is either not set or is in the future.
+        if (exercise.getDueDate() != null && exercise.getDueDate().isBefore(ZonedDateTime.now())) {
+            // Students can still commit code and receive feedback after the exercise due date, if manual review and complaints are not activated.
+            // Students can also commit code for test runs after the due date.
+            // The results for these submissions will not be rated.
+            if ((exercise.getAssessmentType() == AssessmentType.MANUAL || exercise.getAllowComplaintsForAutomaticAssessments()) && !participation.get().isTestRun()) {
+                return false;
+            }
+        }
+
+        return true;
+    }
 }
