@@ -9,6 +9,7 @@ import { combineLatest } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/utils/blob-util';
 import { AlertService } from 'app/core/util/alert.service';
+import { TranslateService } from '@ngx-translate/core';
 
 type UnitResponseType = {
     unitName: string;
@@ -49,6 +50,7 @@ export class AttachmentUnitsComponent implements OnInit {
         private attachmentUnitService: AttachmentUnitService,
         private httpClient: HttpClient,
         private alertService: AlertService,
+        private translateService: TranslateService,
     ) {
         this.file = this.router.getCurrentNavigation()!.extras.state!.file;
         this.fileName = this.router.getCurrentNavigation()!.extras.state!.fileName;
@@ -136,10 +138,41 @@ export class AttachmentUnitsComponent implements OnInit {
     }
 
     validUnitInformation(): boolean {
-        console.log(this.units);
         for (const unit of this.units) {
             if (unit.unitName === '' || unit.unitName === undefined) {
-                this.invalidUnitTableMessage = 'Name can not be empty';
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.empty.unitName`);
+                return false;
+            }
+
+            if (unit.startPage === undefined || unit.startPage === null) {
+                this.invalidUnitTableMessage = `${this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.empty.startPage`)}`;
+                return false;
+            }
+
+            if (unit.endPage === undefined || unit.endPage === null) {
+                this.invalidUnitTableMessage = `${this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.empty.endPage`)}`;
+                return false;
+            }
+
+            if (unit.startPage < 1) {
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.startPage`);
+                return false;
+            }
+
+            if (unit.startPage > this.numberOfpages) {
+                this.invalidUnitTableMessage = `${this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.startPageBigger`)} ${
+                    this.numberOfpages
+                }`;
+                return false;
+            }
+
+            if (unit.endPage < 1) {
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.endPageLower`);
+                return false;
+            }
+
+            if (unit.endPage > this.numberOfpages) {
+                this.invalidUnitTableMessage = `${this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.endPage`)} ${this.numberOfpages}`;
                 return false;
             }
         }

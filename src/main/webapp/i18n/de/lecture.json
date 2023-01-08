@@ -1,15 +1,6 @@
 {
     "artemisApp": {
         "lecture": {
-            "processUnit": "Automatische Einheitenverarbeitung",
-            "split": {
-                "unit": "Units",
-                "unitName": "Einheitenname",
-                "releaseDate": "Veröffentlichungsdatum",
-                "startPage": "Start seite",
-                "endPage": "Ende Seite"
-            },
-            "lectureFileToolTip": "Bitte klicken, um mit der automatischen Trennung von Vorlesungseinheiten fortzufahren",
             "home": {
                 "title": "Vorlesungen",
                 "createLabel": "Vorlesung erstellen",

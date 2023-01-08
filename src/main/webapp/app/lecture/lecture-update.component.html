@@ -76,8 +76,8 @@
                     (change)="onSelectProcessUnit()"
                     [attr.disabled]="editForm.form.invalid || isSaving ? true : null"
                 />
-                <span class="px-1">{{ 'artemisApp.lecture.processUnit' | artemisTranslate }}</span>
-                <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.lecture.lectureFileToolTip' | artemisTranslate"></fa-icon>
+                <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.processUnit' | artemisTranslate }}</span>
+                <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.lectureFileToolTip' | artemisTranslate"></fa-icon>
             </div>
 
             <div *ngIf="processUnitMode" class="form-group">

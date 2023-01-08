@@ -1,23 +1,23 @@
 <jhi-lecture-unit-layout [isLoading]="isLoading">
     <div class="col-4">
         <h2 id="page-heading">
-            <span jhiTranslate="artemisApp.lecture.split.unit">Units</span>
+            <span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.unit">Units</span>
         </h2>
     </div>
     <div class="table-responsive">
         <table class="table table-striped">
             <thead>
                 <tr>
-                    <th><span jhiTranslate="artemisApp.lecture.split.unitName">Unit Name</span></th>
+                    <th><span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.unitName">Unit Name</span></th>
                     <th>
-                        <span jhiTranslate="artemisApp.lecture.split.releaseDate">Release Date</span>
+                        <span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.releaseDate">Release Date</span>
                         <fa-stack ngbTooltip="{{ 'entity.timeZoneWarning' | artemisTranslate : { timeZone: currentTimeZone } }}" class="icon-full-size">
                             <fa-icon [icon]="faGlobe" stackItemSize="1x" class="text-lightgrey"></fa-icon>
                             <fa-icon [icon]="faClock" stackItemSize="1x" transform="shrink-6 down-5 right-5" class="text-secondary"></fa-icon>
                         </fa-stack>
                     </th>
-                    <th><span jhiTranslate="artemisApp.lecture.split.startPage">Start Page</span></th>
-                    <th><span jhiTranslate="artemisApp.lecture.split.endPage">End Page</span></th>
+                    <th><span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.startPage">Start Page</span></th>
+                    <th><span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.split.endPage">End Page</span></th>
                     <th></th>
                 </tr>
             </thead>
@@ -60,7 +60,7 @@
                             type="number"
                             class="form-control"
                             name="endPage"
-                            placeholder="Start Page"
+                            placeholder="End Page"
                             autocomplete="off"
                             [defaultValue]="unit.endPage"
                             [(ngModel)]="unit.endPage"
@@ -70,7 +70,9 @@
                         <button (click)="deleteRow(i)" class="btn btn-danger"><fa-icon [icon]="faTimes"></fa-icon></button>
                     </td>
                 </tr>
-                <button (click)="addRow()" class="btn btn-success mt-2"><fa-icon [icon]="faPlus"></fa-icon></button>
+                <button (click)="addRow()" class="btn btn-success mt-2">
+                    <fa-icon [icon]="faPlus"></fa-icon>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.addUnit' | artemisTranslate }}
+                </button>
             </tbody>
         </table>
         <button type="button" (click)="createAttachmentUnits()" [disabled]="!validUnitInformation()" class="btn btn-primary">
