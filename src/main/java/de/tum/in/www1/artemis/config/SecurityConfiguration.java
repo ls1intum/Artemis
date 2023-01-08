@@ -121,26 +121,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             // .antMatchers("/api.html")
             .antMatchers("/test/**")
             .antMatchers(CustomLti13Configurer.JWKS_PATH);
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/programming-exercises/new-result");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/{v\\d+}/programming-exercises/new-result");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/programming-submissions/*");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/{v\\d+}/programming-submissions/*");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/{v\\d+}/programming-exercises/test-cases-changed/*");
-        web.ignoring()
-            .antMatchers(HttpMethod.GET, "/api/system-notifications/active");
-        web.ignoring()
-            .antMatchers(HttpMethod.GET, "/api/{v\\d+}/system-notifications/active");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/athene-result/*");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, "/api/{v\\d+}/athene-result/*");
         // @formatter:on
     }
 
@@ -173,31 +153,20 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .sessionManagement()
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
+            // api
             .authorizeRequests()
-            .antMatchers("/api/register").permitAll()
-            .antMatchers("/api/{v\\d+}/register").permitAll()
-            .antMatchers("/api/activate").permitAll()
-            .antMatchers("/api/{v\\d+}/activate").permitAll()
-            .antMatchers("/api/authenticate").permitAll()
-            .antMatchers("/api/{v\\d+}/authenticate").permitAll()
-            .antMatchers("/api/account/reset-password/init").permitAll()
-            .antMatchers("/api/{v\\d+}/account/reset-password/init").permitAll()
-            .antMatchers("/api/account/reset-password/finish").permitAll()
-            .antMatchers("/api/{v\\d+}/account/reset-password/finish").permitAll()
-            .antMatchers("/api/lti/launch/*").permitAll()
-            .antMatchers("/api/{v\\d+}/lti/launch/*").permitAll()
-            .antMatchers("/api/lti13/auth-callback").permitAll()
-            .antMatchers("/api/{v\\d+}/lti13/auth-callback").permitAll()
-            .antMatchers("/api/programming-exercises/*/build-plan").permitAll()
-            .antMatchers("/api/{v\\d+}/programming-exercises/*/build-plan").permitAll()
-            .antMatchers("/api/**").authenticated()
+            .antMatchers("/api/admin/**").hasAuthority(Role.ADMIN.getAuthority())
+            .antMatchers("/api/{v\\d+}/admin/**").hasAuthority(Role.ADMIN.getAuthority())
+            .antMatchers("/api/public/**").permitAll()
+            .antMatchers("/api/{v\\d+}/public/**").permitAll()
+            // TODO: Remove the following three lines in January 2024 together with LegacyResource
+            .antMatchers(HttpMethod.POST, "/api/programming-exercises/new-result").permitAll()
+            .antMatchers(HttpMethod.POST, "/api/programming-submissions/*").permitAll()
+            .antMatchers(HttpMethod.POST, "/api/programming-exercises/test-cases-changed/*").permitAll()
             .antMatchers("/websocket/**").permitAll()
-            .antMatchers("/management/health").permitAll()
-            .antMatchers("/management/info").permitAll()
             // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
             .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
-            .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
-            .antMatchers("/time").permitAll()
+            .antMatchers("/api/**").authenticated()
         .and()
             .apply(securityConfigurerAdapter());
 
