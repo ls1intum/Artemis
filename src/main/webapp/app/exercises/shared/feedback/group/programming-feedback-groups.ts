@@ -22,8 +22,8 @@ class ProgrammingFeedbackGroupWrong extends FeedbackGroup {
     }
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits && feedbackItem.credits < 0;
-        const isTestFeedback = feedbackItem.type === 'Test' && feedbackItem.credits !== undefined && feedbackItem.credits <= 0;
+        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.positive !== undefined && !feedbackItem.positive;
+        const isTestFeedback = feedbackItem.type === 'Test' && feedbackItem.positive !== undefined && !feedbackItem.positive;
         return isReviewerFeedback || isTestFeedback;
     }
 }
@@ -61,15 +61,15 @@ class ProgrammingFeedbackGroupInfo extends FeedbackGroup {
     }
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && (feedbackItem.credits === 0 || !feedbackItem.credits);
+        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.positive === undefined;
         const isSubsequentFeedback = feedbackItem.type === 'Subsequent';
         return isReviewerFeedback || isSubsequentFeedback;
     }
 }
 
 /**
- * - Positive credits from Reviewer
- * - Positive credits from Test cases
+ * - Positive from Reviewer
+ * - Positive from Test cases
  */
 class ProgrammingFeedbackGroupCorrect extends FeedbackGroup {
     constructor() {
@@ -80,8 +80,8 @@ class ProgrammingFeedbackGroupCorrect extends FeedbackGroup {
     }
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits > 0;
-        const isTestFeedback = feedbackItem.type === 'Test' && feedbackItem.credits !== undefined && feedbackItem.credits > 0;
+        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && !!feedbackItem.positive;
+        const isTestFeedback = feedbackItem.type === 'Test' && !!feedbackItem.positive;
         return isReviewerFeedback || isTestFeedback;
     }
 }
