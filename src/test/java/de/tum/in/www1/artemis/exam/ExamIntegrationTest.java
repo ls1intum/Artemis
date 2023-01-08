@@ -17,7 +17,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.awaitility.Awaitility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -1963,8 +1962,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             bonusCourseParticipationCount = 5; // Participations from the bonus course should be included in expected participation count.
         }
 
-        Awaitility.setDefaultTimeout(Duration.ofMinutes(1));
-        await().until(() -> {
+        await().timeout(Duration.ofMinutes(1)).until(() -> {
             boolean valid = true;
             for (Exercise exercise : exercisesInExam) {
                 log.debug("participations actual: " + participantScoreRepository.findAllByExercise(exercise).size() + " expected: " + exercise.getStudentParticipations().size());
