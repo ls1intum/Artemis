@@ -13,6 +13,9 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 
 const BAMBOO_RESULT_LEGACY_TIMESTAMP = 1557526348000;
 
+/*
+ * This is a legacy check, results before the 24th May are considered legacy.
+ */
 export const isLegacyResult = (result: Result) => {
     if (result.completionDate) {
         return result.completionDate.valueOf() < BAMBOO_RESULT_LEGACY_TIMESTAMP;

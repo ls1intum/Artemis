@@ -12,7 +12,7 @@ import { Participation, ParticipationType, getExercise } from 'app/entities/part
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Submission, SubmissionExerciseType } from 'app/entities/submission.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
+import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { Result } from 'app/entities/result.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
@@ -21,7 +21,7 @@ import { captureException } from '@sentry/browser';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
-import { ResultService } from 'app/exercises/shared/result/result.service';
+import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
@@ -60,9 +60,7 @@ export class ResultComponent implements OnInit, OnChanges {
     resultString: string;
     templateStatus: ResultTemplateStatus;
     submission?: Submission;
-    badgeClass: string;
-    badgeText: string;
-    badgeTooltip: string;
+    badge: Badge;
     resultTooltip?: string;
 
     latestIndividualDueDate?: dayjs.Dayjs;
@@ -136,10 +134,7 @@ export class ResultComponent implements OnInit, OnChanges {
         });
 
         if (this.showBadge && this.result) {
-            const badgeData = ResultService.evaluateBadge(this.participation, this.result);
-            this.badgeClass = badgeData.badgeClass;
-            this.badgeText = badgeData.text;
-            this.badgeTooltip = badgeData.tooltip;
+            this.badge = ResultService.evaluateBadge(this.participation, this.result);
         }
     }
 
@@ -213,8 +208,8 @@ export class ResultComponent implements OnInit, OnChanges {
             result.participation = this.participation;
         }
 
-        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'xl' });
-        const componentInstance: ResultDetailComponent = modalRef.componentInstance;
+        const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'xl' });
+        const componentInstance: FeedbackComponent = modalRef.componentInstance;
         componentInstance.exercise = this.exercise;
         componentInstance.result = result;
         componentInstance.showTestDetails =
@@ -269,7 +264,7 @@ export class ResultComponent implements OnInit, OnChanges {
      * Determines if some information about testcases could still be hidden because of later individual due dates
      * @param componentInstance the detailed result view
      */
-    private determineShowMissingAutomaticFeedbackInformation(componentInstance: ResultDetailComponent) {
+    private determineShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackComponent) {
         if (!this.latestIndividualDueDate) {
             this.exerciseService.getLatestDueDate(this.exercise!.id!).subscribe((latestIndividualDueDate?: dayjs.Dayjs) => {
                 this.latestIndividualDueDate = latestIndividualDueDate;
@@ -280,7 +275,7 @@ export class ResultComponent implements OnInit, OnChanges {
         }
     }
 
-    private initializeMissingAutomaticFeedbackAndLatestIndividualDueDate(componentInstance: ResultDetailComponent) {
+    private initializeMissingAutomaticFeedbackAndLatestIndividualDueDate(componentInstance: FeedbackComponent) {
         componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
         componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
     }
