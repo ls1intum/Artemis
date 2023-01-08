@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.lecture;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.io.ByteArrayOutputStream;
@@ -100,17 +101,8 @@ public class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrat
         var createResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
         LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(createResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
         System.out.println(lectureUnitSplitInfo.lectureUnitDTOS().get(0).unitName());
-        // var attachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentUnit.class);
-        // var attachment = attachmentUnit.getAttachment();
-        // attachmentUnit.setDescription("Changed");
-        // var updateResult = request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isOk()).andReturn();
-        // attachmentUnit = mapper.readValue(updateResult.getResponse().getContentAsString(), AttachmentUnit.class);
-        // assertThat(attachmentUnit.getDescription()).isEqualTo("Changed");
-        // // testing if bidirectional relationship is kept
-        // attachmentUnit = attachmentUnitRepository.findById(attachmentUnit.getId()).get();
-        // attachment = attachmentRepository.findById(attachment.getId()).get();
-        // assertThat(attachmentUnit.getAttachment()).isEqualTo(attachment);
-        // assertThat(attachment.getAttachmentUnit()).isEqualTo(attachmentUnit);
+        assertThat(lectureUnitSplitInfo.lectureUnitDTOS().size()).isEqualTo(2);
+        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -143,21 +135,21 @@ public class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrat
 
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc1 = new PDDocument()) {
 
-            for (int i = 0; i < 20; i++) {
+            for (int i = 1; i <= 20; i++) {
                 doc1.addPage(new PDPage());
-                PDPageContentStream contentStream = new PDPageContentStream(doc1, doc1.getPage(i));
+                PDPageContentStream contentStream = new PDPageContentStream(doc1, doc1.getPage(i - 1));
 
                 if (i == 7 || i == 14) {
                     contentStream.beginText();
                     contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                    contentStream.newLineAtOffset(25, -15);
+                    contentStream.showText("itp20..");
                     contentStream.newLineAtOffset(25, 500);
                     contentStream.showText("Outline");
                     contentStream.newLineAtOffset(0, -15);
                     contentStream.showText("First Unit");
                     contentStream.newLineAtOffset(0, -15);
                     contentStream.showText("Second Unit");
-                    contentStream.newLineAtOffset(0, -15);
-                    contentStream.showText("Third Unit");
                     contentStream.endText();
                     contentStream.close();
                     continue;
@@ -171,7 +163,7 @@ public class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrat
                 contentStream.close();
             }
             doc1.save(outputStream);
-
+            doc1.close();
             return new MockMultipartFile("file", "lectureFile.pdf", "application/json", outputStream.toByteArray());
         }
     }

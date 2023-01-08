@@ -131,9 +131,6 @@ public class LectureUnitProcessingService {
             if (slideText.contains("Outline")) {
                 outlineCount++;
                 String[] lines = slideText.split("\r\n|\r|\n");
-                System.out.println(lines.length);
-                System.out.println(lines[0]);
-                System.out.println(lines[1]);
                 String unitName = lines[outlineCount + 1].replaceAll("[^a-zA-Z0-9\\s()_-]", "").replaceFirst("^\\s*", "");
                 outlineMap.put(outlineCount, new Tuple<>(unitName, new Tuple<>((outlineCount == 1) ? 1 : index, document.getNumberOfPages())));
 
