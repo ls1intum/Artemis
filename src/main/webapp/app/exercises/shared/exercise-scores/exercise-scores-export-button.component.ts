@@ -3,7 +3,7 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
-import { Component, Injectable, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { getTestCaseNamesFromResults, getTestCaseResults } from 'app/exercises/shared/result/result.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
@@ -49,7 +49,6 @@ import { TestCaseResult } from 'app/entities/test-case-result.model';
         </button>
     `,
 })
-@Injectable({ providedIn: 'root' })
 export class ExerciseScoresExportButtonComponent implements OnInit {
     @Input() exercises: Exercise[] = []; // Used to export multiple scores together
     @Input() exercise: Exercise | ProgrammingExercise;
