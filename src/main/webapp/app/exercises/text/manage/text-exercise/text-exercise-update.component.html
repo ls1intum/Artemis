@@ -182,6 +182,14 @@
                 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
             }}</span>
         </div>
+        <div class="form-group" *ngIf="!isExamMode">
+            <jhi-learning-goal-selection
+                id="learning-goals"
+                [labelName]="'artemisApp.learningGoal.title' | artemisTranslate"
+                [(ngModel)]="textExercise.learningGoals"
+                name="learningGoals"
+            ></jhi-learning-goal-selection>
+        </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="textExercise"></jhi-grading-instructions-details>

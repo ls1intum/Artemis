@@ -22,12 +22,19 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
     @Query("""
             SELECT learningGoal
             FROM LearningGoal learningGoal
-            LEFT JOIN FETCH learningGoal.lectureUnits lu
-            WHERE learningGoal.course.id = :#{#courseId}
-            ORDER BY learningGoal.title""")
-    Set<LearningGoal> findAllByCourseIdWithLectureUnitsUnidirectional(@Param("courseId") Long courseId);
+            LEFT JOIN FETCH learningGoal.userProgress progress
+            WHERE learningGoal.course.id = :courseId
+            """)
+    Set<LearningGoal> findAllForCourse(@Param("courseId") Long courseId);
 
-    Set<LearningGoal> findAllByExercises(Long exerciseId);
+    @Query("""
+            SELECT learningGoal
+            FROM LearningGoal learningGoal
+            LEFT JOIN FETCH learningGoal.userProgress progress
+            WHERE learningGoal.course.id = :courseId
+            AND (progress.user IS NULL OR progress.user.id = :userId)
+            """)
+    Set<LearningGoal> findAllForCourseWithProgressForUser(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     @Query("""
             SELECT learningGoal
@@ -48,26 +55,51 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
     @Query("""
             SELECT learningGoal
             FROM LearningGoal learningGoal
+            LEFT JOIN FETCH learningGoal.userProgress progress
+            LEFT JOIN FETCH learningGoal.exercises exercises
+            LEFT JOIN FETCH learningGoal.lectureUnits lectureUnits
+            LEFT JOIN FETCH lectureUnits.completedUsers completions
+            LEFT JOIN FETCH lectureUnits.lecture lecture
+            LEFT JOIN FETCH lectureUnits.exercise exercise
+            WHERE learningGoal.id = :learningGoalId
+            AND (progress.user IS NULL OR progress.user.id = :userId)
+            """)
+    Optional<LearningGoal> findByIdWithExercisesAndLectureUnitsAndProgressForUser(@Param("learningGoalId") Long learningGoalId, @Param("userId") Long userId);
+
+    @Query("""
+            SELECT learningGoal
+            FROM LearningGoal learningGoal
             LEFT JOIN FETCH learningGoal.lectureUnits lu
             LEFT JOIN FETCH lu.completedUsers
-            WHERE learningGoal.id = :#{#learningGoalId}
+            WHERE learningGoal.id = :learningGoalId
             """)
-    Optional<LearningGoal> findByIdWithLectureUnitsAndCompletions(@Param("learningGoalId") long learningGoalId);
+    Optional<LearningGoal> findByIdWithLectureUnitsAndCompletions(@Param("learningGoalId") Long learningGoalId);
+
+    @Query("""
+            SELECT learningGoal
+            FROM LearningGoal learningGoal
+            LEFT JOIN FETCH learningGoal.exercises
+            LEFT JOIN FETCH learningGoal.lectureUnits lu
+            LEFT JOIN FETCH lu.completedUsers
+            WHERE learningGoal.id = :learningGoalId
+            """)
+    Optional<LearningGoal> findByIdWithExercisesAndLectureUnitsAndCompletions(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
             SELECT learningGoal
             FROM LearningGoal learningGoal
             LEFT JOIN FETCH learningGoal.consecutiveCourses courses
-            WHERE learningGoal.id = :#{#learningGoalId}
+            WHERE learningGoal.id = :learningGoalId
             """)
-    Optional<LearningGoal> findByIdWithConsecutiveCourses(@Param("learningGoalId") long learningGoalId);
+    Optional<LearningGoal> findByIdWithConsecutiveCourses(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
             SELECT prerequisite
             FROM LearningGoal prerequisite
             LEFT JOIN FETCH prerequisite.consecutiveCourses courses
-            WHERE courses.id = :#{#courseId}
-            ORDER BY prerequisite.title""")
+            WHERE courses.id = :courseId
+            ORDER BY prerequisite.title
+            """)
     Set<LearningGoal> findPrerequisitesByCourseId(@Param("courseId") Long courseId);
 
     /**
@@ -106,6 +138,10 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
 
     default LearningGoal findByIdWithLectureUnitsElseThrow(Long learningGoalId) {
         return findByIdWithLectureUnits(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    }
+
+    default LearningGoal findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(Long learningGoalId, Long userId) {
+        return findByIdWithExercisesAndLectureUnitsAndProgressForUser(learningGoalId, userId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
     }
 
     default LearningGoal findByIdWithExercisesElseThrow(Long learningGoalId) {

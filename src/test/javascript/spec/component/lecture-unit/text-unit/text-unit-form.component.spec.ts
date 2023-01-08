@@ -10,6 +10,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
+import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -39,7 +40,13 @@ describe('TextUnitFormComponent', () => {
 
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule],
-            declarations: [TextUnitFormComponent, MarkdownEditorStubComponent, MockComponent(FormDateTimePickerComponent), MockPipe(ArtemisTranslatePipe)],
+            declarations: [
+                TextUnitFormComponent,
+                MarkdownEditorStubComponent,
+                MockComponent(FormDateTimePickerComponent),
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(LearningGoalSelectionComponent),
+            ],
             providers: [MockProvider(TranslateService), { provide: Router, useClass: MockRouter }],
             schemas: [],
         })
@@ -112,6 +119,7 @@ describe('TextUnitFormComponent', () => {
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 name: 'Test',
                 releaseDate: null,
+                learningGoals: null,
                 content: exampleMarkdown,
             });
         });

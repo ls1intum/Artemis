@@ -19,7 +19,7 @@ import org.springframework.security.saml2.provider.service.authentication.Saml2A
 import org.springframework.security.saml2.provider.service.authentication.Saml2Authentication;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationSaml2Test;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationSaml2NoSchedulingTest;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 /**
  * Tests for {@link UserJWTController} and {@link SAML2Service}.
  */
-class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
+class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2NoSchedulingTest {
 
     private static final String STUDENT_NAME = "student_saml_test";
 

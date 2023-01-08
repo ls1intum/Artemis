@@ -43,7 +43,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "saml2" })
 @TestPropertySource(properties = { "artemis.user-management.use-external=false" })
-public abstract class AbstractSpringIntegrationSaml2Test {
+public abstract class AbstractSpringIntegrationSaml2NoSchedulingTest {
 
     @Autowired
     protected DatabaseUtilService database;

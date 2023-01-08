@@ -41,15 +41,19 @@ export class EditLearningGoalComponent implements OnInit {
                     this.courseId = Number(parentParams.get('courseId'));
 
                     const learningGoalObservable = this.learningGoalService.findById(learningGoalId, this.courseId);
+                    const learningGoalCourseProgressObservable = this.learningGoalService.getCourseProgress(learningGoalId, this.courseId);
                     const lecturesObservable = this.lectureService.findAllByCourseId(this.courseId, true);
-                    return forkJoin([learningGoalObservable, lecturesObservable]);
+                    return forkJoin([learningGoalObservable, learningGoalCourseProgressObservable, lecturesObservable]);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
             .subscribe({
-                next: ([learningGoalResult, lecturesResult]) => {
+                next: ([learningGoalResult, courseProgressResult, lecturesResult]) => {
                     if (learningGoalResult.body) {
                         this.learningGoal = learningGoalResult.body;
+                        if (courseProgressResult.body) {
+                            this.learningGoal.courseProgress = courseProgressResult.body;
+                        }
                         // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
                         if (!this.learningGoal.lectureUnits) {
                             this.learningGoal.lectureUnits = [];
@@ -71,6 +75,7 @@ export class EditLearningGoalComponent implements OnInit {
                         description: this.learningGoal.description,
                         connectedLectureUnits: this.learningGoal.lectureUnits,
                         taxonomy: this.learningGoal.taxonomy,
+                        masteryThreshold: this.learningGoal.masteryThreshold,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -78,11 +83,12 @@ export class EditLearningGoalComponent implements OnInit {
     }
 
     updateLearningGoal(formData: LearningGoalFormData) {
-        const { title, description, taxonomy, connectedLectureUnits } = formData;
+        const { title, description, taxonomy, masteryThreshold, connectedLectureUnits } = formData;
 
         this.learningGoal.title = title;
         this.learningGoal.description = description;
         this.learningGoal.taxonomy = taxonomy;
+        this.learningGoal.masteryThreshold = masteryThreshold;
         this.learningGoal.lectureUnits = connectedLectureUnits;
 
         this.isLoading = true;

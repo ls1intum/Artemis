@@ -196,13 +196,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         bitbucketRequestMockProvider.enableMockingOfRequests();
 
-        participantScoreSchedulerService.activate();
+        participantScoreScheduleService.activate();
     }
 
     @AfterEach
     void tearDown() {
         bitbucketRequestMockProvider.reset();
-        participantScoreSchedulerService.shutdown();
+        participantScoreScheduleService.shutdown();
     }
 
     @Test

@@ -80,7 +80,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @BeforeEach
     void setupTestScenario() {
-        participantScoreSchedulerService.activate();
+        participantScoreScheduleService.activate();
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
         this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);

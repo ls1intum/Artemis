@@ -2,8 +2,9 @@ package de.tum.in.www1.artemis.domain;
 
 import java.time.ZonedDateTime;
 import java.util.Optional;
+import java.util.Set;
 
-public interface Completable {
+public interface ILearningObject {
 
     /**
      * Whether the participant has completed the object
@@ -19,4 +20,7 @@ public interface Completable {
      */
     Optional<ZonedDateTime> getCompletionDate(User user);
 
+    Long getId();
+
+    Set<LearningGoal> getLearningGoals();
 }

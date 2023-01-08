@@ -48,6 +48,8 @@ export class SaveExerciseCommand<T extends Exercise> {
             });
         }
 
+        console.log(exercise);
+
         const callServer = ([shouldReevaluate, requestOptions]: [boolean, any?]) => {
             const ex = Exercise.sanitize(exercise);
             switch (this.editType) {

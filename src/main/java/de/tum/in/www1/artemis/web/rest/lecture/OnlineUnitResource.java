@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
@@ -39,10 +40,14 @@ public class OnlineUnitResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public OnlineUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, OnlineUnitRepository onlineUnitRepository) {
+    private final LearningGoalProgressService learningGoalProgressService;
+
+    public OnlineUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, OnlineUnitRepository onlineUnitRepository,
+            LearningGoalProgressService learningGoalProgressService) {
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.onlineUnitRepository = onlineUnitRepository;
+        this.learningGoalProgressService = learningGoalProgressService;
     }
 
     /**
@@ -95,6 +100,9 @@ public class OnlineUnitResource {
         }
 
         OnlineUnit result = onlineUnitRepository.save(onlineUnit);
+
+        learningGoalProgressService.updateProgressByLearningObjectAsync(result);
+
         return ResponseEntity.ok(result);
     }
 
@@ -129,6 +137,8 @@ public class OnlineUnitResource {
         persistedOnlineUnit.setLecture(lecture);
         lecture.addLectureUnit(persistedOnlineUnit);
         lectureRepository.save(lecture);
+
+        learningGoalProgressService.updateProgressByLearningObjectAsync(persistedOnlineUnit);
 
         return ResponseEntity.created(new URI("/api/online-units/" + persistedOnlineUnit.getId())).body(persistedOnlineUnit);
     }
