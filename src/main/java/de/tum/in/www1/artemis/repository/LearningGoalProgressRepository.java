@@ -58,8 +58,10 @@ public interface LearningGoalProgressRepository extends JpaRepository<LearningGo
             SELECT count(l)
             FROM LearningGoalProgress l
             WHERE l.learningGoal.id = :learningGoalId
+            AND l.progress >= :progress
             AND l.confidence >= :confidence
             """)
-    Long countByLearningGoalAndConfidenceGreaterThanEqual(@Param("learningGoalId") Long learningGoalId, @Param("confidence") Double confidence);
+    Long countByLearningGoalAndProgressAndConfidenceGreaterThanEqual(@Param("learningGoalId") Long learningGoalId, @Param("progress") Double progress,
+            @Param("confidence") Double confidence);
 
 }

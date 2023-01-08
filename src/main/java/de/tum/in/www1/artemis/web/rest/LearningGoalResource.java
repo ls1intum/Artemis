@@ -118,7 +118,7 @@ public class LearningGoalResource {
         var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, course.getId(), true, true);
 
         var numberOfStudents = learningGoalProgressRepository.countByLearningGoal(learningGoal.getId());
-        var numberOfMasteredStudents = learningGoalProgressRepository.countByLearningGoalAndConfidenceGreaterThanEqual(learningGoal.getId(),
+        var numberOfMasteredStudents = learningGoalProgressRepository.countByLearningGoalAndProgressAndConfidenceGreaterThanEqual(learningGoal.getId(), 100.0,
                 learningGoal.getMasteryThreshold().doubleValue());
         var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(learningGoalProgressRepository.findAverageConfidenceByLearningGoalId(learningGoalId).orElse(0.0),
                 course);

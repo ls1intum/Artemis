@@ -7,6 +7,7 @@ import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
@@ -177,7 +178,7 @@ public class LearningGoalProgressService {
         }
 
         // Now do the heavy lifting
-        var progress = learningGoalProgress.orElse(new LearningGoalProgress());
+        var studentProgress = learningGoalProgress.orElse(new LearningGoalProgress());
         List<ILearningObject> learningObjects = new ArrayList<>();
 
         List<LectureUnit> allLectureUnits = learningGoal.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents).toList();
@@ -188,15 +189,29 @@ public class LearningGoalProgressService {
         learningObjects.addAll(lectureUnits);
         learningObjects.addAll(exercises);
 
-        progress.setLearningGoal(learningGoal);
-        progress.setUser(user);
-        progress.setProgress(RoundingUtil.roundScoreSpecifiedByCourseSettings(calculateProgress(learningObjects, user), learningGoal.getCourse()));
-        progress.setConfidence(RoundingUtil.roundScoreSpecifiedByCourseSettings(calculateConfidence(exercises, user), learningGoal.getCourse()));
+        var progress = RoundingUtil.roundScoreSpecifiedByCourseSettings(calculateProgress(learningObjects, user), learningGoal.getCourse());
+        var confidence = RoundingUtil.roundScoreSpecifiedByCourseSettings(calculateConfidence(exercises, user), learningGoal.getCourse());
 
-        learningGoalProgressRepository.save(progress);
+        if (exercises.isEmpty()) {
+            // If the learning goal has no exercises, the confidence score equals the progress
+            confidence = progress;
+        }
 
-        logger.debug("Updated progress for user {} in learning goal {} to {}.", user.getLogin(), learningGoal.getId(), progress.getProgress());
-        return progress;
+        studentProgress.setLearningGoal(learningGoal);
+        studentProgress.setUser(user);
+        studentProgress.setProgress(progress);
+        studentProgress.setConfidence(confidence);
+
+        try {
+            learningGoalProgressRepository.save(studentProgress);
+        }
+        catch (ConstraintViolationException e) {
+            // In rare instances of initially creating a progress entity, async updates might run in parallel.
+            // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
+        }
+
+        logger.debug("Updated progress for user {} in learning goal {} to {}.", user.getLogin(), learningGoal.getId(), studentProgress.getProgress());
+        return studentProgress;
     }
 
     /**
