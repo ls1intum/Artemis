@@ -22,7 +22,7 @@ class ProgrammingFeedbackGroupWrong extends FeedbackGroup {
     }
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.positive !== undefined && !feedbackItem.positive;
+        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits < 0;
         const isTestFeedback = feedbackItem.type === 'Test' && feedbackItem.positive !== undefined && !feedbackItem.positive;
         return isReviewerFeedback || isTestFeedback;
     }
@@ -61,7 +61,7 @@ class ProgrammingFeedbackGroupInfo extends FeedbackGroup {
     }
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.positive === undefined;
+        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits === 0;
         const isSubsequentFeedback = feedbackItem.type === 'Subsequent';
         return isReviewerFeedback || isSubsequentFeedback;
     }
@@ -80,7 +80,7 @@ class ProgrammingFeedbackGroupCorrect extends FeedbackGroup {
     }
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && !!feedbackItem.positive;
+        const isReviewerFeedback = feedbackItem.type === 'Reviewer' && feedbackItem.credits !== undefined && feedbackItem.credits > 0;
         const isTestFeedback = feedbackItem.type === 'Test' && !!feedbackItem.positive;
         return isReviewerFeedback || isTestFeedback;
     }
