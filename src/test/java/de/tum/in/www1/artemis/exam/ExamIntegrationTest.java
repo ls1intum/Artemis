@@ -2152,7 +2152,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // TODO: Find appropriate condition for waiting instead of using sleep
         // Waiting for scheduler to finish processing
-        Thread.sleep(60000);
+        Thread.sleep(5000);
 
         // change back to instructor user
         database.changeUser(TEST_PREFIX + "instructor1");
