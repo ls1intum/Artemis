@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.1.xsd">
-    <changeSet author="ge65cer" id="20220824120842">
+    <changeSet author="ge65cer" id="20230107160224-1">
         <comment>Add a table to persist the user progress in learning goals.</comment>
         <createTable tableName="learning_goal_user">
             <column name="learning_goal_id" type="BIGINT">
@@ -30,5 +30,11 @@
                                  constraintName="FK1903cc755394da0466c4ec0934" deferrable="false"
                                  initiallyDeferred="false" referencedColumnNames="id"
                                  referencedTableName="jhi_user" validate="true"/>
+    </changeSet>
+    <changeSet author="ge65cer" id="20230107160224-2">
+        <comment>Add the mastery_threshold attribute to learning goals.</comment>
+        <addColumn tableName="learning_goal">
+            <column name="mastery_threshold" type="INT" defaultValueNumeric="100"/>
+        </addColumn>
     </changeSet>
 </databaseChangeLog>
