@@ -263,7 +263,7 @@ describe('FeedbackComponent', () => {
     });
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {
-        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems();
+        const { feedbacks } = generateFeedbacksAndExpectedItems();
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result.feedbacks = feedbacks;
 
@@ -274,7 +274,7 @@ describe('FeedbackComponent', () => {
     });
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
-        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems();
+        const { feedbacks } = generateFeedbacksAndExpectedItems();
         comp.exerciseType = ExerciseType.PROGRAMMING;
         getFeedbackDetailsForResultStub.mockReturnValue(of({ body: feedbacks } as HttpResponse<Feedback[]>));
 
