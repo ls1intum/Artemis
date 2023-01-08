@@ -13,12 +13,21 @@ export const errorRoute: Routes = [
         },
     },
     {
-        path: 'accessdenied',
+        path: 'access-denied',
         component: ErrorComponent,
         data: {
             authorities: [],
             pageTitle: 'error.title',
             error403: true,
+        },
+    },
+    {
+        path: 'not-found',
+        component: ErrorComponent,
+        data: {
+            authorities: [],
+            pageTitle: 'error.title',
+            error404: true,
         },
     },
     {

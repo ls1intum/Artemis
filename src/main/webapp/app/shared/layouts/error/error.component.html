@@ -1,13 +1,12 @@
 <div>
-    <div class="row">
-        <div class="col">
-            <h1 jhiTranslate="error.title">Error Page!</h1>
+    <div class="container">
+        <h1 jhiTranslate="error.title">Error Page!</h1>
 
-            <div [hidden]="!errorMessage">
-                <div class="alert alert-danger">{{ errorMessage }}</div>
-            </div>
-            <div [hidden]="!error403" class="alert alert-danger" jhiTranslate="error.http.403">You are not authorized to access this page.</div>
-            <div [hidden]="!error404" class="alert alert-danger" jhiTranslate="error.http.404">The page does not exist.</div>
-        </div>
+        <div [hidden]="!error403 || errorMessage" class="alert alert-danger" jhiTranslate="error.http.403">You are not authorized to access this page.</div>
+        <div [hidden]="!error404 || errorMessage" class="alert alert-danger" jhiTranslate="error.http.404">The page does not exist.</div>
+        <div [hidden]="!errorMessage" class="alert alert-danger">{{ errorMessage }}</div>
+
+        <a class="btn btn-primary" [routerLink]="['/']" jhiTranslate="error.action.home">Home</a>
+        <a class="btn btn-secondary" href="https://github.com/ls1intum/Artemis/issues/new/choose" jhiTranslate="error.action.report">Report bug</a>
     </div>
 </div>

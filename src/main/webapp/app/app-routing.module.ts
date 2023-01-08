@@ -108,6 +108,10 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                     path: 'lti',
                     loadChildren: () => import('./lti/lti.module').then((m) => m.ArtemisLtiModule),
                 },
+                {
+                    path: '**',
+                    redirectTo: 'not-found',
+                },
             ],
             { enableTracing: false, onSameUrlNavigation: 'reload' },
         ),
