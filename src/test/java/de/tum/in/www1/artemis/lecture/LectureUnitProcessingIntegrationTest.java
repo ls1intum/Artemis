@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.lecture;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
+import java.util.Collections;
+import java.util.List;
 
 import javax.validation.constraints.NotNull;
 
@@ -26,6 +29,7 @@ import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 
 public class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -40,6 +44,8 @@ public class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrat
     @Autowired
     private LectureRepository lectureRepository;
 
+    private List<LectureUnitSplitDTO> lectureUnitSplits;
+
     private Lecture lecture1;
 
     private Attachment attachment;
@@ -52,6 +58,7 @@ public class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrat
     @BeforeEach
     void initTestCase() {
         this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
+        this.lectureUnitSplits = Collections.singletonList(new LectureUnitSplitDTO("Unit Name", ZonedDateTime.now(), 1, 20, 20));
         this.attachment = ModelFactory.generateAttachment(null);
         this.attachment.setName("          LoremIpsum              ");
         this.attachment.setLink("files/temp/example.txt");
@@ -71,22 +78,32 @@ public class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrat
         this.testAllPreAuthorize();
     }
 
-    private void testAllPreAuthorize() throws Exception {
-        // request.getMvc().perform(buildCreateAttachmentUnits(attachmentUnit, attachment, "Hello World")).andExpect(status().isForbidden());
-        request.getMvc().perform(buildSplitAttachmentUnits(attachmentUnit, attachment, "Hello World")).andExpect(status().isForbidden());
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void testAll_asTutor() throws Exception {
+        this.testAllPreAuthorize();
     }
 
-    private MockHttpServletRequestBuilder buildCreateAttachmentUnits(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment, @NotNull String fileContent)
-            throws Exception {
-        var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentUnit).getBytes());
-        var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
+    void testAll_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
+        this.testAllPreAuthorize();
+    }
+
+    private void testAllPreAuthorize() throws Exception {
+        request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplits, "Hello World")).andExpect(status().isForbidden());
+        request.getMvc().perform(buildGetSplitInformation("Hello World")).andExpect(status().isForbidden());
+    }
+
+    private MockHttpServletRequestBuilder buildSplitAndCreateAttachmentUnits(@NotNull List<LectureUnitSplitDTO> lectureUnitSplits, @NotNull String fileContent) throws Exception {
+        var lectureUnitSplitPart = new MockMultipartFile("lectureUnitSplitDTOs", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(lectureUnitSplits).getBytes());
         var filePart = new MockMultipartFile("file", "testFile.pdf", MediaType.TEXT_PLAIN_VALUE, fileContent.getBytes(StandardCharsets.UTF_8));
 
-        return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lecture1.getId() + "/attachment-units/split").file(attachmentUnitPart).file(attachmentPart)
-                .file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
+        return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lecture1.getId() + "/attachment-units/split").file(lectureUnitSplitPart).file(filePart)
+                .contentType(MediaType.MULTIPART_FORM_DATA_VALUE);
     }
 
-    private MockHttpServletRequestBuilder buildSplitAttachmentUnits(@NotNull AttachmentUnit attachmentUnit, @NotNull Attachment attachment, @NotNull String fileContent) {
+    private MockHttpServletRequestBuilder buildGetSplitInformation(@NotNull String fileContent) {
         var filePart = new MockMultipartFile("file", "testFile.pdf", MediaType.TEXT_PLAIN_VALUE, fileContent.getBytes(StandardCharsets.UTF_8));
 
         return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lecture1.getId() + "/process-units").file(filePart)

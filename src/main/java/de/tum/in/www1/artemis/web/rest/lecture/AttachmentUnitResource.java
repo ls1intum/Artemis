@@ -187,8 +187,15 @@ public class AttachmentUnitResource {
      */
     @PostMapping("lectures/{lectureId}/process-units")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<List<LectureUnitSplitDTO>> getAttachmentUnitsData(@RequestParam(value = "file") MultipartFile file, @PathVariable String lectureId) throws IOException {
+    public ResponseEntity<List<LectureUnitSplitDTO>> getAttachmentUnitsData(@RequestParam(value = "file") MultipartFile file, @PathVariable Long lectureId) throws IOException {
         log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
+
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        if (lecture.getCourse() == null) {
+            throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
+        }
+
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         List<LectureUnitSplitDTO> attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(file);
         if (attachmentUnitsData.isEmpty()) {
