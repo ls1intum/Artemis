@@ -567,7 +567,6 @@ public class ProgrammingExerciseGradingService {
         return testCases.stream().filter(testCase -> !testCase.isInvisible()).filter(testCase -> !(isBeforeDueDate && testCase.isAfterDueDate())).collect(Collectors.toSet());
     }
 
-    // TODO: discussion about name and placement of this class
     private record ScoreCalculationData(ProgrammingExercise exercise, Result result, Set<ProgrammingExerciseTestCase> testCases,
             Set<ProgrammingExerciseTestCase> successfulTestCases, double weightSum, List<Feedback> staticCodeAnalysisFeedback) {
 
