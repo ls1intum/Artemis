@@ -69,10 +69,9 @@ services:
             CYPRESS_tutorGroupName: "artemis-e2etest-tutors"
             CYPRESS_editorGroupName: "artemis-e2etest-editors"
             CYPRESS_instructorGroupName: "artemis-e2etest-instructors"
-        # Wait up to 5 minutes until Artemis has booted
         command: sh -c "cd /app/artemis/src/test/cypress && chmod 777 /root && npm ci && npm run cypress:run"
         volumes:
-            - ../../../../:/app/artemis
+            - ./../../../:/app/artemis
         networks:
             - artemis
 
