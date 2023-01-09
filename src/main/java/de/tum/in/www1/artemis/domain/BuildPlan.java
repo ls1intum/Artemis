@@ -20,6 +20,7 @@ public class BuildPlan extends DomainObject {
     private String buildPlan;
 
     public BuildPlan() {
+        // explicit constructor needed for Jackson
     }
 
     public BuildPlan(String buildPlan) {

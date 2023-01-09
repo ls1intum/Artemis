@@ -7,10 +7,7 @@ import java.util.*;
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
 import org.gitlab4j.api.ProjectApi;
-import org.gitlab4j.api.models.PipelineStatus;
-import org.gitlab4j.api.models.Project;
-import org.gitlab4j.api.models.Trigger;
-import org.gitlab4j.api.models.Variable;
+import org.gitlab4j.api.models.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -262,25 +259,39 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        // https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines
-        final String repositoryPath = getRepositoryPath(participation.getVcsRepositoryUrl());
         try {
-            // TODO: Get latest pipeline
-            PipelineStatus status = gitlab.getPipelineApi().getPipelines(repositoryPath).get(0).getStatus();
-            if (status.equals(PipelineStatus.CREATED) || status.equals(PipelineStatus.WAITING_FOR_RESOURCE) || status.equals(PipelineStatus.PREPARING)
-                    || status.equals(PipelineStatus.PENDING)) {
-                return BuildStatus.QUEUED;
-            }
-            else if (status.equals(PipelineStatus.RUNNING)) {
-                return BuildStatus.BUILDING;
-            }
-            else {
+            final Optional<Pipeline> optionalPipeline = getLatestPipeline(participation);
+            if (optionalPipeline.isEmpty()) {
                 return BuildStatus.INACTIVE;
             }
+            return convertPipelineStatusToBuildStatus(optionalPipeline.get().getStatus());
         }
-        catch (GitLabApiException | IndexOutOfBoundsException e) {
+        catch (GitLabApiException e) {
             return BuildStatus.INACTIVE;
         }
+    }
+
+    private BuildStatus convertPipelineStatusToBuildStatus(PipelineStatus status) {
+        if (status.equals(PipelineStatus.CREATED) || status.equals(PipelineStatus.WAITING_FOR_RESOURCE) || status.equals(PipelineStatus.PREPARING)
+                || status.equals(PipelineStatus.PENDING)) {
+            return BuildStatus.QUEUED;
+        }
+        else if (status.equals(PipelineStatus.RUNNING)) {
+            return BuildStatus.BUILDING;
+        }
+        else {
+            return BuildStatus.INACTIVE;
+        }
+    }
+
+    private Optional<Pipeline> getLatestPipeline(final ProgrammingExerciseParticipation participation) throws GitLabApiException {
+        final String repositoryPath = getRepositoryPath(participation.getVcsRepositoryUrl());
+        final Optional<String> commitHash = participation.findLatestSubmission().map(ProgrammingSubmission.class::cast).map(ProgrammingSubmission::getCommitHash);
+        if (commitHash.isEmpty()) {
+            return Optional.empty();
+        }
+
+        return gitlab.getPipelineApi().getPipelinesStream(repositoryPath, new PipelineFilter().withSha(commitHash.get())).max(Comparator.comparing(Pipeline::getFinishedAt));
     }
 
     @Override

@@ -845,6 +845,5 @@ public class ProgrammingExercise extends Exercise {
 
     public void generateAndSetBuildPlanAccessSecret() {
         buildPlanAccessSecret = UUID.randomUUID().toString();
-        // SecureRandom.getInstanceStrong();
     }
 }
