@@ -7,6 +7,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -29,7 +30,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
-import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
@@ -38,9 +38,6 @@ import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 public class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "lectureunitprocessingintegration";
-
-    @Autowired
-    private AttachmentRepository attachmentRepository;
 
     @Autowired
     private AttachmentUnitRepository attachmentUnitRepository;
@@ -99,13 +96,23 @@ public class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrat
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits() throws Exception {
         var splitResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
         LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
+
         assertThat(lectureUnitSplitInfo.lectureUnitDTOS().size()).isEqualTo(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
         var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo.lectureUnitDTOS())).andExpect(status().isOk()).andReturn();
         List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
                 mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
+
         assertThat(attachmentUnits.size()).isEqualTo(2);
+
+        List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).collect(Collectors.toList());
+        List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
+        System.out.println(attachmentUnitList.get(0).getName());
+
+        assertThat(attachmentUnitList.size()).isEqualTo(2);
+        assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
+
     }
 
     private void testAllPreAuthorize() throws Exception {
