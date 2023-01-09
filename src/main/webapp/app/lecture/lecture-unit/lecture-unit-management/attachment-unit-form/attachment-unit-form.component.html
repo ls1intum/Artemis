@@ -85,7 +85,7 @@
             </div>
             <div class="row">
                 <div class="col-12">
-                    <button *ngIf="!isProcessingMode" id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
                         <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
                     </button>
                     <button *ngIf="hasCancelButton" type="button" (click)="cancelForm()" class="btn btn-default">

@@ -76,7 +76,7 @@
                     (change)="onSelectProcessUnit()"
                     [attr.disabled]="editForm.form.invalid || isSaving ? true : null"
                 />
-                <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.processUnit' | artemisTranslate }}</span>
+                <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.processAutomatically' | artemisTranslate }}</span>
                 <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.lectureFileToolTip' | artemisTranslate"></fa-icon>
             </div>
 
@@ -125,7 +125,7 @@
                             class="btn btn-success"
                             (click)="proceedToUnitSplit()"
                         >
-                            <fa-icon [icon]="faPuzzleProcess"></fa-icon>&nbsp;<span jhiTranslate="entity.action.processUnits">Process Units</span>
+                            <fa-icon [icon]="faPuzzleProcess"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.attachmentUnit.createAttachmentUnits.processUnits">Process Units</span>
                             <span *ngIf="isProcessing" class="spinner-border spinner-border-sm"></span>
                         </button>
                     </div>

@@ -43,7 +43,7 @@ export const lectureUnitRoute: Routes = [
                 component: AttachmentUnitsComponent,
                 data: {
                     authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'global.generic.process-units',
+                    pageTitle: 'artemisApp.attachmentUnit.createAttachmentUnits.pageTitle',
                 },
             },
             {

@@ -7,7 +7,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -106,7 +105,7 @@ class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrationBamb
 
         assertThat(attachmentUnits.size()).isEqualTo(2);
 
-        List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).collect(Collectors.toList());
+        List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
         System.out.println(attachmentUnitList.get(0).getName());
 

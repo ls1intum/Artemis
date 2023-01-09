@@ -30,7 +30,7 @@ export class AttachmentUnitsComponent implements OnInit {
     isProcessingMode: boolean;
 
     units: UnitResponseType[] = [];
-    numberOfpages: number;
+    numberOfPages: number;
 
     faSave = faSave;
     faBan = faBan;
@@ -71,7 +71,7 @@ export class AttachmentUnitsComponent implements OnInit {
             next: (res: any) => {
                 if (res) {
                     this.units = res.body.lectureUnitDTOS;
-                    this.numberOfpages = res.body.numberOfPages;
+                    this.numberOfPages = res.body.numberOfPages;
                     this.isLoading = false;
                 }
             },
@@ -156,9 +156,9 @@ export class AttachmentUnitsComponent implements OnInit {
                 return false;
             }
 
-            if (unit.startPage > this.numberOfpages) {
+            if (unit.startPage > this.numberOfPages) {
                 this.invalidUnitTableMessage = `${this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.startPageBigger`)} ${
-                    this.numberOfpages
+                    this.numberOfPages
                 }`;
                 return false;
             }
@@ -168,8 +168,8 @@ export class AttachmentUnitsComponent implements OnInit {
                 return false;
             }
 
-            if (unit.endPage > this.numberOfpages) {
-                this.invalidUnitTableMessage = `${this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.endPage`)} ${this.numberOfpages}`;
+            if (unit.endPage > this.numberOfPages) {
+                this.invalidUnitTableMessage = `${this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.endPage`)} ${this.numberOfPages}`;
                 return false;
             }
         }

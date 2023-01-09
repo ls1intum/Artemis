@@ -34,8 +34,6 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     formData: AttachmentUnitFormData;
     @Input()
     isEditMode = false;
-    @Input()
-    isProcessingMode = false;
 
     // A human-readable list of allowed file extensions
     readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');

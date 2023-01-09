@@ -116,9 +116,12 @@
             "updated": "Attachment unit updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
             "createAttachmentUnits": {
+                "noUnitDetected": "No unit was detected and could not split automatically. Please add information for each unit!",
+                "pageTitle": "Process units",
                 "addUnit": "Add unit",
                 "lectureFileToolTip": "Please click to proceed with automatic separation of lecture units",
-                "processUnit": "Automatic unit processing",
+                "processUnits": "Process units",
+                "processAutomatically": "Automatic unit processing",
                 "validation": {
                     "empty": {
                         "unitName": "Unit name can not be empty",

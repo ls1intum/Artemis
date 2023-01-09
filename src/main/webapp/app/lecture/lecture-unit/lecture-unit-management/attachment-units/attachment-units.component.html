@@ -41,7 +41,7 @@
                     <td>
                         <input
                             required
-                            [max]="numberOfpages"
+                            [max]="numberOfPages"
                             [min]="1"
                             type="number"
                             class="form-control"
@@ -55,7 +55,7 @@
                     <td>
                         <input
                             required
-                            [max]="numberOfpages"
+                            [max]="numberOfPages"
                             [min]="unit.startPage"
                             type="number"
                             class="form-control"
@@ -67,7 +67,7 @@
                         />
                     </td>
                     <td>
-                        <button (click)="deleteRow(i)" class="btn btn-danger"><fa-icon [icon]="faTimes"></fa-icon></button>
+                        <button [disabled]="units && units.length == 1" (click)="deleteRow(i)" class="btn btn-danger"><fa-icon [icon]="faTimes"></fa-icon></button>
                     </td>
                 </tr>
                 <button (click)="addRow()" class="btn btn-success mt-2">
@@ -75,6 +75,10 @@
                 </button>
             </tbody>
         </table>
+        <div *ngIf="units && units.length < 1" class="alert alert-danger mt-3">
+            <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+            {{ 'artemisApp.attachmentUnit.createAttachmentUnits.noUnitDetected' | artemisTranslate }}
+        </div>
         <button type="button" (click)="createAttachmentUnits()" [disabled]="!validUnitInformation()" class="btn btn-primary">
             <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
         </button>

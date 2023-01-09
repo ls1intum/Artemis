@@ -115,8 +115,11 @@
             "updated": "Dateieinheit aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "createAttachmentUnits": {
+                "noUnitDetected": "Es wurde keine Einheit erkannt und konnte nicht automatisch geteilt werden. Bitte fügen Sie Informationen für jede Einheit hinzu!",
+                "pageTitle": "Prozesseinheiten",
                 "addUnit": "Einheit hinzufügen",
-                "processUnit": "Automatische Einheitenverarbeitung",
+                "processUnits": "Prozesseinheiten",
+                "processAutomatically": "Automatische Einheitenverarbeitung",
                 "validation": {
                     "empty": {
                         "unitName": "Unit name can not be empty",
