@@ -44,66 +44,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 public class ProgrammingExerciseGradingService {
 
-    // TODO: discussion about name
-    static class ScoreCalculationData {
-
-        private ProgrammingExercise exercise;
-
-        private Result result;
-
-        private Set<ProgrammingExerciseTestCase> testCases;
-
-        private Set<ProgrammingExerciseTestCase> successfulTestCases;
-
-        private List<Feedback> staticCodeAnalysisFeedback;
-
-        public ProgrammingExercise getExercise() {
-            return exercise;
-        }
-
-        public ScoreCalculationData exercise(ProgrammingExercise exercise) {
-            this.exercise = exercise;
-            return this;
-        }
-
-        public Result getResult() {
-            return result;
-        }
-
-        public ScoreCalculationData result(Result result) {
-            this.result = result;
-            return this;
-        }
-
-        public Set<ProgrammingExerciseTestCase> getTestCases() {
-            return testCases;
-        }
-
-        public ScoreCalculationData testCases(Set<ProgrammingExerciseTestCase> testCases) {
-            this.testCases = testCases;
-            this.successfulTestCases = testCases.stream().filter(testCase -> testCase.isSuccessful(result)).collect(Collectors.toSet());
-            return this;
-        }
-
-        public Set<ProgrammingExerciseTestCase> getSuccessfulTestCases() {
-            return successfulTestCases;
-        }
-
-        public ScoreCalculationData staticCodeAnalysisFeedback(List<Feedback> staticCodeAnalysisFeedback) {
-            this.staticCodeAnalysisFeedback = staticCodeAnalysisFeedback;
-            return this;
-        }
-
-        public List<Feedback> getStaticCodeAnalysisFeedback() {
-            return staticCodeAnalysisFeedback;
-        }
-
-        public Participation getParticipation() {
-            return result.getParticipation();
-        }
-
-    }
-
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingService.class);
 
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
@@ -627,6 +567,77 @@ public class ProgrammingExerciseGradingService {
         return testCases.stream().filter(testCase -> !testCase.isInvisible()).filter(testCase -> !(isBeforeDueDate && testCase.isAfterDueDate())).collect(Collectors.toSet());
     }
 
+    // TODO: discussion about name and placement of this class
+    static class ScoreCalculationData {
+
+        private ProgrammingExercise exercise;
+
+        private Result result;
+
+        private Set<ProgrammingExerciseTestCase> testCases;
+
+        private Set<ProgrammingExerciseTestCase> successfulTestCases;
+
+        private List<Feedback> staticCodeAnalysisFeedback;
+
+        private double weightSum;
+
+        public ProgrammingExercise getExercise() {
+            return exercise;
+        }
+
+        public ScoreCalculationData exercise(ProgrammingExercise exercise) {
+            this.exercise = exercise;
+            return this;
+        }
+
+        public Result getResult() {
+            return result;
+        }
+
+        public ScoreCalculationData result(Result result) {
+            this.result = result;
+            return this;
+        }
+
+        public Set<ProgrammingExerciseTestCase> getTestCases() {
+            return testCases;
+        }
+
+        private double calculateWeightSum(final Set<ProgrammingExerciseTestCase> allTests) {
+            return allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
+        }
+
+        public ScoreCalculationData testCases(Set<ProgrammingExerciseTestCase> testCases) {
+            this.testCases = testCases;
+            this.successfulTestCases = testCases.stream().filter(testCase -> testCase.isSuccessful(result)).collect(Collectors.toSet());
+            this.weightSum = calculateWeightSum(testCases);
+            return this;
+        }
+
+        public Set<ProgrammingExerciseTestCase> getSuccessfulTestCases() {
+            return successfulTestCases;
+        }
+
+        public double getWeightSum() {
+            return weightSum;
+        }
+
+        public ScoreCalculationData staticCodeAnalysisFeedback(List<Feedback> staticCodeAnalysisFeedback) {
+            this.staticCodeAnalysisFeedback = staticCodeAnalysisFeedback;
+            return this;
+        }
+
+        public List<Feedback> getStaticCodeAnalysisFeedback() {
+            return staticCodeAnalysisFeedback;
+        }
+
+        public Participation getParticipation() {
+            return result.getParticipation();
+        }
+
+    }
+
     /**
      * Calculates the grading for a result and updates the feedbacks
      * @param testCases All test cases for the exercise
@@ -839,10 +850,6 @@ public class ProgrammingExerciseGradingService {
         return capPointsAtMaximum(scoreCalculationData.getExercise(), successfulTestPoints);
     }
 
-    private double calculateWeightSum(final Set<ProgrammingExerciseTestCase> allTests) {
-        return allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
-    }
-
     /**
      * Caps the points at the maximum achievable number.
      * <p>
@@ -885,10 +892,9 @@ public class ProgrammingExerciseGradingService {
      * @return the points which should be awarded for successfully completing the test case.
      */
     private double calculatePointsForTestCase(final ProgrammingExerciseTestCase test, ScoreCalculationData scoreCalculationData) {
-        final double weightSum = calculateWeightSum(scoreCalculationData.getTestCases());
         final int totalTestCaseCount = scoreCalculationData.getTestCases().size();
 
-        final boolean isWeightSumZero = Precision.equals(weightSum, 0, 1E-8);
+        final boolean isWeightSumZero = Precision.equals(scoreCalculationData.getWeightSum(), 0, 1E-8);
         final double testPoints;
         double exerciseMaxPoints = scoreCalculationData.getExercise().getMaxPoints();
 
@@ -903,7 +909,7 @@ public class ProgrammingExerciseGradingService {
         }
         else {
             double testWeight = test.getWeight() * test.getBonusMultiplier();
-            testPoints = (testWeight / weightSum) * exerciseMaxPoints;
+            testPoints = (testWeight / scoreCalculationData.getWeightSum()) * exerciseMaxPoints;
         }
 
         return testPoints + test.getBonusPoints();
