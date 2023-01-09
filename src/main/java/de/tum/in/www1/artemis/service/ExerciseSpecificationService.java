@@ -9,11 +9,11 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.Exam_;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup_;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 @Service
 public class ExerciseSpecificationService {
@@ -91,25 +91,11 @@ public class ExerciseSpecificationService {
         };
     }
 
-    /**
-     * Creates a specification for finding programming exercises.
-     * This method allows to additionally filter for only exercises with SCA active.
-     *
-     * @param searchTerm     Searches for an exercise id, exercise name or course name matching this input
-     * @param isCourseFilter Whether to search in courses for exercises
-     * @param isExamFilter   Whether to search in exams for exercises
-     * @param isSCAFilter    Whether to search only for exercises with SCA active
-     * @param user           The user for whom to fetch all available exercises
-     * @param pageable       Defining how to sort the result and on which
-     * @return A specification that can get passed to the exercise repository.
-     * @see de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService#getAllOnPageWithSize(PageableSearchDTO, Boolean, Boolean, Boolean, User)
-     */
-    public Specification<ProgrammingExercise> getExerciseSearchSpecification(String searchTerm, boolean isCourseFilter, boolean isExamFilter, boolean isSCAFilter, User user,
-            Pageable pageable) {
-        Specification<ProgrammingExercise> specification = getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
-        if (isSCAFilter) {
-            specification = specification.and((root, query, criteriaBuilder) -> criteriaBuilder.isTrue(root.get(ProgrammingExercise_.STATIC_CODE_ANALYSIS_ENABLED)));
-        }
-        return specification;
+    public Specification<ProgrammingExercise> createSCAFilter(ProgrammingLanguage programmingLanguage) {
+        return (root, query, criteriaBuilder) -> {
+            Predicate scaActive = criteriaBuilder.isTrue(root.get(ProgrammingExercise_.STATIC_CODE_ANALYSIS_ENABLED));
+            Predicate sameLanguage = criteriaBuilder.equal(root.get(ProgrammingExercise_.PROGRAMMING_LANGUAGE), programmingLanguage);
+            return criteriaBuilder.and(scaActive, sameLanguage);
+        };
     }
 }

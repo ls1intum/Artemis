@@ -624,10 +624,18 @@ public class ProgrammingExerciseResource {
     @GetMapping(PROGRAMMING_EXERCISES)
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
-            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter,
-            @RequestParam(defaultValue = "false") Boolean isSCAFilter) {
+            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, isSCAFilter, user));
+        return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
+    }
+
+    @GetMapping(PROGRAMMING_EXERCISES + "/with-sca")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesWithSCAOnPage(PageableSearchDTO<String> search,
+            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter,
+            @RequestParam ProgrammingLanguage programmingLanguage) {
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(programmingExerciseService.getAllWithSCAOnPageWithSize(search, isCourseFilter, isExamFilter, programmingLanguage, user));
     }
 
     /**

@@ -125,9 +125,6 @@ class ProgrammingExerciseIntegrationTestService {
     @Autowired
     private UserRepository userRepository;
 
-    @Autowired
-    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
-
     private Course course;
 
     public ProgrammingExercise programmingExercise;

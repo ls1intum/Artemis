@@ -953,15 +953,33 @@ public class ProgrammingExerciseService {
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
-            final Boolean isSCAFilter, final User user) {
+            final User user) {
         // TODO while minor, this still is duplicated code. Can we refactor this in such a way that there are still no database calls for this.
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
         final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
-        Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, isSCAFilter, user,
-                pageable);
+        Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
+        Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findAll(specification, pageable);
+        return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
+    }
+
+    public SearchResultPageDTO<ProgrammingExercise> getAllWithSCAOnPageWithSize(PageableSearchDTO<String> search, boolean isCourseFilter, boolean isExamFilter,
+            ProgrammingLanguage programmingLanguage, User user) {
+        if (!isCourseFilter && !isExamFilter) {
+            return new SearchResultPageDTO<>(Collections.emptyList(), 0);
+        }
+        final var pageable = PageUtil.createExercisePageRequest(search);
+        final var searchTerm = search.getSearchTerm();
+        Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
+        specification = specification.and(exerciseSpecificationService.createSCAFilter(programmingLanguage));
+        // TODO this import only makes sense if only the same languages are shown.
+        // Think about a way to pass the langue from the client
+        // Idea: Instead of one big method, create two endpoints where SCAfilter is always true (no param needed) and the programming language gets passed instead
+        // Maybe also make two methods here instead of one, let's see.
+        // Make 2 endpoints, the relation (languge only set when filter is true) is bad
+        // Also check this in import-endpoint and add test case for this
         Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
