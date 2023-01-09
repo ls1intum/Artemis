@@ -5,7 +5,7 @@ import dayjs from 'dayjs/esm';
 import { filter, map, tap } from 'rxjs/operators';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { User } from 'app/core/user/user.model';
+import { User, UserPublicInfoDTO } from 'app/core/user/user.model';
 import { LectureService } from 'app/lecture/lecture.service';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -26,6 +26,8 @@ import { OnlineCourseConfiguration } from 'app/entities/online-course-configurat
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
+
+export type RoleGroup = 'tutors' | 'students' | 'instructors' | 'editors';
 
 @Injectable({ providedIn: 'root' })
 export class CourseManagementService {
@@ -327,6 +329,13 @@ export class CourseManagementService {
         let httpParams = new HttpParams();
         httpParams = httpParams.append('nameOfUser', name);
         return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/search-other-users`, { params: httpParams, observe: 'response' });
+    }
+
+    searchUsers(courseId: number, loginOrName: string, roles: RoleGroup[]): Observable<HttpResponse<UserPublicInfoDTO[]>> {
+        let httpParams = new HttpParams();
+        httpParams = httpParams.append('loginOrName', loginOrName);
+        httpParams = httpParams.append('roles', roles.join(','));
+        return this.http.get<User[]>(`${this.resourceUrl}/${courseId}/users/search`, { observe: 'response', params: httpParams });
     }
 
     /**

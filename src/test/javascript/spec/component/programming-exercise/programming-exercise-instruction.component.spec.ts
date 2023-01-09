@@ -30,12 +30,11 @@ import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises
 import { Result } from 'app/entities/result.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
+import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { MockParticipationWebsocketService } from '../../helpers/mocks/service/mock-participation-websocket.service';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MockComponent } from 'ng-mocks';
 
 describe('ProgrammingExerciseInstructionComponent', () => {
     let comp: ProgrammingExerciseInstructionComponent;
@@ -59,7 +58,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 ProgrammingExerciseInstructionStepWizardComponent,
                 ProgrammingExerciseInstructionTaskStatusComponent,
                 TranslatePipeMock,
-                MockComponent(FaIconComponent),
             ],
             providers: [
                 ProgrammingExerciseTaskExtensionWrapper,
@@ -74,7 +72,6 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .overrideModule(BrowserDynamicTestingModule, { set: { entryComponents: [FaIconComponent, ProgrammingExerciseInstructionTaskStatusComponent] } })
             .compileComponents()
             .then(() => {
@@ -366,7 +363,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         bubbleSortStep.nativeElement.click();
         expect(openModalStub).toHaveBeenCalledOnce();
-        expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(openModalStub).toHaveBeenCalledWith(FeedbackComponent, { keyboard: true, size: 'lg' });
         expect(modalRef).toEqual({
             componentInstance: {
                 exercise,
@@ -381,7 +378,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         mergeSortStep.nativeElement.click();
         expect(openModalStub).toHaveBeenCalledTimes(2);
-        expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(openModalStub).toHaveBeenCalledWith(FeedbackComponent, { keyboard: true, size: 'lg' });
         expect(modalRef).toEqual({
             componentInstance: {
                 exercise,
@@ -449,7 +446,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         bubbleSortStep.nativeElement.click();
         expect(openModalStub).toHaveBeenCalledOnce();
-        expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(openModalStub).toHaveBeenCalledWith(FeedbackComponent, { keyboard: true, size: 'lg' });
         expect(modalRef).toEqual({
             componentInstance: {
                 exercise,
@@ -464,7 +461,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         mergeSortStep.nativeElement.click();
         expect(openModalStub).toHaveBeenCalledTimes(2);
-        expect(openModalStub).toHaveBeenCalledWith(ResultDetailComponent, { keyboard: true, size: 'lg' });
+        expect(openModalStub).toHaveBeenCalledWith(FeedbackComponent, { keyboard: true, size: 'lg' });
         expect(modalRef).toEqual({
             componentInstance: {
                 exercise,

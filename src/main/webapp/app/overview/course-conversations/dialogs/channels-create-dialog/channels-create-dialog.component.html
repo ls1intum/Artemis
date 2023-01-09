@@ -1,0 +1,24 @@
+<div class="channels-overview" *ngIf="isInitialized">
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span
+                >{{ (isPublicChannel ? 'artemisApp.dialogs.createChannel.titlePublicChannel' : 'artemisApp.dialogs.createChannel.titlePrivateChannel') | artemisTranslate }}
+                {{
+                    (isAnnouncementChannel ? 'artemisApp.dialogs.createChannel.titleAnnouncementChannel' : 'artemisApp.dialogs.createChannel.titleRegularChannel')
+                        | artemisTranslate
+                }}
+            </span>
+        </h4>
+        <button type="button" class="btn-close" (click)="dismiss()"></button>
+    </div>
+    <div class="modal-body">
+        <p>
+            {{ 'artemisApp.dialogs.createChannel.description' | artemisTranslate }}
+        </p>
+        <jhi-channel-form
+            (channelTypeChanged)="onChannelTypeChanged($event)"
+            (isAnnouncementChannelChanged)="onIsAnnouncementChannelChanged($event)"
+            (formSubmitted)="onFormSubmitted($event)"
+        ></jhi-channel-form>
+    </div>
+</div>

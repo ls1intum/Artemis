@@ -92,6 +92,7 @@
             "publishResultsDate": "Veröffentlichung der Ergebnisse",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
+            "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",
             "duration": "Dauer",
             "nrOfStudents": "Anzahl registrierter Studierender",
             "created": "Neue Klausur erstellt",
@@ -328,7 +329,8 @@
                 "conduction": "Klausurdurchführung",
                 "assessment": "Klausurbewertung und Klausureinsicht",
                 "exercises": "Klausuraufgaben",
-                "text": "Klausurtexte"
+                "text": "Klausurtexte",
+                "examSolutions": "Klausurlösungen"
             },
             "title": "Klausurverwaltung",
             "createExam": "Erstelle eine neue Klausur",
@@ -353,6 +355,7 @@
             "courseName": "Kursname",
             "examStudentReviewStart": "Beginn der Klausureinsicht",
             "examStudentReviewEnd": "Ende der Klausureinsicht",
+            "exampleSolutionPublicationDateTooltip": "Studierende können die Beispiellösungen für alle Aufgaben in der Klausur ab diesem Zeitpunkt einsehen, wenn sie an der Klausur teilgenommen haben. Zum Deaktivieren leer lassen.",
             "studentReviewEnabled": "Klausureinsicht ist möglich",
             "maxPoints": {
                 "title": "Erreichbare Punktzahl",
