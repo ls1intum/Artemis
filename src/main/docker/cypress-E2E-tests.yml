@@ -24,28 +24,27 @@ services:
             - ../resources/config/docker-cypress-application-local.env
         # TODO: after the pipeline is running on bamboo maybe also migrate/merge these environment variables
         environment:
-            spring.profiles.active: "artemis,bamboo,bitbucket,jira,prod,docker,cypress"
-            spring.datasource.url: "jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
-            spring.datasource.username: "root"
-            spring.datasource.password: ""
-            artemis.user-management.internal-admin.username: "${bamboo_artemis_admin_username}"
-            artemis.user-management.internal-admin.password: "${bamboo_artemis_admin_password}"
-            artemis.user-management.external.url: "https://jira-prelive.ase.in.tum.de"
-            artemis.user-management.external.user: "${bamboo_jira_prelive_admin_user}"
-            artemis.user-management.external.password: "${bamboo_jira_prelive_admin_password}"
-            artemis.version-control.url: "https://bitbucket-prelive.ase.in.tum.de"
-            artemis.version-control.user: "${bamboo_jira_prelive_admin_user}"
-            artemis.version-control.password: "${bamboo_jira_prelive_admin_password}"
-            artemis.continuous-integration.url: "https://bamboo-prelive.ase.in.tum.de"
-            artemis.continuous-integration.user: "${bamboo_jira_prelive_admin_user}"
-            artemis.continuous-integration.password: "${bamboo_jira_prelive_admin_password}"
-            artemis.continuous-integration.token: "${bamboo_ARTEMIS_CONTINUOUS_INTEGRATION_TOKEN_SECRET}"
-            artemis.continuous-integration.artemis-authentication-token-value: "${bamboo_ARTEMIS_CONTINUOUS_INTEGRATION_ARTEMIS_AUTHENTICATION_TOKEN_VALUE_SECRET}"
+            SPRING_PROFILES_ACTIVE: "artemis,bamboo,bitbucket,jira,prod,docker,cypress"
+            SPRING_DATASOURCE_USERNAME: "root"
+            SPRING_DATASOURCE_PASSWORD: ""
+            ARTEMIS_USERMANAGEMENT_INTERNALADMIN_USERNAME: "${bamboo_artemis_admin_username}"
+            ARTEMIS_USERMANAGEMENT_INTERNALADMIN_PASSWORD: "${bamboo_artemis_admin_password}"
+            ARTEMIS_USERMANAGEMENT_EXTERNAL_URL: "https://jira-prelive.ase.in.tum.de"
+            ARTEMIS_USERMANAGEMENT_EXTERNAL_USER: "${bamboo_jira_prelive_admin_user}"
+            ARTEMIS_USERMANAGEMENT_EXTERNAL_PASSWORD: "${bamboo_jira_prelive_admin_password}"
+            ARTEMIS_VERSIONCONTROL_URL: "https://bitbucket-prelive.ase.in.tum.de"
+            ARTEMIS_VERSIONCONTROL_USER: "${bamboo_jira_prelive_admin_user}"
+            ARTEMIS_VERSIONCONTROL_PASSWORD: "${bamboo_jira_prelive_admin_password}"
+            ARTEMIS_CONTINUOUSINTEGRATION_URL: "https://bamboo-prelive.ase.in.tum.de"
+            ARTEMIS_CONTINUOUSINTEGRATION_USER: "${bamboo_jira_prelive_admin_user}"
+            ARTEMIS_CONTINUOUSINTEGRATION_PASSWORD: "${bamboo_jira_prelive_admin_password}"
+            ARTEMIS_CONTINUOUSINTEGRATION_TOKEN: "${bamboo_ARTEMIS_CONTINUOUS_INTEGRATION_TOKEN_SECRET}"
+            ARTEMIS_CONTINUOUSINTEGRATION_ARTEMISAUTHENTICATIONTOKENVALUE: "${bamboo_ARTEMIS_CONTINUOUS_INTEGRATION_ARTEMIS_AUTHENTICATION_TOKEN_VALUE_SECRET}"
             # for bamboo and bitbucket notifications on /api/programming-exercises/new-result it seems like port
             # 54321 is internally open for the bamboo agents
             # also can't use SSL for this as the hostnames are not integrated in the self-signed certificate
-            server.url: "http://${HOST_HOSTNAME}:54321"
-            server.port: "54321"
+            SERVER_URL: "http://${HOST_HOSTNAME}:54321"
+            SERVER_PORT: "54321"
         ports:
             - 54321:54321
         healthcheck:
