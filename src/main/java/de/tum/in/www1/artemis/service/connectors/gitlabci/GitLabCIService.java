@@ -291,7 +291,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             return Optional.empty();
         }
 
-        return gitlab.getPipelineApi().getPipelinesStream(repositoryPath, new PipelineFilter().withSha(commitHash.get())).max(Comparator.comparing(Pipeline::getFinishedAt));
+        return gitlab.getPipelineApi().getPipelinesStream(repositoryPath, new PipelineFilter().withSha(commitHash.get())).max(Comparator.comparing(Pipeline::getId));
     }
 
     @Override
