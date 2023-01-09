@@ -147,7 +147,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(lecture.getLectureUnits()).hasSize(3);
         boolean nullFound = false;
         for (LectureUnit lectureUnit : lecture.getLectureUnits()) {
-            if (Objects.isNull(lectureUnit)) {
+            if (lectureUnit == null) {
                 nullFound = true;
                 break;
             }

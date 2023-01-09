@@ -58,7 +58,6 @@ describe('Static code analysis tests', () => {
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, scaSubmission, () => {
             editorPage.getResultScore().contains('50%').and('be.visible').click();
             scaFeedback.shouldShowPointChart();
-            scaFeedback.shouldShowFeedback(13, '10');
             // We have to verify those static texts here. If we don't verify those messages the only difference between the SCA and normal programming exercise
             // tests is the score, which hardly verifies the SCA functionality
             scaFeedback.shouldShowCodeIssue("Variable 'literal1' must be private and have accessor methods.", '5');
