@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 
-public class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String TEST_PREFIX = "lectureunitprocessingintegration";
 
