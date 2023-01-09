@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import javax.validation.constraints.NotNull;
@@ -257,7 +256,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
             submission = optionalFileUploadSubmission.orElse(null);
         }
 
-        if (Objects.nonNull(submission)) {
+        if (submission != null) {
             // Make sure the exercise is connected to the participation in the json response
             final StudentParticipation studentParticipation = (StudentParticipation) submission.getParticipation();
             studentParticipation.setExercise(fileUploadExercise);
