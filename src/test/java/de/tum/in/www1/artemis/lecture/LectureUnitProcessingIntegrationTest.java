@@ -26,13 +26,11 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 
@@ -53,23 +51,13 @@ public class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrat
 
     private Lecture lecture1;
 
-    private Attachment attachment;
-
-    private AttachmentUnit attachmentUnit;
-
     @Autowired
     private ObjectMapper mapper;
 
     @BeforeEach
     void initTestCase() {
         this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
-        // this.lectureUnitSplits = Collections.singletonList(new LectureUnitSplitDTO("Unit Name", ZonedDateTime.now(), 1, 20));
-        this.attachment = ModelFactory.generateAttachment(null);
-        this.attachment.setName("          LoremIpsum              ");
-        this.attachment.setLink("files/temp/example.txt");
         this.lecture1 = this.database.createCourseWithLecture(true);
-        this.attachmentUnit = new AttachmentUnit();
-        this.attachmentUnit.setDescription("Lorem Ipsum");
 
         // Add users that are not in the course
         database.createAndSaveUser(TEST_PREFIX + "student42");
@@ -100,9 +88,22 @@ public class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrat
     void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
         var createResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
         LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(createResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
-        System.out.println(lectureUnitSplitInfo.lectureUnitDTOS().get(0).unitName());
         assertThat(lectureUnitSplitInfo.lectureUnitDTOS().size()).isEqualTo(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void splitLectureFile_asInstructor_shouldCreateAttachmentUnits() throws Exception {
+        var splitResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
+        LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
+        assertThat(lectureUnitSplitInfo.lectureUnitDTOS().size()).isEqualTo(2);
+        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
+
+        var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo.lectureUnitDTOS())).andExpect(status().isOk()).andReturn();
+        List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
+                mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
+        assertThat(attachmentUnits.size()).isEqualTo(2);
     }
 
     private void testAllPreAuthorize() throws Exception {
