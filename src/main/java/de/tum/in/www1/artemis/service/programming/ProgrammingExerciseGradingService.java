@@ -813,7 +813,7 @@ public class ProgrammingExerciseGradingService {
             setCreditsForTestCaseFeedback(testCase, scoreCalculationData.getResult(), credits);
         });
 
-        scoreCalculationData.getResult().getFeedbacks().stream().filter(feedback -> Objects.isNull(feedback.getCredits())).forEach(feedback -> feedback.setCredits(0D));
+        scoreCalculationData.getResult().getFeedbacks().stream().filter(feedback -> feedback.getCredits() == null).forEach(feedback -> feedback.setCredits(0D));
     }
 
     /**

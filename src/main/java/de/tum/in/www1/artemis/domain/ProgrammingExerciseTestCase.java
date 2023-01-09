@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.domain;
 import static de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType.DEFAULT;
 
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -244,7 +243,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      */
     public boolean isSuccessful(Result result) {
         return result.getFeedbacks().stream().anyMatch(feedback -> {
-            boolean testNameAreSame = Objects.nonNull(feedback.getText()) && feedback.getText().equalsIgnoreCase(this.getTestName());
+            boolean testNameAreSame = feedback.getText() != null && feedback.getText().equalsIgnoreCase(this.getTestName());
             return testNameAreSame && Boolean.TRUE.equals(feedback.isPositive());
         });
     }
@@ -257,7 +256,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
      */
     public boolean wasNotExecuted(Result result) {
         return result.getFeedbacks().stream().filter(feedback -> feedback.getType() == FeedbackType.AUTOMATIC)
-                .noneMatch(feedback -> Objects.nonNull(feedback.getText()) && feedback.getText().equalsIgnoreCase(this.getTestName()));
+                .noneMatch(feedback -> feedback.getText() != null && feedback.getText().equalsIgnoreCase(this.getTestName()));
     }
 
 }
