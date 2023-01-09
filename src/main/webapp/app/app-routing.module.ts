@@ -21,7 +21,11 @@ const LAYOUT_ROUTES: Routes = [navbarRoute, ...errorRoute];
                 },
                 {
                     path: 'about',
-                    loadChildren: () => import('./core/about-us/artemis-about-us.module').then((module) => module.ArtemisAboutUsModule),
+                    loadChildren: () => import('./core/about-us/artemis-about-us.module').then((m) => m.ArtemisAboutUsModule),
+                },
+                {
+                    path: 'courses',
+                    loadChildren: () => import('./overview/courses-routing.module').then((m) => m.ArtemisCoursesRoutingModule),
                 },
                 {
                     path: 'courses/:courseId/lectures/:lectureId',

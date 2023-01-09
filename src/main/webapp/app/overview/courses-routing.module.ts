@@ -10,7 +10,7 @@ import { CourseExercisesComponent } from 'app/overview/course-exercises/course-e
 
 const routes: Routes = [
     {
-        path: 'courses',
+        path: '',
         component: CoursesComponent,
         data: {
             authorities: [Authority.USER],
@@ -19,11 +19,11 @@ const routes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: 'courses/register',
+        path: 'register',
         loadChildren: () => import('./course-registration/course-registration.module').then((m) => m.CourseRegistrationModule),
     },
     {
-        path: 'courses/:courseId',
+        path: ':courseId',
         component: CourseOverviewComponent,
         data: {
             authorities: [Authority.USER],
