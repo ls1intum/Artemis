@@ -637,7 +637,7 @@ public class ProgrammingExerciseGradingService {
             final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(testCase -> testCase.isSuccessful(result))
                     .collect(Collectors.toSet());
 
-            var scoreCalculationData = new ScoreCalculationData().exercise(exercise).result(result).testCases(testCases).staticCodeAnalysisFeedback(staticCodeAnalysisFeedback);
+            var scoreCalculationData = new ScoreCalculationData(exercise, result, testCases, staticCodeAnalysisFeedback);
 
             updateResultScore(scoreCalculationData, hasDuplicateTestCases, applySubmissionPolicy);
             updateFeedbackCredits(scoreCalculationData);
@@ -754,17 +754,17 @@ public class ProgrammingExerciseGradingService {
             score = calculateScore(scoreCalculationData, applySubmissionPolicy);
         }
 
-        scoreCalculationData.getResult().setScore(score, scoreCalculationData.getExercise().getCourseViaExerciseGroupOrCourseMember());
+        scoreCalculationData.result().setScore(score, scoreCalculationData.exercise().getCourseViaExerciseGroupOrCourseMember());
     }
 
     private void updateFeedbackCredits(ScoreCalculationData scoreCalculationData) {
         // Set credits for successful test cases
-        scoreCalculationData.getTestCases().stream().filter(testCase -> testCase.isSuccessful(scoreCalculationData.getResult())).forEach(testCase -> {
+        scoreCalculationData.testCases().stream().filter(testCase -> testCase.isSuccessful(scoreCalculationData.result())).forEach(testCase -> {
             double credits = calculatePointsForTestCase(testCase, scoreCalculationData);
-            setCreditsForTestCaseFeedback(testCase, scoreCalculationData.getResult(), credits);
+            setCreditsForTestCaseFeedback(testCase, scoreCalculationData.result(), credits);
         });
 
-        scoreCalculationData.getResult().getFeedbacks().stream().filter(feedback -> feedback.getCredits() == null).forEach(feedback -> feedback.setCredits(0D));
+        scoreCalculationData.result().getFeedbacks().stream().filter(feedback -> feedback.getCredits() == null).forEach(feedback -> feedback.setCredits(0D));
     }
 
     /**
@@ -781,7 +781,7 @@ public class ProgrammingExerciseGradingService {
         points = Math.max(0, points);
 
         // The score is calculated as a percentage of the maximum points
-        return points / scoreCalculationData.getExercise().getMaxPoints() * 100.0;
+        return points / scoreCalculationData.exercise().getMaxPoints() * 100.0;
     }
 
     /**
@@ -795,10 +795,10 @@ public class ProgrammingExerciseGradingService {
      * @return the total score for this result without penalty deductions.
      */
     private double calculateSuccessfulTestPoints(ScoreCalculationData scoreCalculationData) {
-        Set<ProgrammingExerciseTestCase> successfulTestCases = scoreCalculationData.getSuccessfulTestCases();
+        Set<ProgrammingExerciseTestCase> successfulTestCases = scoreCalculationData.successfulTestCases();
         double successfulTestPoints = successfulTestCases.stream().mapToDouble(test -> calculatePointsForTestCase(test, scoreCalculationData)).sum();
 
-        return capPointsAtMaximum(scoreCalculationData.getExercise(), successfulTestPoints);
+        return capPointsAtMaximum(scoreCalculationData.exercise(), successfulTestPoints);
     }
 
     /**
@@ -843,15 +843,15 @@ public class ProgrammingExerciseGradingService {
      * @return the points which should be awarded for successfully completing the test case.
      */
     private double calculatePointsForTestCase(final ProgrammingExerciseTestCase test, ScoreCalculationData scoreCalculationData) {
-        final int totalTestCaseCount = scoreCalculationData.getTestCases().size();
+        final int totalTestCaseCount = scoreCalculationData.testCases().size();
 
-        final boolean isWeightSumZero = Precision.equals(scoreCalculationData.getWeightSum(), 0, 1E-8);
+        final boolean isWeightSumZero = Precision.equals(scoreCalculationData.weightSum(), 0, 1E-8);
         final double testPoints;
-        double exerciseMaxPoints = scoreCalculationData.getExercise().getMaxPoints();
+        double exerciseMaxPoints = scoreCalculationData.exercise().getMaxPoints();
 
         // A weight-sum of zero would let the solution show an error to the instructor as the solution score must be
         // 100% of all reachable points. To prevent this, we weigh all test cases equally in such a case.
-        if (isWeightSumZero && scoreCalculationData.getParticipation() instanceof SolutionProgrammingExerciseParticipation) {
+        if (isWeightSumZero && scoreCalculationData.participation() instanceof SolutionProgrammingExerciseParticipation) {
             testPoints = (1.0 / totalTestCaseCount) * exerciseMaxPoints;
         }
         else if (isWeightSumZero) {
@@ -860,7 +860,7 @@ public class ProgrammingExerciseGradingService {
         }
         else {
             double testWeight = test.getWeight() * test.getBonusMultiplier();
-            testPoints = (testWeight / scoreCalculationData.getWeightSum()) * exerciseMaxPoints;
+            testPoints = (testWeight / scoreCalculationData.weightSum()) * exerciseMaxPoints;
         }
 
         return testPoints + test.getBonusPoints();
@@ -876,14 +876,14 @@ public class ProgrammingExerciseGradingService {
      */
     private double calculateTotalPenalty(ScoreCalculationData scoreCalculationData, boolean applySubmissionPolicy) {
         double penalty = 0;
-        var exercise = scoreCalculationData.getExercise();
+        var exercise = scoreCalculationData.exercise();
         int maxStaticCodeAnalysisPenalty = Optional.ofNullable(exercise.getMaxStaticCodeAnalysisPenalty()).orElse(100);
         if (Boolean.TRUE.equals(exercise.isStaticCodeAnalysisEnabled()) && maxStaticCodeAnalysisPenalty > 0) {
-            penalty += calculateStaticCodeAnalysisPenalty(scoreCalculationData.getStaticCodeAnalysisFeedback(), exercise);
+            penalty += calculateStaticCodeAnalysisPenalty(scoreCalculationData.staticCodeAnalysisFeedback(), exercise);
         }
 
         if (applySubmissionPolicy && exercise.getSubmissionPolicy() instanceof SubmissionPenaltyPolicy penaltyPolicy) {
-            penalty += submissionPolicyService.calculateSubmissionPenalty(scoreCalculationData.getParticipation(), penaltyPolicy);
+            penalty += submissionPolicyService.calculateSubmissionPenalty(scoreCalculationData.participation(), penaltyPolicy);
         }
 
         return penalty;
