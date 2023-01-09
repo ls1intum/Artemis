@@ -70,7 +70,7 @@ describe('VideoUnitComponent', () => {
         handleCollapseSpy.mockRestore();
     });
 
-    it('should call complete callback when uncollapsed after timeout', () => {
+    it('should call complete callback when expanded after timeout', () => {
         return new Promise<void>((done) => {
             jest.useFakeTimers();
             jest.spyOn(global, 'setTimeout');
