@@ -272,16 +272,11 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     private BuildStatus convertPipelineStatusToBuildStatus(PipelineStatus status) {
-        if (status.equals(PipelineStatus.CREATED) || status.equals(PipelineStatus.WAITING_FOR_RESOURCE) || status.equals(PipelineStatus.PREPARING)
-                || status.equals(PipelineStatus.PENDING)) {
-            return BuildStatus.QUEUED;
-        }
-        else if (status.equals(PipelineStatus.RUNNING)) {
-            return BuildStatus.BUILDING;
-        }
-        else {
-            return BuildStatus.INACTIVE;
-        }
+        return switch (status) {
+            case CREATED, WAITING_FOR_RESOURCE, PREPARING, PENDING -> BuildStatus.QUEUED;
+            case RUNNING -> BuildStatus.BUILDING;
+            default -> BuildStatus.INACTIVE;
+        };
     }
 
     private Optional<Pipeline> getLatestPipeline(final ProgrammingExerciseParticipation participation) throws GitLabApiException {

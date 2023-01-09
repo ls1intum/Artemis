@@ -20,8 +20,11 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.participation.Participation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
+import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 
@@ -34,6 +37,9 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ParticipationRepository participationRepository;
 
     private Long programmingExerciseId;
 
@@ -67,7 +73,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         database.createProgrammingSubmission(participation, false, "hash");
         mockGetBuildStatus(PipelineStatus.CREATED);
 
-        var result = continuousIntegrationService.getBuildStatus(participation);
+        var result = getBuildStatusForParticipation(participation);
 
         assertThat(result).isEqualTo(ContinuousIntegrationService.BuildStatus.QUEUED);
     }
@@ -80,9 +86,15 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         database.createProgrammingSubmission(participation, false, "hash");
         mockGetBuildStatus(PipelineStatus.RUNNING);
 
-        var result = continuousIntegrationService.getBuildStatus(participation);
+        var result = getBuildStatusForParticipation(participation);
 
         assertThat(result).isEqualTo(ContinuousIntegrationService.BuildStatus.BUILDING);
+    }
+
+    private ContinuousIntegrationService.BuildStatus getBuildStatusForParticipation(final Participation participation) {
+        final var studentParticipation = participationRepository.findByIdWithLatestSubmissionElseThrow(participation.getId());
+        assertThat(studentParticipation).isInstanceOf(ProgrammingExerciseParticipation.class);
+        return continuousIntegrationService.getBuildStatus((ProgrammingExerciseParticipation) studentParticipation);
     }
 
     @Test

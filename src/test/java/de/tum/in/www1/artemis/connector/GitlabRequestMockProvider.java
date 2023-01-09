@@ -10,6 +10,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Stream;
 
 import org.gitlab4j.api.*;
 import org.gitlab4j.api.models.*;
@@ -724,12 +725,10 @@ public class GitlabRequestMockProvider {
     }
 
     public void mockGetBuildStatus(PipelineStatus pipelineStatus) throws GitLabApiException {
-        List<Pipeline> pipelines = new ArrayList<>();
         Pipeline pipeline = new Pipeline();
         pipeline.setId(1L);
         pipeline.setStatus(pipelineStatus);
-        pipelines.add(pipeline);
 
-        doReturn(pipelines.stream()).when(pipelineApi).getPipelinesStream(anyString(), any());
+        doReturn(Stream.of(pipeline)).when(pipelineApi).getPipelinesStream(anyString(), any(PipelineFilter.class));
     }
 }
