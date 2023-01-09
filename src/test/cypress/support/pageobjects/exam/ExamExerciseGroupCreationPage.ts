@@ -1,4 +1,4 @@
-import { BASE_API } from '../../constants';
+import { BASE_API, PUT } from '../../constants';
 import { POST } from '../../constants';
 
 /**
@@ -17,5 +17,11 @@ export class ExamExerciseGroupCreationPage {
         cy.intercept({ method: POST, url: `${BASE_API}courses/*/exams/*/exerciseGroups` }).as('createExerciseGroup');
         cy.get('#save-group').click();
         cy.wait('@createExerciseGroup');
+    }
+
+    update() {
+        cy.intercept({ method: PUT, url: `${BASE_API}courses/*/exams/*/exerciseGroups` }).as('updateExerciseGroup');
+        cy.get('#save-group').click();
+        cy.wait('@updateExerciseGroup');
     }
 }
