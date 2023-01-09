@@ -726,9 +726,10 @@ public class GitlabRequestMockProvider {
     public void mockGetBuildStatus(PipelineStatus pipelineStatus) throws GitLabApiException {
         List<Pipeline> pipelines = new ArrayList<>();
         Pipeline pipeline = new Pipeline();
+        pipeline.setId(1L);
         pipeline.setStatus(pipelineStatus);
         pipelines.add(pipeline);
 
-        doReturn(pipelines).when(pipelineApi).getPipelines(anyString());
+        doReturn(pipelines.stream()).when(pipelineApi).getPipelinesStream(anyString(), any());
     }
 }

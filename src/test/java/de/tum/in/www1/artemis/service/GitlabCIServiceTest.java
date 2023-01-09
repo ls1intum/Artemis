@@ -64,6 +64,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     void testGetBuildStatusQueued() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        database.createProgrammingSubmission(participation, false, "hash");
         mockGetBuildStatus(PipelineStatus.CREATED);
 
         var result = continuousIntegrationService.getBuildStatus(participation);
@@ -76,6 +77,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     void testGetBuildStatusBuilding() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        database.createProgrammingSubmission(participation, false, "hash");
         mockGetBuildStatus(PipelineStatus.RUNNING);
 
         var result = continuousIntegrationService.getBuildStatus(participation);
@@ -88,6 +90,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     void testGetBuildStatusInactive() throws GitLabApiException {
         final ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
         final ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        database.createProgrammingSubmission(participation, false, "hash");
         mockGetBuildStatus(PipelineStatus.CANCELED);
 
         var result = continuousIntegrationService.getBuildStatus(participation);
