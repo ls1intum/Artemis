@@ -578,10 +578,18 @@ public class ProgrammingExerciseGradingService {
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
-        Map<Boolean, List<Feedback>> feedbacksGroupedByIsSCA = result.getFeedbacks().stream().filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType()))
-                .collect(Collectors.groupingBy(Feedback::isStaticCodeAnalysisFeedback));
-        List<Feedback> staticCodeAnalysisFeedback = feedbacksGroupedByIsSCA.getOrDefault(true, new ArrayList<>());
-        List<Feedback> testCaseFeedback = feedbacksGroupedByIsSCA.getOrDefault(false, new ArrayList<>()); // Feedbacks that are not SCA here are test cases
+        List<Feedback> automaticFeedbacks = result.getFeedbacks().stream().filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType())).toList();
+        List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
+        List<Feedback> testCaseFeedback = new ArrayList<>();
+
+        for (Feedback automaticFeedback : automaticFeedbacks) {
+            if (automaticFeedback.isStaticCodeAnalysisFeedback()) {
+                staticCodeAnalysisFeedback.add(automaticFeedback);
+            }
+            else {
+                testCaseFeedback.add(automaticFeedback); // if feedback isn't static code analysis here, then it has to be test case feedback
+            }
+        }
 
         // Remove feedback that is in an invisible SCA category
         staticCodeAnalysisFeedback = staticCodeAnalysisService.categorizeScaFeedback(result, staticCodeAnalysisFeedback, exercise);
