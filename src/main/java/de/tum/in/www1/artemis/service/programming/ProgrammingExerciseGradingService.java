@@ -568,74 +568,25 @@ public class ProgrammingExerciseGradingService {
     }
 
     // TODO: discussion about name and placement of this class
-    static class ScoreCalculationData {
+    private record ScoreCalculationData(ProgrammingExercise exercise, Result result, Set<ProgrammingExerciseTestCase> testCases,
+            Set<ProgrammingExerciseTestCase> successfulTestCases, double weightSum, List<Feedback> staticCodeAnalysisFeedback) {
 
-        private ProgrammingExercise exercise;
-
-        private Result result;
-
-        private Set<ProgrammingExerciseTestCase> testCases;
-
-        private Set<ProgrammingExerciseTestCase> successfulTestCases;
-
-        private List<Feedback> staticCodeAnalysisFeedback;
-
-        private double weightSum;
-
-        public ProgrammingExercise getExercise() {
-            return exercise;
+        ScoreCalculationData(final ProgrammingExercise exercise, final Result result, final Set<ProgrammingExerciseTestCase> testCases,
+                final List<Feedback> staticCodeAnalysisFeedback) {
+            this(exercise, result, testCases, successfulTestCases(testCases, result), calculateWeightSum(testCases), staticCodeAnalysisFeedback);
         }
 
-        public ScoreCalculationData exercise(ProgrammingExercise exercise) {
-            this.exercise = exercise;
-            return this;
-        }
-
-        public Result getResult() {
-            return result;
-        }
-
-        public ScoreCalculationData result(Result result) {
-            this.result = result;
-            return this;
-        }
-
-        public Set<ProgrammingExerciseTestCase> getTestCases() {
-            return testCases;
-        }
-
-        private double calculateWeightSum(final Set<ProgrammingExerciseTestCase> allTests) {
+        private static double calculateWeightSum(final Set<ProgrammingExerciseTestCase> allTests) {
             return allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
         }
 
-        public ScoreCalculationData testCases(Set<ProgrammingExerciseTestCase> testCases) {
-            this.testCases = testCases;
-            this.successfulTestCases = testCases.stream().filter(testCase -> testCase.isSuccessful(result)).collect(Collectors.toSet());
-            this.weightSum = calculateWeightSum(testCases);
-            return this;
+        private static Set<ProgrammingExerciseTestCase> successfulTestCases(final Set<ProgrammingExerciseTestCase> allTests, final Result result) {
+            return allTests.stream().filter(testCase -> testCase.isSuccessful(result)).collect(Collectors.toSet());
         }
 
-        public Set<ProgrammingExerciseTestCase> getSuccessfulTestCases() {
-            return successfulTestCases;
-        }
-
-        public double getWeightSum() {
-            return weightSum;
-        }
-
-        public ScoreCalculationData staticCodeAnalysisFeedback(List<Feedback> staticCodeAnalysisFeedback) {
-            this.staticCodeAnalysisFeedback = staticCodeAnalysisFeedback;
-            return this;
-        }
-
-        public List<Feedback> getStaticCodeAnalysisFeedback() {
-            return staticCodeAnalysisFeedback;
-        }
-
-        public Participation getParticipation() {
+        public Participation participation() {
             return result.getParticipation();
         }
-
     }
 
     /**
