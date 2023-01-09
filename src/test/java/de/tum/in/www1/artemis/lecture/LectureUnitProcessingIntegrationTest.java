@@ -5,6 +5,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -58,7 +59,8 @@ public class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrat
     void initTestCase() {
         this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = this.database.createCourseWithLecture(true);
-
+        List<LectureUnitSplitDTO> units = new ArrayList<>();
+        this.lectureUnitSplits = new LectureUnitInformationDTO(units, 1);
         // Add users that are not in the course
         database.createAndSaveUser(TEST_PREFIX + "student42");
         database.createAndSaveUser(TEST_PREFIX + "tutor42");
