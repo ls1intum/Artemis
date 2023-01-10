@@ -44,7 +44,7 @@
                         </ng-template>
                     </h4>
 
-                    <span class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
+                    <span *ngIf="badge" class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
                         {{ badge.text | artemisTranslate | uppercase }}
                     </span>
                 </div>
