@@ -91,7 +91,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         // Some futures might already run while all tasks are cancelled. Waiting a bit makes sure the mocks are not called by the futures after the reset.
         // Otherwise, the following test might fail.
-        Thread.sleep(800);  // ok
+        Thread.sleep(900);  // ok
 
         bambooRequestMockProvider.reset();
         bitbucketRequestMockProvider.reset();
