@@ -55,7 +55,7 @@
                     <span [ngbTooltip]="result.submission.submissionDate | artemisDate">
                         {{ result.submission.submissionDate | artemisTimeAgo }}
                     </span>
-                    , {{ 'artemisApp.feedback.modal.linkedToCommit' | artemisTranslate }}:
+                    - {{ 'artemisApp.feedback.modal.linkedToCommit' | artemisTranslate }}:
                     <a *ngIf="commitUrl; else commitWithoutLink" href="{{ commitUrl }}" target="_blank" rel="noopener noreferrer">{{ commitHash }}</a>
                     <ng-template #commitWithoutLink>{{ commitHash }}</ng-template>
                 </p>
