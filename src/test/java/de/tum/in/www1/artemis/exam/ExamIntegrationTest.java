@@ -1964,15 +1964,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         }
 
         await().timeout(Duration.ofMinutes(1)).until(() -> {
-            boolean valid = true;
             for (Exercise exercise : exercisesInExam) {
-                log.debug("participations actual: " + participantScoreRepository.findAllByExercise(exercise).size() + " expected: " + exercise.getStudentParticipations().size());
                 if (participantScoreRepository.findAllByExercise(exercise).size() != exercise.getStudentParticipations().size()) {
-                    valid = false;
-                    break;
+                    return false;
                 }
             }
-            return valid;
+            return true;
         });
 
         var examScores = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
