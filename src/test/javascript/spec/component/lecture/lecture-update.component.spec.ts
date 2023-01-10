@@ -23,12 +23,14 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import dayjs from 'dayjs/esm';
+import { By } from '@angular/platform-browser';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
     let lectureComponent: LectureComponent;
     let lectureUpdateWizardComponentFixture: ComponentFixture<LectureUpdateWizardComponent>;
     let lectureUpdateWizardComponent: LectureUpdateWizardComponent;
+
     let lectureService: LectureService;
     let lectureUpdateComponentFixture: ComponentFixture<LectureUpdateComponent>;
     let lectureUpdateComponent: LectureUpdateComponent;
@@ -231,7 +233,7 @@ describe('Lecture', () => {
         expect(lectureUpdateComponent.isShowingWizardMode).toBeTrue();
     }));
 
-    it('should select process units automatically', fakeAsync(() => {
+    it('should select process units checkbox', fakeAsync(() => {
         lectureUpdateComponent.processUnitMode = false;
         const selectProcessUnit = jest.spyOn(lectureUpdateComponent, 'onSelectProcessUnit');
         lectureUpdateComponent.onSelectProcessUnit();
@@ -258,7 +260,7 @@ describe('Lecture', () => {
     }));
 
     it('should create a lecture and then redirect to unit split', fakeAsync(() => {
-        lectureUpdateComponent.file = new File([''], 'testFile.pdf');
+        lectureUpdateComponent.file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
         lectureUpdateComponent.fileName = 'testFile';
         lectureUpdateComponent.processUnitMode = true;
         lectureUpdateComponent.lecture = { title: 'test1' } as Lecture;
@@ -289,5 +291,23 @@ describe('Lecture', () => {
 
         const expectedPath = ['course-management', 1, 'lectures', 3, 'unit-management', 'attachment-units', 'process'];
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName } });
+    }));
+
+    it('should call on file change on changed file', fakeAsync(() => {
+        lectureUpdateComponent.processUnitMode = false;
+        lectureUpdateComponentFixture.detectChanges();
+        expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeFalsy();
+
+        const onFileChangeStub = jest.spyOn(lectureUpdateComponent, 'onFileChange');
+
+        const processUnit = lectureUpdateComponentFixture.debugElement.query(By.css('input[name="processUnit"]')).nativeElement;
+        processUnit.click();
+        expect(processUnit.checked).toBeTruthy();
+        lectureUpdateComponent.processUnitMode = true;
+        lectureUpdateComponentFixture.autoDetectChanges();
+        const fileInput = lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
+        expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeTruthy();
+        fileInput.dispatchEvent(new Event('change'));
+        expect(onFileChangeStub).toHaveBeenCalledOnce();
     }));
 });
