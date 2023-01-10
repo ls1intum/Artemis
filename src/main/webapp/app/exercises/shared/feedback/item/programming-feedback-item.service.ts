@@ -158,7 +158,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         if (issue.startColumn) {
             const columnText =
                 !issue.endColumn || issue.startColumn === issue.endColumn
-                    ? this.translateService.instant('artemisApp.result.detail.codeIssue.column', { line: issue.startColumn })
+                    ? this.translateService.instant('artemisApp.result.detail.codeIssue.column', { column: issue.startColumn })
                     : this.translateService.instant('artemisApp.result.detail.codeIssue.columns', { from: issue.startColumn, to: issue.endColumn });
             return `${issue.filePath} ${lineText} ${columnText}`;
         }
