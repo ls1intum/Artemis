@@ -3,8 +3,8 @@
         "courseExerciseOverview": {
             "installPrerequisites": {
                 "headline": "Installiere die notwendigen Tools",
-                "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren. Installiere die neueste Version von <a href='https://www.jetbrains.com/idea/download/' target='_blank' rel='noopener noreferrer'>IntelliJ</a>.",
-                "videoUrl": "https://stream.lrz.de/vod/_definst_/mp4:tum/RBG/artemisintro_2022_11_02_11_00COMB.mp4/playlist.m3u8"
+                "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren. Installiere wie im Video gezeigt die neueste Version von <a href='https://www.jetbrains.com/idea/download/' target='_blank' rel='noopener noreferrer'>IntelliJ</a>.",
+                "videoUrl": "https://edge.live.rbg.tum.de/vod/artemisintro_2023_01_10_11_00COMB.mp4/playlist.m3u8"
             },
             "exercises": {
                 "headline": "Aufgaben",
@@ -52,18 +52,18 @@
             },
             "repositoryCreated": {
                 "headline": "Dein Repository wurde erstellt",
-                "content": "Dein Repository ist bereit und kann ab jetzt geklont werden. Fahre mit dem nächsten Schritt fort, um mehr zu erfahren."
+                "content": "Dein Repository ist bereit und kann ab jetzt geklont werden. Fahre mit dem nächsten Schritt fort, um mehr über das Klonen und Bearbeiten von Programmieraufgaben auf Artemis zu erfahren."
             },
             "cloneRepository": {
                 "headline": "Klone das Repository in IntelliJ",
-                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in IntelliJ klont. Danach solltest du auf das <tt>X</tt> oben rechts klicken, um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Konto-Menü aus fortsetzen.",
+                "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in IntelliJ klont. Danach solltest du auf das <tt>X</tt> oben rechts klicken, um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Benutzerkonto-Menü (Login-Name oben rechts) aus fortsetzen.",
                 "hint": "Falls du noch nicht die Java JDK 17 installiert hast, wird auch im Video gezeigt, wie du diese erhältst.",
-                "videoUrl": "https://stream.lrz.de/vod/_definst_/mp4:tum/RBG/artemisintro_2022_11_02_12_00COMB.mp4/playlist.m3u8"
+                "videoUrl": "https://edge.live.rbg.tum.de/vod/artemisintro_2023_01_10_11_00COMB.mp4/playlist.m3u8"
             },
             "solveExercise": {
                 "headline": "Löse die Aufgabe",
                 "content": "In diesem Video schauen wir uns das Projekt an, lösen die darin gegebene Aufgabe und pushen das Repository zurück zu Artemis.",
-                "videoUrl": "https://stream.lrz.de/vod/_definst_/mp4:tum/RBG/artemisintro_2022_11_02_13_00COMB.mp4/playlist.m3u8"
+                "videoUrl": "https://edge.live.rbg.tum.de/vod/artemisintro_2023_01_10_11_00COMB.mp4/playlist.m3u8"
             },
             "reviewResult": {
                 "headline": "Überprüfe dein Ergebnis",
