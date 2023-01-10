@@ -475,43 +475,6 @@ public class FileService implements DisposableBean {
      * @param keepParentFolder    if true also creates the resources with the folder they are currently in (e.g. current/parent/* -> new/parent/*)
      * @throws IOException if the copying operation fails.
      */
-    public void copyResources(Resource[] resources, String prefix, String targetDirectoryPath, Boolean keepParentFolder) throws IOException {
-        for (Resource resource : resources) {
-            // Replace windows separator with "/"
-            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8).replaceAll("\\\\", "/");
-            // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
-            int index = fileUrl.indexOf(prefix);
-
-            String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
-            targetFilePath = applySpecialFilenameReplacements(targetFilePath);
-
-            if (isIgnoredDirectory(targetFilePath)) {
-                continue;
-            }
-
-            Path copyPath = Path.of(targetDirectoryPath + targetFilePath);
-            File parentFolder = copyPath.toFile().getParentFile();
-            if (!parentFolder.exists()) {
-                Files.createDirectories(parentFolder.toPath());
-            }
-
-            Files.copy(resource.getInputStream(), copyPath, REPLACE_EXISTING);
-            // make gradlew executable
-            if (targetFilePath.endsWith("gradlew")) {
-                copyPath.toFile().setExecutable(true);
-            }
-        }
-    }
-
-    /**
-     * This copies the directory at the old directory path to the new path, including all files and sub folders
-     *
-     * @param resources           the resources that should be copied
-     * @param prefix              cut everything until the end of the prefix (e.g. exercise-abc -> abc when prefix = exercise)
-     * @param targetDirectoryPath the path of the folder where the copy should be located
-     * @param keepParentFolder    if true also creates the resources with the folder they are currently in (e.g. current/parent/* -> new/parent/*)
-     * @throws IOException if the copying operation fails.
-     */
 
     public void copyResources(Resource[] resources, String prefix, Path targetDirectoryPath, Boolean keepParentFolder) throws IOException {
 

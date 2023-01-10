@@ -474,10 +474,10 @@ public class ProgrammingExerciseService {
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, @Nullable Resource[] projectTypeResources, String projectTypePrefix,
             String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
         if (gitService.listFiles(repository).isEmpty()) { // Only copy template if repo is empty
-            fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
+            fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath(), true);
             // Also copy project type specific files AFTERWARDS (so that they might overwrite the default files)
             if (projectTypeResources != null) {
-                fileService.copyResources(projectTypeResources, projectTypePrefix, repository.getLocalPath().toAbsolutePath().toString(), true);
+                fileService.copyResources(projectTypeResources, projectTypePrefix, repository.getLocalPath().toAbsolutePath(), true);
             }
 
             replacePlaceholders(programmingExercise, repository);
@@ -516,7 +516,7 @@ public class ProgrammingExerciseService {
             projectTemplatePath += "/projectTemplate/**/*.*";
             Resource[] projectTemplate = resourceLoaderService.getResources(projectTemplatePath);
             // keep the folder structure
-            fileService.copyResources(projectTemplate, "projectTemplate", repository.getLocalPath().toAbsolutePath().toString(), true);
+            fileService.copyResources(projectTemplate, "projectTemplate", repository.getLocalPath().toAbsolutePath(), true);
 
             // These resources might override the programming language dependent resources as they are project type dependent.
             if (projectType != null) {
@@ -525,7 +525,7 @@ public class ProgrammingExerciseService {
 
                 try {
                     Resource[] projectTypeProjectTemplate = resourceLoaderService.getResources(projectTypeProjectTemplatePath);
-                    fileService.copyResources(projectTypeProjectTemplate, projectTypePrefix, repository.getLocalPath().toAbsolutePath().toString(), false);
+                    fileService.copyResources(projectTypeProjectTemplate, projectTypePrefix, repository.getLocalPath().toAbsolutePath(), false);
                 }
                 catch (FileNotFoundException ignored) {
                 }
@@ -542,7 +542,7 @@ public class ProgrammingExerciseService {
             if (!programmingExercise.hasSequentialTestRuns()) {
                 String testFilePath = templatePath + "/testFiles/**/*.*";
                 Resource[] testFileResources = resourceLoaderService.getResources(testFilePath);
-                String packagePath = Path.of(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
+                Path packagePath = Path.of(repository.getLocalPath().toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath();
 
                 sectionsMap.put("non-sequential", true);
                 sectionsMap.put("sequential", false);
@@ -585,7 +585,7 @@ public class ProgrammingExerciseService {
                 if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                     String staticCodeAnalysisConfigPath = templatePath + "/staticCodeAnalysisConfig/**/*.*";
                     Resource[] staticCodeAnalysisResources = resourceLoaderService.getResources(staticCodeAnalysisConfigPath);
-                    fileService.copyResources(staticCodeAnalysisResources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
+                    fileService.copyResources(staticCodeAnalysisResources, prefix, repository.getLocalPath().toAbsolutePath(), true);
                 }
             }
             else {
@@ -629,7 +629,7 @@ public class ProgrammingExerciseService {
                     Files.createDirectory(Path.of(buildStagePath.toAbsolutePath().toString(), "test"));
                     Files.createDirectory(Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}"));
 
-                    String packagePath = Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath().toString();
+                    Path packagePath = Path.of(buildStagePath.toAbsolutePath().toString(), "test", "${packageNameFolder}").toAbsolutePath();
 
                     // staging project files are only required for maven
                     if (isMaven && stagePomXml != null) {
