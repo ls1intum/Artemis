@@ -37,12 +37,12 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
             servletResponse.setStatus(401);
             return;
         }
-        catch (LocalVCBadRequestException e) {
-            servletResponse.setStatus(400);
+        catch (LocalVCForbiddenException e) {
+            servletResponse.setStatus(403);
             return;
         }
-        catch (LocalVCNotFoundException e) {
-            servletResponse.setStatus(404);
+        catch (LocalVCBadRequestException e) {
+            servletResponse.setStatus(400);
             return;
         }
         catch (LocalVCInternalException e) {

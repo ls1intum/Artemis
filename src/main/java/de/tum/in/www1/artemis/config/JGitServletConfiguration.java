@@ -54,7 +54,7 @@ public class JGitServletConfiguration {
                 // name – name of the repository, as parsed out of the URL (everything after /git).
                 // Returns the opened repository instance, never null.
 
-                // Find the local repository depending on the name and return an opened instance. Must be closed later on.
+                // Find the local repository depending on the name.
                 File gitDir = new File(localVCPath + File.separator + name);
 
                 log.debug("Path to resolve repository from: {}", gitDir.getPath());
