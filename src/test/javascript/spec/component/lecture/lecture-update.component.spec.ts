@@ -1,6 +1,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
+import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
@@ -16,14 +17,13 @@ import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-edi
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
+import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
-import dayjs from 'dayjs/esm';
-import { By } from '@angular/platform-browser';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -309,5 +309,46 @@ describe('Lecture', () => {
         expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeTruthy();
         fileInput.dispatchEvent(new Event('change'));
         expect(onFileChangeStub).toHaveBeenCalledOnce();
+    }));
+
+    it('should set lecture start and end date correctly', fakeAsync(() => {
+        activatedRoute = TestBed.inject(ActivatedRoute);
+        activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6 } });
+
+        lectureComponentFixture.detectChanges();
+        lectureUpdateComponent.lecture = { id: 6, title: 'test1Updated' } as Lecture;
+
+        const setDatesSpy = jest.spyOn(lectureUpdateComponent, 'onDatesValuesChanged');
+
+        lectureUpdateComponent.lecture.startDate = dayjs().year(2022).month(3).date(5);
+        lectureUpdateComponent.lecture.endDate = dayjs().year(2022).month(3).date(1);
+
+        lectureUpdateComponent.onDatesValuesChanged();
+
+        expect(setDatesSpy).toHaveBeenCalledOnce();
+        expect(lectureUpdateComponent.lecture.startDate).toEqual(lectureUpdateComponent.lecture.endDate);
+
+        lectureComponentFixture.detectChanges();
+        tick();
+
+        lectureUpdateComponent.lecture.startDate = undefined;
+        lectureUpdateComponent.lecture.endDate = undefined;
+
+        lectureUpdateComponent.onDatesValuesChanged();
+
+        expect(setDatesSpy).toHaveBeenCalledTimes(2);
+        expect(lectureUpdateComponent.lecture.startDate).toBeUndefined();
+        expect(lectureUpdateComponent.lecture.endDate).toBeUndefined();
+
+        lectureComponentFixture.detectChanges();
+        tick();
+
+        lectureUpdateComponent.lecture.startDate = dayjs().year(2022).month(1).date(1);
+        lectureUpdateComponent.lecture.endDate = dayjs().year(2022).month(1).date(3);
+
+        lectureUpdateComponent.onDatesValuesChanged();
+
+        expect(setDatesSpy).toHaveBeenCalledTimes(3);
+        expect(lectureUpdateComponent.lecture.startDate.toDate()).toBeBefore(lectureUpdateComponent.lecture.endDate.toDate());
     }));
 });
