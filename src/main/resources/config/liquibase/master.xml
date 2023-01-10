@@ -7,8 +7,12 @@
     <include file="classpath:config/liquibase/changelog/20220000000600_cleanup.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20220826000000_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20221026200000_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20221107120000_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20221117081200_changelog.xml" relativeToChangelogFile="false"/>
     <include file="classpath:config/liquibase/changelog/20221120004207_changelog.xml" relativeToChangelogFile="false"/>
-
+    <include file="classpath:config/liquibase/changelog/20230102203648_changelog.xml" relativeToChangelogFile="false"/>
+    <include file="classpath:config/liquibase/changelog/20230104145003_changelog.xml" relativeToChangelogFile="false"/>
     <!-- NOTE: please use the format "YYYYMMDDhhmmss_changelog.xml", i.e. year month day hour minutes seconds and not something else! -->
     <!-- we should also stay in a chronological order! -->
+    <!-- you can use the command 'date '+%Y%m%d%H%M%S'' to get the current date and time in the correct format -->
 </databaseChangeLog>

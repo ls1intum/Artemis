@@ -527,18 +527,6 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
         </createTable>
-        <createTable tableName="jhi_date_time_wrapper">
-            <column autoIncrement="true" name="id" type="bigint">
-                <constraints nullable="false" primaryKey="true"/>
-            </column>
-            <column name="instant" type="timestamp"/>
-            <column name="local_date_time" type="timestamp"/>
-            <column name="offset_date_time" type="timestamp"/>
-            <column name="zoned_date_time" type="timestamp"/>
-            <column name="local_time" type="time"/>
-            <column name="offset_time" type="time"/>
-            <column name="local_date" type="date"/>
-        </createTable>
         <createTable tableName="jhi_persistent_audit_event">
             <column autoIncrement="true" name="event_id" type="bigint">
                 <constraints nullable="false" primaryKey="true"/>

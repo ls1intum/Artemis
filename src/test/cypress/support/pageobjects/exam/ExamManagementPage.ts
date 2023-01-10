@@ -49,7 +49,7 @@ export class ExamManagementPage {
     /**
      * Opens the student exams page.
      */
-    openStudenExams(examId: number) {
+    openStudentExams(examId: number) {
         cy.get(`#student-exams-${examId}`).click();
     }
 
