@@ -13,13 +13,8 @@ import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faHandshakeAngle, faPuzzlePiece, faSave } from '@fortawesome/free-solid-svg-icons';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
-import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
-
-export interface FileProperties {
-    file?: File;
-    fileName?: string;
-}
 
 @Component({
     selector: 'jhi-lecture-update',
@@ -53,10 +48,6 @@ export class LectureUpdateComponent implements OnInit {
     faPuzzleProcess = faPuzzlePiece;
     faBan = faBan;
     faHandShakeAngle = faHandshakeAngle;
-
-    // have to handle the file input as a special case at is not part of the reactive form
-    @ViewChild('fileInput', { static: false })
-    fileInput: ElementRef;
     file: File;
     fileName: string;
     fileInputTouched = false;

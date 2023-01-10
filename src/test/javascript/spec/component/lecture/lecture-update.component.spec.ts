@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
@@ -9,6 +9,7 @@ import { Lecture } from 'app/entities/lecture.model';
 import { LectureUpdateComponent } from 'app/lecture/lecture-update.component';
 import { LectureComponent } from 'app/lecture/lecture.component';
 import { LectureService } from 'app/lecture/lecture.service';
+import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -23,6 +24,7 @@ import { MockTranslateService } from '../../helpers/mocks/service/mock-translate
 import { ArtemisTestModule } from '../../test.module';
 import dayjs from 'dayjs/esm';
 import { Location } from '@angular/common';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
@@ -50,6 +52,7 @@ describe('Lecture', () => {
             declarations: [
                 LectureUpdateComponent,
                 LectureComponent,
+                MockComponent(LectureUpdateWizardComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(MarkdownEditorComponent),
                 MockPipe(ArtemisTranslatePipe),
@@ -93,7 +96,6 @@ describe('Lecture', () => {
                 lectureServiceFindAllByLectureIdStub = jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(new HttpResponse({ body: [pastLecture] })));
 
                 location = TestBed.inject(Location);
-
                 router = TestBed.get(Router);
             });
     });
@@ -131,6 +133,40 @@ describe('Lecture', () => {
         expect(createSpy).toHaveBeenCalledOnce();
         expect(createSpy).toHaveBeenCalledWith({ title: 'test1' });
         expect(lectureServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
+    }));
+
+    it('should create lecture in wizard mode', fakeAsync(() => {
+        activatedRoute = TestBed.inject(ActivatedRoute);
+        activatedRoute.queryParams = of({
+            shouldBeInWizardMode: true,
+        });
+        lectureUpdateComponent.lecture = { title: '' } as Lecture;
+
+        const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
+            of<HttpResponse<Lecture>>(
+                new HttpResponse({
+                    body: {
+                        id: 3,
+                        title: 'test1',
+                        course: {
+                            id: 1,
+                        },
+                    } as Lecture,
+                }),
+            ),
+        );
+
+        lectureUpdateComponent.save();
+        tick();
+        lectureUpdateComponentFixture.detectChanges();
+
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        const expectedPath = ['course-management', 1, 'lectures', 3];
+        expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
+
+        expect(createSpy).toHaveBeenCalledOnce();
+        expect(createSpy).toHaveBeenCalledWith({ title: '' });
+        expect(lectureUpdateComponent.isShowingWizardMode).toBeTrue();
     }));
 
     it('should edit a lecture', fakeAsync(() => {
@@ -171,21 +207,15 @@ describe('Lecture', () => {
         expect(lectureUpdateComponent.isShowingWizardMode).toBeTrue();
     }));
 
-    // TODO: state not covered fix!
     it('should be in wizard mode', fakeAsync(() => {
         activatedRoute = TestBed.inject(ActivatedRoute);
-        activatedRoute.snapshot.queryParams = of({
+        activatedRoute.queryParams = of({
             shouldBeInWizardMode: true,
         });
 
         lectureUpdateComponent.ngOnInit();
-
         lectureUpdateComponentFixture.detectChanges();
         tick();
-
-        activatedRoute.snapshot.queryParams.subscribe((par: any) => {
-            lectureUpdateComponent.isShowingWizardMode = par.shouldBeInWizardMode;
-        });
 
         expect(lectureUpdateComponent.isShowingWizardMode).toBeTrue();
     }));
@@ -197,6 +227,23 @@ describe('Lecture', () => {
         tick();
         expect(selectProcessUnit).toHaveBeenCalledOnce();
         expect(lectureUpdateComponent.processUnitMode).toBeTrue();
+    }));
+
+    it('should navigate to previous state', fakeAsync(() => {
+        activatedRoute = TestBed.inject(ActivatedRoute);
+        activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6, title: '', course: { id: 1 } } });
+
+        lectureUpdateComponent.ngOnInit();
+        lectureComponentFixture.detectChanges();
+
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        const previousState = jest.spyOn(lectureUpdateComponent, 'previousState');
+        lectureUpdateComponent.previousState();
+        tick();
+        expect(previousState).toHaveBeenCalledOnce();
+
+        const expectedPath = ['course-management', '1', 'lectures', '6'];
+        expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
     }));
 
     it('should create a lecture and then redirect to unit split', fakeAsync(() => {
