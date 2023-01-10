@@ -68,13 +68,7 @@
                                         <button id="channelOverview" ngbDropdownItem (click)="openChannelOverviewDialog($event)">
                                             {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.browseChannels' | artemisTranslate }}
                                         </button>
-                                        <button
-                                            id="createChannel"
-                                            ngbDropdownItem
-                                            [hidden]="!course.isAtLeastInstructor"
-                                            (click)="openCreateChannelDialog($event)"
-                                            *ngIf="canCreateChannel(course)"
-                                        >
+                                        <button id="createChannel" ngbDropdownItem (click)="openCreateChannelDialog($event)" *ngIf="canCreateChannel(course)">
                                             {{ 'artemisApp.conversationsLayout.conversationSelectionSideBar.createChannel' | artemisTranslate }}
                                         </button>
                                     </div>

@@ -30,7 +30,6 @@ describe('Exam Import Paging Service', () => {
             ],
         });
         service = TestBed.inject(ExamImportPagingService);
-        service.resourceUrl = 'resourceUrl';
         httpMock = TestBed.inject(HttpTestingController);
     });
 

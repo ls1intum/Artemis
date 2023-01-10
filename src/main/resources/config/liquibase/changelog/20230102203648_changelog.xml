@@ -41,7 +41,7 @@
         <addForeignKeyConstraint baseColumnNames="creator_id" baseTableName="conversation" constraintName="fk_conversation_creator" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="jhi_user"/>
         <addUniqueConstraint columnNames="conversation_id, user_id" constraintName="conversation_participant_uq" tableName="conversation_participant"/>
         <sql>update conversation SET discriminator = 'O' WHERE discriminator IS NULL;</sql>
-        <sql>update conversation c SET creator_id = (select cp.user_id from conversation_participant cp where cp.conversation_id = c.id)
+        <sql>update conversation c SET creator_id = (select cp.user_id from conversation_participant cp where cp.conversation_id = c.id LIMIT 1)
              where creator_id IS NULL AND discriminator = 'O';</sql>
         <!-- Reset unread message properties for all users to prevent edge cases -->
         <sql>update conversation_participant SET unread_messages_count = 0</sql>

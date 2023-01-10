@@ -173,7 +173,6 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param newExercise The new exercise for which a participation should be generated
      */
-    @NotNull
     public void setupInitialSolutionParticipation(ProgrammingExercise newExercise) {
         final String solutionRepoName = newExercise.generateRepositoryName(RepositoryType.SOLUTION);
         SolutionProgrammingExerciseParticipation solutionParticipation = new SolutionProgrammingExerciseParticipation();
@@ -191,7 +190,6 @@ public class ProgrammingExerciseParticipationService {
      *
      * @param newExercise The new exercise for which a participation should be generated
      */
-    @NotNull
     public void setupInitialTemplateParticipation(ProgrammingExercise newExercise) {
         final String exerciseRepoName = newExercise.generateRepositoryName(RepositoryType.TEMPLATE);
         TemplateProgrammingExerciseParticipation templateParticipation = new TemplateProgrammingExerciseParticipation();

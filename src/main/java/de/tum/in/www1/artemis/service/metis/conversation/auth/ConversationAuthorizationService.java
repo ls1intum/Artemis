@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.metis.conversation.auth;
 
-import java.util.Objects;
-
 import javax.persistence.Persistence;
 
 import org.springframework.stereotype.Service;
@@ -35,7 +33,7 @@ public class ConversationAuthorizationService {
      * @throws IllegalArgumentException if the user parameter is null
      */
     protected User getUserIfNecessary(User user) {
-        if (Objects.isNull(user)) {
+        if (user == null) {
             throw new IllegalArgumentException("User must not be null");
         }
         var userToCheck = user;
