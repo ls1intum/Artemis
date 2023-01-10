@@ -42,6 +42,8 @@ public class AtheneRequestMockProvider {
     @Autowired
     private ObjectMapper mapper;
 
+    private AutoCloseable closeable;
+
     public AtheneRequestMockProvider(@Qualifier("atheneRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutAtheneRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
@@ -51,16 +53,20 @@ public class AtheneRequestMockProvider {
     public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServerShortTimeout = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
     }
 
-    public void reset() {
+    public void reset() throws Exception {
         if (mockServer != null) {
             mockServer.reset();
         }
 
         if (mockServerShortTimeout != null) {
             mockServerShortTimeout.reset();
+        }
+
+        if (closeable != null) {
+            closeable.close();
         }
     }
 

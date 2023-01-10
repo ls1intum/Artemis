@@ -68,7 +68,7 @@ public class Flowchart extends UMLDiagram {
     }
 
     @Override
-    protected List<UMLElement> getModelElements() {
+    public List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = new ArrayList<>();
         modelElements.addAll(terminals);
         modelElements.addAll(processes);

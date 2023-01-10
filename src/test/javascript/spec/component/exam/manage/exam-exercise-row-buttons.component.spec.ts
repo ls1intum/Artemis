@@ -167,7 +167,7 @@ describe('Exam Exercise Row Buttons Component', () => {
     describe('check exercise deletion', () => {
         it('should delete textExercise', () => {
             comp.exercise = textExercise;
-            const textExerciseServiceDeleteStub = jest.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse<{}>({ body: [] })));
+            const textExerciseServiceDeleteStub = jest.spyOn(textExerciseService, 'delete').mockReturnValue(of(new HttpResponse<any>({ body: [] })));
 
             comp.deleteExercise();
 
@@ -176,7 +176,7 @@ describe('Exam Exercise Row Buttons Component', () => {
 
         it('should delete modelingExercise', () => {
             comp.exercise = modelingExercise;
-            const modelingExerciseServiceDeleteStub = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<{}>({ body: [] })));
+            const modelingExerciseServiceDeleteStub = jest.spyOn(modelingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<any>({ body: [] })));
 
             comp.deleteExercise();
 
@@ -185,7 +185,7 @@ describe('Exam Exercise Row Buttons Component', () => {
 
         it('should delete fileExercise', () => {
             comp.exercise = fileExercise;
-            const fileExerciseServiceDeleteStub = jest.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of(new HttpResponse<{}>({ body: [] })));
+            const fileExerciseServiceDeleteStub = jest.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(of(new HttpResponse<any>({ body: [] })));
 
             comp.deleteExercise();
 
@@ -194,7 +194,7 @@ describe('Exam Exercise Row Buttons Component', () => {
 
         it('should delete quizExercise', () => {
             comp.exercise = quizExercise;
-            const quizExerciseServiceDeleteStub = jest.spyOn(quizExerciseService, 'delete').mockReturnValue(of(new HttpResponse<{}>({ body: [] })));
+            const quizExerciseServiceDeleteStub = jest.spyOn(quizExerciseService, 'delete').mockReturnValue(of(new HttpResponse<any>({ body: [] })));
 
             comp.deleteExercise();
 
@@ -203,7 +203,7 @@ describe('Exam Exercise Row Buttons Component', () => {
 
         it('should delete programmingExercise', () => {
             comp.exercise = programmingExercise;
-            const programmingExerciseServiceDeleteStub = jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<{}>({ body: [] })));
+            const programmingExerciseServiceDeleteStub = jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(of(new HttpResponse<any>({ body: [] })));
 
             comp.deleteProgrammingExercise({ deleteStudentReposBuildPlans: true, deleteBaseReposBuildPlans: false });
 

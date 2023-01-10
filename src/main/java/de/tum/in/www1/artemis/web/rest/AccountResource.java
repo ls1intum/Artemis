@@ -210,13 +210,17 @@ public class AccountResource {
      */
     @PostMapping(path = "/account/reset-password/init")
     public void requestPasswordReset(@RequestBody String mailUsername) {
-        List<User> user = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
-        if (!user.isEmpty()) {
-            List<User> internalUsers = user.stream().filter(User::isInternal).toList();
+        List<User> users = userRepository.findAllByEmailOrUsernameIgnoreCase(mailUsername);
+        if (!users.isEmpty()) {
+            List<User> internalUsers = users.stream().filter(User::isInternal).toList();
             if (internalUsers.isEmpty()) {
                 throw new BadRequestAlertException("The user is handled externally. The password can't be reset within Artemis.", "Account", "externalUser");
             }
-            else if (userService.prepareUserForPasswordReset(internalUsers.get(0))) {
+            else if (internalUsers.size() >= 2) {
+                throw new BadRequestAlertException("Email or username is not unique. Found multiple potential users", "Account", "usernameNotUnique");
+            }
+            var internalUser = internalUsers.get(0);
+            if (userService.prepareUserForPasswordReset(internalUser)) {
                 mailService.sendPasswordResetMail(internalUsers.get(0));
             }
         }
@@ -238,6 +242,11 @@ public class AccountResource {
     public void finishPasswordReset(@RequestBody KeyAndPasswordVM keyAndPassword) {
         if (isPasswordLengthInvalid(keyAndPassword.getNewPassword())) {
             throw new PasswordViolatesRequirementsException();
+        }
+        // TODO: the key should be 20 characters long according to jhipsters RandomUtil.DEF_COUNT, we should improve the following input validation
+        // Idea: the key follows the same ideas as e.g. JWT: it should only be valid for a short time (i.e. the key should expire e.g. after 2 days)
+        if (StringUtils.isEmpty(keyAndPassword.getKey()) || keyAndPassword.getKey().length() < 10) {
+            throw new AccessForbiddenException("Invalid key for password reset");
         }
         Optional<User> user = userService.completePasswordReset(keyAndPassword.getNewPassword(), keyAndPassword.getKey());
 

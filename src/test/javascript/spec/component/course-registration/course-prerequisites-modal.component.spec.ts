@@ -16,8 +16,8 @@ import { IndividualLearningGoalProgress } from 'app/course/learning-goals/learni
 class LearningGoalCardStubComponent {
     @Input() learningGoal: LearningGoal;
     @Input() learningGoalProgress: IndividualLearningGoalProgress;
-    @Input() isPrerequisite: Boolean;
-    @Input() displayOnly: Boolean;
+    @Input() isPrerequisite: boolean;
+    @Input() displayOnly: boolean;
 }
 
 describe('CoursePrerequisitesModal', () => {

@@ -112,7 +112,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                 tap((params) => {
                     if (!this.isExamMode) {
                         this.exerciseCategories = this.modelingExercise.categories || [];
-                        if (!!this.modelingExercise.course) {
+                        if (this.modelingExercise.course) {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id!).subscribe({
                                 next: (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);

@@ -32,7 +32,7 @@ public abstract class BaseExercise extends DomainObject {
     private Double maxPoints;
 
     @Column(name = "bonus_points")
-    private Double bonusPoints;
+    private Double bonusPoints = 0.0;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "assessment_type")
@@ -65,8 +65,8 @@ public abstract class BaseExercise extends DomainObject {
     private DifficultyLevel difficulty;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "mode")
-    private ExerciseMode mode;
+    @Column(name = "mode", columnDefinition = "varchar(255) default 'INDIVIDUAL'", nullable = false)
+    private ExerciseMode mode = ExerciseMode.INDIVIDUAL;
 
     public String getTitle() {
         return title;
@@ -183,20 +183,6 @@ public abstract class BaseExercise extends DomainObject {
 
     public void setExampleSolutionPublicationDate(@Nullable ZonedDateTime exampleSolutionPublicationDate) {
         this.exampleSolutionPublicationDate = exampleSolutionPublicationDate;
-    }
-
-    /**
-     * Checks whether students should be able to see the example solution.
-     *
-     * @return true if example solution publication date is in the past, false otherwise (including null case).
-     */
-    public boolean isExampleSolutionPublished() {
-        if (this.isExamExercise()) {
-            // This feature is currently not available for exam exercises, this should return false
-            // for exam exercises until the conditions for them is fully implemented.
-            return false;
-        }
-        return this.exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(this.exampleSolutionPublicationDate);
     }
 
     /**

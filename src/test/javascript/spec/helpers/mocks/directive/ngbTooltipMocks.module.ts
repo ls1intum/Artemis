@@ -1,17 +1,22 @@
 import { Component, Directive, EventEmitter, Input, NgModule, Output } from '@angular/core';
 
 @Component({
+    // eslint-disable-next-line @angular-eslint/component-selector
     selector: 'ngb-tooltip-window',
     template: ``,
 })
-export class NgbTooltipWindowMock {
+export class NgbTooltipWindowMockComponent {
     @Input() animation: boolean;
     @Input() id: string;
     @Input() tooltipClass: string;
 }
 
-@Directive({ selector: '[ngbTooltip]', exportAs: 'ngbTooltip' })
-export class NgbTooltipMock {
+@Directive({
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: '[ngbTooltip]',
+    exportAs: 'ngbTooltip',
+})
+export class NgbTooltipMockDirective {
     @Input() animation: boolean;
 
     @Input() autoClose: boolean | 'inside' | 'outside';
@@ -41,7 +46,7 @@ export class NgbTooltipMock {
 }
 
 @NgModule({
-    declarations: [NgbTooltipMock, NgbTooltipWindowMock],
-    exports: [NgbTooltipMock, NgbTooltipWindowMock],
+    declarations: [NgbTooltipMockDirective, NgbTooltipWindowMockComponent],
+    exports: [NgbTooltipMockDirective, NgbTooltipWindowMockComponent],
 })
 export class NgbTooltipMocksModule {}

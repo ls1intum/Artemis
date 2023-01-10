@@ -1055,8 +1055,8 @@ public class ProgrammingExerciseService {
     public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
         String projectKey = courseShortName + programmingExercise.getShortName().toUpperCase().replaceAll("\\s+", "");
         String projectName = courseShortName + " " + programmingExercise.getTitle();
-        log.debug("Project Key: " + projectKey);
-        log.debug("Project Name: " + projectName);
+        log.debug("Project Key: {}", projectKey);
+        log.debug("Project Name: {}", projectName);
         boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
         if (projectExists) {
             return true;

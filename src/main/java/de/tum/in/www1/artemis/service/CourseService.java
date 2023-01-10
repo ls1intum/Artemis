@@ -404,7 +404,7 @@ public class CourseService {
     /**
      * Add multiple users to the course so that they can access it
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
-     * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
+     * Note: registration based on other user attributes (e.g. name) is currently NOT supported
      * <p>
      * This method first tries to find the user in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
@@ -422,7 +422,8 @@ public class CourseService {
         for (var studentDto : studentDTOs) {
             var registrationNumber = studentDto.getRegistrationNumber();
             var login = studentDto.getLogin();
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, courseGroupName, courseGroupRole, login);
+            var email = studentDto.getEmail();
+            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, courseGroupName, courseGroupRole, login, email);
             if (optionalStudent.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
             }
@@ -755,8 +756,8 @@ public class CourseService {
         userService.addUserToGroup(user, group, role);
     }
 
-    public void removeUserFromGroup(User user, String group, Role role) {
-        userService.removeUserFromGroup(user, group, role);
+    public void removeUserFromGroup(User user, String group) {
+        userService.removeUserFromGroup(user, group);
     }
 
     /**

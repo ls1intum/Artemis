@@ -176,6 +176,7 @@ describe('Exam Update Component', () => {
             expect(component.isValidConfiguration).toBeTrue();
 
             examWithoutExercises.publishResultsDate = dayjs().add(4, 'hours');
+            examWithoutExercises.exampleSolutionPublicationDate = dayjs().add(5, 'hours');
             examWithoutExercises.examStudentReviewStart = dayjs().add(5, 'hours');
             examWithoutExercises.examStudentReviewEnd = dayjs().add(6, 'hours');
             fixture.detectChanges();
@@ -201,6 +202,26 @@ describe('Exam Update Component', () => {
 
             examWithoutExercises.examStudentReviewStart = undefined;
             fixture.detectChanges();
+            expect(component.isValidConfiguration).toBeFalse();
+        });
+
+        it('should validate the example solution publication date correctly', () => {
+            const newExamWithoutExercises = new Exam();
+            newExamWithoutExercises.id = 2;
+            component.exam = newExamWithoutExercises;
+
+            const now = dayjs();
+            newExamWithoutExercises.visibleDate = now.add(2, 'hours');
+            newExamWithoutExercises.startDate = now.add(3, 'hours');
+            newExamWithoutExercises.endDate = now.add(4, 'hours');
+            newExamWithoutExercises.workingTime = 3600;
+            newExamWithoutExercises.exampleSolutionPublicationDate = undefined;
+            expect(component.isValidConfiguration).toBeTrue();
+
+            newExamWithoutExercises.exampleSolutionPublicationDate = now.add(4, 'hours');
+            expect(component.isValidConfiguration).toBeTrue();
+
+            newExamWithoutExercises.exampleSolutionPublicationDate = now.add(2, 'hours');
             expect(component.isValidConfiguration).toBeFalse();
         });
 
@@ -422,7 +443,7 @@ describe('Exam Update Component', () => {
         examForImport.endDate = timeNow.add(1, 'hours');
         examForImport.workingTime = 2 * 60 * 60;
         examForImport.gracePeriod = 90;
-        examForImport.maxPoints = 15;
+        examForImport.examMaxPoints = 15;
         examForImport.numberOfExercisesInExam = 5;
         examForImport.randomizeExerciseOrder = true;
         examForImport.publishResultsDate = timeNow.add(1, 'days');
@@ -534,12 +555,13 @@ describe('Exam Update Component', () => {
             expect(component.exam.endDate).toBeUndefined();
             expect(component.exam.workingTime).toBe(0);
             expect(component.exam.gracePeriod).toBe(90);
-            expect(component.exam.maxPoints).toBe(15);
+            expect(component.exam.examMaxPoints).toBe(15);
             expect(component.exam.numberOfExercisesInExam).toBe(5);
             expect(component.exam.randomizeExerciseOrder).toBeTrue();
             expect(component.exam.publishResultsDate).toBeUndefined();
             expect(component.exam.examStudentReviewStart).toBeUndefined();
             expect(component.exam.examStudentReviewEnd).toBeUndefined();
+            expect(component.exam.exampleSolutionPublicationDate).toBeUndefined();
             expect(component.exam.numberOfCorrectionRoundsInExam).toBe(2);
             expect(component.exam.startText).toBe('Hello World');
             expect(component.exam.endText).toBe('Goodbye World');

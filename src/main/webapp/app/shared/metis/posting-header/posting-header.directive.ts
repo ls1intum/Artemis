@@ -10,6 +10,8 @@ import { UserRole } from 'app/shared/metis/metis.util';
 export abstract class PostingHeaderDirective<T extends Posting> implements OnInit {
     @Input() posting: T;
     @Input() isCourseMessagesPage: boolean;
+
+    @Input() hasChannelModerationRights = false;
     @Output() isModalOpen = new EventEmitter<void>();
     isAtLeastTutorInCourse: boolean;
     isAuthorOfPosting: boolean;

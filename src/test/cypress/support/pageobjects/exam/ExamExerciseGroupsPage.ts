@@ -6,6 +6,21 @@ export class ExamExerciseGroupsPage {
         cy.get('#create-new-group').click();
     }
 
+    shouldHaveTitle(groupIndex: number, groupTitle: string) {
+        cy.get(`#group-${groupIndex} .group-title`).contains(groupTitle);
+    }
+
+    clickEditGroup(groupIndex: number) {
+        cy.get(`#group-${groupIndex} .edit-group`).click();
+    }
+
+    clickDeleteGroup(groupIndex: number, groupName: string) {
+        cy.get(`#group-${groupIndex} .delete-group`).click();
+        cy.get('#delete').should('be.disabled');
+        cy.get('#confirm-exercise-name').type(groupName);
+        cy.get('#delete').should('not.be.disabled').click();
+    }
+
     shouldShowNumberOfExerciseGroups(numberOfGroups: number) {
         cy.get('#number-groups').should('contain.text', numberOfGroups);
     }
