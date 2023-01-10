@@ -4,6 +4,7 @@ import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/t
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 @Component({
+    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-session-row]',
     templateUrl: './tutorial-group-session-row.component.html',
     styleUrls: ['./tutorial-group-session-row.component.scss'],
@@ -38,9 +39,9 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
             this.overlapsWithFreePeriod = !!this.session.tutorialGroupFreePeriod;
             if (this.isCancelled) {
                 if (this.overlapsWithFreePeriod) {
-                    this.cancellationReason = !!this.session.tutorialGroupFreePeriod?.reason ? this.session.tutorialGroupFreePeriod.reason : undefined;
+                    this.cancellationReason = this.session.tutorialGroupFreePeriod?.reason ? this.session.tutorialGroupFreePeriod.reason : undefined;
                 } else {
-                    this.cancellationReason = !!this.session.statusExplanation ? this.session.statusExplanation : undefined;
+                    this.cancellationReason = this.session.statusExplanation ? this.session.statusExplanation : undefined;
                 }
             }
         }

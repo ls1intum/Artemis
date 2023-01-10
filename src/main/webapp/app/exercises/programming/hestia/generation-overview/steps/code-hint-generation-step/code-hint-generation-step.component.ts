@@ -42,6 +42,7 @@ export class CodeHintGenerationStepComponent implements OnInit {
 
     generateCodeHints(deleteOldHints: boolean, buttonTranslationKey: string) {
         this.isLoading = true;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         this.codeHintService.generateCodeHintsForExercise(this.exercise?.id!, deleteOldHints).subscribe({
             next: (generatedHints) => {
                 if (deleteOldHints) {

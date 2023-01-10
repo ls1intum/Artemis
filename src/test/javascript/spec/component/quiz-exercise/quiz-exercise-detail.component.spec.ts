@@ -14,7 +14,7 @@ import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.mo
 import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { QuizBatch, QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -293,8 +293,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.isImport = true;
                 quizExercise.testRunParticipationsExist = true;
 
-                let alertServiceStub: jest.SpyInstance;
-                alertServiceStub = jest.spyOn(alertService, 'warning');
+                const alertServiceStub = jest.spyOn(alertService, 'warning');
                 comp.ngOnInit();
 
                 expect(alertServiceStub).not.toHaveBeenCalled();
@@ -306,8 +305,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.isImport = false;
                 quizExercise.testRunParticipationsExist = true;
 
-                let alertServiceStub: jest.SpyInstance;
-                alertServiceStub = jest.spyOn(alertService, 'warning');
+                const alertServiceStub = jest.spyOn(alertService, 'warning');
                 comp.ngOnInit();
 
                 expect(alertServiceStub).toHaveBeenCalledOnce();
@@ -389,6 +387,66 @@ describe('QuizExercise Management Detail Component', () => {
                     // dueDate for SYNCHRONIZED quizzes are calculated so no need to validate.
                     expect(comp.hasErrorInQuizBatches()).toBeTrue();
                 }
+            });
+        });
+
+        describe('set isEditable', () => {
+            const testRoute = {
+                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+                queryParams: of({}),
+            } as any as ActivatedRoute;
+            beforeEach(waitForAsync(() => configureTestBed(testRoute)));
+            beforeEach(configureFixtureAndServices);
+            beforeEach(() => {
+                comp.quizExercise = new QuizExercise(undefined, undefined);
+                comp.quizExercise.id = 1;
+                comp.quizExercise.title = 'test';
+                comp.quizExercise.duration = 600;
+                const { question } = createValidMCQuestion();
+                comp.quizExercise.quizQuestions = [question];
+                comp.quizExercise.quizMode = QuizMode.SYNCHRONIZED;
+                comp.quizExercise.status = QuizStatus.VISIBLE;
+                comp.quizExercise.isAtLeastEditor = true;
+                comp.quizExercise.quizEnded = false;
+            });
+
+            it('should set isEditable to true if new quiz', () => {
+                comp.init();
+                comp.quizExercise.id = undefined;
+                expect(comp.quizExercise.isEditable).toBeTrue();
+            });
+
+            it('should set isEditable to true if existing quiz is synchronized, not active and not over', () => {
+                comp.init();
+                expect(comp.quizExercise.isEditable).toBeTrue();
+            });
+
+            it('should set isEditable to true if existing quiz is batched, no batch exists, not active and not over', () => {
+                comp.quizExercise.quizMode = QuizMode.BATCHED;
+                comp.quizExercise.quizBatches = undefined;
+                comp.init();
+                expect(comp.quizExercise.isEditable).toBeTrue();
+            });
+
+            it('should set isEditable to false if existing quiz is batched, batch exists, not active and not over', () => {
+                comp.quizExercise.quizMode = QuizMode.BATCHED;
+                comp.quizExercise.quizBatches = [new QuizBatch()];
+                comp.init();
+                expect(comp.quizExercise.isEditable).toBeFalse();
+            });
+
+            it('should set isEditable to false if existing quiz is synchronized, active, and not over', () => {
+                comp.quizExercise.quizMode = QuizMode.SYNCHRONIZED;
+                comp.quizExercise.status = QuizStatus.ACTIVE;
+                comp.init();
+                expect(comp.quizExercise.isEditable).toBeFalse();
+            });
+
+            it('should set isEditable to false if existing quiz is synchronized, not active, and over', () => {
+                comp.quizExercise.quizMode = QuizMode.SYNCHRONIZED;
+                comp.quizExercise.quizEnded = true;
+                comp.init();
+                expect(comp.quizExercise.isEditable).toBeFalse();
             });
         });
     });
@@ -792,8 +850,7 @@ describe('QuizExercise Management Detail Component', () => {
                 it('should call alert service if fails', () => {
                     quizExerciseServiceFindForCourseStub.mockReturnValue(throwError(() => ({ status: 404 })));
                     console.error = jest.fn();
-                    let alertServiceStub: jest.SpyInstance;
-                    alertServiceStub = jest.spyOn(alertService, 'error');
+                    const alertServiceStub = jest.spyOn(alertService, 'error');
                     comp.onCourseSelect();
                     expect(alertServiceStub).toHaveBeenCalledOnce();
                 });
@@ -839,8 +896,7 @@ describe('QuizExercise Management Detail Component', () => {
                 it('should call alert service if fails', () => {
                     quizExerciseServiceFindForExamStub.mockReturnValue(throwError(() => ({ status: 404 })));
                     console.error = jest.fn();
-                    let alertServiceStub: jest.SpyInstance;
-                    alertServiceStub = jest.spyOn(alertService, 'error');
+                    const alertServiceStub = jest.spyOn(alertService, 'error');
                     comp.onExamSelect();
                     expect(alertServiceStub).toHaveBeenCalledOnce();
                 });
@@ -1241,8 +1297,7 @@ describe('QuizExercise Management Detail Component', () => {
 
             const saveAndExpectAlertService = () => {
                 console.error = jest.fn();
-                let alertServiceStub: jest.SpyInstance;
-                alertServiceStub = jest.spyOn(alertService, 'error');
+                const alertServiceStub = jest.spyOn(alertService, 'error');
                 saveQuizWithPendingChangesCache();
                 expect(alertServiceStub).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();

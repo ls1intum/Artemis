@@ -97,7 +97,7 @@ public class LectureUnitService {
         // Creating a new list of lecture units without the one we want to remove
         List<LectureUnit> lectureUnitsUpdated = new ArrayList<>();
         for (LectureUnit unit : lecture.getLectureUnits()) {
-            if (Objects.nonNull(unit) && !unit.getId().equals(lectureUnitToDelete.getId())) {
+            if (unit != null && !unit.getId().equals(lectureUnitToDelete.getId())) {
                 lectureUnitsUpdated.add(unit);
             }
         }

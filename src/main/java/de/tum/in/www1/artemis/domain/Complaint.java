@@ -38,13 +38,12 @@ public class Complaint extends DomainObject {
     private ZonedDateTime submittedTime;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "complaint_type")
-    private ComplaintType complaintType;
+    @Column(name = "complaint_type", nullable = false)
+    private ComplaintType complaintType = ComplaintType.COMPLAINT;      // default value
 
     // TODO: delete in the next major release
     @Deprecated
     @Column(name = "result_before_complaint")
-    @Lob
     @JsonIgnore
     private String resultBeforeComplaint;
 

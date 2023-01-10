@@ -30,7 +30,7 @@ export class ExtensionPointDirective implements OnChanges {
     private viewRef: EmbeddedViewRef<any> | undefined = undefined;
 
     @Input() public jhiExtensionPoint: TemplateRef<any> | undefined = undefined;
-    @Input() public jhiExtensionPointContext: Object | undefined = undefined;
+    @Input() public jhiExtensionPointContext?: any = undefined;
 
     constructor(private viewContainerRef: ViewContainerRef, private templateRef: TemplateRef<any>) {}
 
