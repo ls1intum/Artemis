@@ -31,6 +31,7 @@ import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-rout
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { OnlineUnit } from 'app/entities/lecture-unit/onlineUnit.model';
 
 @Component({ selector: 'jhi-learning-goals-popover', template: '' })
 class LearningGoalsPopoverStubComponent {
@@ -41,6 +42,7 @@ class LearningGoalsPopoverStubComponent {
     @Input()
     navigateTo: 'learningGoalManagement' | 'courseStatistics' = 'courseStatistics';
 }
+
 describe('LectureUnitManagementComponent', () => {
     let lectureUnitManagementComponent: LectureUnitManagementComponent;
     let lectureUnitManagementComponentFixture: ComponentFixture<LectureUnitManagementComponent>;
@@ -153,6 +155,7 @@ describe('LectureUnitManagementComponent', () => {
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.question');
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new TextUnit())).toBe('artemisApp.textUnit.delete.question');
         expect(lectureUnitManagementComponent.getDeleteQuestionKey(new VideoUnit())).toBe('artemisApp.videoUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new OnlineUnit())).toBe('artemisApp.onlineUnit.delete.question');
     });
 
     it('should give the correct confirmation text translation key', () => {
@@ -160,6 +163,7 @@ describe('LectureUnitManagementComponent', () => {
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new VideoUnit())).toBe('artemisApp.videoUnit.delete.typeNameToConfirm');
         expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new TextUnit())).toBe('artemisApp.textUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new OnlineUnit())).toBe('artemisApp.onlineUnit.delete.typeNameToConfirm');
     });
 
     it('should give the correct action type', () => {
@@ -167,5 +171,6 @@ describe('LectureUnitManagementComponent', () => {
         expect(lectureUnitManagementComponent.getActionType(new ExerciseUnit())).toEqual(ActionType.Unlink);
         expect(lectureUnitManagementComponent.getActionType(new TextUnit())).toEqual(ActionType.Delete);
         expect(lectureUnitManagementComponent.getActionType(new VideoUnit())).toEqual(ActionType.Delete);
+        expect(lectureUnitManagementComponent.getActionType(new OnlineUnit())).toEqual(ActionType.Delete);
     });
 });
