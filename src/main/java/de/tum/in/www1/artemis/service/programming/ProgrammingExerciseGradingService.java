@@ -568,19 +568,15 @@ public class ProgrammingExerciseGradingService {
     }
 
     private record ScoreCalculationData(ProgrammingExercise exercise, Result result, Set<ProgrammingExerciseTestCase> testCases,
-            Set<ProgrammingExerciseTestCase> successfulTestCases, double weightSum, List<Feedback> staticCodeAnalysisFeedback) {
+            Set<ProgrammingExerciseTestCase> successfulTestCases, List<Feedback> staticCodeAnalysisFeedback, double weightSum) {
 
-        ScoreCalculationData(final ProgrammingExercise exercise, final Result result, final Set<ProgrammingExerciseTestCase> testCases,
-                final List<Feedback> staticCodeAnalysisFeedback) {
-            this(exercise, result, testCases, successfulTestCases(testCases, result), calculateWeightSum(testCases), staticCodeAnalysisFeedback);
+        ScoreCalculationData(ProgrammingExercise exercise, Result result, Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> successfulTestCases,
+                List<Feedback> staticCodeAnalysisFeedback) {
+            this(exercise, result, testCases, successfulTestCases, staticCodeAnalysisFeedback, calculateWeightSum(testCases));
         }
 
         private static double calculateWeightSum(final Set<ProgrammingExerciseTestCase> allTests) {
             return allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
-        }
-
-        private static Set<ProgrammingExerciseTestCase> successfulTestCases(final Set<ProgrammingExerciseTestCase> allTests, final Result result) {
-            return allTests.stream().filter(testCase -> testCase.isSuccessful(result)).collect(Collectors.toSet());
         }
 
         public Participation participation() {
@@ -636,7 +632,7 @@ public class ProgrammingExerciseGradingService {
             final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(testCase -> testCase.isSuccessful(result))
                     .collect(Collectors.toSet());
 
-            var scoreCalculationData = new ScoreCalculationData(exercise, result, testCases, staticCodeAnalysisFeedback);
+            var scoreCalculationData = new ScoreCalculationData(exercise, result, testCases, successfulTestCases, staticCodeAnalysisFeedback);
 
             updateResultScore(scoreCalculationData, hasDuplicateTestCases, applySubmissionPolicy);
             updateFeedbackCredits(scoreCalculationData);
