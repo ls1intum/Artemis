@@ -1,16 +1,23 @@
+import { HttpClient } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { TranslateService } from '@ngx-translate/core';
-import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise.model';
-import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { ExercisePagingService } from 'app/exercises/shared/manage/exercise-paging.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { take } from 'rxjs/operators';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { take } from 'rxjs';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 
-describe('ModelingExercise Service', () => {
-    let service: ModelingExercisePagingService;
+class DummyPagingService extends ExercisePagingService<any> {
+    constructor(http: HttpClient) {
+        super(http, 'test');
+    }
+}
+
+describe('Exercise Paging Service', () => {
+    let service: ExercisePagingService<any>;
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
@@ -22,13 +29,13 @@ describe('ModelingExercise Service', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
             ],
         });
-        service = TestBed.inject(ModelingExercisePagingService);
-        service.resourceUrl = 'resourceUrl';
         httpMock = TestBed.inject(HttpTestingController);
+        const httpClient = TestBed.get(HttpClient);
+        service = new DummyPagingService(httpClient);
     });
 
     it('should find an element', fakeAsync(() => {
-        const searchResult = { resultsOnPage: [new ModelingExercise(UMLDiagramType.Flowchart, undefined, undefined)], numberOfPages: 5 };
+        const searchResult = { resultsOnPage: [new QuizExercise(undefined, undefined)], numberOfPages: 5 };
         const pageable = { pageSize: 2, page: 3, sortingOrder: SortingOrder.DESCENDING, searchTerm: 'testSearchTerm', sortedColumn: 'testSortedColumn' };
         service
             .searchForExercises(pageable, true, true)
