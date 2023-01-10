@@ -23,17 +23,16 @@ import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 import dayjs from 'dayjs/esm';
-import { Location } from '@angular/common';
-import { NO_ERRORS_SCHEMA } from '@angular/core';
 
 describe('Lecture', () => {
     let lectureComponentFixture: ComponentFixture<LectureComponent>;
     let lectureComponent: LectureComponent;
+    let lectureUpdateWizardComponentFixture: ComponentFixture<LectureUpdateWizardComponent>;
+    let lectureUpdateWizardComponent: LectureUpdateWizardComponent;
     let lectureService: LectureService;
     let lectureUpdateComponentFixture: ComponentFixture<LectureUpdateComponent>;
     let lectureUpdateComponent: LectureUpdateComponent;
     let lectureServiceFindAllByLectureIdStub: jest.SpyInstance;
-    let location: Location;
     let router: Router;
     let activatedRoute: ActivatedRoute;
 
@@ -52,6 +51,7 @@ describe('Lecture', () => {
             declarations: [
                 LectureUpdateComponent,
                 LectureComponent,
+                LectureUpdateWizardComponent,
                 MockComponent(LectureUpdateWizardComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(MarkdownEditorComponent),
@@ -92,10 +92,12 @@ describe('Lecture', () => {
                 lectureUpdateComponentFixture = TestBed.createComponent(LectureUpdateComponent);
                 lectureUpdateComponent = lectureUpdateComponentFixture.componentInstance;
 
+                lectureUpdateWizardComponentFixture = TestBed.createComponent(LectureUpdateWizardComponent);
+                lectureUpdateWizardComponent = lectureUpdateWizardComponentFixture.componentInstance;
+
                 lectureService = TestBed.inject(LectureService);
                 lectureServiceFindAllByLectureIdStub = jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(new HttpResponse({ body: [pastLecture] })));
 
-                location = TestBed.inject(Location);
                 router = TestBed.get(Router);
             });
     });
@@ -135,14 +137,25 @@ describe('Lecture', () => {
         expect(lectureServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
 
-    it('should create lecture in wizard mode', fakeAsync(() => {
-        activatedRoute = TestBed.inject(ActivatedRoute);
-        activatedRoute.queryParams = of({
-            shouldBeInWizardMode: true,
-        });
+    it('should create lecture in wizard mode', () => {
         lectureUpdateComponent.lecture = { title: '' } as Lecture;
+        lectureUpdateComponent.isShowingWizardMode = true;
+        lectureUpdateComponent.wizardComponent = lectureUpdateWizardComponent;
 
         const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
+            of<HttpResponse<Lecture>>(
+                new HttpResponse({
+                    body: {
+                        title: 'test1',
+                        course: {
+                            id: 1,
+                        },
+                    } as Lecture,
+                }),
+            ),
+        );
+
+        const findSpy = jest.spyOn(lectureService, 'findWithDetails').mockReturnValue(
             of<HttpResponse<Lecture>>(
                 new HttpResponse({
                     body: {
@@ -156,18 +169,16 @@ describe('Lecture', () => {
             ),
         );
 
-        lectureUpdateComponent.save();
-        tick();
-        lectureUpdateComponentFixture.detectChanges();
+        const onLectureCreationSucceededSpy = jest.spyOn(lectureUpdateWizardComponent, 'onLectureCreationSucceeded');
 
-        const navigateSpy = jest.spyOn(router, 'navigate');
-        const expectedPath = ['course-management', 1, 'lectures', 3];
-        expect(navigateSpy).toHaveBeenCalledWith(expectedPath);
+        lectureUpdateComponent.save();
 
         expect(createSpy).toHaveBeenCalledOnce();
         expect(createSpy).toHaveBeenCalledWith({ title: '' });
-        expect(lectureUpdateComponent.isShowingWizardMode).toBeTrue();
-    }));
+
+        expect(findSpy).toHaveBeenCalledOnce();
+        expect(onLectureCreationSucceededSpy).toHaveBeenCalledOnce();
+    });
 
     it('should edit a lecture', fakeAsync(() => {
         activatedRoute = TestBed.inject(ActivatedRoute);
