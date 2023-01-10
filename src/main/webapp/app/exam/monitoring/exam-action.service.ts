@@ -11,6 +11,7 @@ export const EXAM_MONITORING_ACTION_TOPIC = (examId: number) => `/topic/exam-mon
 export const EXAM_MONITORING_ACTIONS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/actions`;
 export const EXAM_MONITORING_STATUS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/update`;
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface IExamActionService {}
 
 @Injectable({ providedIn: 'root' })
@@ -200,7 +201,7 @@ export class ExamActionService implements IExamActionService {
      *
      * @param exam the exam to observe
      */
-    public subscribeForExamMonitoringUpdate = (exam: Exam): BehaviorSubject<Boolean> => {
+    public subscribeForExamMonitoringUpdate = (exam: Exam): BehaviorSubject<boolean> => {
         this.openExamMonitoringUpdateWebsocketSubscriptionIfNotExisting(exam);
         let examMonitoringStatusObservable = this.examMonitoringStatusObservables.get(exam.id!)!;
         if (!examMonitoringStatusObservable) {

@@ -1,13 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+import { MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { of } from 'rxjs';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
 import { ActivatedRoute } from '@angular/router';
 import { Component, Input } from '@angular/core';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -24,7 +23,7 @@ import { ArtemisTestModule } from '../../test.module';
 class LearningGoalCardStubComponent {
     @Input() learningGoal: LearningGoal;
     @Input() learningGoalProgress: CourseLearningGoalProgress;
-    @Input() isPrerequisite: Boolean;
+    @Input() isPrerequisite: boolean;
 }
 
 describe('LearningGoalManagementComponent', () => {
@@ -38,7 +37,6 @@ describe('LearningGoalManagementComponent', () => {
                 LearningGoalManagementComponent,
                 LearningGoalCardStubComponent,
                 MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
             ],

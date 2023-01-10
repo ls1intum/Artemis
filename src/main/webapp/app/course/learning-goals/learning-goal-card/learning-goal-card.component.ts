@@ -20,9 +20,9 @@ export class LearningGoalCardComponent implements OnInit, OnDestroy {
     @Input()
     learningGoalProgress: IndividualLearningGoalProgress | CourseLearningGoalProgress | undefined;
     @Input()
-    isPrerequisite: Boolean;
+    isPrerequisite: boolean;
     @Input()
-    displayOnly: Boolean;
+    displayOnly: boolean;
 
     public predicate = 'id';
     public reverse = false;

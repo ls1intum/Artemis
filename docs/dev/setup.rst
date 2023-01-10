@@ -28,7 +28,7 @@ following dependencies/tools on your machine:
    Artemis uses Hibernate to store entities in a MySQL database.
    Download and install the MySQL Community Server (8.0.x) and configure it according to section
    `MySQL Setup <#mysql-setup>`__.
-3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=16.13.0 < 17) to compile
+3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=18.10.0 < 19) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
 4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=8.1.0) to

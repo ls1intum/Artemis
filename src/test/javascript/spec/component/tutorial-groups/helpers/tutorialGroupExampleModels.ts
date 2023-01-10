@@ -64,6 +64,7 @@ export const tutorialGroupToTutorialGroupFormData = (entity: TutorialGroup): Tut
             startTime: entity.tutorialGroupSchedule?.startTime,
             endTime: entity.tutorialGroupSchedule?.endTime,
             repetitionFrequency: entity.tutorialGroupSchedule?.repetitionFrequency,
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             period: [entity.tutorialGroupSchedule?.validFromInclusive?.toDate()!, entity.tutorialGroupSchedule?.validToInclusive?.toDate()!],
         },
     };

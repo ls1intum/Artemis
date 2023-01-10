@@ -1,31 +1,31 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/complaints/complaint.service';
-import { Complaint, ComplaintType } from 'app/entities/complaint.model';
-import { TranslateService } from '@ngx-translate/core';
-import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
-import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
-import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { ActivatedRoute, Router } from '@angular/router';
-import { AlertService } from 'app/core/util/alert.service';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { MockRouter } from '../../helpers/mocks/mock-router';
-import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { SortService } from 'app/shared/service/sort.service';
-import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { of } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { ComplaintResponse } from 'app/entities/complaint-response.model';
-import { Result } from 'app/entities/result.model';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { TranslateService } from '@ngx-translate/core';
+import { ComplaintService, EntityResponseTypeArray, IComplaintService } from 'app/complaints/complaint.service';
+import { ListOfComplaintsComponent } from 'app/complaints/list-of-complaints/list-of-complaints.component';
 import { User } from 'app/core/user/user.model';
-import dayjs from 'dayjs/esm';
-import { TextSubmission } from 'app/entities/text-submission.model';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { TextExercise } from 'app/entities/text-exercise.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { ComplaintResponse } from 'app/entities/complaint-response.model';
+import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { Course } from 'app/entities/course.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Result } from 'app/entities/result.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { TextSubmission } from 'app/entities/text-submission.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { SortService } from 'app/shared/service/sort.service';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
+import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
+import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 
 describe('ListOfComplaintsComponent', () => {
     let fixture: ComponentFixture<ListOfComplaintsComponent>;
@@ -210,17 +210,10 @@ describe('ListOfComplaintsComponent', () => {
         });
 
         it('complaint locked by the current user', () => {
-            const userLogin = 'user';
             const endDate = dayjs().add(2, 'days');
-            const complaint = new Complaint();
+            const complaint = createComplaint(ComplaintType.MORE_FEEDBACK, endDate);
             complaint.id = 42;
             complaint.result = new Result();
-            complaint.complaintText = 'Test text';
-            complaint.complaintType = ComplaintType.MORE_FEEDBACK;
-            complaint.complaintResponse = new ComplaintResponse();
-            complaint.complaintResponse.isCurrentlyLocked = true;
-            complaint.complaintResponse.reviewer = { login: userLogin } as User;
-            complaint.complaintResponse.lockEndDate = endDate;
             jest.spyOn(complaintService, 'isComplaintLockedByLoggedInUser').mockReturnValue(true);
             jest.spyOn(complaintService, 'isComplaintLocked').mockReturnValue(true);
             jest.spyOn(translateService, 'instant');
@@ -255,15 +248,47 @@ describe('ListOfComplaintsComponent', () => {
     });
 
     it('navigate for openAssessmentEditor', () => {
-        const userLogin = 'user';
-        const endDate = dayjs().add(2, 'days');
+        testOpenAssessmentEditor(ComplaintType.MORE_FEEDBACK, false, 0);
+    });
+
+    it('uses correct correction round for accepted complaints', () => {
+        testOpenAssessmentEditor(ComplaintType.COMPLAINT, true, 1);
+    });
+
+    it('uses correct correction round for rejected complaints', () => {
+        testOpenAssessmentEditor(ComplaintType.COMPLAINT, false, 0);
+    });
+
+    it('uses correct correction round for accepted more feedback requests', () => {
+        testOpenAssessmentEditor(ComplaintType.MORE_FEEDBACK, true, 0);
+    });
+
+    function testOpenAssessmentEditor(type: ComplaintType, accepted: boolean, expectedCorrectionRound: number) {
         const submissionId = 13;
         const participationId = 69;
         const exerciseId = 1337;
         const courseId = 77;
+        const complaint = createComplaintWithSubmissionAndResult(submissionId, participationId, exerciseId, courseId, type);
+        activatedRoute.data = of({ complaintType: type });
+        complaint.accepted = accepted;
+        jest.spyOn(router, 'navigate');
+        activatedRoute.setParameters({ courseId });
+
+        comp.ngOnInit();
+        comp.openAssessmentEditor(complaint);
+
+        expect(comp.correctionRound).toBe(expectedCorrectionRound);
+        expect(router.navigate).toHaveBeenCalledOnce();
+        expect(router.navigate).toHaveBeenCalledWith(
+            ['/course-management', `${courseId}`, 'text-exercises', `${exerciseId}`, 'participations', `${participationId}`, 'submissions', `${submissionId}`, 'assessment'],
+            { queryParams: { 'correction-round': expectedCorrectionRound } },
+        );
+    }
+
+    function createComplaintWithSubmissionAndResult(submissionId: number, participationId: number, exerciseId: number, courseId: number, type?: ComplaintType): Complaint {
         const course = new Course();
         course.id = courseId;
-        const complaint = new Complaint();
+        const complaint = createComplaint(type);
         complaint.id = 42;
         complaint.result = new Result();
         complaint.result.submission = new TextSubmission();
@@ -272,25 +297,20 @@ describe('ListOfComplaintsComponent', () => {
         complaint.result.participation.id = participationId;
         complaint.result.participation.exercise = new TextExercise(course, undefined);
         complaint.result.participation.exercise.id = exerciseId;
+        return complaint;
+    }
+
+    function createComplaint(type = ComplaintType.MORE_FEEDBACK, endDate = dayjs().add(2, 'days')): Complaint {
+        const userLogin = 'user';
+        const complaint = new Complaint();
         complaint.complaintText = 'Test text';
-        complaint.complaintType = ComplaintType.MORE_FEEDBACK;
+        complaint.complaintType = type;
         complaint.complaintResponse = new ComplaintResponse();
         complaint.complaintResponse.isCurrentlyLocked = true;
         complaint.complaintResponse.reviewer = { login: userLogin } as User;
         complaint.complaintResponse.lockEndDate = endDate;
-        jest.spyOn(router, 'navigate');
-        activatedRoute.setParameters({ courseId });
-
-        comp.ngOnInit();
-        comp.openAssessmentEditor(complaint);
-
-        expect(comp.correctionRound).toBe(0);
-        expect(router.navigate).toHaveBeenCalledOnce();
-        expect(router.navigate).toHaveBeenCalledWith(
-            ['/course-management', `${courseId}`, 'text-exercises', `${exerciseId}`, 'participations', `${participationId}`, 'submissions', `${submissionId}`, 'assessment'],
-            { queryParams: { 'correction-round': 0 } },
-        );
-    });
+        return complaint;
+    }
 
     it.each(['4', '5'])(
         'should filter complaints accordingly',

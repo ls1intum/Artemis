@@ -1,0 +1,44 @@
+.conversation-list-entry {
+    .dropdown-toggle::after {
+        content: none;
+    }
+
+    &.active {
+        background-color: var(--metis-light-blue);
+    }
+
+    .interaction {
+        visibility: hidden;
+    }
+
+    &:hover {
+        color: white;
+        background-color: var(--metis-blue);
+
+        .interaction {
+            visibility: visible;
+
+            .btn {
+                color: white;
+                border-color: white;
+
+                &:hover {
+                    background-color: black;
+                }
+            }
+        }
+    }
+
+    cursor: pointer;
+    display: flex;
+    padding: 0.2rem;
+    color: var(--metis-conversation-sidebar);
+    justify-content: space-between;
+
+    &.conversation-name {
+        font-size: 12px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}

@@ -81,7 +81,9 @@ export class CourseManagementPage {
      * */
     private confirmUserIntoGroup(credentials: CypressCredentials) {
         cy.get('#typeahead-basic ').type(credentials.username).type('{enter}');
-        cy.get('#ngb-typeahead-0-0').contains(credentials.username).click();
+        cy.get('#ngb-typeahead-0')
+            .contains(new RegExp('\\(' + credentials.username + '\\)'))
+            .click();
         cy.get('#bread-crumb-2').click();
     }
 

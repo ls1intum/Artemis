@@ -328,7 +328,7 @@ export class GradingSystemService {
      * @param gradingScale a grading scale belonging to a course or an exam
      */
     getGradingScaleMaxPoints(gradingScale?: GradingScale): number {
-        return (gradingScale?.exam?.maxPoints ?? gradingScale?.course?.maxPoints) || 0;
+        return (gradingScale?.exam?.examMaxPoints ?? gradingScale?.course?.maxPoints) || 0;
     }
 
     /**

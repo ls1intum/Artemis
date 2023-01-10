@@ -87,7 +87,8 @@ public interface OrganizationRepository extends JpaRepository<Organization, Long
     @NotNull
     default Set<Organization> getAllMatchingOrganizationsByUserEmail(String userEmail) {
         Set<Organization> matchingOrganizations = new HashSet<>();
-        this.findAll().forEach(organization -> {
+        // TODO: we should avoid findAll() and instead try to filter this directly in the database
+        findAll().forEach(organization -> {
             Pattern pattern = Pattern.compile(organization.getEmailPattern());
             Matcher matcher = pattern.matcher(userEmail);
             if (matcher.matches()) {

@@ -2,6 +2,8 @@
     <!-- Post reactions -->
     <div *ngIf="!previewMode" class="col-auto ps-3 pe-0">
         <jhi-post-reactions-bar
+            [lastReadDate]="lastReadDate"
+            [readOnlyMode]="readOnlyMode"
             [posting]="posting"
             [(showAnswers)]="showAnswers"
             [sortedAnswerPosts]="sortedAnswerPosts"
@@ -21,6 +23,8 @@
 <ng-container *ngIf="showAnswers" class="list-answer-post">
     <jhi-answer-post
         *ngFor="let answerPost of sortedAnswerPosts; let isLastAnswer = last; trackBy: answerPostTrackByFn"
+        [lastReadDate]="lastReadDate"
+        [isReadOnlyMode]="readOnlyMode"
         [posting]="answerPost"
         [isLastAnswer]="isLastAnswer"
         [isCourseMessagesPage]="isCourseMessagesPage"
