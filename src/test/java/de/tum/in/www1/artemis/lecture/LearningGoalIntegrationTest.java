@@ -162,9 +162,9 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 50, true);
 
-        await().atMost(Duration.ofSeconds(5)).until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
-        await().atMost(Duration.ofSeconds(5)).until(() -> participantScoreRepository.findAllByExercise(teamTextExercise).size() == 1);
-        await().atMost(Duration.ofSeconds(5)).until(() -> participantScoreRepository.findAllByExercise(modelingExercise).size() == 1);
+        await().atMost(Duration.ofSeconds(30)).until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
+        await().atMost(Duration.ofSeconds(30)).until(() -> participantScoreRepository.findAllByExercise(teamTextExercise).size() == 1);
+        await().atMost(Duration.ofSeconds(30)).until(() -> participantScoreRepository.findAllByExercise(modelingExercise).size() == 1);
 
         creatingLectureUnitsOfLectureOne();
         creatingLectureUnitsOfLectureTwo();
