@@ -288,7 +288,7 @@ public class ExamService {
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
         log.info("Try to find quiz submitted answer counts");
         List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
-        log.info("Found " + submittedAnswerCounts.size() + " quiz submitted answer counts");
+        log.info("Found {} quiz submitted answer counts", submittedAnswerCounts.size());
 
         // Counts how many participants each exercise has
         Map<Long, Long> exerciseIdToNumberParticipations = studentParticipations.stream()
@@ -354,7 +354,7 @@ public class ExamService {
         var hasSecondCorrectionAndStarted = exam.getNumberOfCorrectionRoundsInExam() > 1
                 && exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).anyMatch(Exercise::getSecondCorrectionEnabled);
 
-        return new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints(), averagePointsAchieved, hasSecondCorrectionAndStarted, exerciseGroups, studentResults);
+        return new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getExamMaxPoints(), averagePointsAchieved, hasSecondCorrectionAndStarted, exerciseGroups, studentResults);
     }
 
     /**
@@ -404,8 +404,11 @@ public class ExamService {
             }
             BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, achievedPointsOfBonusTo, achievedPointsOfSource);
             String bonusGrade = null;
-            if (verdict == PlagiarismVerdict.PLAGIARISM) {
-                bonusGrade = GradeStep.PLAGIARISM_GRADE;
+            if (result == null || !result.hasParticipated()) {
+                bonusGrade = bonus.getSourceGradingScale().getNoParticipationGradeOrDefault();
+            }
+            else if (verdict == PlagiarismVerdict.PLAGIARISM) {
+                bonusGrade = bonus.getSourceGradingScale().getPlagiarismGradeOrDefault();
             }
             else if (bonusExample.bonusGrade() != null) {
                 bonusGrade = bonusExample.bonusGrade().toString();
@@ -441,12 +444,14 @@ public class ExamService {
 
             StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummaryAsStudent(targetUser, studentExam);
             var studentResult = studentExamWithGradeDTO.studentResult();
-            return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null));
+            return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null,
+                    Boolean.TRUE.equals(studentResult.submitted())));
         }
         var scores = calculateExamScores(examId);
         var studentIdSet = new HashSet<>(studentIds);
-        return scores.studentResults().stream().filter(studentResult -> studentIdSet.contains(studentResult.userId())).collect(Collectors.toMap(ExamScoresDTO.StudentResult::userId,
-                studentResult -> new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null)));
+        return scores.studentResults().stream().filter(studentResult -> studentIdSet.contains(studentResult.userId()))
+                .collect(Collectors.toMap(ExamScoresDTO.StudentResult::userId, studentResult -> new BonusSourceResultDTO(studentResult.overallPointsAchieved(),
+                        studentResult.mostSeverePlagiarismVerdict(), null, null, Boolean.TRUE.equals(studentResult.submitted()))));
 
     }
 
@@ -465,7 +470,7 @@ public class ExamService {
         loadQuizExercisesForStudentExam(studentExam);
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
-        if (!studentExam.isSubmitted() || !studentExam.areResultsPublishedYet()) {
+        if (!Boolean.TRUE.equals(studentExam.isSubmitted()) || !studentExam.areResultsPublishedYet()) {
             throw new AccessForbiddenException("You are not allowed to access the grade summary of a student exam which was NOT submitted!");
         }
 
@@ -543,6 +548,8 @@ public class ExamService {
         }
 
         if (!isAtLeastInstructor) {
+            // If the exerciseGroup (and the exam) will be filtered out, move example solution publication date to the exercise to preserve this information.
+            exercise.setExampleSolutionPublicationDate(exercise.getExerciseGroup().getExam().getExampleSolutionPublicationDate());
             exercise.setExerciseGroup(null);
         }
 
@@ -632,9 +639,15 @@ public class ExamService {
             PlagiarismMapping plagiarismMapping, ExamBonusCalculator examBonusCalculator) {
         User user = studentExam.getUser();
 
-        if (plagiarismMapping.studentHasVerdict(user.getId(), PlagiarismVerdict.PLAGIARISM)) {
+        if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
+            String noParticipationGrade = gradingScale.map(GradingScale::getNoParticipationGradeOrDefault).orElse(GradingScale.DEFAULT_NO_PARTICIPATION_GRADE);
             return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
-                    0.0, GradeStep.PLAGIARISM_GRADE, GradeStep.PLAGIARISM_GRADE, false, 0.0, null, null, PlagiarismVerdict.PLAGIARISM);
+                    0.0, noParticipationGrade, noParticipationGrade, false, 0.0, null, null, null);
+        }
+        else if (plagiarismMapping.studentHasVerdict(user.getId(), PlagiarismVerdict.PLAGIARISM)) {
+            String plagiarismGrade = gradingScale.map(GradingScale::getPlagiarismGradeOrDefault).orElse(GradingScale.DEFAULT_PLAGIARISM_GRADE);
+            return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
+                    0.0, plagiarismGrade, plagiarismGrade, false, 0.0, null, null, PlagiarismVerdict.PLAGIARISM);
         }
 
         var overallPointsAchieved = 0.0;
@@ -691,12 +704,12 @@ public class ExamService {
         var hasPassed = false;
         BonusResultDTO gradeWithBonus = null;
 
-        if (exam.getMaxPoints() > 0) {
-            overallScoreAchieved = (overallPointsAchieved / exam.getMaxPoints()) * 100.0;
+        if (exam.getExamMaxPoints() > 0) {
+            overallScoreAchieved = (overallPointsAchieved / exam.getExamMaxPoints()) * 100.0;
             if (gradingScale.isPresent()) {
                 // Calculate current student grade
                 GradeStep studentGrade = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchieved, gradingScale.get().getId());
-                var overallScoreAchievedInFirstCorrection = (overallPointsAchievedInFirstCorrection / exam.getMaxPoints()) * 100.0;
+                var overallScoreAchievedInFirstCorrection = (overallPointsAchievedInFirstCorrection / exam.getExamMaxPoints()) * 100.0;
                 GradeStep studentGradeInFirstCorrection = gradingScaleRepository.matchPercentageToGradeStep(overallScoreAchievedInFirstCorrection, gradingScale.get().getId());
                 overallGrade = studentGrade.getGradeName();
                 overallGradeInFirstCorrection = studentGradeInFirstCorrection.getGradeName();
@@ -889,7 +902,7 @@ public class ExamService {
         }
 
         // Check that the exam max points is set
-        if (exam.getMaxPoints() == 0) {
+        if (exam.getExamMaxPoints() == 0) {
             throw new BadRequestAlertException("The exam max points can not be 0.", "Exam", "artemisApp.exam.validation.maxPointsNotSet");
         }
 
@@ -915,7 +928,7 @@ public class ExamService {
                 pointsReachableByMandatoryExercises += groupRepresentativeExercise.getMaxPoints();
             }
         }
-        if (pointsReachableByMandatoryExercises > exam.getMaxPoints()) {
+        if (pointsReachableByMandatoryExercises > exam.getExamMaxPoints()) {
             throw new BadRequestAlertException("Check that you set the exam max points correctly! The max points a student can earn in the mandatory exercise groups is too big",
                     "Exam", "artemisApp.exam.validation.tooManyMaxPoints");
         }
@@ -928,7 +941,7 @@ public class ExamService {
                 pointsReachable += groupRepresentativeExercise.getMaxPoints();
             }
         }
-        if (pointsReachable < exam.getMaxPoints()) {
+        if (pointsReachable < exam.getExamMaxPoints()) {
             throw new BadRequestAlertException("Check that you set the exam max points correctly! The max points a student can earn in the exercise groups is too low", "Exam",
                     "artemisApp.exam.validation.tooFewMaxPoints");
         }
