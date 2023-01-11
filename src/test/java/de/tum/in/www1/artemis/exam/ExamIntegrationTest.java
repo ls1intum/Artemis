@@ -198,7 +198,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         bitbucketRequestMockProvider.enableMockingOfRequests();
 
-        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
         participantScoreSchedulerService.activate();
     }
 
