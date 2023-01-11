@@ -79,7 +79,7 @@ public class LearningGoal extends DomainObject {
         this.description = description;
     }
 
-    public Integer getMasteryThreshold() {
+    public int getMasteryThreshold() {
         return masteryThreshold == null ? 100 : this.masteryThreshold;
     }
 

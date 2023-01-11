@@ -263,7 +263,7 @@ public class LectureResource {
             else {
                 return authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
             }
-        }).peek(lectureUnit -> {
+        }).map(lectureUnit -> {
             lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
 
             if (lectureUnit instanceof ExerciseUnit) {
@@ -273,6 +273,7 @@ public class LectureResource {
                 // re-add the learning goals already loaded with the exercise unit
                 ((ExerciseUnit) lectureUnit).getExercise().setLearningGoals(exercise.getLearningGoals());
             }
+            return lectureUnit;
         }).collect(Collectors.toCollection(ArrayList::new));
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);

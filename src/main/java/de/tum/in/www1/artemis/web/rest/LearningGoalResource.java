@@ -208,8 +208,9 @@ public class LearningGoalResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         // Set completion stations and remove exercise units (redundant as we also return all exercises)
-        learningGoal.setLectureUnits(learningGoal.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).peek(lectureUnit -> {
+        learningGoal.setLectureUnits(learningGoal.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(lectureUnit -> {
             lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
+            return lectureUnit;
         }).collect(Collectors.toSet()));
         return ResponseEntity.ok().body(learningGoal);
     }
@@ -474,10 +475,15 @@ public class LearningGoalResource {
     private void linkLectureUnitsToLearningGoal(LearningGoal learningGoal, Set<LectureUnit> lectureUnitsToAdd, Set<LectureUnit> lectureUnitsToRemove) {
         // Remove the learning goal from the old lecture units
         var lectureUnitsToRemoveFromDb = getLectureUnitsFromDatabase(lectureUnitsToRemove);
-        lectureUnitRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
-                .peek(lectureUnit -> lectureUnit.getLearningGoals().remove(learningGoal)).collect(Collectors.toSet()));
+        lectureUnitRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).map(lectureUnit -> {
+            lectureUnit.getLearningGoals().remove(learningGoal);
+            return lectureUnit;
+        }).collect(Collectors.toSet()));
         exerciseRepository.saveAll(lectureUnitsToRemoveFromDb.stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
-                .map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).peek(exercise -> exercise.getLearningGoals().remove(learningGoal)).collect(Collectors.toSet()));
+                .map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).map(exercise -> {
+                    exercise.getLearningGoals().remove(learningGoal);
+                    return exercise;
+                }).collect(Collectors.toSet()));
 
         // Add the learning goal to the new lecture units
         var lectureUnitsFromDb = getLectureUnitsFromDatabase(lectureUnitsToAdd);

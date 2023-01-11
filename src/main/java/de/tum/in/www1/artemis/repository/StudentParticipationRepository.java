@@ -753,7 +753,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 .filter(participation -> participation.getParticipant() != null)
 
                 // filter all irrelevant results, i.e. rated = false or no completion date or no score
-                .peek(participation -> {
+                .map(participation -> {
                     List<Result> relevantResults = new ArrayList<>();
 
                     // Get the results over the participation or over submissions
@@ -786,6 +786,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                         relevantResults.add(correctResult);
                     }
                     participation.setResults(new HashSet<>(relevantResults));
+                    return participation;
                 }).toList();
     }
 

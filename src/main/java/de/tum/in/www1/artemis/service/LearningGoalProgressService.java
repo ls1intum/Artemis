@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
@@ -107,12 +106,14 @@ public class LearningGoalProgressService {
      * @return All learning goals of the course with the updated progress for the user
      */
     public Set<LearningGoal> getLearningGoalsAndUpdateProgressByUserInCourse(User user, Course course) {
-        return learningGoalRepository.findAllForCourse(course.getId()).stream().peek(learningGoal -> {
+        var learningGoals = learningGoalRepository.findAllForCourse(course.getId());
+        learningGoals.forEach(learningGoal -> {
             var updatedProgress = updateLearningGoalProgress(learningGoal.getId(), user);
             if (updatedProgress != null) {
                 learningGoal.setUserProgress(Set.of(updatedProgress));
             }
-        }).collect(Collectors.toSet());
+        });
+        return learningGoals;
     }
 
     /**
