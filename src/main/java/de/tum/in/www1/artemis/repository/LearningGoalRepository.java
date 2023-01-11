@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -120,6 +121,20 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
             """)
     Page<LearningGoal> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
+
+    /**
+     * Returns the title of the learning goal with the given id.
+     *
+     * @param learningGoalId the id of the learning goal
+     * @return the name/title of the learning goal or null if the learning goal does not exist
+     */
+    @Query("""
+            SELECT learningGoal.title
+            FROM LearningGoal learningGoal
+            WHERE learningGoal.id = :learningGoalId
+            """)
+    @Cacheable(cacheNames = "learningGoalTitle", key = "#learningGoalId", unless = "#result == null")
+    String getLearningGoalTitle(@Param("learningGoalId") Long learningGoalId);
 
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<LearningGoal> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);

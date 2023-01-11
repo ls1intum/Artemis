@@ -14,8 +14,6 @@ export class LearningGoalCardComponent {
     learningGoal: LearningGoal;
     @Input()
     isPrerequisite: boolean;
-    @Input()
-    displayOnly: boolean;
 
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;

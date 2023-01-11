@@ -11,8 +11,11 @@
             "masteryThreshold": "Schwellwert zum Erreichen der Kompetenz",
             "course": "Kurs",
             "progress": "Fortschritt",
+            "progressDescription": "Der Prozentsatz an abgeschlossenen Vorlesungseinheiten und Übungen, die mit dieser Kompetenz verknüpft sind.",
             "confidence": "Konfidenz",
+            "confidenceDescription": "Die durchschnittliche Bewertung in allen verknüpften Übungen im Verhältnis zu dem vom Lehrenden festgelegten Schwellenwert für die Beherrschung der Kompetenz.",
             "mastery": "Kompetenzbeherrschung",
+            "masteryDescription": "Ein gewichteter Leistungsindex aus Fortschritt und Konfidenz, der Deine Entwicklung auf dem Weg zur Beherrschung der Kompetenz veranschaulicht.",
             "masteredStudents": "Studierende mit Kompetenz",
             "mastered": "Abgeschlossen",
             "taxonomies": {
@@ -24,7 +27,7 @@
                 "create": "Erstellen"
             },
             "table": {
-                "panelHeader": "Dein Fortschritt",
+                "panelHeader": "Deine Fortentwicklung",
                 "panelDescription": "Dein Weg zum Erwerb dieser Kompetenz."
             },
             "manageLearningGoals": {

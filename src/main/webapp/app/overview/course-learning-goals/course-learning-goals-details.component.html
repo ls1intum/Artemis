@@ -59,15 +59,21 @@
             </div>
             <jhi-side-panel class="d-block mt-3" [panelHeader]="'artemisApp.learningGoal.table.panelHeader' | artemisTranslate">
                 <div class="row mb-1 g-0">
-                    <div class="col-7">{{ 'artemisApp.learningGoal.progress' | artemisTranslate }}</div>
+                    <div class="col-7">
+                        {{ 'artemisApp.learningGoal.progress' | artemisTranslate }} <jhi-help-icon text="artemisApp.learningGoal.progressDescription"></jhi-help-icon>
+                    </div>
                     <div class="col-5">{{ progress }} %</div>
                 </div>
                 <div class="row mb-1 g-0">
-                    <div class="col-7">{{ 'artemisApp.learningGoal.confidence' | artemisTranslate }}</div>
+                    <div class="col-7">
+                        {{ 'artemisApp.learningGoal.confidence' | artemisTranslate }} <jhi-help-icon text="artemisApp.learningGoal.confidenceDescription"></jhi-help-icon>
+                    </div>
                     <div class="col-5">{{ confidence }} %</div>
                 </div>
                 <div class="row mb-1 g-0">
-                    <div class="col-7">{{ 'artemisApp.learningGoal.mastery' | artemisTranslate }}</div>
+                    <div class="col-7">
+                        {{ 'artemisApp.learningGoal.mastery' | artemisTranslate }} <jhi-help-icon text="artemisApp.learningGoal.masteryDescription"></jhi-help-icon>
+                    </div>
                     <div class="col-5">{{ mastery }} %</div>
                 </div>
             </jhi-side-panel>

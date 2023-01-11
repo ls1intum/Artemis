@@ -3,7 +3,8 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CourseLearningGoalProgress, LearningGoal, LearningGoalProgress, LearningGoalRelation } from 'app/entities/learningGoal.model';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
-import { map } from 'rxjs/operators';
+import { map, tap } from 'rxjs/operators';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 type EntityResponseType = HttpResponse<LearningGoal>;
 type EntityArrayResponseType = HttpResponse<LearningGoal[]>;
@@ -14,14 +15,18 @@ type EntityArrayResponseType = HttpResponse<LearningGoal[]>;
 export class LearningGoalService {
     private resourceURL = SERVER_API_URL + 'api';
 
-    constructor(private httpClient: HttpClient, private lectureUnitService: LectureUnitService) {}
+    constructor(private httpClient: HttpClient, private entityTitleService: EntityTitleService, private lectureUnitService: LectureUnitService) {}
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/goals`, { observe: 'response' });
+        return this.httpClient
+            .get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/goals`, { observe: 'response' })
+            .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
     getAllPrerequisitesForCourse(courseId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient.get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' });
+        return this.httpClient
+            .get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/prerequisites`, { observe: 'response' })
+            .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
     getProgress(learningGoalId: number, courseId: number, refresh = false) {
@@ -40,9 +45,13 @@ export class LearningGoalService {
     }
 
     findById(learningGoalId: number, courseId: number) {
-        return this.httpClient
-            .get<LearningGoal>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertLectureUnitArrayResponseDateFromServer(res)));
+        return this.httpClient.get<LearningGoal>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => {
+                this.convertLectureUnitArrayResponseDateFromServer(res);
+                this.sendTitlesToEntityTitleService(res?.body);
+                return res;
+            }),
+        );
     }
 
     create(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
@@ -101,5 +110,9 @@ export class LearningGoalService {
             copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
         }
         return copy;
+    }
+
+    private sendTitlesToEntityTitleService(learningGoal: LearningGoal | undefined | null) {
+        this.entityTitleService.setTitle(EntityType.LEARNING_GOAL, [learningGoal?.id], learningGoal?.title);
     }
 }

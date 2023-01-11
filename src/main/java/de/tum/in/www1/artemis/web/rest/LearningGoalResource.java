@@ -82,6 +82,19 @@ public class LearningGoalResource {
     }
 
     /**
+     * GET /learning-goals/:learningGoalId/title : Returns the title of the learning goal with the given id
+     *
+     * @param learningGoalId the id of the learning goal
+     * @return the title of the learning goal wrapped in an ResponseEntity or 404 Not Found if no learning goal with that id exists
+     */
+    @GetMapping(value = "/learning-goals/{learningGoalId}/title")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> getLearningGoalTitle(@PathVariable Long learningGoalId) {
+        final var title = learningGoalRepository.getLearningGoalTitle(learningGoalId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
+    }
+
+    /**
      * GET /courses/:courseId/goals/:learningGoalId/individual-progress  gets the learning goal progress for the whole course
      *
      * @param courseId                 the id of the course to which the learning goal belongs
@@ -119,7 +132,7 @@ public class LearningGoalResource {
 
         var numberOfStudents = learningGoalProgressRepository.countByLearningGoal(learningGoal.getId());
         var numberOfMasteredStudents = learningGoalProgressRepository.countByLearningGoalAndProgressAndConfidenceGreaterThanEqual(learningGoal.getId(), 100.0,
-                learningGoal.getMasteryThreshold().doubleValue());
+                (double) learningGoal.getMasteryThreshold());
         var averageStudentScore = RoundingUtil.roundScoreSpecifiedByCourseSettings(learningGoalProgressRepository.findAverageConfidenceByLearningGoalId(learningGoalId).orElse(0.0),
                 course);
 

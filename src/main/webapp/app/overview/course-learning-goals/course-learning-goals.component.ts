@@ -9,11 +9,12 @@ import { Subscription, forkJoin } from 'rxjs';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-course-learning-goals',
     templateUrl: './course-learning-goals.component.html',
-    styles: [],
+    styleUrls: ['../course-overview.scss'],
 })
 export class CourseLearningGoalsComponent implements OnInit {
     @Input()
@@ -23,6 +24,10 @@ export class CourseLearningGoalsComponent implements OnInit {
     course?: Course;
     learningGoals: LearningGoal[] = [];
     prerequisites: LearningGoal[] = [];
+
+    isCollapsed = false;
+    faAngleDown = faAngleDown;
+    faAngleUp = faAngleUp;
 
     private courseUpdateSubscription?: Subscription;
 
@@ -51,6 +56,23 @@ export class CourseLearningGoalsComponent implements OnInit {
         } else {
             this.loadData();
         }
+    }
+
+    get countLearningGoals() {
+        return this.learningGoals.length;
+    }
+
+    get countMasteredLearningGoals() {
+        return this.learningGoals.filter((lg) => {
+            if (lg.userProgress?.length && lg.masteryThreshold) {
+                return lg.userProgress.first()!.progress == 100 && lg.userProgress.first()!.confidence! >= lg.masteryThreshold!;
+            }
+            return false;
+        }).length;
+    }
+
+    get countPrerequisites() {
+        return this.prerequisites.length;
     }
 
     /**

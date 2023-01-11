@@ -11,8 +11,11 @@
             "masteryThreshold": "Mastery threshold",
             "course": "Course",
             "progress": "Progress",
+            "progressDescription": "The percentage of completed lecture units and exercises linked to this competency.",
             "confidence": "Confidence",
+            "confidenceDescription": "The average score in all linked exercises in relation to the threshold required for mastering the competency defined by the instructor.",
             "mastery": "Mastery",
+            "masteryDescription": "A weighted metric of your progress and confidence, which shows your overall advancement towards competency mastery.",
             "masteredStudents": "Mastered students",
             "mastered": "Mastered",
             "taxonomies": {
@@ -24,7 +27,7 @@
                 "create": "Create"
             },
             "table": {
-                "panelHeader": "Your progress"
+                "panelHeader": "Your advancement"
             },
             "manageLearningGoals": {
                 "title": "Competency Management",

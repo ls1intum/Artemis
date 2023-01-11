@@ -20,6 +20,7 @@
     multiple
 >
     <option *ngFor="let learningGoal of learningGoals" [ngValue]="learningGoal">
+        <fa-icon *ngIf="learningGoal.taxonomy" [icon]="getIcon(learningGoal.taxonomy)" [fixedWidth]="true"></fa-icon>
         {{ learningGoal.title }}
     </option>
 </select>
