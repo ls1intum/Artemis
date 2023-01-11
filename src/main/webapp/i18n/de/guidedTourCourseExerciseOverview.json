@@ -57,7 +57,7 @@
             "cloneRepository": {
                 "headline": "Klone das Repository in IntelliJ",
                 "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in IntelliJ klont. Danach solltest du auf das <tt>X</tt> oben rechts klicken, um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Benutzerkonto-Menü (Login-Name oben rechts) aus fortsetzen.",
-                "hint": "Falls du noch nicht die Java JDK 17 installiert hast, wird auch im Video gezeigt, wie du diese erhältst.",
+                "hint": "Falls du noch nicht Java JDK 17 installiert hast, wird auch im Video gezeigt, wie du diese erhältst.",
                 "videoUrl": "https://edge.live.rbg.tum.de/vod/artemisintro_2023_01_10_11_00COMB.mp4/playlist.m3u8"
             },
             "solveExercise": {
