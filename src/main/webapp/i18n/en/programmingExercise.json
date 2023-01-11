@@ -177,8 +177,8 @@
                     "resetFailed": "The categories could not be reset.",
                     "import": "Import Configuration",
                     "importLabel": "Import SCA configuration from exercise",
-                    "importSuccessful": "Successfully imported the configuration from exercise {{exercise}}",
-                    "importFailed": "Failed to import categories from exercise {{exercise}}"
+                    "importSuccessful": "Successfully imported the configuration from exercise {{exercise}}.",
+                    "importFailed": "Failed to import categories from exercise {{exercise}}."
                 },
                 "charts": {
                     "title": "Charts",

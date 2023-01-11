@@ -83,7 +83,7 @@ public class ExerciseIntegrationTestUtils {
 
                 var result = request.get(apiPath, HttpStatus.OK, SearchResultPageDTO.class, params);
 
-                var exerciseComparator = getExpetedComparator(sort);
+                var exerciseComparator = getExpectedComparator(sort);
                 if (order == SortingOrder.DESCENDING) {
                     exerciseComparator = exerciseComparator.reversed();
                 }
@@ -92,7 +92,7 @@ public class ExerciseIntegrationTestUtils {
         }
     }
 
-    private Comparator<LinkedHashMap<String, ? extends Comparable>> getExpetedComparator(Exercise.ExerciseSearchColumn sort) {
+    private Comparator<LinkedHashMap<String, ? extends Comparable>> getExpectedComparator(Exercise.ExerciseSearchColumn sort) {
         return switch (sort) {
             case ID -> Comparator.comparing(map -> map.get("id"));
             case TITLE -> Comparator.comparing(map -> map.get("title"));
