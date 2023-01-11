@@ -935,7 +935,7 @@ public abstract class Exercise extends BaseExercise implements ILearningObject {
      */
     public enum ExerciseSearchColumn {
 
-        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
+        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title"), EXAM_TITLE("exerciseGroup.exam.title");
 
         private final String mappedColumnName;
 
