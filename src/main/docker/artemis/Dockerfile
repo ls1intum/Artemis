@@ -1,17 +1,4 @@
 #-----------------------------------------------------------------------------------------------------------------------
-# gradle dependecies caching stage
-#-----------------------------------------------------------------------------------------------------------------------
-#TODO: cache beforehand of the gradle dependencies which don't change often ...
-#FROM eclipse-temurin:17-jdk as gradle-cache
-#WORKDIR /opt/gradle-cache
-#ENV GRADLE_USER_HOME /opt/gradle-cache
-#COPY gradlew gradlew.bat /opt/java-code/
-#COPY build.gradle gradle.properties settings.gradle /opt/java-code/
-#COPY gradle/ /opt/java-code/gradle/
-#WORKDIR /opt/java-code
-#RUN ./gradlew -i --stacktrace --no-daemon clean build > /dev/null 2>&1 || true
-
-#-----------------------------------------------------------------------------------------------------------------------
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
 FROM eclipse-temurin:17-jdk as builder
