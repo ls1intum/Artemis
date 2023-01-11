@@ -1,3 +1,4 @@
+import { HttpParams } from '@angular/common/http';
 import { Component, Injector, Input, OnInit } from '@angular/core';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -107,11 +108,7 @@ export class ExerciseImportComponent implements OnInit {
                 debounceTime(debounce),
                 tap(() => (this.loading = true)),
                 switchMap(() => {
-                    if (this.programmingLanguage) {
-                        // TODO can this be improved somehow?
-                        return (this.pagingService as CodeAnalysisPagingService).searchForExercises(this.state, this.isCourseFilter, this.isExamFilter, this.programmingLanguage);
-                    }
-                    return this.pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter);
+                    return this.pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter, this.programmingLanguage);
                 }),
             )
             .subscribe((resp: SearchResult<Exercise>) => {
