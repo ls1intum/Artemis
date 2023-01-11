@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -20,12 +19,9 @@ public class LectureService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final LectureUnitRepository lectureUnitRepository;
-
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LectureUnitRepository lectureUnitRepository) {
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
-        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     /**

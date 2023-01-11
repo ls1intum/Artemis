@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.service.LearningGoalService;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
@@ -62,12 +61,10 @@ public class LearningGoalResource {
 
     private final LearningGoalProgressService learningGoalProgressService;
 
-    private final ExerciseService exerciseService;
-
     public LearningGoalResource(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             LearningGoalRepository learningGoalRepository, LearningGoalRelationRepository learningGoalRelationRepository, LectureUnitRepository lectureUnitRepository,
             LearningGoalService learningGoalService, LearningGoalProgressRepository learningGoalProgressRepository, ExerciseRepository exerciseRepository,
-            LearningGoalProgressService learningGoalProgressService, ExerciseService exerciseService) {
+            LearningGoalProgressService learningGoalProgressService) {
         this.courseRepository = courseRepository;
         this.learningGoalRelationRepository = learningGoalRelationRepository;
         this.lectureUnitRepository = lectureUnitRepository;
@@ -78,7 +75,6 @@ public class LearningGoalResource {
         this.learningGoalProgressRepository = learningGoalProgressRepository;
         this.exerciseRepository = exerciseRepository;
         this.learningGoalProgressService = learningGoalProgressService;
-        this.exerciseService = exerciseService;
     }
 
     /**
@@ -87,7 +83,7 @@ public class LearningGoalResource {
      * @param learningGoalId the id of the learning goal
      * @return the title of the learning goal wrapped in an ResponseEntity or 404 Not Found if no learning goal with that id exists
      */
-    @GetMapping(value = "/learning-goals/{learningGoalId}/title")
+    @GetMapping("/learning-goals/{learningGoalId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getLearningGoalTitle(@PathVariable Long learningGoalId) {
         final var title = learningGoalRepository.getLearningGoalTitle(learningGoalId);
@@ -97,8 +93,9 @@ public class LearningGoalResource {
     /**
      * GET /courses/:courseId/goals/:learningGoalId/individual-progress  gets the learning goal progress for the whole course
      *
-     * @param courseId                 the id of the course to which the learning goal belongs
-     * @param learningGoalId           the id of the learning goal for which to get the progress
+     * @param courseId the id of the course to which the learning goal belongs
+     * @param learningGoalId the id of the learning goal for which to get the progress
+     * @param refresh whether to update the student progress or fetch it from the database (default)
      * @return the ResponseEntity with status 200 (OK) and with the learning goal course performance in the body
      */
     @GetMapping("/courses/{courseId}/goals/{learningGoalId}/student-progress")

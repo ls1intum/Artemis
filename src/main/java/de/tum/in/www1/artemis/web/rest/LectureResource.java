@@ -230,7 +230,7 @@ public class LectureResource {
      * @param lectureId the id of the lecture
      * @return the title of the lecture wrapped in an ResponseEntity or 404 Not Found if no lecture with that id exists
      */
-    @GetMapping(value = "/lectures/{lectureId}/title")
+    @GetMapping("/lectures/{lectureId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
         final var title = lectureRepository.getLectureTitle(lectureId);

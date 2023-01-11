@@ -406,6 +406,7 @@ public class CourseResource {
      * GET /courses/{courseId}/for-dashboard
      *
      * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
+     * @param refresh if true, this request was initiated by the user clicking on a refresh button
      * @return a course with all exercises, lectures, exams and learning goals visible to the student
      */
     @GetMapping("courses/{courseId}/for-dashboard")

@@ -7,7 +7,6 @@ export enum EntityType {
     COURSE = 'COURSE',
     EXERCISE = 'EXERCISE',
     LECTURE = 'LECTURE',
-
     LEARNING_GOAL = 'LEARNING_GOAL',
     HINT = 'HINT',
     DIAGRAM = 'DIAGRAM',
