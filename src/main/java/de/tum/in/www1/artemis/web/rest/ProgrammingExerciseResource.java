@@ -364,7 +364,7 @@ public class ProgrammingExerciseResource {
     /**
      * PUT /programming-exercises/timeline : Updates the timeline attributes of a given exercise
      * @param updatedProgrammingExercise containing the changes that have to be saved
-     * @param notificationText an optional text to notify the student group about the update on the programming exercise
+     * @param notificationText           an optional text to notify the student group about the update on the programming exercise
      * @return the ResponseEntity with status 200 (OK) with the updated ProgrammingExercise, or with status 403 (Forbidden)
      * if the user is not allowed to update the exercise or with 404 (Not Found) if the updated ProgrammingExercise couldn't be found in the database
      */
@@ -476,7 +476,7 @@ public class ProgrammingExerciseResource {
     /**
      * GET /programming-exercises/:exerciseId/with-template-and-solution-participation
      *
-     * @param exerciseId the id of the programmingExercise to retrieve
+     * @param exerciseId            the id of the programmingExercise to retrieve
      * @param withSubmissionResults get all submission results
      * @return the ResponseEntity with status 200 (OK) and the programming exercise with template and solution participation, or with status 404 (Not Found)
      */
@@ -618,7 +618,6 @@ public class ProgrammingExerciseResource {
      * @param search         The pageable search containing the page size, page number and query string
      * @param isCourseFilter Whether to search in the courses for exercises
      * @param isExamFilter   Whether to search in the groups for exercises
-     * @param isSCAFilter    Whether to search only for exercises with SCA active
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping(PROGRAMMING_EXERCISES)
@@ -629,6 +628,16 @@ public class ProgrammingExerciseResource {
         return ResponseEntity.ok(programmingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 
+    /**
+     * Search for programming exercises by id, title and course title. Only exercises with SCA enabled and the given programming language will be included.
+     * The result is pageable since there might be hundreds of exercises in the DB.
+     *
+     * @param search              The pageable search containing the page size, page number and query string
+     * @param isCourseFilter      Whether to search in the courses for exercises
+     * @param isExamFilter        Whether to search in the groups for exercises
+     * @param programmingLanguage Filters for only exercises with this language
+     * @return The desired page, sorted and matching the given query
+     */
     @GetMapping(PROGRAMMING_EXERCISES + "/with-sca")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<ProgrammingExercise>> getAllExercisesWithSCAOnPage(PageableSearchDTO<String> search,
@@ -704,10 +713,9 @@ public class ProgrammingExerciseResource {
     /**
      * PUT /programming-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing ProgrammingExercise.
      *
-     * @param exerciseId                                   of the exercise
-     * @param programmingExercise                          the ProgrammingExercise to re-evaluate and update
-     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
-     *
+     * @param exerciseId                                  of the exercise
+     * @param programmingExercise                         the ProgrammingExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
      * @return the ResponseEntity with status 200 (OK) and with body the updated ProgrammingExercise, or with status 400 (Bad Request) if the ProgrammingExercise is not valid,
      * or with status 409 (Conflict) if given exerciseId is not same as in the object of the request body, or with status 500 (Internal Server Error) if the ProgrammingExercise
      * couldn't be updated
