@@ -5,7 +5,7 @@
                 "title": "Text Exercises",
                 "createLabel": "Create new Text Exercise",
                 "editLabel": "Edit Text Exercise",
-                "importLabel": "Import a Text Exercise"
+                "importLabel": "Import Text Exercise"
             },
             "submitButton": {
                 "create": "Create",
