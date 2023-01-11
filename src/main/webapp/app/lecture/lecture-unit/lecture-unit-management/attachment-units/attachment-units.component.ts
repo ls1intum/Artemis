@@ -10,12 +10,11 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 
-type UnitResponseType = {
+type AttachmentUnitsInfoResponseType = {
     unitName: string;
     releaseDate?: dayjs.Dayjs;
     startPage: number;
     endPage: number;
-    numberOfPages?: number;
 };
 
 @Component({
@@ -28,7 +27,7 @@ export class AttachmentUnitsComponent implements OnInit {
     isLoading: boolean;
     isProcessingMode: boolean;
 
-    units: UnitResponseType[] = [];
+    units: AttachmentUnitsInfoResponseType[] = [];
     numberOfPages: number;
 
     faSave = faSave;
@@ -92,10 +91,8 @@ export class AttachmentUnitsComponent implements OnInit {
         formData.append('lectureUnitSplitDTOs', objectToJsonBlob(this.units));
 
         this.attachmentUnitService.createUnits(this.lectureId, formData).subscribe({
-            next: (res: any) => {
-                if (res) {
-                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
-                }
+            next: () => {
+                this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 this.isLoading = false;
             },
             error: (res: HttpErrorResponse) => {

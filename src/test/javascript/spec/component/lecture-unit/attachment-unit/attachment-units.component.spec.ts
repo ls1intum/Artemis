@@ -6,6 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
+import { objectToJsonBlob } from 'app/utils/blob-util';
 import { of } from 'rxjs';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
@@ -15,6 +16,8 @@ import { ArtemisTestModule } from '../../../test.module';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { TranslateService } from '@ngx-translate/core';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
+import dayjs from 'dayjs/esm';
+import { HttpResponse } from '@angular/common/http';
 
 @Component({ selector: 'jhi-lecture-unit-layout', template: '<ng-content></ng-content>' })
 class LectureUnitLayoutStubComponent {
@@ -22,12 +25,47 @@ class LectureUnitLayoutStubComponent {
     isLoading = false;
 }
 
+type AttachmentUnitsInfoResponseType = {
+    unitName: string;
+    releaseDate?: dayjs.Dayjs;
+    startPage: number;
+    endPage: number;
+};
+
+type AttachmentUnitsResponseType = {
+    units: AttachmentUnitsInfoResponseType[];
+    numberOfPages: number;
+};
+
 describe('AttachmentUnitsComponent', () => {
     let attachmentUnitsComponentFixture: ComponentFixture<AttachmentUnitsComponent>;
     let attachmentUnitsComponent: AttachmentUnitsComponent;
 
-    let activatedRoute: ActivatedRoute;
+    let attachmentUnitService: AttachmentUnitService;
     let router: Router;
+    let translateService: TranslateService;
+    let translateStub: jest.SpyInstance;
+
+    const unit1: AttachmentUnitsInfoResponseType = {
+        unitName: 'Unit 1',
+        releaseDate: dayjs().year(2022).month(3).date(5),
+        startPage: 1,
+        endPage: 20,
+    };
+    const unit2: AttachmentUnitsInfoResponseType = {
+        unitName: 'Unit 2',
+        releaseDate: dayjs().year(2022).month(3).date(5),
+        startPage: 21,
+        endPage: 40,
+    };
+    const unit3: AttachmentUnitsInfoResponseType = {
+        unitName: 'Unit 3',
+        releaseDate: dayjs().year(2022).month(3).date(5),
+        startPage: 41,
+        endPage: 60,
+    };
+    const units = [unit1, unit2, unit3];
+    const numberOfPages = 60;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -85,11 +123,48 @@ describe('AttachmentUnitsComponent', () => {
         attachmentUnitsComponent = attachmentUnitsComponentFixture.componentInstance;
         attachmentUnitsComponentFixture.detectChanges();
 
+        attachmentUnitsComponent.units = units;
+        attachmentUnitsComponent.numberOfPages = numberOfPages;
+
+        translateService = TestBed.inject(TranslateService);
+        attachmentUnitService = TestBed.inject(AttachmentUnitService);
         router = TestBed.get(Router);
+        translateStub = jest.spyOn(translateService, 'instant');
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
+    });
+
+    it('should create attachment units', fakeAsync(() => {
+        const file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('lectureUnitSplitDTOs', objectToJsonBlob(units));
+
+        const responseBody: AttachmentUnitsResponseType = {
+            units,
+            numberOfPages,
+        };
+
+        const attachmentUnitsResponse: HttpResponse<AttachmentUnitsResponseType> = new HttpResponse({
+            body: responseBody,
+            status: 201,
+        });
+        const createAttachmentUnitStub = jest.spyOn(attachmentUnitService, 'createUnits').mockReturnValue(of(attachmentUnitsResponse));
+        const navigateSpy = jest.spyOn(router, 'navigate');
+
+        attachmentUnitsComponent.createAttachmentUnits();
+        attachmentUnitsComponentFixture.detectChanges();
+
+        expect(createAttachmentUnitStub).toHaveBeenCalledWith(1, formData);
+        expect(createAttachmentUnitStub).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledOnce();
+    }));
+
+    it('should validate valid table correctly', () => {
+        expect(attachmentUnitsComponent.validUnitInformation()).toBeTrue();
+        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeUndefined();
     });
 
     it('should add row to table and delete row from table only if there are more then 1 rows in table', () => {
@@ -99,10 +174,12 @@ describe('AttachmentUnitsComponent', () => {
         attachmentUnitsComponent.deleteRow(0);
         expect(attachmentUnitsComponent.units).toHaveLength(1);
         expect(attachmentUnitsComponent.deleteRow(0)).toBeFalse();
+
+        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
     });
 
     it('should navigate to previous state', fakeAsync(() => {
-        activatedRoute = TestBed.inject(ActivatedRoute);
         attachmentUnitsComponentFixture.detectChanges();
 
         const navigateSpy = jest.spyOn(router, 'navigate');
