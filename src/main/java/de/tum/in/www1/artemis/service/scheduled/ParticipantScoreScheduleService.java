@@ -136,7 +136,7 @@ public class ParticipantScoreScheduleService {
      */
     @Scheduled(cron = "0 * * * * *")
     protected void scheduleTasks() {
-        logger.info("Schedule tasks to process...");
+        logger.debug("Schedule tasks to process...");
         SecurityUtils.setAuthorizationObject();
         if (isRunning.get()) {
             executeScheduledTasks();
@@ -171,7 +171,7 @@ public class ParticipantScoreScheduleService {
             scheduleTask(participantScore.getExercise().getId(), participantScore.getParticipant().getId(), Instant.now(), null);
         });
 
-        logger.info("Processing of {} results and {} participant scores.", resultsToProcess.size(), participantScoresToProcess.size());
+        logger.debug("Processing of {} results and {} participant scores.", resultsToProcess.size(), participantScoresToProcess.size());
     }
 
     /**

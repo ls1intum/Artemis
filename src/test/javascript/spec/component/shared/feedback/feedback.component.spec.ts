@@ -355,4 +355,13 @@ describe('FeedbackComponent', () => {
         expect(comp.loadingFailed).toBeTrue();
         expect(comp.isLoading).toBeFalse();
     });
+
+    it('should hide chart if no exercise available', () => {
+        comp.showScoreChart = true;
+        comp.exercise = undefined;
+
+        comp.ngOnInit();
+
+        expect(comp.showScoreChart).toBeFalse();
+    });
 });

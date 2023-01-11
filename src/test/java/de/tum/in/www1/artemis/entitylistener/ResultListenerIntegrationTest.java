@@ -72,7 +72,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @BeforeEach
     void setupTestScenario() {
         participantScoreScheduleService.activate();
-        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         ZonedDateTime pastReleaseDate = ZonedDateTime.now().minusDays(5);
         ZonedDateTime pastDueDate = ZonedDateTime.now().minusDays(3);
         ZonedDateTime pastAssessmentDueDate = ZonedDateTime.now().minusDays(2);
