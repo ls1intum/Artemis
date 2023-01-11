@@ -2,6 +2,7 @@
     &__header {
         display: flex;
         justify-content: space-between;
+        gap: 2rem;
     }
 
     &__category {
@@ -39,6 +40,7 @@
             display: flex;
             width: 100%;
             justify-content: space-between;
+            gap: 2rem;
         }
     }
 }

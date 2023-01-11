@@ -20,7 +20,8 @@
             "type": "Type",
             "result": "Result",
             "modal": {
-                "submissionInformation": "Submitted {{ timeAgo }}, linked to commit: "
+                "submitted": "Submitted",
+                "linkedToCommit": "linked to commit"
             }
         }
     }
