@@ -92,7 +92,6 @@ public class ExerciseIntegrationTestUtils {
         }
     }
 
-    // TODO can this be writen better?
     private Comparator<LinkedHashMap<String, ? extends Comparable>> getExpetedComparator(Exercise.ExerciseSearchColumn sort) {
         return switch (sort) {
             case ID -> Comparator.comparing(map -> map.get("id"));

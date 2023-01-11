@@ -1,4 +1,3 @@
-import { HttpParams } from '@angular/common/http';
 import { Component, Injector, Input, OnInit } from '@angular/core';
 import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';

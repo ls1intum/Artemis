@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -160,7 +161,7 @@ public class ProgrammingExerciseService {
      * @param programmingExercise The programmingExercise that should be setup
      * @return The new setup exercise
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
-     * @throws IOException If the template files couldn't be read
+     * @throws IOException     If the template files couldn't be read
      */
     @Transactional // TODO: apply the transaction on a smaller scope
     // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
@@ -414,8 +415,8 @@ public class ProgrammingExerciseService {
 
     /**
      * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
-     * @param updatedProgrammingExercise the changed programming exercise with its new values
-     * @param notificationText    optional text about the changes for a notification
+     * @param updatedProgrammingExercise      the changed programming exercise with its new values
+     * @param notificationText                optional text about the changes for a notification
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
@@ -783,7 +784,7 @@ public class ProgrammingExerciseService {
      * @param testsPath       The path to the tests' folder, e.g. the path inside the repository where the structure oracle file will be saved in.
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
-     * @throws IOException If the URLs cannot be converted to actual {@link Path paths}
+     * @throws IOException     If the URLs cannot be converted to actual {@link Path paths}
      * @throws GitAPIException If the checkout fails
      */
     public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
@@ -948,7 +949,6 @@ public class ProgrammingExerciseService {
      * @param search         The search query defining the search term and the size of the returned page
      * @param isCourseFilter Whether to search in the courses for exercises
      * @param isExamFilter   Whether to search in the groups for exercises
-     * @param isSCAFilter    Whether to only include exercises with SCA active
      * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
@@ -958,28 +958,35 @@ public class ProgrammingExerciseService {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
-        final var pageable = PageUtil.createExercisePageRequest(search);
-        final var searchTerm = search.getSearchTerm();
+        String searchTerm = search.getSearchTerm();
+        PageRequest pageable = PageUtil.createExercisePageRequest(search);
         Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
-        Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findAll(specification, pageable);
-        return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
+        return getAllOnPageForSpecification(pageable, specification);
     }
 
+    /**
+     * Search for all programming exercises with SCA enabled and with a specific programming language.
+     *
+     * @param search              The search query defining the search term and the size of the returned page
+     * @param isCourseFilter      Whether to search in the courses for exercises
+     * @param isExamFilter        Whether to search in the groups for exercises
+     * @param user                The user for whom to fetch all available exercises
+     * @param programmingLanguage The result will only include exercises in this language
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     */
     public SearchResultPageDTO<ProgrammingExercise> getAllWithSCAOnPageWithSize(PageableSearchDTO<String> search, boolean isCourseFilter, boolean isExamFilter,
             ProgrammingLanguage programmingLanguage, User user) {
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
-        final var pageable = PageUtil.createExercisePageRequest(search);
-        final var searchTerm = search.getSearchTerm();
+        String searchTerm = search.getSearchTerm();
+        PageRequest pageable = PageUtil.createExercisePageRequest(search);
         Specification<ProgrammingExercise> specification = exerciseSpecificationService.getExerciseSearchSpecification(searchTerm, isCourseFilter, isExamFilter, user, pageable);
         specification = specification.and(exerciseSpecificationService.createSCAFilter(programmingLanguage));
-        // TODO this import only makes sense if only the same languages are shown.
-        // Think about a way to pass the langue from the client
-        // Idea: Instead of one big method, create two endpoints where SCAfilter is always true (no param needed) and the programming language gets passed instead
-        // Maybe also make two methods here instead of one, let's see.
-        // Make 2 endpoints, the relation (languge only set when filter is true) is bad
-        // Also check this in import-endpoint and add test case for this
+        return getAllOnPageForSpecification(pageable, specification);
+    }
+
+    private SearchResultPageDTO<ProgrammingExercise> getAllOnPageForSpecification(PageRequest pageable, Specification<ProgrammingExercise> specification) {
         Page<ProgrammingExercise> exercisePage = programmingExerciseRepository.findAll(specification, pageable);
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
@@ -1054,7 +1061,7 @@ public class ProgrammingExerciseService {
      * The check is done based on a generated project key (course short name + exercise short name) and the project name (course short name + exercise title).
      *
      * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
-     * @param courseShortName the shortName of the course the programming exercise should be imported in
+     * @param courseShortName     the shortName of the course the programming exercise should be imported in
      * @return TRUE if a project with the same ProjectKey or ProjectName already exists, otherwise false
      */
     public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
@@ -1088,8 +1095,9 @@ public class ProgrammingExerciseService {
     /**
      * Locks or unlocks the repository if necessary due to the changes in the programming exercise.
      * Notice: isAllowOfflineIde() == null means that the offline IDE is allowed
+     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise the updated exercise with new values
+     * @param updatedProgrammingExercise      the updated exercise with new values
      */
     public void handleRepoAccessRightChanges(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (!programmingExerciseBeforeUpdate.isReleased()) {
@@ -1117,8 +1125,9 @@ public class ProgrammingExerciseService {
 
     /**
      * Checks if the repos have to be locked/unlocked based on the new due date. Individual due dates are considered, so not all repositories might get locked/unlocked
+     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise the updated exercise with new values
+     * @param updatedProgrammingExercise      the updated exercise with new values
      * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
      */
     private boolean handleRepoAccessRightChangesDueDates(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
@@ -1143,8 +1152,9 @@ public class ProgrammingExerciseService {
 
     /**
      * Checks if the repos have to be locked/unlocked based on the allowance of offline IDEs. The read access in the VCS is only necessary when working with an offline IDE
+     *
      * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
-     * @param updatedProgrammingExercise the updated exercise with new values
+     * @param updatedProgrammingExercise      the updated exercise with new values
      * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
      */
     private boolean handleRepoAccessRightChangesChangesOfflineIDE(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
