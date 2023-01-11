@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.Exam_;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup_;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 @Service
 public class ExerciseSpecificationService {
@@ -91,6 +92,13 @@ public class ExerciseSpecificationService {
         };
     }
 
+    /**
+     * Creates a {@link Specification} to filter for programming exercises with the given programming language and SCA enabled.
+     *
+     * @param programmingLanguage the language to filter for
+     * @return a Specification that can get passed to the @{@link de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository}
+     * @see de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService#getAllWithSCAOnPageWithSize(PageableSearchDTO, boolean, boolean, ProgrammingLanguage, User)
+     */
     public Specification<ProgrammingExercise> createSCAFilter(ProgrammingLanguage programmingLanguage) {
         return (root, query, criteriaBuilder) -> {
             Predicate scaActive = criteriaBuilder.isTrue(root.get(ProgrammingExercise_.STATIC_CODE_ANALYSIS_ENABLED));
