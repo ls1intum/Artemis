@@ -1,4 +1,6 @@
 import { defineConfig } from 'cypress';
+import { registerMultilanguageCoveragePlugin } from '@heddendorp/cypress-plugin-multilanguage-coverage';
+import path from 'path';
 
 export default defineConfig({
     fixturesFolder: 'fixtures',
@@ -16,7 +18,8 @@ export default defineConfig({
         toConsole: true,
     },
     e2e: {
-        setupNodeEvents(on) {
+        setupNodeEvents(on, config) {
+            process.env.CYPRESS_COLLECT_COVERAGE === 'true' && registerMultilanguageCoveragePlugin({ workingDirectory: path.join(__dirname), saveRawCoverage: true })(on, config);
             on('task', {
                 error(message: string) {
                     console.error('\x1b[31m', 'ERROR: ', message, '\x1b[0m');
