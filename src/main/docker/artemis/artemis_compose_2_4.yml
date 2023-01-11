@@ -27,8 +27,6 @@ services:
         environment:
             _JAVA_OPTIONS: -Xmx5120m -Xms2560m
             SPRING_PROFILES_ACTIVE: artemis,scheduling,athene,prod,docker
-        # TODO: add a restart at a certain stage for prod systems for sure, not sure about dev systems?, discuss
-        # restart: unless-stopped
         healthcheck:
             test: wget -nv -t1 --spider http://localhost:8080/actuator/health || exit 1
             start_period: 300s
