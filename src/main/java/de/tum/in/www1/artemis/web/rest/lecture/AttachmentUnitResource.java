@@ -159,10 +159,10 @@ public class AttachmentUnitResource {
      * @param lectureId            the id of the lecture to which the attachment units should be added
      * @param lectureUnitSplitDTOs the units that should be created
      * @param file                 the file to be splitted
-     * @return the ResponseEntity with status 200 (ok) and with body the new attachment units
+     * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment units
      * @throws IOException
      */
-    @PostMapping(value = "lectures/{lectureId}/attachment-units/split")
+    @PostMapping("lectures/{lectureId}/attachment-units/split")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestPart List<LectureUnitSplitDTO> lectureUnitSplitDTOs,
             @RequestPart MultipartFile file) throws IOException {
@@ -178,11 +178,11 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * POST lectures/:lectureId/process-units : gets units data to be split.
+     * POST lectures/:lectureId/process-units : Prepare attachment units information
      *
      * @param file       the file to get the units data
      * @param lectureId  the id of the lecture to which the file is going to be splitted
-     * @return the ResponseEntity with status 200 (ok) and with body the new list of LectureUnitSplitDTO
+     * @return the ResponseEntity with status 200 (ok) and with body attachmentUnitsData
      * @throws IOException
      */
     @PostMapping("lectures/{lectureId}/process-units")

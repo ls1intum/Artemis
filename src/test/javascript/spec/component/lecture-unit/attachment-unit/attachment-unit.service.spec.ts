@@ -93,4 +93,80 @@ describe('AttachmentUnitService', () => {
         req.flush(returnedFromService);
         expect(expectedResult.body).toEqual(expected);
     });
+
+    it('should create AttachmentUnits', async () => {
+        const returnedAttachmentUnits = [
+            {
+                type: 'attachment',
+                id: 1,
+                name: 'Unit 1',
+                lecture: {
+                    id: 1,
+                    title: 'test',
+                    course: {
+                        id: 1,
+                        title: 'test',
+                    },
+                },
+                attachment: {
+                    id: 1,
+                    name: 'Unit1',
+                    link: '/api/files/attachments/attachment-unit/235/Unit_1_.pdf',
+                    version: 1,
+                    attachmentType: 'FILE',
+                },
+            },
+        ];
+        let response: any;
+        const returnedFromService = { ...returnedAttachmentUnits };
+
+        const expected = { ...returnedFromService };
+        const file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append(
+            'lectureUnitSplitDTOs',
+            objectToJsonBlob([
+                {
+                    unitName: 'Unit 1',
+                    releaseDate: dayjs().year(2022).month(3).date(5),
+                    startPage: 1,
+                    endPage: 20,
+                },
+            ]),
+        );
+        service
+            .createUnits(1, formData)
+            .pipe(take(1))
+            .subscribe((resp) => (response = resp));
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        expect(response.body).toEqual(expected);
+    });
+
+    it('should get units information', async () => {
+        const unit1 = {
+            unitName: 'Unit 1',
+            releaseDate: dayjs().year(2022).month(3).date(5),
+            startPage: 1,
+            endPage: 20,
+        };
+
+        let response: any;
+        const returnedFromService = { lectureUnitDTOS: [unit1], numberOfPages: 20 };
+
+        const expected = { ...returnedFromService };
+
+        const file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+
+        service
+            .getSplitUnitsData(1, formData)
+            .pipe(take(1))
+            .subscribe((resp) => (response = resp));
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        expect(response.body).toEqual(expected);
+    });
 });
