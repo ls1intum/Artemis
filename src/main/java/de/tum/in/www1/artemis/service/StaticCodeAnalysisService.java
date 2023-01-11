@@ -154,7 +154,6 @@ public class StaticCodeAnalysisService {
         var oldCategories = findByExerciseId(targetExercise.getId());
 
         var newCategories = sourceCategories.stream().map(category -> {
-            // TODO check if and what additional validation is necessary, of if we can simply copy everything.
             var copy = category.copy();
             copy.setProgrammingExercise(targetExercise);
             return copy;

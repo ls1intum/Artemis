@@ -384,5 +384,25 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.FORBIDDEN);
     }
 
-    // TODO Test user without enough rights for one exercise -> Exception
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testImportCategories_differentLanguages() throws Exception {
+        ProgrammingExercise sourceExercise = database.addProgrammingExerciseToCourse(course, true, false, ProgrammingLanguage.SWIFT);
+
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, programmingExerciseSCAEnabled);
+        request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testImportCategories_asEditor_wrongCourse() throws Exception {
+        Course otherCourse = database.addCourseWithOneProgrammingExercise(true);
+        otherCourse.setEditorGroupName("otherEditorGroup");
+        otherCourse.setInstructorGroupName("otherInstructorGroup");
+        courseRepository.save(otherCourse);
+        Exercise sourceExercise = otherCourse.getExercises().iterator().next();
+
+        var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.IMPORT, programmingExerciseSCAEnabled);
+        request.patch(endpoint + "?sourceExerciseId=" + sourceExercise.getId(), null, HttpStatus.FORBIDDEN);
+    }
 }

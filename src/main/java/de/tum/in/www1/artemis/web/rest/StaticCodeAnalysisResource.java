@@ -127,6 +127,10 @@ public class StaticCodeAnalysisResource {
         checkSCAEnabledForExerciseElseThrow(sourceExercise);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, sourceExercise, null);
 
+        if (targetExercise.getProgrammingLanguage() != sourceExercise.getProgrammingLanguage()) {
+            throw new ConflictException("SCA configurations can only be imported from exercises with the same programming language", ENTITY_NAME, "programmingLanguageMismatch");
+        }
+
         Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.importCategoriesFromExercise(targetExercise, sourceExercise);
         return ResponseEntity.ok(staticCodeAnalysisCategories);
     }
