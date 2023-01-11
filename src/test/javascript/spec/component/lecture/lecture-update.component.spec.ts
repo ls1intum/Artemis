@@ -5,36 +5,30 @@ import { By } from '@angular/platform-browser';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
-import { AlertService } from 'app/core/util/alert.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureUpdateComponent } from 'app/lecture/lecture-update.component';
-import { LectureComponent } from 'app/lecture/lecture.component';
 import { LectureService } from 'app/lecture/lecture.service';
 import { LectureUpdateWizardComponent } from 'app/lecture/wizard-mode/lecture-update-wizard.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
-import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MarkdownEditorComponent } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HtmlForMarkdownPipe } from 'app/shared/pipes/html-for-markdown.pipe';
 import dayjs from 'dayjs/esm';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../test.module';
 
-describe('Lecture', () => {
-    let lectureComponentFixture: ComponentFixture<LectureComponent>;
-    let lectureComponent: LectureComponent;
+describe('LectureUpdateComponent', () => {
     let lectureUpdateWizardComponentFixture: ComponentFixture<LectureUpdateWizardComponent>;
     let lectureUpdateWizardComponent: LectureUpdateWizardComponent;
 
     let lectureService: LectureService;
     let lectureUpdateComponentFixture: ComponentFixture<LectureUpdateComponent>;
     let lectureUpdateComponent: LectureUpdateComponent;
-    let lectureServiceFindAllByLectureIdStub: jest.SpyInstance;
     let router: Router;
     let activatedRoute: ActivatedRoute;
 
@@ -52,15 +46,12 @@ describe('Lecture', () => {
             imports: [ArtemisTestModule, FormsModule, MockModule(NgbTooltipModule)],
             declarations: [
                 LectureUpdateComponent,
-                LectureComponent,
-                LectureUpdateWizardComponent,
                 MockComponent(LectureUpdateWizardComponent),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(MarkdownEditorComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockPipe(HtmlForMarkdownPipe),
-                MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
             ],
             providers: [
@@ -82,15 +73,10 @@ describe('Lecture', () => {
                         },
                     },
                 },
-                MockProvider(AlertService),
-                MockProvider(LectureService),
             ],
         })
             .compileComponents()
             .then(() => {
-                lectureComponentFixture = TestBed.createComponent(LectureComponent);
-                lectureComponent = lectureComponentFixture.componentInstance;
-
                 lectureUpdateComponentFixture = TestBed.createComponent(LectureUpdateComponent);
                 lectureUpdateComponent = lectureUpdateComponentFixture.componentInstance;
 
@@ -98,8 +84,6 @@ describe('Lecture', () => {
                 lectureUpdateWizardComponent = lectureUpdateWizardComponentFixture.componentInstance;
 
                 lectureService = TestBed.inject(LectureService);
-                lectureServiceFindAllByLectureIdStub = jest.spyOn(lectureService, 'findAllByCourseId').mockReturnValue(of(new HttpResponse({ body: [pastLecture] })));
-
                 router = TestBed.get(Router);
             });
     });
@@ -109,7 +93,6 @@ describe('Lecture', () => {
     });
 
     it('should create lecture', fakeAsync(() => {
-        lectureComponentFixture.detectChanges();
         lectureUpdateComponent.lecture = { title: 'test1' } as Lecture;
         const navigateSpy = jest.spyOn(router, 'navigate');
 
@@ -136,7 +119,6 @@ describe('Lecture', () => {
 
         expect(createSpy).toHaveBeenCalledOnce();
         expect(createSpy).toHaveBeenCalledWith({ title: 'test1' });
-        expect(lectureServiceFindAllByLectureIdStub).toHaveBeenCalledOnce();
     }));
 
     it('should create lecture in wizard mode', () => {
@@ -186,7 +168,7 @@ describe('Lecture', () => {
         activatedRoute = TestBed.inject(ActivatedRoute);
         activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6 } });
 
-        lectureComponentFixture.detectChanges();
+        lectureUpdateComponentFixture.detectChanges();
         lectureUpdateComponent.lecture = { id: 6, title: 'test1Updated' } as Lecture;
 
         const updateSpy = jest.spyOn(lectureService, 'update').mockReturnValue(
@@ -247,7 +229,7 @@ describe('Lecture', () => {
         activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6, title: '', course: { id: 1 } } });
 
         lectureUpdateComponent.ngOnInit();
-        lectureComponentFixture.detectChanges();
+        lectureUpdateComponentFixture.detectChanges();
 
         const navigateSpy = jest.spyOn(router, 'navigate');
         const previousState = jest.spyOn(lectureUpdateComponent, 'previousState');
@@ -293,7 +275,7 @@ describe('Lecture', () => {
         expect(navigateSpy).toHaveBeenCalledWith(expectedPath, { state: { file: lectureUpdateComponent.file, fileName: lectureUpdateComponent.fileName } });
     }));
 
-    it('should call on file change on changed file', fakeAsync(() => {
+    it('should call onFileChange on changed file', fakeAsync(() => {
         lectureUpdateComponent.processUnitMode = false;
         lectureUpdateComponentFixture.detectChanges();
         expect(lectureUpdateComponentFixture.debugElement.nativeElement.querySelector('#fileInput')).toBeFalsy();
@@ -311,11 +293,11 @@ describe('Lecture', () => {
         expect(onFileChangeStub).toHaveBeenCalledOnce();
     }));
 
-    it('should set lecture start and end date correctly', fakeAsync(() => {
+    it('should set lecture start date and end date correctly', fakeAsync(() => {
         activatedRoute = TestBed.inject(ActivatedRoute);
         activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6 } });
 
-        lectureComponentFixture.detectChanges();
+        lectureUpdateComponentFixture.detectChanges();
         lectureUpdateComponent.lecture = { id: 6, title: 'test1Updated' } as Lecture;
 
         const setDatesSpy = jest.spyOn(lectureUpdateComponent, 'onDatesValuesChanged');
@@ -328,7 +310,7 @@ describe('Lecture', () => {
         expect(setDatesSpy).toHaveBeenCalledOnce();
         expect(lectureUpdateComponent.lecture.startDate).toEqual(lectureUpdateComponent.lecture.endDate);
 
-        lectureComponentFixture.detectChanges();
+        lectureUpdateComponentFixture.detectChanges();
         tick();
 
         lectureUpdateComponent.lecture.startDate = undefined;
@@ -340,7 +322,7 @@ describe('Lecture', () => {
         expect(lectureUpdateComponent.lecture.startDate).toBeUndefined();
         expect(lectureUpdateComponent.lecture.endDate).toBeUndefined();
 
-        lectureComponentFixture.detectChanges();
+        lectureUpdateComponentFixture.detectChanges();
         tick();
 
         lectureUpdateComponent.lecture.startDate = dayjs().year(2022).month(1).date(1);

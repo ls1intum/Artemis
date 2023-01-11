@@ -4,7 +4,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
-import { HttpClient } from '@angular/common/http';
 import { combineLatest } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { objectToJsonBlob } from 'app/utils/blob-util';
@@ -48,7 +47,6 @@ export class AttachmentUnitsComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private attachmentUnitService: AttachmentUnitService,
-        private httpClient: HttpClient,
         private alertService: AlertService,
         private translateService: TranslateService,
     ) {
