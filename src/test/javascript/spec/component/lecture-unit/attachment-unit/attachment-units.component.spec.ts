@@ -26,6 +26,9 @@ describe('AttachmentUnitsComponent', () => {
     let attachmentUnitsComponentFixture: ComponentFixture<AttachmentUnitsComponent>;
     let attachmentUnitsComponent: AttachmentUnitsComponent;
 
+    let activatedRoute: ActivatedRoute;
+    let router: Router;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(NgbTooltipModule)],
@@ -81,17 +84,32 @@ describe('AttachmentUnitsComponent', () => {
         attachmentUnitsComponentFixture = TestBed.createComponent(AttachmentUnitsComponent);
         attachmentUnitsComponent = attachmentUnitsComponentFixture.componentInstance;
         attachmentUnitsComponentFixture.detectChanges();
+
+        router = TestBed.get(Router);
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
     });
 
-    it('should add row', () => {
+    it('should add row to table and delete row from table only if there are more then 1 rows in table', () => {
         attachmentUnitsComponent.units = [{ unitName: '', startPage: 0, endPage: 0 }];
-        attachmentUnitsComponent.isLoading = false;
         attachmentUnitsComponent.addRow();
-
         expect(attachmentUnitsComponent.units).toHaveLength(2);
+        attachmentUnitsComponent.deleteRow(0);
+        expect(attachmentUnitsComponent.units).toHaveLength(1);
+        expect(attachmentUnitsComponent.deleteRow(0)).toBeFalse();
     });
+
+    it('should navigate to previous state', fakeAsync(() => {
+        activatedRoute = TestBed.inject(ActivatedRoute);
+        attachmentUnitsComponentFixture.detectChanges();
+
+        const navigateSpy = jest.spyOn(router, 'navigate');
+        const previousState = jest.spyOn(attachmentUnitsComponent, 'previousState');
+        attachmentUnitsComponent.previousState();
+        expect(previousState).toHaveBeenCalledOnce();
+
+        expect(navigateSpy).toHaveBeenCalledOnce();
+    }));
 });
