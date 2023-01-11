@@ -22,13 +22,11 @@ import org.eclipse.jgit.lib.RefUpdate;
 import org.eclipse.jgit.lib.Repository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -57,20 +55,10 @@ public class LocalVCService extends AbstractVersionControlService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCPath;
 
-    @Value("${artemis.git.name}")
-    private String artemisGitName;
-
-    private final RestTemplate restTemplate;
-
-    private final RestTemplate shortTimeoutRestTemplate;
-
-    public LocalVCService(@Qualifier("localVCRestTemplate") RestTemplate restTemplate, UrlService urlService,
-            @Qualifier("shortTimeoutLocalVCRestTemplate") RestTemplate shortTimeoutRestTemplate, GitService gitService, ApplicationContext applicationContext,
+    public LocalVCService(UrlService urlService, GitService gitService, ApplicationContext applicationContext,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             Environment environment) {
         super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository, environment);
-        this.restTemplate = restTemplate;
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     @Override
@@ -133,21 +121,7 @@ public class LocalVCService extends AbstractVersionControlService {
 
     @Override
     public void setRepositoryPermissionsToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, Set<User> users) throws LocalVCException {
-        users.forEach(user -> setStudentRepositoryPermissionToReadOnly(repositoryUrl, projectKey, user.getLogin()));
-    }
-
-    /**
-     * Set the permission of a student for a repository to read-only.
-     *
-     * @param repositoryUrl        The complete repository-url (including protocol,
-     *                             host and the complete path)
-     * @param projectKey           The project key of the repository's project.
-     * @param username             The username of the user whom to assign a
-     *                             permission level
-     */
-    private void setStudentRepositoryPermissionToReadOnly(VcsRepositoryUrl repositoryUrl, String projectKey, String username) throws LocalVCException {
-        // VersionControlRepositoryPermission.REPO_READ
-        // TODO: Probably create a new db table "participation_student_permission" which contains whether each student for one participation has read and/or write privileges.
+        // Not implemented for local VC. All checks for whether a student can access a repository are conducted in the LocalVCFetchFilter and LocalVCPushFilter.
     }
 
     /**
@@ -177,7 +151,7 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void unprotectBranch(VcsRepositoryUrl repositoryUrl, String branch) throws VersionControlException {
         // Not implemented. It is not needed for local VC for the current use
-        // case, because the main branch is unprotected by default
+        // case, because the main branch is unprotected by default.
     }
 
     /**
@@ -234,11 +208,7 @@ public class LocalVCService extends AbstractVersionControlService {
 
     @Override
     public ConnectorHealth health() {
-        ConnectorHealth health = null;
-
-        // TODO: Check if servlet is running.
-        health = new ConnectorHealth(true);
-
+        ConnectorHealth health = new ConnectorHealth(true);
         health.setAdditionalInfo(Map.of("url", localVCServerUrl));
         return health;
     }
@@ -271,7 +241,7 @@ public class LocalVCService extends AbstractVersionControlService {
                 throw new IOException("Could not create directory " + remoteDir.getPath());
             }
 
-            // Create a bare local repository with JGit
+            // Create a bare local repository with JGit.
             Git git = Git.init().setDirectory(remoteDir).setBare(true).call();
             Repository repository = git.getRepository();
             RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
@@ -303,120 +273,20 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     @NotNull
     public Commit getLastCommitDetails(Object requestBody) throws LocalVCException {
-        // NOTE the requestBody should look like this:
-        // {"eventKey":"...","date":"...","actor":{...},"repository":{...},"changes":[{"ref":{...},"refId":"refs/heads/main",
-        // "fromHash":"5626436a443eb898a5c5f74b6352f26ea2b7c84e","toHash":"662868d5e16406d1dd4dcfa8ac6c46ee3d677924","type":"UPDATE"}]}
-        // we are interested in the toHash
-        Commit commit = new Commit();
-        try {
-            // TODO: use a DTO (e.g. something similar to CommitDTO)
-            final var commitData = new ObjectMapper().convertValue(requestBody, JsonNode.class);
-            var lastChange = commitData.get("changes").get(0);
-            var ref = lastChange.get("ref");
-            if (ref != null) {
-                var branch = ref.get("displayId").asText();
-                commit.setBranch(branch);
-            }
-            var hash = lastChange.get("toHash").asText();
-            commit.setCommitHash(hash);
-            var actor = commitData.get("actor");
-            String name = actor.get("name").asText();
-            String email = actor.get("emailAddress").asText();
-            if (artemisGitName.equalsIgnoreCase(name)) {
-                final var commitInfo = fetchCommitInfo(commitData, hash);
-                if (commitInfo != null) {
-                    commit.setMessage(commitInfo.get("message").asText());
-                    name = commitInfo.get("author").get("name").asText();
-                    email = commitInfo.get("author").get("emailAddress").asText();
-                }
-            }
-            commit.setAuthorName(name);
-            commit.setAuthorEmail(email);
-        }
-        catch (Exception e) {
-            // silently fail because this step is not absolutely necessary
-            log.error("Error when getting hash of last commit. Able to continue.", e);
-        }
-        return commit;
+        // The local VCS will create a Commit object straight away and hand that to the processNewProgrammingSubmission method in ProgrammingSubmissionService.
+        return (Commit) requestBody;
     }
 
     @Override
     public ZonedDateTime getPushDate(ProgrammingExerciseParticipation participation, String commitHash, Object eventObject) throws LocalVCException {
-        // If the event object is supplied we try to retrieve the push date from there
-        // to save one call
-        // if (eventObject != null) {
+        // The local CIS will provide an eventObject that contains the push date.
         JsonNode node = new ObjectMapper().convertValue(eventObject, JsonNode.class);
         String dateString = node.get("date").asText(null);
-        // if (dateString != null) {
         try {
             return ZonedDateTime.parse(dateString, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ssZ"));
         }
         catch (DateTimeParseException e) {
             throw new LocalVCException("Unable to get the push date from participation.");
         }
-        // }
-        // }
-
-        // boolean isLastPage = false;
-        // final int perPage = 40;
-        // int start = 0;
-        // while (!isLastPage) {
-        // try {
-        // UriComponents builder = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI())
-        // .pathSegment("rest", "api", "latest", "projects", participation.getProgrammingExercise().getProjectKey(), "repos",
-        // urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()), "ref-change-activities")
-        // .queryParam("start", start).queryParam("limit", perPage).queryParam("ref", "refs/heads/" + defaultBranch).build();
-        // final var response = restTemplate.exchange(builder.toUri(), HttpMethod.GET, null, BitbucketChangeActivitiesDTO.class);
-        // if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
-        // throw new BitbucketException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
-        // }
-        // final var changeActivities = response.getBody().values();
-        //
-        // final var activityOfPush = changeActivities.stream().filter(activity -> commitHash.equals(activity.refChange().toHash())).findFirst();
-        // if (activityOfPush.isPresent()) {
-        // return Instant.ofEpochMilli(activityOfPush.get().createdDate()).atZone(ZoneOffset.UTC);
-        // }
-        // isLastPage = response.getBody().isLastPage();
-        // start += perPage;
-        // }
-        // catch (URISyntaxException e) {
-        // throw new BitbucketException("Unable to get push date for participation " + participation.getId(), e);
-        // }
-        // }
-        // throw new BitbucketException("Unable to find push date result for participation " + participation.getId() + " and hash " + commitHash);
     }
-
-    @Nullable
-    private JsonNode fetchCommitInfo(JsonNode commitData, String hash) {
-        try {
-            var cloneLinks = commitData.get("repository").get("links").get("clone");
-            VcsRepositoryUrl repositoryURL;
-            // it might be the case that cloneLinks contains two URLs and the first one is
-            // 'ssh'. Then we are interested in http
-            // we use contains here, because it could be the case that https is used here as
-            // well in the future.
-            // It should not be possible that the cloneLinks array is empty.
-            if (cloneLinks.size() > 1 && !cloneLinks.get(0).get("name").asText().contains("http")) {
-                repositoryURL = new VcsRepositoryUrl(cloneLinks.get(1).get("href").asText());
-            }
-            else {
-                repositoryURL = new VcsRepositoryUrl(cloneLinks.get(0).get("href").asText());
-            }
-            final var projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryURL);
-            final var slug = urlService.getRepositorySlugFromRepositoryUrl(repositoryURL);
-            // final var uriBuilder = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI())
-            // .pathSegment("rest", "api", "1.0", "projects", projectKey, "repos", slug, "commits", hash).build();
-            final JsonNode commitInfo = null; // restTemplate.exchange(uriBuilder.toUri(), HttpMethod.GET, null, JsonNode.class).getBody();
-            if (commitInfo == null) {
-                throw new LocalVCException("Unable to fetch commit info from local git for hash " + hash);
-            }
-
-            return commitInfo;
-        }
-        catch (Exception e) {
-            log.warn("Cannot fetch commit info for hash {} due to error: {}", hash, e.getMessage());
-        }
-        return null;
-    }
-
 }

@@ -8,8 +8,6 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -37,8 +35,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Service
 @Profile("localvc")
 public class LocalVCFilterUtilService {
-
-    private final Logger log = LoggerFactory.getLogger(LocalVCFilterUtilService.class);
 
     @Value("${artemis.version-control.url}")
     private URL localVCServerUrl;
@@ -115,11 +111,6 @@ public class LocalVCFilterUtilService {
         ProgrammingExercise exercise = findExerciseForRepository(projectKey);
 
         authorizeUser(repositoryTypeOrUserName, course, exercise, user, forPush);
-
-        if (forPush) {
-            log.debug("Notifying Artemis about a new push.");
-            // TODO: Add Webhooks -> notifies Artemis on Push
-        }
     }
 
     private String checkAuthorizationHeader(String authorizationHeader) throws LocalVCAuthException {

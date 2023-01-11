@@ -50,6 +50,8 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
             return;
         }
 
+        // TODO: Notify Artemis on Push
+
         filterChain.doFilter(servletRequest, servletResponse);
 
     }
