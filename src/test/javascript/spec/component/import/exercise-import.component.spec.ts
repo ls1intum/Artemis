@@ -177,7 +177,7 @@ describe('ExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, true, true);
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, true, true, undefined);
             expect(comp.listSorting).toBeTrue();
         });
     }));
@@ -187,7 +187,7 @@ describe('ExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, page: 5 }, true, true);
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, page: 5 }, true, true, undefined);
             expect(comp.page).toBe(5);
         });
     }));
@@ -200,7 +200,7 @@ describe('ExerciseImportComponent', () => {
             tick(10);
             expect(searchForExercisesStub).not.toHaveBeenCalled();
             tick(290);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, true, true);
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, true, true, undefined);
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
@@ -210,7 +210,7 @@ describe('ExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.sortedColumn = 'TITLE';
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, true, true);
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, true, true, undefined);
             expect(comp.sortedColumn).toBe('TITLE');
         });
     }));
@@ -243,6 +243,6 @@ describe('ExerciseImportComponent', () => {
             sortedColumn: 'ID',
             sortingOrder: 'DESCENDING',
         };
-        expect(pagingServiceSpy).toHaveBeenCalledWith(expectedSearchObject, false, false);
+        expect(pagingServiceSpy).toHaveBeenCalledWith(expectedSearchObject, false, false, undefined);
     }));
 });

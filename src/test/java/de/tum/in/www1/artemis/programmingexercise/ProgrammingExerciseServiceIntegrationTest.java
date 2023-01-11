@@ -188,14 +188,14 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         assertThat(searchResult.getResultsOnPage().stream().filter(result -> ((int) ((LinkedHashMap<String, ?>) result).get("id")) == exerciseId.intValue())).hasSize(1);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor(boolean withSCA) throws Exception {
         testCourseAndExamFilters(withSCA);
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { false, true })
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin(boolean withSCA) throws Exception {
@@ -213,18 +213,17 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     private void testSCAFilter(String searchTerm, boolean expectSca) throws Exception {
         var search = database.configureSearch(searchTerm);
         var filters = database.searchMapping(search);
-        filters.add("isSCAFilter", "false");
 
-        // We should get both exercises if the filter is false:
+        // We should get both exercises when we don't filter for SCA only (other endpoint)
         var result = request.get("/api/programming-exercises", HttpStatus.OK, SearchResultPageDTO.class, filters);
         assertThat(result.getResultsOnPage()).hasSize(2);
 
         filters = database.searchMapping(search);
-        filters.add("isSCAFilter", "true");
+        filters.add("programmingLanguage", "JAVA");
 
         // The exam exercise is always created with SCA deactivated
         // expectSca true -> 1 result, false -> 0 results
-        result = request.get("/api/programming-exercises", HttpStatus.OK, SearchResultPageDTO.class, filters);
+        result = request.get("/api/programming-exercises/with-sca", HttpStatus.OK, SearchResultPageDTO.class, filters);
         assertThat(result.getResultsOnPage()).hasSize(expectSca ? 1 : 0);
     }
 

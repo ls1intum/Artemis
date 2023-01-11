@@ -22,6 +22,7 @@ import {
     ChartFilterType,
     EditableField,
     ProgrammingExerciseConfigureGradingComponent,
+    Table,
 } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading.component';
 import { ProgrammingExerciseGradingSubmissionPolicyConfigurationActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-submission-policy-configuration-actions.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
@@ -825,7 +826,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(passedBuildCharts[2].totalParticipations).toBe(5);
     });
 
-    const sortAndTestTable = (table: string) => (headerElement: DebugElement, prop: string, dir: string) => {
+    const sortAndTestTable = (table: Table) => (headerElement: DebugElement, prop: string, dir: string) => {
         headerElement.nativeElement.click();
         fixture.detectChanges();
 
@@ -846,7 +847,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         sortAndTest(weightHeader, 'weight', 'asc');
         sortAndTest(weightHeader, 'weight', 'desc');
 
-        const passedPercentHeader = headerColumns[6];
+        const passedPercentHeader = headerColumns[7];
         sortAndTest(passedPercentHeader, 'passedPercent', 'asc');
         sortAndTest(passedPercentHeader, 'passedPercent', 'desc');
     });

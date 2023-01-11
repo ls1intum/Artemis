@@ -63,6 +63,8 @@ const DefaultFieldValues = {
 
 export type GradingTab = 'test-cases' | 'code-analysis' | 'submission-policy';
 
+export type Table = 'testCases' | 'codeAnalysis';
+
 @Component({
     selector: 'jhi-programming-exercise-configure-grading',
     templateUrl: './programming-exercise-configure-grading.component.html',
@@ -712,7 +714,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     tableSorts = { testCases: [{ prop: 'testName', dir: 'asc' }], codeAnalysis: [{ prop: 'name', dir: 'asc' }] };
-    onSort(table: 'testCases' | 'codeAnalysis', config: any) {
+    onSort(table: Table, config: any) {
         this.tableSorts[table] = config.sorts;
     }
 
@@ -721,7 +723,7 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
      * @param table The table of the property
      * @param prop The sorted property
      */
-    iconForSortPropField(table: 'testCases' | 'codeAnalysis', prop: string) {
+    iconForSortPropField(table: Table, prop: string) {
         const propSort = this.tableSorts[table].find((e) => e.prop === prop);
         if (!propSort) {
             return faSort;
