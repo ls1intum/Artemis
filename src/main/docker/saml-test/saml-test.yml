@@ -15,8 +15,8 @@ services:
         networks:
             - artemis
 
-#TODO: possible to add artemis yml here to artemis?
-# artemis volume: - ./saml-test/application-saml2.yml:/opt/artemis/config/application-saml2.yml:ro
+#TODO: add saml artemis configs via env file or environment variables here for artemis-app?
+# yml config file for this setup in./application-saml2.yml
 
 networks:
     artemis:

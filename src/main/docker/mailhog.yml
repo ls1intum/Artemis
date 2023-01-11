@@ -13,7 +13,7 @@ services:
         networks:
             - artemis
 
-# TODO: add mailconfigs or yml file here for artemis?
+# TODO: add mailconfigs via env file or environment variables here for artemis-app?
 #spring:
 #    mail:
 #        host: mailhog
