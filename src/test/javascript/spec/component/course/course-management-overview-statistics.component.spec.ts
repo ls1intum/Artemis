@@ -4,7 +4,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementOverviewStatisticsComponent } from 'app/course/manage/overview/course-management-overview-statistics.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LineChartModule } from '@swimlane/ngx-charts';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTestModule } from '../../test.module';
@@ -22,13 +21,7 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [MockModule(LineChartModule), ArtemisTestModule],
-            declarations: [
-                CourseManagementOverviewStatisticsComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(FaIconComponent),
-                MockDirective(TranslateDirective),
-                MockComponent(HelpIconComponent),
-            ],
+            declarations: [CourseManagementOverviewStatisticsComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective), MockComponent(HelpIconComponent)],
             providers: [{ provide: TranslateService, useClass: MockTranslateService }],
         })
             .compileComponents()

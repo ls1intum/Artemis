@@ -58,6 +58,7 @@ export class ResetRepoButtonComponent implements OnInit {
 
     resetRepository(gradedParticipationId?: number) {
         this.exercise.loading = true;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
         const participationId = this.practiceParticipation?.id ?? this.gradedParticipation?.id!;
         this.programmingExerciseParticipationService
             .resetRepository(participationId, gradedParticipationId)

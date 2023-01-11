@@ -153,7 +153,7 @@
                                 [result]="result"
                                 [showUngradedResults]="true"
                                 [showBadge]="true"
-                                [showTestDetails]="programmingExercise?.showTestNamesToStudents ?? false"
+                                [showTestDetails]="exampleSolutionInfo?.programmingExercise?.showTestNamesToStudents ?? false"
                                 [exercise]="exercise"
                             >
                             </jhi-result>
@@ -197,7 +197,7 @@
             >
             </jhi-reset-repo-button>
             <!-- PROBLEM STATEMENT END -->
-            <ng-container *ngIf="exampleSolutionUML || exampleSolution || exercise?.exampleSolutionPublished">
+            <ng-container *ngIf="exampleSolutionInfo?.exampleSolutionUML || exampleSolutionInfo?.exampleSolution || exercise?.exampleSolutionPublished">
                 <div class="row mb-2 mt-2 align-items-baseline">
                     <div class="control-label" (click)="changeExampleSolution()">
                         <span class="h3 pe-2">{{ 'artemisApp.exercise.exampleSolution' | artemisTranslate }}</span>
@@ -205,16 +205,16 @@
                     </div>
                 </div>
                 <dl class="row-md jh-entity-details markdown-preview" *ngIf="!exampleSolutionCollapsed">
-                    <dd *ngIf="exampleSolutionUML && modelingExercise" class="editor-outline-background">
+                    <dd *ngIf="exampleSolutionInfo?.exampleSolutionUML && exampleSolutionInfo?.modelingExercise" class="editor-outline-background">
                         <jhi-modeling-editor
                             [readOnly]="true"
-                            [diagramType]="modelingExercise.diagramType!"
-                            [umlModel]="exampleSolutionUML!"
-                            [withExplanation]="!!modelingExercise.exampleSolutionExplanation"
-                            [explanation]="modelingExercise.exampleSolutionExplanation || ''"
+                            [diagramType]="exampleSolutionInfo?.modelingExercise?.diagramType"
+                            [umlModel]="exampleSolutionInfo?.exampleSolutionUML"
+                            [withExplanation]="!!exampleSolutionInfo?.modelingExercise?.exampleSolutionExplanation"
+                            [explanation]="exampleSolutionInfo?.modelingExercise?.exampleSolutionExplanation || ''"
                         ></jhi-modeling-editor>
                     </dd>
-                    <dd *ngIf="exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolution"></dd>
+                    <dd *ngIf="exampleSolutionInfo?.exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolutionInfo?.exampleSolution"></dd>
                     <ng-container *ngIf="exercise?.exampleSolutionPublished">
                         <dd class="editor-outline-background">
                             <jhi-programming-exercise-example-solution-repo-download
@@ -223,7 +223,7 @@
                                 [title]="'artemisApp.programmingExercise.export.downloadExampleSolution'"
                             ></jhi-programming-exercise-example-solution-repo-download>
                         </dd>
-                        <dd *ngIf="programmingExercise?.releaseTestsWithExampleSolution" class="editor-outline-background">
+                        <dd *ngIf="exampleSolutionInfo?.programmingExercise?.releaseTestsWithExampleSolution" class="editor-outline-background">
                             <jhi-programming-exercise-example-solution-repo-download
                                 class="ms-2"
                                 [exerciseId]="exercise.id!"

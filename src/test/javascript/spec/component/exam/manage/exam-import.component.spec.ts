@@ -18,7 +18,6 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
@@ -52,7 +51,6 @@ describe('Exam Import Component', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
-                MockComponent(FaIconComponent),
                 MockComponent(ButtonComponent),
                 MockComponent(HelpIconComponent),
                 MockComponent(DifficultyBadgeComponent),

@@ -634,21 +634,18 @@ public class UserService {
     }
 
     /**
-     * remove the user from the specified group only in the Artemis database
+     * remove the user from the specified group
      *
      * @param user  the user
      * @param group the group
-     * @param role the role
      */
-    public void removeUserFromGroup(User user, String group, Role role) {
+    public void removeUserFromGroup(User user, String group) {
         removeUserFromGroupInternal(user, group); // internal Artemis database
         artemisAuthenticationProvider.removeUserFromGroup(user, group); // e.g. JIRA
-        // e.g. Gitlab
+        // e.g. Gitlab/Bitbucket
         optionalVcsUserManagementService.ifPresent(vcsUserManagementService -> vcsUserManagementService.updateVcsUser(user.getLogin(), user, Set.of(group), Set.of()));
-        optionalCIUserManagementService.ifPresent(ciUserManagementService -> {
-            ciUserManagementService.removeUserFromGroups(user.getLogin(), Set.of(group));
-            ciUserManagementService.addUserToGroups(user.getLogin(), user.getGroups());
-        });
+        // e.g. Jenkins
+        optionalCIUserManagementService.ifPresent(ciUserManagementService -> ciUserManagementService.removeUserFromGroups(user.getLogin(), Set.of(group)));
     }
 
     /**
@@ -670,16 +667,23 @@ public class UserService {
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
+     * Steps:
+     *
+     *  1) we use the registration number and try to find the student in the Artemis user database
+     *  2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a potential external user management system
+     *  3) if we cannot find the user in the (TUM) LDAP or the registration number was not set properly, try again using the login
+     *  4) if we still cannot find the user, we try again using the email
+     *
      *       @param registrationNumber     the registration number of the user
      *       @param courseGroupName        the courseGroup the user has to be added to
      *       @param courseGroupRole        the courseGroupRole enum
      *       @param login                  the login of the user
+     *       @param email                  the email of the user
      *       @return the found student, otherwise returns an empty optional
      *
      * */
-    public Optional<User> findUserAndAddToCourse(String registrationNumber, String courseGroupName, Role courseGroupRole, String login) {
+    public Optional<User> findUserAndAddToCourse(String registrationNumber, String courseGroupName, Role courseGroupRole, String login, String email) {
         try {
-            // 1) we use the registration number and try to find the student in the Artemis user database
             var optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
             if (optionalStudent.isPresent()) {
                 var student = optionalStudent.get();
@@ -691,9 +695,8 @@ public class UserService {
                 return optionalStudent;
             }
 
-            // 2) if we cannot find the student, we use the registration number and try to find the student in the (TUM) LDAP, create it in the Artemis DB and in a
-            // potential external user management system
-            optionalStudent = this.createUserFromLdap(registrationNumber);
+            optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber).or(() -> (this.createUserFromLdap(registrationNumber)))
+                    .or(() -> (userRepository.findUserWithGroupsAndAuthoritiesByLogin(login))).or(() -> (userRepository.findUserWithGroupsAndAuthoritiesByEmail(email)));
             if (optionalStudent.isPresent()) {
                 var student = optionalStudent.get();
                 // the newly created user needs to get the rights to access the course
@@ -701,16 +704,7 @@ public class UserService {
                 return optionalStudent;
             }
 
-            // 3) if we cannot find the user in the (TUM) LDAP or the registration number was not set properly, try again using the login
-            optionalStudent = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
-            if (optionalStudent.isPresent()) {
-                var student = optionalStudent.get();
-                // the newly created user needs to get the rights to access the course
-                this.addUserToGroup(student, courseGroupName, courseGroupRole);
-                return optionalStudent;
-            }
-
-            log.warn("User with registration number '{}' and login '{}' not found in Artemis user database nor found in (TUM) LDAP", registrationNumber, login);
+            log.warn("User with registration number '{}', login '{}' and email '{}' not found in Artemis user database nor found in (TUM) LDAP", registrationNumber, login, email);
         }
         catch (Exception ex) {
             log.warn("Error while processing user with registration number {}", registrationNumber, ex);

@@ -208,7 +208,7 @@ public class SubmissionService {
     public Optional<Submission> getNextAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
         var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
 
-        return assessableSubmissions.stream().filter(a -> Objects.nonNull(a.getParticipation().getIndividualDueDate()))
+        return assessableSubmissions.stream().filter(a -> a.getParticipation().getIndividualDueDate() != null)
                 .min(Comparator.comparing(a -> a.getParticipation().getIndividualDueDate()));
     }
 

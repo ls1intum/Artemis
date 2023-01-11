@@ -40,7 +40,6 @@ import { CodeEditorAceComponent } from 'app/exercises/programming/shared/code-ed
 import { CodeEditorFileBrowserComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser.component';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { RouterTestingModule } from '@angular/router/testing';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { CodeEditorContainerComponent } from 'app/exercises/programming/shared/code-editor/container/code-editor-container.component';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-headers/included-in-score-badge.component';
@@ -155,7 +154,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
             declarations: [
                 CodeEditorTutorAssessmentContainerComponent,
                 MockComponent(ProgrammingAssessmentRepoExportButtonComponent),
-                MockComponent(FaIconComponent),
                 AssessmentLayoutComponent,
                 MockComponent(AssessmentComplaintAlertComponent),
                 MockComponent(AssessmentHeaderComponent),
@@ -193,7 +191,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
                 { provide: ActivatedRoute, useValue: route() },
             ],
         })
-            .overrideModule(ArtemisTestModule, { set: { declarations: [], exports: [] } })
             .compileComponents()
             .then(() => {
                 // Ignore console errors
