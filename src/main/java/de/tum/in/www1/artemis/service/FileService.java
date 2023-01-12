@@ -484,7 +484,8 @@ public class FileService implements DisposableBean {
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
 
-            String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length()) : "/" + resource.getFilename();
+            // We use prefix.length() + 1 to also cut the "/" after the prefix
+            String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length() + 1) : resource.getFilename();
             targetFilePath = applySpecialFilenameReplacements(targetFilePath);
 
             if (isIgnoredDirectory(targetFilePath)) {
