@@ -74,7 +74,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @BeforeEach
     void init() {
-        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         database.addUsers(TEST_PREFIX, 2, 1, 1, 2);
         User instructor1 = database.getUserByLogin(TEST_PREFIX + "instructor1");
         User instructor2 = database.getUserByLogin(TEST_PREFIX + "instructor2");
