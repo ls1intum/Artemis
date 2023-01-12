@@ -3,7 +3,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
-import { ProgrammingExerciseService } from './services/programming-exercise.service';
+import { ProgrammingExerciseInstructorRepositoryType, ProgrammingExerciseService } from './services/programming-exercise.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ExerciseComponent } from 'app/exercises/shared/exercise/exercise.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -24,6 +24,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ConsistencyCheckComponent } from 'app/shared/consistency-check/consistency-check.component';
 import { faBook, faCheckDouble, faDownload, faFileSignature, faListAlt, faPencilAlt, faPlus, faSort, faTable, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { downloadZipFileFromResponse } from 'app/shared/util/download.util';
 
 @Component({
     selector: 'jhi-programming-exercise',
@@ -38,6 +39,8 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     solutionParticipationType = ProgrammingExerciseParticipationType.SOLUTION;
     templateParticipationType = ProgrammingExerciseParticipationType.TEMPLATE;
     allChecked = false;
+    // Used to make the repository links download the repositories instead of linking to Bitbucket/GitLab.
+    localVCEnabled = false;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideGenerateAndImportButton') overrideGenerateAndImportButton: TemplateRef<any>;
@@ -89,6 +92,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
                 this.programmingExercises = res.body!;
                 this.profileService.getProfileInfo().subscribe((profileInfo) => {
                     this.buildPlanLinkTemplate = profileInfo.buildPlanURLTemplate;
+                    this.localVCEnabled = profileInfo.activeProfiles.includes('localvc');
                 });
                 // reconnect exercise with course
                 this.programmingExercises.forEach((exercise) => {
@@ -215,5 +219,23 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     checkConsistencies() {
         const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.exercisesToCheck = this.selectedProgrammingExercises;
+    }
+
+    /**
+     * Downloads the instructor repository. Used when the "localvc" profile is active.
+     * For the local VCS, linking to an external site displaying the repository does not work.
+     * Instead, the repository is downloaded.
+     *
+     * @param programmingExerciseId
+     * @param repositoryType
+     */
+    downloadRepository(programmingExerciseId: number | undefined, repositoryType: ProgrammingExerciseInstructorRepositoryType) {
+        if (programmingExerciseId) {
+            // Repository type cannot be 'AUXILIARY' as auxiliary repositories are currently not supported for the local VCS.
+            this.programmingExerciseService.exportInstructorRepository(programmingExerciseId, repositoryType, undefined).subscribe((response) => {
+                downloadZipFileFromResponse(response);
+                this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
+            });
+        }
     }
 }

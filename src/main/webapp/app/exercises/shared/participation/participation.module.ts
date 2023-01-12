@@ -11,10 +11,12 @@ import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-score
 import { ArtemisParticipationRoutingModule } from 'app/exercises/shared/participation/participation-routing.module';
 import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
     imports: [
         ArtemisSharedModule,
+        ArtemisSharedComponentModule,
         ArtemisParticipationRoutingModule,
         ArtemisExerciseScoresModule,
         ArtemisProgrammingExerciseActionsModule,

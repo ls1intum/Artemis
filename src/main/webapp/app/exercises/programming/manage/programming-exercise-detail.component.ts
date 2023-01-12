@@ -75,6 +75,9 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     lockingOrUnlockingRepositories = false;
     courseId: number;
     doughnutStats: ExerciseManagementStatisticsDto;
+    // Used to hide links to repositories when the "localvc" profile is active.
+    // Also used to hide the buttons to lock and unlock all repositories as that does not do anything in the local VCS.
+    localVCEnabled = false;
 
     isAdmin = false;
     addedLineCount: number;
@@ -185,6 +188,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
                             );
                         }
                         this.supportsAuxiliaryRepositories = profileInfo.externalUserManagementName?.toLowerCase().includes('jira') ?? false;
+                        this.localVCEnabled = profileInfo.activeProfiles.includes('localvc');
                     }
                 });
 

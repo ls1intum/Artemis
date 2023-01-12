@@ -35,7 +35,7 @@ export class CloneRepoButtonComponent implements OnInit, OnChanges {
     repositoryPassword: string;
     versionControlUrl: string;
     versionControlAccessTokenRequired?: boolean;
-    localVCEnabled: boolean;
+    localVCEnabled = false;
     user: User;
     cloneHeadline: string;
     wasCopied = false;

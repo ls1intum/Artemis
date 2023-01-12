@@ -64,6 +64,8 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue: ProjectType;
+    // This is used to switch off auxiliary repositories for when the "localvc" profile is active. Auxiliary repositories are not supported yet for local VC.
+    localVCEnabled = false;
 
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';
     // Java package name Regex according to Java 14 JLS (https://docs.oracle.com/javase/specs/jls/se14/html/jls-7.html#jls-7.4.1),
@@ -404,6 +406,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProductionEnvironment = profileInfo.inProduction;
+                this.localVCEnabled = profileInfo.activeProfiles.includes('localvc');
             }
         });
 

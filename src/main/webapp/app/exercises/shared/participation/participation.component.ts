@@ -50,6 +50,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     newManualResultAllowed: boolean;
     hasLoadedPendingSubmissions = false;
     presentationScoreEnabled = false;
+    // Used to show the "Clone Repository URL" button instead of a link to Bitbucket/GitLab when the "localvc" profile is active.
+    localVCEnabled = false;
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -130,6 +132,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
                 if (programmingExercise.projectKey) {
                     this.profileService.getProfileInfo().subscribe((profileInfo) => {
                         setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, (this.exercise as ProgrammingExercise).projectKey);
+                        this.localVCEnabled = profileInfo.activeProfiles.includes('localvc');
                     });
                 }
             }
