@@ -128,10 +128,10 @@
                         "startPage": "Start page can not be empty.",
                         "endPage": "End page can not be empty."
                     },
-                    "endPageLower": "End page can not be smaller then 1",
-                    "startPageBigger": "Start page can not be bigger then",
-                    "startPage": "Start page must be bigger or equal to 1",
-                    "endPage": "End page must be less or equal to"
+                    "endPageLower": "End page can not be smaller than 1.",
+                    "startPageBigger": "Start page can not be bigger than {{ max }}.",
+                    "startPage": "Start page must be bigger or equal to 1.",
+                    "endPage": "End page must be less or equal to {{ max }}."
                 },
                 "split": {
                     "unit": "Units",

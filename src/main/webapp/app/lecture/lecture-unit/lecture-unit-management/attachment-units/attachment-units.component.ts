@@ -138,13 +138,13 @@ export class AttachmentUnitsComponent implements OnInit {
                 return false;
             }
 
-            if (!unit.startPage) {
-                this.invalidUnitTableMessage = `${this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.empty.startPage`)}`;
+            if (unit.startPage === null) {
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.empty.startPage`);
                 return false;
             }
 
-            if (!unit.endPage) {
-                this.invalidUnitTableMessage = `${this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.empty.endPage`)}`;
+            if (unit.endPage === null) {
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.empty.endPage`);
                 return false;
             }
 
@@ -154,9 +154,9 @@ export class AttachmentUnitsComponent implements OnInit {
             }
 
             if (unit.startPage > this.numberOfPages) {
-                this.invalidUnitTableMessage = `${this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.startPageBigger`)} ${
-                    this.numberOfPages
-                }`;
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.startPageBigger`, {
+                    max: this.numberOfPages ?? '',
+                });
                 return false;
             }
 
@@ -166,7 +166,9 @@ export class AttachmentUnitsComponent implements OnInit {
             }
 
             if (unit.endPage > this.numberOfPages) {
-                this.invalidUnitTableMessage = `${this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.endPage`)} ${this.numberOfPages}`;
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.endPage`, {
+                    max: this.numberOfPages ?? '',
+                });
                 return false;
             }
         }

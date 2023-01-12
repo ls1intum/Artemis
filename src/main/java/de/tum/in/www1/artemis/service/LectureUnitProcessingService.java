@@ -120,6 +120,7 @@ public class LectureUnitProcessingService {
                 units.add(newLectureUnit);
             });
 
+            document.close();
             return new LectureUnitInformationDTO(units, numberOfPages);
         }
         catch (IOException e) {

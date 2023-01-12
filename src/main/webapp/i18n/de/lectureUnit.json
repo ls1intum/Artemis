@@ -127,9 +127,9 @@
                         "endPage": "Die letzte Seite muss definiert sein."
                     },
                     "endPageLower": "Letzte Seite darf nicht kleiner als 1 sein.",
-                    "startPageBigger": "Die Startseite darf nicht größer als",
+                    "startPageBigger": "Die Startseite darf nicht größer als {{ max }} sein.",
                     "startPage": "Startseite muss größer oder gleich 1 sein.",
-                    "endPage": "Endseite darf nicht größer als"
+                    "endPage": "Letzte Seite darf nicht größer als {{ max }} sein."
                 },
                 "split": {
                     "empty": "",
