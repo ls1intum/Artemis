@@ -10,7 +10,7 @@ export class ExamCreationPage {
      * @param title the exam title
      */
     setTitle(title: string) {
-        cy.get('#title').type(title);
+        cy.get('#title').clear().type(title);
     }
 
     /**
@@ -92,8 +92,18 @@ export class ExamCreationPage {
         return cy.wait('@examCreationQuery');
     }
 
+    /**
+     * Updates the created exam.
+     * @returns the query chainable if a test needs to access the response
+     */
+    update() {
+        cy.intercept('PUT', '/api/courses/*/exams').as('examCreationQuery');
+        cy.get('#save-exam').click();
+        return cy.wait('@examCreationQuery');
+    }
+
     private enterText(selector: string, text: string) {
-        cy.get(selector).find('.ace_content').type(text);
+        cy.get(selector).find('.ace_text-input').focus().clear().type(text);
     }
 
     private enterDate(selector: string, date: dayjs.Dayjs) {

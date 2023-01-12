@@ -9,7 +9,6 @@ import { BonusService, EntityResponseType } from 'app/grading-system/bonus/bonus
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
-import { TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { of, throwError } from 'rxjs';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
@@ -115,6 +114,8 @@ describe('BonusComponent', () => {
         title: 'Title',
         gradeType: GradeType.GRADE,
         maxPoints: 100,
+        plagiarismGrade: GradingScale.DEFAULT_PLAGIARISM_GRADE,
+        noParticipationGrade: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE,
         gradeSteps: [
             {
                 id: 577,
@@ -298,7 +299,7 @@ describe('BonusComponent', () => {
             pageSize: 100,
             searchTerm: '',
             sortingOrder: SortingOrder.DESCENDING,
-            sortedColumn: TableColumn.ID,
+            sortedColumn: 'ID',
         };
 
         fixture.detectChanges();

@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
 @EntityListeners({ AuditingEntityListener.class, ResultListener.class })
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Result extends DomainObject {
+public class Result extends DomainObject implements Comparable<Result> {
 
     /**
      * This constant determines how many seconds after the exercise due dates submissions will stil be considered valid
@@ -634,5 +634,15 @@ public class Result extends DomainObject {
         setTestCaseCount(originalResult.getTestCaseCount());
         setPassedTestCaseCount(originalResult.getPassedTestCaseCount());
         setCodeIssueCount(originalResult.getCodeIssueCount());
+    }
+
+    @Override
+    public int compareTo(Result other) {
+        if (getCompletionDate() == null || other.getCompletionDate() == null || Objects.equals(getCompletionDate(), other.getCompletionDate())) {
+            // this case should not happen, but in the rare case we can compare the ids (in tests, the submission dates might be identical as ms are not stored in the database)
+            // newer ids are typically later
+            return getId().compareTo(other.getId());
+        }
+        return getCompletionDate().compareTo(other.getCompletionDate());
     }
 }
