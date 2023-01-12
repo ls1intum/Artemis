@@ -539,17 +539,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         } as any);
 
         mergeSortStep.nativeElement.click();
-        verifyTask(2, {
-            componentInstance: {
-                exercise,
-                exerciseType: ExerciseType.PROGRAMMING,
-                feedbackFilter: [],
-                result,
-                showTestDetails: true,
-                taskName: 'Merge Sort',
-                numberOfNotExecutedTests: 0,
-            },
-        } as any);
+        // Should not get called another time
+        expect(openModalStub).toHaveBeenCalledOnce();
     }));
 
     const verifyTask = (expectedInvocations: number, expected: NgbModalRef) => {
