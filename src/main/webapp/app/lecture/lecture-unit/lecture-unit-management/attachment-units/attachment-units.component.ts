@@ -24,6 +24,7 @@ type AttachmentUnitsInfoResponseType = {
 })
 export class AttachmentUnitsComponent implements OnInit {
     lectureId: number;
+    courseId: number;
     isLoading: boolean;
     isProcessingMode: boolean;
 
@@ -54,6 +55,7 @@ export class AttachmentUnitsComponent implements OnInit {
         const lectureRoute = this.activatedRoute.parent!.parent!;
         combineLatest([lectureRoute.paramMap, lectureRoute.parent!.paramMap]).subscribe(([params]) => {
             this.lectureId = Number(params.get('lectureId'));
+            this.courseId = Number(params.get('courseId'));
         });
     }
 
@@ -106,8 +108,8 @@ export class AttachmentUnitsComponent implements OnInit {
         });
     }
 
-    previousState() {
-        this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
+    cancelSplit() {
+        this.router.navigate(['course-management', this.courseId.toString(), 'lectures', this.lectureId.toString()]);
     }
 
     addRow() {

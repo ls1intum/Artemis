@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
@@ -120,12 +120,19 @@ export class LectureUpdateComponent implements OnInit {
     toggleWizardMode() {
         this.isShowingWizardMode = !this.isShowingWizardMode;
     }
+
     proceedToUnitSplit() {
         this.save();
     }
+
+    /**
+     * Activate or deactivate the processUnitMode mode for automatic lecture units creation.
+     * This function is called by checking Automatic unit processing checkbox when creating a new lecture
+     */
     onSelectProcessUnit() {
         this.processUnitMode = !this.processUnitMode;
     }
+
     onFileChange(event: any): void {
         if (event.target.files.length) {
             const fileList = event.target.files;
@@ -161,6 +168,7 @@ export class LectureUpdateComponent implements OnInit {
         } else if (this.processUnitMode) {
             this.isSaving = false;
             this.isProcessing = false;
+            this.alertService.success(`Lecture with title ${lecture.title} was successfully ${this.lecture.id !== undefined ? 'updated' : 'created'}.`);
             this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id, 'unit-management', 'attachment-units', 'process'], {
                 state: { file: this.file, fileName: this.fileName },
             });

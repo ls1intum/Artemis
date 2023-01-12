@@ -34,9 +34,9 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 
-class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "lectureunitprocessingintegration";
+    private static final String TEST_PREFIX = "attachmentunitsintegrationtest";
 
     @Autowired
     private AttachmentUnitRepository attachmentUnitRepository;
@@ -107,7 +107,6 @@ class LectureUnitProcessingIntegrationTest extends AbstractSpringIntegrationBamb
 
         List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
-        System.out.println(attachmentUnitList.get(0).getName());
 
         assertThat(attachmentUnitList.size()).isEqualTo(2);
         assertThat(attachmentUnitList).isEqualTo(attachmentUnits);

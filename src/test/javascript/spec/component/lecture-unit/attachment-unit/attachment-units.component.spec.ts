@@ -45,7 +45,6 @@ describe('AttachmentUnitsComponent', () => {
     let attachmentUnitService: AttachmentUnitService;
     let router: Router;
     let translateService: TranslateService;
-    let translateStub: jest.SpyInstance;
 
     const unit1: AttachmentUnitsInfoResponseType = {
         unitName: 'Unit 1',
@@ -130,7 +129,6 @@ describe('AttachmentUnitsComponent', () => {
         translateService = TestBed.inject(TranslateService);
         attachmentUnitService = TestBed.inject(AttachmentUnitService);
         router = TestBed.get(Router);
-        translateStub = jest.spyOn(translateService, 'instant');
     });
 
     afterEach(() => {
@@ -184,8 +182,8 @@ describe('AttachmentUnitsComponent', () => {
         attachmentUnitsComponentFixture.detectChanges();
 
         const navigateSpy = jest.spyOn(router, 'navigate');
-        const previousState = jest.spyOn(attachmentUnitsComponent, 'previousState');
-        attachmentUnitsComponent.previousState();
+        const previousState = jest.spyOn(attachmentUnitsComponent, 'cancelSplit');
+        attachmentUnitsComponent.cancelSplit();
         expect(previousState).toHaveBeenCalledOnce();
 
         expect(navigateSpy).toHaveBeenCalledOnce();

@@ -187,7 +187,7 @@ public class AttachmentUnitResource {
      */
     @PostMapping("lectures/{lectureId}/process-units")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@RequestParam(value = "file") MultipartFile file, @PathVariable Long lectureId) throws IOException {
+    public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@RequestParam("file") MultipartFile file, @PathVariable Long lectureId) throws IOException {
         log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);

@@ -82,7 +82,7 @@
         <button type="button" (click)="createAttachmentUnits()" [disabled]="!validUnitInformation()" class="btn btn-primary">
             <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
         </button>
-        <button (click)="previousState()" class="btn btn-default"><fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span></button>
+        <button (click)="cancelSplit()" class="btn btn-default"><fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span></button>
 
         <div *ngIf="invalidUnitTableMessage" class="alert alert-warning mt-3">
             <fa-icon [icon]="faExclamationTriangle"></fa-icon>
