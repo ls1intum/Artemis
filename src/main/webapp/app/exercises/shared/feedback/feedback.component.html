@@ -44,15 +44,18 @@
                         </ng-template>
                     </h4>
 
-                    <span class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
+                    <span *ngIf="badge" class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
                         {{ badge.text | artemisTranslate | uppercase }}
                     </span>
                 </div>
 
                 <!-- Show and link to the commit hash in case of programming exercise results -->
                 <p *ngIf="exerciseType === ExerciseType.PROGRAMMING && result.submission">
-                    {{ 'artemisApp.feedback.modal.submissionInformation' | artemisTranslate : { timeAgo: result.submission.submissionDate | artemisTimeAgo } }}
-
+                    {{ 'artemisApp.feedback.modal.submitted' | artemisTranslate }}
+                    <span [ngbTooltip]="result.submission.submissionDate | artemisDate">
+                        {{ result.submission.submissionDate | artemisTimeAgo }}
+                    </span>
+                    - {{ 'artemisApp.feedback.modal.linkedToCommit' | artemisTranslate }}:
                     <a *ngIf="commitUrl; else commitWithoutLink" href="{{ commitUrl }}" target="_blank" rel="noopener noreferrer">{{ commitHash }}</a>
                     <ng-template #commitWithoutLink>{{ commitHash }}</ng-template>
                 </p>
