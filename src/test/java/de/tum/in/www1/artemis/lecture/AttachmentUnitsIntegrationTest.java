@@ -82,7 +82,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
         var createResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
         LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(createResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
-        assertThat(lectureUnitSplitInfo.lectureUnitDTOS().size()).isEqualTo(2);
+        assertThat(lectureUnitSplitInfo.lectureUnitDTOS()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
     }
 
@@ -92,19 +92,19 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         var splitResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
         LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
 
-        assertThat(lectureUnitSplitInfo.lectureUnitDTOS().size()).isEqualTo(2);
+        assertThat(lectureUnitSplitInfo.lectureUnitDTOS()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
         var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo.lectureUnitDTOS())).andExpect(status().isOk()).andReturn();
         List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
                 mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
 
-        assertThat(attachmentUnits.size()).isEqualTo(2);
+        assertThat(attachmentUnits).hasSize(2);
 
         List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
 
-        assertThat(attachmentUnitList.size()).isEqualTo(2);
+        assertThat(attachmentUnitList).hasSize(2);
         assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
 
     }

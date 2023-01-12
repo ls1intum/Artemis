@@ -37,6 +37,7 @@ export class AttachmentUnitService {
             )
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
+
     getSplitUnitsData(lectureId: number, formData: FormData) {
         return this.httpClient.post(`${this.resourceURL}/lectures/${lectureId}/process-units`, formData, { observe: 'response' });
     }

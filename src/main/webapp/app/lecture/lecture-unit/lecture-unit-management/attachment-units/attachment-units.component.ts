@@ -133,17 +133,17 @@ export class AttachmentUnitsComponent implements OnInit {
 
     validUnitInformation(): boolean {
         for (const unit of this.units) {
-            if (unit.unitName === '' || unit.unitName === undefined) {
+            if (!unit.unitName) {
                 this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.empty.unitName`);
                 return false;
             }
 
-            if (unit.startPage === undefined || unit.startPage === null) {
+            if (!unit.startPage) {
                 this.invalidUnitTableMessage = `${this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.empty.startPage`)}`;
                 return false;
             }
 
-            if (unit.endPage === undefined || unit.endPage === null) {
+            if (!unit.endPage) {
                 this.invalidUnitTableMessage = `${this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.empty.endPage`)}`;
                 return false;
             }

@@ -69,13 +69,7 @@
                 </div>
             </div>
             <div class="py-2">
-                <input
-                    class="form-check-input"
-                    type="checkbox"
-                    name="processUnit"
-                    (change)="onSelectProcessUnit()"
-                    [attr.disabled]="editForm.form.invalid || isSaving ? true : null"
-                />
+                <input class="form-check-input" type="checkbox" name="processUnit" (change)="onSelectProcessUnit()" [disabled]="editForm.form.invalid || isSaving" />
                 <span class="px-1">{{ 'artemisApp.attachmentUnit.createAttachmentUnits.processAutomatically' | artemisTranslate }}</span>
                 <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.lectureFileToolTip' | artemisTranslate"></fa-icon>
             </div>
