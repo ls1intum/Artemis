@@ -15,7 +15,7 @@
                     <fa-icon class="pe-3" [icon]="isCollapsed ? faAngleDown : faAngleUp"></fa-icon>
                     <span>{{ 'artemisApp.learningGoal.prerequisite.title' | artemisTranslate }}: {{ countPrerequisites }}</span>
                 </div>
-                <div *ngIf="isCollapsed">
+                <div *ngIf="!isCollapsed">
                     <jhi-learning-goal-card
                         *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
                         [learningGoal]="prerequisite"

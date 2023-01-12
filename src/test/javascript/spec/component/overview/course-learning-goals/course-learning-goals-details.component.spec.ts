@@ -26,6 +26,7 @@ import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { By } from '@angular/platform-browser';
+import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 
 describe('CourseLearningGoalsDetails', () => {
     let fixture: ComponentFixture<CourseLearningGoalsDetailsComponent>;
@@ -47,6 +48,7 @@ describe('CourseLearningGoalsDetails', () => {
                 MockComponent(OnlineUnitComponent),
                 MockComponent(LearningGoalRingsComponent),
                 MockComponent(SidePanelComponent),
+                MockComponent(HelpIconComponent),
                 MockComponent(FaIconComponent),
                 MockComponent(FireworksComponent),
             ],

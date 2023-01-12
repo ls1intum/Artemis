@@ -25,7 +25,7 @@ export class CourseLearningGoalsComponent implements OnInit {
     learningGoals: LearningGoal[] = [];
     prerequisites: LearningGoal[] = [];
 
-    isCollapsed = false;
+    isCollapsed = true;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
 
