@@ -93,7 +93,6 @@ describe('AssessmentHeaderComponent', () => {
             id: 16,
             dueDate: dayjs().subtract(2, 'days'),
         } as Exercise;
-        // @ts-ignore
         component.result = undefined;
         fixture.detectChanges();
         const warningComponent = fixture.debugElement.query(By.directive(AssessmentWarningComponent));
@@ -102,7 +101,6 @@ describe('AssessmentHeaderComponent', () => {
 
     it('should display alert when assessment due date has passed', () => {
         component.hasAssessmentDueDatePassed = true;
-        // @ts-ignore
         component.result = undefined;
         fixture.detectChanges();
 
