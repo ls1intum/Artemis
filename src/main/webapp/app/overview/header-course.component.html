@@ -4,7 +4,7 @@
             <h3 class="fw-medium" [class.mb-0]="!courseDescription">{{ course.title }}</h3>
             <ng-container *ngIf="courseDescription">
                 <h5 class="fw-medium">{{ courseDescription }}</h5>
-                <h6 class="fw-medium" role="button" *ngIf="enableShowMore" (click)="toggleCourseDescription()">
+                <h6 class="fw-medium show-more" role="button" *ngIf="enableShowMore" (click)="toggleCourseDescription()">
                     {{ 'artemisApp.courseOverview.' + (longDescriptionShown ? 'showLess' : 'showMore') | artemisTranslate }}
                 </h6>
             </ng-container>
