@@ -96,6 +96,7 @@
             "includedInOverallScoreExamLabel": "Should this exercise be included in the exam score calculation?",
             "includedInOverallScore": "Included in Score",
             "includedCompletely": "Included",
+            "categoriesTooltip": "You can define up to two categories per exercise (Enter category and press ENTER). You are free in defining them, though it might be best to use them consistently. They will be visible to students.",
             "includedCompletelyTooltip": "All points and bonus points earned in this exercise count towards your course/exam score!",
             "includedAsBonus": "Bonus",
             "includedAsBonusTooltip": "All points earned in this exercise count towards your course/exam score as bonus points!",
