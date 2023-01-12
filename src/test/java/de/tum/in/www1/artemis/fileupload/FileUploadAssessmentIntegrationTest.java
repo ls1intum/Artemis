@@ -67,9 +67,7 @@ class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrationBambo
         afterReleaseFileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
     }
 
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    List<Feedback> exerciseWithSGI() throws Exception {
+    private List<Feedback> exerciseWithSGI() throws Exception {
         database.addGradingInstructionsToExercise(afterReleaseFileUploadExercise);
         FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + afterReleaseFileUploadExercise.getId(),
                 afterReleaseFileUploadExercise, FileUploadExercise.class, HttpStatus.OK);
