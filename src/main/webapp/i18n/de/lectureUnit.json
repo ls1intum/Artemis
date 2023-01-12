@@ -116,19 +116,19 @@
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "createAttachmentUnits": {
                 "noUnitDetected": "Es wurde keine Einheit erkannt und konnte nicht automatisch geteilt werden. Bitte fügen Sie Informationen für jede Einheit hinzu!",
-                "pageTitle": "Prozesseinheiten",
+                "pageTitle": "Einheiten",
                 "addUnit": "Einheit hinzufügen",
-                "processUnits": "Prozesseinheiten",
+                "processUnits": "Einheiten festlegen",
                 "processAutomatically": "Automatische Einheitenverarbeitung",
                 "validation": {
                     "empty": {
-                        "unitName": "Unit name can not be empty",
-                        "startPage": "Die Startseite darf nicht leer sein",
-                        "endPage": "Endseite darf nicht leer sein"
+                        "unitName": "Name darf nicht leer sein.",
+                        "startPage": "Die Startseite muss definiert sein.",
+                        "endPage": "Die letzte Seite muss definiert sein."
                     },
-                    "endPageLower": "Endseite darf nicht kleiner als 1 sein",
+                    "endPageLower": "Letzte Seite darf nicht kleiner als 1 sein.",
                     "startPageBigger": "Die Startseite darf nicht größer als",
-                    "startPage": "Startseite muss größer oder gleich 1 sein",
+                    "startPage": "Startseite muss größer oder gleich 1 sein.",
                     "endPage": "Endseite darf nicht größer als"
                 },
                 "split": {
@@ -136,10 +136,10 @@
                     "unit": "Units",
                     "unitName": "Einheitenname",
                     "releaseDate": "Veröffentlichungsdatum",
-                    "startPage": "Start seite",
-                    "endPage": "Ende Seite"
+                    "startPage": "Startseite",
+                    "endPage": "Letzte Seite"
                 },
-                "lectureFileToolTip": "Bitte klicken, um mit der automatischen Trennung von Vorlesungseinheiten fortzufahren"
+                "lectureFileToolTip": "Bitte klicken, um mit der automatischen Trennung von Vorlesungseinheiten fortzufahren."
             },
             "createAttachmentUnit": {
                 "title": "Dateieinheit erstellen",

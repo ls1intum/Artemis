@@ -119,14 +119,14 @@
                 "noUnitDetected": "No unit was detected and could not split automatically. Please add information for each unit!",
                 "pageTitle": "Process units",
                 "addUnit": "Add unit",
-                "lectureFileToolTip": "Please click to proceed with automatic separation of lecture units",
+                "lectureFileToolTip": "Please click to proceed with automatic separation of lecture units.",
                 "processUnits": "Process units",
                 "processAutomatically": "Automatic unit processing",
                 "validation": {
                     "empty": {
-                        "unitName": "Unit name can not be empty",
-                        "startPage": "Start page can not be empty",
-                        "endPage": "End page can not be empty"
+                        "unitName": "Unit name can not be empty.",
+                        "startPage": "Start page can not be empty.",
+                        "endPage": "End page can not be empty."
                     },
                     "endPageLower": "End page can not be smaller then 1",
                     "startPageBigger": "Start page can not be bigger then",
