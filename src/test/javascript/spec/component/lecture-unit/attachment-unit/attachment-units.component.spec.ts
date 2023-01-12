@@ -44,7 +44,6 @@ describe('AttachmentUnitsComponent', () => {
 
     let attachmentUnitService: AttachmentUnitService;
     let router: Router;
-    let translateService: TranslateService;
 
     const unit1: AttachmentUnitsInfoResponseType = {
         unitName: 'Unit 1',
@@ -126,7 +125,6 @@ describe('AttachmentUnitsComponent', () => {
         attachmentUnitsComponent.units = units;
         attachmentUnitsComponent.numberOfPages = numberOfPages;
 
-        translateService = TestBed.inject(TranslateService);
         attachmentUnitService = TestBed.inject(AttachmentUnitService);
         router = TestBed.get(Router);
     });
@@ -164,6 +162,26 @@ describe('AttachmentUnitsComponent', () => {
     it('should validate valid table correctly', () => {
         expect(attachmentUnitsComponent.validUnitInformation()).toBeTrue();
         expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeUndefined();
+    });
+
+    it('should validate valid start page', () => {
+        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 0, endPage: 1 }];
+        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+
+        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: numberOfPages + 10, endPage: 1 }];
+        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+    });
+
+    it('should validate valid end page', () => {
+        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 1, endPage: numberOfPages + 10 }];
+        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+
+        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 1, endPage: 0 }];
+        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
     });
 
     it('should add row to table and delete row from table only if there are more then 1 rows in table', () => {
