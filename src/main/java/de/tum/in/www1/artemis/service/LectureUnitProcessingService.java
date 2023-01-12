@@ -13,6 +13,7 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
@@ -20,7 +21,6 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile;
 import de.tum.in.www1.artemis.domain.Attachment;
 import de.tum.in.www1.artemis.domain.enumeration.AttachmentType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
-import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
@@ -90,9 +90,7 @@ public class LectureUnitProcessingService {
 
         try (InputStream input = new FileInputStream(outputFile); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
             IOUtils.copy(input, fileItemOutputStream);
-
         }
-        tempFile.deleteOnExit();
         return new CommonsMultipartFile(fileItem);
     }
 
@@ -103,19 +101,18 @@ public class LectureUnitProcessingService {
      */
     public LectureUnitInformationDTO getSplitUnitData(MultipartFile file) throws IOException {
 
-        List<LectureUnitSplitDTO> units = new ArrayList<>();
         try (PDDocument document = PDDocument.load(file.getBytes())) {
+            List<LectureUnitSplitDTO> units = new ArrayList<>();
 
-            Tuple<Map<Integer, Tuple<String, Tuple<Integer, Integer>>>, Integer> unitsInformation = separateIntoUnits(document);
-            Map<Integer, Tuple<String, Tuple<Integer, Integer>>> unitsDocumentMap = unitsInformation.x();
-            int numberOfPages = unitsInformation.y();
+            Outline unitsInformation = separateIntoUnits(document);
+            Map<Integer, LectureUnitSplit> unitsDocumentMap = unitsInformation.splits;
+            int numberOfPages = unitsInformation.totalPages;
 
-            unitsDocumentMap.forEach((k, v) -> {
-                LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO(v.x(), ZonedDateTime.now(), v.y().x(), v.y().y());
+            unitsDocumentMap.forEach((key, value) -> {
+                LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO(value.unitName, ZonedDateTime.now(), value.startPage, value.endPage);
                 units.add(newLectureUnit);
             });
 
-            document.close();
             return new LectureUnitInformationDTO(units, numberOfPages);
         }
 
@@ -124,13 +121,13 @@ public class LectureUnitProcessingService {
     /**
      * This method prepares a map with information on how the slide
      * is going to be split. The map looks like the following:
-     * Map<OutlineNumber, (UnitName, (StartPage, EndPage))>
+     * Map<OutlineNumber, (UnitName, StartPage, EndPage)>
      *
-     * @param document The document (lecture slide) to be split
+     * @param document The document (lecture pdf) to be split
      * @return The prepared map
      */
-    private Tuple<Map<Integer, Tuple<String, Tuple<Integer, Integer>>>, Integer> separateIntoUnits(PDDocument document) throws IOException {
-        Map<Integer, Tuple<String, Tuple<Integer, Integer>>> outlineMap = new HashMap<>();
+    private Outline separateIntoUnits(PDDocument document) throws IOException {
+        Map<Integer, LectureUnitSplit> outlineMap = new HashMap<>();
 
         Splitter pdfSplitter = new Splitter();
         PDFTextStripper pdfStripper = new PDFTextStripper();
@@ -144,30 +141,54 @@ public class LectureUnitProcessingService {
             PDDocument currentPage = iterator.next();
             String slideText = pdfStripper.getText(currentPage);
 
-            if (slideText.contains("Outline")) {
+            if (isOutlineSlide(slideText)) {
                 outlineCount++;
                 String[] lines = slideText.split("\r\n|\r|\n");
+
+                // if it's the outline slide it will get the next bullet point as unit name.
                 String unitName = lines[outlineCount + 1].replaceAll("[^a-zA-Z0-9\\s()_-]", "").replaceFirst("^\\s*", "");
-                outlineMap.put(outlineCount, new Tuple<>(unitName, new Tuple<>((outlineCount == 1) ? 1 : index, document.getNumberOfPages())));
+                outlineMap.put(outlineCount, new LectureUnitSplit(unitName, outlineCount == 1 ? 1 : index, document.getNumberOfPages()));
 
                 if (outlineCount > 1) {
-                    // get previous slide details (move 2 iterations back and then 2 forward)
+                    // two iterations back to access previous slide text
                     iterator.previous();
-                    iterator.previous();
-                    String previousSlideText = pdfStripper.getText(iterator.next());
+                    String previousPageText = pdfStripper.getText(iterator.previous());
 
+                    updatePreviousUnitEndPage(outlineCount, outlineMap, index, previousPageText.contains("Break"));
+
+                    // two iterations forward in order to be at current slide
                     iterator.next();
-
-                    // update previous outline map endPage
-                    int previousOutlineCount = outlineCount - 1;
-                    int previousStart = outlineMap.get(previousOutlineCount).y().x();
-                    String previousUnitName = outlineMap.get(previousOutlineCount).x();
-                    outlineMap.put(previousOutlineCount, new Tuple<>(previousUnitName, new Tuple<>(previousStart, previousSlideText.contains("Break") ? index - 2 : index - 1)));
+                    iterator.next();
                 }
             }
             index++;
         }
 
-        return new Tuple<>(outlineMap, document.getNumberOfPages());
+        document.close();
+        return new Outline(outlineMap, document.getNumberOfPages());
+    }
+
+    /**
+     * This method updates previous unit end page, and it's called if outline count is bigger then 1
+     *
+     * @param outlineCount Outline count is the number of slides that contain Outline
+     * @param outlineMap   Outline map with unit information
+     * @param index        index that shows current page
+     */
+    private void updatePreviousUnitEndPage(int outlineCount, @NotNull Map<Integer, LectureUnitSplit> outlineMap, int index, boolean containsBreak) {
+        int previousOutlineCount = outlineCount - 1;
+        int previousStart = outlineMap.get(previousOutlineCount).startPage;
+        String previousUnitName = outlineMap.get(previousOutlineCount).unitName;
+        outlineMap.put(previousOutlineCount, new LectureUnitSplit(previousUnitName, previousStart, containsBreak ? index - 2 : index - 1));
+    }
+
+    private boolean isOutlineSlide(final String slideText) {
+        return slideText.contains("Outline");
+    }
+
+    private record LectureUnitSplit(String unitName, int startPage, int endPage) {
+    }
+
+    private record Outline(Map<Integer, LectureUnitSplit> splits, int totalPages) {
     }
 }

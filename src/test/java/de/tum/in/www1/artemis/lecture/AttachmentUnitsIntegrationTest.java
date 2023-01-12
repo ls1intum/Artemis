@@ -30,7 +30,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
-import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 
@@ -40,9 +39,6 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Autowired
     private AttachmentUnitRepository attachmentUnitRepository;
-
-    @Autowired
-    private LectureRepository lectureRepository;
 
     private LectureUnitInformationDTO lectureUnitSplits;
 
