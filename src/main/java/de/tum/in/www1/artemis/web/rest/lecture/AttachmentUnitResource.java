@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.lecture;
 
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -160,12 +159,11 @@ public class AttachmentUnitResource {
      * @param lectureUnitSplitDTOs the units that should be created
      * @param file                 the file to be splitted
      * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment units
-     * @throws IOException
      */
     @PostMapping("lectures/{lectureId}/attachment-units/split")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestPart List<LectureUnitSplitDTO> lectureUnitSplitDTOs,
-            @RequestPart MultipartFile file) throws IOException {
+            @RequestPart MultipartFile file) {
         log.debug("REST request to create AttachmentUnits {} with lectureId {}", lectureUnitSplitDTOs, lectureId);
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
@@ -173,6 +171,7 @@ public class AttachmentUnitResource {
             throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+
         List<AttachmentUnit> savedAttachmentUnits = attachmentUnitService.createAttachmentUnits(lectureUnitSplitDTOs, lecture, file);
         return ResponseEntity.ok().body(savedAttachmentUnits);
     }
@@ -183,11 +182,10 @@ public class AttachmentUnitResource {
      * @param file       the file to get the units data
      * @param lectureId  the id of the lecture to which the file is going to be splitted
      * @return the ResponseEntity with status 200 (ok) and with body attachmentUnitsData
-     * @throws IOException
      */
     @PostMapping("lectures/{lectureId}/process-units")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@RequestParam("file") MultipartFile file, @PathVariable Long lectureId) throws IOException {
+    public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@RequestParam("file") MultipartFile file, @PathVariable Long lectureId) {
         log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
 
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);

@@ -5,6 +5,8 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,9 +20,12 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Service
 public class AttachmentUnitService {
+
+    private final Logger log = LoggerFactory.getLogger(AttachmentUnitService.class);
 
     private final AttachmentUnitRepository attachmentUnitRepository;
 
@@ -81,26 +86,34 @@ public class AttachmentUnitService {
      * @param file The file (lecture slide) to be split
      * @return The created attachment units
      */
-    public List<AttachmentUnit> createAttachmentUnits(List<LectureUnitSplitDTO> lectureUnitSplitDTOs, Lecture lecture, MultipartFile file) throws IOException {
+    public List<AttachmentUnit> createAttachmentUnits(List<LectureUnitSplitDTO> lectureUnitSplitDTOs, Lecture lecture, MultipartFile file) {
         List<Long> ids = new ArrayList<>();
-        List<LectureUnitDTO> lectureUnitsDTO = lectureUnitProcessingService.splitUnits(lectureUnitSplitDTOs, file);
-        lectureUnitsDTO.forEach(lectureUnit -> {
-            lectureUnit.attachmentUnit().setLecture(null);
-            AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(lectureUnit.attachmentUnit());
-            ids.add(savedAttachmentUnit.getId());
-            lectureUnit.attachmentUnit().setLecture(lecture);
-            lecture.addLectureUnit(savedAttachmentUnit);
-            lectureRepository.save(lecture);
+        List<LectureUnitDTO> lectureUnitsDTO = null;
+        try {
+            log.debug("Splitting attachment file {} with info {}", file, lectureUnitSplitDTOs);
+            lectureUnitsDTO = lectureUnitProcessingService.splitUnits(lectureUnitSplitDTOs, file);
+            lectureUnitsDTO.forEach(lectureUnit -> {
+                lectureUnit.attachmentUnit().setLecture(null);
+                AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(lectureUnit.attachmentUnit());
+                ids.add(savedAttachmentUnit.getId());
+                lectureUnit.attachmentUnit().setLecture(lecture);
+                lecture.addLectureUnit(savedAttachmentUnit);
+                lectureRepository.save(lecture);
 
-            handleFile(lectureUnit.file(), lectureUnit.attachment(), true);
+                handleFile(lectureUnit.file(), lectureUnit.attachment(), true);
 
-            lectureUnit.attachment().setAttachmentUnit(savedAttachmentUnit);
-            lectureUnit.attachment().setVersion(1);
+                lectureUnit.attachment().setAttachmentUnit(savedAttachmentUnit);
+                lectureUnit.attachment().setVersion(1);
 
-            Attachment savedAttachment = attachmentRepository.saveAndFlush(lectureUnit.attachment());
-            lectureUnit.attachmentUnit().setAttachment(savedAttachment);
-            evictCache(lectureUnit.file(), savedAttachmentUnit);
-        });
+                Attachment savedAttachment = attachmentRepository.saveAndFlush(lectureUnit.attachment());
+                lectureUnit.attachmentUnit().setAttachment(savedAttachment);
+                evictCache(lectureUnit.file(), savedAttachmentUnit);
+            });
+        }
+        catch (IOException e) {
+            log.error("Error while splitting attachment file", e);
+            throw new InternalServerErrorException("Could not create attachment units");
+        }
 
         return attachmentUnitRepository.findAllById(ids);
     }
@@ -129,7 +142,7 @@ public class AttachmentUnitService {
 
         updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit);
         handleFile(updateFile, existingAttachment, keepFilename);
-        existingAttachment.setVersion(existingAttachment.getVersion() + 1);
+        existingAttachment.setVersion(existingAttachment.getVersion() != null ? existingAttachment.getVersion() + 1 : 1);
         Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
         prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachment);
         evictCache(updateFile, savedAttachmentUnit);

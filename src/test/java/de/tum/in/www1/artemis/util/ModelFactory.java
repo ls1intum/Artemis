@@ -74,6 +74,7 @@ public class ModelFactory {
             attachment.setUploadDate(date);
         }
         attachment.setName("TestAttachment");
+        attachment.setVersion(1);
         return attachment;
     }
 

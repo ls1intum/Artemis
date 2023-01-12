@@ -14,6 +14,8 @@ import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.multipart.commons.CommonsMultipartFile;
@@ -24,9 +26,12 @@ import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Service
 public class LectureUnitProcessingService {
+
+    private final Logger log = LoggerFactory.getLogger(LectureUnitProcessingService.class);
 
     /**
      * Split units from given file according to given split information.
@@ -99,9 +104,11 @@ public class LectureUnitProcessingService {
      * @param file The file (lecture slide) to be split
      * @return The prepared information of split units as list of LectureUnitSplitDTO
      */
-    public LectureUnitInformationDTO getSplitUnitData(MultipartFile file) throws IOException {
+    public LectureUnitInformationDTO getSplitUnitData(MultipartFile file) {
 
         try (PDDocument document = PDDocument.load(file.getBytes())) {
+            log.debug("Start preparing information of split units for the file {}", file);
+
             List<LectureUnitSplitDTO> units = new ArrayList<>();
 
             Outline unitsInformation = separateIntoUnits(document);
@@ -115,7 +122,10 @@ public class LectureUnitProcessingService {
 
             return new LectureUnitInformationDTO(units, numberOfPages);
         }
-
+        catch (IOException e) {
+            log.error("Error while preparing the map with information", e);
+            throw new InternalServerErrorException("Could not prepare split information");
+        }
     }
 
     /**
