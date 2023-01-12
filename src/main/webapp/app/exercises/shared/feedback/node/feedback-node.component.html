@@ -15,16 +15,14 @@
     <p *ngElse jhiTranslate="artemisApp.result.noFeedback">No feedback available</p>
 </div>
 
-<details *ngIf="feedbackItemGroup" class="feedback-item-group" [open]="feedbackItemGroup.open">
-    <summary class="feedback-item-group__summary" [ngClass]="'bg-' + feedbackItemGroup.color">
-        <div class="feedback-item-group__summary__content">
-            <h4 class="feedback-item__category">{{ feedbackItemGroup.name | titlecase }} ({{ feedbackItemGroup.members.length }})</h4>
+<div *ngIf="feedbackItemGroup" class="feedback-item-group">
+    <div class="feedback-item-group__summary" [ngClass]="'bg-' + feedbackItemGroup.color" (click)="feedbackItemGroup.open = !feedbackItemGroup.open">
+        <fa-icon class="me-2" [icon]="feedbackItemGroup.open ? faAngleUp : faAngleDown"></fa-icon>
+        <h4 class="feedback-item__category">{{ feedbackItemGroup.name | titlecase }} ({{ feedbackItemGroup.members.length }})</h4>
+        <span *ngIf="feedbackItemGroup.credits !== 0" class="fw-bold">{{ roundValueSpecifiedByCourseSettings(feedbackItemGroup.credits, course) }}P </span>
+    </div>
 
-            <span *ngIf="feedbackItemGroup.credits !== 0" class="fw-bold">{{ roundValueSpecifiedByCourseSettings(feedbackItemGroup.credits, course) }}P </span>
-        </div>
-    </summary>
-
-    <div class="mx-3">
+    <div *ngIf="feedbackItemGroup.open" class="mx-3">
         <jhi-feedback-node *ngFor="let feedbackItem of feedbackItemGroup.members" [feedbackItemNode]="feedbackItem" [course]="course"></jhi-feedback-node>
     </div>
-</details>
+</div>
