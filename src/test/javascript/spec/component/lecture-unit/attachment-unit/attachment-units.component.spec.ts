@@ -174,7 +174,7 @@ describe('AttachmentUnitsComponent', () => {
         expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
 
         // @ts-ignore
-        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: undefined, endPage: 10 }];
+        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: null, endPage: 10 }];
         expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
         expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
     });
@@ -189,7 +189,7 @@ describe('AttachmentUnitsComponent', () => {
         expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
 
         // @ts-ignore
-        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 2, endPage: undefined }];
+        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 2, endPage: null }];
         expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
         expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
     });
