@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
@@ -161,9 +162,9 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 50, true);
 
-        await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
-        await().until(() -> participantScoreRepository.findAllByExercise(teamTextExercise).size() == 1);
-        await().until(() -> participantScoreRepository.findAllByExercise(modelingExercise).size() == 1);
+        await().atMost(Duration.ofSeconds(30)).until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
+        await().atMost(Duration.ofSeconds(30)).until(() -> participantScoreRepository.findAllByExercise(teamTextExercise).size() == 1);
+        await().atMost(Duration.ofSeconds(30)).until(() -> participantScoreRepository.findAllByExercise(modelingExercise).size() == 1);
 
         creatingLectureUnitsOfLectureOne();
         creatingLectureUnitsOfLectureTwo();
