@@ -1,7 +1,7 @@
 <div class="card-second-header" [hidden]="!steps || steps.length === 0">
     <div class="stepwizard">
         <div class="stepwizard-row">
-            <div>
+            <div class="stepwizard-title">
                 {{ 'artemisApp.programmingExercise.problemStatement.tasksOfExercise' | artemisTranslate }}
             </div>
             <div *ngFor="let step of steps; index as i" class="stepwizard-step">
