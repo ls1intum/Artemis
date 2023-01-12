@@ -27,7 +27,7 @@ export class FeedbackService {
      * @param participationId the current participation
      * @param result
      */
-    public getDetailsForResult(participationId: number, result: Result): Observable<Feedback[]> {
+    public getFeedbacksForResult(participationId: number, result: Result): Observable<Feedback[]> {
         return this.resultService.getFeedbackDetailsForResult(participationId, result).pipe(map(({ body: feedbackList }) => feedbackList!));
     }
 }
