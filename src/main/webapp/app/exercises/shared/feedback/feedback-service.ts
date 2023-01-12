@@ -1,6 +1,8 @@
 import { Injectable } from '@angular/core';
 import { Feedback } from 'app/entities/feedback.model';
+import { Result } from 'app/entities/result.model';
 import { ResultService } from 'app/exercises/shared/result/result.service';
+import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
@@ -23,9 +25,9 @@ export class FeedbackService {
     /**
      * Loads the missing feedback details
      * @param participationId the current participation
-     * @param resultId the current result
+     * @param result
      */
-    public getDetailsForResult(participationId: number, resultId: number) {
-        return this.resultService.getFeedbackDetailsForResult(participationId, resultId).pipe(map(({ body: feedbackList }) => feedbackList!));
+    public getDetailsForResult(participationId: number, result: Result): Observable<Feedback[]> {
+        return this.resultService.getFeedbackDetailsForResult(participationId, result).pipe(map(({ body: feedbackList }) => feedbackList!));
     }
 }
