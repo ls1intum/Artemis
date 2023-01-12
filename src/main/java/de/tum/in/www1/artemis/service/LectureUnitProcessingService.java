@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.io.*;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -35,52 +36,64 @@ public class LectureUnitProcessingService {
      */
     public List<LectureUnitDTO> splitUnits(List<LectureUnitSplitDTO> lectureUnitSplitDTOs, MultipartFile file) throws IOException {
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        List<LectureUnitDTO> units = new ArrayList<>();
-        Splitter pdfSplitter = new Splitter();
-        PDDocument document = PDDocument.load(file.getBytes());
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = PDDocument.load(file.getBytes())) {
+            List<LectureUnitDTO> units = new ArrayList<>();
+            Splitter pdfSplitter = new Splitter();
 
-        for (LectureUnitSplitDTO lectureUnit : lectureUnitSplitDTOs) {
-            AttachmentUnit attachmentUnit = new AttachmentUnit();
-            Attachment attachment = new Attachment();
-            PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
+            for (LectureUnitSplitDTO lectureUnit : lectureUnitSplitDTOs) {
+                AttachmentUnit attachmentUnit = new AttachmentUnit();
+                Attachment attachment = new Attachment();
+                PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
 
-            pdfSplitter.setStartPage(lectureUnit.startPage());
-            pdfSplitter.setEndPage(lectureUnit.endPage());
-            pdfSplitter.setSplitAtPage(lectureUnit.endPage());
+                pdfSplitter.setStartPage(lectureUnit.startPage());
+                pdfSplitter.setEndPage(lectureUnit.endPage());
+                pdfSplitter.setSplitAtPage(lectureUnit.endPage());
 
-            List<PDDocument> documentUnits = pdfSplitter.split(document);
-            pdDocumentInformation.setTitle(lectureUnit.unitName());
-            documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
-            documentUnits.get(0).save(outputStream);
+                List<PDDocument> documentUnits = pdfSplitter.split(document);
+                pdDocumentInformation.setTitle(lectureUnit.unitName());
+                documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
+                documentUnits.get(0).save(outputStream);
 
-            // setup attachmentUnit and attachment
-            attachmentUnit.setDescription("");
-            attachment.setName(lectureUnit.unitName());
-            attachment.setAttachmentType(AttachmentType.FILE);
-            attachment.setVersion(1);
-            attachment.setReleaseDate(lectureUnit.releaseDate());
-            attachment.setUploadDate(ZonedDateTime.now());
+                // setup attachmentUnit and attachment
+                attachmentUnit.setDescription("");
+                attachment.setName(lectureUnit.unitName());
+                attachment.setAttachmentType(AttachmentType.FILE);
+                attachment.setReleaseDate(lectureUnit.releaseDate());
+                attachment.setUploadDate(ZonedDateTime.now());
 
-            // prepare file to be set from byte[] to MultipartFile by using CommonsMultipartFile
-            String tempDirectory = System.getProperty("java.io.tmpdir");
-            File tempFile = new File(tempDirectory, lectureUnit.unitName() + ".pdf");
-            Files.write(tempFile.toPath(), outputStream.toByteArray());
-            File outputFile = new File(tempFile.toString());
-            FileItem fileItem = new DiskFileItem("mainUnitFile", Files.probeContentType(outputFile.toPath()), false, outputFile.getName(), (int) outputFile.length(),
-                    outputFile.getParentFile());
-            InputStream input = new FileInputStream(outputFile);
-            OutputStream fileItemOutputStream = fileItem.getOutputStream();
-            IOUtils.copy(input, fileItemOutputStream);
-            MultipartFile multipartFile = new CommonsMultipartFile(fileItem);
+                MultipartFile multipartFile = convertByteArrayToMultipart(lectureUnit.unitName(), outputStream.toByteArray());
 
-            LectureUnitDTO lectureUnitsDTO = new LectureUnitDTO(attachmentUnit, attachment, multipartFile);
-            units.add(lectureUnitsDTO);
-            tempFile.deleteOnExit();
+                LectureUnitDTO lectureUnitsDTO = new LectureUnitDTO(attachmentUnit, attachment, multipartFile);
+                units.add(lectureUnitsDTO);
+                documentUnits.get(0).close();
+            }
+
+            outputStream.close();
+            document.close();
+            return units;
         }
+    }
 
-        document.close();
-        return units;
+    /**
+     * Prepare file to be set from byte[] to MultipartFile by using CommonsMultipartFile
+     * @param unitName         unit name to set file name
+     * @param streamByteArray  byte array to save to the temp file
+     * @return multipartFile
+     */
+    private MultipartFile convertByteArrayToMultipart(String unitName, byte[] streamByteArray) throws IOException {
+        Path tempPath = Path.of(FilePathService.getTempFilePath(), unitName + ".pdf");
+        File tempFile = Path.of(tempPath.toString()).toFile();
+        Files.write(tempPath, streamByteArray);
+        File outputFile = Path.of(tempFile.toString()).toFile();
+        FileItem fileItem = new DiskFileItem("mainUnitFile", Files.probeContentType(outputFile.toPath()), false, outputFile.getName(), (int) outputFile.length(),
+                outputFile.getParentFile());
+
+        try (InputStream input = new FileInputStream(outputFile); OutputStream fileItemOutputStream = fileItem.getOutputStream()) {
+            IOUtils.copy(input, fileItemOutputStream);
+
+        }
+        tempFile.deleteOnExit();
+        return new CommonsMultipartFile(fileItem);
     }
 
     /**
@@ -91,18 +104,21 @@ public class LectureUnitProcessingService {
     public LectureUnitInformationDTO getSplitUnitData(MultipartFile file) throws IOException {
 
         List<LectureUnitSplitDTO> units = new ArrayList<>();
-        PDDocument document = PDDocument.load(file.getBytes());
-        Tuple<Map<Integer, Tuple<String, Tuple<Integer, Integer>>>, Integer> unitsInformation = separateIntoUnits(document);
-        Map<Integer, Tuple<String, Tuple<Integer, Integer>>> unitsDocumentMap = unitsInformation.x();
-        int numberOfPages = unitsInformation.y();
+        try (PDDocument document = PDDocument.load(file.getBytes())) {
 
-        unitsDocumentMap.forEach((k, v) -> {
-            LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO(v.x(), ZonedDateTime.now(), v.y().x(), v.y().y());
-            units.add(newLectureUnit);
-        });
+            Tuple<Map<Integer, Tuple<String, Tuple<Integer, Integer>>>, Integer> unitsInformation = separateIntoUnits(document);
+            Map<Integer, Tuple<String, Tuple<Integer, Integer>>> unitsDocumentMap = unitsInformation.x();
+            int numberOfPages = unitsInformation.y();
 
-        document.close();
-        return new LectureUnitInformationDTO(units, numberOfPages);
+            unitsDocumentMap.forEach((k, v) -> {
+                LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO(v.x(), ZonedDateTime.now(), v.y().x(), v.y().y());
+                units.add(newLectureUnit);
+            });
+
+            document.close();
+            return new LectureUnitInformationDTO(units, numberOfPages);
+        }
+
     }
 
     /**
@@ -125,8 +141,8 @@ public class LectureUnitProcessingService {
         int outlineCount = 0;
         int index = 1;
         while (iterator.hasNext()) {
-            PDDocument pdCurrent = iterator.next();
-            String slideText = pdfStripper.getText(pdCurrent);
+            PDDocument currentPage = iterator.next();
+            String slideText = pdfStripper.getText(currentPage);
 
             if (slideText.contains("Outline")) {
                 outlineCount++;
@@ -146,7 +162,6 @@ public class LectureUnitProcessingService {
                     int previousOutlineCount = outlineCount - 1;
                     int previousStart = outlineMap.get(previousOutlineCount).y().x();
                     String previousUnitName = outlineMap.get(previousOutlineCount).x();
-                    outlineMap.remove(previousOutlineCount);
                     outlineMap.put(previousOutlineCount, new Tuple<>(previousUnitName, new Tuple<>(previousStart, previousSlideText.contains("Break") ? index - 2 : index - 1)));
                 }
             }

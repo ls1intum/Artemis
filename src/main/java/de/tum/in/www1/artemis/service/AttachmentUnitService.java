@@ -61,13 +61,13 @@ public class AttachmentUnitService {
         lecture.addLectureUnit(savedAttachmentUnit);
         lectureRepository.save(lecture);
 
-        // Default attachment
-        attachment.setVersion(0);
-
         handleFile(file, attachment, keepFilename);
-        attachment.setAttachmentUnit(savedAttachmentUnit);
-        Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
 
+        // Default attachment
+        attachment.setVersion(1);
+        attachment.setAttachmentUnit(savedAttachmentUnit);
+
+        Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
         prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachment);
         evictCache(file, savedAttachmentUnit);
 
@@ -92,10 +92,11 @@ public class AttachmentUnitService {
             lecture.addLectureUnit(savedAttachmentUnit);
             lectureRepository.save(lecture);
 
-            lectureUnit.attachment().setVersion(0);
-
             handleFile(lectureUnit.file(), lectureUnit.attachment(), true);
+
             lectureUnit.attachment().setAttachmentUnit(savedAttachmentUnit);
+            lectureUnit.attachment().setVersion(1);
+
             Attachment savedAttachment = attachmentRepository.saveAndFlush(lectureUnit.attachment());
             lectureUnit.attachmentUnit().setAttachment(savedAttachment);
             evictCache(lectureUnit.file(), savedAttachmentUnit);
@@ -128,9 +129,8 @@ public class AttachmentUnitService {
 
         updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit);
         handleFile(updateFile, existingAttachment, keepFilename);
-
+        existingAttachment.setVersion(existingAttachment.getVersion() + 1);
         Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
-
         prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachment);
         evictCache(updateFile, savedAttachmentUnit);
 
@@ -162,7 +162,6 @@ public class AttachmentUnitService {
         if (file != null && !file.isEmpty()) {
             String filePath = fileService.handleSaveFile(file, keepFilename, false);
             attachment.setLink(filePath);
-            attachment.setVersion(attachment.getVersion() + 1);
             attachment.setUploadDate(ZonedDateTime.now());
         }
     }
