@@ -300,9 +300,9 @@ public class CourseService {
     public void delete(Course course) {
         log.debug("Request to delete Course : {}", course.getTitle());
 
-        deleteLearningGoalsOfCourse(course);
         deleteExercisesOfCourse(course);
         deleteLecturesOfCourse(course);
+        deleteLearningGoalsOfCourse(course);
         deleteNotificationsOfCourse(course);
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);

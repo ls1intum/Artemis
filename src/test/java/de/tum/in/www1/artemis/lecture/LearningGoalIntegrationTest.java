@@ -368,7 +368,6 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private void testAllPreAuthorize() throws Exception {
         request.put("/api/courses/" + idOfCourse + "/goals", new LearningGoal(), HttpStatus.FORBIDDEN);
         request.post("/api/courses/" + idOfCourse + "/goals", new LearningGoal(), HttpStatus.FORBIDDEN);
-        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN, LearningGoal.class);
         request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.FORBIDDEN, CourseLearningGoalProgressDTO.class);
         request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN);
     }
@@ -392,15 +391,15 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getLearningGoal_asInstructor_shouldReturnLearningGoal() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLearningGoal_asStudent_shouldReturnLearningGoal() throws Exception {
         LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
         assertThat(learningGoal.getId()).isEqualTo(idOfLearningGoal);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
-    void getLearningGoal_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
+    void getLearningGoal_asUserNotInCourse_shouldReturnForbidden() throws Exception {
         request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN, LearningGoal.class);
     }
 
@@ -539,6 +538,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLecture_asInstructor_shouldUpdateLearningGoal() throws Exception {
+        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
         request.delete("/api/lectures/" + idOfLectureTwo, HttpStatus.OK);
         LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
         assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId)).containsAll(Set.of(idOfTextUnitOfLectureOne));
@@ -622,7 +622,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLearningGoal_asInstructor_shouldUpdateLearningGoal() throws Exception {
-        LearningGoal existingLearningGoal = learningGoalRepository.findByIdWithLectureUnitsAndCompletions(idOfLearningGoal).orElseThrow();
+        LearningGoal existingLearningGoal = learningGoalRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(idOfLearningGoal);
         LectureUnit textLectureUnit = lectureUnitRepository.findByIdWithLearningGoalsBidirectionalElseThrow(idOfTextUnitOfLectureOne);
         existingLearningGoal.setTitle("Updated");
         existingLearningGoal.removeLectureUnit(textLectureUnit);
@@ -657,21 +657,6 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         LearningGoal learningGoal = new LearningGoal();
         learningGoal.setTitle("Example Title");
         request.postWithResponseBody("/api/courses/" + idOfCourse + "/goals", learningGoal, LearningGoal.class, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createLearningGoal_goalWithNameAlreadyExists_shouldReturnBadRequest() throws Exception {
-        Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourse).get();
-        LearningGoal existingLearningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
-        LearningGoal learningGoal = new LearningGoal();
-        learningGoal.setTitle(existingLearningGoal.getTitle());
-        learningGoal.setDescription("This is an example of a freshly created learning goal");
-        learningGoal.setCourse(course);
-        List<LectureUnit> allLectureUnits = lectureUnitRepository.findAll();
-        Set<LectureUnit> connectedLectureUnits = new HashSet<>(allLectureUnits);
-        learningGoal.setLectureUnits(connectedLectureUnits);
-        request.postWithResponseBody("/api/courses/" + idOfCourse + "/goals", learningGoal, LearningGoal.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

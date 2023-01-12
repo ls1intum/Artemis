@@ -6,9 +6,9 @@ import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
 
-import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -206,7 +206,7 @@ public class LearningGoalProgressService {
         try {
             learningGoalProgressRepository.save(studentProgress);
         }
-        catch (ConstraintViolationException e) {
+        catch (DataIntegrityViolationException e) {
             // In rare instances of initially creating a progress entity, async updates might run in parallel.
             // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
         }

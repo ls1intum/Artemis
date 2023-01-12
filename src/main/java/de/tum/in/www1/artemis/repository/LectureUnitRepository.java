@@ -30,13 +30,13 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
     @Query("""
             SELECT lectureUnit
             FROM LectureUnit lectureUnit
-            LEFT JOIN FETCH lectureUnit.learningGoals lg1
-            LEFT JOIN FETCH lectureUnit.exercise e
-            LEFT JOIN FETCH e.learningGoals lg2
-            WHERE lg1.id = :learningGoalId
-            OR lg2.id = :learningGoalId
+            LEFT JOIN FETCH lectureUnit.learningGoals lg
+            LEFT JOIN FETCH lg.lectureUnits
+            LEFT JOIN FETCH lectureUnit.exercise exercise
+            LEFT JOIN FETCH exercise.learningGoals
+            WHERE lectureUnit.id = :lectureUnitId
             """)
-    List<LectureUnit> findAllByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
+    Optional<LectureUnit> findByIdWithLearningGoalsBidirectional(@Param("lectureUnitId") long lectureUnitId);
 
     @Query("""
             SELECT lectureUnit
@@ -45,9 +45,9 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
             LEFT JOIN FETCH lg.lectureUnits
             LEFT JOIN FETCH lectureUnit.exercise exercise
             LEFT JOIN FETCH exercise.learningGoals
-            WHERE lectureUnit.id = :lectureUnitId
+            WHERE lectureUnit.id IN :lectureUnitIds
             """)
-    Optional<LectureUnit> findByIdWithLearningGoalsBidirectional(@Param("lectureUnitId") long lectureUnitId);
+    List<LectureUnit> findAllByIdWithLearningGoalsBidirectional(@Param("lectureUnitIds") Iterable<Long> longs);
 
     default LectureUnit findByIdWithLearningGoalsBidirectionalElseThrow(long lectureUnitId) {
         return findByIdWithLearningGoalsBidirectional(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
