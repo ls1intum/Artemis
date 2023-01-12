@@ -128,6 +128,10 @@ export class FeedbackComponent implements OnInit {
         this.feedbackItemService = this.exerciseType === ExerciseType.PROGRAMMING ? this.injector.get(ProgrammingFeedbackItemService) : this.injector.get(FeedbackItemServiceImpl);
         this.fetchAdditionalInformation();
 
+        if (this.showScoreChart) {
+            this.updateChart(this.feedbackItemNodes);
+        }
+
         this.badge = ResultService.evaluateBadge(this.result.participation!, this.result);
 
         this.commitHash = this.getCommitHash().slice(0, 11);
@@ -181,10 +185,6 @@ export class FeedbackComponent implements OnInit {
 
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
                         this.feedbackItemNodes = this.feedbackItemService.group(feedbackItems, this.exercise!);
-
-                        if (this.showScoreChart) {
-                            this.updateChart(this.feedbackItemNodes);
-                        }
                     }
 
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
