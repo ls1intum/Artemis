@@ -140,7 +140,7 @@
             <dd>
                 <span>{{ course.shortName }}</span>
             </dd>
-            <div *ngIf="course.isAtLeastInstructor">
+            <div *ngIf="course.isAtLeastInstructor; else groupsWithoutLink">
                 <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
                 <dd>
                     <a [routerLink]="['/course-management', course.id, 'groups', 'students']" id="add-students"> {{ course.studentGroupName }} ({{ course.numberOfStudents }})</a>
@@ -162,24 +162,26 @@
                     >
                 </dd>
             </div>
-            <div *ngIf="course.isAtLeastInstructor">
-                <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
-                <dd>
-                    <span>{{ course.studentGroupName }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
-                <dd>
-                    <span>{{ course.teachingAssistantGroupName }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.course.editorGroupName">Editor Group Name</span></dt>
-                <dd>
-                    <span>{{ course.editorGroupName }}</span>
-                </dd>
-                <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
-                <dd>
-                    <span>{{ course.instructorGroupName }}</span>
-                </dd>
-            </div>
+            <ng-template #groupsWithoutLink>
+                <div>
+                    <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
+                    <dd>
+                        <span>{{ course.studentGroupName }}</span>
+                    </dd>
+                    <dt><span jhiTranslate="artemisApp.course.teachingAssistantGroupName">Teaching Assistant Group Name</span></dt>
+                    <dd>
+                        <span>{{ course.teachingAssistantGroupName }}</span>
+                    </dd>
+                    <dt><span jhiTranslate="artemisApp.course.editorGroupName">Editor Group Name</span></dt>
+                    <dd>
+                        <span>{{ course.editorGroupName }}</span>
+                    </dd>
+                    <dt><span jhiTranslate="artemisApp.course.instructorGroupName">Instructor Group Name</span></dt>
+                    <dd>
+                        <span>{{ course.instructorGroupName }}</span>
+                    </dd>
+                </div>
+            </ng-template>
             <dt><span jhiTranslate="artemisApp.course.startDate">Start Date</span></dt>
             <dd>
                 <span>{{ course.startDate | artemisDate }}</span>
