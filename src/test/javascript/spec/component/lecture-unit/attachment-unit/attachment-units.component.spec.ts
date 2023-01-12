@@ -172,6 +172,11 @@ describe('AttachmentUnitsComponent', () => {
         attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: numberOfPages + 10, endPage: 1 }];
         expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
         expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+
+        // @ts-ignore
+        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: undefined, endPage: 10 }];
+        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
     });
 
     it('should validate valid end page', () => {
@@ -180,6 +185,11 @@ describe('AttachmentUnitsComponent', () => {
         expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
 
         attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 1, endPage: 0 }];
+        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+
+        // @ts-ignore
+        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 2, endPage: undefined }];
         expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
         expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
     });
