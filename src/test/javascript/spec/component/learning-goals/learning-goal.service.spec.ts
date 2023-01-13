@@ -145,7 +145,7 @@ describe('LearningGoalService', () => {
         const returnedFromService = { ...defaultLearningGoals.first(), id: 0 };
         const expected = { ...returnedFromService };
         learningGoalService
-            .addPrerequisite(defaultLearningGoals.id!, 1)
+            .addPrerequisite(defaultLearningGoals.first()!.id!, 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedResultLearningGoal = resp));
 

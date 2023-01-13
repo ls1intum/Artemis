@@ -42,6 +42,7 @@ public class LearningGoalService {
      * Get all learning goals for a course, including the progress for the user.
      * @param course The course for which the learning goals should be retrieved.
      * @param user The user for whom to filter the visible lecture units attached to the learning goal.
+     * @param updateProgress Whether the learning goal progress should be updated or taken from the database.
      * @return A list of learning goals with their lecture units (filtered for the user) and user progress.
      */
     public Set<LearningGoal> findAllForCourse(@NotNull Course course, @NotNull User user, boolean updateProgress) {
