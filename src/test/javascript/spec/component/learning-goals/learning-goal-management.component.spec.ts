@@ -14,11 +14,14 @@ import { HttpResponse } from '@angular/common/http';
 import { AccountService } from 'app/core/auth/account.service';
 import { ArtemisTestModule } from '../../test.module';
 import { LearningGoalCardStubComponent } from './learning-goal-card-stub.component';
-import { NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbProgressbar } from '@ng-bootstrap/ng-bootstrap';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('LearningGoalManagementComponent', () => {
-    let learningGoalManagementComponentFixture: ComponentFixture<LearningGoalManagementComponent>;
-    let learningGoalManagementComponent: LearningGoalManagementComponent;
+    let fixture: ComponentFixture<LearningGoalManagementComponent>;
+    let component: LearningGoalManagementComponent;
+    let learningGoalService: LearningGoalService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -34,6 +37,8 @@ describe('LearningGoalManagementComponent', () => {
             providers: [
                 MockProvider(AccountService),
                 MockProvider(LearningGoalService),
+                MockProvider(AlertService),
+                { provide: NgbModal, useClass: MockNgbModalService },
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -49,8 +54,9 @@ describe('LearningGoalManagementComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                learningGoalManagementComponentFixture = TestBed.createComponent(LearningGoalManagementComponent);
-                learningGoalManagementComponent = learningGoalManagementComponentFixture.componentInstance;
+                fixture = TestBed.createComponent(LearningGoalManagementComponent);
+                component = fixture.componentInstance;
+                learningGoalService = TestBed.inject(LearningGoalService);
             });
     });
 
@@ -59,7 +65,6 @@ describe('LearningGoalManagementComponent', () => {
     });
 
     it('should load learning goal and associated progress', () => {
-        const learningGoalService = TestBed.inject(LearningGoalService);
         const learningGoal = new LearningGoal();
         const textUnit = new TextUnit();
         learningGoal.id = 1;
@@ -89,15 +94,14 @@ describe('LearningGoalManagementComponent', () => {
         const getProgressSpy = jest.spyOn(learningGoalService, 'getCourseProgress').mockReturnValue(of(learningGoalProgressResponse));
         jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
 
-        learningGoalManagementComponentFixture.detectChanges();
+        fixture.detectChanges();
 
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getProgressSpy).toHaveBeenCalledTimes(2);
-        expect(learningGoalManagementComponent.learningGoals).toHaveLength(2);
+        expect(component.learningGoals).toHaveLength(2);
     });
 
     it('should load prerequisites', () => {
-        const learningGoalService = TestBed.inject(LearningGoalService);
         const learningGoal = new LearningGoal();
         learningGoal.id = 1;
         learningGoal.description = 'test';
@@ -114,9 +118,9 @@ describe('LearningGoalManagementComponent', () => {
         jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsOfCourseResponse));
         const getAllPrerequisitesForCourseSpy = jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
 
-        learningGoalManagementComponentFixture.detectChanges();
+        fixture.detectChanges();
 
         expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
-        expect(learningGoalManagementComponent.prerequisites).toHaveLength(2);
+        expect(component.prerequisites).toHaveLength(2);
     });
 });

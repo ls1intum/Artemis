@@ -6,7 +6,7 @@ import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
 import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
-import { CourseLearningGoalProgress, LearningGoal, LearningGoalProgress } from 'app/entities/learningGoal.model';
+import { CourseLearningGoalProgress, LearningGoal, LearningGoalProgress, LearningGoalRelation } from 'app/entities/learningGoal.model';
 
 describe('LearningGoalService', () => {
     let learningGoalService: LearningGoalService;
@@ -141,6 +141,41 @@ describe('LearningGoalService', () => {
         expect(expectedResultLearningGoal.body).toEqual(expected);
     }));
 
+    it('should delete a LearningGoal', fakeAsync(() => {
+        let result: any;
+        learningGoalService.delete(1, 1).subscribe((resp) => (result = resp.ok));
+        const req = httpTestingController.expectOne({ method: 'DELETE' });
+        req.flush({ status: 200 });
+        tick();
+
+        expect(result).toBeTrue();
+    }));
+
+    it('should add a LearningGoal relation', fakeAsync(() => {
+        const returnedFromService = { tailLearningGoal: 1, headLearningGoal: 2, type: 'assumes' } as LearningGoalRelation;
+        let result: any;
+        learningGoalService
+            .createLearningGoalRelation(1, 2, 'assumes', 1)
+            .pipe(take(1))
+            .subscribe((resp) => (result = resp));
+
+        const req = httpTestingController.expectOne({ method: 'POST' });
+        req.flush(returnedFromService);
+        tick();
+
+        expect(result.body).toEqual(returnedFromService);
+    }));
+
+    it('should remove a LearningGoal relation', fakeAsync(() => {
+        let result: any;
+        learningGoalService.removeLearningGoalRelation(1, 1, 1).subscribe((resp) => (result = resp.ok));
+        const req = httpTestingController.expectOne({ method: 'DELETE' });
+        req.flush({ status: 200 });
+        tick();
+
+        expect(result).toBeTrue();
+    }));
+
     it('should add a prerequisite', fakeAsync(() => {
         const returnedFromService = { ...defaultLearningGoals.first(), id: 0 };
         const expected = { ...returnedFromService };
@@ -154,5 +189,15 @@ describe('LearningGoalService', () => {
         tick();
 
         expect(expectedResultLearningGoal.body).toEqual(expected);
+    }));
+
+    it('should remove a prerequisite', fakeAsync(() => {
+        let result: any;
+        learningGoalService.removePrerequisite(1, 1).subscribe((resp) => (result = resp.ok));
+        const req = httpTestingController.expectOne({ method: 'DELETE' });
+        req.flush({ status: 200 });
+        tick();
+
+        expect(result).toBeTrue();
     }));
 });
