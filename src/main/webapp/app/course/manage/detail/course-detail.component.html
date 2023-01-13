@@ -140,6 +140,10 @@
             <dd>
                 <span>{{ course.shortName }}</span>
             </dd>
+            <!--
+                For users which are at least instructor we show the group name including a link to the course user group management,
+                where new users can be added to the group, since they have the permission to add/remove users to/from the group  
+            -->
             <div *ngIf="course.isAtLeastInstructor; else groupsWithoutLink">
                 <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
                 <dd>
@@ -162,6 +166,10 @@
                     >
                 </dd>
             </div>
+            <!-- 
+                For users which are not at least instructor we just show the group names without the link to the course user management page, 
+                since they don't have the permission to add/remove users to/from the group
+            -->
             <ng-template #groupsWithoutLink>
                 <div>
                     <dt><span jhiTranslate="artemisApp.course.studentGroupName">Student Group Name</span></dt>
