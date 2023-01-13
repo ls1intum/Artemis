@@ -1,4 +1,4 @@
-<ng-container *ngIf="realExamsOfCourse.length > 0">
+<ng-container *ngIf="realExamsOfCourse.length">
     <h2 class="my-2" jhiTranslate="artemisApp.exam.overview.realExamsHeading">Exams</h2>
     <div class="row d-flex align-items-start">
         <ng-container *ngFor="let exam of realExamsOfCourse">
@@ -13,7 +13,7 @@
     <hr />
 </ng-container>
 <!-- Section test exams. Shold not be displayed, if no test exams exist -->
-<ng-container *ngIf="testExamsOfCourse.length > 0">
+<ng-container *ngIf="testExamsOfCourse.length">
     <h2 jhiTranslate="artemisApp.exam.overview.testExamsHeading">Test Exams</h2>
     <div class="row">
         <ng-container *ngFor="let exam of testExamsOfCourse">

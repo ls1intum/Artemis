@@ -226,6 +226,18 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCoursesRegisteredUnregisteredStudentExam() throws Exception {
+        courseTestService.testGetCoursesRegisteredUnregisteredStudentExam();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGetCoursesInstructorExam() throws Exception {
+        courseTestService.testGetCoursesInstructorExam();
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
         courseTestService.testGetCoursesAccurateTimezoneEvaluation();

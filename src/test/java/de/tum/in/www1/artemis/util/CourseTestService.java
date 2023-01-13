@@ -732,6 +732,51 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCoursesRegisteredUnregisteredStudentExam() throws Exception {
+        User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").get();
+
+        String suffix = "active";
+        adjustUserGroupsToCustomGroups(suffix);
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
+                userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        course = courseRepo.save(course);
+        Exam examRegistered = ModelFactory.generateExam(course);
+        examRegistered.addRegisteredUser(student);
+        examRepo.save(examRegistered);
+        Exam examUnregistered = ModelFactory.generateExam(course);
+        examRepo.save(examUnregistered);
+        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        final var finalCourse = course;
+        Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
+        assertThat(courseInList).isNotNull();
+        assertThat(courseInList.getExams()).hasSize(1);
+        assertThat(courseInList.getExams()).contains(examRegistered);
+    }
+
+    // Test
+    public void testGetCoursesInstructorExam() throws Exception {
+        User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").get();
+
+        String suffix = "active";
+        adjustUserGroupsToCustomGroups(suffix);
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
+                userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        course = courseRepo.save(course);
+        Exam examRegistered = ModelFactory.generateExam(course);
+        examRegistered.addRegisteredUser(student);
+        examRepo.save(examRegistered);
+        Exam examUnregistered = ModelFactory.generateExam(course);
+        examRepo.save(examUnregistered);
+        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        final var finalCourse = course;
+        Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
+        assertThat(courseInList).isNotNull();
+        assertThat(courseInList.getExams()).hasSize(2);
+        assertThat(courseInList.getExams()).contains(examRegistered);
+        assertThat(courseInList.getExams()).contains(examUnregistered);
+    }
+
+    // Test
     public void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
         adjustUserGroupsToCustomGroups("timezone");
         Course courseActive = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),

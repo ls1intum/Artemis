@@ -65,8 +65,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             LEFT JOIN FETCH exams.registeredUsers registeredUsers
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
             AND (c.endDate >= :now OR c.endDate IS NULL)
-            AND (registeredUsers.id = :#{#userId} OR c.instructorGroupName IN :#{#groupNames})
-            AND (exams.visibleDate <= :now OR c.instructorGroupName IN :#{#groupNames})
+            AND (registeredUsers.id = :#{#userId} OR c.instructorGroupName IN :#{#groupNames} OR exams IS NULL)
+            AND (exams.visibleDate <= :now OR exams IS NULL)
             """)
     List<Course> findAllActiveWithLecturesAndRelevantExams(@Param("now") ZonedDateTime now, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames);
 
