@@ -18,7 +18,7 @@ svg {
     }
     .progressbar {
         animation: ring-appear 1s ease-in-out forwards;
-        transition: stroke-dasharray 1s ease-in-out;
+        transition: stroke-dasharray 1s ease-in-out, opacity 1s linear;
         stroke-linecap: round;
 
         &.hidden {
@@ -38,6 +38,8 @@ svg {
         }
         .progressbar {
             stroke: var(--learning-goal-rings-red);
+            animation-duration: 1.6s;
+            transition-duration: 1.6s;
         }
     }
 
@@ -49,6 +51,8 @@ svg {
         }
         .progressbar {
             stroke: var(--learning-goal-rings-green);
+            animation-duration: 1.3s;
+            transition-duration: 1.3s;
         }
     }
 
@@ -60,6 +64,8 @@ svg {
         }
         .progressbar {
             stroke: var(--learning-goal-rings-blue);
+            animation-duration: 1s;
+            transition-duration: 1s;
         }
     }
 }

@@ -49,14 +49,16 @@ describe('LearningGoalRings', () => {
 
         const masteryRing = fixture.debugElement.query(By.css('.ring1 .progressbar'));
         expect(masteryRing).toBeTruthy();
-        expect(masteryRing.nativeElement.classList).toContain('hidden');
+        expect(masteryRing.styles.opacity).toBe('0');
 
         const confidenceRing = fixture.debugElement.query(By.css('.ring2 .progressbar'));
         expect(confidenceRing).toBeTruthy();
+        expect(confidenceRing.styles.opacity).toBe('1');
         expect(confidenceRing.nativeElement.getAttribute('stroke-dasharray')).toBe('50, 100');
 
         const progressRing = fixture.debugElement.query(By.css('.ring3 .progressbar'));
         expect(progressRing).toBeTruthy();
+        expect(progressRing.styles.opacity).toBe('1');
         expect(progressRing.nativeElement.getAttribute('stroke-dasharray')).toBe('100, 100');
     });
 });
