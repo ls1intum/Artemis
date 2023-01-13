@@ -12,13 +12,17 @@
     }
 }
 
-.feedback-item-group {
-    &__summary {
+.feedback-group {
+    display: flex;
+    border-radius: 0.15rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+
+    &__left {
         display: flex;
-        border-radius: 0.15rem;
-        margin-bottom: 1rem;
-        padding: 1rem;
         align-items: center;
-        cursor: pointer;
     }
 }
