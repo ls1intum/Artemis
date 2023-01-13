@@ -46,7 +46,7 @@
                 "overdue": "Hide overdue",
                 "optional": "Hide optional",
                 "noExerciseDate": "No date associated",
-                "exerciseGroupHeader": "Exercises: {{ total }}",
+                "exerciseGroupHeader": "(Exercises: {{ total }})",
                 "currentExerciseGroupHeader": "Current exercise active until {{ date }}:",
                 "currentExerciseGroupHeaderWithoutDueDate": "Current exercise:",
                 "sortExercises": "Sort exercises",
@@ -142,7 +142,7 @@
                 "noData": "No learning goals available for this course."
             },
             "lectureList": {
-                "lectureGroupHeader": "Lectures: {{ total }}",
+                "lectureGroupHeader": "(Lectures: {{ total }})",
                 "totalLectures": "Total lectures:",
                 "totalAttachments": "Total attachments:",
                 "isLecture": "This is a lecture",
