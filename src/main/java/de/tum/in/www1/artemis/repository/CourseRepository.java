@@ -58,15 +58,17 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     @Query("""
             SELECT DISTINCT c FROM Course c
-            WHERE (c.startDate <= :now
-            	OR c.startDate IS NULL)
-            AND (c.endDate >= :now
-            	OR c.endDate IS NULL)
+            LEFT JOIN FETCH c.exams exams
+            LEFT JOIN FETCH exams.registeredUsers registeredUsers
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+            AND (c.endDate >= :now OR c.endDate IS NULL)
+            AND (registeredUsers.id = :#{#userId} OR c.instructorGroupName IN :#{#groupNames})
+            AND (exams.visibleDate <= :now OR c.instructorGroupName IN :#{#groupNames})
             """)
-    List<Course> findAllActiveWithLecturesAndExams(@Param("now") ZonedDateTime now);
+    List<Course> findAllActiveWithLecturesAndRelevantExams(@Param("now") ZonedDateTime now, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames);
 
     @Query("""
             SELECT DISTINCT c FROM Course c
@@ -262,8 +264,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      *
      * @return the list of entities
      */
-    default List<Course> findAllActiveWithLecturesAndExams() {
-        return findAllActiveWithLecturesAndExams(ZonedDateTime.now());
+    default List<Course> findAllActiveWithLecturesAndRelevantExams(User user) {
+        return findAllActiveWithLecturesAndRelevantExams(ZonedDateTime.now(), user.getId(), user.getGroups());
     }
 
     /**

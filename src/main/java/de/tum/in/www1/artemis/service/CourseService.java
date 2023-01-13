@@ -244,31 +244,23 @@ public class CourseService {
      * @return an unmodifiable list of all courses for the user
      */
     public List<Course> findAllActiveForUser(User user) {
-        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
-                .filter(course -> isCourseVisibleForUser(user, course)).toList();
+        return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> isCourseVisibleForUser(user, course)).toList();
     }
 
     /**
-     * Get all courses with exercises, lectures  and exams (filtered for given user)
+     * Get all courses with exercises, lectures and exams (filtered for given user)
      *
      * @param user the user entity
      * @return an unmodifiable list of all courses including exercises, lectures and exams for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
-        var userVisibleCourses = courseRepository.findAllActiveWithLecturesAndExams().stream()
-                // remove old courses that have already finished
-                .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
-                // remove courses the user should not be able to see
-                .filter(course -> isCourseVisibleForUser(user, course));
+        var userVisibleCourses = courseRepository.findAllActiveWithLecturesAndRelevantExams(user).stream().filter(course -> isCourseVisibleForUser(user, course));
 
         // TODO: find all exercises for all courses of the user in one db call to improve the performance, then we would need to map them to the correct course
 
         return userVisibleCourses.peek(course -> {
             course.setExercises(exerciseService.findAllForCourse(course, user));
             course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
-            if (authCheckService.isOnlyStudentInCourse(course, user)) {
-                course.setExams(examRepository.filterVisibleExams(course.getExams()));
-            }
         }).toList();
     }
 
