@@ -162,7 +162,6 @@ public class LearningGoalProgressService {
         var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsAndCompletions(learningGoalId).orElse(null);
 
         if (user == null || learningGoal == null) {
-            // If the user or learning goal no longer exist, there is nothing to do
             logger.debug("User or learning goal no longer exist, skipping.");
             return null;
         }
@@ -172,13 +171,11 @@ public class LearningGoalProgressService {
         if (learningGoalProgress.isPresent()) {
             var lastModified = learningGoalProgress.get().getLastModifiedDate();
             if (lastModified != null && lastModified.isAfter(Instant.now().minusSeconds(1))) {
-                // If we have updated the progress within the last seconds, skip it
                 logger.debug("Learning goal progress has been updated very recently, skipping.");
                 return learningGoalProgress.get();
             }
         }
 
-        // Now do the heavy lifting
         var studentProgress = learningGoalProgress.orElse(new LearningGoalProgress());
         List<ILearningObject> learningObjects = new ArrayList<>();
 

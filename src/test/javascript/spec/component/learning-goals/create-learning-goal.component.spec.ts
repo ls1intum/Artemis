@@ -1,4 +1,3 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -10,7 +9,6 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { Lecture } from 'app/entities/lecture.model';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { LearningGoal } from 'app/entities/learningGoal.model';

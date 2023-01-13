@@ -61,7 +61,7 @@ public abstract class LectureUnit extends DomainObject implements ILearningObjec
     protected Set<LearningGoal> learningGoals = new HashSet<>();
 
     @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JsonIgnore // important!
+    @JsonIgnore // important, so that the completion status of other users do not leak to anyone
     private Set<LectureUnitCompletion> completedUsers = new HashSet<>();
 
     public String getName() {
