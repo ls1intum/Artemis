@@ -23,18 +23,11 @@ public class LearningGoalService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final ExerciseRepository exerciseRepository;
-
-    private final LectureUnitRepository lectureUnitRepository;
-
     private final LearningGoalProgressService learningGoalProgressService;
 
-    public LearningGoalService(LearningGoalRepository learningGoalRepository, AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository,
-            LectureUnitRepository lectureUnitRepository, LearningGoalProgressService learningGoalProgressService) {
+    public LearningGoalService(LearningGoalRepository learningGoalRepository, AuthorizationCheckService authCheckService, LearningGoalProgressService learningGoalProgressService) {
         this.learningGoalRepository = learningGoalRepository;
         this.authCheckService = authCheckService;
-        this.exerciseRepository = exerciseRepository;
-        this.lectureUnitRepository = lectureUnitRepository;
         this.learningGoalProgressService = learningGoalProgressService;
     }
 
