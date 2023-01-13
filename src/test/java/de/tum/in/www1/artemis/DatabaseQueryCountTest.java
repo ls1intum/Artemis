@@ -17,7 +17,7 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @BeforeEach
     void setup() {
-        participantScoreSchedulerService.shutdown();
+        participantScoreScheduleService.shutdown();
         database.addUsers(TEST_PREFIX, 1, 5, 0, 0);
     }
 
