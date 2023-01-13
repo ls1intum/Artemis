@@ -10,7 +10,7 @@ import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { NgModel, ReactiveFormsModule } from '@angular/forms';
 import { LearningGoal } from 'app/entities/learningGoal.model';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 
 describe('LearningGoalSelection', () => {
@@ -76,6 +76,18 @@ describe('LearningGoalSelection', () => {
         expect(component.learningGoals).toBeArrayOfSize(1);
         expect(component.learningGoals.first()?.course).toBeUndefined();
         expect(component.learningGoals.first()?.userProgress).toBeUndefined();
+    });
+
+    it('should set disabled when error during loading', () => {
+        const getCourseSpy = jest.spyOn(courseCalculation, 'getCourse').mockReturnValue({ learningGoals: undefined });
+        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(throwError({ status: 500 }));
+
+        fixture.detectChanges();
+
+        expect(getCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
+        expect(component.isLoading).toBeFalse();
+        expect(component.disabled).toBeTrue();
     });
 
     it('should select learning goals when value is written', () => {

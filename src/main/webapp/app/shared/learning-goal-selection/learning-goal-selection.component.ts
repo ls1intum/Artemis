@@ -27,7 +27,7 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
 
     @Output() valueChange = new EventEmitter();
 
-    isLoading = true;
+    isLoading = false;
 
     getIcon = getIcon;
     faQuestionCircle = faQuestionCircle;
@@ -43,8 +43,8 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
             const course = this.courseCalculationService.getCourse(courseId);
             if (course?.learningGoals) {
                 this.setLearningGoals(course.learningGoals!);
-                this.isLoading = false;
             } else {
+                this.isLoading = true;
                 this.learningGoalService.getAllForCourse(courseId).subscribe({
                     next: (response) => {
                         this.setLearningGoals(response.body!);
@@ -57,10 +57,6 @@ export class LearningGoalSelectionComponent implements OnInit, ControlValueAcces
                     },
                 });
             }
-        } else {
-            this.setLearningGoals([]);
-            this.disabled = true;
-            this.isLoading = false;
         }
     }
 
