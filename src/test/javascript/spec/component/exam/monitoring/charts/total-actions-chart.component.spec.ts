@@ -21,6 +21,10 @@ import { ActivatedRoute } from '@angular/router';
 import { ceilDayjsSeconds } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
+class MockExamActionService {
+    cachedExamActionsGroupedByTimestamp = new Map();
+}
+
 describe('Total Actions Chart Component', () => {
     let comp: TotalActionsChartComponent;
     let fixture: ComponentFixture<TotalActionsChartComponent>;
@@ -49,6 +53,7 @@ describe('Total Actions Chart Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ArtemisDatePipe },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
+                { provide: ExamActionService, useClass: MockExamActionService },
             ],
         })
             .compileComponents()
@@ -80,13 +85,12 @@ describe('Total Actions Chart Component', () => {
     });
 
     it('should call initData on init with actions', () => {
-        // Create series
         const series = createSingleSeriesDataEntriesWithTimestamps(comp.getLastXTimestamps(), pipe);
 
         const length = createActions().length;
         const groupedByTimestamp = new Map();
         groupedByTimestamp.set(ceiledNow.toString(), length);
-        examActionService.cachedExamActionsGroupedByTimestamp.set(exam.id!, groupedByTimestamp);
+        examActionService.cachedExamActionsGroupedByTimestamp!.set(exam.id!, groupedByTimestamp);
 
         // Insert value
         series.filter((data) => data.name === pipe.transform(ceiledNow, 'time', true).toString())[0].value = length;
