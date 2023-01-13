@@ -735,7 +735,7 @@ public class CourseTestService {
     public void testGetCoursesRegisteredUnregisteredStudentExam() throws Exception {
         User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").get();
 
-        String suffix = "active";
+        String suffix = "registered";
         adjustUserGroupsToCustomGroups(suffix);
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
                 userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
@@ -749,15 +749,14 @@ public class CourseTestService {
         final var finalCourse = course;
         Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
         assertThat(courseInList).isNotNull();
-        assertThat(courseInList.getExams()).hasSize(1);
-        assertThat(courseInList.getExams()).contains(examRegistered);
+        assertThat(courseInList.getExams()).containsExactly(examRegistered);
     }
 
     // Test
     public void testGetCoursesInstructorExam() throws Exception {
         User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").get();
 
-        String suffix = "active";
+        String suffix = "instructorExam";
         adjustUserGroupsToCustomGroups(suffix);
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
                 userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
@@ -771,9 +770,7 @@ public class CourseTestService {
         final var finalCourse = course;
         Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
         assertThat(courseInList).isNotNull();
-        assertThat(courseInList.getExams()).hasSize(2);
-        assertThat(courseInList.getExams()).contains(examRegistered);
-        assertThat(courseInList.getExams()).contains(examUnregistered);
+        assertThat(courseInList.getExams()).containsExactlyInAnyOrder(examRegistered, examUnregistered);
     }
 
     // Test
