@@ -115,6 +115,12 @@
             "updated": "Dateieinheit aktualisiert",
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "createAttachmentUnits": {
+                "informativeText": {
+                    "firstLine": "Artemis sucht nach der Gliederung und unterteilt das PDF in Einheiten.",
+                    "secondLine": "Artemis extrahiert den Namen der Einheit in der Gliederung.",
+                    "thirdLine": "Wenn die Folie das Wort \"Break\" enthält, entfernt Artemis dieses.",
+                    "note": "Hinweis: Sie haben die Möglichkeit, die Informationen zu bearbeiten, bevor Sie die angehängten Einheiten endgültig übermitteln."
+                },
                 "noUnitDetected": "Es wurde keine Einheit erkannt und konnte nicht automatisch geteilt werden. Bitte fügen Sie Informationen für jede Einheit hinzu!",
                 "pageTitle": "Einheiten",
                 "addUnit": "Einheit hinzufügen",

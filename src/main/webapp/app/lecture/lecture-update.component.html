@@ -74,6 +74,19 @@
                 <fa-icon [icon]="faQuestionCircle" [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnits.lectureFileToolTip' | artemisTranslate"></fa-icon>
             </div>
 
+            <div *ngIf="processUnitMode" class="alert alert-warning mt-3">
+                <span>
+                    <ul class="informative-text">
+                        <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.firstLine' | artemisTranslate }}</li>
+                        <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.secondLine' | artemisTranslate }}</li>
+                        <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.thirdLine' | artemisTranslate }}</li>
+                        <li class="mt-2">
+                            <em>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.note' | artemisTranslate }}</em>
+                        </li>
+                    </ul>
+                </span>
+            </div>
+
             <div *ngIf="processUnitMode" class="form-group">
                 <label>{{ 'artemisApp.attachmentUnit.createAttachmentUnit.file' | artemisTranslate }}*</label>
                 <small id="fileHelp" class="form-text text-muted">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
@@ -84,7 +97,6 @@
                 <div class="input-group background-file">
                     <div class="custom-file overflow-ellipsis">
                         <input
-                            #fileInput
                             id="fileInput"
                             type="file"
                             class="custom-file-input"
@@ -115,7 +127,7 @@
                         <button
                             type="button"
                             id="process-units-entity"
-                            [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing || !file"
+                            [disabled]="editForm.form.invalid || isSaving || !processUnitMode || isProcessing || !fileName"
                             class="btn btn-success"
                             (click)="proceedToUnitSplit()"
                         >

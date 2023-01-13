@@ -116,6 +116,12 @@
             "updated": "Attachment unit updated",
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
             "createAttachmentUnits": {
+                "informativeText": {
+                    "firstLine": "Artemis searches for the Outline and splits the PDF into units.",
+                    "secondLine": "Artemis extracts the name of the unit from the outline.",
+                    "thirdLine": "If slide contains Break word Artemis will remove it.",
+                    "note": "Note: You will have the option to edit the information before finally submitting the attachment units."
+                },
                 "noUnitDetected": "No unit was detected and could not split automatically. Please add information for each unit!",
                 "pageTitle": "Process units",
                 "addUnit": "Add unit",

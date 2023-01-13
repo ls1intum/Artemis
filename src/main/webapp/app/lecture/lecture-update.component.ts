@@ -138,6 +138,8 @@ export class LectureUpdateComponent implements OnInit {
             const fileList = event.target.files;
             this.file = fileList[0];
             this.fileName = this.file.name;
+        } else {
+            this.fileName = '';
         }
     }
 
