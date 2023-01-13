@@ -61,6 +61,11 @@
             "editLearningGoal": {
                 "title": "Edit a competency"
             },
+            "link": {
+                "title": "Linked Competencies",
+                "lectureUnit": "Optionally link this lecture unit to one or more competencies.",
+                "exercise": "Optionally link this exercise to one or more competencies."
+            },
             "learningGoalCard": {
                 "connectedLectureUnits": "Linked Lecture Units",
                 "connectedLectureUnitsExplanation": "The following lecture units are linked to this competency:",

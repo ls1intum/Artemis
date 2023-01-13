@@ -6,6 +6,7 @@ import java.util.*;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.LearningGoal;
@@ -54,7 +55,13 @@ public class LectureUnitService {
                 completion.setLectureUnit(lectureUnit);
                 completion.setUser(user);
                 completion.setCompletedAt(ZonedDateTime.now());
-                lectureUnitCompletionRepository.save(completion);
+                try {
+                    lectureUnitCompletionRepository.save(completion);
+                }
+                catch (DataIntegrityViolationException e) {
+                    // In rare instances the completion status might already exist if this method runs in parallel.
+                    // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
+                }
             }
         }
         else {
