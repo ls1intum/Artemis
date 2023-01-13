@@ -650,6 +650,9 @@ public class ProgrammingExerciseGradingService {
             addFeedbackTestsNotExecuted(result, exercise, staticCodeAnalysisFeedback);
         }
 
+        // Case 3: If there is no test case feedback, the build has failed, or it has previously fallen under case 2. In this case we just return the original result without
+        // changing it.
+
         return result;
     }
 
