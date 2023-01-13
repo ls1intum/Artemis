@@ -96,6 +96,7 @@ describe('Test Exam creation/deletion', () => {
         it('Deletes an existing test exam', () => {
             navigationBar.openCourseManagement();
             courseManagement.openExamsOfCourse(course.shortName!);
+            examManagement.getExamSelector(examData.title).should('exist');
             examManagement.openExam(examId);
             examDetailsPage.deleteExam(examData.title);
             examManagement.getExamSelector(examData.title).should('not.exist');
