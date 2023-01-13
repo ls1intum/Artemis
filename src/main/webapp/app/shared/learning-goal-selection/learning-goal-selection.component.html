@@ -1,4 +1,4 @@
-<div *ngIf="isLoading || learningGoals.length">
+<div *ngIf="isLoading || (learningGoals && learningGoals.length)">
     <label for="learning-goal-input-field" class="form-control-label col" *ngIf="labelName">
         {{ labelName }}
     </label>

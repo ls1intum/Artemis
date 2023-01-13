@@ -12,6 +12,7 @@ import { NgModel, ReactiveFormsModule } from '@angular/forms';
 import { LearningGoal } from 'app/entities/learningGoal.model';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { By } from '@angular/platform-browser';
 
 describe('LearningGoalSelection', () => {
     let fixture: ComponentFixture<LearningGoalSelectionComponent>;
@@ -57,11 +58,13 @@ describe('LearningGoalSelection', () => {
 
         fixture.detectChanges();
 
+        const select = fixture.debugElement.query(By.css('select'));
         expect(component.value).toBeUndefined();
         expect(getCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).not.toHaveBeenCalled();
         expect(component.isLoading).toBeFalse();
         expect(component.learningGoals).toBeArrayOfSize(1);
+        expect(select).not.toBeNull();
     });
 
     it('should get learning goals from service', () => {
@@ -88,6 +91,18 @@ describe('LearningGoalSelection', () => {
         expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(component.isLoading).toBeFalse();
         expect(component.disabled).toBeTrue();
+    });
+
+    it('should be hidden when no learning goals', () => {
+        const getCourseSpy = jest.spyOn(courseCalculation, 'getCourse').mockReturnValue({ learningGoals: [] });
+
+        fixture.detectChanges();
+
+        const select = fixture.debugElement.query(By.css('select'));
+        expect(getCourseSpy).toHaveBeenCalledOnce();
+        expect(component.isLoading).toBeFalse();
+        expect(component.learningGoals).toBeEmpty();
+        expect(select).toBeNull();
     });
 
     it('should select learning goals when value is written', () => {
