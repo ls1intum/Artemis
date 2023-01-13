@@ -33,7 +33,7 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
             FROM LearningGoal learningGoal
             LEFT JOIN FETCH learningGoal.userProgress progress
             WHERE learningGoal.course.id = :courseId
-            AND (progress.user IS NULL OR progress.user.id = :userId)
+            AND progress.user.id = :userId
             """)
     Set<LearningGoal> findAllForCourseWithProgressForUser(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
@@ -63,9 +63,8 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
             LEFT JOIN FETCH lectureUnits.lecture lecture
             LEFT JOIN FETCH lectureUnits.exercise exercise
             WHERE learningGoal.id = :learningGoalId
-            AND (progress.user IS NULL OR progress.user.id = :userId)
             """)
-    Optional<LearningGoal> findByIdWithExercisesAndLectureUnitsAndProgressForUser(@Param("learningGoalId") Long learningGoalId, @Param("userId") Long userId);
+    Optional<LearningGoal> findByIdWithExercisesAndLectureUnits(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
             SELECT learningGoal
@@ -174,8 +173,8 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
         return findByIdWithLectureUnits(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
     }
 
-    default LearningGoal findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(Long learningGoalId, Long userId) {
-        return findByIdWithExercisesAndLectureUnitsAndProgressForUser(learningGoalId, userId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    default LearningGoal findByIdWithExercisesAndLectureUnitsElseThrow(Long learningGoalId) {
+        return findByIdWithExercisesAndLectureUnits(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
     }
 
     default LearningGoal findByIdWithExercisesElseThrow(Long learningGoalId) {

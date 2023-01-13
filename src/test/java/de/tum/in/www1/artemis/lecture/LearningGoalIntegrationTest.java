@@ -152,7 +152,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         createPrerequisite();
         createLectureOne(course);
         createLectureTwo(course);
-        var learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
+        var learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
         textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(learningGoal));
         createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 50, true);
         modelingExercise = createModelingExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(learningGoal));
@@ -538,7 +538,6 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLecture_asInstructor_shouldUpdateLearningGoal() throws Exception {
-        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
         request.delete("/api/lectures/" + idOfLectureTwo, HttpStatus.OK);
         LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
         assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId)).containsAll(Set.of(idOfTextUnitOfLectureOne));

@@ -1,7 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
-import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -47,7 +47,7 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
             LEFT JOIN FETCH exercise.learningGoals
             WHERE lectureUnit.id IN :lectureUnitIds
             """)
-    List<LectureUnit> findAllByIdWithLearningGoalsBidirectional(@Param("lectureUnitIds") Iterable<Long> longs);
+    Set<LectureUnit> findAllByIdWithLearningGoalsBidirectional(@Param("lectureUnitIds") Iterable<Long> longs);
 
     default LectureUnit findByIdWithLearningGoalsBidirectionalElseThrow(long lectureUnitId) {
         return findByIdWithLearningGoalsBidirectional(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));

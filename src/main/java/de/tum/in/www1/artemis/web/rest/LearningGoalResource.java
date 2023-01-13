@@ -133,9 +133,10 @@ public class LearningGoalResource {
         log.debug("REST request to get LearningGoal : {}", learningGoalId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var course = courseRepository.findByIdElseThrow(courseId);
-        var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsAndProgressForUserElseThrow(learningGoalId, user.getId());
+        var learningGoal = learningGoalRepository.findByIdWithExercisesAndLectureUnitsElseThrow(learningGoalId);
         checkAuthorizationForLearningGoal(Role.STUDENT, course, learningGoal);
 
+        learningGoal.setUserProgress(learningGoalProgressRepository.findByLearningGoalIdAndUserId(learningGoalId, user.getId()).map(Set::of).orElse(Set.of()));
         // Set completion status and remove exercise units (redundant as we also return all exercises)
         learningGoal.setLectureUnits(learningGoal.getLectureUnits().stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit))
                 .filter(lectureUnit -> authorizationCheckService.isAllowedToSeeLectureUnit(lectureUnit, user)).map(lectureUnit -> {
@@ -480,6 +481,7 @@ public class LearningGoalResource {
         exercises.stream().map(Exercise::getLearningGoals).forEach(learningGoals -> learningGoals.add(learningGoal));
         lectureUnitRepository.saveAll(lectureUnitsWithoutExercises);
         exerciseRepository.saveAll(exercises);
+        learningGoal.setLectureUnits(lectureUnitsToAdd);
     }
 
     /**

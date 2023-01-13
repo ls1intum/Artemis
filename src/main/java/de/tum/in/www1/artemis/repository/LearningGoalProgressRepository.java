@@ -33,6 +33,14 @@ public interface LearningGoalProgressRepository extends JpaRepository<LearningGo
     @Query("""
             SELECT learningGoalProgress
             FROM LearningGoalProgress learningGoalProgress
+            WHERE learningGoalProgress.learningGoal.id = :learningGoalId
+            AND learningGoalProgress.user.id = :userId
+            """)
+    Optional<LearningGoalProgress> findByLearningGoalIdAndUserId(@Param("learningGoalId") Long learningGoalId, @Param("userId") Long userId);
+
+    @Query("""
+            SELECT learningGoalProgress
+            FROM LearningGoalProgress learningGoalProgress
             LEFT JOIN FETCH learningGoalProgress.user
             LEFT JOIN FETCH learningGoalProgress.learningGoal
             WHERE learningGoalProgress.learningGoal.id = :learningGoalId
