@@ -493,7 +493,6 @@ public class FileService implements DisposableBean {
             }
             // will append the targetFilePath to the targetDirectoryPath, targetFilePath cannot have a "/" prefix
             Path copyPath = targetDirectoryPath.resolve(targetFilePath);
-            // File parentFolder = copyPath.toFile().getParentFile();
             Path parentFolder = copyPath.getParent();
             if (!Files.exists(parentFolder)) {
                 Files.createDirectories(parentFolder);
