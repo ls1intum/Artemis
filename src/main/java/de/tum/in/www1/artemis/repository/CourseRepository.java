@@ -58,44 +58,41 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "lectures", "lectures.attachments", "exams" })
     @Query("""
-            SELECT DISTINCT c FROM Course c
-            WHERE (c.startDate <= :now
-            	OR c.startDate IS NULL)
-            AND (c.endDate >= :now
-            	OR c.endDate IS NULL)
+            SELECT DISTINCT c
+            FROM Course c
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
-    List<Course> findAllActiveWithLecturesAndExams(@Param("now") ZonedDateTime now);
+    List<Course> findAllActiveWithExercisesLecturesAndExams(@Param("now") ZonedDateTime now);
+
+    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "lectures", "lectures.attachments", "exams" })
+    Optional<Course> findWithExercisesLecturesAndExamsById(long courseId);
 
     @Query("""
-            SELECT DISTINCT c FROM Course c
-            LEFT JOIN FETCH c.tutorialGroups tutorialGroups
-            LEFT JOIN FETCH tutorialGroups.teachingAssistant tutor
-            LEFT JOIN FETCH tutorialGroups.registrations registrations
-            LEFT JOIN FETCH registrations.student student
-            WHERE (c.startDate <= :#{#now}
-            	OR c.startDate IS NULL)
-            AND (c.endDate >= :#{#now}
-            	OR c.endDate IS NULL)
-            AND (student.id = :#{#userId} OR tutor.id = :#{#userId})
+            SELECT DISTINCT c
+            FROM Course c
+                LEFT JOIN FETCH c.tutorialGroups tutorialGroups
+                LEFT JOIN FETCH tutorialGroups.teachingAssistant tutor
+                LEFT JOIN FETCH tutorialGroups.registrations registrations
+                LEFT JOIN FETCH registrations.student student
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND (student.id = :userId OR tutor.id = :userId)
             """)
     List<Course> findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
-    Optional<Course> findWithEagerLecturesAndExamsById(long courseId);
-
     // Note: this is currently only used for testing purposes
     @Query("""
-            SELECT DISTINCT c FROM Course c
-            LEFT JOIN FETCH c.exercises exercises
-            LEFT JOIN FETCH c.lectures lectures
-            LEFT JOIN FETCH lectures.attachments
+            SELECT DISTINCT c
+            FROM Course c
+                LEFT JOIN FETCH c.exercises exercises
+                LEFT JOIN FETCH c.lectures lectures
+                LEFT JOIN FETCH lectures.attachments
                 LEFT JOIN FETCH exercises.categories
-                WHERE (c.startDate <= :now
-                	OR c.startDate IS NULL)
-                AND (c.endDate >= :now
-                	OR c.endDate IS NULL)
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
                 """)
     List<Course> findAllActiveWithEagerExercisesAndLectures(@Param("now") ZonedDateTime now);
 
@@ -262,8 +259,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      *
      * @return the list of entities
      */
-    default List<Course> findAllActiveWithLecturesAndExams() {
-        return findAllActiveWithLecturesAndExams(ZonedDateTime.now());
+    default List<Course> findAllActiveWithExercisesLecturesAndExams() {
+        return findAllActiveWithExercisesLecturesAndExams(ZonedDateTime.now());
     }
 
     /**
@@ -283,7 +280,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     @NotNull
     default Course findByIdWithLecturesAndExamsElseThrow(long courseId) {
-        return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return findWithExercisesLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**

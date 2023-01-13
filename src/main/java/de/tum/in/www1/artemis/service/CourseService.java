@@ -225,7 +225,7 @@ public class CourseService {
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException();
         }
-        course.setExercises(exerciseService.findAllForCourse(course, user));
+        course.setExercises(exerciseService.filterExercisesForCourse(course, user));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
         course.setLearningGoals(learningGoalService.findAllForCourse(course, user));
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
@@ -255,7 +255,7 @@ public class CourseService {
      * @return an unmodifiable list of all courses including exercises, lectures and exams for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
-        var userVisibleCourses = courseRepository.findAllActiveWithLecturesAndExams().stream()
+        var userVisibleCourses = courseRepository.findAllActiveWithExercisesLecturesAndExams().stream()
                 // remove old courses that have already finished
                 .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
                 // remove courses the user should not be able to see
@@ -264,7 +264,7 @@ public class CourseService {
         // TODO: find all exercises for all courses of the user in one db call to improve the performance, then we would need to map them to the correct course
 
         return userVisibleCourses.peek(course -> {
-            course.setExercises(exerciseService.findAllForCourse(course, user));
+            course.setExercises(exerciseService.filterExercisesForCourse(course, user));
             course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
             if (authCheckService.isOnlyStudentInCourse(course, user)) {
                 course.setExams(examRepository.filterVisibleExams(course.getExams()));

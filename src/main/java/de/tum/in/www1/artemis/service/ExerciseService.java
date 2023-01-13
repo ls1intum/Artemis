@@ -275,26 +275,27 @@ public class ExerciseService {
     }
 
     /**
-     * Finds all Exercises for a given Course
+     * filter all exercises for a given course based on the user role and course settings
      *
-     * @param course corresponding course
+     * @param course corresponding course: exercises
      * @param user   the user entity
-     * @return a List of all Exercises for the given course
+     * @return a set of all Exercises for the given course
      */
-    public Set<Exercise> findAllForCourse(Course course, User user) {
+    public Set<Exercise> filterExercisesForCourse(Course course, User user) {
         Set<Exercise> exercises = null;
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
             // tutors/instructors/admins can see all exercises of the course
-            exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
+            exercises = course.getExercises();
         }
         else if (authCheckService.isOnlyStudentInCourse(course, user)) {
 
             if (course.isOnlineCourse()) {
+                // this cases happens rarely, so we can reload the relevant exercises from the database
                 // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
                 exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
             }
             else {
-                exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
+                exercises = course.getExercises();
             }
 
             // students for this course might not have the right to see it, so we have to
