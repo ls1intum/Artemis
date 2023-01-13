@@ -104,20 +104,22 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
     }
 
     completeLectureUnit(event: LectureUnitCompletionEvent): void {
-        if (event.lectureUnit.lecture && event.lectureUnit.visibleToStudents && event.lectureUnit.completed !== event.completed) {
-            this.lectureUnitService.setCompletion(event.lectureUnit.id!, event.lectureUnit.lecture!.id!, event.completed).subscribe({
-                next: () => {
-                    event.lectureUnit.completed = event.completed;
-
-                    this.learningGoalService.getProgress(this.learningGoalId!, this.courseId!, true).subscribe({
-                        next: (resp) => {
-                            this.learningGoal.userProgress = [resp.body!];
-                            this.showFireworksIfMastered();
-                        },
-                    });
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+        if (!event.lectureUnit.lecture || !event.lectureUnit.visibleToStudents || event.lectureUnit.completed === event.completed) {
+            return;
         }
+
+        this.lectureUnitService.setCompletion(event.lectureUnit.id!, event.lectureUnit.lecture!.id!, event.completed).subscribe({
+            next: () => {
+                event.lectureUnit.completed = event.completed;
+
+                this.learningGoalService.getProgress(this.learningGoalId!, this.courseId!, true).subscribe({
+                    next: (resp) => {
+                        this.learningGoal.userProgress = [resp.body!];
+                        this.showFireworksIfMastered();
+                    },
+                });
+            },
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+        });
     }
 }

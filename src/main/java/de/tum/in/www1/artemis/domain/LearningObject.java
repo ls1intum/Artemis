@@ -4,7 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
-public interface ILearningObject {
+public interface LearningObject {
 
     /**
      * Whether the participant has completed the object

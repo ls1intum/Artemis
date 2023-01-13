@@ -28,7 +28,7 @@ import de.tum.in.www1.artemis.domain.*;
 @JsonSubTypes({ @JsonSubTypes.Type(value = AttachmentUnit.class, name = "attachment"), @JsonSubTypes.Type(value = ExerciseUnit.class, name = "exercise"),
         @JsonSubTypes.Type(value = TextUnit.class, name = "text"), @JsonSubTypes.Type(value = VideoUnit.class, name = "video"),
         @JsonSubTypes.Type(value = OnlineUnit.class, name = "online") })
-public abstract class LectureUnit extends DomainObject implements ILearningObject {
+public abstract class LectureUnit extends DomainObject implements LearningObject {
 
     @Transient
     private boolean visibleToStudents;

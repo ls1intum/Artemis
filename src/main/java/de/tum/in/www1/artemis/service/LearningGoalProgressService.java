@@ -62,7 +62,7 @@ public class LearningGoalProgressService {
      * @param participant The participant (user or team) for which to update the progress
      */
     @Async
-    public void updateProgressByLearningObjectAsync(ILearningObject learningObject, @NotNull Participant participant) {
+    public void updateProgressByLearningObjectAsync(LearningObject learningObject, @NotNull Participant participant) {
         SecurityUtils.setAuthorizationObject(); // required for async
         updateProgressByLearningObject(learningObject, participant.getParticipants());
     }
@@ -72,7 +72,7 @@ public class LearningGoalProgressService {
      * @param learningObject The learning object for which to fetch the learning goals
      */
     @Async
-    public void updateProgressByLearningObjectAsync(ILearningObject learningObject) {
+    public void updateProgressByLearningObjectAsync(LearningObject learningObject) {
         SecurityUtils.setAuthorizationObject(); // required for async
         Course course;
         if (learningObject instanceof Exercise exercise) {
@@ -121,7 +121,7 @@ public class LearningGoalProgressService {
      * @param learningObject The learning object for which to fetch the learning goals
      * @param users A list of users for which to update the progress
      */
-    public void updateProgressByLearningObject(ILearningObject learningObject, @NotNull Set<User> users) {
+    public void updateProgressByLearningObject(LearningObject learningObject, @NotNull Set<User> users) {
         logger.debug("Updating learning goal progress for {} users.", users.size());
         try {
             Set<LearningGoal> learningGoals;
@@ -177,7 +177,7 @@ public class LearningGoalProgressService {
         }
 
         var studentProgress = learningGoalProgress.orElse(new LearningGoalProgress());
-        List<ILearningObject> learningObjects = new ArrayList<>();
+        List<LearningObject> learningObjects = new ArrayList<>();
 
         List<LectureUnit> allLectureUnits = learningGoal.getLectureUnits().stream().filter(LectureUnit::isVisibleToStudents).toList();
 
@@ -218,7 +218,7 @@ public class LearningGoalProgressService {
      * @param user The user for which the progress should be calculated
      * @return The percentage of completed learning objects by the user
      */
-    private double calculateProgress(@NotNull List<ILearningObject> learningObjects, @NotNull User user) {
+    private double calculateProgress(@NotNull List<LearningObject> learningObjects, @NotNull User user) {
         var completions = learningObjects.stream().map(learningObject -> hasUserCompleted(user, learningObject)).toList();
         return completions.stream().mapToInt(completed -> completed ? 100 : 0).summaryStatistics().getAverage();
     }
@@ -241,7 +241,7 @@ public class LearningGoalProgressService {
      * @param learningObject The lecture unit or exercise
      * @return True if the user completed the lecture unit or has at least one result for the exercise, false otherwise
      */
-    private boolean hasUserCompleted(@NotNull User user, ILearningObject learningObject) {
+    private boolean hasUserCompleted(@NotNull User user, LearningObject learningObject) {
         if (learningObject instanceof LectureUnit lectureUnit) {
             return lectureUnit.getCompletedUsers().stream().map(LectureUnitCompletion::getUser).anyMatch(user1 -> user1.getId().equals(user.getId()));
         }
