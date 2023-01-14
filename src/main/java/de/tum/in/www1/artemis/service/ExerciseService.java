@@ -253,7 +253,7 @@ public class ExerciseService {
         if (exerciseIds.isEmpty()) {
             return new HashSet<>();
         }
-        Set<Exercise> exercises = exerciseRepository.findByExerciseIdWithCategories(exerciseIds);
+        Set<Exercise> exercises = exerciseRepository.findByExerciseIdsWithCategories(exerciseIds);
         // Set is needed here to remove duplicates
         Set<Course> courses = exercises.stream().map(Exercise::getCourseViaExerciseGroupOrCourseMember).collect(Collectors.toSet());
         if (courses.size() != 1) {
@@ -275,27 +275,22 @@ public class ExerciseService {
     }
 
     /**
-     * filter all exercises for a given course based on the user role and course settings
+     * Filter all exercises for a given course based on the user role and course settings
+     * Assumes that the exercises are already been loaded (i.e. no proxy)
      *
      * @param course corresponding course: exercises
      * @param user   the user entity
      * @return a set of all Exercises for the given course
      */
     public Set<Exercise> filterExercisesForCourse(Course course, User user) {
-        Set<Exercise> exercises = null;
-        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            // tutors/instructors/admins can see all exercises of the course
-            exercises = course.getExercises();
-        }
-        else if (authCheckService.isOnlyStudentInCourse(course, user)) {
+        Set<Exercise> exercises = course.getExercises();
+        // no need to filter for tutors/editors/instructors/admins because they can see all exercises of the course
+        if (authCheckService.isOnlyStudentInCourse(course, user)) {
 
             if (course.isOnlineCourse()) {
-                // this cases happens rarely, so we can reload the relevant exercises from the database
+                // this case happens rarely, so we can reload the relevant exercises from the database
                 // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
                 exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
-            }
-            else {
-                exercises = course.getExercises();
             }
 
             // students for this course might not have the right to see it, so we have to
@@ -303,20 +298,19 @@ public class ExerciseService {
             exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
         }
 
-        if (exercises != null) {
-            for (Exercise exercise : exercises) {
-                setAssignedTeamIdForExerciseAndUser(exercise, user);
+        for (Exercise exercise : exercises) {
+            // only necessary for team exercises
+            setAssignedTeamIdForExerciseAndUser(exercise, user);
 
-                // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
-                if (exercise instanceof QuizExercise quizExercise) {
-                    quizExercise.filterSensitiveInformation();
+            // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
+            if (exercise instanceof QuizExercise quizExercise) {
+                quizExercise.filterSensitiveInformation();
 
-                    // if the quiz is not active the batches do not matter and there is no point in loading them
-                    if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
-                        // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
-                        quizExercise.setQuizBatches(null);
-                        quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
-                    }
+                // if the quiz is not active the batches do not matter and there is no point in loading them
+                if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
+                    // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
+                    quizExercise.setQuizBatches(null);
+                    quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
                 }
             }
         }

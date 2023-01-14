@@ -58,17 +58,19 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "lectures", "lectures.attachments", "exams" })
+    // Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
     @Query("""
             SELECT DISTINCT c
             FROM Course c
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
-    List<Course> findAllActiveWithExercisesLecturesAndExams(@Param("now") ZonedDateTime now);
+    List<Course> findAllActiveWithLecturesAndExams(@Param("now") ZonedDateTime now);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exercises", "exercises.categories", "lectures", "lectures.attachments", "exams" })
-    Optional<Course> findWithExercisesLecturesAndExamsById(long courseId);
+    // Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
+    Optional<Course> findWithLecturesAndExamsById(long courseId);
 
     @Query("""
             SELECT DISTINCT c
@@ -259,8 +261,8 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      *
      * @return the list of entities
      */
-    default List<Course> findAllActiveWithExercisesLecturesAndExams() {
-        return findAllActiveWithExercisesLecturesAndExams(ZonedDateTime.now());
+    default List<Course> findAllActiveWithLecturesAndExams() {
+        return findAllActiveWithLecturesAndExams(ZonedDateTime.now());
     }
 
     /**
@@ -280,7 +282,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     @NotNull
     default Course findByIdWithLecturesAndExamsElseThrow(long courseId) {
-        return findWithExercisesLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return findWithLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**

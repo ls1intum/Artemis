@@ -39,9 +39,17 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
             SELECT e
             FROM Exercise e
                 LEFT JOIN FETCH e.categories
+            WHERE e.course.id IN :courseIds
+            """)
+    Set<Exercise> findByCourseIdsWithCategories(@Param("courseIds") Set<Long> courseIds);
+
+    @Query("""
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.categories
             WHERE e.id IN :exerciseIds
             """)
-    Set<Exercise> findByExerciseIdWithCategories(@Param("exerciseIds") Set<Long> exerciseIds);
+    Set<Exercise> findByExerciseIdsWithCategories(@Param("exerciseIds") Set<Long> exerciseIds);
 
     @Query("""
             SELECT e

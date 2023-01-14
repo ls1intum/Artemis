@@ -34,6 +34,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
@@ -48,6 +49,7 @@ import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -411,11 +413,12 @@ public class CourseResource {
     @GetMapping("courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
     public Course getCourseForDashboard(@PathVariable long courseId) {
-        long start = System.currentTimeMillis();
+        long timeNanoStart = System.nanoTime();
+        log.debug("REST request to get one course with exercises, participations and results, ...");
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user);
-        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user, start);
+        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
+        logDuration(List.of(course), user, timeNanoStart);
         return course;
     }
 
@@ -427,14 +430,24 @@ public class CourseResource {
     @GetMapping("courses/for-dashboard")
     @PreAuthorize("hasRole('USER')")
     public List<Course> getAllCoursesForDashboard() {
-        long start = System.currentTimeMillis();
-        log.debug("REST request to get all Courses the user has access to with exercises, participations and results");
+        long timeNanoStart = System.nanoTime();
+        log.debug("REST request to get all courses the user has access to with exercises, participations and results");
         User user = userRepository.getUserWithGroupsAndAuthorities();
-
-        // get all courses with exercises for this user
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
-        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user, start);
+        courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user);
+        logDuration(courses, user, timeNanoStart);
         return courses;
+    }
+
+    private void logDuration(List<Course> courses, User user, long timeNanoStart) {
+        if (log.isInfoEnabled()) {
+            Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
+            Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
+            int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
+            int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
+            log.info("/courses/for-dashboard finished in {} for {} courses with {} individual exercises and {} team exercises for user {}",
+                    TimeLogUtil.formatDurationFrom(timeNanoStart), courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
+        }
     }
 
     /**
