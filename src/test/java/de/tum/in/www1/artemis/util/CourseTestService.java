@@ -775,20 +775,23 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesAccurateTimezoneEvaluation() throws Exception {
-        adjustUserGroupsToCustomGroups("timezone");
-        Course courseActive = ModelFactory.generateCourse(1L, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
-                userPrefix + "student" + "timezone", userPrefix + "tutor" + "timezone", userPrefix + "editor" + "timezone", userPrefix + "instructor" + "timezone");
-        Course courseNotActivePast = ModelFactory.generateCourse(2L, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(),
-                userPrefix + "student" + "timezone", userPrefix + "tutor" + "timezone", userPrefix + "editor" + "timezone", userPrefix + "instructor" + "timezone");
-        Course courseNotActiveFuture = ModelFactory.generateCourse(3L, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(),
-                userPrefix + "student" + "timezone", userPrefix + "tutor" + "timezone", userPrefix + "editor" + "timezone", userPrefix + "instructor" + "timezone");
+        String suffix = "timezone";
+        adjustUserGroupsToCustomGroups(suffix);
+        Course courseActive = ModelFactory.generateCourse(null, ZonedDateTime.now().minusMinutes(25), ZonedDateTime.now().plusMinutes(25), new HashSet<>(),
+                userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        Course courseNotActivePast = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(5), ZonedDateTime.now().minusMinutes(25), new HashSet<>(),
+                userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        Course courseNotActiveFuture = ModelFactory.generateCourse(null, ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(5), new HashSet<>(),
+                userPrefix + "student" + suffix, userPrefix + "tutor" + suffix, userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
         courseActive = courseRepo.save(courseActive);
-        courseRepo.save(courseNotActivePast);
-        courseRepo.save(courseNotActiveFuture);
+        courseNotActivePast = courseRepo.save(courseNotActivePast);
+        courseNotActiveFuture = courseRepo.save(courseNotActiveFuture);
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
 
-        assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), courseNotActivePast.getId())).toList()).as("Past inactive course was filtered out").isEmpty();
-        assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), courseNotActiveFuture.getId())).toList()).as("Future inactive course was filtered out").isEmpty();
+        long courseNotActivePastId = courseNotActivePast.getId();
+        long courseNotActiveFutureId = courseNotActiveFuture.getId();
+        assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), courseNotActivePastId)).toList()).as("Past inactive course was filtered out").isEmpty();
+        assertThat(courses.stream().filter(c -> Objects.equals(c.getId(), courseNotActiveFutureId)).toList()).as("Future inactive course was filtered out").isEmpty();
 
         Course finalCourseActive = courseActive;
         Optional<Course> optionalCourse = courses.stream().filter(c -> Objects.equals(c.getId(), finalCourseActive.getId())).findFirst();
@@ -796,9 +799,8 @@ public class CourseTestService {
 
         List<Course> coursesForNotifications = request.getList("/api/courses/for-notifications", HttpStatus.OK, Course.class);
 
-        assertThat(coursesForNotifications.stream().filter(c -> Objects.equals(c.getId(), courseNotActivePast.getId())).toList()).as("Past inactive course was filtered out")
-                .isEmpty();
-        assertThat(coursesForNotifications.stream().filter(c -> Objects.equals(c.getId(), courseNotActiveFuture.getId())).toList()).as("Future inactive course was filtered out")
+        assertThat(coursesForNotifications.stream().filter(c -> Objects.equals(c.getId(), courseNotActivePastId)).toList()).as("Past inactive course was filtered out").isEmpty();
+        assertThat(coursesForNotifications.stream().filter(c -> Objects.equals(c.getId(), courseNotActiveFutureId)).toList()).as("Future inactive course was filtered out")
                 .isEmpty();
 
         optionalCourse = coursesForNotifications.stream().filter(c -> Objects.equals(c.getId(), finalCourseActive.getId())).findFirst();

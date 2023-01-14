@@ -51,36 +51,34 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query("""
             SELECT DISTINCT c FROM Course c
-            WHERE (c.startDate <= :now
-            	OR c.startDate IS NULL)
-            AND (c.endDate >= :now
-            	OR c.endDate IS NULL)
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     @Query("""
-            SELECT DISTINCT c FROM Course c
-            LEFT JOIN FETCH c.exams exams
-            LEFT JOIN FETCH exams.registeredUsers registeredUsers
+            SELECT DISTINCT c
+            FROM Course c
+                LEFT JOIN FETCH c.exams exams
+                LEFT JOIN exams.registeredUsers registeredUsers
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
-            AND (c.endDate >= :now OR c.endDate IS NULL)
-            AND (registeredUsers.id = :#{#userId} OR c.instructorGroupName IN :#{#groupNames} OR exams IS NULL)
-            AND (exams.visibleDate <= :now OR exams IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND (registeredUsers.id = :#{#userId} OR c.instructorGroupName IN :#{#groupNames} OR exams IS NULL)
+                AND (exams.visibleDate <= :now OR exams IS NULL)
             """)
     List<Course> findAllActiveWithLecturesAndRelevantExams(@Param("now") ZonedDateTime now, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames);
 
     @Query("""
-            SELECT DISTINCT c FROM Course c
-            LEFT JOIN FETCH c.tutorialGroups tutorialGroups
-            LEFT JOIN FETCH tutorialGroups.teachingAssistant tutor
-            LEFT JOIN FETCH tutorialGroups.registrations registrations
-            LEFT JOIN FETCH registrations.student student
-            WHERE (c.startDate <= :#{#now}
-            	OR c.startDate IS NULL)
-            AND (c.endDate >= :#{#now}
-            	OR c.endDate IS NULL)
-            AND (student.id = :#{#userId} OR tutor.id = :#{#userId})
+            SELECT DISTINCT c
+            FROM Course c
+                LEFT JOIN FETCH c.tutorialGroups tutorialGroups
+                LEFT JOIN FETCH tutorialGroups.teachingAssistant tutor
+                LEFT JOIN FETCH tutorialGroups.registrations registrations
+                LEFT JOIN FETCH registrations.student student
+            WHERE (c.startDate <= :#{#now} OR c.startDate IS NULL)
+                AND (c.endDate >= :#{#now} OR c.endDate IS NULL)
+                AND (student.id = :#{#userId} OR tutor.id = :#{#userId})
             """)
     List<Course> findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
 
@@ -89,15 +87,14 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     // Note: this is currently only used for testing purposes
     @Query("""
-            SELECT DISTINCT c FROM Course c
-            LEFT JOIN FETCH c.exercises exercises
-            LEFT JOIN FETCH c.lectures lectures
-            LEFT JOIN FETCH lectures.attachments
+            SELECT DISTINCT c
+            FROM Course c
+                LEFT JOIN FETCH c.exercises exercises
+                LEFT JOIN FETCH c.lectures lectures
+                LEFT JOIN FETCH lectures.attachments
                 LEFT JOIN FETCH exercises.categories
-                WHERE (c.startDate <= :now
-                	OR c.startDate IS NULL)
-                AND (c.endDate >= :now
-                	OR c.endDate IS NULL)
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
                 """)
     List<Course> findAllActiveWithEagerExercisesAndLectures(@Param("now") ZonedDateTime now);
 
@@ -157,16 +154,18 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query("""
             SELECT DISTINCT c
-            FROM Course c LEFT JOIN FETCH c.exercises e
+            FROM Course c
+                LEFT JOIN FETCH c.exercises e
             WHERE (c.instructorGroupName IN :#{#userGroups} OR c.editorGroupName IN :#{#userGroups})
                 AND TYPE(e) = QuizExercise
             """)
     List<Course> getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(@Param("userGroups") List<String> userGroups);
 
     @Query("""
-            select distinct c
-            from Course c left join fetch c.exercises e
-            where TYPE(e) = QuizExercise
+            SELECT DISTINCT c
+            FROM Course c
+            LEFT JOIN FETCH c.exercises e
+            WHERE TYPE(e) = QuizExercise
             """)
     List<Course> findAllWithQuizExercisesWithEagerExercises();
 
@@ -195,11 +194,12 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
                 substring(cast(s.submissionDate as string), 1, 10), p.student.login
                 )
-            FROM StudentParticipation p JOIN p.submissions s
+            FROM StudentParticipation p
+                JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
                 AND s.submissionDate >= cast(:startDate as timestamp)
                 AND s.submissionDate <= cast(:endDate as timestamp)
-                group by substring(cast(s.submissionDate as string), 1, 10), p.student.login
+            GROUP BY substring(cast(s.submissionDate as string), 1, 10), p.student.login
             """)
     List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
@@ -262,6 +262,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     /**
      * Get all the courses.
      *
+     * @param user the user for which the visible courses should be found
      * @return the list of entities
      */
     default List<Course> findAllActiveWithLecturesAndRelevantExams(User user) {
