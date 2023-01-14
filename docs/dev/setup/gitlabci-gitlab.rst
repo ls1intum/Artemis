@@ -4,6 +4,10 @@ GitLab CI and GitLab Setup
 This section describes how to set up a programming exercise environment
 based on GitLab CI and GitLab.
 
+.. note::
+    Depending on your operating system, it might not work with the predefined values (``host.docker.internal``).
+    Therefore, it might be necessary to adapt these with e.g. your local IP address.
+
 **Prerequisites:**
 
 * `Docker <https://docs.docker.com/install>`__
@@ -49,6 +53,11 @@ GitLab
 5. Generate an access token
     Go to ``http://host.docker.internal/-/profile/personal_access_tokens`` and generate an access token with all scopes.
     This token is used in the Artemis configuration as ``artemis.version-control.token``.
+
+6. Allow outbound requests to local network
+    For setting up the webhook between Artemis and GitLab, it is necessary to allow requests to the local network.
+    Go to ``http://host.docker.internal/admin/application_settings/network`` and allow the outbound requests.
+    More information about this aspect can be found in the `GitLab setup instructions <#gitlab-access-token>`__ (step 12).
 
 GitLab Runner
 """""""""""""
