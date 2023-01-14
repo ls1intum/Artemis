@@ -734,10 +734,10 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Assertions
-        var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseToBeImported.getId());
+        var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findWithExerciseByExerciseId(exerciseToBeImported.getId());
         assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isTrue();
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorOnFields("name", "state", "penalty", "maxPenalty")
-                .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
+                .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(sourceExercise.getProgrammingLanguage()));
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);
     }
 
