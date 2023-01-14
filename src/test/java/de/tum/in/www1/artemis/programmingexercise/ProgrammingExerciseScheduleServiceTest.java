@@ -85,13 +85,12 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @AfterEach
     void tearDown() throws InterruptedException {
         // not yet finished scheduled futures may otherwise affect following tests
-        for (final var lifecycle : ExerciseLifecycle.values()) {
-            scheduleService.cancelScheduledTaskForLifecycle(programmingExercise.getId(), lifecycle);
-        }
+        scheduleService.clearAllTasks();
 
+        // TODO: find a better solution in the future, because this makes the tests slower
         // Some futures might already run while all tasks are cancelled. Waiting a bit makes sure the mocks are not called by the futures after the reset.
         // Otherwise, the following test might fail.
-        Thread.sleep(900);  // ok
+        Thread.sleep(500);  // ok
 
         bambooRequestMockProvider.reset();
         bitbucketRequestMockProvider.reset();
