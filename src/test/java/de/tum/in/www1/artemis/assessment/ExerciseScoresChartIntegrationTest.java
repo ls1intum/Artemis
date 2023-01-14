@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.ParticipationService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresDTO;
 
 class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -42,31 +43,17 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
     Long idOfTeamTextExercise;
 
     @Autowired
-    SubmissionRepository submissionRepository;
+    private UserRepository userRepository;
 
     @Autowired
-    ResultRepository resultRepository;
-
-    @Autowired
-    ExerciseRepository exerciseRepository;
-
-    @Autowired
-    CourseRepository courseRepository;
-
-    @Autowired
-    UserRepository userRepository;
-
-    @Autowired
-    ParticipationService participationService;
-
-    @Autowired
-    TeamRepository teamRepository;
+    private TeamRepository teamRepository;
 
     @Autowired
     private ParticipantScoreRepository participantScoreRepository;
 
     @BeforeEach
     void setupTestScenario() {
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         participantScoreSchedulerService.activate();
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         this.database.addUsers(TEST_PREFIX, 3, 2, 0, 0);
@@ -105,6 +92,11 @@ class ExerciseScoresChartIntegrationTest extends AbstractSpringIntegrationBamboo
 
         await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 3);
         await().until(() -> participantScoreRepository.findAllByExercise(teamExercise).size() == 2);
+    }
+
+    @AfterEach
+    void tearDown() {
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
     }
 
     @Test

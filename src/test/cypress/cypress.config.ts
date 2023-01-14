@@ -34,6 +34,10 @@ export default defineConfig({
                     return null;
                 },
             });
+            on('before:browser:launch', (browser, launchOptions) => {
+                launchOptions.args.push('--lang=en');
+                return launchOptions;
+            });
         },
         specPattern: ['init/ImportUsers.cy.ts', 'e2e/**/*.cy.{js,jsx,ts,tsx}'],
         supportFile: 'support/index.ts',
