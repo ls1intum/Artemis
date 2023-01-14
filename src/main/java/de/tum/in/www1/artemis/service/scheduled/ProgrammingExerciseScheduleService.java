@@ -502,21 +502,17 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             try {
                 var failedLockOperationsFuture = removeWritePermissionsFromAllStudentRepositories(programmingExerciseId, condition);
                 failedLockOperationsFuture.thenAccept(failedLockOperations -> {
-                    // TODO this seems duplicated?
                     // We sent a notification to the instructor about the success of the repository locking and stashing operations.
                     long numberOfFailedLockOperations = failedLockOperations.size();
 
-                    Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
-                            .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
-                    if (programmingExercise.isEmpty()) {
-                        throw new EntityNotFoundException("programming exercise not found with id " + programmingExerciseId);
-                    }
+                    ProgrammingExercise programmingExercise = programmingExerciseRepository
+                            .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(programmingExerciseId);
                     if (numberOfFailedLockOperations > 0) {
-                        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise,
                                 Constants.PROGRAMMING_EXERCISE_FAILED_LOCK_OPERATIONS_NOTIFICATION + numberOfFailedLockOperations);
                     }
                     else {
-                        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                        groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise,
                                 Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_LOCK_OPERATION_NOTIFICATION);
                     }
                 });
@@ -528,16 +524,16 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 if (Boolean.TRUE.equals(exercise.isAllowOnlineEditor())) {
                     var failedStashOperationsFuture = stashChangesInAllStudentRepositories(programmingExerciseId, condition);
                     failedStashOperationsFuture.thenAccept(failedStashOperations -> {
-                        Optional<ProgrammingExercise> programmingExercise = programmingExerciseRepository
-                                .findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId);
+                        ProgrammingExercise programmingExercise = programmingExerciseRepository
+                                .findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesElseThrow(programmingExerciseId);
 
                         long numberOfFailedStashOperations = failedStashOperations.size();
                         if (numberOfFailedStashOperations > 0) {
-                            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise,
                                     Constants.PROGRAMMING_EXERCISE_FAILED_STASH_OPERATIONS_NOTIFICATION + numberOfFailedStashOperations);
                         }
                         else {
-                            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise.get(),
+                            groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(programmingExercise,
                                     Constants.PROGRAMMING_EXERCISE_SUCCESSFUL_STASH_OPERATION_NOTIFICATION);
                         }
                     });

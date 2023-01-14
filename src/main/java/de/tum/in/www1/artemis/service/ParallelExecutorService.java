@@ -17,10 +17,20 @@ public class ParallelExecutorService {
 
     private static final int THREADS = 10;
 
-    public <T, R> CompletableFuture<R>[] runForAll(Collection<T> collection, Function<T, R> consumer) {
+    /**
+     * Executes the code in the given function for evey object in parallel.
+     * Returns an array of CompletableFutures allowing to retrieve the functions return value
+     *
+     * @param collection Objects for which the task should be executed in parallel
+     * @param function   Code to execute
+     * @param <T>        input type
+     * @param <R>        function output type
+     * @return the created futures
+     */
+    public <T, R> CompletableFuture<R>[] runForAll(Collection<T> collection, Function<T, R> function) {
         ExecutorService threadPool = Executors.newFixedThreadPool(THREADS);
 
-        CompletableFuture<R>[] futures = collection.stream().map(element -> CompletableFuture.supplyAsync(() -> consumer.apply(element), threadPool))
+        CompletableFuture<R>[] futures = collection.stream().map(element -> CompletableFuture.supplyAsync(() -> function.apply(element), threadPool))
                 .toArray(CompletableFuture[]::new);
 
         CompletableFuture.allOf(futures).thenApply(ignore -> {
