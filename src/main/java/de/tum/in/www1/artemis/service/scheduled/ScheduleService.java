@@ -160,4 +160,14 @@ public class ScheduleService {
             cancelScheduledTaskForParticipationLifecycle(exerciseId, participationId, lifecycle);
         }
     }
+
+    /**
+     * cancels all futures tasks, only us this for testing purposes
+     */
+    public void clearAllTasks() {
+        scheduledParticipationTasks.values().forEach(futures -> futures.forEach(future -> future.cancel(true)));
+        scheduledExerciseTasks.values().forEach(futures -> futures.forEach(future -> future.cancel(true)));
+        scheduledParticipationTasks.clear();
+        scheduledExerciseTasks.clear();
+    }
 }
