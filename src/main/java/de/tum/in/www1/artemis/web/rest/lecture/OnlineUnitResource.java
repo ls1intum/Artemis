@@ -17,6 +17,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import com.google.common.net.InternetDomainName;
+
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.OnlineUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -155,6 +157,14 @@ public class OnlineUnitResource {
         try {
             // Ensure that the link is a correctly formed URL
             URL url = new URL(link);
+
+            if (!url.getProtocol().equalsIgnoreCase("http") && !url.getProtocol().equalsIgnoreCase("https")) {
+                throw new BadRequestException("The specified link uses an unsupported protocol");
+            }
+
+            if (!InternetDomainName.isValid(url.getHost()) || url.getHost().equalsIgnoreCase("localhost")) {
+                throw new BadRequestException("The specified link does not contain a valid domain");
+            }
 
             log.info("Requesting online resource at {}", url);
 

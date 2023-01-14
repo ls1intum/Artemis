@@ -99,6 +99,22 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteLectureUnit_shouldUnlinkLearningGoal() throws Exception {
+        var lectureUnit = lecture1.getLectureUnits().get(0);
+        var learningGoal = database.createLearningGoal(lecture1.getCourse());
+        lectureUnit.setLearningGoals(Set.of(learningGoal));
+        lectureRepository.save(lecture1);
+
+        var lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        assertThat(lecture.getLectureUnits().get(0).getLearningGoals()).isNotEmpty();
+
+        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_shouldRemoveCompletions() throws Exception {
         var lectureUnit = lecture1.getLectureUnits().get(0);
         var user = userRepo.findOneByLogin(TEST_PREFIX + "student1").get();

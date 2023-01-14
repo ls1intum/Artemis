@@ -8,6 +8,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -179,7 +180,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private void createLearningGoal() {
         Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourse).get();
         LearningGoal learningGoal = new LearningGoal();
-        learningGoal.setTitle("LearningGoalOne");
+        learningGoal.setTitle("LearningGoal" + new Random().nextInt());
         learningGoal.setDescription("This is an example learning goal");
         learningGoal.setTaxonomy(LearningGoalTaxonomy.UNDERSTAND);
         learningGoal.setCourse(course);
@@ -397,8 +398,9 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void getTitle_ForLearningGoal() throws Exception {
+        var learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         String title = request.get("/api/learning-goals/" + idOfLearningGoal + "/title", HttpStatus.OK, String.class);
-        assertThat(title).isEqualTo("LearningGoalOne");
+        assertThat(title).isEqualTo(learningGoal.getTitle());
     }
 
     @Test
@@ -509,6 +511,16 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createLearningGoalRelation_shouldReturnBadRequest() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        Long idOfOtherLearningGoal = database.createLearningGoal(course).getId();
+
+        request.post("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type=" + "abc123xyz", null,
+                HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void createLearningGoalRelation_shouldReturnForbidden() throws Exception {
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
@@ -554,6 +566,22 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         var relations = learningGoalRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
         assertThat(relations).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteLearningGoalRelation_shouldReturnBadRequest() throws Exception {
+        LearningGoal learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        LearningGoal otherLearningGoal = database.createLearningGoal(course);
+
+        var relation = new LearningGoalRelation();
+        relation.setTailLearningGoal(otherLearningGoal); // invalid
+        relation.setHeadLearningGoal(learningGoal);
+        relation.setType(LearningGoalRelation.RelationType.EXTENDS);
+        relation = learningGoalRelationRepository.save(relation);
+
+        request.delete("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal + "/relations/" + relation.getId(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -688,6 +716,14 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateLearningGoal_asInstructor_badRequest() throws Exception {
+        LearningGoal existingLearningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        existingLearningGoal.setId(null);
+        request.putWithResponseBody("/api/courses/" + idOfCourse + "/learning-goals", existingLearningGoal, LearningGoal.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createLearningGoal_asInstructor_shouldCreateLearningGoal() throws Exception {
         Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourse).get();
         LearningGoal learningGoal = new LearningGoal();
@@ -700,6 +736,18 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         var persistedLearningGoal = request.postWithResponseBody("/api/courses/" + idOfCourse + "/learning-goals", learningGoal, LearningGoal.class, HttpStatus.CREATED);
         assertThat(persistedLearningGoal.getId()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createLearningGoal_asInstructor_badRequest() throws Exception {
+        LearningGoal learningGoal = new LearningGoal(); // no title
+        request.postWithResponseBody("/api/courses/" + idOfCourse + "/learning-goals", learningGoal, LearningGoal.class, HttpStatus.BAD_REQUEST);
+        learningGoal.setTitle(" "); // empty title
+        request.postWithResponseBody("/api/courses/" + idOfCourse + "/learning-goals", learningGoal, LearningGoal.class, HttpStatus.BAD_REQUEST);
+        learningGoal.setTitle("Hello");
+        learningGoal.setId(5L); // id is set
+        request.postWithResponseBody("/api/courses/" + idOfCourse + "/learning-goals", learningGoal, LearningGoal.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -724,7 +772,16 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         final var search = database.configureSearch(learningGoal.getTitle());
         final var result = request.get("/api/learning-goals/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
-        assertThat(result.getResultsOnPage()).hasSize(10);
+        assertThat(result.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAdminGetsResultsFromAllCourses() throws Exception {
+        LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
+        final var search = database.configureSearch(learningGoal.getTitle());
+        final var result = request.get("/api/learning-goals/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
     @Test
@@ -767,6 +824,12 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourseTwo).orElseThrow();
         assertThat(course.getPrerequisites()).doesNotContain(learningGoal);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void removePrerequisite_conflict() throws Exception {
+        request.delete("/api/courses/" + idOfCourse + "/prerequisites/" + idOfLearningGoal, HttpStatus.CONFLICT);
     }
 
     @Test
