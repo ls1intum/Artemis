@@ -104,11 +104,11 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/goals : gets all the learning goals of a course
+     * GET /courses/:courseId/learning-goals : gets all the learning goals of a course
      * @param courseId the id of the course for which the learning goals should be fetched
      * @return the ResponseEntity with status 200 (OK) and with body the found learning goals
      */
-    @GetMapping("/courses/{courseId}/goals")
+    @GetMapping("/courses/{courseId}/learning-goals")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<LearningGoal>> getLearningGoals(@PathVariable Long courseId) {
         log.debug("REST request to get learning goals for course with id: {}", courseId);
@@ -121,13 +121,13 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/goals/:learningGoalId : gets the learning goal with the specified id
+     * GET /courses/:courseId/learning-goals/:learningGoalId : gets the learning goal with the specified id
      *
      * @param learningGoalId the id of the learning goal to retrieve
      * @param courseId the id of the course to which the learning goal belongs
      * @return the ResponseEntity with status 200 (OK) and with body the learning goal, or with status 404 (Not Found)
      */
-    @GetMapping("/courses/{courseId}/goals/{learningGoalId}")
+    @GetMapping("/courses/{courseId}/learning-goals/{learningGoalId}")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<LearningGoal> getLearningGoal(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.debug("REST request to get LearningGoal : {}", learningGoalId);
@@ -149,13 +149,13 @@ public class LearningGoalResource {
     }
 
     /**
-     * PUT /courses/:courseId/goals : Updates an existing learning goal.
+     * PUT /courses/:courseId/learning-goals : Updates an existing learning goal.
      *
      * @param courseId  the id of the course to which the learning goals belongs
      * @param learningGoal the learningGoal to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated learningGoal
      */
-    @PutMapping("/courses/{courseId}/goals")
+    @PutMapping("/courses/{courseId}/learning-goals")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoal> updateLearningGoal(@PathVariable Long courseId, @RequestBody LearningGoal learningGoal) {
         log.debug("REST request to update LearningGoal : {}", learningGoal);
@@ -184,14 +184,14 @@ public class LearningGoalResource {
     }
 
     /**
-     * POST /courses/:courseId/goals : creates a new learning goal.
+     * POST /courses/:courseId/learning-goals : creates a new learning goal.
      *
      * @param courseId      the id of the course to which the learning goal should be added
      * @param learningGoal the learning goal that should be created
      * @return the ResponseEntity with status 201 (Created) and with body the new learning goal
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PostMapping("/courses/{courseId}/goals")
+    @PostMapping("/courses/{courseId}/learning-goals")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoal> createLearningGoal(@PathVariable Long courseId, @RequestBody LearningGoal learningGoal) throws URISyntaxException {
         log.debug("REST request to create LearningGoal : {}", learningGoal);
@@ -212,16 +212,16 @@ public class LearningGoalResource {
 
         linkLectureUnitsToLearningGoal(persistedLearningGoal, learningGoal.getLectureUnits(), Set.of());
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/goals/" + persistedLearningGoal.getId())).body(persistedLearningGoal);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/learning-goals/" + persistedLearningGoal.getId())).body(persistedLearningGoal);
     }
 
     /**
-     * DELETE /courses/:courseId/goals/:learningGoalId
+     * DELETE /courses/:courseId/learning-goals/:learningGoalId
      * @param courseId the id of the course to which the learning goal belongs
      * @param learningGoalId the id of the learning goal to remove
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/courses/{courseId}/goals/{learningGoalId}")
+    @DeleteMapping("/courses/{courseId}/learning-goals/{learningGoalId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteLearningGoal(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.info("REST request to delete a LearningGoal : {}", learningGoalId);
@@ -252,14 +252,14 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/goals/:learningGoalId/individual-progress  gets the learning goal progress for the whole course
+     * GET /courses/:courseId/learning-goals/:learningGoalId/student-progress  gets the learning goal progress for a user
      *
      * @param courseId the id of the course to which the learning goal belongs
      * @param learningGoalId the id of the learning goal for which to get the progress
      * @param refresh whether to update the student progress or fetch it from the database (default)
      * @return the ResponseEntity with status 200 (OK) and with the learning goal course performance in the body
      */
-    @GetMapping("/courses/{courseId}/goals/{learningGoalId}/student-progress")
+    @GetMapping("/courses/{courseId}/learning-goals/{learningGoalId}/student-progress")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<LearningGoalProgress> getLearningGoalStudentProgress(@PathVariable Long courseId, @PathVariable Long learningGoalId,
             @RequestParam(defaultValue = "false") Boolean refresh) {
@@ -281,13 +281,13 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/goals/:learningGoalId/course-progress  gets the learning goal progress for the whole course
+     * GET /courses/:courseId/learning-goals/:learningGoalId/course-progress  gets the learning goal progress for the whole course
      *
      * @param courseId                 the id of the course to which the learning goal belongs
      * @param learningGoalId           the id of the learning goal for which to get the progress
      * @return the ResponseEntity with status 200 (OK) and with the learning goal course performance in the body
      */
-    @GetMapping("/courses/{courseId}/goals/{learningGoalId}/course-progress")
+    @GetMapping("/courses/{courseId}/learning-goals/{learningGoalId}/course-progress")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<CourseLearningGoalProgressDTO> getLearningGoalCourseProgress(@PathVariable Long courseId, @PathVariable Long learningGoalId) {
         log.debug("REST request to get course progress for learning goal: {}", learningGoalId);
@@ -305,13 +305,13 @@ public class LearningGoalResource {
     }
 
     /**
-     * GET /courses/:courseId/goals/:learningGoalId/relations  get the relations for the learning goal
+     * GET /courses/:courseId/learning-goals/:learningGoalId/relations  get the relations for the learning goal
      *
      * @param courseId                 the id of the course to which the learning goal belongs
      * @param learningGoalId           the id of the learning goal for which to fetch all relations
      * @return the ResponseEntity with status 200 (OK) and with a list of relations for the learning goal in the body
      */
-    @GetMapping("/courses/{courseId}/goals/{learningGoalId}/relations")
+    @GetMapping("/courses/{courseId}/learning-goals/{learningGoalId}/relations")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Set<LearningGoalRelation>> getLearningGoalRelations(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.debug("REST request to get relations for LearningGoal : {}", learningGoalId);
@@ -324,14 +324,14 @@ public class LearningGoalResource {
     }
 
     /**
-     * POST /courses/:courseId/goals/:learningGoalId/relations
+     * POST /courses/:courseId/learning-goals/:learningGoalId/relations
      * @param courseId  the id of the course to which the learning goals belong
      * @param tailLearningGoalId the id of the learning goal at the tail of the relation
      * @param headLearningGoalId the id of the learning goal at the head of the relation
      * @param type the type of the relation as request parameter
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PostMapping("/courses/{courseId}/goals/{tailLearningGoalId}/relations/{headLearningGoalId}")
+    @PostMapping("/courses/{courseId}/learning-goals/{tailLearningGoalId}/relations/{headLearningGoalId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoalRelation> createLearningGoalRelation(@PathVariable Long courseId, @PathVariable Long tailLearningGoalId,
             @PathVariable Long headLearningGoalId, @RequestParam(defaultValue = "") String type) {
@@ -359,13 +359,13 @@ public class LearningGoalResource {
     }
 
     /**
-     * DELETE /courses/:courseId/goals/:learningGoalId/relations/:learningGoalRelationId
+     * DELETE /courses/:courseId/learning-goals/:learningGoalId/relations/:learningGoalRelationId
      * @param courseId the id of the course
      * @param learningGoalId the id of the learning goal to which the relation belongs
      * @param learningGoalRelationId the id of the learning goal relation
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("/courses/{courseId}/goals/{learningGoalId}/relations/{learningGoalRelationId}")
+    @DeleteMapping("/courses/{courseId}/learning-goals/{learningGoalId}/relations/{learningGoalRelationId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removeLearningGoalRelation(@PathVariable Long learningGoalId, @PathVariable Long courseId, @PathVariable Long learningGoalRelationId) {
         log.info("REST request to remove a learning goal relation: {}", learningGoalId);

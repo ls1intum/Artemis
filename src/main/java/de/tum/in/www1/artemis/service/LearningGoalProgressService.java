@@ -208,7 +208,8 @@ public class LearningGoalProgressService {
             // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
         }
 
-        logger.debug("Updated progress for user {} in learning goal {} to {}.", user.getLogin(), learningGoal.getId(), studentProgress.getProgress());
+        logger.debug("Updated progress for user {} in learning goal {} to {} / {}.", user.getLogin(), learningGoal.getId(), studentProgress.getProgress(),
+                studentProgress.getConfidence());
         return studentProgress;
     }
 

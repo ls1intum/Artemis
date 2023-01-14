@@ -19,7 +19,7 @@ export class LearningGoalService {
 
     getAllForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
-            .get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/goals`, { observe: 'response' })
+            .get<LearningGoal[]>(`${this.resourceURL}/courses/${courseId}/learning-goals`, { observe: 'response' })
             .pipe(tap((res: EntityArrayResponseType) => res?.body?.forEach(this.sendTitlesToEntityTitleService.bind(this))));
     }
 
@@ -32,20 +32,20 @@ export class LearningGoalService {
     getProgress(learningGoalId: number, courseId: number, refresh = false) {
         let params = new HttpParams();
         params = params.set('refresh', refresh.toString());
-        return this.httpClient.get<LearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/student-progress`, {
+        return this.httpClient.get<LearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/learning-goals/${learningGoalId}/student-progress`, {
             params,
             observe: 'response',
         });
     }
 
     getCourseProgress(learningGoalId: number, courseId: number) {
-        return this.httpClient.get<CourseLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/course-progress`, {
+        return this.httpClient.get<CourseLearningGoalProgress>(`${this.resourceURL}/courses/${courseId}/learning-goals/${learningGoalId}/course-progress`, {
             observe: 'response',
         });
     }
 
     findById(learningGoalId: number, courseId: number) {
-        return this.httpClient.get<LearningGoal>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}`, { observe: 'response' }).pipe(
+        return this.httpClient.get<LearningGoal>(`${this.resourceURL}/courses/${courseId}/learning-goals/${learningGoalId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
                 this.convertLectureUnitArrayResponseDateFromServer(res);
                 this.sendTitlesToEntityTitleService(res?.body);
@@ -56,7 +56,7 @@ export class LearningGoalService {
 
     create(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
         const copy = this.convertLearningGoalDatesFromClient(learningGoal);
-        return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/goals`, copy, { observe: 'response' });
+        return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/learning-goals`, copy, { observe: 'response' });
     }
 
     addPrerequisite(learningGoalId: number, courseId: number): Observable<EntityResponseType> {
@@ -65,11 +65,11 @@ export class LearningGoalService {
 
     update(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
         const copy = this.convertLearningGoalDatesFromClient(learningGoal);
-        return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/goals`, copy, { observe: 'response' });
+        return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/learning-goals`, copy, { observe: 'response' });
     }
 
     delete(learningGoalId: number, courseId: number) {
-        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}`, { observe: 'response' });
+        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/learning-goals/${learningGoalId}`, { observe: 'response' });
     }
 
     removePrerequisite(learningGoalId: number, courseId: number) {
@@ -79,20 +79,20 @@ export class LearningGoalService {
     createLearningGoalRelation(tailLearningGoalId: number, headLearningGoalId: number, type: string, courseId: number): Observable<EntityResponseType> {
         let params = new HttpParams();
         params = params.set('type', type);
-        return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/goals/${tailLearningGoalId}/relations/${headLearningGoalId}`, null, {
+        return this.httpClient.post(`${this.resourceURL}/courses/${courseId}/learning-goals/${tailLearningGoalId}/relations/${headLearningGoalId}`, null, {
             observe: 'response',
             params,
         });
     }
 
     getLearningGoalRelations(learningGoalId: number, courseId: number) {
-        return this.httpClient.get<LearningGoalRelation[]>(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/relations`, {
+        return this.httpClient.get<LearningGoalRelation[]>(`${this.resourceURL}/courses/${courseId}/learning-goals/${learningGoalId}/relations`, {
             observe: 'response',
         });
     }
 
     removeLearningGoalRelation(learningGoalId: number, learningGoalRelationId: number, courseId: number) {
-        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/goals/${learningGoalId}/relations/${learningGoalRelationId}`, {
+        return this.httpClient.delete(`${this.resourceURL}/courses/${courseId}/learning-goals/${learningGoalId}/relations/${learningGoalRelationId}`, {
             observe: 'response',
         });
     }
