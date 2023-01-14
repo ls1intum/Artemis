@@ -7,6 +7,7 @@ import { filter, tap } from 'rxjs/operators';
 @Component({
     selector: 'jhi-footer',
     templateUrl: './footer.component.html',
+    styleUrls: ['./footer.scss'],
 })
 export class FooterComponent implements OnInit {
     readonly releaseNotesUrl = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;

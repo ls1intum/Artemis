@@ -57,6 +57,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void initTestCase() throws Exception {
         this.database.addUsers(1, 1, 0, 1);
         this.attachment = ModelFactory.generateAttachment(null);
+        this.attachment.setName("          LoremIpsum              ");
         this.attachment.setLink("files/temp/example.txt");
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.attachmentUnit = new AttachmentUnit();
@@ -130,6 +131,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(persistedAttachment.getId()).isNotNull();
         var updatedAttachmentUnit = attachmentUnitRepository.findById(persistedAttachmentUnit.getId()).get();
         assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachment);
+        assertThat(updatedAttachmentUnit.getAttachment().getName()).isEqualTo("LoremIpsum");
     }
 
     @Test

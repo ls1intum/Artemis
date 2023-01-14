@@ -73,6 +73,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public courseId: number;
     public course: Course;
     public exercise?: Exercise;
+    public programmingExercise?: ProgrammingExercise;
     public resultWithComplaint?: Result;
     public latestRatedResult?: Result;
     public complaint?: Complaint;
@@ -262,8 +263,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.exampleSolution = this.artemisMarkdown.safeHtmlForMarkdown(exercise.exampleSolution);
             }
         } else if (newExercise.type === ExerciseType.PROGRAMMING) {
-            const exercise = newExercise as ProgrammingExercise;
-            this.isProgrammingExerciseExampleSolutionPublished = exercise.exampleSolutionPublished || false;
+            this.programmingExercise = newExercise as ProgrammingExercise;
+            this.isProgrammingExerciseExampleSolutionPublished = this.programmingExercise.exampleSolutionPublished || false;
         }
         // For TAs the example solution is collapsed on default to avoid spoiling, as the example solution is always shown to TAs
         this.exampleSolutionCollapsed = !!this.exercise?.isAtLeastTutor;

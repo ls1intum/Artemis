@@ -39,7 +39,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         this.database.addUsers(1, 1, 1, 1);
         this.lecture = this.database.createCourseWithLecture(true);
         this.textUnit = new TextUnit();
-        this.textUnit.setName("LoremIpsum");
+        this.textUnit.setName("LoremIpsum     ");
         this.textUnit.setContent("This is a Test");
 
         // Add users that are not in the course
@@ -77,6 +77,7 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     void createTextUnit_asEditor_shouldCreateTextUnitUnit() throws Exception {
         var persistedTextUnit = request.postWithResponseBody("/api/lectures/" + this.lecture.getId() + "/text-units", textUnit, TextUnit.class, HttpStatus.CREATED);
         assertThat(persistedTextUnit.getId()).isNotNull();
+        assertThat(persistedTextUnit.getName()).isEqualTo("LoremIpsum");
     }
 
     @Test
