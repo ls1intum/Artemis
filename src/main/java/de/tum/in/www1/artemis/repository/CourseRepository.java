@@ -37,16 +37,16 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("select distinct course.teachingAssistantGroupName from Course course")
     Set<String> findAllTeachingAssistantGroupNames();
 
-    @Query("select distinct course from Course course where course.instructorGroupName like :#{#name}")
+    @Query("select distinct course from Course course where course.instructorGroupName like :name")
     Course findCourseByInstructorGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where course.editorGroupName like :#{#name}")
+    @Query("select distinct course from Course course where course.editorGroupName like :name")
     Course findCourseByEditorGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where course.teachingAssistantGroupName like :#{#name}")
+    @Query("select distinct course from Course course where course.teachingAssistantGroupName like :name")
     Course findCourseByTeachingAssistantGroupName(@Param("name") String name);
 
-    @Query("select distinct course from Course course where course.studentGroupName like :#{#name}")
+    @Query("select distinct course from Course course where course.studentGroupName like :name")
     Course findCourseByStudentGroupName(@Param("name") String name);
 
     @Query("""
@@ -64,7 +64,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 LEFT JOIN exams.registeredUsers registeredUsers
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
-                AND (registeredUsers.id = :#{#userId} OR c.instructorGroupName IN :#{#groupNames} OR exams IS NULL)
+                AND (registeredUsers.id = :userId OR c.instructorGroupName IN :groupNames OR exams IS NULL)
                 AND (exams.visibleDate <= :now OR exams IS NULL)
             """)
     List<Course> findAllActiveWithLecturesAndRelevantExams(@Param("now") ZonedDateTime now, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames);
@@ -76,9 +76,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 LEFT JOIN FETCH tutorialGroups.teachingAssistant tutor
                 LEFT JOIN FETCH tutorialGroups.registrations registrations
                 LEFT JOIN FETCH registrations.student student
-            WHERE (c.startDate <= :#{#now} OR c.startDate IS NULL)
-                AND (c.endDate >= :#{#now} OR c.endDate IS NULL)
-                AND (student.id = :#{#userId} OR tutor.id = :#{#userId})
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND (student.id = :userId OR tutor.id = :userId)
             """)
     List<Course> findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
 
@@ -122,7 +122,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("select distinct course from Course course left join fetch course.organizations organizations left join fetch course.prerequisites prerequisites where (course.startDate is null or course.startDate <= :now) and (course.endDate is null or course.endDate >= :now) and course.onlineCourse = false and course.registrationEnabled = true")
     List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
-    @Query("select course from Course course left join fetch course.organizations co where course.id = :#{#courseId}")
+    @Query("select course from Course course left join fetch course.organizations co where course.id = :courseId")
     Optional<Course> findWithEagerOrganizations(@Param("courseId") long courseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "onlineCourseConfiguration", "tutorialGroupsConfiguration" })
@@ -156,7 +156,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             SELECT DISTINCT c
             FROM Course c
                 LEFT JOIN FETCH c.exercises e
-            WHERE (c.instructorGroupName IN :#{#userGroups} OR c.editorGroupName IN :#{#userGroups})
+            WHERE (c.instructorGroupName IN :userGroups OR c.editorGroupName IN :userGroups)
                 AND TYPE(e) = QuizExercise
             """)
     List<Course> getCoursesWithQuizExercisesForWhichUserHasAtLeastEditorAccess(@Param("userGroups") List<String> userGroups);
