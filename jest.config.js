@@ -65,6 +65,7 @@ module.exports = {
             lines: 85.4,
         },
     },
+    coverageReporters: ["clover", "json", "lcov", "text-summary"],
     setupFilesAfterEnv: ['<rootDir>/src/test/javascript/spec/jest-test-setup.ts', 'jest-extended/all'],
     moduleFileExtensions: ['ts', 'html', 'js', 'json', 'mjs'],
     resolver: '<rootDir>/jest.resolver.js',

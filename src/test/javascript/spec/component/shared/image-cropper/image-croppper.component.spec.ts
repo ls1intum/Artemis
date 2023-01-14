@@ -10,6 +10,7 @@ import { CropperPosition } from 'app/shared/image-cropper/interfaces/cropper-pos
 import { CropperSettings } from 'app/shared/image-cropper/interfaces/cropper.settings';
 import { ElementRef } from '@angular/core';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
+
 describe('ImageCropperComponent', () => {
     let fixture: ComponentFixture<ImageCropperComponent>;
     let comp: ImageCropperComponent;

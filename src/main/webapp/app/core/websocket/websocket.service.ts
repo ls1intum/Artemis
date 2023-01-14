@@ -164,7 +164,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         };
         this.stompClient = Stomp.over(this.socket, options);
         // Note: at the moment, debugging is deactivated to prevent console log statements
-        this.stompClient.debug = function () {};
+        this.stompClient.debug = () => {};
         const headers = <ConnectionHeaders>{};
 
         this.stompClient.connect(
