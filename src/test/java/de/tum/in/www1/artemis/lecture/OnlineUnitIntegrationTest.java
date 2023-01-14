@@ -93,10 +93,24 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createOnlineUnit_invalidUrl_shouldReturnBadRequest() throws Exception {
+        onlineUnit.setSource("abc123");
+        request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createOnlineUnit_withId_shouldReturnBadRequest() throws Exception {
+        onlineUnit.setId(999L);
+        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -160,12 +174,31 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateOnlineUnit_noLecture_shouldReturnConflict() throws Exception {
+        persistOnlineUnitWithLecture();
+
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
+        this.onlineUnit.setLecture(null);
+        this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getOnlineUnit_correctId_shouldReturnOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
         this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
         OnlineUnit onlineUnitFromRequest = request.get("/api/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.OK, OnlineUnit.class);
         assertThat(this.onlineUnit.getId()).isEqualTo(onlineUnitFromRequest.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getOnlineUnit_incorrectId_shouldReturnConflict() throws Exception {
+        persistOnlineUnitWithLecture();
+
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
+        request.get("/api/lectures/" + "999" + "/online-units/" + this.onlineUnit.getId(), HttpStatus.CONFLICT, OnlineUnit.class);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")

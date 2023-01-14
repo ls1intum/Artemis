@@ -64,12 +64,7 @@ public class OnlineUnitResource {
     public ResponseEntity<OnlineUnit> getOnlineUnit(@PathVariable Long onlineUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get onlineUnit : {}", onlineUnitId);
         var onlineUnit = onlineUnitRepository.findByIdElseThrow(onlineUnitId);
-        if (onlineUnit.getLecture() == null || onlineUnit.getLecture().getCourse() == null) {
-            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "onlineUnit", "lectureOrCourseMissing");
-        }
-        if (!onlineUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "onlineUnit", "lectureIdMismatch");
-        }
+        checkOnlineUnitCourseAndLecture(onlineUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(onlineUnit);
     }
@@ -89,22 +84,13 @@ public class OnlineUnitResource {
             throw new BadRequestException();
         }
 
-        if (onlineUnit.getLecture() == null || onlineUnit.getLecture().getCourse() == null) {
-            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "onlineUnit", "lectureOrCourseMissing");
-        }
-
+        checkOnlineUnitCourseAndLecture(onlineUnit, lectureId);
         validateUrl(onlineUnit);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, onlineUnit.getLecture().getCourse(), null);
 
-        if (!onlineUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "onlineUnit", "lectureIdMismatch");
-        }
-
         OnlineUnit result = onlineUnitRepository.save(onlineUnit);
-
         learningGoalProgressService.updateProgressByLearningObjectAsync(result);
-
         return ResponseEntity.ok(result);
     }
 
@@ -213,6 +199,20 @@ public class OnlineUnitResource {
         }
         catch (MalformedURLException exception) {
             throw new BadRequestException();
+        }
+    }
+
+    /**
+     * Checks that the online unit belongs to the specified lecture.
+     * @param onlineUnit The online unit to check
+     * @param lectureId The id of the lecture to check against
+     */
+    private void checkOnlineUnitCourseAndLecture(OnlineUnit onlineUnit, Long lectureId) {
+        if (onlineUnit.getLecture() == null || onlineUnit.getLecture().getCourse() == null) {
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "onlineUnit", "lectureOrCourseMissing");
+        }
+        if (!onlineUnit.getLecture().getId().equals(lectureId)) {
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "onlineUnit", "lectureIdMismatch");
         }
     }
 }

@@ -42,30 +42,6 @@ public class VideoUnitResource {
 
     private final LearningGoalProgressService learningGoalProgressService;
 
-    /**
-     * Normalizes the provided video Url.
-     * @param videoUnit provided video unit
-     */
-    private void normalizeVideoUrl(VideoUnit videoUnit) {
-        // Remove leading and trailing whitespaces
-        if (videoUnit.getSource() != null) {
-            videoUnit.setSource(videoUnit.getSource().strip());
-        }
-    }
-
-    /**
-     * Validates the provided video Url.
-     * @param videoUnit provided video unit
-     */
-    private void validateVideoUrl(VideoUnit videoUnit) {
-        try {
-            new URL(videoUnit.getSource());
-        }
-        catch (MalformedURLException exception) {
-            throw new BadRequestException();
-        }
-    }
-
     public VideoUnitResource(LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService, VideoUnitRepository videoUnitRepository,
             LearningGoalProgressService learningGoalProgressService) {
         this.lectureRepository = lectureRepository;
@@ -86,12 +62,7 @@ public class VideoUnitResource {
     public ResponseEntity<VideoUnit> getVideoUnit(@PathVariable Long videoUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get VideoUnit : {}", videoUnitId);
         var videoUnit = videoUnitRepository.findByIdElseThrow(videoUnitId);
-        if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
-            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "VideoUnit", "lectureOrCourseMissing");
-        }
-        if (!videoUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "VideoUnit", "lectureIdMismatch");
-        }
+        checkVideoUnitCourseAndLecture(videoUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
         return ResponseEntity.ok().body(videoUnit);
     }
@@ -111,18 +82,10 @@ public class VideoUnitResource {
             throw new BadRequestException();
         }
 
-        if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
-            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "VideoUnit", "lectureOrCourseMissing");
-        }
-
+        checkVideoUnitCourseAndLecture(videoUnit, lectureId);
         normalizeVideoUrl(videoUnit);
         validateVideoUrl(videoUnit);
-
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, videoUnit.getLecture().getCourse(), null);
-
-        if (!videoUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "VideoUnit", "lectureIdMismatch");
-        }
 
         VideoUnit result = videoUnitRepository.save(videoUnit);
 
@@ -167,6 +130,44 @@ public class VideoUnitResource {
         learningGoalProgressService.updateProgressByLearningObjectAsync(persistedVideoUnit);
 
         return ResponseEntity.created(new URI("/api/video-units/" + persistedVideoUnit.getId())).body(persistedVideoUnit);
+    }
+
+    /**
+     * Checks that the video unit belongs to the specified lecture.
+     * @param videoUnit The video unit to check
+     * @param lectureId The id of the lecture to check against
+     */
+    private void checkVideoUnitCourseAndLecture(VideoUnit videoUnit, Long lectureId) {
+        if (videoUnit.getLecture() == null || videoUnit.getLecture().getCourse() == null) {
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "VideoUnit", "lectureOrCourseMissing");
+        }
+        if (!videoUnit.getLecture().getId().equals(lectureId)) {
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "VideoUnit", "lectureIdMismatch");
+        }
+    }
+
+    /**
+     * Normalizes the provided video Url.
+     * @param videoUnit provided video unit
+     */
+    private void normalizeVideoUrl(VideoUnit videoUnit) {
+        // Remove leading and trailing whitespaces
+        if (videoUnit.getSource() != null) {
+            videoUnit.setSource(videoUnit.getSource().strip());
+        }
+    }
+
+    /**
+     * Validates the provided video Url.
+     * @param videoUnit provided video unit
+     */
+    private void validateVideoUrl(VideoUnit videoUnit) {
+        try {
+            new URL(videoUnit.getSource());
+        }
+        catch (MalformedURLException exception) {
+            throw new BadRequestException();
+        }
     }
 
 }
