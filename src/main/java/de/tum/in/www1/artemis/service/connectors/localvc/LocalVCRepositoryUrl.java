@@ -58,7 +58,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
         projectKey = pathSplit[3];
         courseShortName = pathSplit[2];
         repositorySlug = pathSplit[4].replace(".git", "");
-        repositoryTypeOrUserName = this.repositorySlug.toLowerCase().replace(this.projectKey.toLowerCase() + "-", "");
+        repositoryTypeOrUserName = repositorySlug.toLowerCase().replace(projectKey.toLowerCase() + "-", "");
 
         // Project key should contain the course short name.
         if (!projectKey.toLowerCase().contains(courseShortName.toLowerCase())) {
@@ -71,6 +71,29 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
         catch (URISyntaxException e) {
             throw new LocalVCException("Could not create local VC Repository URL", e);
         }
+    }
+
+    public LocalVCRepositoryUrl(String localVCPath, File repositoryFolderPath) {
+        String separator = File.separator;
+        String folderPath = repositoryFolderPath.getPath();
+
+        // Extract segments from path.
+        String[] pathSplit = folderPath.split(separator);
+
+        if (!pathSplit[0].equals(localVCPath)) {
+            throw new LocalVCException("Invalid repository path.");
+        }
+
+        projectKey = pathSplit[2];
+        courseShortName = pathSplit[1];
+        repositorySlug = pathSplit[3].replace(".git", "");
+        repositoryTypeOrUserName = repositorySlug.toLowerCase().replace(projectKey.toLowerCase() + "-", "");
+
+        // Project key should contain the course short name.
+        if (!projectKey.toLowerCase().contains(courseShortName.toLowerCase())) {
+            throw new LocalVCException("Badly formed Local Git Path: " + folderPath + " Expected the repository name to start with the lower case course short name.");
+        }
+
     }
 
     public Path getLocalPath(String localVCPath) {

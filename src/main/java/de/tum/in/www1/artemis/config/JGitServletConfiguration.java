@@ -9,6 +9,7 @@ import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
+import org.eclipse.jgit.transport.ReceivePack;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,6 +20,7 @@ import org.springframework.context.annotation.Profile;
 
 import de.tum.in.www1.artemis.security.localVC.LocalVCFetchFilter;
 import de.tum.in.www1.artemis.security.localVC.LocalVCFilterUtilService;
+import de.tum.in.www1.artemis.security.localVC.LocalVCPostPushHook;
 import de.tum.in.www1.artemis.security.localVC.LocalVCPushFilter;
 
 /**
@@ -91,11 +93,20 @@ public class JGitServletConfiguration {
                 repository.getConfig().setBoolean("receive", null, "denyDeletes", true);
                 repository.getConfig().setBoolean("receive", null, "denyRenames", true);
 
+                repository.incrementOpen();
+
                 return repository;
             });
 
             gitServlet.addUploadPackFilter(new LocalVCFetchFilter(localVCFilterUtilService));
             gitServlet.addReceivePackFilter(new LocalVCPushFilter(localVCFilterUtilService));
+
+            gitServlet.setReceivePackFactory((req, db) -> {
+                ReceivePack receivePack = new ReceivePack(db);
+                // Add a hook that triggers the creation of a new submission after the push went through successfully.
+                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCFilterUtilService));
+                return receivePack;
+            });
 
             log.info("Registering GitServlet");
             return new ServletRegistrationBean<>(gitServlet, "/git/*");

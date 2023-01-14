@@ -8,6 +8,11 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.eclipse.jgit.lib.ObjectId;
+import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -29,12 +34,16 @@ import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Profile("localvc")
 public class LocalVCFilterUtilService {
+
+    private final Logger log = LoggerFactory.getLogger(LocalVCFilterUtilService.class);
 
     @Value("${artemis.version-control.url}")
     private URL localVCServerUrl;
@@ -63,6 +72,10 @@ public class LocalVCFilterUtilService {
 
     private final TeamRepository teamRepository;
 
+    private final ProgrammingSubmissionService programmingSubmissionService;
+
+    private final ProgrammingMessagingService programmingMessagingService;
+
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
     public LocalVCFilterUtilService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseRepository courseRepository,
@@ -70,7 +83,8 @@ public class LocalVCFilterUtilService {
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ExamSubmissionService examSubmissionService,
-            SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService, TeamRepository teamRepository) {
+            SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService, TeamRepository teamRepository,
+            ProgrammingSubmissionService programmingSubmissionService, ProgrammingMessagingService programmingMessagingService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -83,6 +97,8 @@ public class LocalVCFilterUtilService {
         this.submissionPolicyService = submissionPolicyService;
         this.plagiarismService = plagiarismService;
         this.teamRepository = teamRepository;
+        this.programmingSubmissionService = programmingSubmissionService;
+        this.programmingMessagingService = programmingMessagingService;
     }
 
     /**
@@ -98,6 +114,16 @@ public class LocalVCFilterUtilService {
         String password = basicAuthCredentials.split(":")[1];
 
         User user = authenticateUser(username, password);
+
+        // Optimization.
+        // For each git command (i.e. 'git fetch' or 'git push'), the git client sends three requests.
+        // The URLs of the first two requests end on '[repository URL]/info/refs'. The third one ends on '[repository URL]/git-receive-pack' (for push) and '[repository
+        // URL]/git-upload-pack' (for fetch).
+        // The following checks will only be conducted for the second request, so we do not have to access the database too often.
+        // The first request does not contain credentials and will thus already be blocked by the 'authenticateUser' method above.
+        if (!servletRequest.getRequestURI().endsWith("/info/refs")) {
+            return;
+        }
 
         String url = servletRequest.getRequestURL().toString();
         LocalVCRepositoryUrl localVCUrl = validateRepositoryUrl(url);
@@ -185,15 +211,17 @@ public class LocalVCFilterUtilService {
 
         if (isRequestingBaseRepository(repositoryTypeOrUserName)) {
             // ---- Requesting one of the base repositories ("exercise", "tests", or "solution") ----
-            authorizeUserForBaseRepository(course, user, repositoryTypeOrUserName, exercise);
-            return;
+            authorizeUserForBaseRepository(user, repositoryTypeOrUserName, exercise);
         }
 
         // ---- Requesting one of the participant repositories. ----
 
-        // Check that the user is a student.
-        if (authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
-            throw new LocalVCForbiddenException();
+        // Teaching Assistants and Instructors can fetch any repository but can only push to repositories that belong to them.
+        if (!repositoryTypeOrUserName.equals(user.getLogin()) && authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+            if (forPush) {
+                throw new LocalVCAuthException();
+            }
+            return;
         }
 
         // Check that a participation exists.
@@ -225,10 +253,9 @@ public class LocalVCFilterUtilService {
         return false;
     }
 
-    private void authorizeUserForBaseRepository(Course course, User user, String repositoryType, ProgrammingExercise exercise)
-            throws LocalVCAuthException, LocalVCInternalException {
+    private void authorizeUserForBaseRepository(User user, String repositoryType, ProgrammingExercise exercise) throws LocalVCAuthException, LocalVCInternalException {
         // Check that the user is at least a teaching assistant in the course the repository belongs to.
-        boolean isAtLeastTeachingAssistantInCourse = authorizationCheckService.isAtLeastTeachingAssistantInCourse(course, user);
+        boolean isAtLeastTeachingAssistantInCourse = authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
         if (!isAtLeastTeachingAssistantInCourse) {
             throw new LocalVCAuthException();
         }
@@ -242,12 +269,17 @@ public class LocalVCFilterUtilService {
                 throw new LocalVCInternalException();
             }
         }
-
-        if (repositoryType.equals(RepositoryType.SOLUTION.getName())) {
+        else if (repositoryType.equals(RepositoryType.SOLUTION.getName())) {
             try {
                 solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exercise.getId());
             }
             catch (EntityNotFoundException e) {
+                throw new LocalVCInternalException();
+            }
+        }
+        else {
+            // Repository type must be "tests".
+            if (!repositoryType.equals(RepositoryType.TESTS.getName())) {
                 throw new LocalVCInternalException();
             }
         }
@@ -294,12 +326,13 @@ public class LocalVCFilterUtilService {
     private void authorizeUserForCourseExercise(Course course, String userName, User user, ProgrammingExerciseStudentParticipation participation, ProgrammingExercise exercise,
             boolean forPush) {
         // Check if the repository belongs to a team.
-        Team team = findValidTeam(course.getId(), userName, user, participation);
-
-        if (team == null) {
+        if (exercise.isTeamMode()) {
+            authorizeTeam(course.getId(), userName, user, participation);
+        }
+        else {
             // Repository belongs to a single student.
 
-            // Check that the user name in the repository name corresponds to the user name used for Basic Auth.
+            // Check that the username in the repository name corresponds to the username used for Basic Auth.
             if (!user.getLogin().equals(userName)) {
                 throw new LocalVCAuthException();
             }
@@ -337,8 +370,9 @@ public class LocalVCFilterUtilService {
         }
     }
 
-    private Team findValidTeam(Long courseId, String userNameFromUrl, User user, ProgrammingExerciseStudentParticipation participation)
+    private void authorizeTeam(Long courseId, String userNameFromUrl, User user, ProgrammingExerciseStudentParticipation participation)
             throws LocalVCInternalException, LocalVCAuthException {
+
         List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(courseId, userNameFromUrl);
         if (teams.size() > 0) {
             if (teams.size() > 1) {
@@ -355,10 +389,7 @@ public class LocalVCFilterUtilService {
             if (participation.getTeam().isEmpty() || !participation.getTeam().get().getShortName().equals(team.getShortName())) {
                 throw new LocalVCAuthException();
             }
-
-            return team;
         }
-        return null;
     }
 
     private void checkSubmissionPolicy(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation)
@@ -379,4 +410,71 @@ public class LocalVCFilterUtilService {
             throw new LocalVCForbiddenException();
         }
     }
+
+    public void createNewSubmission(String commitHash, Repository repository, LocalVCRepositoryUrl localVCRepositoryUrl) {
+
+        Commit commit = extractCommitInfo(commitHash, repository);
+
+        ProgrammingExercise exercise = findExerciseForRepository(localVCRepositoryUrl.getProjectKey());
+
+        // Retrieve participation for the repository.
+        ProgrammingExerciseParticipation participation;
+
+        if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.TEMPLATE.getName())) {
+            participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
+        }
+        else if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.SOLUTION.getName())) {
+            participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
+        }
+        else {
+            participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), localVCRepositoryUrl.getRepositoryTypeOrUserName())
+                    .orElse(null);
+        }
+
+        if (participation == null) {
+            throw new LocalVCInternalException("No participation found for repository " + repository.getDirectory().getPath());
+        }
+
+        try {
+            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
+            // Therefore, a mock auth object has to be created.
+            SecurityUtils.setAuthorizationObject();
+            ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit);
+            // Remove unnecessary information from the new submission.
+            submission.getParticipation().setSubmissions(null);
+            programmingMessagingService.notifyUserAboutSubmission(submission);
+        }
+        catch (Exception ex) {
+            log.error("Exception encountered when trying to create a new submission for participation {} with the following commit: {}", participation.getId(), commit, ex);
+            throw new LocalVCInternalException();
+        }
+    }
+
+    private Commit extractCommitInfo(String commitHash, Repository repository) {
+        RevCommit revCommit;
+        String branch;
+
+        try {
+            ObjectId objectId = repository.resolve(commitHash);
+            revCommit = repository.parseCommit(objectId);
+            branch = repository.getBranch();
+        }
+        catch (Exception e) {
+            throw new LocalVCInternalException(e.getMessage());
+        }
+
+        if (revCommit == null || branch == null) {
+            throw new LocalVCInternalException();
+        }
+
+        Commit commit = new Commit();
+        commit.setCommitHash(commitHash);
+        commit.setAuthorName(revCommit.getAuthorIdent().getName());
+        commit.setAuthorEmail(revCommit.getAuthorIdent().getEmailAddress());
+        commit.setBranch(branch);
+        commit.setMessage(revCommit.getFullMessage());
+
+        return commit;
+    }
+
 }

@@ -4,8 +4,8 @@ import de.tum.in.www1.artemis.exception.LocalVCException;
 
 public class LocalVCBadRequestException extends LocalVCException {
 
-    public LocalVCBadRequestException(String message) {
-        super(message);
+    public LocalVCBadRequestException() {
+        super();
     }
 
     public LocalVCBadRequestException(String message, Throwable cause) {

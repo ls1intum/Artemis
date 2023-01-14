@@ -113,7 +113,13 @@ public class ProgrammingSubmissionResource {
             // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
             // Therefore a mock auth object has to be created.
             SecurityUtils.setAuthorizationObject();
-            ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(participationId, requestBody);
+
+            Participation participation = participationRepository.findByIdWithLegalSubmissionsElseThrow(participationId);
+            if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
+                throw new EntityNotFoundException("Programming Exercise Participation", participationId);
+            }
+
+            ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(programmingExerciseParticipation, requestBody);
             // Remove unnecessary information from the new submission.
             submission.getParticipation().setSubmissions(null);
             programmingMessagingService.notifyUserAboutSubmission(submission);

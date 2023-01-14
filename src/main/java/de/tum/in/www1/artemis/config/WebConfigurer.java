@@ -52,7 +52,6 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
             log.info("Web application configuration, using profiles: {}", (Object[]) env.getActiveProfiles());
         }
         setCachingHttpHeaders(servletContext);
-
         log.info("Web application fully configured");
     }
 
