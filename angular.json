@@ -118,8 +118,8 @@
               "sourceMap": {
                 "scripts": true,
                 "styles": false,
-                "hidden": true,
-                "vendor": true
+                "hidden": false,
+                "vendor": false
               },
               "namedChunks": false,
               "aot": true,
