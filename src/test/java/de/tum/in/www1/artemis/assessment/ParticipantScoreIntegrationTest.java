@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
@@ -80,6 +82,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @BeforeEach
     void setupTestScenario() {
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         participantScoreSchedulerService.activate();
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
@@ -150,6 +153,11 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
         await().until(() -> participantScoreRepository.findAllByExercise(teamExercise).size() == 1);
         await().until(() -> participantScoreRepository.findAllByExercise(examTextExercise).size() == 1);
+    }
+
+    @AfterEach
+    void tearDown() {
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
     }
 
     private void testAllPreAuthorize() throws Exception {
