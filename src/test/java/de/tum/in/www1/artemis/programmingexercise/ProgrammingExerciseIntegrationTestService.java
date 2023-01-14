@@ -1567,11 +1567,11 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void unlockAllRepositories() throws Exception {
-        course.setInstructorGroupName(userPrefix + "unlockAll");
-        courseRepository.save(course);
+        String suffix = "unlockAll";
+        database.updateCourseGroups(userPrefix, course, suffix);
 
         var instructor = database.getUserByLogin(userPrefix + "instructor1");
-        instructor.setGroups(Set.of(userPrefix + "unlockAll"));
+        instructor.setGroups(Set.of(userPrefix + "instructor" + suffix));
         userRepository.save(instructor);
 
         mockConfigureRepository(programmingExercise);
@@ -1579,6 +1579,8 @@ class ProgrammingExerciseIntegrationTestService {
 
         final var endpoint = ProgrammingExerciseResourceEndpoints.UNLOCK_ALL_REPOSITORIES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.put(ROOT + endpoint, null, HttpStatus.OK);
+
+        Thread.sleep(500);
 
         verify(versionControlService, times(1)).configureRepository(programmingExercise, participation1, true);
         verify(versionControlService, times(1)).configureRepository(programmingExercise, participation2, true);
