@@ -5,8 +5,6 @@ import static de.tum.in.www1.artemis.config.Constants.EXAM_START_WAIT_TIME_MINUT
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -31,6 +29,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ParallelExecutorService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -75,11 +74,14 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final GitService gitService;
 
+    private final ParallelExecutorService parallelExecutorService;
+
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, ParticipationRepository participationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, Environment env, ProgrammingTriggerService programmingTriggerService,
             ProgrammingExerciseGradingService programmingExerciseGradingService, GroupNotificationService groupNotificationService, ExamDateService examDateService,
-            ProgrammingExerciseParticipationService programmingExerciseParticipationService, StudentExamRepository studentExamRepository, GitService gitService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, StudentExamRepository studentExamRepository, GitService gitService,
+            ParallelExecutorService parallelExecutorService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -94,6 +96,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         this.programmingExerciseGradingService = programmingExerciseGradingService;
         this.env = env;
         this.gitService = gitService;
+        this.parallelExecutorService = parallelExecutorService;
     }
 
     @PostConstruct
@@ -688,29 +691,27 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsByIdElseThrow(programmingExerciseId);
         List<ProgrammingExerciseStudentParticipation> failedOperations = new ArrayList<>();
 
-        // TODO: we should think about executing those operations again in batches to avoid issues on the vcs server, however those operations are typically executed
-        // synchronously so this might not be an issue
+        // TODO: we should think about executing those operations again in batches to avoid issues on the vcs server
 
-        ExecutorService threadPool = Executors.newFixedThreadPool(10);
+        CompletableFuture<ProgrammingExerciseStudentParticipation>[] futures = parallelExecutorService.runForAll(programmingExercise.getStudentParticipations(),
+                studentParticipation -> {
+                    ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
+                    if (condition.test(programmingExerciseStudentParticipation)) {
+                        operation.accept(programmingExercise, programmingExerciseStudentParticipation);
+                    }
+                    return programmingExerciseStudentParticipation;
+                });
 
-        CompletableFuture<?>[] futures = programmingExercise.getStudentParticipations().stream().map(studentParticipation -> {
-            ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
-            Runnable runnable = () -> {
-                if (condition.test(programmingExerciseStudentParticipation)) {
-                    operation.accept(programmingExercise, programmingExerciseStudentParticipation);
+        for (var future : futures) {
+            future.whenComplete((participation, exception) -> {
+                if (exception != null) {
+                    log.error(String.format("'%s' failed for programming exercise with id %d for student repository with participation id %d", operationName,
+                            programmingExercise.getId(), participation.getId()), exception);
+                    failedOperations.add(participation);
                 }
-            };
-            return CompletableFuture.runAsync(runnable, threadPool).exceptionally(e -> {
-                log.error(String.format("'%s' failed for programming exercise with id %d for student repository with participation id %d", operationName,
-                        programmingExercise.getId(), studentParticipation.getId()), e);
-                failedOperations.add(programmingExerciseStudentParticipation);
-                return null;
             });
-        }).toArray(CompletableFuture<?>[]::new);
+        }
 
-        return CompletableFuture.allOf(futures).thenApply(ignore -> {
-            threadPool.shutdown();
-            return failedOperations;
-        });
+        return CompletableFuture.allOf(futures).thenApply(ignore -> failedOperations);
     }
 }

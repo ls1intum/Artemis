@@ -6,7 +6,6 @@ import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
@@ -31,6 +30,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.ParallelExecutorService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.SubmissionVersionService;
@@ -82,11 +82,14 @@ public class StudentExamService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
+    private final ParallelExecutorService parallelExecutorService;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate,
+            ParallelExecutorService parallelExecutorService) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -103,6 +106,7 @@ public class StudentExamService {
         this.examRepository = examRepository;
         this.cacheManager = cacheManager;
         this.messagingTemplate = messagingTemplate;
+        this.parallelExecutorService = parallelExecutorService;
     }
 
     /**
@@ -346,8 +350,7 @@ public class StudentExamService {
      * @return the latestSubmission
      */
     public Optional<Submission> prepareProgrammingSubmission(Optional<Submission> latestSubmission, StudentParticipation studentParticipation) {
-        if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise
-                && ((ProgrammingExercise) studentParticipation.getExercise()).areManualResultsAllowed()) {
+        if (latestSubmission.isEmpty() && studentParticipation.getExercise() instanceof ProgrammingExercise programmingExercise && programmingExercise.areManualResultsAllowed()) {
             submissionService.addEmptyProgrammingSubmissionToParticipation(studentParticipation);
             return studentParticipation.findLatestSubmission();
         }
@@ -359,12 +362,12 @@ public class StudentExamService {
         if (existingStudentExam.getIndividualEndDate() != null && ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDate())) {
             // Use the programming exercises in the DB to lock the repositories (for safety)
             for (Exercise exercise : existingStudentExam.getExercises()) {
-                if (exercise instanceof ProgrammingExercise) {
+                if (exercise instanceof ProgrammingExercise programmingExercise) {
                     try {
                         log.debug("lock student repositories for {}", currentUser);
                         ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
                                 currentUser.getLogin());
-                        programmingExerciseParticipationService.lockStudentRepository((ProgrammingExercise) exercise, participation);
+                        programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
                     }
                     catch (Exception e) {
                         log.error("Locking programming exercise {} submitted manually by {} failed", exercise.getId(), currentUser.getLogin(), e);
@@ -507,20 +510,24 @@ public class StudentExamService {
         var startedAt = ZonedDateTime.now();
         var lock = new ReentrantLock();
         sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), 0, startedAt, lock);
-        var threadPool = Executors.newFixedThreadPool(10);
-        var futures = studentExams.stream()
-                .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool)
-                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
-                                generatedParticipations.size(), startedAt, lock))
-                        .exceptionally(throwable -> {
-                            log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), throwable);
-                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
-                                    generatedParticipations.size(), startedAt, lock);
-                            return null;
-                        }))
-                .toArray(CompletableFuture<?>[]::new);
+        var futures = parallelExecutorService.runForAll(studentExams, studentExam -> {
+            setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations);
+            return studentExam;
+        });
+        for (var future : futures) {
+            future.whenComplete((studentExam, exception) -> {
+                if (exception != null) {
+                    log.error("Exception while preparing exercises for student exam {}", studentExam.getId(), exception);
+                    sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
+                            generatedParticipations.size(), startedAt, lock);
+                    return;
+                }
+                sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(), generatedParticipations.size(),
+                        startedAt, lock);
+            });
+        }
+
         return CompletableFuture.allOf(futures).thenApply(emtpy -> {
-            threadPool.shutdown();
             sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExams.size(), generatedParticipations.size(), startedAt,
                     lock);
             return generatedParticipations.size();
