@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, NgModule, Output } from '@angular/core';
 
 @Component({
+    // eslint-disable-next-line @angular-eslint/directive-selector
     selector: 'ngb-alert',
     exportAs: 'ngbAlert',
     template: '<ng-content></ng-content>',
