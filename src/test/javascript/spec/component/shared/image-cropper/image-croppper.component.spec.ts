@@ -25,6 +25,7 @@ describe('ImageCropperComponent', () => {
     let loadImageFileSpy: jest.SpyInstance;
     let loadBase64ImageSpy: jest.SpyInstance;
     let loadImageFromURLSpy: jest.SpyInstance;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
