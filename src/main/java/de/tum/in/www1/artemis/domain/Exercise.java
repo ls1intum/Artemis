@@ -467,7 +467,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      * @return the latest relevant result in the given participation, or null, if none exist
      */
     @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
+    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, boolean ignoreAssessmentDueDate) {
         // for most types of exercises => return latest result (all results are relevant)
         Submission latestSubmission = null;
         // we get the results over the submissions
