@@ -132,7 +132,7 @@ public class ParticipantScoreSchedulerService {
      */
     @Scheduled(cron = "0 * * * * *")
     protected void scheduleTasks() {
-        logger.info("Schedule tasks to process...");
+        logger.debug("Schedule tasks to process...");
         SecurityUtils.setAuthorizationObject();
         if (isRunning.get()) {
             executeScheduledTasks();
@@ -172,7 +172,7 @@ public class ParticipantScoreSchedulerService {
             }
         });
 
-        logger.info("Processing of {} results and {} participant scores.", resultsToProcess.size(), participantScoresToProcess.size());
+        logger.debug("Processing of {} results and {} participant scores.", resultsToProcess.size(), participantScoresToProcess.size());
     }
 
     /**

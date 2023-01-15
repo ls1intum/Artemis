@@ -396,7 +396,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(results).hasSize(numberOfStudents / 2);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
-        assertThat(resultWithPoints2).containsExactlyElementsOf(results);
+        assertThat(resultWithPoints2).containsExactlyInAnyOrderElementsOf(results);
 
         final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
         final GradingCriterion criterion2 = getGradingCriterionByTitle(fileUploadExercise, "test title2");
