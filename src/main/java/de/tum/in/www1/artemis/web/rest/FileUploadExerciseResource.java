@@ -22,13 +22,17 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SubmissionExportOptionsDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
-/** REST controller for managing FileUploadExercise. */
+/**
+ * REST controller for managing FileUploadExercise.
+ */
 @RestController
 @RequestMapping(FileUploadExerciseResource.Endpoints.ROOT)
 public class FileUploadExerciseResource {
@@ -62,10 +66,15 @@ public class FileUploadExerciseResource {
 
     private final FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
+    private final FileUploadExerciseImportService fileUploadExerciseImportService;
+
+    private final FileUploadExerciseService fileUploadExerciseService;
+
     public FileUploadExerciseResource(FileUploadExerciseRepository fileUploadExerciseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
             CourseService courseService, ExerciseService exerciseService, ExerciseDeletionService exerciseDeletionService,
             FileUploadSubmissionExportService fileUploadSubmissionExportService, GradingCriterionRepository gradingCriterionRepository, CourseRepository courseRepository,
-            ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService) {
+            ParticipationRepository participationRepository, GroupNotificationScheduleService groupNotificationScheduleService,
+            FileUploadExerciseImportService fileUploadExerciseImportService, FileUploadExerciseService fileUploadExerciseService) {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -77,6 +86,8 @@ public class FileUploadExerciseResource {
         this.fileUploadSubmissionExportService = fileUploadSubmissionExportService;
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
+        this.fileUploadExerciseImportService = fileUploadExerciseImportService;
+        this.fileUploadExerciseService = fileUploadExerciseService;
     }
 
     /**
@@ -106,6 +117,28 @@ public class FileUploadExerciseResource {
         groupNotificationScheduleService.checkNotificationsForNewExercise(fileUploadExercise);
 
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
+    }
+
+    @PostMapping("/file-upload-exercises/import/{sourceId}")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<FileUploadExercise> importFileUploadExercise(@PathVariable long sourceId, @RequestBody FileUploadExercise importedFileUploadExercise)
+            throws URISyntaxException {
+
+        if (sourceId <= 0 || (importedFileUploadExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedFileUploadExercise.getExerciseGroup() == null)) {
+            log.debug("Either the courseId or exerciseGroupId must be set for an import");
+            throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
+        }
+        importedFileUploadExercise.checkCourseAndExerciseGroupExclusivity("File Upload Exercise");
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var originalFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(sourceId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedFileUploadExercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalFileUploadExercise, user);
+        // validates general settings: points, dates
+        importedFileUploadExercise.validateGeneralSettings();
+
+        final var newFileUploadExercise = fileUploadExerciseImportService.importFileUploadExercise(originalFileUploadExercise, importedFileUploadExercise);
+        fileUploadExerciseRepository.save(newFileUploadExercise);
+        return ResponseEntity.created(new URI("/api/file-upload-exercises/" + newFileUploadExercise.getId())).body(newFileUploadExercise);
     }
 
     private boolean isFilePatternValid(FileUploadExercise exercise) {
@@ -140,13 +173,30 @@ public class FileUploadExerciseResource {
     }
 
     /**
+     * Search for all file-upload exercises by id, title and course title. The result is pageable since there
+     * might be hundreds of exercises in the DB.
+     *
+     * @param search         The pageable search containing the page size, page number and query string
+     * @param isCourseFilter Whether to search in the courses for exercises
+     * @param isExamFilter   Whether to search in the groups for exercises
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("file-upload-exercises")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<SearchResultPageDTO<FileUploadExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
+            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(fileUploadExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
+    }
+
+    /**
      * PUT /file-upload-exercises : Updates an existing fileUploadExercise.
      *
      * @param fileUploadExercise the fileUploadExercise to update
-     * @param notificationText the text shown to students
-     * @param exerciseId the id of exercise
+     * @param notificationText   the text shown to students
+     * @param exerciseId         the id of exercise
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or with status 400 (Bad Request) if the fileUploadExercise is not valid, or
-     *         with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
+     * with status 500 (Internal Server Error) if the fileUploadExercise couldn't be updated
      */
     @PutMapping("/file-upload-exercises/{exerciseId}")
     @PreAuthorize("hasRole('EDITOR')")
@@ -248,7 +298,7 @@ public class FileUploadExerciseResource {
     /**
      * POST /file-upload-exercises/:exerciseId/export-submissions : sends exercise submissions as zip
      *
-     * @param exerciseId the id of the exercise to get the repos from
+     * @param exerciseId              the id of the exercise to get the repos from
      * @param submissionExportOptions the options that should be used for the export
      * @return ResponseEntity with status
      */
@@ -271,10 +321,9 @@ public class FileUploadExerciseResource {
     /**
      * PUT /file-upload-exercises/{exerciseId}/re-evaluate : Re-evaluates and updates an existing fileUploadExercise.
      *
-     * @param exerciseId                                   of the exercise
-     * @param fileUploadExercise                           the fileUploadExercise to re-evaluate and update
-     * @param deleteFeedbackAfterGradingInstructionUpdate  boolean flag that indicates whether the associated feedback should be deleted or not
-     *
+     * @param exerciseId                                  of the exercise
+     * @param fileUploadExercise                          the fileUploadExercise to re-evaluate and update
+     * @param deleteFeedbackAfterGradingInstructionUpdate boolean flag that indicates whether the associated feedback should be deleted or not
      * @return the ResponseEntity with status 200 (OK) and with body the updated fileUploadExercise, or
      * with status 400 (Bad Request) if the fileUploadExercise is not valid, or with status 409 (Conflict)
      * if given exerciseId is not same as in the object of the request body, or with status 500 (Internal

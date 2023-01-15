@@ -13,6 +13,7 @@ import { SortService } from 'app/shared/service/sort.service';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { Subject } from 'rxjs';
 import { debounceTime, switchMap, tap } from 'rxjs/operators';
+import { FileUploadExercisePagingService } from 'app/exercises/file-upload/manage/file-upload-exercise-paging.service';
 
 export type TableColumn = 'ID' | 'TITLE' | 'COURSE_TITLE' | 'EXAM_TITLE' | 'PROGRAMMING_LANGUAGE';
 
@@ -62,15 +63,16 @@ export class ExerciseImportComponent implements OnInit {
     constructor(private sortService: SortService, private activeModal: NgbActiveModal, private injector: Injector) {}
 
     ngOnInit(): void {
-        if (!this.exerciseType || this.exerciseType === ExerciseType.FILE_UPLOAD) {
-            // Importing file upload exercises is not supported yet.
+        if (!this.exerciseType) {
             return;
         }
         this.pagingService = this.getPagingService();
+
         if (this.programmingLanguage) {
             this.titleKey = 'artemisApp.programmingExercise.configureGrading.categories.importLabel';
         } else {
-            this.titleKey = `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
+            this.titleKey =
+                this.exerciseType === ExerciseType.FILE_UPLOAD ? `artemisApp.fileUploadExercise.home.importLabel` : `artemisApp.${this.exerciseType}Exercise.home.importLabel`;
         }
         this.content = { resultsOnPage: [], numberOfPages: 0 };
 
@@ -91,6 +93,8 @@ export class ExerciseImportComponent implements OnInit {
                 return this.injector.get(QuizExercisePagingService);
             case ExerciseType.TEXT:
                 return this.injector.get(TextExercisePagingService);
+            case ExerciseType.FILE_UPLOAD:
+                return this.injector.get(FileUploadExercisePagingService);
             default:
                 throw new Error('Unsupported exercise type: ' + this.exerciseType);
         }
