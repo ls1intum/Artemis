@@ -4,6 +4,8 @@ import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
+import { LoadedImage } from 'app/shared/image-cropper/interfaces/loaded-image.interface';
+import { LoadImageService } from 'app/shared/image-cropper/services/load-image.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseUpdateComponent } from 'app/course/manage/course-update.component';
@@ -44,8 +46,10 @@ describe('Course Management Update Component', () => {
     let courseAdminService: CourseAdminService;
     let profileService: ProfileService;
     let organizationService: OrganizationManagementService;
+    let loadImageService: LoadImageService;
     let course: Course;
     const validTimeZone = 'Europe/Berlin';
+    let loadImageSpy: jest.SpyInstance;
 
     beforeEach(() => {
         course = new Course();
@@ -89,6 +93,7 @@ describe('Course Management Update Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 MockProvider(TranslateService),
+                MockProvider(LoadImageService),
             ],
             declarations: [
                 CourseUpdateComponent,
@@ -111,6 +116,8 @@ describe('Course Management Update Component', () => {
                 courseAdminService = TestBed.inject(CourseAdminService);
                 profileService = TestBed.inject(ProfileService);
                 organizationService = TestBed.inject(OrganizationManagementService);
+                loadImageService = TestBed.inject(LoadImageService);
+                loadImageSpy = jest.spyOn(loadImageService, 'loadImageFile');
             });
     });
 
@@ -450,6 +457,8 @@ describe('Course Management Update Component', () => {
 
     describe('deleteIcon', () => {
         it('should remove icon image and delete icon button from component', () => {
+            const base64String = Buffer.from('testContent').toString('base64');
+            loadImageSpy.mockImplementation(() => Promise.resolve({ transformed: { base64: base64String } } as LoadedImage));
             setIcon();
             let deleteIconButton = getDeleteIconButton();
             deleteIconButton.dispatchEvent(new Event('click'));
@@ -468,9 +477,7 @@ describe('Course Management Update Component', () => {
         });
 
         function setIcon(): void {
-            const croppedImage = 'testCroppedImage';
-            comp.croppedImage = 'data:image/png;base64,' + croppedImage;
-            comp.courseImageUploadFile = new File([''], 'testFilename');
+            comp.courseImageUploadFile = new File([''], 'testFilename.png', { type: 'image/png' });
             comp.showCropper = true;
             comp.ngOnInit();
             fixture.detectChanges();

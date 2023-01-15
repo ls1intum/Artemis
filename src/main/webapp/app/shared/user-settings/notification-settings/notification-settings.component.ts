@@ -35,8 +35,8 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
         super(userSettingsService, alertService, changeDetector);
     }
 
-    userSettings: UserSettingsStructure<NotificationSetting>;
-    settings: Array<NotificationSetting>;
+    declare userSettings: UserSettingsStructure<NotificationSetting>;
+    declare settings: Array<NotificationSetting>;
 
     // needed for HTML access
     readonly communicationChannel = NotificationSettingsCommunicationChannel;

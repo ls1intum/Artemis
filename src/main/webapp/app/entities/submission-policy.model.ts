@@ -29,8 +29,6 @@ export class LockRepositoryPolicy extends SubmissionPolicy {
 }
 
 export class SubmissionPenaltyPolicy extends SubmissionPolicy {
-    public exceedingPenalty?: number;
-
     constructor() {
         super(SubmissionPolicyType.SUBMISSION_PENALTY);
     }
