@@ -408,13 +408,14 @@ public class CourseResource {
      * GET /courses/{courseId}/for-dashboard
      *
      * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
-     * @return a course with all exercises, lectures, exams and learning goals visible to the student
+     * @return a course with all exercises, lectures, exams, learning goals, etc. visible to the user
      */
+    // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
     public Course getCourseForDashboard(@PathVariable long courseId) {
         long timeNanoStart = System.nanoTime();
-        log.debug("REST request to get one course with exercises, participations and results, ...");
+        log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
@@ -425,14 +426,14 @@ public class CourseResource {
     /**
      * GET /courses/for-dashboard
      *
-     * @return the list of courses (the user has access to) including all exercises with participation and result for the user
+     * @return the list of courses (the user has access to) including all exercises with participation, submission and result, etc. for the user
      */
     @GetMapping("courses/for-dashboard")
     @PreAuthorize("hasRole('USER')")
     public List<Course> getAllCoursesForDashboard() {
         long timeNanoStart = System.nanoTime();
-        log.debug("REST request to get all courses the user has access to with exercises, participations and results");
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        log.debug("REST request to get all courses the user {} has access to with exams, lectures, exercises, participations, submissions and results", user.getLogin());
         List<Course> courses = courseService.findAllActiveWithExercisesAndLecturesAndExamsForUser(user);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(courses, user);
         logDuration(courses, user, timeNanoStart);

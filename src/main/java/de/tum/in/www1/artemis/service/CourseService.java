@@ -222,6 +222,7 @@ public class CourseService {
         // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
         course.setExercises(exerciseService.filterExercisesForCourse(course, user));
+        exerciseService.loadExerciseDetailsIfNecessary(course, user);
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
         course.setLearningGoals(learningGoalService.findAllForCourse(course, user));
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
@@ -270,6 +271,7 @@ public class CourseService {
             // connect the exercises with the course
             course.setExercises(allExercises.stream().filter(ex -> ex.getCourseViaExerciseGroupOrCourseMember().getId().equals(course.getId())).collect(Collectors.toSet()));
             course.setExercises(exerciseService.filterExercisesForCourse(course, user));
+            exerciseService.loadExerciseDetailsIfNecessary(course, user);
             course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
             if (authCheckService.isOnlyStudentInCourse(course, user)) {
                 course.setExams(examRepository.filterVisibleExams(course.getExams()));

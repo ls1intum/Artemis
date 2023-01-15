@@ -284,21 +284,31 @@ public class ExerciseService {
      */
     public Set<Exercise> filterExercisesForCourse(Course course, User user) {
         Set<Exercise> exercises = course.getExercises();
-        // no need to filter for tutors/editors/instructors/admins because they can see all exercises of the course
-        if (authCheckService.isOnlyStudentInCourse(course, user)) {
-
-            if (course.isOnlineCourse()) {
-                // this case happens rarely, so we can reload the relevant exercises from the database
-                // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
-                exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
-            }
-
-            // students for this course might not have the right to see it, so we have to
-            // filter out exercises that are not released (or explicitly made visible to students) yet
-            exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
+        if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
+            // no need to filter for tutors/editors/instructors/admins because they can see all exercises of the course
+            return exercises;
         }
 
-        for (Exercise exercise : exercises) {
+        if (course.isOnlineCourse()) {
+            // this case happens rarely, so we can reload the relevant exercises from the database
+            // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
+            exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
+        }
+
+        // students for this course might not have the right to see it, so we have to
+        // filter out exercises that are not released (or explicitly made visible to students) yet
+        return exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
+    }
+
+    /**
+     * Loads additional details for team exercises and for active quiz exercises
+     * Assumes that the exercises are already been loaded (i.e. no proxy)
+     *
+     * @param course corresponding course: exercises
+     * @param user   the user entity
+     */
+    public void loadExerciseDetailsIfNecessary(Course course, User user) {
+        for (Exercise exercise : course.getExercises()) {
             // only necessary for team exercises
             setAssignedTeamIdForExerciseAndUser(exercise, user);
 
@@ -314,8 +324,6 @@ public class ExerciseService {
                 }
             }
         }
-
-        return exercises;
     }
 
     /**
