@@ -52,7 +52,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 2, 1, 1, 1);
     }
 
     @Test
@@ -618,6 +618,27 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFileUploadExercise_asStudent_exampleSolutionVisibility() throws Exception {
         testGetFileUploadExercise_exampleSolutionVisibility(true, TEST_PREFIX + "student1");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testImportFileUploadExerciseAsEditorSuccess() throws Exception {
+        Course course = database.addCourseWithFileUploadExercise();
+        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
+        var sourceExerciseId = expectedFileUploadExercise.getId();
+        var actualFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
+                HttpStatus.CREATED);
+        assertThat(actualFileUploadExercise).isEqualTo(expectedFileUploadExercise);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
+    void testImportFileUploadExerciseAsStudentFails() throws Exception {
+        Course course = database.addCourseWithFileUploadExercise();
+        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
+        var sourceExerciseId = expectedFileUploadExercise.getId();
+        request.postWithResponseBody("/api/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class, HttpStatus.FORBIDDEN);
+
     }
 
     @Test
