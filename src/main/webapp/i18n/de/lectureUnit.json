@@ -127,6 +127,7 @@
                 "processUnits": "Einheiten festlegen",
                 "processAutomatically": "Automatische Einheitenverarbeitung",
                 "validation": {
+                    "invalidPages": "Die Startseite oder die letzte Seite von {{ unitName }} sind falsch eingestellt.",
                     "empty": {
                         "unitName": "Name darf nicht leer sein.",
                         "startPage": "Die Startseite muss definiert sein.",

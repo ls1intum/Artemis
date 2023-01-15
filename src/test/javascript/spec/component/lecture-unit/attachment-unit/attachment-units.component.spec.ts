@@ -177,6 +177,10 @@ describe('AttachmentUnitsComponent', () => {
         attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: null, endPage: 10 }];
         expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
         expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
+
+        attachmentUnitsComponent.units = [{ unitName: 'Unit 1', startPage: 10, endPage: 1 }];
+        expect(attachmentUnitsComponent.validUnitInformation()).toBeFalse();
+        expect(attachmentUnitsComponent.invalidUnitTableMessage).toBeDefined();
     });
 
     it('should validate valid end page', () => {

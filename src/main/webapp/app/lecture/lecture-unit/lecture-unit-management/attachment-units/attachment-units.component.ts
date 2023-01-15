@@ -171,6 +171,13 @@ export class AttachmentUnitsComponent implements OnInit {
                 });
                 return false;
             }
+
+            if (unit.startPage > unit.endPage) {
+                this.invalidUnitTableMessage = this.translateService.instant(`artemisApp.attachmentUnit.createAttachmentUnits.validation.invalidPages`, {
+                    unitName: unit.unitName ?? '',
+                });
+                return false;
+            }
         }
 
         this.invalidUnitTableMessage = undefined;

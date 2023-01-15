@@ -129,6 +129,7 @@
                 "processUnits": "Process units",
                 "processAutomatically": "Automatic unit processing",
                 "validation": {
+                    "invalidPages": "The start page or end page of {{ unitName }} are set incorrectly.",
                     "empty": {
                         "unitName": "Unit name can not be empty.",
                         "startPage": "Start page can not be empty.",
