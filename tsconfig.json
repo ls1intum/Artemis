@@ -22,7 +22,7 @@
         "allowSyntheticDefaultImports":true,
         "outDir": "build/resources/main/static/app",
         "forceConsistentCasingInFileNames": true,
-        "lib": ["es2020", "dom"],
+        "lib": ["es2021", "dom"],
         "typeRoots": [
             "node_modules/@types"
         ],
