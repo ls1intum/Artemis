@@ -263,7 +263,7 @@ describe('FeedbackComponent', () => {
     });
 
     it('should not try to retrieve the feedbacks from the server if provided result has feedbacks', () => {
-        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems();
+        const { feedbacks } = generateFeedbacksAndExpectedItems();
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result.feedbacks = feedbacks;
 
@@ -274,7 +274,7 @@ describe('FeedbackComponent', () => {
     });
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
-        const { feedbacks, expectedItems } = generateFeedbacksAndExpectedItems();
+        const { feedbacks } = generateFeedbacksAndExpectedItems();
         comp.exerciseType = ExerciseType.PROGRAMMING;
         getFeedbackDetailsForResultStub.mockReturnValue(of({ body: feedbacks } as HttpResponse<Feedback[]>));
 
@@ -354,5 +354,14 @@ describe('FeedbackComponent', () => {
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
         expect(comp.loadingFailed).toBeTrue();
         expect(comp.isLoading).toBeFalse();
+    });
+
+    it('should hide chart if no exercise available', () => {
+        comp.showScoreChart = true;
+        comp.exercise = undefined;
+
+        comp.ngOnInit();
+
+        expect(comp.showScoreChart).toBeFalse();
     });
 });

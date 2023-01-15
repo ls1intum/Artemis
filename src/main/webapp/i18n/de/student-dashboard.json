@@ -46,7 +46,7 @@
                 "overdue": "Keine Überfälligen",
                 "optional": "Keine Optionalen",
                 "noExerciseDate": "Kein Datum zugeordnet",
-                "exerciseGroupHeader": "Aufgaben: {{ total }}",
+                "exerciseGroupHeader": "(Aufgaben: {{ total }})",
                 "currentExerciseGroupHeader": "Aktuelle Übung aktiv bis {{ date }}:",
                 "currentExerciseGroupHeaderWithoutDueDate": "Aktuelle Übung:",
                 "sortExercises": "Aufgaben sortieren",
@@ -140,7 +140,7 @@
                 "noData": "Es sind keine Lernziele für diesen Kurs vorhanden."
             },
             "lectureList": {
-                "lectureGroupHeader": "Vorlesungen: {{ total }}",
+                "lectureGroupHeader": "(Vorlesungen: {{ total }})",
                 "totalLectures": "Vorlesungen insgesamt:",
                 "totalAttachments": "Anhänge insgesamt:",
                 "isLecture": "Das ist eine Vorlesung",

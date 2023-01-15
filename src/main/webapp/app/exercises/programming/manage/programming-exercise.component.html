@@ -11,7 +11,7 @@
 
         <ng-container *jhiExtensionPoint="overrideGenerateAndImportButton">
             <a
-                *ngIf="course && course.isAtLeastEditor"
+                *ngIf="course?.isAtLeastEditor"
                 id="jh-create-entity"
                 class="btn btn-primary jh-create-entity create-programming-exercise text-truncate mb-1 me-1"
                 [jhiFeatureToggleLink]="FeatureToggle.ProgrammingExercises"
@@ -22,7 +22,7 @@
                 <span class="hidden-sm-down" jhiTranslate="artemisApp.programmingExercise.home.generateLabel">Generate new Programming Exercise</span>
             </a>
             <button
-                *ngIf="course && course.isAtLeastEditor"
+                *ngIf="course?.isAtLeastEditor"
                 id="jh-import-entity"
                 class="btn btn-primary jh-create-entity create-programming-exercise text-truncate mb-1 me-1"
                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"

@@ -270,7 +270,7 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.exampleSolutionCollapsed).toBeFalse();
     });
 
-    it('should collapse/uncollapse example solution when clicked', () => {
+    it('should collapse/expand example solution when clicked', () => {
         expect(comp.exampleSolutionCollapsed).toBeUndefined();
         comp.changeExampleSolution();
         expect(comp.exampleSolutionCollapsed).toBeTrue();
@@ -316,11 +316,13 @@ describe('CourseExerciseDetailsComponent', () => {
         const childComponent = {} as DiscussionSectionComponent;
         comp.onChildActivate(childComponent);
 
+        const courseId = programmingExercise.course!.id!;
+
         comp.hasSubmissionPolicy = false;
-        comp.courseId = programmingExercise.course?.id!;
+        comp.courseId = courseId;
 
         comp.handleNewExercise(programmingExercise);
-        expect(comp.baseResource).toBe(`/course-management/${programmingExercise.course?.id!}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
+        expect(comp.baseResource).toBe(`/course-management/${courseId}/${programmingExercise.type}-exercises/${programmingExercise.id}/`);
         expect(comp.allowComplaintsForAutomaticAssessments).toBeTrue();
         expect(comp.hasSubmissionPolicy).toBeTrue();
         expect(submissionPolicyServiceSpy).toHaveBeenCalledOnce();
