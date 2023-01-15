@@ -144,11 +144,11 @@ public class OnlineUnitResource {
             // Ensure that the link is a correctly formed URL
             URL url = new URL(link);
 
-            if (!url.getProtocol().equalsIgnoreCase("http") && !url.getProtocol().equalsIgnoreCase("https")) {
+            if (!"http".equalsIgnoreCase(url.getProtocol()) && !"https".equalsIgnoreCase(url.getProtocol())) {
                 throw new BadRequestException("The specified link uses an unsupported protocol");
             }
 
-            if (!InternetDomainName.isValid(url.getHost()) || url.getHost().equalsIgnoreCase("localhost")) {
+            if (!InternetDomainName.isValid(url.getHost()) || "localhost".equalsIgnoreCase(url.getHost())) {
                 throw new BadRequestException("The specified link does not contain a valid domain");
             }
 
