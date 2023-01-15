@@ -80,7 +80,7 @@ public class LectureUnitProcessingService {
     }
 
     /**
-     * Prepare file to be set from byte[] to MultipartFile by using CommonsMultipartFile
+     * Convert byte[] to MultipartFile by using CommonsMultipartFile
      * @param unitName         unit name to set file name
      * @param streamByteArray  byte array to save to the temp file
      * @return multipartFile
@@ -102,7 +102,7 @@ public class LectureUnitProcessingService {
     /**
      * Prepare information of split units for client
      * @param file The file (lecture slide) to be split
-     * @return The prepared information of split units as list of LectureUnitSplitDTO
+     * @return The prepared information of split units LectureUnitInformationDTO
      */
     public LectureUnitInformationDTO getSplitUnitData(MultipartFile file) {
 
@@ -139,11 +139,11 @@ public class LectureUnitProcessingService {
      */
     private Outline separateIntoUnits(PDDocument document) throws IOException {
         Map<Integer, LectureUnitSplit> outlineMap = new HashMap<>();
-
         Splitter pdfSplitter = new Splitter();
         PDFTextStripper pdfStripper = new PDFTextStripper();
+        // split the document into single pages
         List<PDDocument> pages = pdfSplitter.split(document);
-
+        int numberOfPages = document.getNumberOfPages();
         ListIterator<PDDocument> iterator = pages.listIterator();
 
         int outlineCount = 0;
@@ -158,7 +158,7 @@ public class LectureUnitProcessingService {
 
                 // if it's the outline slide it will get the next bullet point as unit name.
                 String unitName = lines[outlineCount + 1].replaceAll("[^a-zA-Z0-9\\s()_-]", "").replaceFirst("^\\s*", "");
-                outlineMap.put(outlineCount, new LectureUnitSplit(unitName, outlineCount == 1 ? 1 : index, document.getNumberOfPages()));
+                outlineMap.put(outlineCount, new LectureUnitSplit(unitName, outlineCount == 1 ? 1 : index, numberOfPages));
 
                 if (outlineCount > 1) {
                     // two iterations back to access previous slide text
@@ -176,7 +176,7 @@ public class LectureUnitProcessingService {
         }
 
         document.close();
-        return new Outline(outlineMap, document.getNumberOfPages());
+        return new Outline(outlineMap, numberOfPages);
     }
 
     /**

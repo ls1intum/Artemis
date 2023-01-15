@@ -108,6 +108,9 @@ export class AttachmentUnitsComponent implements OnInit {
         });
     }
 
+    /**
+     * Go back to the lecture page
+     */
     cancelSplit() {
         this.router.navigate(['course-management', this.courseId.toString(), 'lectures', this.lectureId.toString()]);
     }
