@@ -35,40 +35,44 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
     List<TeamScore> findAllByExerciseIn(Set<Exercise> exercises, Pageable pageable);
 
     @Query("""
-            SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(t.team.name, AVG(t.lastScore), AVG(t.lastRatedScore), AVG(t.lastPoints), AVG(t.lastRatedPoints))
-            FROM TeamScore t
-            WHERE t.exercise IN :exercises
-            GROUP BY t.team.name
+            SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(s.team.name, AVG(s.lastScore), AVG(s.lastRatedScore), AVG(s.lastPoints), AVG(s.lastRatedPoints))
+            FROM TeamScore s
+            WHERE s.exercise IN :exercises
+            GROUP BY s.team.name
             """)
     List<ParticipantScoreAverageDTO> getAvgScoreOfTeamInExercises(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
-            SELECT DISTINCT t
-            FROM TeamScore t
-            WHERE t.exercise = :exercise AND :user MEMBER OF t.team.students
+            SELECT DISTINCT s
+            FROM TeamScore s
+            WHERE s.exercise = :exercise
+                AND :user MEMBER OF s.team.students
             """)
     Optional<TeamScore> findTeamScoreByExerciseAndUserLazy(@Param("exercise") Exercise exercise, @Param("user") User user);
 
     @Query("""
-            SELECT t, SUM(ts.lastRatedPoints)
-            FROM TeamScore ts LEFT JOIN ts.team t
-            WHERE ts.exercise IN :exercises
+            SELECT t, SUM(s.lastRatedPoints)
+            FROM TeamScore s
+                LEFT JOIN s.team t
+            WHERE s.exercise IN :exercises
             GROUP BY t.id
             """)
     List<Object[]> getAchievedPointsOfTeams(@Param("exercises") Set<Exercise> exercises);
 
     @Query("""
-            SELECT t
-            FROM TeamScore t LEFT JOIN FETCH t.exercise
-            WHERE t.exercise IN :exercises AND :user MEMBER OF t.team.students
+            SELECT s
+            FROM TeamScore s
+                LEFT JOIN FETCH s.exercise
+            WHERE s.exercise IN :exercises
+                AND :user MEMBER OF s.team.students
             """)
     List<TeamScore> findAllByExerciseAndUserWithEagerExercise(@Param("exercises") Set<Exercise> exercises, @Param("user") User user);
 
     @Query("""
-            SELECT teamScore
-            FROM TeamScore teamScore
-            WHERE teamScore.exercise IN :exercises
-            AND :user MEMBER OF teamScore.team.students
+            SELECT s
+            FROM TeamScore s
+            WHERE s.exercise IN :exercises
+                AND :user MEMBER OF s.team.students
             """)
     List<TeamScore> findAllByExercisesAndUser(@Param("exercises") List<Exercise> exercises, @Param("user") User user);
 

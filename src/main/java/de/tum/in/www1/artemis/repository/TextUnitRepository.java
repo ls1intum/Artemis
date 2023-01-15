@@ -17,15 +17,15 @@ public interface TextUnitRepository extends JpaRepository<TextUnit, Long> {
 
     @Query("""
             SELECT tu FROM TextUnit tu
-            LEFT JOIN FETCH tu.learningGoals
+                LEFT JOIN FETCH tu.learningGoals
             WHERE tu.id = :textUnitId
             """)
     Optional<TextUnit> findByIdWithLearningGoals(@Param("textUnitId") Long textUnitId);
 
     @Query("""
             SELECT tu FROM TextUnit tu
-            LEFT JOIN FETCH tu.learningGoals lg
-            LEFT JOIN FETCH lg.lectureUnits
+                LEFT JOIN FETCH tu.learningGoals lg
+                LEFT JOIN FETCH lg.lectureUnits
             WHERE tu.id = :textUnitId
             """)
     Optional<TextUnit> findByIdWithLearningGoalsBidirectional(@Param("textUnitId") Long textUnitId);

@@ -21,95 +21,95 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long> {
 
     @Query("""
-            SELECT learningGoal
-            FROM LearningGoal learningGoal
-            LEFT JOIN FETCH learningGoal.userProgress progress
-            WHERE learningGoal.course.id = :courseId
+            SELECT lg
+            FROM LearningGoal lg
+            LEFT JOIN FETCH lg.userProgress progress
+                WHERE lg.course.id = :courseId
             """)
     Set<LearningGoal> findAllForCourse(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT learningGoal
-            FROM LearningGoal learningGoal
-            LEFT JOIN FETCH learningGoal.userProgress progress
-            WHERE learningGoal.course.id = :courseId
-            AND (progress IS NULL OR progress.user.id = :userId)
+            SELECT lg
+            FROM LearningGoal lg
+                LEFT JOIN FETCH lg.userProgress progress
+            WHERE lg.course.id = :courseId
+                AND (progress IS NULL OR progress.user.id = :userId)
             """)
     Set<LearningGoal> findAllForCourseWithProgressForUser(@Param("courseId") Long courseId, @Param("userId") Long userId);
 
     @Query("""
-            SELECT learningGoal
-            FROM LearningGoal learningGoal
-            LEFT JOIN FETCH learningGoal.exercises ex
-            WHERE learningGoal.id = :#{#learningGoalId}
+            SELECT lg
+            FROM LearningGoal lg
+                LEFT JOIN FETCH lg.exercises ex
+            WHERE lg.id = :#{#learningGoalId}
             """)
     Optional<LearningGoal> findByIdWithExercises(@Param("learningGoalId") long learningGoalId);
 
     @Query("""
-            SELECT learningGoal
-            FROM LearningGoal learningGoal
-            LEFT JOIN FETCH learningGoal.lectureUnits lu
-            WHERE learningGoal.id = :#{#learningGoalId}
+            SELECT lg
+            FROM LearningGoal lg
+                LEFT JOIN FETCH lg.lectureUnits lu
+            WHERE lg.id = :#{#learningGoalId}
             """)
     Optional<LearningGoal> findByIdWithLectureUnits(@Param("learningGoalId") long learningGoalId);
 
     @Query("""
-            SELECT learningGoal
-            FROM LearningGoal learningGoal
-            LEFT JOIN FETCH learningGoal.userProgress progress
-            LEFT JOIN FETCH learningGoal.exercises exercises
-            LEFT JOIN FETCH learningGoal.lectureUnits lectureUnits
-            LEFT JOIN FETCH lectureUnits.completedUsers completions
-            LEFT JOIN FETCH lectureUnits.lecture lecture
-            LEFT JOIN FETCH lectureUnits.exercise exercise
-            WHERE learningGoal.id = :learningGoalId
+            SELECT lg
+            FROM LearningGoal lg
+                LEFT JOIN FETCH lg.userProgress
+                LEFT JOIN FETCH lg.exercises
+                LEFT JOIN FETCH lg.lectureUnits lu
+                LEFT JOIN FETCH lu.completedUsers
+                LEFT JOIN FETCH lu.lecture l
+                LEFT JOIN FETCH lu.exercise e
+            WHERE lg.id = :learningGoalId
             """)
     Optional<LearningGoal> findByIdWithExercisesAndLectureUnits(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
-            SELECT learningGoal
-            FROM LearningGoal learningGoal
-            LEFT JOIN FETCH learningGoal.lectureUnits lu
-            LEFT JOIN FETCH lu.completedUsers
-            WHERE learningGoal.id = :learningGoalId
+            SELECT lg
+            FROM LearningGoal lg
+                LEFT JOIN FETCH lg.lectureUnits lu
+                LEFT JOIN FETCH lu.completedUsers
+            WHERE lg.id = :learningGoalId
             """)
     Optional<LearningGoal> findByIdWithLectureUnitsAndCompletions(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
-            SELECT learningGoal
-            FROM LearningGoal learningGoal
-            LEFT JOIN FETCH learningGoal.exercises
-            LEFT JOIN FETCH learningGoal.lectureUnits lu
-            LEFT JOIN FETCH lu.completedUsers
-            WHERE learningGoal.id = :learningGoalId
+            SELECT lg
+            FROM LearningGoal lg
+                LEFT JOIN FETCH lg.exercises
+                LEFT JOIN FETCH lg.lectureUnits lu
+                LEFT JOIN FETCH lu.completedUsers
+            WHERE lg.id = :learningGoalId
             """)
     Optional<LearningGoal> findByIdWithExercisesAndLectureUnitsAndCompletions(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
-            SELECT learningGoal
-            FROM LearningGoal learningGoal
-            LEFT JOIN FETCH learningGoal.exercises exercises
-            LEFT JOIN FETCH exercises.learningGoals
-            LEFT JOIN FETCH learningGoal.lectureUnits lectureUnits
-            LEFT JOIN FETCH lectureUnits.learningGoals
-            WHERE learningGoal.id = :learningGoalId
+            SELECT lg
+            FROM LearningGoal lg
+                LEFT JOIN FETCH lg.exercises ex
+                LEFT JOIN FETCH ex.learningGoals
+                LEFT JOIN FETCH lg.lectureUnits lu
+                LEFT JOIN FETCH lu.learningGoals
+            WHERE lg.id = :learningGoalId
             """)
     Optional<LearningGoal> findByIdWithExercisesAndLectureUnitsBidirectional(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
-            SELECT learningGoal
-            FROM LearningGoal learningGoal
-            LEFT JOIN FETCH learningGoal.consecutiveCourses courses
-            WHERE learningGoal.id = :learningGoalId
+            SELECT lg
+            FROM LearningGoal lg
+                LEFT JOIN FETCH lg.consecutiveCourses
+            WHERE lg.id = :learningGoalId
             """)
     Optional<LearningGoal> findByIdWithConsecutiveCourses(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
-            SELECT prerequisite
-            FROM LearningGoal prerequisite
-            LEFT JOIN FETCH prerequisite.consecutiveCourses courses
-            WHERE courses.id = :courseId
-            ORDER BY prerequisite.title
+            SELECT pr
+            FROM LearningGoal pr
+                LEFT JOIN FETCH pr.consecutiveCourses c
+            WHERE c.id = :courseId
+            ORDER BY pr.title
             """)
     Set<LearningGoal> findPrerequisitesByCourseId(@Param("courseId") Long courseId);
 
@@ -124,10 +124,10 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
      * @return Page with search results
      */
     @Query("""
-            SELECT learningGoal
-            FROM LearningGoal learningGoal
-            WHERE (learningGoal.course.instructorGroupName IN :groups OR learningGoal.course.editorGroupName IN :groups)
-            AND (learningGoal.title LIKE %:partialTitle% OR learningGoal.course.title LIKE %:partialCourseTitle%)
+            SELECT lg
+            FROM LearningGoal lg
+            WHERE (lg.course.instructorGroupName IN :groups OR lg.course.editorGroupName IN :groups)
+                AND (lg.title LIKE %:partialTitle% OR lg.course.title LIKE %:partialCourseTitle%)
             """)
     Page<LearningGoal> findByTitleInLectureOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
             @Param("groups") Set<String> groups, Pageable pageable);
@@ -139,9 +139,9 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
      * @return the name/title of the learning goal or null if the learning goal does not exist
      */
     @Query("""
-            SELECT learningGoal.title
-            FROM LearningGoal learningGoal
-            WHERE learningGoal.id = :learningGoalId
+            SELECT lg.title
+            FROM LearningGoal lg
+            WHERE lg.id = :learningGoalId
             """)
     @Cacheable(cacheNames = "learningGoalTitle", key = "#learningGoalId", unless = "#result == null")
     String getLearningGoalTitle(@Param("learningGoalId") Long learningGoalId);

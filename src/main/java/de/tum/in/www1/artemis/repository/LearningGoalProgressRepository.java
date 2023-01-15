@@ -24,50 +24,50 @@ public interface LearningGoalProgressRepository extends JpaRepository<LearningGo
     void deleteAllByUserId(Long userId);
 
     @Query("""
-            SELECT learningGoalProgress
-            FROM LearningGoalProgress learningGoalProgress
-            WHERE learningGoalProgress.learningGoal.id = :learningGoalId
+            SELECT lgp
+            FROM LearningGoalProgress lgp
+            WHERE lgp.learningGoal.id = :learningGoalId
             """)
     List<LearningGoalProgress> findAllByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
-            SELECT learningGoalProgress
-            FROM LearningGoalProgress learningGoalProgress
-            WHERE learningGoalProgress.learningGoal.id = :learningGoalId
-            AND learningGoalProgress.user.id = :userId
+            SELECT lgp
+            FROM LearningGoalProgress lgp
+            WHERE lgp.learningGoal.id = :learningGoalId
+                AND lgp.user.id = :userId
             """)
     Optional<LearningGoalProgress> findByLearningGoalIdAndUserId(@Param("learningGoalId") Long learningGoalId, @Param("userId") Long userId);
 
     @Query("""
-            SELECT learningGoalProgress
-            FROM LearningGoalProgress learningGoalProgress
-            LEFT JOIN FETCH learningGoalProgress.user
-            LEFT JOIN FETCH learningGoalProgress.learningGoal
-            WHERE learningGoalProgress.learningGoal.id = :learningGoalId
-            AND learningGoalProgress.user.id = :userId
+            SELECT lgp
+            FROM LearningGoalProgress lgp
+                LEFT JOIN FETCH lgp.user
+                LEFT JOIN FETCH lgp.learningGoal
+            WHERE lgp.learningGoal.id = :learningGoalId
+                AND lgp.user.id = :userId
             """)
     Optional<LearningGoalProgress> findEagerByLearningGoalIdAndUserId(@Param("learningGoalId") Long learningGoalId, @Param("userId") Long userId);
 
     @Query("""
-            SELECT AVG(learningGoalProgress.confidence)
-            FROM LearningGoalProgress learningGoalProgress
-            WHERE learningGoalProgress.learningGoal.id = :learningGoalId
+            SELECT AVG(lgp.confidence)
+            FROM LearningGoalProgress lgp
+            WHERE lgp.learningGoal.id = :learningGoalId
             """)
     Optional<Double> findAverageConfidenceByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
-            SELECT count(l)
-            FROM LearningGoalProgress l
-            WHERE l.learningGoal.id = :learningGoalId
+            SELECT count(lgp)
+            FROM LearningGoalProgress lgp
+            WHERE lgp.learningGoal.id = :learningGoalId
             """)
     Long countByLearningGoal(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
-            SELECT count(l)
-            FROM LearningGoalProgress l
-            WHERE l.learningGoal.id = :learningGoalId
-            AND l.progress >= :progress
-            AND l.confidence >= :confidence
+            SELECT count(lgp)
+            FROM LearningGoalProgress lgp
+            WHERE lgp.learningGoal.id = :learningGoalId
+                AND lgp.progress >= :progress
+                AND lgp.confidence >= :confidence
             """)
     Long countByLearningGoalAndProgressAndConfidenceGreaterThanEqual(@Param("learningGoalId") Long learningGoalId, @Param("progress") Double progress,
             @Param("confidence") Double confidence);

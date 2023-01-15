@@ -18,34 +18,34 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> {
 
     @Query("""
-            SELECT lectureUnit
-            FROM LectureUnit lectureUnit
-            LEFT JOIN FETCH lectureUnit.learningGoals
-            LEFT JOIN FETCH lectureUnit.exercise exercise
-            LEFT JOIN FETCH exercise.learningGoals
-            WHERE lectureUnit.id = :lectureUnitId
+            SELECT lu
+            FROM LectureUnit lu
+                LEFT JOIN FETCH lu.learningGoals
+                LEFT JOIN FETCH lu.exercise exercise
+                LEFT JOIN FETCH exercise.learningGoals
+            WHERE lu.id = :lectureUnitId
             """)
     Optional<LectureUnit> findByIdWithLearningGoals(@Param("lectureUnitId") Long lectureUnitId);
 
     @Query("""
-            SELECT lectureUnit
-            FROM LectureUnit lectureUnit
-            LEFT JOIN FETCH lectureUnit.learningGoals lg
-            LEFT JOIN FETCH lg.lectureUnits
-            LEFT JOIN FETCH lectureUnit.exercise exercise
-            LEFT JOIN FETCH exercise.learningGoals
-            WHERE lectureUnit.id = :lectureUnitId
+            SELECT lu
+            FROM LectureUnit lu
+                LEFT JOIN FETCH lu.learningGoals lg
+                LEFT JOIN FETCH lg.lectureUnits
+                LEFT JOIN FETCH lu.exercise ex
+                LEFT JOIN FETCH ex.learningGoals
+            WHERE lu.id = :lectureUnitId
             """)
     Optional<LectureUnit> findByIdWithLearningGoalsBidirectional(@Param("lectureUnitId") long lectureUnitId);
 
     @Query("""
-            SELECT lectureUnit
-            FROM LectureUnit lectureUnit
-            LEFT JOIN FETCH lectureUnit.learningGoals lg
-            LEFT JOIN FETCH lg.lectureUnits
-            LEFT JOIN FETCH lectureUnit.exercise exercise
-            LEFT JOIN FETCH exercise.learningGoals
-            WHERE lectureUnit.id IN :lectureUnitIds
+            SELECT lu
+            FROM LectureUnit lu
+                LEFT JOIN FETCH lu.learningGoals lg
+                LEFT JOIN FETCH lg.lectureUnits
+                LEFT JOIN FETCH lu.exercise ex
+                LEFT JOIN FETCH ex.learningGoals
+            WHERE lu.id IN :lectureUnitIds
             """)
     Set<LectureUnit> findAllByIdWithLearningGoalsBidirectional(@Param("lectureUnitIds") Iterable<Long> longs);
 
