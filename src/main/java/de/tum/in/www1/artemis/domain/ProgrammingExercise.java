@@ -826,7 +826,7 @@ public class ProgrammingExercise extends Exercise {
         this.buildPlan = buildPlan;
     }
 
-    // TODO: Safe build plan when exercise is created
+    // TODO: Save build plan when exercise is created
     public BuildPlan getBuildPlan() {
         return buildPlan;
     }
@@ -835,7 +835,7 @@ public class ProgrammingExercise extends Exercise {
         this.buildPlanAccessSecret = buildPlanAccessSecret;
     }
 
-    public boolean isBuildPlanAccessSecretSet() {
+    public boolean hasBuildPlanAccessSecretSet() {
         return buildPlanAccessSecret != null && !buildPlanAccessSecret.isEmpty();
     }
 

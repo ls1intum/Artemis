@@ -718,7 +718,7 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     }
 
     default void generateBuildPlanAccessSecretIfNotExists(ProgrammingExercise exercise) {
-        if (!exercise.isBuildPlanAccessSecretSet()) {
+        if (!exercise.hasBuildPlanAccessSecretSet()) {
             exercise.generateAndSetBuildPlanAccessSecret();
             save(exercise);
         }

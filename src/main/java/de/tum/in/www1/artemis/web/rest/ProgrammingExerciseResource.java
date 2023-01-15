@@ -818,13 +818,9 @@ public class ProgrammingExerciseResource {
     @GetMapping(BUILD_PLAN)
     @PreAuthorize("permitAll()")
     public ResponseEntity<String> getBuildPlan(@PathVariable Long exerciseId, @RequestParam("secret") String secret) {
-        log.debug("REST request to get build plan for programming exercise with id : {}", exerciseId);
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findById(exerciseId);
-        if (optionalProgrammingExercise.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
-        if (programmingExercise.getBuildPlanAccessSecret() == null || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
+        log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
+        ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        if (!programmingExercise.hasBuildPlanAccessSecretSet() || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
             throw new AccessForbiddenException();
         }
         return ResponseEntity.ok().body(programmingExercise.getBuildPlan().getBuildPlan());
