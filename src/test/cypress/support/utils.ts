@@ -44,7 +44,7 @@ export function dayjsToString(dayjs: day.Dayjs) {
  * @returns a date string with only one digit for the milliseconds
  */
 export function trimDate(date: string) {
-    return date.slice(0, 21);
+    return date.slice(0, 19);
 }
 
 export function parseArrayBufferAsJsonObject(buffer: ArrayBuffer) {
