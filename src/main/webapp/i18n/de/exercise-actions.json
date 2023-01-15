@@ -49,7 +49,7 @@
             "hoverToShow": "(hover, um es anzuzeigen)",
             "cloneSourceTree": {
                 "button": "In Git-Client klonen",
-                "helpIcon": "Dies öffnet das Repository in Source Tree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."
+                "helpIcon": "Dies öffnet das Repository in Sourcetree oder Tower. Falls du diese nicht installiert hast, kannst du das Repository in deiner IDE oder dem Terminal klonen."
             },
             "goToBuildPlan": "Zum Build-Plan gehen",
             "openTextEditor": "Texteditor öffnen",
