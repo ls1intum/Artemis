@@ -2,7 +2,6 @@
     display: flex;
     align-items: center;
     min-height: 60px;
-    margin: 0 -1rem;
     margin-bottom: 0.5rem;
 
     $padding-y: 11px;
@@ -13,7 +12,9 @@
 
     .tab-item {
         cursor: pointer;
-        margin: 0 0.5em;
+        margin-top: 0;
+        margin-right: 1em;
+        margin-bottom: 0;
 
         &.active {
             box-shadow: 0 2px 0 var(--artemis-dark);
@@ -48,6 +49,24 @@
             margin-right: 0;
         }
     }
+}
+
+.dropdown-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 1rem;
+    margin-right: 0;
+    margin-left: 0;
+
+    .form-group {
+        width: 23%;
+        min-width: 20%;
+    }
+}
+
+.dropdown-container .form-group .form-control {
+    margin-top: 0.25em;
 }
 
 @media screen and (max-width: 991px) {

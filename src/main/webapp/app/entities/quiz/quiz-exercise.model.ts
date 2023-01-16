@@ -32,7 +32,6 @@ export class QuizBatch {
 }
 
 export class QuizExercise extends Exercise {
-    public id?: number;
     public visibleToStudents?: boolean; // (computed by server)
     public allowedNumberOfAttempts?: number;
     public remainingNumberOfAttempts?: number;

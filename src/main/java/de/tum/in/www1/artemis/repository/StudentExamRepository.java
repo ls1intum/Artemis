@@ -34,103 +34,126 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     Optional<StudentExam> findWithExercisesById(Long id);
 
     @Query("""
-            SELECT DISTINCT se FROM StudentExam se
-            LEFT JOIN FETCH se.exercises e
-                  WHERE se.testRun = FALSE
-                      AND se.exam.id = :#{#examId}
-                      AND se.user.id = :#{#userId}
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
+            WHERE se.testRun = FALSE
+                AND se.exam.id = :examId
+                AND se.user.id = :userId
             """)
     Optional<StudentExam> findWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
 
+    // Normally, there should only be one student exam for the same user/exam pair (except test runs for instructors)
     @Query("""
-            SELECT DISTINCT se FROM StudentExam se
-            LEFT JOIN FETCH se.exercises e
-            LEFT JOIN FETCH e.studentParticipations sp
-            LEFT JOIN FETCH sp.submissions s
-            WHERE se.id = :#{#studentExamId}
-            	AND se.testRun = :#{#isTestRun}
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
+            WHERE se.testRun = FALSE
+                AND se.exam.id = :examId
+                AND se.user.id = :userId
             """)
-    Optional<StudentExam> findWithExercisesParticipationsSubmissionsById(@Param("studentExamId") Long studentExamId, @Param("isTestRun") boolean isTestRun);
+    List<StudentExam> findAllWithExercisesByUserIdAndExamId(@Param("userId") long userId, @Param("examId") long examId);
 
     @Query("""
-            SELECT se FROM StudentExam se
-            WHERE se.exam.id = :#{#examId}
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
+                LEFT JOIN FETCH e.studentParticipations sp
+                LEFT JOIN FETCH sp.submissions s
+            WHERE se.id = :studentExamId
+            	AND se.testRun = :isTestRun
+            """)
+    Optional<StudentExam> findWithExercisesParticipationsSubmissionsById(@Param("studentExamId") long studentExamId, @Param("isTestRun") boolean isTestRun);
+
+    @Query("""
+            SELECT se
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
             	AND se.testRun = FALSE
             """)
-    Set<StudentExam> findByExamId(@Param("examId") Long examId);
+    Set<StudentExam> findByExamId(@Param("examId") long examId);
 
     @Query("""
-            SELECT se FROM StudentExam se
-            LEFT JOIN FETCH se.exercises
-            WHERE se.exam.id = :#{#examId}
+            SELECT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises
+            WHERE se.exam.id = :examId
             """)
-    Set<StudentExam> findAllWithExercisesByExamId(@Param("examId") Long examId);
+    Set<StudentExam> findAllWithExercisesByExamId(@Param("examId") long examId);
 
     @Query("""
-            SELECT se FROM StudentExam se
-            LEFT JOIN FETCH se.exercises e
-            WHERE se.exam.id = :#{#examId}
+            SELECT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
+            WHERE se.exam.id = :examId
             	AND se.testRun = FALSE
             """)
-    Set<StudentExam> findAllWithoutTestRunsWithExercisesByExamId(@Param("examId") Long examId);
+    Set<StudentExam> findAllWithoutTestRunsWithExercisesByExamId(@Param("examId") long examId);
 
     @Query("""
-            SELECT se FROM StudentExam se
-            WHERE se.exam.id = :#{#examId}
+            SELECT se
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
             	AND se.testRun = TRUE
             """)
     List<StudentExam> findAllTestRunsByExamId(@Param("examId") Long examId);
 
     @Query("""
-            SELECT count(se) FROM StudentExam se
-            WHERE se.exam.id = :#{#examId}
+            SELECT count(se)
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
             	AND se.testRun = TRUE
             """)
     long countTestRunsByExamId(@Param("examId") Long examId);
 
     @Query("""
-            SELECT count(se) FROM StudentExam se
-            WHERE se.exam.id = :#{#examId}
+            SELECT count(se)
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
             	AND se.started = TRUE
             	AND se.testRun = FALSE
             """)
     long countStudentExamsStartedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
 
     @Query("""
-            SELECT count(se) FROM StudentExam se
-            WHERE se.exam.id = :#{#examId}
+            SELECT count(se)
+            FROM StudentExam se
+            WHERE se.exam.id = :examId
             	AND se.submitted = TRUE
             	AND se.testRun = FALSE
             """)
     long countStudentExamsSubmittedByExamIdIgnoreTestRuns(@Param("examId") Long examId);
 
     @Query("""
-            SELECT DISTINCT se FROM StudentExam se
-            LEFT JOIN FETCH se.exercises e
-            LEFT JOIN FETCH e.studentParticipations sp
-            LEFT JOIN FETCH sp.submissions s
-            LEFT JOIN FETCH s.results r
-            LEFT JOIN FETCH r.assessor a
-            WHERE se.exam.id = :#{#examId}
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
+                LEFT JOIN FETCH e.studentParticipations sp
+                LEFT JOIN FETCH sp.submissions s
+                LEFT JOIN FETCH s.results r
+                LEFT JOIN FETCH r.assessor a
+            WHERE se.exam.id = :examId
             	AND se.testRun = TRUE
             	AND se.user.id = sp.student.id
             """)
     List<StudentExam> findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(@Param("examId") Long examId);
 
     @Query("""
-            SELECT DISTINCT se FROM StudentExam se
-            LEFT JOIN FETCH se.exercises e
-            WHERE se.exam.id = :#{#examId}
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
+            WHERE se.exam.id = :examId
             	AND se.testRun = TRUE
-            	AND se.user.id = :#{#userId}
+            	AND se.user.id = :userId
             """)
     List<StudentExam> findAllTestRunsWithExercisesByExamIdForUser(@Param("examId") Long examId, @Param("userId") Long userId);
 
     @Query("""
-            SELECT DISTINCT se FROM StudentExam se
+            SELECT DISTINCT se
+            FROM StudentExam se
             WHERE se.testRun = FALSE
-            	AND se.exam.id = :#{#examId}
-            	AND se.user.id = :#{#userId}
+            	AND se.exam.id = :examId
+            	AND se.user.id = :userId
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
@@ -144,40 +167,45 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     boolean existsByExam_CourseIdAndExamIdAndUserId(@Param("courseId") long courseId, @Param("examId") long examId, @Param("userId") long userId);
 
     @Query("""
-            SELECT DISTINCT se FROM StudentExam se
-            LEFT JOIN FETCH se.exercises e
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises e
             WHERE se.testRun = FALSE
             	AND e.id = :#{#exerciseId}
-            	AND se.user.id = :#{#userId}
+            	AND se.user.id = :userId
             """)
     Optional<StudentExam> findByExerciseIdAndUserId(@Param("exerciseId") Long exerciseId, @Param("userId") Long userId);
 
     @Query("""
-            SELECT max(se.workingTime) FROM StudentExam se
+            SELECT max(se.workingTime)
+            FROM StudentExam se
             WHERE se.testRun = FALSE
-            	AND se.exam.id = :#{#examId}
+            	AND se.exam.id = :examId
             """)
     Optional<Integer> findMaxWorkingTimeByExamId(@Param("examId") Long examId);
 
     @Query("""
-            SELECT DISTINCT se.workingTime FROM StudentExam se
+            SELECT DISTINCT se.workingTime
+            FROM StudentExam se
             WHERE se.testRun = FALSE
-            	AND se.exam.id = :#{#examId}
+            	AND se.exam.id = :examId
             """)
     Set<Integer> findAllDistinctWorkingTimesByExamId(@Param("examId") Long examId);
 
     @Query("""
-            SELECT DISTINCT u FROM StudentExam se
-            LEFT JOIN se.user u
+            SELECT DISTINCT u
+            FROM StudentExam se
+                LEFT JOIN se.user u
             WHERE se.testRun = FALSE
-            	AND se.exam.id = :#{#examId}
+            	AND se.exam.id = :examId
             """)
     Set<User> findUsersWithStudentExamsForExam(@Param("examId") Long examId);
 
     @Query("""
-            SELECT DISTINCT se FROM StudentExam se
-            LEFT JOIN FETCH se.exercises exercises
-            WHERE se.exam.id = :#{#examId}
+            SELECT DISTINCT se
+            FROM StudentExam se
+                LEFT JOIN FETCH se.exercises
+            WHERE se.exam.id = :examId
             	AND se.submitted = FALSE
             	AND se.testRun = FALSE
             """)
@@ -186,19 +214,20 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     List<StudentExam> findAllByExamId_AndTestRunIsTrue(@Param("examId") Long examId);
 
     @Query("""
-            SELECT DISTINCT se FROM StudentExam se
-             WHERE se.user.id = :#{#userId}
-             AND se.exam.course.id = :#{#courseId}
-             AND se.exam.testExam = TRUE
-             AND se.testRun = FALSE
+            SELECT DISTINCT se
+            FROM StudentExam se
+            WHERE se.user.id = :userId
+                AND se.exam.course.id = :#{#courseId}
+                AND se.exam.testExam = TRUE
+                AND se.testRun = FALSE
             """)
     List<StudentExam> findStudentExamForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
 
     @Query("""
             SELECT DISTINCT se FROM StudentExam se
                         LEFT JOIN FETCH se.exercises exercises
-                        WHERE se.exam.id = :#{#examId}
-                        AND se.user.id = :#{#userId}
+                        WHERE se.exam.id = :examId
+                        AND se.user.id = :userId
                         	AND se.submitted = FALSE
                         	AND se.testRun = FALSE
                         	AND se.exam.testExam = TRUE
