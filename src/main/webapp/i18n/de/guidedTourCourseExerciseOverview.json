@@ -4,7 +4,7 @@
             "installPrerequisites": {
                 "headline": "Installiere die notwendigen Tools",
                 "content": "Bevor wir uns den Kurs und die darin enthaltene Beispielaufgabe anschauen, müssen wir zuerst die notwendigen Tools herunterladen und installieren. Installiere wie im Video gezeigt die neueste Version von <a href='https://www.jetbrains.com/idea/download/' target='_blank' rel='noopener noreferrer'>IntelliJ</a>.",
-                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25524?video_only=1"
+                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25976?video_only=1"
             },
             "exercises": {
                 "headline": "Aufgaben",
@@ -58,12 +58,12 @@
                 "headline": "Klone das Repository in IntelliJ",
                 "content": "Schau dir das folgende Video an, um zu verstehen, wie man ein Git Repository in IntelliJ klont. Danach solltest du auf das <tt>X</tt> oben rechts klicken, um das Tutorial zu stoppen und die im Video angezeigten Schritte durchzuführen. Danach kannst du das Tutorial wieder von deinem Benutzerkonto-Menü (Login-Name oben rechts) aus fortsetzen.",
                 "hint": "Falls du noch nicht Java JDK 17 installiert hast, wird auch im Video gezeigt, wie du diese erhältst.",
-                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25525?video_only=1"
+                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25977?video_only=1"
             },
             "solveExercise": {
                 "headline": "Löse die Aufgabe",
                 "content": "In diesem Video schauen wir uns das Projekt an, lösen die darin gegebene Aufgabe und pushen das Repository zurück zu Artemis.",
-                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25526?video_only=1"
+                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25978?video_only=1"
             },
             "reviewResult": {
                 "headline": "Überprüfe dein Ergebnis",

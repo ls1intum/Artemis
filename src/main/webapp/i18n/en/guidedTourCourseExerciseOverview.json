@@ -4,7 +4,7 @@
             "installPrerequisites": {
                 "headline": "Install required tools",
                 "content": "Before we have a look at this course and the example exercise, we need to download and install a few software tools. Install the newest version of <a href='https://www.jetbrains.com/idea/download/' target='_blank' rel='noopener noreferrer'>IntelliJ</a> as shown in the video.",
-                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25524?video_only=1"
+                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25976?video_only=1"
             },
             "exercises": {
                 "headline": "Exercises",
@@ -58,12 +58,12 @@
                 "headline": "Clone repository in IntelliJ",
                 "content": "Watch the following video to learn how to clone a git repository in IntelliJ. After this step, you should click on the <tt>X</tt> button in the top right to stop the tutorial and apply the steps you saw in the video. Afterwards, resume the tutorial from your account menu (user name on the top right).",
                 "hint": "If you haven't installed the Java JDK 17 version, the video will show you how to do this.",
-                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25525?video_only=1"
+                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25977?video_only=1"
             },
             "solveExercise": {
                 "headline": "Solve the exercise",
                 "content": "In this video we will inspect the project, solve the given task and push the repository to Artemis.",
-                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25526?video_only=1"
+                "videoUrl": "https://live.rbg.tum.de/w/artemisintro/25978?video_only=1"
             },
             "reviewResult": {
                 "headline": "Review your result",
