@@ -76,8 +76,8 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("""
             SELECT e FROM Exercise e
-            LEFT JOIN FETCH e.learningGoals lg
-            LEFT JOIN FETCH lg.exercises
+                LEFT JOIN FETCH e.learningGoals lg
+                LEFT JOIN FETCH lg.exercises
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithLearningGoalsBidirectional(@Param("exerciseId") Long exerciseId);
