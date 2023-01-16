@@ -3,7 +3,7 @@ import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-item.model';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -18,8 +18,6 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     getIconTooltip = getIconTooltip;
 
     examExerciseOverviewItems: ExamExerciseOverviewItem[] = [];
-    getSubmissionForExercise = ExamParticipationService.getSubmissionForExercise;
-    getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
 
     constructor(protected changeDetectorReference: ChangeDetectorRef, private examParticipationService: ExamParticipationService) {
         super(changeDetectorReference);
@@ -42,6 +40,10 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
 
     openExercise(exercise: Exercise) {
         this.onPageChanged.emit({ overViewChange: false, exercise, forceSave: false });
+    }
+
+    getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
+        return this.examParticipationService.getExerciseButtonTooltip(exercise);
     }
 
     /**

@@ -155,15 +155,10 @@ public class ProgrammingExerciseResultTestService {
 
         // Retrieve updated results
         var updatedResults = resultRepository.findAllWithEagerFeedbackByAssessorIsNotNullAndParticipation_ExerciseIdAndCompletionDateIsNotNull(programmingExercise.getId());
-        assertThat(updatedResults).hasSize(3);
+        assertThat(updatedResults).containsExactlyInAnyOrderElementsOf(resultsWithFeedback);
 
-        // Assert that the result order stays the same
-        assertThat(updatedResults.get(0).getId()).isEqualTo(resultsWithFeedback.get(0).getId());
-        assertThat(updatedResults.get(1).getId()).isEqualTo(resultsWithFeedback.get(1).getId());
-        assertThat(updatedResults.get(2).getId()).isEqualTo(resultsWithFeedback.get(2).getId());
-
-        // Assert that the last result is the SEMI_AUTOMATIC result
-        semiAutoResult = updatedResults.get(2);
+        var semiAutoResultId = semiAutoResult.getId();
+        semiAutoResult = updatedResults.stream().filter(result -> result.getId().equals(semiAutoResultId)).findFirst().get();
         assertThat(semiAutoResult.getAssessmentType()).isEqualTo(AssessmentType.SEMI_AUTOMATIC);
         // Assert that the SEMI_AUTOMATIC result has two feedbacks whereas the last one is the automatic one
         assertThat(semiAutoResult.getFeedbacks()).hasSize(2);

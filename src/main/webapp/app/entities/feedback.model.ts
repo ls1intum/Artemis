@@ -66,7 +66,7 @@ export class Feedback implements BaseEntity {
     public suggestedFeedbackOriginSubmissionReference?: number;
     public suggestedFeedbackParticipationReference?: number;
 
-    // Specifies whether or not the tutor feedback is correct relative to the instructor feedback (during tutor training) or if there is a validation error.
+    // Specifies whether the tutor feedback is correct relative to the instructor feedback (during tutor training) or if there is a validation error.
     // Client only property.
     public correctionStatus?: FeedbackCorrectionStatus;
 
@@ -216,17 +216,16 @@ export const buildFeedbackTextForReview = (feedback: Feedback, addFeedbackText =
 
     return convertToHtmlLinebreaks(feedbackText);
 };
-
 /**
  * Helper method to find subsequent feedback for the review. When the feedback has a link with grading instruction,
  * it keeps the number of how many times the grading instructions are applied. If the usage limit is exceeded for the
  * grading instruction, it marks the feedback as subsequent.
  *
- * @param assessment the list of feedback provided in the assessment
+ * @param feedbacks the list of feedbacks
  */
-export const checkSubsequentFeedbackInAssessment = (assessment: Feedback[]) => {
+export const checkSubsequentFeedbackInAssessment = (feedbacks: Feedback[]) => {
     const gradingInstructions = {}; // { instructionId: number of encounters }
-    for (const feedback of assessment) {
+    for (const feedback of feedbacks) {
         if (feedback.gradingInstruction && feedback.gradingInstruction.credits !== 0) {
             if (gradingInstructions[feedback.gradingInstruction!.id!]) {
                 // this grading instruction is counted before

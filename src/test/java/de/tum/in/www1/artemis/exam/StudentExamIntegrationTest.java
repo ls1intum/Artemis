@@ -22,6 +22,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -60,6 +62,8 @@ import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private final Logger log = LoggerFactory.getLogger(this.getClass());
 
     private static final String TEST_PREFIX = "studexam";
 
@@ -140,6 +144,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @BeforeEach
     void initTestCase() throws Exception {
+        // the service already creates 5 students, 1 tutor, 1 editor, 1 instructor
         programmingExerciseTestService.setupTestUsers(TEST_PREFIX, 0, 0, 0, 1);
         var student1 = database.getUserByLogin(TEST_PREFIX + "student1");
         var student2 = database.getUserByLogin(TEST_PREFIX + "student2");
@@ -180,7 +185,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @AfterEach
-    void resetDatabase() throws Exception {
+    void tearDown() throws Exception {
         programmingExerciseTestService.tearDown();
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
@@ -1742,9 +1747,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @NotNull
-    private Exam configureFinalExamWithBonusExam(StudentExam finalStudentExam, StudentExam bonusStudentExam, BonusStrategy bonusStrategy) throws Exception {
+    private Exam configureFinalExamWithBonusExam(StudentExam finalStudentExam, StudentExam bonusStudentExam, BonusStrategy bonusStrategy) {
         var finalExam = examRepository.findById(finalStudentExam.getExam().getId()).orElseThrow();
         var bonusExam = examRepository.findById(bonusStudentExam.getExam().getId()).orElseThrow();
+        assertThat(finalExam.getId()).isNotEqualTo(bonusExam.getId());
 
         GradingScale finalExamGradingScale = createGradeScale(false);
         finalExamGradingScale.setExam(finalExam);
@@ -1812,10 +1818,52 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusStrategy()).isEqualTo(bonusStrategy);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusFromTitle()).isEqualTo("Real exam 1");
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(0.0);
-        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusGrade()).isEqualTo(GradeStep.PLAGIARISM_GRADE);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusGrade()).isEqualTo(GradingScale.DEFAULT_PLAGIARISM_GRADE);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalPoints()).isEqualTo(22.0);
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalGrade()).isEqualTo("3.0");
         assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().mostSeverePlagiarismVerdict()).isEqualTo(PlagiarismVerdict.PLAGIARISM);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testGradedFinalExamSummaryWithPlagiarismAndNotParticipatedBonusExamAsStudent() throws Exception {
+        StudentExam finalStudentExam = createStudentExamWithResultsAndAssessments(false);
+        bambooRequestMockProvider.reset();
+
+        User student = finalStudentExam.getUser();
+
+        final String noParticipationGrade = "NoParticipation";
+
+        studentExam1.setSubmitted(false);
+        studentExam1.setUser(student);
+        studentExamRepository.save(studentExam1);
+
+        StudentExam bonusStudentExam = studentExam1;
+
+        BonusStrategy bonusStrategy = BonusStrategy.POINTS;
+
+        Exam finalExam = configureFinalExamWithBonusExam(finalStudentExam, bonusStudentExam, bonusStrategy);
+        var bonusGradingScale = bonusRepository.findAllByBonusToExamId(finalExam.getId()).iterator().next().getSourceGradingScale();
+        bonusGradingScale.setNoParticipationGrade(noParticipationGrade);
+        gradingScaleRepository.save(bonusGradingScale);
+
+        // users tries to access exam summary after results are published
+        database.changeUser(student.getLogin());
+
+        var studentExams = studentExamRepository.findAllWithExercisesByUserIdAndExamId(student.getId(), finalExam.getId());
+        log.debug("Found {} student exams for student {} {} and exam {}", studentExams.size(), student.getId(), student.getLogin(), finalExam.getId());
+        assertThat(studentExams).as("Found too many student exams" + studentExams).hasSize(1);
+
+        var studentExamGradeInfoFromServer = request.get("/api/courses/" + finalExam.getCourse().getId() + "/exams/" + finalExam.getId() + "/student-exams/grade-summary",
+                HttpStatus.OK, StudentExamWithGradeDTO.class);
+
+        assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchieved()).isEqualTo(24.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult().overallGrade()).isEqualTo("3.0");
+
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(0.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().bonusGrade()).isEqualTo(noParticipationGrade);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalPoints()).isEqualTo(24.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult().gradeWithBonus().finalGrade()).isEqualTo("3.0");
     }
 
     @Test

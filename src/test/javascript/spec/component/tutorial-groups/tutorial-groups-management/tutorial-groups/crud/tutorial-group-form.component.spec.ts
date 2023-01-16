@@ -100,7 +100,7 @@ describe('TutorialGroupFormComponent', () => {
         jest.restoreAllMocks();
     });
 
-    describe('with schedule', function () {
+    describe('with schedule', () => {
         beforeEach(() => {
             component.configureSchedule = true;
             runOnPushChangeDetection(fixture);
@@ -200,7 +200,7 @@ describe('TutorialGroupFormComponent', () => {
         }));
     });
 
-    describe('without schedule', function () {
+    describe('without schedule', () => {
         beforeEach(() => {
             component.configureSchedule = false;
             runOnPushChangeDetection(fixture);

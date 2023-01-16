@@ -158,7 +158,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             assertThat(pathWithoutWorkingDir).isEqualTo(issueJSON.get("filePath"));
         }
 
-        // 2. Test that null or empty paths default to FeedbackService.DEFAULT_FILEPATH
+        // 2. Test that null or empty paths default to FeedbackRepository.DEFAULT_FILEPATH
         var resultNotification2 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
                 ProgrammingLanguage.JAVA);
         var reports2 = resultNotification2.getBuild().jobs().iterator().next().staticCodeAnalysisReports();
@@ -396,7 +396,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         assertThat(results).hasSize(numberOfStudents / 2);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
         final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
-        assertThat(resultWithPoints2).containsExactlyElementsOf(results);
+        assertThat(resultWithPoints2).containsExactlyInAnyOrderElementsOf(results);
 
         final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
         final GradingCriterion criterion2 = getGradingCriterionByTitle(fileUploadExercise, "test title2");

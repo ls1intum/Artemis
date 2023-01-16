@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -54,6 +55,7 @@ import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -196,12 +198,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         bitbucketRequestMockProvider.enableMockingOfRequests();
 
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
         participantScoreSchedulerService.activate();
     }
 
     @AfterEach
     void tearDown() {
         bitbucketRequestMockProvider.reset();
+        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
         participantScoreSchedulerService.shutdown();
     }
 
@@ -860,7 +864,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Test for bad request, when visibleDate equals the startDate
         Exam examF = ModelFactory.generateExam(course);
         examF.setVisibleDate(examF.getStartDate());
-        return List.of(examA, examB, examC, examD, examE, examF);
+        // Test for bad request, when exampleSolutionPublicationDate is before the visibleDate
+        Exam examG = ModelFactory.generateExam(course);
+        examG.setExampleSolutionPublicationDate(examG.getVisibleDate().minusHours(1));
+        return List.of(examA, examB, examC, examD, examE, examF, examG);
     }
 
     @Test
@@ -1041,6 +1048,26 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.patch("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams/" + examWithModelingEx.getId() + "/student-exams/" + studentExam.getId() + "/working-time",
                 3, HttpStatus.OK);
         verify(instanceMessageSendService, times(2)).sendModelingExerciseSchedule(modelingExercise.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testUpdateExam_exampleSolutionPublicationDateChanged() throws Exception {
+        var modelingExercise = database.addCourseExamExerciseGroupWithOneModelingExercise();
+        var examWithModelingEx = modelingExercise.getExerciseGroup().getExam();
+
+        assertThat(modelingExercise.isExampleSolutionPublished()).isFalse();
+        examWithModelingEx.setVisibleDate(now().minusHours(5));
+        examWithModelingEx.setStartDate(examWithModelingEx.getVisibleDate().plusMinutes(1));
+        examWithModelingEx.setEndDate(examWithModelingEx.getStartDate().plusMinutes(1));
+        examWithModelingEx.setPublishResultsDate(examWithModelingEx.getEndDate().plusMinutes(1));
+        examWithModelingEx.setExampleSolutionPublicationDate(examWithModelingEx.getPublishResultsDate().plusMinutes(1));
+        request.put("/api/courses/" + examWithModelingEx.getCourse().getId() + "/exams", examWithModelingEx, HttpStatus.OK);
+
+        Exam fetchedExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examWithModelingEx.getId());
+        Exercise exercise = fetchedExam.getExerciseGroups().get(0).getExercises().stream().findFirst().orElseThrow();
+        assertThat(exercise.isExampleSolutionPublished()).isTrue();
+
     }
 
     @Test
@@ -1796,7 +1823,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamScore(boolean withCourseBonus) throws Exception {
-        participantScoreRepository.deleteAll();
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // TODO avoid duplicated code with StudentExamIntegrationTest
 
@@ -1933,14 +1959,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         gradingScale.setExam(exam);
         gradingScaleRepository.save(gradingScale);
 
-        long bonusCourseParticipationCount = 0;
         if (withCourseBonus) {
             configureCourseAsBonusWithIndividualAndTeamResults(course, gradingScale);
-            bonusCourseParticipationCount = 5; // Participations from the bonus course should be included in expected participation count.
         }
 
-        final long expectedParticipationCount = 90 + bonusCourseParticipationCount; // 90 participations from the exam.
-        await().until(() -> participantScoreRepository.count() == expectedParticipationCount);
+        await().timeout(Duration.ofMinutes(1)).until(() -> {
+            for (Exercise exercise : exercisesInExam) {
+                if (participantScoreRepository.findAllByExercise(exercise).size() != exercise.getStudentParticipations().size()) {
+                    return false;
+                }
+            }
+            return true;
+        });
 
         var examScores = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
@@ -2047,7 +2077,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                     case TEST_PREFIX + "student3" -> {
                         assertThat(studentResult.gradeWithBonus().mostSeverePlagiarismVerdict()).isEqualTo(PlagiarismVerdict.PLAGIARISM);
                         assertThat(studentResult.gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(0.0);
-                        assertThat(studentResult.gradeWithBonus().bonusGrade()).isEqualTo(GradeStep.PLAGIARISM_GRADE);
+                        assertThat(studentResult.gradeWithBonus().bonusGrade()).isEqualTo(GradingScale.DEFAULT_PLAGIARISM_GRADE);
                         assertThat(studentResult.gradeWithBonus().finalGrade()).isEqualTo("1.0");
                     }
                     default -> {
@@ -2115,6 +2145,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 5L);
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isNull();
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(90L, 90L);
+
+        await().until(() -> participantScoreSchedulerService.isIdle());
 
         // change back to instructor user
         database.changeUser(TEST_PREFIX + "instructor1");

@@ -795,11 +795,11 @@ public class ProgrammingExercise extends Exercise {
             throw new BadRequestAlertException("Assessment type is not manual", "Exercise", "invalidManualFeedbackSettings");
         }
 
-        if (Objects.isNull(this.getDueDate())) {
+        if (this.getDueDate() == null) {
             throw new BadRequestAlertException("Exercise due date is not set", "Exercise", "invalidManualFeedbackSettings");
         }
 
-        if (Objects.nonNull(this.buildAndTestStudentSubmissionsAfterDueDate)) {
+        if (this.buildAndTestStudentSubmissionsAfterDueDate != null) {
             throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
         }
     }
