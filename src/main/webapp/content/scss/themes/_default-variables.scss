@@ -35,7 +35,7 @@ $dark: $gray-900;
 
 $body-color: $gray-900;
 $text-muted: $gray-600;
-$body-bg: $gray-100;
+$body-bg: $gray-200;
 
 $navbar-dark-color: rgba($white, 0.6);
 $navbar-dark-hover-color: $white;
@@ -54,7 +54,7 @@ $footer-bg: #fff;
 $navbar-foreground: #ccc;
 $navbar-bg: $artemis-dark;
 $navbar-item-active-hover-bg: $artemis-dark;
-$navbar-breadcrumb-background: #e4e5e6;
+$navbar-breadcrumb-background: $body-bg;
 $navbar-breadcrumb-color: #0065bd;
 
 // === END BOOTSTRAP ===

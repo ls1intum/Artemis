@@ -213,9 +213,12 @@ export class ExamActionService {
      * @param exam the exam to unsubscribe
      * */
     public unsubscribeForExamMonitoringUpdate(exam: Exam): void {
-        const topic = EXAM_MONITORING_STATUS_TOPIC(exam.id!);
-        this.jhiWebsocketService.unsubscribe(topic);
-        this.openExamMonitoringStatusWebsocketSubscriptions.delete(exam.id!);
+        // if loading the student exam failed, the exam will not be available
+        if (exam?.id) {
+            const topic = EXAM_MONITORING_STATUS_TOPIC(exam.id);
+            this.jhiWebsocketService.unsubscribe(topic);
+            this.openExamMonitoringStatusWebsocketSubscriptions.delete(exam.id);
+        }
     }
 
     /**

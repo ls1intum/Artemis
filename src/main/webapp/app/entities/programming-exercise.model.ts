@@ -49,7 +49,6 @@ export class ProgrammingExercise extends Exercise {
     public allowOfflineIde?: boolean;
     public programmingLanguage?: ProgrammingLanguage;
     public packageName?: string;
-    public problemStatement?: string;
     public sequentialTestRuns?: boolean;
     public showTestNamesToStudents?: boolean;
     public checkoutSolutionRepository?: boolean;

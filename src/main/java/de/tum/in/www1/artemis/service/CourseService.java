@@ -29,7 +29,6 @@ import org.springframework.util.StringUtils;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -50,6 +49,7 @@ import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupService;
 import de.tum.in.www1.artemis.service.user.UserService;
+import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
@@ -187,9 +187,8 @@ public class CourseService {
      *
      * @param courses           the courses for which the participations should be fetched
      * @param user              the user for which the participations should be fetched
-     * @param startTimeInMillis start time for logging purposes
      */
-    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user, long startTimeInMillis) {
+    public void fetchParticipationsWithSubmissionsAndResultsForCourses(List<Course> courses, User user) {
         Set<Exercise> exercises = courses.stream().flatMap(course -> course.getExercises().stream()).collect(Collectors.toSet());
         List<StudentParticipation> participationsOfUserInExercises = studentParticipationRepository.getAllParticipationsOfUserInExercises(user, exercises);
         if (participationsOfUserInExercises.isEmpty()) {
@@ -206,11 +205,6 @@ public class CourseService {
                 }
             }
         }
-        Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
-        int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
-        int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
-        log.info("/courses/for-dashboard.done in {}ms for {} courses with {} individual exercises and {} team exercises for user {}",
-                System.currentTimeMillis() - startTimeInMillis, courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
     }
 
     /**
@@ -226,7 +220,10 @@ public class CourseService {
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException();
         }
-        course.setExercises(exerciseService.findAllForCourse(course, user));
+        // Load exercises with categories separately because this is faster than loading them with lectures and exam above (the query would become too complex)
+        course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
+        course.setExercises(exerciseService.filterExercisesForCourse(course, user));
+        exerciseService.loadExerciseDetailsIfNecessary(course, user);
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
         course.setLearningGoals(learningGoalService.findAllForCourse(course, user, refresh));
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
@@ -256,21 +253,35 @@ public class CourseService {
      * @return an unmodifiable list of all courses including exercises, lectures and exams for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
+        long start = System.nanoTime();
         var userVisibleCourses = courseRepository.findAllActiveWithLecturesAndExams().stream()
                 // remove old courses that have already finished
                 .filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
                 // remove courses the user should not be able to see
-                .filter(course -> isCourseVisibleForUser(user, course));
+                .filter(course -> isCourseVisibleForUser(user, course)).toList();
 
-        // TODO: find all exercises for all courses of the user in one db call to improve the performance, then we would need to map them to the correct course
+        log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
 
-        return userVisibleCourses.peek(course -> {
-            course.setExercises(exerciseService.findAllForCourse(course, user));
+        long startFindAllExercises = System.nanoTime();
+        var courseIds = userVisibleCourses.stream().map(DomainObject::getId).collect(Collectors.toSet());
+        Set<Exercise> allExercises = exerciseRepository.findByCourseIdsWithCategories(courseIds);
+        log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises after {}", allExercises.size(), TimeLogUtil.formatDurationFrom(startFindAllExercises));
+
+        long startFilterAll = System.nanoTime();
+        var courses = userVisibleCourses.stream().peek(course -> {
+            // connect the exercises with the course
+            course.setExercises(allExercises.stream().filter(ex -> ex.getCourseViaExerciseGroupOrCourseMember().getId().equals(course.getId())).collect(Collectors.toSet()));
+            course.setExercises(exerciseService.filterExercisesForCourse(course, user));
+            exerciseService.loadExerciseDetailsIfNecessary(course, user);
             course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
             if (authCheckService.isOnlyStudentInCourse(course, user)) {
                 course.setExams(examRepository.filterVisibleExams(course.getExams()));
             }
         }).toList();
+
+        log.debug("all {} filterExercisesForCourse individually finished together after {}", courses.size(), TimeLogUtil.formatDurationFrom(startFilterAll));
+        log.debug("Filter exercises, lectures, and exams finished after {}", TimeLogUtil.formatDurationFrom(start));
+        return courses;
     }
 
     private boolean isCourseVisibleForUser(User user, Course course) {
