@@ -53,7 +53,8 @@ export class CourseLearningGoalsDetailsComponent implements OnInit {
                 this.learningGoal = resp.body!;
                 if (this.learningGoal && this.learningGoal.exercises) {
                     // Add exercises as lecture units for display
-                    (this.learningGoal.lectureUnits ?? []).push(
+                    this.learningGoal.lectureUnits = this.learningGoal.lectureUnits ?? [];
+                    this.learningGoal.lectureUnits.push(
                         ...this.learningGoal.exercises.map((exercise) => {
                             const exerciseUnit = new ExerciseUnit();
                             exerciseUnit.id = exercise.id;

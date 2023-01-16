@@ -605,8 +605,6 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getLearningGoalCourseProgressTeamsTest_asInstructorOne() throws Exception {
-        // adjustToCustomGroup("asInstructorOne");
-
         cleanUpInitialParticipations();
 
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team

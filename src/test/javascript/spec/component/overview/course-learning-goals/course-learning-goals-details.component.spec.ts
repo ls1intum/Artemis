@@ -27,6 +27,7 @@ import { HttpResponse } from '@angular/common/http';
 import { MockHasAnyAuthorityDirective } from '../../../helpers/mocks/directive/mock-has-any-authority.directive';
 import { By } from '@angular/platform-browser';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 
 describe('CourseLearningGoalsDetails', () => {
     let fixture: ComponentFixture<CourseLearningGoalsDetailsComponent>;
@@ -82,7 +83,7 @@ describe('CourseLearningGoalsDetails', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should load learning goal to display progress and lecture units', () => {
+    it('should load learning goal to display progress and all lecture units', () => {
         const learningGoal = {
             id: 1,
             lectureUnits: [new TextUnit()],
@@ -98,6 +99,22 @@ describe('CourseLearningGoalsDetails', () => {
         expect(findByIdSpy).toHaveBeenCalledOnce();
         expect(component.learningGoal.lectureUnits).toHaveLength(2);
         expect(textUnit).not.toBeNull();
+        expect(exerciseUnit).not.toBeNull();
+    });
+
+    it('should load learning goal to display progress and the exercise unit', () => {
+        const learningGoal = {
+            id: 1,
+            exercises: [{ id: 5 } as ModelingExercise],
+        } as LearningGoal;
+        const findByIdSpy = jest.spyOn(learningGoalService, 'findById').mockReturnValue(of(new HttpResponse({ body: learningGoal })));
+
+        fixture.detectChanges();
+
+        const exerciseUnit = fixture.debugElement.query(By.directive(ExerciseUnitComponent));
+
+        expect(findByIdSpy).toHaveBeenCalledOnce();
+        expect(component.learningGoal.lectureUnits).toHaveLength(1);
         expect(exerciseUnit).not.toBeNull();
     });
 
