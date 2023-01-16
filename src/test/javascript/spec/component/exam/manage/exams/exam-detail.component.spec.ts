@@ -3,7 +3,7 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ActivatedRoute, Data } from '@angular/router';
+import { ActivatedRoute, Data, Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { AccountService } from 'app/core/auth/account.service';
@@ -41,6 +41,7 @@ describe('ExamDetailComponent', () => {
     let examDetailComponentFixture: ComponentFixture<ExamDetailComponent>;
     let examDetailComponent: ExamDetailComponent;
     let service: ExamManagementService;
+    let router: Router;
 
     const exampleHTML = '<h1>Sample Markdown</h1>';
     const exam = new Exam();
@@ -105,9 +106,11 @@ describe('ExamDetailComponent', () => {
                 examDetailComponent = examDetailComponentFixture.componentInstance;
                 service = TestBed.inject(ExamManagementService);
             });
+
+        router = TestBed.inject(Router);
     });
 
-    beforeEach(function () {
+    beforeEach(() => {
         // reset exam
         exam.id = 1;
         exam.course = new Course();
@@ -236,11 +239,13 @@ describe('ExamDetailComponent', () => {
         const responseFakeEmptyExamArray = { body: [exam] } as HttpResponse<Exam[]>;
         jest.spyOn(service, 'delete').mockReturnValue(of(responseFakeDelete));
         jest.spyOn(service, 'findAllExamsForCourse').mockReturnValue(of(responseFakeEmptyExamArray));
+        jest.spyOn(router, 'navigate');
 
         // WHEN
         examDetailComponent.deleteExam(exam.id!);
 
         // THEN
         expect(service.delete).toHaveBeenCalledOnce();
+        expect(router.navigate).toHaveBeenCalledOnce();
     });
 });

@@ -35,6 +35,7 @@
             </div>
             <div *ngIf="!isExamMode" class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
+                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
                 <jhi-category-selector
                     [categories]="exerciseCategories"
                     [existingCategories]="existingCategories"
