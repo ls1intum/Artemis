@@ -850,7 +850,7 @@ export class GuidedTourService {
         });
 
         // Keep loading icon until the page is being refreshed
-        window.onload = function () {
+        window.onload = () => {
             this['restartIsLoading'] = false;
         };
     }

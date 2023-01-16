@@ -191,9 +191,9 @@ public abstract class BaseExercise extends DomainObject {
      * @return true, if students are allowed to see this exercise, otherwise false
      */
     @JsonView(QuizView.Before.class)
-    public Boolean isVisibleToStudents() {
+    public boolean isVisibleToStudents() {
         if (releaseDate == null) {  // no release date means the exercise is visible to students
-            return Boolean.TRUE;
+            return true;
         }
         return releaseDate.isBefore(ZonedDateTime.now());
     }
