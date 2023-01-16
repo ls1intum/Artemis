@@ -58,7 +58,7 @@ describe('Exam creation/deletion', () => {
         cy.login(artemis.users.getAdmin(), '/');
     });
 
-    it('Creates an exam', function () {
+    it('Creates an exam', () => {
         navigationBar.openCourseManagement();
         courseManagement.openExamsOfCourse(course.shortName!);
 

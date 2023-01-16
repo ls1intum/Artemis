@@ -253,7 +253,7 @@ public class ExerciseService {
         if (exerciseIds.isEmpty()) {
             return new HashSet<>();
         }
-        Set<Exercise> exercises = exerciseRepository.findByExerciseIdWithCategories(exerciseIds);
+        Set<Exercise> exercises = exerciseRepository.findByExerciseIdsWithCategories(exerciseIds);
         // Set is needed here to remove duplicates
         Set<Course> courses = exercises.stream().map(Exercise::getCourseViaExerciseGroupOrCourseMember).collect(Collectors.toSet());
         if (courses.size() != 1) {
@@ -275,52 +275,55 @@ public class ExerciseService {
     }
 
     /**
-     * Finds all Exercises for a given Course
+     * Filter all exercises for a given course based on the user role and course settings
+     * Assumes that the exercises are already been loaded (i.e. no proxy)
      *
-     * @param course corresponding course
+     * @param course corresponding course: exercises
      * @param user   the user entity
-     * @return a List of all Exercises for the given course
+     * @return a set of all Exercises for the given course
      */
-    public Set<Exercise> findAllForCourse(Course course, User user) {
-        Set<Exercise> exercises = null;
+    public Set<Exercise> filterExercisesForCourse(Course course, User user) {
+        Set<Exercise> exercises = course.getExercises();
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
-            // tutors/instructors/admins can see all exercises of the course
-            exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
-        }
-        else if (authCheckService.isOnlyStudentInCourse(course, user)) {
-
-            if (course.isOnlineCourse()) {
-                // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
-                exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
-            }
-            else {
-                exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
-            }
-
-            // students for this course might not have the right to see it, so we have to
-            // filter out exercises that are not released (or explicitly made visible to students) yet
-            exercises = exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
+            // no need to filter for tutors/editors/instructors/admins because they can see all exercises of the course
+            return exercises;
         }
 
-        if (exercises != null) {
-            for (Exercise exercise : exercises) {
-                setAssignedTeamIdForExerciseAndUser(exercise, user);
+        if (course.isOnlineCourse()) {
+            // this case happens rarely, so we can reload the relevant exercises from the database
+            // students in online courses can only see exercises where the lti outcome url exists, otherwise the result cannot be reported later on
+            exercises = exerciseRepository.findByCourseIdWhereLtiOutcomeUrlExists(course.getId(), user.getLogin());
+        }
 
-                // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
-                if (exercise instanceof QuizExercise quizExercise) {
-                    quizExercise.filterSensitiveInformation();
+        // students for this course might not have the right to see it, so we have to
+        // filter out exercises that are not released (or explicitly made visible to students) yet
+        return exercises.stream().filter(Exercise::isVisibleToStudents).collect(Collectors.toSet());
+    }
 
-                    // if the quiz is not active the batches do not matter and there is no point in loading them
-                    if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
-                        // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
-                        quizExercise.setQuizBatches(null);
-                        quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
-                    }
+    /**
+     * Loads additional details for team exercises and for active quiz exercises
+     * Assumes that the exercises are already been loaded (i.e. no proxy)
+     *
+     * @param course corresponding course: exercises
+     * @param user   the user entity
+     */
+    public void loadExerciseDetailsIfNecessary(Course course, User user) {
+        for (Exercise exercise : course.getExercises()) {
+            // only necessary for team exercises
+            setAssignedTeamIdForExerciseAndUser(exercise, user);
+
+            // filter out questions and all statistical information about the quizPointStatistic from quizExercises (so users can't see which answer options are correct)
+            if (exercise instanceof QuizExercise quizExercise) {
+                quizExercise.filterSensitiveInformation();
+
+                // if the quiz is not active the batches do not matter and there is no point in loading them
+                if (quizExercise.isQuizStarted() && !quizExercise.isQuizEnded()) {
+                    // delete the proxy as it doesn't work; getQuizBatchForStudent will load the batches from the DB directly
+                    quizExercise.setQuizBatches(null);
+                    quizExercise.setQuizBatches(quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).stream().collect(Collectors.toSet()));
                 }
             }
         }
-
-        return exercises;
     }
 
     /**

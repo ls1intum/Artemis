@@ -20,7 +20,7 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
     providers: [QuizStatisticUtil],
 })
 export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticComponent {
-    question: MultipleChoiceQuestion;
+    declare question: MultipleChoiceQuestion;
 
     answerTextRendered: SafeHtml[];
 

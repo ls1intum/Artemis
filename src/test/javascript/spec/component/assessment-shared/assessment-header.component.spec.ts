@@ -8,7 +8,7 @@ import { Result } from 'app/entities/result.model';
 import { AlertOverlayComponent } from 'app/shared/alert/alert-overlay.component';
 import { RouterTestingModule } from '@angular/router/testing';
 import { AssessmentWarningComponent } from 'app/assessment/assessment-warning/assessment-warning.component';
-import { MockComponent, MockModule, MockProvider } from 'ng-mocks';
+import { MockProvider } from 'ng-mocks';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -22,8 +22,8 @@ import { HttpResponse } from '@angular/common/http';
 import { GradeStep } from 'app/entities/grade-step.model';
 import { of } from 'rxjs';
 import { MockTranslateValuesDirective } from '../../helpers/mocks/directive/mock-translate-values.directive';
-import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgbAlert } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { NgbAlertsMocksModule } from '../../helpers/mocks/directive/ngbAlertsMocks.module';
 
 describe('AssessmentHeaderComponent', () => {
     let component: AssessmentHeaderComponent;
@@ -48,7 +48,7 @@ describe('AssessmentHeaderComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, RouterTestingModule, MockModule(NgbTooltipModule), MockComponent(NgbAlert)],
+            imports: [ArtemisTestModule, RouterTestingModule, NgbTooltipMocksModule, NgbAlertsMocksModule],
             declarations: [AssessmentHeaderComponent, AssessmentWarningComponent, AlertOverlayComponent, TranslateDirective, ArtemisTranslatePipe, MockTranslateValuesDirective],
             providers: [
                 {
@@ -93,7 +93,6 @@ describe('AssessmentHeaderComponent', () => {
             id: 16,
             dueDate: dayjs().subtract(2, 'days'),
         } as Exercise;
-        // @ts-ignore
         component.result = undefined;
         fixture.detectChanges();
         const warningComponent = fixture.debugElement.query(By.directive(AssessmentWarningComponent));
@@ -102,7 +101,6 @@ describe('AssessmentHeaderComponent', () => {
 
     it('should display alert when assessment due date has passed', () => {
         component.hasAssessmentDueDatePassed = true;
-        // @ts-ignore
         component.result = undefined;
         fixture.detectChanges();
 

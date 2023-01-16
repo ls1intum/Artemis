@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
@@ -21,7 +21,7 @@ import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
-import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbPaginationMocksModule } from '../../../helpers/mocks/directive/ngbPaginationMocks.module';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
@@ -44,7 +44,7 @@ describe('Exam Import Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule), MockComponent(NgbPagination)],
+            imports: [ArtemisTestModule, FormsModule, NgbPaginationMocksModule],
             declarations: [
                 ExamImportComponent,
                 ExamExerciseImportComponent,
