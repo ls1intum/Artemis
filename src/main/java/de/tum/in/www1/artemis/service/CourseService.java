@@ -252,7 +252,7 @@ public class CourseService {
      */
     public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
         long start = System.nanoTime();
-        var userVisibleCourses = courseRepository.findAllActiveWithLecturesAndRelevantExams(user).stream().filter(course -> isCourseVisibleForUser(user, course));
+        var userVisibleCourses = courseRepository.findAllActiveWithLecturesAndRelevantExams(user).stream().filter(course -> isCourseVisibleForUser(user, course)).toList();
 
         log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
 
