@@ -155,7 +155,7 @@ public class AttachmentUnitResource {
      * POST lectures/:lectureId/attachment-units/split : creates new attachment units.
      *
      * @param lectureId            the id of the lecture to which the attachment units should be added
-     * @param lectureUnitSplitDTOs the units that should be created
+     * @param lectureUnitInformationDTO the units that should be created
      * @param file                 the file to be splitted
      * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment units
      */
