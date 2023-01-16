@@ -137,7 +137,6 @@ describe('CoursesComponent', () => {
                 fixture = TestBed.createComponent(CoursesComponent);
                 component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
-                router = TestBed.inject(Router);
                 location = TestBed.inject(Location);
                 TestBed.inject(GuidedTourService);
                 courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
@@ -146,6 +145,7 @@ describe('CoursesComponent', () => {
                 exerciseService = TestBed.inject(ExerciseService);
                 fixture.detectChanges();
             });
+        router = TestBed.inject(Router);
     });
 
     afterEach(() => {

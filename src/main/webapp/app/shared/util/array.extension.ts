@@ -1,7 +1,7 @@
 export {};
 
 declare global {
-    export interface Array<T> {
+    interface Array<T> {
         last(): T | undefined;
         first(): T | undefined;
 
@@ -13,7 +13,7 @@ declare global {
 }
 
 if (!Array.prototype.last) {
-    Array.prototype.last = function () {
+    Array.prototype.last = function last<T>(): T | undefined {
         if (!this.length) {
             return undefined;
         }
@@ -22,7 +22,7 @@ if (!Array.prototype.last) {
 }
 
 if (!Array.prototype.first) {
-    Array.prototype.first = function () {
+    Array.prototype.first = function first<T>(): T | undefined {
         if (!this.length) {
             return undefined;
         }
@@ -31,7 +31,8 @@ if (!Array.prototype.first) {
 }
 
 if (!Array.prototype.shuffle) {
-    Array.prototype.shuffle = function () {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    Array.prototype.shuffle = function shuffle<T>(): void {
         if (this.length > 1) {
             for (let i = this.length - 1; i > 0; i--) {
                 const randomIndex = Math.floor(Math.random() * (i + 1));

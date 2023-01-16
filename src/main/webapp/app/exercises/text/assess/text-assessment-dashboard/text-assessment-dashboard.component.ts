@@ -35,8 +35,6 @@ export class TextAssessmentDashboardComponent extends AbstractAssessmentDashboar
     examId: number;
     exerciseGroupId: number;
 
-    filterOption?: number;
-
     private cancelConfirmationText: string;
 
     // Icons
