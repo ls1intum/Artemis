@@ -18,7 +18,6 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     @Input() exercise: Exercise;
     @Input() latestResult?: Result;
     @Input() tasks: TaskArray;
-    @Input() showTestDetails?: boolean;
 
     steps: Array<{ done: TestCaseState; title: string; tests: string[] }>;
 
@@ -61,7 +60,6 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
         componentInstance.result = this.latestResult;
         componentInstance.feedbackFilter = tests;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
-        componentInstance.showTestDetails = this.showTestDetails || false;
         componentInstance.taskName = taskName;
         componentInstance.numberOfNotExecutedTests = notExecutedTests.length;
     }
