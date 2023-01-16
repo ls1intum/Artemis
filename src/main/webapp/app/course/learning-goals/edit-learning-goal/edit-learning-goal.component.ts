@@ -10,6 +10,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/lecture.service';
 import { combineLatest, forkJoin } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
+import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     selector: 'jhi-edit-learning-goal',
@@ -65,6 +66,10 @@ export class EditLearningGoalComponent implements OnInit {
                             // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
                             if (!lecture.lectureUnits) {
                                 lecture.lectureUnits = [];
+                            } else {
+                                // Filter out exercise units, they should be added via the exercise management for now
+                                // TODO: User experience improvements for linking learning objects when editing a learning goal
+                                lecture.lectureUnits = lecture.lectureUnits.filter((lectureUnit) => lectureUnit.type !== LectureUnitType.EXERCISE);
                             }
                         }
                     }
