@@ -15,39 +15,7 @@ import { TestCaseResult } from 'app/entities/test-case-result.model';
 
 @Component({
     selector: 'jhi-exercise-scores-export-button',
-    template: `
-        <div *ngIf="isProgrammingExerciseResults" ngbDropdown class="d-inline">
-            <button id="export-results-dropdown" class="btn btn-info btn-sm me-1" ngbDropdownToggle>
-                <fa-icon [icon]="faDownload"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults.title">Export Results</span>
-            </button>
-            <div ngbDropdownMenu="export-results-dropdown">
-                <button ngbDropdownItem (click)="exportResults(false, false)" jhiTranslate="artemisApp.exercise.exportResults.withoutTestCases">Without test cases</button>
-                <button
-                    ngbTooltip="{{ 'artemisApp.exercise.exportResults.withTestCasesTooltip' | artemisTranslate }}"
-                    placement="left"
-                    ngbDropdownItem
-                    (click)="exportResults(true, false)"
-                    jhiTranslate="artemisApp.exercise.exportResults.withTestCases"
-                >
-                    With test cases
-                </button>
-                <button
-                    ngbTooltip="{{ 'artemisApp.exercise.exportResults.withTestCasesAndFeedbackTooltip' | artemisTranslate }}"
-                    placement="left"
-                    ngbDropdownItem
-                    (click)="exportResults(true, true)"
-                    jhiTranslate="artemisApp.exercise.exportResults.withTestCasesAndFeedback"
-                >
-                    With test cases<br />and feedback
-                </button>
-            </div>
-        </div>
-        <button *ngIf="!isProgrammingExerciseResults" class="btn btn-info btn-sm me-1" (click)="exportResults(false, false)">
-            <fa-icon [icon]="faDownload"></fa-icon>
-            <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.exportResults.title">Export Results</span>
-        </button>
-    `,
+    templateUrl: './exercise-scores-export-button.component.html',
 })
 export class ExerciseScoresExportButtonComponent implements OnInit {
     @Input() exercises: Exercise[] = []; // Used to export multiple scores together
