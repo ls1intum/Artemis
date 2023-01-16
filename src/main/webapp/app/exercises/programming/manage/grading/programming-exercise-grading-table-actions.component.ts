@@ -32,9 +32,6 @@ export class ProgrammingExerciseGradingTableActionsComponent {
         const modalRef = this.modalService.open(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         modalRef.componentInstance.programmingLanguage = this.exercise.programmingLanguage;
-        modalRef.result.then(
-            (result: ProgrammingExercise) => this.onCategoryImport.emit(result.id),
-            () => {},
-        );
+        modalRef.result.then((result: ProgrammingExercise) => this.onCategoryImport.emit(result.id));
     }
 }

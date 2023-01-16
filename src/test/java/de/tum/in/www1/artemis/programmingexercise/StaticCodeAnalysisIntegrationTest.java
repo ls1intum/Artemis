@@ -334,7 +334,8 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
         var categories = staticCodeAnalysisCategoryRepository.findByExerciseId(sourceExercise.getId());
         for (var category : categories) {
             category.setState(CategoryState.GRADED);
-            double rand1 = ThreadLocalRandom.current().nextDouble(10), rand2 = ThreadLocalRandom.current().nextDouble(10);
+            double rand1 = ThreadLocalRandom.current().nextDouble(10);
+            double rand2 = ThreadLocalRandom.current().nextDouble(10);
             category.setMaxPenalty(Math.max(rand1, rand2));
             category.setPenalty(Math.min(rand1, rand2));
         }
