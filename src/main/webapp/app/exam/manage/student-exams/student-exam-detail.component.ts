@@ -237,7 +237,7 @@ export class StudentExamDetailComponent implements OnInit {
      * Checks if the user should be able to edit the inputs.
      */
     isFormDisabled(): boolean {
-        return this.isSavingWorkingTime;
+        return this.isSavingWorkingTime || (this.isTestRun && !!this.studentExam.submitted) || !this.studentExam.exam;
     }
 
     examIsOver(): boolean {

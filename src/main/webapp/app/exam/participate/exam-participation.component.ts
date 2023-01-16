@@ -1,5 +1,4 @@
 import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
-import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -19,7 +18,6 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { convertDateFromServer } from 'app/utils/date.utils';
 import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -579,15 +577,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
         this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
 
-        const channel = getWebSocketChannelForWorkingTimeChange(this.studentExamId);
+        const channel = getWebSocketChannelForWorkingTimeChange(this.studentExam.id!);
         this.websocketService.subscribe(channel);
         this.websocketService.receive(channel).subscribe((workingTime: number) => {
             const decreased = workingTime < (this.studentExam.workingTime ?? 0);
-            const individualStudentEndDateBefore = this.individualStudentEndDate;
             this.studentExam.workingTime = workingTime;
             this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime, 'seconds');
             this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
-            const dateFormat = individualStudentEndDateBefore.isSame(this.individualStudentEndDate, 'day') ? 'time' : 'short';
+            const dateFormat = startDate.isSame(this.individualStudentEndDate, 'day') ? 'time' : 'short';
             const newIndividualStudentEndDateFormatted = this.artemisDatePipe.transform(this.individualStudentEndDate, dateFormat);
             if (decreased) {
                 this.alertService.error('artemisApp.exam.examParticipation.workingTimeDecreased', { date: newIndividualStudentEndDateFormatted });
