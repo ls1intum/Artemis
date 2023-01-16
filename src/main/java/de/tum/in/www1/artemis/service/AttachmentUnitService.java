@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.AttachmentRepository;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitDTO;
-import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
@@ -81,17 +81,17 @@ public class AttachmentUnitService {
 
     /**
      * Creates new attachment units for the given lecture.
-     * @param lectureUnitSplitDTOs The split information
+     * @param lectureUnitInformationDTO The split information which contains units as list, number of pages and removeBreakSlide flag
      * @param lecture The lecture linked to the attachmentUnits
      * @param file The file (lecture slide) to be split
      * @return The created attachment units
      */
-    public List<AttachmentUnit> createAttachmentUnits(List<LectureUnitSplitDTO> lectureUnitSplitDTOs, Lecture lecture, MultipartFile file) {
+    public List<AttachmentUnit> createAttachmentUnits(LectureUnitInformationDTO lectureUnitInformationDTO, Lecture lecture, MultipartFile file) {
         List<Long> ids = new ArrayList<>();
         List<LectureUnitDTO> lectureUnitsDTO = null;
         try {
-            log.debug("Splitting attachment file {} with info {}", file, lectureUnitSplitDTOs);
-            lectureUnitsDTO = lectureUnitProcessingService.splitUnits(lectureUnitSplitDTOs, file);
+            log.debug("Splitting attachment file {} with info {}", file, lectureUnitInformationDTO.units());
+            lectureUnitsDTO = lectureUnitProcessingService.splitUnits(lectureUnitInformationDTO, file);
             lectureUnitsDTO.forEach(lectureUnit -> {
                 lectureUnit.attachmentUnit().setLecture(null);
                 AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(lectureUnit.attachmentUnit());

@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { faBan, faClock, faExclamationTriangle, faGlobe, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faClock, faExclamationTriangle, faGlobe, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -10,11 +10,17 @@ import { objectToJsonBlob } from 'app/utils/blob-util';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateService } from '@ngx-translate/core';
 
-type AttachmentUnitsInfoResponseType = {
+type LectureUnitDTOS = {
     unitName: string;
     releaseDate?: dayjs.Dayjs;
     startPage: number;
     endPage: number;
+};
+
+type LectureUnitInformationDTO = {
+    units: LectureUnitDTOS[];
+    numberOfPages: number;
+    removeBreakSlides: boolean;
 };
 
 @Component({
@@ -27,10 +33,8 @@ export class AttachmentUnitsComponent implements OnInit {
     courseId: number;
     isLoading: boolean;
     isProcessingMode: boolean;
-
-    units: AttachmentUnitsInfoResponseType[] = [];
+    units: LectureUnitDTOS[] = [];
     numberOfPages: number;
-
     faSave = faSave;
     faBan = faBan;
     faGlobe = faGlobe;
@@ -38,10 +42,12 @@ export class AttachmentUnitsComponent implements OnInit {
     faTimes = faTimes;
     faPlus = faPlus;
     faExclamationTriangle = faExclamationTriangle;
+    faQuestionCircle = faQuestionCircle;
 
     file: File;
     fileName: string;
     invalidUnitTableMessage?: string;
+    removeBreakSlides: boolean;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -60,6 +66,7 @@ export class AttachmentUnitsComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        this.removeBreakSlides = false;
         this.isLoading = true;
         this.isProcessingMode = true;
 
@@ -69,7 +76,7 @@ export class AttachmentUnitsComponent implements OnInit {
         this.attachmentUnitService.getSplitUnitsData(this.lectureId, formData).subscribe({
             next: (res: any) => {
                 if (res) {
-                    this.units = res.body.lectureUnitDTOS;
+                    this.units = res.body.units;
                     this.numberOfPages = res.body.numberOfPages;
                     this.isLoading = false;
                 }
@@ -87,10 +94,10 @@ export class AttachmentUnitsComponent implements OnInit {
 
     createAttachmentUnits(): void {
         this.isLoading = true;
-
+        const lectureUnitInformationDTOObj: LectureUnitInformationDTO = { units: this.units, numberOfPages: this.numberOfPages, removeBreakSlides: this.removeBreakSlides };
         const formData: FormData = new FormData();
         formData.append('file', this.file);
-        formData.append('lectureUnitSplitDTOs', objectToJsonBlob(this.units));
+        formData.append('lectureUnitInformationDTO', objectToJsonBlob(lectureUnitInformationDTOObj));
 
         this.attachmentUnitService.createUnits(this.lectureId, formData).subscribe({
             next: () => {
@@ -187,7 +194,7 @@ export class AttachmentUnitsComponent implements OnInit {
         return true;
     }
 
-    get currentTimeZone(): string {
-        return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    onSelectRemoveBreakSlides() {
+        this.removeBreakSlides = !this.removeBreakSlides;
     }
 }

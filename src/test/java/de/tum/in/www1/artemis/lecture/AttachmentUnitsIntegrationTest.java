@@ -52,7 +52,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.lecture1 = this.database.createCourseWithLecture(true);
         List<LectureUnitSplitDTO> units = new ArrayList<>();
-        this.lectureUnitSplits = new LectureUnitInformationDTO(units, 1);
+        this.lectureUnitSplits = new LectureUnitInformationDTO(units, 1, true);
         // Add users that are not in the course
         database.createAndSaveUser(TEST_PREFIX + "student42");
         database.createAndSaveUser(TEST_PREFIX + "tutor42");
@@ -82,7 +82,7 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
         var createResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
         LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(createResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
-        assertThat(lectureUnitSplitInfo.lectureUnitDTOS()).hasSize(2);
+        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
     }
 
@@ -92,10 +92,10 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         var splitResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
         LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
 
-        assertThat(lectureUnitSplitInfo.lectureUnitDTOS()).hasSize(2);
+        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
 
-        var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo.lectureUnitDTOS())).andExpect(status().isOk()).andReturn();
+        var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo)).andExpect(status().isOk()).andReturn();
         List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
                 mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
 
@@ -110,12 +110,13 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplits.lectureUnitDTOS())).andExpect(status().isForbidden());
+        request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplits)).andExpect(status().isForbidden());
         request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isForbidden());
     }
 
-    private MockHttpServletRequestBuilder buildSplitAndCreateAttachmentUnits(@NotNull List<LectureUnitSplitDTO> lectureUnitSplits) throws Exception {
-        var lectureUnitSplitPart = new MockMultipartFile("lectureUnitSplitDTOs", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(lectureUnitSplits).getBytes());
+    private MockHttpServletRequestBuilder buildSplitAndCreateAttachmentUnits(@NotNull LectureUnitInformationDTO lectureUnitInformationDTO) throws Exception {
+        var lectureUnitSplitPart = new MockMultipartFile("lectureUnitInformationDTO", "", MediaType.APPLICATION_JSON_VALUE,
+                mapper.writeValueAsString(lectureUnitInformationDTO).getBytes());
         var filePart = createLecturePdf();
 
         return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lecture1.getId() + "/attachment-units/split").file(lectureUnitSplitPart).file(filePart)

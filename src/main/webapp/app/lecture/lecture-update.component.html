@@ -75,16 +75,11 @@
             </div>
 
             <div *ngIf="processUnitMode" class="alert alert-warning mt-3">
-                <span>
-                    <ul class="informative-text">
-                        <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.firstLine' | artemisTranslate }}</li>
-                        <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.secondLine' | artemisTranslate }}</li>
-                        <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.thirdLine' | artemisTranslate }}</li>
-                        <li class="mt-2">
-                            <em>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.note' | artemisTranslate }}</em>
-                        </li>
-                    </ul>
-                </span>
+                <ul class="informative-text">
+                    <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.firstLine' | artemisTranslate }}</li>
+                    <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.secondLine' | artemisTranslate }}</li>
+                    <li>{{ 'artemisApp.attachmentUnit.createAttachmentUnits.informativeText.note' | artemisTranslate }}</li>
+                </ul>
             </div>
 
             <div *ngIf="processUnitMode" class="form-group">

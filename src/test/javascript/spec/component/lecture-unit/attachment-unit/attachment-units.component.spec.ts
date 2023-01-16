@@ -65,6 +65,7 @@ describe('AttachmentUnitsComponent', () => {
     };
     const units = [unit1, unit2, unit3];
     const numberOfPages = 60;
+    const removeBreakSlides = true;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -134,10 +135,11 @@ describe('AttachmentUnitsComponent', () => {
     });
 
     it('should create attachment units', fakeAsync(() => {
+        const lectureUnitInformationDTOObj = { units: units, numberOfPages: numberOfPages, removeBreakSlides: removeBreakSlides };
         const file = new File([''], 'testFile.pdf', { type: 'application/pdf' });
         const formData: FormData = new FormData();
         formData.append('file', file);
-        formData.append('lectureUnitSplitDTOs', objectToJsonBlob(units));
+        formData.append('lectureUnitInformationDTO', objectToJsonBlob(lectureUnitInformationDTOObj));
 
         const responseBody: AttachmentUnitsResponseType = {
             units,
