@@ -140,7 +140,7 @@ public class BuildLogEntryService {
                 || log.startsWith("Failing task") || log.startsWith("Running post build") || log.startsWith("Running on server") || log.startsWith("Finalising the build...")
                 || log.startsWith("Stopping timer.") || log.startsWith("Finished building") || log.startsWith("All post build plugins have finished")
                 || log.startsWith("Publishing an artifact") || log.startsWith("Unable to publish artifact") || log.startsWith("The artifact hasn't been successfully published")
-                || log.startsWith("Beginning to execute") || log.startsWith("Substituting variable");
+                || log.startsWith("Beginning to execute") || log.startsWith("Substituting variable") || log.startsWith("Pipeline Maven Plugin");
     }
 
     /**
