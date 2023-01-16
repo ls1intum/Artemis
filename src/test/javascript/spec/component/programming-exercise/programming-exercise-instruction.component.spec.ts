@@ -370,10 +370,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 exerciseType: ExerciseType.PROGRAMMING,
                 feedbackFilter: ['testBubbleSort'],
                 result,
-                showTestDetails: true,
                 taskName: 'Implement Bubble Sort',
                 numberOfNotExecutedTests: 1,
-            },
+            } as FeedbackComponent,
         });
 
         mergeSortStep.nativeElement.click();
@@ -385,10 +384,9 @@ describe('ProgrammingExerciseInstructionComponent', () => {
                 exerciseType: ExerciseType.PROGRAMMING,
                 feedbackFilter: ['testMergeSort'],
                 result,
-                showTestDetails: true,
                 taskName: 'Implement Merge Sort',
                 numberOfNotExecutedTests: 0,
-            },
+            } as FeedbackComponent,
         });
     }));
 
