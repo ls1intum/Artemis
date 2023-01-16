@@ -237,7 +237,9 @@
             "continueAfterHandInEarlyDescription": "Du willst doch nicht vorzeitig abgeben?",
             "handInEarlyNoticeFirstSentence": "Du bist dabei die Klausur vorzeitig abzugeben.",
             "handInEarlyNoticeSecondSentence": "Du kannst danach nicht mehr an der Klausur teilnehmen.",
-            "namePlaceholder": "Trage deinen vollen Namen hier ein"
+            "namePlaceholder": "Trage deinen vollen Namen hier ein",
+            "workingTimeIncreased": "Deine Arbeitszeit wurde verlängert bis {{ date }}.",
+            "workingTimeDecreased": "Deine Arbeitszeit wurde verkürzt bis {{ date }}."
         },
         "exerciseGroup": {
             "created": "Neue Aufgabengruppe erstellt",

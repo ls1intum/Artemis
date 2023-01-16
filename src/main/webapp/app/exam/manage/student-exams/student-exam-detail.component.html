@@ -33,9 +33,9 @@
     </div>
 
     <div class="mb-3" *ngIf="!isTestExam">
-        <h5><span jhiTranslate="artemisApp.studentExams.workingTime" [ngbTooltip]="getWorkingTimeToolTip()">Working time</span></h5>
+        <h5><span jhiTranslate="artemisApp.studentExams.workingTime">Working time</span></h5>
         <form #form="ngForm" (ngSubmit)="saveWorkingTime()">
-            <div class="mb-1 working-time-form" [ngbTooltip]="getWorkingTimeToolTip()">
+            <div class="mb-1 working-time-form">
                 <div class="input-group mb-1 d-flex justify-content-between align-items-center">
                     <label for="hours" class="me-4" jhiTranslate="artemisApp.studentExams.setWorkingTime">Absolute:</label>
                     <input
@@ -98,8 +98,8 @@
                 </div>
             </div>
             <button type="submit" class="btn btn-primary me-2" [disabled]="!form.valid || isFormDisabled()">
-                <fa-icon [icon]="faSave" [ngbTooltip]="getWorkingTimeToolTip()"></fa-icon>
-                <span jhiTranslate="entity.action.save" [ngbTooltip]="getWorkingTimeToolTip()">Save</span>
+                <fa-icon [icon]="faSave"></fa-icon>
+                <span jhiTranslate="entity.action.save">Save</span>
             </button>
         </form>
     </div>

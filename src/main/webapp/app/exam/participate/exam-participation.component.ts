@@ -1,4 +1,5 @@
 import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -15,8 +16,10 @@ import { FileUploadSubmissionService } from 'app/exercises/file-upload/participa
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
 import { Submission } from 'app/entities/submission.model';
 import { Exam } from 'app/entities/exam.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { convertDateFromServer } from 'app/utils/date.utils';
 import { BehaviorSubject, Observable, Subject, Subscription, of, throwError } from 'rxjs';
 import { catchError, distinctUntilChanged, filter, map, tap, throttleTime, timeout } from 'rxjs/operators';
 import { InitializationState } from 'app/entities/participation/participation.model';
@@ -48,6 +51,8 @@ import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
+
+const getWebSocketChannelForWorkingTimeChange = (studentExamId: number) => `/topic/studentExams/${studentExamId}/working-time-change-during-conduction`;
 
 @Component({
     selector: 'jhi-exam-participation',
@@ -141,10 +146,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private examMonitoringService: ExamMonitoringService,
         private examActionService: ExamActionService,
         private featureToggleService: FeatureToggleService,
+        private artemisDatePipe: ArtemisDatePipe,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
-            this.alertService.error('artemisApp.examParticipation.saveSubmissionError');
+            this.alertService.error('artemisApp.exam.examParticipation.saveSubmissionError');
         });
     }
 
@@ -566,11 +572,29 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.examMonitoringUpdateSubscription?.unsubscribe();
         this.examActionService.unsubscribeForExamMonitoringUpdate(this.exam);
         window.clearInterval(this.autoSaveInterval);
+        this.websocketService.unsubscribe(getWebSocketChannelForWorkingTimeChange(this.studentExamId));
     }
 
     initIndividualEndDates(startDate: dayjs.Dayjs) {
         this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
         this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
+
+        const channel = getWebSocketChannelForWorkingTimeChange(this.studentExamId);
+        this.websocketService.subscribe(channel);
+        this.websocketService.receive(channel).subscribe((workingTime: number) => {
+            const decreased = workingTime < (this.studentExam.workingTime ?? 0);
+            const individualStudentEndDateBefore = this.individualStudentEndDate;
+            this.studentExam.workingTime = workingTime;
+            this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime, 'seconds');
+            this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
+            const dateFormat = individualStudentEndDateBefore.isSame(this.individualStudentEndDate, 'day') ? 'time' : 'short';
+            const newIndividualStudentEndDateFormatted = this.artemisDatePipe.transform(this.individualStudentEndDate, dateFormat);
+            if (decreased) {
+                this.alertService.error('artemisApp.exam.examParticipation.workingTimeDecreased', { date: newIndividualStudentEndDateFormatted });
+            } else {
+                this.alertService.success('artemisApp.exam.examParticipation.workingTimeIncreased', { date: newIndividualStudentEndDateFormatted });
+            }
+        });
     }
 
     /**
