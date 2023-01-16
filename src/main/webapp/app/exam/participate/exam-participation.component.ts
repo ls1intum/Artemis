@@ -573,6 +573,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         this.websocketService.unsubscribe(getWebSocketChannelForWorkingTimeChange(this.studentExamId));
     }
 
+    /**
+     * Initializes the individual end dates and sets up a subscription for potential changes during the conduction
+     * @param startDate the start date of the exam
+     */
     initIndividualEndDates(startDate: dayjs.Dayjs) {
         this.individualStudentEndDate = dayjs(startDate).add(this.studentExam.workingTime!, 'seconds');
         this.individualStudentEndDateWithGracePeriod = this.individualStudentEndDate.clone().add(this.exam.gracePeriod!, 'seconds');
