@@ -5,8 +5,8 @@ import static de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseTy
 import java.util.HashSet;
 import java.util.Set;
 
-import javax.annotation.Nonnull;
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -98,7 +98,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         this.weight = weight;
     }
 
-    @Nonnull
+    @NotNull
     public Double getBonusMultiplier() {
         return bonusMultiplier != null ? bonusMultiplier : 1.0;
     }
@@ -112,7 +112,7 @@ public class ProgrammingExerciseTestCase extends DomainObject {
         this.bonusMultiplier = bonusMultiplier;
     }
 
-    @Nonnull
+    @NotNull
     public Double getBonusPoints() {
         return bonusPoints != null ? bonusPoints : 0.0;
     }

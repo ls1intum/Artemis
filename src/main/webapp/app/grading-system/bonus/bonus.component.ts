@@ -11,7 +11,6 @@ import { ButtonSize } from 'app/shared/components/button.component';
 import { Subject, forkJoin, of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
-import { TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { AlertService } from 'app/core/util/alert.service';
 
@@ -96,7 +95,7 @@ export class BonusComponent implements OnInit {
         pageSize: 100,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,
-        sortedColumn: TableColumn.ID,
+        sortedColumn: 'ID',
     };
 
     constructor(

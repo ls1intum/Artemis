@@ -1,5 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { GradeType } from 'app/entities/grading-scale.model';
+import { BaseGradingSystemComponent } from 'app/grading-system/base-grading-system/base-grading-system.component';
 
 @Component({
     selector: 'jhi-grading-system',
@@ -7,9 +9,12 @@ import { ActivatedRoute } from '@angular/router';
     styleUrls: ['./grading-system.component.scss'],
 })
 export class GradingSystemComponent implements OnInit {
+    readonly GradeType = GradeType;
+
     courseId?: number;
     examId?: number;
     isExam = false;
+    childComponent?: BaseGradingSystemComponent;
 
     constructor(private route: ActivatedRoute) {}
 
@@ -21,5 +26,14 @@ export class GradingSystemComponent implements OnInit {
                 this.isExam = true;
             }
         });
+    }
+
+    /**
+     * This function gets called if the router outlet gets activated. The sub routes
+     * should derive from BaseGradingSystemComponent
+     * @param instance The component instance
+     */
+    onChildActivate(instance: BaseGradingSystemComponent) {
+        this.childComponent = instance;
     }
 }

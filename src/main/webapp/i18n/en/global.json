@@ -12,7 +12,8 @@
             "start": "Start",
             "edit": "Edit",
             "copy": "Copy",
-            "copied": "Copied"
+            "copied": "Copied",
+            "new": "New"
         },
         "menu": {
             "home": "Home",
@@ -253,7 +254,8 @@
             "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",
             "toggleToSubmitted": "Change Student Exam to Submitted",
             "endNow": "End Now",
-            "ldap": "Sync from LDAP"
+            "ldap": "Sync from LDAP",
+            "notUndoable": "This action cannot be undone!"
         },
         "detail": {
             "field": "Field",
