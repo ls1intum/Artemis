@@ -56,6 +56,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
+    // Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments" })
     @Query("""
             SELECT DISTINCT c
@@ -69,6 +70,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             """)
     List<Course> findAllActiveWithLecturesAndRelevantExams(@Param("now") ZonedDateTime now, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames);
 
+    // Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
+    Optional<Course> findWithLecturesAndExamsById(long courseId);
+
     @Query("""
             SELECT DISTINCT c
             FROM Course c
@@ -81,9 +86,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
                 AND (student.id = :userId OR tutor.id = :userId)
             """)
     List<Course> findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
-
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
-    Optional<Course> findWithEagerLecturesAndExamsById(long courseId);
 
     // Note: this is currently only used for testing purposes
     @Query("""
@@ -286,7 +288,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     @NotNull
     default Course findByIdWithLecturesAndExamsElseThrow(long courseId) {
-        return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return findWithLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**

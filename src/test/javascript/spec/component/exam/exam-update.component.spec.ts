@@ -24,7 +24,7 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Params, UrlSegment, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, Params, Router, UrlSegment, convertToParamMap } from '@angular/router';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';
@@ -49,6 +49,7 @@ describe('Exam Update Component', () => {
     let component: ExamUpdateComponent;
     let fixture: ComponentFixture<ExamUpdateComponent>;
     let examManagementService: ExamManagementService;
+    let router: Router;
     const examWithoutExercises = new Exam();
     examWithoutExercises.id = 1;
 
@@ -151,6 +152,7 @@ describe('Exam Update Component', () => {
                 ],
             }).compileComponents();
 
+            router = TestBed.inject(Router);
             fixture = TestBed.createComponent(ExamUpdateComponent);
             component = fixture.componentInstance;
             examManagementService = fixture.debugElement.injector.get(ExamManagementService);
@@ -226,6 +228,7 @@ describe('Exam Update Component', () => {
         });
 
         it('should update', fakeAsync(() => {
+            const navigateSpy = jest.spyOn(router, 'navigate');
             fixture.detectChanges();
 
             const updateSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(of(new HttpResponse<Exam>({ body: { ...examWithoutExercises, id: 1 } })));
@@ -233,6 +236,7 @@ describe('Exam Update Component', () => {
             // trigger save
             component.save();
             tick();
+            expect(navigateSpy).toHaveBeenCalledOnce();
             expect(updateSpy).toHaveBeenCalledOnce();
             expect(component.isSaving).toBeFalse();
         }));
@@ -335,6 +339,7 @@ describe('Exam Update Component', () => {
         }));
 
         it('should create', fakeAsync(() => {
+            const navigateSpy = jest.spyOn(router, 'navigate');
             examWithoutExercises.id = undefined;
             fixture.detectChanges();
 
@@ -343,6 +348,7 @@ describe('Exam Update Component', () => {
             // trigger save
             component.save();
             tick();
+            expect(navigateSpy).toHaveBeenCalledOnce();
             expect(createSpy).toHaveBeenCalledOnce();
             expect(component.isSaving).toBeFalse();
         }));
