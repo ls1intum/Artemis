@@ -80,6 +80,8 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit, OnDe
                         this.tutorialGroupsConfiguration = tutorialGroupsConfigurationResult.body;
                         if (this.tutorialGroupsConfiguration.tutorialGroupFreePeriods) {
                             this.tutorialGroupFreePeriods = this.sortService.sortByProperty(this.tutorialGroupsConfiguration.tutorialGroupFreePeriods, 'start', false);
+                        } else {
+                            this.tutorialGroupFreePeriods = [];
                         }
                     }
                 },
