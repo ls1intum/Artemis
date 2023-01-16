@@ -162,7 +162,7 @@ export class FeedbackComponent implements OnInit {
         }
 
         this.showTestDetails =
-            this.exercise?.isAtLeastTutor || (this.exerciseType === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).showTestNamesToStudents) || false;
+            this.exercise?.isAtLeastTutor || (this.exerciseType === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise)?.showTestNamesToStudents) || false;
     }
 
     /**
