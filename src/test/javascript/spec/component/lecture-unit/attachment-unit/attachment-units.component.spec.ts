@@ -3,7 +3,7 @@ import { AttachmentUnitsComponent } from 'app/lecture/lecture-unit/lecture-unit-
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { objectToJsonBlob } from 'app/utils/blob-util';
@@ -221,5 +221,14 @@ describe('AttachmentUnitsComponent', () => {
         expect(previousState).toHaveBeenCalledOnce();
 
         expect(navigateSpy).toHaveBeenCalledOnce();
+    }));
+
+    it('should select process units checkbox', fakeAsync(() => {
+        attachmentUnitsComponent.removeBreakSlides = false;
+        const onSelectRemoveBreakSlides = jest.spyOn(attachmentUnitsComponent, 'onSelectRemoveBreakSlides');
+        attachmentUnitsComponent.onSelectRemoveBreakSlides();
+        tick();
+        expect(onSelectRemoveBreakSlides).toHaveBeenCalledOnce();
+        expect(attachmentUnitsComponent.removeBreakSlides).toBeTrue();
     }));
 });
