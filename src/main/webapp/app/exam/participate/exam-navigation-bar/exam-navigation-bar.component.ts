@@ -6,7 +6,7 @@ import dayjs from 'dayjs/esm';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExamExerciseUpdateService } from 'app/exam/manage/exam-exercise-update.service';
 import { Subscription } from 'rxjs';
-import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { CommitState, DomainChange, DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { map } from 'rxjs/operators';
@@ -35,7 +35,6 @@ export class ExamNavigationBarComponent implements OnInit {
     criticalTime = dayjs.duration(5, 'minutes');
 
     icon: IconProp;
-    getExerciseButtonTooltip = this.examParticipationService.getExerciseButtonTooltip;
 
     subscriptionToLiveExamExerciseUpdates: Subscription;
 
@@ -93,6 +92,10 @@ export class ExamNavigationBarComponent implements OnInit {
                         }
                     });
             });
+    }
+
+    getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
+        return this.examParticipationService.getExerciseButtonTooltip(exercise);
     }
 
     triggerExamAboutToEnd() {
