@@ -202,10 +202,10 @@ a:not(.btn):hover {
         background-color: var(--navbar-breadcrumb-background);
         margin-left: 1rem;
         margin-bottom: 0;
-        padding: 10px 16px 10px 16px;
+        padding: 5px 16px 5px 16px;
 
         .breadcrumb-link {
-            font-weight: lighter;
+            font-weight: 300;
             display: inline;
         }
     }

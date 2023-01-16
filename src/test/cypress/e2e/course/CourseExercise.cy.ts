@@ -50,7 +50,7 @@ describe('Course Exercise', () => {
             });
         });
 
-        it('should filter exercises based on title', function () {
+        it('should filter exercises based on title', () => {
             cy.visit(`/courses/${course.id}/exercises`);
             cy.get(`#exercise-card-${exercise1.id}`).should('be.visible');
             cy.get(`#exercise-card-${exercise2.id}`).should('be.visible');

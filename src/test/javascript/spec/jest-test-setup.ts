@@ -7,7 +7,7 @@ import 'jest-extended';
 import failOnConsole from 'jest-fail-on-console';
 
 failOnConsole({
-    shouldFailOnWarn: false,
+    shouldFailOnWarn: true,
 });
 
 const noop = () => {};

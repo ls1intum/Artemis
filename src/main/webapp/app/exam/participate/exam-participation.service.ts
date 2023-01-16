@@ -14,6 +14,8 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
+export type ButtonTooltipType = 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
+
 @Injectable({ providedIn: 'root' })
 export class ExamParticipationService {
     public currentlyLoadedStudentExam = new Subject<StudentExam>();
@@ -282,7 +284,7 @@ export class ExamParticipationService {
         }
     }
 
-    getExerciseButtonTooltip(exercise: Exercise): 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted' {
+    getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         // The submission might not yet exist for this exercise.
         // When the participant navigates to the exercise the submissions are created.
