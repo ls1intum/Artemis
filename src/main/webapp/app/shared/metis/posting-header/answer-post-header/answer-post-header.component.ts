@@ -14,7 +14,6 @@ import dayjs from 'dayjs/esm';
 export class AnswerPostHeaderComponent extends PostingHeaderDirective<AnswerPost> implements OnInit {
     @Input()
     isReadOnlyMode = false;
-    @Input() isCourseMessagesPage: boolean;
 
     @Input() lastReadDate?: dayjs.Dayjs;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
