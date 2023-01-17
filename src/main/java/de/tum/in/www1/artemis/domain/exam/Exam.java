@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.*;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.quiz.QuizPool;
 
 @Entity
 @Table(name = "exam")
@@ -144,6 +145,10 @@ public class Exam extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("exam")
     private Set<ExamUser> examUsers = new HashSet<>();
+
+    @OneToOne(mappedBy = "exam", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
+    private QuizPool quizPool;
 
     @Transient
     private Long numberOfExamUsersTransient;
@@ -408,6 +413,14 @@ public class Exam extends DomainObject {
 
     public void setExamArchivePath(String examArchivePath) {
         this.examArchivePath = examArchivePath;
+    }
+
+    public QuizPool getQuizPool() {
+        return quizPool;
+    }
+
+    public void setQuizPool(QuizPool quizPool) {
+        this.quizPool = quizPool;
     }
 
     /**

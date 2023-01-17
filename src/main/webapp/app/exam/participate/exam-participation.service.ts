@@ -14,6 +14,8 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { captureException } from '@sentry/browser';
+import { ExamExercise } from 'app/entities/exam-exercise.model';
+import { isQuizExamExercise } from 'app/exam/participate/exam.utils';
 
 export type ButtonTooltipType = 'submitted' | 'notSubmitted' | 'synced' | 'notSynced' | 'notSavedOrSubmitted';
 
@@ -159,6 +161,7 @@ export class ExamParticipationService {
      */
     public submitStudentExam(courseId: number, examId: number, studentExam: StudentExam): Observable<StudentExam> {
         const url = this.getResourceURL(courseId, examId) + '/student-exams/submit';
+        this.setStudentExamQuizExamSubmission(studentExam);
         const studentExamCopy = cloneDeep(studentExam);
         ExamParticipationService.breakCircularDependency(studentExamCopy);
 
@@ -177,6 +180,13 @@ export class ExamParticipationService {
                 }
             }),
         );
+    }
+
+    private setStudentExamQuizExamSubmission(studentExam: StudentExam) {
+        const quizExamExercise = studentExam.exercises?.filter((exercise) => isQuizExamExercise(exercise)).first();
+        if (quizExamExercise) {
+            studentExam.quizExamSubmission = quizExamExercise.studentParticipations![0].submissions![0];
+        }
     }
 
     private static breakCircularDependency(studentExam: StudentExam) {
@@ -257,7 +267,15 @@ export class ExamParticipationService {
     }
 
     private static convertStudentExamFromServer(studentExam: StudentExam): StudentExam {
-        studentExam.exercises = ExerciseService.convertExercisesDateFromServer(studentExam.exercises);
+        const quizExamExercise = studentExam.exercises?.filter((exercise) => isQuizExamExercise(exercise)).first();
+        const convertedExercises = ExerciseService.convertExercisesDateFromServer(
+            studentExam.exercises?.filter((exercise) => !isQuizExamExercise(exercise)).map((exercise) => exercise as Exercise),
+        );
+        if (quizExamExercise) {
+            studentExam.exercises = [quizExamExercise, ...convertedExercises];
+        } else {
+            studentExam.exercises = convertedExercises;
+        }
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
         // Add a default exercise group to connect exercises with the exam.
         studentExam.exercises = studentExam.exercises.map((exercise: Exercise) => {
@@ -288,14 +306,14 @@ export class ExamParticipationService {
         return studentExam;
     }
 
-    public static getSubmissionForExercise(exercise: Exercise) {
+    public static getSubmissionForExercise(exercise: ExamExercise) {
         if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].submissions) {
             // NOTE: using "submissions[0]" might not work for programming exercises with multiple submissions, it is better to always take the last submission
             return exercise.studentParticipations[0].submissions.last();
         }
     }
 
-    getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
+    getExerciseButtonTooltip(exercise: ExamExercise): ButtonTooltipType {
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         // The submission might not yet exist for this exercise.
         // When the participant navigates to the exercise the submissions are created.

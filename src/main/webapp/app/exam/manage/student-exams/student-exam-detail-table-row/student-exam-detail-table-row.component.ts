@@ -1,5 +1,5 @@
 import { Component, Input, OnChanges } from '@angular/core';
-import { Exercise, ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
+import { ExerciseType, IncludedInOverallScore, getIcon } from 'app/entities/exercise.model';
 import { Submission } from 'app/entities/submission.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
@@ -7,6 +7,7 @@ import { Course } from 'app/entities/course.model';
 import { Result } from 'app/entities/result.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
+import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 @Component({
     /* eslint-disable-next-line  @angular-eslint/component-selector */
@@ -15,7 +16,7 @@ import { faFolderOpen } from '@fortawesome/free-solid-svg-icons';
     providers: [],
 })
 export class StudentExamDetailTableRowComponent implements OnChanges {
-    @Input() exercise: Exercise;
+    @Input() exercise: ExamExercise;
     @Input() examId: number;
     @Input() isTestRun: boolean;
     @Input() course: Course;
@@ -57,7 +58,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
      * @param submission
      * @param resultId
      */
-    getAssessmentLink(exercise: Exercise, submission?: Submission, resultId?: number) {
+    getAssessmentLink(exercise: ExamExercise, submission?: Submission, resultId?: number) {
         let route;
         if (!exercise || !exercise.type) {
             return;
@@ -84,7 +85,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
      * Gets the bonus points from the given exercise according to its includedInOverallScore value.
      * @param exercise exercise with or without bonus points
      */
-    getBonusPoints(exercise?: Exercise): number | undefined {
+    getBonusPoints(exercise?: ExamExercise): number | undefined {
         if (!exercise) {
             return 0;
         }
@@ -102,7 +103,7 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
      * Gets the max points from the given exercise according to its includedInOverallScore value.
      * @param exercise relevant exercise
      */
-    getMaxPoints(exercise?: Exercise): number | undefined {
+    getMaxPoints(exercise?: ExamExercise): number | undefined {
         if (!exercise) {
             return 0;
         }

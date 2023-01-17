@@ -14,6 +14,7 @@ import { map } from 'rxjs/operators';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { ExamSession } from 'app/entities/exam-session.model';
 import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -21,7 +22,7 @@ import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./exam-navigation-bar.component.scss'],
 })
 export class ExamNavigationBarComponent implements OnInit {
-    @Input() exercises: Exercise[] = [];
+    @Input() exercises: ExamExercise[] = [];
     @Input() exerciseIndex = 0;
     @Input() endDate: dayjs.Dayjs;
     @Input() overviewPageOpen: boolean;
@@ -95,8 +96,8 @@ export class ExamNavigationBarComponent implements OnInit {
             });
     }
 
-    getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
-        return this.examParticipationService.getExerciseButtonTooltip(exercise);
+    getExerciseButtonTooltip(examExercise: ExamExercise): ButtonTooltipType {
+        return this.examParticipationService.getExerciseButtonTooltip(examExercise);
     }
 
     triggerExamAboutToEnd() {
@@ -117,7 +118,7 @@ export class ExamNavigationBarComponent implements OnInit {
             }
             // set index and emit event
             this.exerciseIndex = exerciseIndex;
-            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave });
+            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex] as Exercise, forceSave: !!forceSave });
         } else if (overviewPage) {
             // set index and emit event
             this.exerciseIndex = -1;
@@ -142,7 +143,7 @@ export class ExamNavigationBarComponent implements OnInit {
      */
     saveExercise(changeExercise = true) {
         const newIndex = this.exerciseIndex + 1;
-        const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
+        const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex] as Exercise);
         // we do not submit programming exercises on a save
         if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
@@ -175,15 +176,15 @@ export class ExamNavigationBarComponent implements OnInit {
      * TODO: we should try to extract a method for the common logic which avoids side effects (i.e. changing this.icon)
      *  this method could e.g. return the sync status and the icon
      *
-     * @param exerciseIndex index of the exercise
+     * @param itemIndex index of the exercise
      * @return the sync status of the exercise (whether the corresponding submission is saved on the server or not)
      */
-    setExerciseButtonStatus(exerciseIndex: number): 'synced' | 'synced active' | 'notSynced' {
+    setExerciseButtonStatus(itemIndex: number): 'synced' | 'synced active' | 'notSynced' {
         // start with a yellow status (edit icon)
         // TODO: it's a bit weired, that it works that multiple icons (one per exercise) are hold in the same instance variable of the component
         //  we should definitely refactor this and e.g. use the same ExamExerciseOverviewItem as in exam-exercise-overview-page.component.ts !
         this.icon = faEdit;
-        const exercise = this.exercises[exerciseIndex];
+        const exercise = this.exercises[itemIndex] as Exercise;
         const submission = ExamParticipationService.getSubmissionForExercise(exercise);
         if (!submission) {
             // in case no participation/submission yet exists -> display synced
@@ -195,7 +196,7 @@ export class ExamNavigationBarComponent implements OnInit {
         }
         if (submission.isSynced || this.isOnlyOfflineIDE(exercise)) {
             // make button blue (except for the current page)
-            if (exerciseIndex === this.exerciseIndex && !this.overviewPageOpen) {
+            if (itemIndex === this.exerciseIndex && !this.overviewPageOpen) {
                 return 'synced active';
             } else {
                 return 'synced';

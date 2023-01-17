@@ -94,6 +94,11 @@ public class ModelingExercise extends Exercise {
     }
 
     @Override
+    public String getType() {
+        return "modeling";
+    }
+
+    @Override
     public ExerciseType getExerciseType() {
         return MODELING;
     }

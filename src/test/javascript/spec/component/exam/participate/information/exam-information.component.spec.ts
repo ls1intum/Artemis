@@ -32,7 +32,7 @@ let studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as Stu
 describe('ExamInformationComponent', () => {
     beforeEach(() => {
         exam = { id: 1, title: 'ExamForTesting', startDate, endDate, testExam: false } as Exam;
-        studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
+        studentExam = { id: 1, exam, user, workingTime: 60, submitted: true, quizQuestionTotalPoints: 100 } as StudentExam;
 
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([])],
@@ -57,9 +57,11 @@ describe('ExamInformationComponent', () => {
 
     it('should initialize', () => {
         component.exam = exam;
+        component.studentExam = studentExam;
         fixture.detectChanges();
         expect(fixture).toBeDefined();
-        expect(component.examEndDate).toEqual(exam.endDate);
+        const examEndDate = exam.startDate!.add(studentExam.workingTime!, 'seconds');
+        expect(component.examEndDate).toEqual(examEndDate);
     });
 
     it('should return undefined if the exam is not set', () => {

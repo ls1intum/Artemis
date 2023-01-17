@@ -105,11 +105,14 @@ public class ExamResource {
 
     private final CustomAuditEventRepository auditEventRepository;
 
+    private final QuizPoolService quizPoolService;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamDeletionService examDeletionService,
             ExamAccessService examAccessService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService,
             AuthorizationCheckService authCheckService, ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository,
             AssessmentDashboardService assessmentDashboardService, ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository,
-            ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService, CustomAuditEventRepository auditEventRepository) {
+            ExamImportService examImportService, ExamMonitoringScheduleService examMonitoringScheduleService, CustomAuditEventRepository auditEventRepository,
+            QuizPoolService quizPoolService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -127,6 +130,7 @@ public class ExamResource {
         this.examImportService = examImportService;
         this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.auditEventRepository = auditEventRepository;
+        this.quizPoolService = quizPoolService;
     }
 
     /**
@@ -745,7 +749,7 @@ public class ExamResource {
         // Reset existing student exams & participations in case they already exist
         examDeletionService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
 
-        List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
+        List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam, quizPoolService.getStudentExamQuizQuestionsGenerator(examId));
 
         // we need to break a cycle for the serialization
         breakCyclesForSerialization(studentExams);
@@ -791,7 +795,7 @@ public class ExamResource {
         log.info("REST request to generate missing student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_MISSING_STUDENT_EXAMS);
-        List<StudentExam> studentExams = studentExamRepository.generateMissingStudentExams(exam);
+        List<StudentExam> studentExams = studentExamRepository.generateMissingStudentExams(exam, quizPoolService.getStudentExamQuizQuestionsGenerator(examId));
 
         // we need to break a cycle for the serialization
         breakCyclesForSerialization(studentExams);

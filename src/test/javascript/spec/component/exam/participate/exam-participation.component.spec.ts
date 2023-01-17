@@ -47,6 +47,10 @@ import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websoc
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { LocalStorageService } from 'ngx-webstorage';
+import { getExamExercises } from 'app/exam/participate/exam.utils';
+import { QuizExamExercise } from 'app/entities/quiz-exam-exercise.model';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 
 describe('ExamParticipationComponent', () => {
     let fixture: ComponentFixture<ExamParticipationComponent>;
@@ -509,6 +513,7 @@ describe('ExamParticipationComponent', () => {
             participation.submissions = [submission, syncedSubmission];
             textExercise.studentParticipations = [participation];
             comp.studentExam.exercises = [textExercise];
+            comp.examExercises = getExamExercises(comp.studentExam);
             textSubmissionUpdateSpy = jest.spyOn(textSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
             comp.triggerSave(false, false);
             expect(textSubmissionUpdateSpy).toHaveBeenCalledWith(submission, 5);
@@ -526,6 +531,7 @@ describe('ExamParticipationComponent', () => {
             participation.submissions = [submission, syncedSubmission];
             modelingExercise.studentParticipations = [participation];
             comp.studentExam.exercises = [modelingExercise];
+            comp.examExercises = getExamExercises(comp.studentExam);
             modelingSubmissionUpdateSpy = jest.spyOn(modelingSubmissionService, 'update').mockReturnValue(of(new HttpResponse({ body: submission })));
             comp.triggerSave(false, false);
             expect(modelingSubmissionUpdateSpy).toHaveBeenCalledWith(submission, 5);
@@ -543,6 +549,26 @@ describe('ExamParticipationComponent', () => {
             participation.submissions = [submission, syncedSubmission];
             quizExercise.studentParticipations = [participation];
             comp.studentExam.exercises = [quizExercise];
+            comp.examExercises = getExamExercises(comp.studentExam);
+            quizSubmissionUpdateSpy = jest.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(submission));
+            comp.triggerSave(false, false);
+            tick(500);
+            expect(quizSubmissionUpdateSpy).toHaveBeenCalledWith(5, submission);
+            expect(quizSubmissionUpdateSpy).not.toHaveBeenCalledWith(5, syncedSubmission);
+            expectSyncedSubmissions(submission, syncedSubmission);
+        }));
+
+        it('should sync quiz exam submissions', fakeAsync(() => {
+            const quizExercise = { quizExam: true, type: ExerciseType.QUIZ } as QuizExamExercise;
+            quizExercise.id = 5;
+            const participation = new StudentParticipation();
+            const submission = new QuizExamSubmission();
+            const syncedSubmission = new QuizExamSubmission();
+            syncedSubmission.isSynced = true;
+            participation.submissions = [submission, syncedSubmission];
+            quizExercise.studentParticipations = [participation];
+            comp.studentExam.exercises = [quizExercise];
+            comp.examExercises = getExamExercises(comp.studentExam);
             quizSubmissionUpdateSpy = jest.spyOn(examParticipationService, 'updateQuizSubmission').mockReturnValue(of(submission));
             comp.triggerSave(false, false);
             tick(500);
@@ -685,6 +711,7 @@ describe('ExamParticipationComponent', () => {
         exercise2.id = 42;
         comp.studentExam = new StudentExam();
         comp.studentExam.exercises = [exercise1, exercise2];
+        comp.examExercises = getExamExercises(comp.studentExam);
         const triggerSpy = jest.spyOn(comp, 'triggerSave');
         const exerciseChange = { overViewChange: false, exercise: exercise2, forceSave: true };
         const createParticipationForExerciseSpy = jest.spyOn(comp, 'createParticipationForExercise').mockReturnValue(of(new StudentParticipation()));
@@ -713,6 +740,7 @@ describe('ExamParticipationComponent', () => {
             comp.handInEarly = true;
             comp.studentExam = new StudentExam();
             comp.studentExam.exercises = [exercise1, exercise2, exercise3];
+            comp.examExercises = getExamExercises(comp.studentExam);
             comp.activeExamPage = {
                 isOverviewPage: false,
                 exercise: exercise2,

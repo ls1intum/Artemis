@@ -45,7 +45,7 @@ public class QuizExerciseImportService extends ExerciseImportService {
         QuizExercise newExercise = copyQuizExerciseBasis(importedExercise);
         copyQuizQuestions(importedExercise, newExercise);
         copyQuizBatches(importedExercise, newExercise);
-        return quizExerciseService.save(newExercise);
+        return quizExerciseService.saveConfiguration(newExercise);
     }
 
     /**

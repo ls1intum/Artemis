@@ -10,8 +10,8 @@ import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.mode
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitted-text.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { faQuestionCircle } from '@fortawesome/free-regular-svg-icons';
+import { QuizExamExercise } from 'app/entities/quiz-exam-exercise.model';
 
 @Component({
     selector: 'jhi-quiz-scoring-infostudent-modal',
@@ -32,7 +32,7 @@ export class QuizScoringInfoStudentModalComponent implements AfterViewInit {
     @Input() shortAnswerText = new Array<ShortAnswerSubmittedText>();
     @Input() correctlyMappedDragAndDropItems: number; // Amount of correctly mapped drag and drop items
     @Input() multipleChoiceSubmittedResult: Result;
-    @Input() submittedQuizExercise: QuizExercise;
+    @Input() submittedQuizExercise: QuizExamExercise;
 
     /* Multiple Choice Counting Variables*/
     multipleChoiceCorrectAnswerCorrectlyChosen: number; // Amount of right options chosen by the student

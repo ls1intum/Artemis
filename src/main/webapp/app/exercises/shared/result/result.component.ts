@@ -25,6 +25,7 @@ import { Badge, ResultService } from 'app/exercises/shared/result/result.service
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 @Component({
     selector: 'jhi-result',
@@ -53,7 +54,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() showBadge = false;
     @Input() showIcon = true;
     @Input() missingResultInfo = MissingResultInformation.NONE;
-    @Input() exercise?: Exercise;
+    @Input() exercise?: ExamExercise;
 
     textColorClass: string;
     resultIconClass: IconProp;
@@ -89,7 +90,7 @@ export class ResultComponent implements OnInit, OnChanges {
     ngOnInit(): void {
         if (!this.result && this.participation) {
             this.exercise = this.exercise ?? getExercise(this.participation);
-            this.participation.exercise = this.exercise;
+            this.participation.exercise = this.exercise as Exercise;
 
             if (this.participation.results?.length) {
                 if (this.exercise && this.exercise.type === ExerciseType.MODELING) {
@@ -114,10 +115,10 @@ export class ResultComponent implements OnInit, OnChanges {
             // make sure this.participation is initialized in case it was not passed
             this.participation = this.result.participation;
             this.exercise = this.exercise ?? getExercise(this.participation);
-            this.participation.exercise = this.exercise;
+            this.participation.exercise = this.exercise as Exercise;
         } else if (this.participation) {
             this.exercise = this.exercise ?? getExercise(this.participation);
-            this.participation.exercise = this.exercise;
+            this.participation.exercise = this.exercise as Exercise;
         } else if (!this.result?.exampleResult) {
             // result of example submission does not have participation
             captureException(new Error('The result component did not get a participation or result as parameter and can therefore not display the score'));
@@ -217,7 +218,7 @@ export class ResultComponent implements OnInit, OnChanges {
 
         const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'xl' });
         const componentInstance: FeedbackComponent = modalRef.componentInstance;
-        componentInstance.exercise = this.exercise;
+        componentInstance.exercise = this.exercise as Exercise;
         componentInstance.result = result;
         if (this.exercise) {
             componentInstance.exerciseType = this.exercise.type!;
@@ -230,7 +231,7 @@ export class ResultComponent implements OnInit, OnChanges {
         if (
             this.result?.assessmentType === AssessmentType.AUTOMATIC &&
             this.exercise?.type === ExerciseType.PROGRAMMING &&
-            hasExerciseDueDatePassed(this.exercise, this.participation)
+            hasExerciseDueDatePassed(this.exercise as Exercise, this.participation)
         ) {
             this.determineShowMissingAutomaticFeedbackInformation(componentInstance);
         }

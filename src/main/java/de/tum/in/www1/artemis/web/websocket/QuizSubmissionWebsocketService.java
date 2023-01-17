@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.QuizSubmissionService;
+import de.tum.in.www1.artemis.service.QuizExerciseSubmissionService;
 
 @SuppressWarnings("unused")
 @Controller
@@ -30,14 +30,14 @@ public class QuizSubmissionWebsocketService {
 
     private final ParticipationService participationService;
 
-    private final QuizSubmissionService quizSubmissionService;
+    private final QuizExerciseSubmissionService quizSubmissionService;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
     private final UserRepository userRepository;
 
     public QuizSubmissionWebsocketService(QuizExerciseService quizExerciseService, ParticipationService participationService, SimpMessageSendingOperations messagingTemplate,
-            QuizSubmissionService quizSubmissionService, UserRepository userRepository) {
+            QuizExerciseSubmissionService quizSubmissionService, UserRepository userRepository) {
         this.quizExerciseService = quizExerciseService;
         this.participationService = participationService;
         this.messagingTemplate = messagingTemplate;

@@ -1732,6 +1732,18 @@ public class DatabaseUtilService {
         return studentExam;
     }
 
+    public StudentExam addExercisesToStudentExam(StudentExam studentExam, List<Exercise> exercises) {
+        studentExam.setExercises(exercises);
+        studentExam = studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
+    public StudentExam addQuizQuestionsToStudentExam(StudentExam studentExam, List<QuizQuestion> quizQuestions) {
+        studentExam.setQuizQuestions(quizQuestions);
+        studentExam = studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
     public Exam addExerciseGroupsAndExercisesToExam(Exam exam, boolean withProgrammingExercise) {
         ModelFactory.generateExerciseGroup(true, exam); // text
         ModelFactory.generateExerciseGroup(true, exam); // quiz

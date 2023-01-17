@@ -8,12 +8,12 @@ import { ShortAnswerSubmittedText } from 'app/entities/quiz/short-answer-submitt
 import { MultipleChoiceSubmittedAnswer } from 'app/entities/quiz/multiple-choice-submitted-answer.model';
 import { DragAndDropSubmittedAnswer } from 'app/entities/quiz/drag-and-drop-submitted-answer.model';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { QuizExerciseService } from 'app/exercises/quiz/manage/quiz-exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { Result } from 'app/entities/result.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { QuizExamExercise } from 'app/entities/quiz-exam-exercise.model';
 
 @Component({
     selector: 'jhi-quiz-exam-summary',
@@ -29,7 +29,7 @@ export class QuizExamSummaryComponent implements OnInit {
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
 
     @Input()
-    exercise: QuizExercise;
+    exercise: QuizExamExercise;
 
     @Input()
     submission: QuizSubmission;

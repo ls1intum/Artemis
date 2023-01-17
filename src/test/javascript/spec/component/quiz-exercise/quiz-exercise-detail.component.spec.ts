@@ -1,8 +1,8 @@
 import { HttpResponse } from '@angular/common/http';
-import { ChangeDetectorRef, EventEmitter, SimpleChange } from '@angular/core';
+import { ChangeDetectorRef, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap } from '@angular/router';
-import { NgbDate, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -15,7 +15,7 @@ import { DragItem } from 'app/entities/quiz/drag-item.model';
 import { DropLocation } from 'app/entities/quiz/drop-location.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { QuizBatch, QuizExercise, QuizMode, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
-import { QuizQuestion, QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
+import { QuizQuestion } from 'app/entities/quiz/quiz-question.model';
 import { ShortAnswerMapping } from 'app/entities/quiz/short-answer-mapping.model';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
 import { ShortAnswerSolution } from 'app/entities/quiz/short-answer-solution.model';
@@ -40,6 +40,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { MockProvider } from 'ng-mocks';
 import { Duration } from 'app/exercises/quiz/manage/quiz-exercise-interfaces';
+import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
 
 describe('QuizExercise Management Detail Component', () => {
     let comp: QuizExerciseDetailComponent;
@@ -669,68 +670,6 @@ describe('QuizExercise Management Detail Component', () => {
             });
         });
 
-        describe('add questions', () => {
-            // setup
-            beforeEach(() => {
-                resetQuizExercise();
-                comp.quizExercise = quizExercise;
-            });
-
-            it('should add empty MC question', () => {
-                const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-                comp.addMultipleChoiceQuestion();
-
-                expect(comp.quizExercise.quizQuestions).toHaveLength(amountQuizQuestions + 1);
-                expect(comp.quizExercise.quizQuestions?.last()?.type).toEqual(QuizQuestionType.MULTIPLE_CHOICE);
-            });
-
-            it('should add empty DnD question', () => {
-                const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-                comp.addDragAndDropQuestion();
-
-                expect(comp.quizExercise.quizQuestions).toHaveLength(amountQuizQuestions + 1);
-                expect(comp.quizExercise.quizQuestions?.last()?.type).toEqual(QuizQuestionType.DRAG_AND_DROP);
-            });
-
-            it('should add empty SA question', () => {
-                const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-                comp.addShortAnswerQuestion();
-
-                expect(comp.quizExercise.quizQuestions).toHaveLength(amountQuizQuestions + 1);
-                expect(comp.quizExercise.quizQuestions?.last()?.type).toEqual(QuizQuestionType.SHORT_ANSWER);
-            });
-        });
-
-        describe('add questions without quizExercise', () => {
-            let initializeNewQuizExerciseStub: jest.SpyInstance;
-
-            beforeEach(() => {
-                initializeNewQuizExerciseStub = jest.spyOn(comp, 'initializeNewQuizExercise').mockImplementation();
-                initializeNewQuizExerciseStub.mockReturnValue(quizExercise);
-            });
-
-            it('should set quiz exercise to entity when adding MC question', () => {
-                expect(comp.quizExercise).toBeUndefined();
-                comp.addMultipleChoiceQuestion();
-                expect(initializeNewQuizExerciseStub).toHaveBeenCalledOnce();
-                expect(comp.quizExercise).toEqual(quizExercise);
-            });
-
-            it('should set quiz exercise to entity when adding Dnd question', () => {
-                expect(comp.quizExercise).toBeUndefined();
-                comp.addDragAndDropQuestion();
-                expect(initializeNewQuizExerciseStub).toHaveBeenCalledOnce();
-                expect(comp.quizExercise).toEqual(quizExercise);
-            });
-
-            it('should set quiz exercise to entity when adding SA question', () => {
-                expect(comp.quizExercise).toBeUndefined();
-                comp.addShortAnswerQuestion();
-                expect(initializeNewQuizExerciseStub).toHaveBeenCalledOnce();
-                expect(comp.quizExercise).toEqual(quizExercise);
-            });
-        });
-
         describe('calculating max exercise score', () => {
             it('should return sum of scores of the questions', () => {
                 resetQuizExercise();
@@ -747,273 +686,6 @@ describe('QuizExercise Management Detail Component', () => {
                 saQuestion.points = 3;
                 comp.quizExercise.quizQuestions = [multiQuestion, dndQuestion, saQuestion];
                 expect(comp.calculateMaxExerciseScore()).toBe(6);
-            });
-        });
-
-        describe('add existing questions', () => {
-            it('should add questions with export quiz option and call import', () => {
-                comp.showExistingQuestions = true;
-                const { question: exportedQuestion } = createValidMCQuestion();
-                exportedQuestion.title = 'exported';
-                exportedQuestion.exportQuiz = true;
-                const { question: notExportedQuestion } = createValidMCQuestion();
-                notExportedQuestion.title = 'notExported';
-                notExportedQuestion.exportQuiz = false;
-                comp.existingQuestions = [exportedQuestion, notExportedQuestion];
-                const verifyAndImportQuestionsStub = jest.spyOn(comp, 'verifyAndImportQuestions').mockImplementation();
-                const cacheValidationStub = jest.spyOn(comp, 'cacheValidation').mockImplementation();
-                comp.addExistingQuestions();
-                expect(verifyAndImportQuestionsStub).toHaveBeenCalledWith([exportedQuestion]);
-                expect(cacheValidationStub).toHaveBeenCalledOnce();
-                expect(comp.showExistingQuestions).toBeFalse();
-                expect(comp.showExistingQuestionsFromCourse).toBeTrue();
-                expect(comp.selectedCourseId).toBeUndefined();
-                expect(comp.allExistingQuestions).toEqual([]);
-                expect(comp.existingQuestions).toEqual([]);
-
-                // restore mocks
-                verifyAndImportQuestionsStub.mockRestore();
-                cacheValidationStub.mockRestore();
-            });
-
-            describe('applyFilter', () => {
-                const { question: multiChoiceQuestion } = createValidMCQuestion();
-                const { question: dndQuestion } = createValidDnDQuestion();
-                const { question: shortQuestion } = createValidSAQuestion();
-
-                beforeEach(() => {
-                    comp.quizExercise = quizExercise;
-                    comp.allExistingQuestions = [multiChoiceQuestion, dndQuestion, shortQuestion];
-                    comp.mcqFilterEnabled = false;
-                    comp.dndFilterEnabled = false;
-                    comp.shortAnswerFilterEnabled = false;
-                    comp.searchQueryText = '';
-                });
-
-                it('should put mc question when mc filter selected', () => {
-                    comp.mcqFilterEnabled = true;
-                    comp.applyFilter();
-                    expect(comp.existingQuestions).toEqual([multiChoiceQuestion]);
-                });
-
-                it('should put mc question when dnd filter selected', () => {
-                    comp.dndFilterEnabled = true;
-                    comp.applyFilter();
-                    expect(comp.existingQuestions).toEqual([dndQuestion]);
-                });
-
-                it('should put mc question when sa filter selected', () => {
-                    comp.shortAnswerFilterEnabled = true;
-                    comp.applyFilter();
-                    expect(comp.existingQuestions).toEqual([shortQuestion]);
-                });
-
-                it('should put all if all selected', () => {
-                    comp.mcqFilterEnabled = true;
-                    comp.dndFilterEnabled = true;
-                    comp.shortAnswerFilterEnabled = true;
-                    comp.applyFilter();
-                    expect(comp.existingQuestions).toEqual(comp.allExistingQuestions);
-                });
-            });
-
-            describe('select course', () => {
-                let quizExerciseServiceFindForCourseStub: jest.SpyInstance;
-                let quizExerciseServiceFindStub: jest.SpyInstance;
-
-                beforeEach(() => {
-                    comp.allExistingQuestions = [];
-                    comp.courses = [course];
-                    comp.selectedCourseId = course.id;
-                    resetQuizExercise();
-                    comp.quizExercise = quizExercise;
-                    quizExerciseServiceFindForCourseStub = jest.spyOn(quizExerciseService, 'findForCourse');
-                    quizExerciseServiceFindForCourseStub.mockReturnValue(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
-                    quizExerciseServiceFindStub = jest.spyOn(quizExerciseService, 'find');
-                    quizExerciseServiceFindStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-                });
-
-                it('should call find course with selected id', () => {
-                    comp.onCourseSelect();
-                    expect(quizExerciseServiceFindForCourseStub).toHaveBeenCalledWith(comp.selectedCourseId);
-                    expect(quizExerciseServiceFindStub).toHaveBeenCalledWith(quizExercise.id);
-                    expect(comp.allExistingQuestions).toEqual(quizExercise.quizQuestions);
-                });
-
-                it('should not call find course without selected id', () => {
-                    comp.selectedCourseId = undefined;
-                    comp.onCourseSelect();
-                    expect(quizExerciseServiceFindForCourseStub).not.toHaveBeenCalled();
-                    expect(quizExerciseServiceFindStub).not.toHaveBeenCalled();
-                });
-
-                it('should call alert service if fails', () => {
-                    quizExerciseServiceFindForCourseStub.mockReturnValue(throwError(() => ({ status: 404 })));
-                    console.error = jest.fn();
-                    const alertServiceStub = jest.spyOn(alertService, 'error');
-                    comp.onCourseSelect();
-                    expect(alertServiceStub).toHaveBeenCalledOnce();
-                });
-
-                afterAll(() => {
-                    jest.clearAllMocks();
-                });
-            });
-
-            describe('select exam', () => {
-                let quizExerciseServiceFindForExamStub: jest.SpyInstance;
-                let quizExerciseServiceFindStub: jest.SpyInstance;
-                const exerciseGroup = new ExerciseGroup();
-
-                beforeEach(() => {
-                    comp.allExistingQuestions = [];
-                    exerciseGroup.exam = exam;
-                    quizExercise.exerciseGroup = exerciseGroup;
-                    comp.exams = [exam];
-                    comp.selectedExamId = exam.id;
-                    resetQuizExercise();
-                    comp.quizExercise = quizExercise;
-                    quizExerciseServiceFindForExamStub = jest.spyOn(quizExerciseService, 'findForExam');
-                    quizExerciseServiceFindForExamStub.mockReturnValue(of(new HttpResponse<QuizExercise[]>({ body: [quizExercise] })));
-                    quizExerciseServiceFindStub = jest.spyOn(quizExerciseService, 'find');
-                    quizExerciseServiceFindStub.mockReturnValue(of(new HttpResponse<QuizExercise>({ body: quizExercise })));
-                });
-
-                it('should call find exam with selected id', () => {
-                    comp.onExamSelect();
-                    expect(quizExerciseServiceFindForExamStub).toHaveBeenCalledWith(comp.selectedExamId);
-                    expect(quizExerciseServiceFindStub).toHaveBeenCalledWith(quizExercise.id);
-                    expect(comp.allExistingQuestions).toEqual(quizExercise.quizQuestions);
-                });
-
-                it('should not call find exam without selected id', () => {
-                    comp.selectedExamId = undefined;
-                    comp.onExamSelect();
-                    expect(quizExerciseServiceFindForExamStub).not.toHaveBeenCalled();
-                    expect(quizExerciseServiceFindStub).not.toHaveBeenCalled();
-                });
-
-                it('should call alert service if fails', () => {
-                    quizExerciseServiceFindForExamStub.mockReturnValue(throwError(() => ({ status: 404 })));
-                    console.error = jest.fn();
-                    const alertServiceStub = jest.spyOn(alertService, 'error');
-                    comp.onExamSelect();
-                    expect(alertServiceStub).toHaveBeenCalledOnce();
-                });
-
-                afterAll(() => {
-                    jest.clearAllMocks();
-                });
-            });
-        });
-
-        describe('delete questions', () => {
-            const deleteQuestionAndExpect = () => {
-                const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-                const questionToDelete = comp.quizExercise.quizQuestions![amountQuizQuestions - 1];
-                comp.deleteQuestion(questionToDelete);
-                expect(comp.quizExercise.quizQuestions).toHaveLength(amountQuizQuestions - 1);
-            };
-
-            // setup
-            beforeEach(() => {
-                resetQuizExercise();
-                comp.quizExercise = quizExercise;
-            });
-
-            it('should delete MC question', () => {
-                comp.addMultipleChoiceQuestion();
-                deleteQuestionAndExpect();
-            });
-
-            it('should delete DnD question', () => {
-                comp.addDragAndDropQuestion();
-                deleteQuestionAndExpect();
-            });
-
-            it('should delete SA question', () => {
-                comp.addShortAnswerQuestion();
-                deleteQuestionAndExpect();
-            });
-        });
-
-        describe('updating question', () => {
-            beforeEach(() => {
-                resetQuizExercise();
-                comp.quizExercise = quizExercise;
-            });
-
-            it('should replace quiz questions with copy of it', () => {
-                const cacheValidationStub = jest.spyOn(comp, 'cacheValidation');
-                comp.onQuestionUpdated();
-                expect(cacheValidationStub).toHaveBeenCalledOnce();
-                expect(comp.quizExercise.quizQuestions).toEqual(Array.from(comp.quizExercise.quizQuestions!));
-            });
-        });
-
-        describe('import questions', () => {
-            const importQuestionAndExpectOneMoreQuestionInQuestions = async (question: QuizQuestion) => {
-                const amountQuizQuestions = comp.quizExercise.quizQuestions?.length || 0;
-                await comp.verifyAndImportQuestions([question]);
-
-                expect(comp.quizExercise.quizQuestions).toHaveLength(amountQuizQuestions + 1);
-            };
-            // setup
-            beforeEach(() => {
-                resetQuizExercise();
-                comp.quizExercise = quizExercise;
-            });
-
-            it('should set import file correctly', () => {
-                const file = new File(['content'], 'testFileName', { type: 'text/plain' });
-                const ev = { target: { files: [file] } };
-                const changeDetectorDetectChangesStub = jest.spyOn(changeDetector.constructor.prototype, 'detectChanges');
-                comp.setImportFile(ev);
-                expect(comp.importFile).toEqual(file);
-                expect(comp.importFileName).toBe('testFileName');
-                expect(changeDetectorDetectChangesStub).toHaveBeenCalledOnce();
-            });
-
-            it('should import MC question', async () => {
-                const { question, answerOption1, answerOption2 } = createValidMCQuestion();
-                await importQuestionAndExpectOneMoreQuestionInQuestions(question);
-                const lastAddedQuestion = comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1] as MultipleChoiceQuestion;
-                expect(lastAddedQuestion.type).toEqual(QuizQuestionType.MULTIPLE_CHOICE);
-                expect(lastAddedQuestion.answerOptions).toHaveLength(2);
-                expect(lastAddedQuestion.answerOptions![0]).toEqual(answerOption1);
-                expect(lastAddedQuestion.answerOptions![1]).toEqual(answerOption2);
-            });
-
-            it('should import DnD question', async () => {
-                const { question, dragItem1, dragItem2, dropLocation } = createValidDnDQuestion();
-
-                // mock fileUploaderService
-                jest.spyOn(fileUploaderService, 'duplicateFile').mockReturnValue(Promise.resolve({ path: 'test' }));
-                await importQuestionAndExpectOneMoreQuestionInQuestions(question);
-                const lastAddedQuestion = comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1] as DragAndDropQuestion;
-                expect(lastAddedQuestion.type).toEqual(QuizQuestionType.DRAG_AND_DROP);
-                expect(lastAddedQuestion.correctMappings).toHaveLength(1);
-                expect(lastAddedQuestion.dragItems![0]).toEqual(dragItem1);
-                expect(lastAddedQuestion.dragItems![1]).toEqual(dragItem2);
-                expect(lastAddedQuestion.dropLocations![0]).toEqual(dropLocation);
-                expect(lastAddedQuestion.dragItems![0].pictureFilePath).toBe('test');
-                expect(lastAddedQuestion.dragItems![1].pictureFilePath).toBeUndefined();
-            });
-
-            it('should import SA question', async () => {
-                const { question, shortAnswerMapping1, shortAnswerMapping2, spot1, spot2, shortAnswerSolution1, shortAnswerSolution2 } = createValidSAQuestion();
-                importQuestionAndExpectOneMoreQuestionInQuestions(question);
-                const lastAddedQuestion = comp.quizExercise.quizQuestions![comp.quizExercise.quizQuestions!.length - 1] as ShortAnswerQuestion;
-                expect(lastAddedQuestion.type).toEqual(QuizQuestionType.SHORT_ANSWER);
-                expect(lastAddedQuestion.correctMappings).toHaveLength(2);
-                expect(lastAddedQuestion.correctMappings![0]).toEqual(shortAnswerMapping1);
-                expect(lastAddedQuestion.correctMappings![1]).toEqual(shortAnswerMapping2);
-                expect(lastAddedQuestion.spots).toHaveLength(2);
-                expect(lastAddedQuestion.spots![0]).toEqual(spot1);
-                expect(lastAddedQuestion.spots![1]).toEqual(spot2);
-                expect(lastAddedQuestion.solutions).toHaveLength(2);
-                expect(lastAddedQuestion.solutions![0]).toEqual(shortAnswerSolution1);
-                expect(lastAddedQuestion.solutions![1]).toEqual(shortAnswerSolution2);
             });
         });
 
@@ -1328,6 +1000,8 @@ describe('QuizExercise Management Detail Component', () => {
             const saveQuizWithPendingChangesCache = () => {
                 comp.cacheValidation();
                 comp.pendingChangesCache = true;
+                comp.quizQuestionsEditComponent = new QuizQuestionListEditComponent();
+                jest.spyOn(comp.quizQuestionsEditComponent, 'parseAllQuestions').mockImplementation();
                 comp.save();
             };
 
@@ -1525,186 +1199,6 @@ describe('QuizExercise Management Detail Component', () => {
                 examManagementServiceStub = jest.spyOn(examManagementService, 'findAllExamsAccessibleToUser');
                 examManagementServiceStub.mockReturnValue(of(new HttpResponse<Exam>({ body: exam })));
             });
-
-            it('should show existing questions if not already shown', () => {
-                comp.courses = [];
-                comp.quizExercise = quizExercise;
-                comp.showExistingQuestions = false;
-                const setQuestionsFromCourseSpy = jest.spyOn(comp, 'setExistingQuestionSourceToCourse');
-                comp.showHideExistingQuestions();
-                expect(courseManagementServiceStub).toHaveBeenCalledOnce();
-                expect(examManagementServiceStub).toHaveBeenCalledOnce();
-                expect(comp.showExistingQuestions).toBeTrue();
-                expect(setQuestionsFromCourseSpy).toHaveBeenCalledOnce();
-            });
-
-            it('should not call getAll if there are courses', () => {
-                comp.courses = [course];
-                comp.quizExercise = quizExercise;
-                comp.showHideExistingQuestions();
-                expect(courseManagementServiceStub).not.toHaveBeenCalled();
-                expect(examManagementServiceStub).toHaveBeenCalledOnce();
-            });
-
-            it('should initialize quizExercise if it is not', () => {
-                comp.courses = [course];
-                expect(comp.quizExercise).toBeUndefined();
-                comp.showHideExistingQuestions();
-                expect(comp.quizExercise).toBeDefined();
-            });
-
-            it('should hide existing questions if already shown', () => {
-                comp.showExistingQuestions = true;
-                comp.showHideExistingQuestions();
-                expect(comp.showExistingQuestions).toBeFalse();
-            });
-
-            it('should set showExistingQuestionsFromCourse to given value', () => {
-                const element = document.createElement('input');
-                const control = { ...element, value: 'test' };
-                // @ts-ignore
-                const getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
-                comp.setExistingQuestionSourceToCourse();
-                expect(comp.showExistingQuestionsFromCourse).toBeTrue();
-                expect(comp.showExistingQuestionsFromFile).toBeFalse();
-                expect(comp.showExistingQuestionsFromExam).toBeFalse();
-                comp.setExistingQuestionSourceToFile();
-                expect(comp.showExistingQuestionsFromCourse).toBeFalse();
-                expect(comp.showExistingQuestionsFromFile).toBeTrue();
-                expect(comp.showExistingQuestionsFromExam).toBeFalse();
-                comp.setExistingQuestionSourceToExam();
-                expect(comp.showExistingQuestionsFromCourse).toBeFalse();
-                expect(comp.showExistingQuestionsFromFile).toBeFalse();
-                expect(comp.showExistingQuestionsFromExam).toBeTrue();
-                expect(getElementStub).toHaveBeenCalledTimes(3);
-                expect(control.value).toBe('');
-            });
-        });
-
-        describe('importing quiz', () => {
-            let generateFileReaderStub: jest.SpyInstance;
-            let verifyStub: jest.SpyInstance;
-            let getElementStub: jest.SpyInstance;
-            let readAsText: jest.Mock;
-            let reader: FileReader;
-            const jsonContent = `[{
-                "type": "multiple-choice",
-                "id": 1,
-                "title": "vav",
-                "text": "Enter your long question if needed",
-                "hint": "Add a hint here (visible during the quiz via ?-Button)",
-                "score": 1,
-                "scoringType": "ALL_OR_NOTHING",
-                "randomizeOrder": true,
-                "invalid": false,
-                "answerOptions": [
-                  {
-                    "id": 1,
-                    "text": "Enter a correct answer option here",
-                    "hint": "Add a hint here (visible during the quiz via ?-Button)",
-                    "explanation": "Add an explanation here (only visible in feedback after quiz has ended)",
-                    "isCorrect": true,
-                    "invalid": false
-                  },
-                  {
-                    "id": 2,
-                    "text": "Enter a wrong answer option here",
-                    "isCorrect": false,
-                    "invalid": false
-                  }
-                ]
-              }]`;
-            const fakeFile = new File([jsonContent], 'file.txt', { type: 'text/plain' });
-            const questions = JSON.parse(jsonContent) as QuizQuestion[];
-            const element = document.createElement('input');
-            const control = { ...element, value: 'test' };
-            beforeEach(() => {
-                comp.importFile = fakeFile;
-                comp.quizExercise = quizExercise;
-                verifyStub = jest.spyOn(comp, 'verifyAndImportQuestions').mockImplementation();
-                readAsText = jest.fn();
-                reader = new FileReader();
-                // @ts-ignore
-                reader = { ...reader, result: jsonContent };
-                // @ts-ignore
-                generateFileReaderStub = jest.spyOn(comp, 'generateFileReader').mockReturnValue({ ...reader, onload: null, readAsText });
-                // @ts-ignore
-                getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
-            });
-
-            afterEach(() => {
-                jest.clearAllMocks();
-            });
-
-            it('should call verify and import questions with right json', async () => {
-                expect(control.value).toBe('test');
-                await comp.importQuiz();
-                expect(readAsText).toHaveBeenCalledWith(fakeFile);
-                expect(generateFileReaderStub).toHaveBeenCalledOnce();
-                comp.onFileLoadImport(reader);
-                expect(verifyStub).toHaveBeenCalledWith(questions);
-                expect(comp.importFile).toBeUndefined();
-                expect(getElementStub).toHaveBeenCalledTimes(4);
-                expect(control.value).toBe('');
-            });
-
-            it('should not call any functions without import file', async () => {
-                comp.importFile = undefined;
-                await comp.importQuiz();
-                expect(readAsText).not.toHaveBeenCalled();
-                expect(generateFileReaderStub).not.toHaveBeenCalled();
-                expect(comp.importFile).toBeUndefined();
-            });
-
-            it('should alert user when onload throws error', async () => {
-                const alert = window.alert;
-                const alertFunction = jest.fn();
-                window.alert = alertFunction;
-                verifyStub.mockImplementation(() => {
-                    throw '';
-                });
-                await comp.importQuiz();
-                comp.onFileLoadImport(reader);
-                expect(alertFunction).toHaveBeenCalledOnce();
-                window.alert = alert;
-            });
-        });
-
-        describe('verify and import questions', () => {
-            const { question: multiQuestion, answerOption1 } = createValidMCQuestion();
-            let modalServiceStub: jest.SpyInstance;
-            let componentInstance: any;
-            let shouldImportEmitter: EventEmitter<void>;
-
-            beforeEach(() => {
-                shouldImportEmitter = new EventEmitter<void>();
-                resetQuizExercise();
-                comp.quizExercise = quizExercise;
-                componentInstance = { questions: [], shouldImport: shouldImportEmitter };
-                modalServiceStub = jest.spyOn(modalService, 'open').mockReturnValue(<NgbModalRef>{ componentInstance });
-            });
-
-            it('should call addQuestions', () => {
-                const addQuestionsSpy = jest.spyOn(comp, 'addQuestions');
-                comp.verifyAndImportQuestions([multiQuestion]);
-                expect(addQuestionsSpy).toHaveBeenCalledWith([multiQuestion]);
-            });
-
-            it('should open modal service when there are invalid questions', () => {
-                const addQuestionsSpy = jest.spyOn(comp, 'addQuestions');
-                answerOption1.invalid = true;
-                comp.verifyAndImportQuestions([multiQuestion]);
-                expect(addQuestionsSpy).not.toHaveBeenCalled();
-                expect(modalServiceStub).toHaveBeenCalledOnce();
-                shouldImportEmitter.emit();
-                expect(addQuestionsSpy).toHaveBeenCalledOnce();
-            });
-        });
-
-        describe('generating file reader', () => {
-            it('should return file reader when called', () => {
-                expect(comp.generateFileReader()).toEqual(new FileReader());
-            });
         });
 
         describe('invalid reasons', () => {
@@ -1714,17 +1208,9 @@ describe('QuizExercise Management Detail Component', () => {
             };
 
             const checkForInvalidFlaggedQuestionAndReason = () => {
-                comp.checkForInvalidFlaggedQuestions(comp.quizExercise.quizQuestions);
+                comp.checkForInvalidFlaggedQuestions();
                 filterReasonAndExpectMoreThanOneInArray('artemisApp.quizExercise.invalidReasons.questionHasInvalidFlaggedElements');
             };
-
-            it('should concatenate invalid reasons', () => {
-                jest.spyOn(comp, 'computeInvalidReasons').mockReturnValue([
-                    { translateKey: 'testKey1', translateValues: 'testValue' },
-                    { translateKey: 'testKey2', translateValues: 'testValue' },
-                ]);
-                expect(comp.invalidReasonsHTML()).toBe('testKey1   -   testKey2  ');
-            });
 
             describe('should include right reasons in reasons array for quiz', () => {
                 beforeEach(() => {

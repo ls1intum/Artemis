@@ -379,7 +379,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                     StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
-            assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
+            assertThat(response.getExamExercises()).hasSize(exam2.getNumberOfExercisesInExam());
 
             assertThat(studentExamRepository.findById(studentExam.getId()).get().isStarted()).isTrue();
             assertParticipationAndSubmissions(response, user);
@@ -440,7 +440,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private void assertParticipationAndSubmissions(StudentExam response, User user) {
-        for (var exercise : response.getExercises()) {
+        for (var exercise : response.getExamExercises()) {
             assertThat(exercise.getStudentParticipations()).as(exercise.getClass().getName() + " should have 1 participation").hasSize(1);
             var participation = exercise.getStudentParticipations().iterator().next();
             if (!(exercise instanceof ProgrammingExercise)) {
@@ -454,8 +454,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(exercise.getGradingCriteria()).isNullOrEmpty();
             assertThat(exercise.getGradingInstructions()).isNullOrEmpty();
         }
-        var textExercise = (TextExercise) response.getExercises().get(0);
-        var quizExercise = (QuizExercise) response.getExercises().get(1);
+        var textExercise = (TextExercise) response.getExamExercises().get(0);
+        var quizExercise = (QuizExercise) response.getExamExercises().get(1);
 
         // Check that sensitive information has been removed
         assertThat(textExercise.getExampleSolution()).isNull();
@@ -517,7 +517,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(response).isEqualTo(testRun);
         assertThat(response.isStarted()).isTrue();
         assertThat(response.isTestRun()).isTrue();
-        assertThat(response.getExercises()).hasSize(exam.getNumberOfExercisesInExam());
+        assertThat(response.getExamExercises()).hasSize(exam.getNumberOfExercisesInExam());
         for (Exercise exercise : response.getExercises()) {
             assertThat(exercise.getStudentParticipations()).hasSize(1);
         }
@@ -556,7 +556,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam2 = database.addExam(course2, examVisibleDate, examStartDate, examEndDate);
         var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        List<Submission> response = request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
+        List<Submission> response = request.getList("/api/exercises/" + testRun.getExamExercises().get(0).getId() + "/test-run-submissions", HttpStatus.OK, Submission.class);
         assertThat(response).isNotEmpty();
         assertThat((response.get(0).getParticipation()).isTestRun()).isTrue();
     }
@@ -581,7 +581,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var exam = database.addTextModelingProgrammingExercisesToExam(exam2, false, false);
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         database.changeUser(TEST_PREFIX + "student2");
-        request.getList("/api/exercises/" + testRun.getExercises().get(0).getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
+        request.getList("/api/exercises/" + testRun.getExamExercises().get(0).getId() + "/test-run-submissions", HttpStatus.FORBIDDEN, Submission.class);
     }
 
     @Test
@@ -1020,7 +1020,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.changeUser(studentExams.get(0).getUser().getLogin());
         var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExams.get(0).getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
-        for (var exercise : studentExamResponse.getExercises()) {
+        for (var exercise : studentExamResponse.getExamExercises()) {
             var participation = exercise.getStudentParticipations().iterator().next();
             Submission submission = null;
             if (exercise instanceof ProgrammingExercise) {
@@ -1052,7 +1052,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         var studentExamDatabase = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExams.get(0).getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
-        for (var exercise : studentExamDatabase.getExercises()) {
+        for (var exercise : studentExamDatabase.getExamExercises()) {
             var participation = exercise.getStudentParticipations().iterator().next();
             var iterator = participation.getSubmissions().iterator();
             if (iterator.hasNext()) {
@@ -1074,7 +1074,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         final List<ProgrammingExercise> exercisesToBeLocked = new ArrayList<>();
         final List<ProgrammingExerciseStudentParticipation> studentProgrammingParticipations = new ArrayList<>();
 
-        for (var exercise : studentExamResponse.getExercises()) {
+        for (var exercise : studentExamResponse.getExamExercises()) {
             var participation = exercise.getStudentParticipations().iterator().next();
             if (exercise instanceof ProgrammingExercise programmingExercise) {
                 studentProgrammingParticipations.add((ProgrammingExerciseStudentParticipation) participation);
@@ -1116,7 +1116,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                     HttpStatus.OK, StudentExam.class);
 
-            for (var exercise : studentExamResponse.getExercises()) {
+            for (var exercise : studentExamResponse.getExamExercises()) {
                 var participation = exercise.getStudentParticipations().iterator().next();
                 if (exercise instanceof ProgrammingExercise programmingExercise) {
                     doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
@@ -1202,7 +1202,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         final ObjectId newCommitHashObjectId = ObjectId.fromString(newCommitHash);
 
         for (var studentExam : studentExamsAfterStart) {
-            for (var exercise : studentExam.getExercises()) {
+            for (var exercise : studentExam.getExamExercises()) {
                 var participation = exercise.getStudentParticipations().iterator().next();
                 if (exercise instanceof ProgrammingExercise) {
                     // do another programming submission to check if the StudentExam after submit contains the new commit hash
@@ -1222,11 +1222,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             var studentExamFinished = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/submit", studentExamAfterStart,
                     StudentExam.class, HttpStatus.OK);
             // Check that all text/quiz/modeling submissions were saved and that submitted versions were created
-            for (var exercise : studentExamFinished.getExercises()) {
+            for (var exercise : studentExamFinished.getExamExercises()) {
                 var participationAfterFinish = exercise.getStudentParticipations().iterator().next();
                 var submissionAfterFinish = participationAfterFinish.getSubmissions().iterator().next();
 
-                var exerciseAfterStart = studentExamAfterStart.getExercises().stream().filter(exAfterStart -> exAfterStart.getId().equals(exercise.getId())).findFirst().get();
+                var exerciseAfterStart = studentExamAfterStart.getExamExercises().stream().filter(exAfterStart -> exAfterStart.getId().equals(exercise.getId())).findFirst().get();
                 var participationAfterStart = exerciseAfterStart.getStudentParticipations().iterator().next();
                 var submissionAfterStart = participationAfterStart.getSubmissions().iterator().next();
 
@@ -1403,7 +1403,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 StudentExam.class);
 
         // check that all relevant information is visible to the student
-        for (final var exercise : studentExamSummary.getExercises()) {
+        for (final var exercise : studentExamSummary.getExamExercises()) {
             assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isEmpty();
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getGradingCriteria()).isEmpty();
@@ -1457,7 +1457,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 StudentExam.class);
 
         // check that all relevant information is visible to the student
-        for (final var exercise : studentExamSummary.getExercises()) {
+        for (final var exercise : studentExamSummary.getExamExercises()) {
             assertThat(exercise.getStudentParticipations().iterator().next().getResults()).isNotEmpty();
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getGradingCriteria()).isEmpty();
@@ -1526,7 +1526,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var studentExamFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
 
-        for (final var exercise : studentExamFromServer.getExercises()) {
+        for (final var exercise : studentExamFromServer.getExamExercises()) {
             if (exercise instanceof QuizExercise) {
                 assertThat(studentExamGradeInfoFromServer.achievedPointsPerExercise().get(exercise.getId())).isEqualTo(4.0);
             }
@@ -1620,7 +1620,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var studentExamFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
 
-        for (final var exercise : studentExamFromServer.getExercises()) {
+        for (final var exercise : studentExamFromServer.getExamExercises()) {
             if (exercise instanceof QuizExercise) {
                 assertThat(studentExamGradeInfoFromServer.achievedPointsPerExercise().get(exercise.getId())).isEqualTo(4.0);
             }
@@ -1639,7 +1639,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var studentExamFromServer = request.get("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
 
-        for (var exercise : studentExamFromServer.getExercises()) {
+        for (var exercise : studentExamFromServer.getExamExercises()) {
             var participation = exercise.getStudentParticipations().iterator().next();
             if (exercise instanceof ProgrammingExercise) {
                 doReturn(COMMIT_HASH_OBJECT_ID).when(gitService).getLastCommitHash(any());
@@ -1865,7 +1865,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         bonusRepository.save(bonus);
 
         StudentParticipation participationWithLatestResult = studentParticipationRepository
-                .findByExerciseIdAndStudentIdAndTestRunWithLatestResult(finalStudentExam.getExercises().get(0).getId(), finalStudentExam.getUser().getId(), false).orElseThrow();
+                .findByExerciseIdAndStudentIdAndTestRunWithLatestResult(finalStudentExam.getExamExercises().get(0).getId(), finalStudentExam.getUser().getId(), false)
+                .orElseThrow();
         Result result = participationWithLatestResult.getResults().iterator().next();
         result.setScore(0.0); // To reduce grade to a grade lower than the max grade.
         resultRepository.save(result);
@@ -2047,7 +2048,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun1.getId(), HttpStatus.OK);
         var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRunList).hasSize(1);
-        testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
+        testRunList.get(0).getExamExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
     }
 
     @Test
@@ -2067,7 +2068,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun2.getId(), HttpStatus.OK);
         var testRunList = studentExamRepository.findAllTestRunsWithExercisesParticipationsSubmissionsResultsByExamId(exam.getId());
         assertThat(testRunList).hasSize(1);
-        testRunList.get(0).getExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
+        testRunList.get(0).getExamExercises().forEach(exercise -> assertThat(exercise.getStudentParticipations()).isNotEmpty());
     }
 
     @Test
@@ -2077,7 +2078,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var exam = database.addExam(course1);
         exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         var testRun = database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
-        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(testRun.getExercises().get(0).getId(), instructor.getId());
+        var participations = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerLegalSubmissions(testRun.getExamExercises().get(0).getId(), instructor.getId());
         assertThat(participations).isNotEmpty();
         participationService.delete(participations.get(0).getId(), false, false, true);
         request.delete("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/test-run/" + testRun.getId(), HttpStatus.OK);
@@ -2142,7 +2143,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         QuizExercise quizExercise = null;
         QuizSubmission quizSubmission = null;
 
-        for (var exercise : testRunResponse.getExercises()) {
+        for (var exercise : testRunResponse.getExamExercises()) {
             var participation = exercise.getStudentParticipations().iterator().next();
             var submission = participation.getSubmissions().iterator().next();
             if (exercise instanceof QuizExercise) {
@@ -2450,7 +2451,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamForStart.isSubmitted()).isFalse();
         assertThat(studentExamForStart.getStartedDate()).isNull();
         assertThat(studentExamForStart.getSubmissionDate()).isNull();
-        assertThat(studentExamForStart.getExercises()).hasSize(0);
+        assertThat(studentExamForStart.getExamExercises()).hasSize(0);
 
         // Step 2: Call /conduction to get the exam with exercises and started date set
         StudentExam studentExamForConduction = request.get(
@@ -2466,8 +2467,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(ZonedDateTime.now().minusSeconds(10).isBefore(studentExamForConduction.getStartedDate())).isTrue();
         assertThat(ZonedDateTime.now().plusSeconds(10).isAfter(studentExamForConduction.getStartedDate())).isTrue();
         assertThat(studentExamForConduction.getSubmissionDate()).isNull();
-        assertThat(studentExamForConduction.getExercises()).hasSize(3);
-        QuizExercise quizExercise = (QuizExercise) studentExamForConduction.getExercises().get(2);
+        assertThat(studentExamForConduction.getExamExercises()).hasSize(3);
+        QuizExercise quizExercise = (QuizExercise) studentExamForConduction.getExamExercises().get(2);
         assertThat(quizExercise.getQuizQuestions()).hasSize(3);
 
         Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(Set.of(studentExamForConduction));

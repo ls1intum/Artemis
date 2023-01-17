@@ -55,6 +55,7 @@ import { FileUploadExerciseManagementResolve } from 'app/exercises/file-upload/m
 import { ModelingExerciseResolver } from 'app/exercises/modeling/manage/modeling-exercise-resolver.service';
 import { ExamResolve, ExerciseGroupResolve, StudentExamResolve } from 'app/exam/manage/exam-management-resolve.service';
 import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
+import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
 
 export const examManagementRoute: Routes = [
     {
@@ -418,6 +419,16 @@ export const examManagementRoute: Routes = [
         data: {
             authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
             pageTitle: 'artemisApp.fileUploadExercise.home.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    // Quiz Exam Exercise
+    {
+        path: ':examId/quiz-pool',
+        component: QuizPoolComponent,
+        data: {
+            authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.quizExercise.home.title',
         },
         canActivate: [UserRouteAccessService],
     },

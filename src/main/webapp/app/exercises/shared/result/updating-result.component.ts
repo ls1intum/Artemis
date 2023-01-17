@@ -16,6 +16,7 @@ import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils
 import { hasParticipationChanged } from 'app/exercises/shared/participation/participation.utils';
 import { MissingResultInformation } from 'app/exercises/shared/result/result.utils';
 import { convertDateFromServer } from 'app/utils/date.utils';
+import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 /**
  * A component that wraps the result component, updating its result on every websocket result event for the logged-in user.
@@ -28,7 +29,7 @@ import { convertDateFromServer } from 'app/utils/date.utils';
     providers: [ResultService, RepositoryService],
 })
 export class UpdatingResultComponent implements OnChanges, OnDestroy {
-    @Input() exercise: Exercise;
+    @Input() exercise: ExamExercise;
     @Input() participation: StudentParticipation;
     @Input() short = false;
     @Input() showUngradedResults = false;
@@ -78,7 +79,7 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      */
     ngOnDestroy() {
         if (this.resultSubscription) {
-            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id!, this.exercise);
+            this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.participation.id!, this.exercise as Exercise);
             this.resultSubscription.unsubscribe();
         }
         if (this.submissionSubscription) {
@@ -147,10 +148,10 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
         return (
             this.showUngradedResults ||
             !submission ||
-            !this.exercise.dueDate ||
+            !(this.exercise as Exercise).dueDate ||
             submission.type === SubmissionType.INSTRUCTOR ||
             submission.type === SubmissionType.TEST ||
-            dayjs(submission.submissionDate).isBefore(getExerciseDueDate(this.exercise, this.participation))
+            dayjs(submission.submissionDate).isBefore(getExerciseDueDate(this.exercise as Exercise, this.participation))
         );
     }
 

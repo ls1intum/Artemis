@@ -5,6 +5,7 @@ import { QuizQuestionType } from 'app/entities/quiz/quiz-question.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { DragAndDropQuestion } from 'app/entities/quiz/drag-and-drop-question.model';
 import { captureException } from '@sentry/browser';
+import { QuizExamExercise } from 'app/entities/quiz-exam-exercise.model';
 
 @Injectable({ providedIn: 'root' })
 export class ArtemisQuizService {
@@ -15,7 +16,7 @@ export class ArtemisQuizService {
      *
      * @param quizExercise {object} the quizExercise to randomize elements in
      */
-    randomizeOrder(quizExercise: QuizExercise) {
+    randomizeOrder(quizExercise: QuizExamExercise) {
         if (quizExercise.quizQuestions) {
             // shuffle questions
             if (quizExercise.randomizeQuestionOrder) {

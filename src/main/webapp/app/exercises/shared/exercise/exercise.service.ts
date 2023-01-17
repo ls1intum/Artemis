@@ -24,6 +24,7 @@ import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { SafeHtml } from '@angular/platform-browser';
+import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -438,7 +439,7 @@ export class ExerciseService {
         return exercise;
     }
 
-    isIncludedInScore(exercise: Exercise | undefined) {
+    isIncludedInScore(exercise: ExamExercise | undefined) {
         if (!exercise?.includedInOverallScore) {
             return '';
         }

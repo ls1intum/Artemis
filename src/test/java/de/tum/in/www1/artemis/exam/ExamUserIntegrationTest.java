@@ -207,7 +207,7 @@ class ExamUserIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
                     StudentExam.class, headers);
             assertThat(response).isEqualTo(studentExam);
             assertThat(response.isStarted()).isTrue();
-            assertThat(response.getExercises()).hasSize(exam2.getNumberOfExercisesInExam());
+            assertThat(response.getExamExercises()).hasSize(exam2.getNumberOfExercisesInExam());
 
             assertThat(studentExamRepository.findById(studentExam.getId()).get().isStarted()).isTrue();
         }

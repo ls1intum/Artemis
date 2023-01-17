@@ -145,7 +145,7 @@ public class QuizExerciseResource {
         Course course = courseService.retrieveCourseOverExerciseGroupOrCourseId(quizExercise);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
-        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.saveConfiguration(quizExercise);
 
         return ResponseEntity.created(new URI("/api/quiz-exercises/" + quizExercise.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
@@ -201,7 +201,7 @@ public class QuizExerciseResource {
             quizExercise.setQuizBatches(batches);
         }
 
-        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.saveConfiguration(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, quizExercise, notificationText);
         return ResponseEntity.ok(quizExercise);

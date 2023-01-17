@@ -4,7 +4,6 @@ import { MultipleChoiceQuestionComponent } from 'app/exercises/quiz/shared/quest
 import { DragAndDropQuestionComponent } from 'app/exercises/quiz/shared/questions/drag-and-drop-question/drag-and-drop-question.component';
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { DragAndDropMapping } from 'app/entities/quiz/drag-and-drop-mapping.model';
@@ -17,7 +16,9 @@ import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-sub
 import { cloneDeep } from 'lodash-es';
 import { ArtemisQuizService } from 'app/shared/quiz/quiz.service';
 import { Submission } from 'app/entities/submission.model';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { ExamExercise } from 'app/entities/exam-exercise.model';
+import { QuizExamExercise } from 'app/entities/quiz-exam-exercise.model';
 
 @Component({
     selector: 'jhi-quiz-submission-exam',
@@ -47,7 +48,8 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
     @Input()
     studentSubmission: QuizSubmission;
 
-    @Input() exercise: QuizExercise;
+    @Input() exercise: QuizExamExercise;
+
     selectedAnswerOptions = new Map<number, AnswerOption[]>();
     dragAndDropMappings = new Map<number, DragAndDropMapping[]>();
     shortAnswerSubmittedTexts = new Map<number, ShortAnswerSubmittedText[]>();
@@ -66,7 +68,7 @@ export class QuizExamSubmissionComponent extends ExamSubmissionComponent impleme
         return this.studentSubmission;
     }
 
-    getExercise(): Exercise {
+    getExercise(): ExamExercise {
         return this.exercise;
     }
 

@@ -31,6 +31,11 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { FitTextModule } from 'app/exercises/quiz/shared/fit-text/fit-text.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExerciseCategoriesModule } from 'app/shared/exercise-categories/exercise-categories.module';
+import { QuizPoolMappingComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping.component';
+import { QuizPoolMappingQuestionListComponent } from 'app/exercises/quiz/manage/quiz-pool-mapping-question-list.component';
+import { QuizPoolComponent } from 'app/exercises/quiz/manage/quiz-pool.component';
+import { QuizQuestionListEditComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit.component';
+import { QuizQuestionListEditExistingComponent } from 'app/exercises/quiz/manage/quiz-question-list-edit-existing.component';
 
 const ENTITY_STATES = [...quizManagementRoute];
 
@@ -69,6 +74,11 @@ const ENTITY_STATES = [...quizManagementRoute];
         QuizReEvaluateWarningComponent,
         QuizExerciseExportComponent,
         MatchPercentageInfoModalComponent,
+        QuizPoolMappingComponent,
+        QuizPoolMappingQuestionListComponent,
+        QuizPoolComponent,
+        QuizQuestionListEditComponent,
+        QuizQuestionListEditExistingComponent,
     ],
     exports: [QuizExerciseComponent],
 })

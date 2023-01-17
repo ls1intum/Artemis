@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.quiz;
 
+import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
@@ -10,6 +11,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -30,7 +32,11 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.ScoringType;
+import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizBatchService;
@@ -74,6 +80,15 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private QuizBatchService quizBatchService;
 
+    @Autowired
+    private QuizQuestionRepository quizQuestionRepository;
+
+    @Autowired
+    private ExamRepository examRepository;
+
+    @Autowired
+    private StudentParticipationRepository studentParticipationRepository;
+
     int numberOfStudentsInTest = 10;
 
     @BeforeEach
@@ -87,7 +102,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testQuizSubmit() {
         QuizExercise quizExercise = setupQuizExerciseParameters();
-        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.saveConfiguration(quizExercise);
 
         QuizSubmission quizSubmission;
 
@@ -187,7 +202,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizExercise.getQuizQuestions().get(0).setScoringType(ScoringType.PROPORTIONAL_WITHOUT_PENALTY);
         quizExercise.getQuizQuestions().get(1).score(1);
         quizExercise.getQuizQuestions().get(2).score(1);
-        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.saveConfiguration(quizExercise);
 
         MultipleChoiceQuestion mcQuestion = (MultipleChoiceQuestion) quizExercise.getQuizQuestions().get(0);
         DragAndDropQuestion dndQuestion = (DragAndDropQuestion) quizExercise.getQuizQuestions().get(1);
@@ -275,7 +290,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null, quizMode);
         quizExercise.setDuration(600);
-        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.saveConfiguration(quizExercise);
 
         // at the beginning there are no submissions and no participants
         assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
@@ -328,7 +343,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusSeconds(20), ZonedDateTime.now().plusSeconds(30), quizMode);
         quizExercise.setDuration(10);
-        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.saveConfiguration(quizExercise);
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
             var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().plusSeconds(10)));
@@ -347,7 +362,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), quizMode);
         quizExercise.setDuration(10);
-        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.saveConfiguration(quizExercise);
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
             var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
@@ -370,7 +385,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(5), null, QuizMode.SYNCHRONIZED);
         quizExercise.setDuration(350);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
-        quizExerciseService.save(quizExercise);
+        quizExerciseService.saveConfiguration(quizExercise);
 
         quizScheduleService.clearAllQuizData();
         quizScheduleService.clearQuizData(quizExercise.getId());
@@ -389,7 +404,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusHours(5), null, quizMode);
         quizExercise.setDuration(360);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(ZonedDateTime.now().minusMinutes(5)));
-        quizExerciseService.save(quizExercise);
+        quizExerciseService.saveConfiguration(quizExercise);
 
         if (quizMode != QuizMode.SYNCHRONIZED) {
             var batch = quizBatchService.save(ModelFactory.generateQuizBatch(quizExercise, ZonedDateTime.now().minusSeconds(5)));
@@ -412,7 +427,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizExercise.setDueDate(ZonedDateTime.now().minusSeconds(8));
         quizExercise.setDuration(2);
         quizExercise.setIsOpenForPractice(true);
-        quizExerciseService.save(quizExercise);
+        quizExerciseService.saveConfiguration(quizExercise);
 
         // at the beginning there are no submissions and participants
         assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
@@ -486,7 +501,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizExerciseServer.setDueDate(ZonedDateTime.now().minusSeconds(2));
         quizExerciseServer.setDuration(2);
         quizExerciseServer.setIsOpenForPractice(false);
-        quizExerciseService.save(quizExerciseServer);
+        quizExerciseService.saveConfiguration(quizExerciseServer);
 
         assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExerciseServer.getId())).isEmpty();
 
@@ -513,7 +528,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void testQuizSubmitPractice_badRequest_exam() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         QuizExercise quizExerciseServer = database.createQuizForExam(exerciseGroup);
-        quizExerciseService.save(quizExerciseServer);
+        quizExerciseService.saveConfiguration(quizExerciseServer);
 
         assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExerciseServer.getId())).isEmpty();
 
@@ -531,7 +546,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
-        quizExerciseService.save(quizExercise);
+        quizExerciseService.saveConfiguration(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
     }
 
@@ -543,7 +558,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         course.setStudentGroupName("abc");
         courseRepository.save(course);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
-        quizExerciseService.save(quizExercise);
+        quizExerciseService.saveConfiguration(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
         verifyNoInteractions(messagingTemplate);
     }
@@ -556,7 +571,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         course.setTeachingAssistantGroupName("tutor2");
         courseRepository.save(course);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
-        quizExerciseService.save(quizExercise);
+        quizExerciseService.saveConfiguration(quizExercise);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", new QuizSubmission(), Result.class, HttpStatus.FORBIDDEN);
     }
 
@@ -578,7 +593,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
-        quizExerciseService.save(quizExercise);
+        quizExerciseService.saveConfiguration(quizExercise);
         var quizSubmission = new QuizSubmission();
         quizSubmission.setId(1L);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/preview", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
@@ -590,7 +605,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
-        quizExerciseService.save(quizExercise);
+        quizExerciseService.saveConfiguration(quizExercise);
         var quizSubmission = new QuizSubmission();
         quizSubmission.setId(1L);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/practice", quizSubmission, Result.class, HttpStatus.BAD_REQUEST);
@@ -603,7 +618,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, quizMode);
-        quizExerciseService.save(quizExercise);
+        quizExerciseService.saveConfiguration(quizExercise);
 
         int numberOfParticipants = 10;
 
@@ -663,7 +678,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         // also schedules the quiz
         log.debug("// Saving the quiz initially");
-        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.saveConfiguration(quizExercise);
 
         checkQuizNotStarted(publishQuizPath);
 
@@ -675,7 +690,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         log.debug("// Rescheduling the quiz for another 2s into the future");
         var adjustedReleaseDate = initialReleaseDate.plus(1000, ChronoUnit.MILLIS);
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(adjustedReleaseDate));
-        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.saveConfiguration(quizExercise);
 
         // wait for the old release date to pass
         sleep(750);
@@ -739,7 +754,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
-        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.saveConfiguration(quizExercise);
 
         QuizSubmission quizSubmission = new QuizSubmission();
         for (var question : quizExercise.getQuizQuestions()) {
@@ -789,7 +804,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
         quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().peek(quizQuestion -> quizQuestion.setScoringType(scoringType)).toList());
-        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.saveConfiguration(quizExercise);
 
         QuizSubmission quizSubmission = new QuizSubmission();
         for (var question : quizExercise.getQuizQuestions()) {
@@ -830,7 +845,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), QuizMode.SYNCHRONIZED, course);
         quizExercise.addQuestions(database.createShortAnswerQuestion());
         quizExercise.setDuration(10);
-        quizExercise = quizExerciseService.save(quizExercise);
+        quizExercise = quizExerciseService.saveConfiguration(quizExercise);
 
         ShortAnswerQuestion saQuestion = (ShortAnswerQuestion) quizExercise.getQuizQuestions().get(0);
         ShortAnswerSubmittedAnswer submittedAnswer = new ShortAnswerSubmittedAnswer();
@@ -848,6 +863,56 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizSubmission.addSubmittedAnswers(submittedAnswer);
         request.postWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/live", quizSubmission, Result.class,
                 tooLarge ? HttpStatus.BAD_REQUEST : HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student5", roles = "USER")
+    void testQuizExerciseSubmitExam() throws Exception {
+        Course course = database.createCourse();
+        Exam exam = database.addExamWithExerciseGroup(course, true);
+        var startDate = now().minusMinutes(5);
+        var endDate = now().plusMinutes(5);
+        exam.setStartDate(startDate);
+        exam.setEndDate(endDate);
+        exam = examRepository.save(exam);
+        QuizQuestion quizQuestion0 = database.createMultipleChoiceQuestion();
+        QuizQuestion quizQuestion1 = database.createMultipleChoiceQuestion();
+        QuizExercise quizExercise = database.createQuizForExam(exam.getExerciseGroups().get(0));
+        quizExercise.setQuizQuestions(List.of(quizQuestion0));
+        exerciseRepository.save(quizExercise);
+
+        User user = database.getUserByLogin(TEST_PREFIX + "student5");
+        StudentExam studentExam = database.addStudentExamWithUser(exam, user);
+        studentExam = database.addExercisesToStudentExam(studentExam, List.of(quizExercise));
+        quizQuestionRepository.save(quizQuestion1);
+        studentExam = database.addQuizQuestionsToStudentExam(studentExam, List.of(quizQuestion1));
+
+        StudentParticipation studentParticipation = new StudentParticipation();
+        studentParticipation.setParticipant(user);
+        studentParticipation.exercise(quizExercise);
+        studentParticipationRepository.save(studentParticipation);
+
+        SubmittedAnswer submittedAnswer0 = new MultipleChoiceSubmittedAnswer();
+        submittedAnswer0.setQuizQuestion(quizQuestion0);
+        QuizSubmission quizSubmission = new QuizSubmission();
+        quizSubmission.setSubmittedAnswers(Set.of(submittedAnswer0));
+        QuizSubmission updatedQuizSubmission = request.putWithResponseBody("/api/exercises/" + quizExercise.getId() + "/submissions/exam", quizSubmission, QuizSubmission.class,
+                HttpStatus.OK);
+        assertThat(updatedQuizSubmission.isSubmitted()).isTrue();
+        assertThat(updatedQuizSubmission.getType()).isEqualTo(SubmissionType.MANUAL);
+        assertThat(updatedQuizSubmission.getParticipation()).isEqualTo(studentParticipation);
+        assertThat(updatedQuizSubmission.getResults()).isEmpty();
+
+        SubmittedAnswer submittedAnswer1 = new MultipleChoiceSubmittedAnswer();
+        submittedAnswer0.setQuizQuestion(quizQuestion1);
+        QuizExamSubmission quizExamSubmission = new QuizExamSubmission();
+        quizExamSubmission.setSubmittedAnswers(Set.of(submittedAnswer1));
+        QuizExamSubmission updatedQuizExamSubmission = request.putWithResponseBody("/api/exercises/0/submissions/exam", quizExamSubmission, QuizExamSubmission.class,
+                HttpStatus.OK);
+        assertThat(updatedQuizExamSubmission.isSubmitted()).isTrue();
+        assertThat(updatedQuizExamSubmission.getType()).isEqualTo(SubmissionType.MANUAL);
+        assertThat(updatedQuizExamSubmission.getParticipation()).isNull();
+        assertThat(updatedQuizExamSubmission.getResults()).isEmpty();
     }
 
     private void checkQuizNotStarted(String path) {

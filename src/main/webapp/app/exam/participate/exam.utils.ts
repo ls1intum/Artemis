@@ -2,6 +2,10 @@ import { Exam } from 'app/entities/exam.model';
 import { StudentExam } from 'app/entities/student-exam.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
+import { ExamExercise } from 'app/entities/exam-exercise.model';
+import { QuizExamSubmission } from 'app/entities/quiz/quiz-exam-submission.model';
+import { cloneDeep } from 'lodash-es';
+import { QuizExamExercise } from 'app/entities/quiz-exam-exercise.model';
 
 /**
  * Calculates the individual end time based on the studentExam
@@ -75,4 +79,31 @@ export const isExamOverMultipleDays = (exam: Exam, studentExam: StudentExam): bo
     const endDate = endTime(exam, studentExam)!;
 
     return !endDate.isSame(exam.startDate, 'day');
+};
+
+export const isQuizExamExercise = (exercise: QuizExamExercise): boolean => {
+    return exercise?.quizExam ?? false;
+};
+
+export const getExamExercises = (studentExam: StudentExam): ExamExercise[] => {
+    const examExercises = [];
+    if (studentExam.exercises) {
+        let examExerciseExist = false;
+        for (let i = 0; i < studentExam.exercises.length; i++) {
+            const exercise = studentExam.exercises[i];
+            if (isQuizExamExercise(exercise)) {
+                const submission = exercise.studentParticipations![0].submissions![0] as QuizExamSubmission;
+                submission.studentExam = cloneDeep(studentExam);
+                exercise.navigationTitle = `Quiz`;
+                examExerciseExist = true;
+            }
+            examExercises.push(exercise);
+        }
+        for (let i = 0; i < examExercises.length; i++) {
+            if (!isQuizExamExercise(examExercises[i])) {
+                examExercises[i].navigationTitle = `${examExerciseExist ? i : i + 1}`;
+            }
+        }
+    }
+    return examExercises;
 };

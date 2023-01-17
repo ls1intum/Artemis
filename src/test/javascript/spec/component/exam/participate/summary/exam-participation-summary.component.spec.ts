@@ -111,6 +111,7 @@ const studentExam = {
     exam,
     user,
     exercises,
+    numberOfExamSessions: 1,
 } as StudentExam;
 
 const studentExamForTestExam = {
@@ -118,6 +119,7 @@ const studentExamForTestExam = {
     exam: testExam,
     user,
     exercises,
+    numberOfExamSessions: 1,
 } as StudentExam;
 const gradeInfo: StudentExamWithGradeDTO = {
     maxPoints: 100,

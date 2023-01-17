@@ -17,6 +17,7 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { ExerciseInfo } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram, faQuestion } from '@fortawesome/free-solid-svg-icons';
+import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 export enum DifficultyLevel {
     EASY = 'EASY',
@@ -52,7 +53,7 @@ export enum IncludedInOverallScore {
     NOT_INCLUDED = 'NOT_INCLUDED',
 }
 
-export abstract class Exercise implements BaseEntity {
+export abstract class Exercise implements BaseEntity, ExamExercise {
     public id?: number;
     public problemStatement?: string;
     public gradingInstructions?: string;
@@ -119,6 +120,7 @@ export abstract class Exercise implements BaseEntity {
     public presentationScoreEnabled?: boolean;
     public gradingInstructionFeedbackUsed?: boolean;
     public exampleSolutionPublished?: boolean;
+    public navigationTitle?: string;
 
     protected constructor(type: ExerciseType) {
         this.type = type;
@@ -193,7 +195,7 @@ export function getCourseId(exercise: Exercise): number | undefined {
  * The course is extracted from the course of the exercise if present, if not present (exam mode), it is extracted from the corresponding exam.
  * @param exercise the exercise for which the course should be extracted
  */
-export function getCourseFromExercise(exercise: Exercise): Course | undefined {
+export function getCourseFromExercise(exercise: ExamExercise): Course | undefined {
     return exercise.course || exercise.exerciseGroup?.exam?.course;
 }
 

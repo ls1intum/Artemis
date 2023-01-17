@@ -1,10 +1,10 @@
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { Exercise, getIcon, getIconTooltip } from 'app/entities/exercise.model';
+import { getIcon, getIconTooltip } from 'app/entities/exercise.model';
 import { ExamPageComponent } from 'app/exam/participate/exercises/exam-page.component';
-import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamExerciseOverviewItem } from 'app/entities/exam-exercise-overview-item.model';
 import { ButtonTooltipType, ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 @Component({
     selector: 'jhi-exam-exercise-overview-page',
@@ -12,8 +12,8 @@ import { faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
     styleUrls: ['./exam-exercise-overview-page.scss'],
 })
 export class ExamExerciseOverviewPageComponent extends ExamPageComponent implements OnInit, OnChanges {
-    @Input() studentExam: StudentExam;
-    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise: Exercise; forceSave: boolean }>();
+    @Input() exercises: ExamExercise[];
+    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise: ExamExercise; forceSave: boolean }>();
     getIcon = getIcon;
     getIconTooltip = getIconTooltip;
 
@@ -24,7 +24,7 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
     }
 
     ngOnInit() {
-        this.studentExam.exercises?.forEach((exercise) => {
+        this.exercises?.forEach((exercise) => {
             const item = new ExamExerciseOverviewItem();
             item.exercise = exercise;
             item.icon = faEdit;
@@ -38,12 +38,12 @@ export class ExamExerciseOverviewPageComponent extends ExamPageComponent impleme
         });
     }
 
-    openExercise(exercise: Exercise) {
-        this.onPageChanged.emit({ overViewChange: false, exercise, forceSave: false });
+    openExercise(examExercise: ExamExercise) {
+        this.onPageChanged.emit({ overViewChange: false, exercise: examExercise, forceSave: false });
     }
 
-    getExerciseButtonTooltip(exercise: Exercise): ButtonTooltipType {
-        return this.examParticipationService.getExerciseButtonTooltip(exercise);
+    getExerciseButtonTooltip(examExercise: ExamExercise): ButtonTooltipType {
+        return this.examParticipationService.getExerciseButtonTooltip(examExercise);
     }
 
     /**

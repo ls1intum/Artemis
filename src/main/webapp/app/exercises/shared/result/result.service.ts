@@ -19,6 +19,7 @@ import { ProgrammingSubmission } from 'app/entities/programming-submission.model
 import { captureException } from '@sentry/browser';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
+import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -61,7 +62,7 @@ export class ResultService implements IResultService {
      * @param exercise the exercise where the result belongs to
      * @param short flag that indicates if the resultString should use the short format
      */
-    getResultString(result: Result | undefined, exercise: Exercise | undefined, short?: boolean): string {
+    getResultString(result: Result | undefined, exercise: ExamExercise | undefined, short?: boolean): string {
         if (result && exercise) {
             return this.getResultStringDefinedParameters(result, exercise, short);
         } else {
@@ -77,7 +78,7 @@ export class ResultService implements IResultService {
      * @param exercise the exercise where the result belongs to
      * @param short flag that indicates if the resultString should use the short format
      */
-    private getResultStringDefinedParameters(result: Result, exercise: Exercise, short: boolean | undefined): string {
+    private getResultStringDefinedParameters(result: Result, exercise: ExamExercise, short: boolean | undefined): string {
         const relativeScore = roundValueSpecifiedByCourseSettings(result.score!, getCourseFromExercise(exercise));
         const points = roundValueSpecifiedByCourseSettings((result.score! * exercise.maxPoints!) / 100, getCourseFromExercise(exercise));
         if (exercise.type !== ExerciseType.PROGRAMMING) {

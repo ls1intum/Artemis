@@ -15,6 +15,8 @@ import { ExamParticipationService } from 'app/exam/participate/exam-participatio
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { getExamExercises } from 'app/exam/participate/exam.utils';
+import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -37,6 +39,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * Current student's exam.
      */
     private _studentExam: StudentExam;
+    examExercises: ExamExercise[];
     plagiarismCaseInfos: { [exerciseId: number]: PlagiarismCaseInfo } = {};
 
     get studentExam(): StudentExam {
@@ -46,6 +49,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     @Input()
     set studentExam(studentExam: StudentExam) {
         this._studentExam = studentExam;
+        this.examExercises = getExamExercises(studentExam);
         if (this.studentExamGradeInfoDTO) {
             this.studentExamGradeInfoDTO.studentExam = studentExam;
         }
@@ -134,8 +138,12 @@ export class ExamParticipationSummaryComponent implements OnInit {
         return getIcon(exerciseType);
     }
 
-    asProgrammingExercise(exercise: Exercise): ProgrammingExercise {
+    asProgrammingExercise(exercise: ExamExercise): ProgrammingExercise {
         return exercise as ProgrammingExercise;
+    }
+
+    asExercise(exercise: ExamExercise): Exercise {
+        return exercise as Exercise;
     }
 
     get resultsPublished() {
@@ -156,7 +164,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         setTimeout(() => this.themeService.print());
     }
 
-    public generateLink(exercise: Exercise) {
+    public generateLink(exercise: ExamExercise) {
         if (exercise?.studentParticipations?.length) {
             return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
         }
@@ -167,7 +175,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * @param exercise
      * returns the students' submission for the exercise, undefined if no participation could be found
      */
-    getSubmissionForExercise(exercise: Exercise) {
+    getSubmissionForExercise(exercise: ExamExercise) {
         return exercise?.studentParticipations?.[0]?.submissions?.[0];
     }
 
@@ -175,7 +183,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * @param exercise
      * returns the students' submission for the exercise, undefined if no participation could be found
      */
-    getParticipationForExercise(exercise: Exercise) {
+    getParticipationForExercise(exercise: ExamExercise) {
         return exercise.studentParticipations?.[0] || undefined;
     }
 

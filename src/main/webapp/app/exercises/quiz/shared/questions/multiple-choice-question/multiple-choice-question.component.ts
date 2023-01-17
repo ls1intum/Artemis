@@ -4,9 +4,9 @@ import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
 import { RenderedQuizQuestionMarkDownElement } from 'app/entities/quiz/quiz-question.model';
 import { Result } from 'app/entities/result.model';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { faExclamationCircle, faExclamationTriangle, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { faCheckSquare, faCircle, faDotCircle, faSquare } from '@fortawesome/free-regular-svg-icons';
+import { QuizExamExercise } from 'app/entities/quiz-exam-exercise.model';
 
 @Component({
     selector: 'jhi-multiple-choice-question',
@@ -43,7 +43,7 @@ export class MultipleChoiceQuestionComponent {
     @Input()
     submittedResult: Result;
     @Input()
-    submittedQuizExercise: QuizExercise;
+    submittedQuizExercise: QuizExamExercise;
 
     @Output()
     selectedAnswerOptionsChange = new EventEmitter<AnswerOption[]>();

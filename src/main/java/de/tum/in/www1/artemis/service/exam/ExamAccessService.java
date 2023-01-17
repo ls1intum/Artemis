@@ -41,8 +41,11 @@ public class ExamAccessService {
 
     private final StudentExamService studentExamService;
 
+    private final QuizPoolService quizPoolService;
+
     public ExamAccessService(ExamRepository examRepository, StudentExamRepository studentExamRepository, AuthorizationCheckService authorizationCheckService,
-            UserRepository userRepository, CourseRepository courseRepository, ExamRegistrationService examRegistrationService, StudentExamService studentExamService) {
+            UserRepository userRepository, CourseRepository courseRepository, ExamRegistrationService examRegistrationService, StudentExamService studentExamService,
+            QuizPoolService quizPoolService) {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.authorizationCheckService = authorizationCheckService;
@@ -50,6 +53,7 @@ public class ExamAccessService {
         this.courseRepository = courseRepository;
         this.examRegistrationService = examRegistrationService;
         this.studentExamService = studentExamService;
+        this.quizPoolService = quizPoolService;
     }
 
     /**
@@ -83,7 +87,7 @@ public class ExamAccessService {
                 throw new BadRequestAlertException("The requested Exam is no test exam and thus no student exam can be created", ENTITY_NAME,
                         "StudentExamGenerationOnlyForTestExams");
             }
-            studentExam = studentExamService.generateTestExam(examWithExerciseGroupsAndExercises, currentUser);
+            studentExam = studentExamService.generateTestExam(examWithExerciseGroupsAndExercises, currentUser, quizPoolService.getStudentExamQuizQuestionsGenerator(examId));
             // For the start of the exam, the exercises are not needed. They are later loaded via StudentExamResource
             studentExam.setExercises(null);
         }

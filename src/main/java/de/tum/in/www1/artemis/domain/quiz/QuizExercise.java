@@ -23,9 +23,11 @@ import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
+import de.tum.in.www1.artemis.domain.exam.QuizExamExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.view.QuizView;
+import de.tum.in.www1.artemis.service.QuizConfiguration;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
@@ -37,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @Entity
 @DiscriminatorValue(value = "Q")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class QuizExercise extends Exercise {
+public class QuizExercise extends Exercise implements QuizConfiguration, QuizExamExercise {
 
     @Column(name = "randomize_question_order")
     @JsonView(QuizView.Before.class)
@@ -119,6 +121,16 @@ public class QuizExercise extends Exercise {
 
     public Integer getDuration() {
         return duration;
+    }
+
+    @Override
+    public void setQuestionParent(QuizQuestion quizQuestion) {
+        quizQuestion.setExercise(this);
+    }
+
+    @Override
+    public void setQuizBatchParent(QuizBatch quizBatch) {
+        quizBatch.setQuizExercise(this);
     }
 
     public QuizExercise duration(Integer duration) {
@@ -295,29 +307,10 @@ public class QuizExercise extends Exercise {
      * @return the resulting score
      */
     public Double getScoreForSubmission(QuizSubmission quizSubmission) {
-        double score = getScoreInPointsForSubmission(quizSubmission);
+        double score = quizSubmission.getScoreInPointsForSubmission(quizQuestions);
         double maxPoints = getOverallQuizPoints();
         // map the resulting score to the 0 to 100 scale
         return 100.0 * score / maxPoints;
-    }
-
-    /**
-     * Get the score for this submission as the number of points
-     *
-     * @param quizSubmission the submission that should be evaluated
-     * @return the resulting score
-     */
-    public Double getScoreInPointsForSubmission(QuizSubmission quizSubmission) {
-        double score = 0.0;
-        // iterate through all quizQuestions of this quiz
-        for (QuizQuestion quizQuestion : getQuizQuestions()) {
-            // search for submitted answer for this quizQuestion
-            SubmittedAnswer submittedAnswer = quizSubmission.getSubmittedAnswerForQuestion(quizQuestion);
-            if (submittedAnswer != null) {
-                score += quizQuestion.scoreForAnswer(submittedAnswer);
-            }
-        }
-        return score;
     }
 
     /**
@@ -546,109 +539,6 @@ public class QuizExercise extends Exercise {
     }
 
     /**
-     * Recreate missing pointers from children to parents that were removed by @JSONIgnore
-     */
-    public void reconnectJSONIgnoreAttributes() {
-        // iterate through quizQuestions to add missing pointer back to quizExercise
-        // Note: This is necessary because of the @IgnoreJSON in question and answerOption
-        // that prevents infinite recursive JSON serialization.
-        for (QuizQuestion quizQuestion : getQuizQuestions()) {
-            if (quizQuestion.getId() != null) {
-                quizQuestion.setExercise(this);
-                // reconnect QuestionStatistics
-                if (quizQuestion.getQuizQuestionStatistic() != null) {
-                    quizQuestion.getQuizQuestionStatistic().setQuizQuestion(quizQuestion);
-                }
-                // do the same for answerOptions (if quizQuestion is multiple choice)
-                if (quizQuestion instanceof MultipleChoiceQuestion mcQuestion) {
-                    MultipleChoiceQuestionStatistic mcStatistic = (MultipleChoiceQuestionStatistic) mcQuestion.getQuizQuestionStatistic();
-                    // reconnect answerCounters
-                    for (AnswerCounter answerCounter : mcStatistic.getAnswerCounters()) {
-                        if (answerCounter.getId() != null) {
-                            answerCounter.setMultipleChoiceQuestionStatistic(mcStatistic);
-                        }
-                    }
-                    // reconnect answerOptions
-                    for (AnswerOption answerOption : mcQuestion.getAnswerOptions()) {
-                        if (answerOption.getId() != null) {
-                            answerOption.setQuestion(mcQuestion);
-                        }
-                    }
-                }
-                if (quizQuestion instanceof DragAndDropQuestion dragAndDropQuestion) {
-                    DragAndDropQuestionStatistic dragAndDropStatistic = (DragAndDropQuestionStatistic) dragAndDropQuestion.getQuizQuestionStatistic();
-                    // reconnect dropLocations
-                    for (DropLocation dropLocation : dragAndDropQuestion.getDropLocations()) {
-                        if (dropLocation.getId() != null) {
-                            dropLocation.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect dragItems
-                    for (DragItem dragItem : dragAndDropQuestion.getDragItems()) {
-                        if (dragItem.getId() != null) {
-                            dragItem.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect correctMappings
-                    for (DragAndDropMapping mapping : dragAndDropQuestion.getCorrectMappings()) {
-                        if (mapping.getId() != null) {
-                            mapping.setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                    // reconnect dropLocationCounters
-                    for (DropLocationCounter dropLocationCounter : dragAndDropStatistic.getDropLocationCounters()) {
-                        if (dropLocationCounter.getId() != null) {
-                            dropLocationCounter.setDragAndDropQuestionStatistic(dragAndDropStatistic);
-                            dropLocationCounter.getDropLocation().setQuestion(dragAndDropQuestion);
-                        }
-                    }
-                }
-                if (quizQuestion instanceof ShortAnswerQuestion shortAnswerQuestion) {
-                    ShortAnswerQuestionStatistic shortAnswerStatistic = (ShortAnswerQuestionStatistic) shortAnswerQuestion.getQuizQuestionStatistic();
-                    // reconnect spots
-                    for (ShortAnswerSpot spot : shortAnswerQuestion.getSpots()) {
-                        if (spot.getId() != null) {
-                            spot.setQuestion(shortAnswerQuestion);
-                        }
-                    }
-                    // reconnect solutions
-                    for (ShortAnswerSolution solution : shortAnswerQuestion.getSolutions()) {
-                        if (solution.getId() != null) {
-                            solution.setQuestion(shortAnswerQuestion);
-                        }
-                    }
-                    // reconnect correctMappings
-                    for (ShortAnswerMapping mapping : shortAnswerQuestion.getCorrectMappings()) {
-                        if (mapping.getId() != null) {
-                            mapping.setQuestion(shortAnswerQuestion);
-                        }
-                    }
-                    // reconnect spotCounters
-                    for (ShortAnswerSpotCounter shortAnswerSpotCounter : shortAnswerStatistic.getShortAnswerSpotCounters()) {
-                        if (shortAnswerSpotCounter.getId() != null) {
-                            shortAnswerSpotCounter.setShortAnswerQuestionStatistic(shortAnswerStatistic);
-                            shortAnswerSpotCounter.getSpot().setQuestion(shortAnswerQuestion);
-                        }
-                    }
-                }
-            }
-        }
-
-        // reconnect pointCounters
-        for (PointCounter pointCounter : getQuizPointStatistic().getPointCounters()) {
-            if (pointCounter.getId() != null) {
-                pointCounter.setQuizPointStatistic(getQuizPointStatistic());
-            }
-        }
-
-        if (getQuizBatches() != null) {
-            for (QuizBatch quizBatch : getQuizBatches()) {
-                quizBatch.setQuizExercise(this);
-            }
-        }
-    }
-
-    /**
      * add Result to all Statistics of the given QuizExercise
      *
      * @param result         the result which will be added
@@ -717,6 +607,11 @@ public class QuizExercise extends Exercise {
                 throw new BadRequestAlertException("Start time must not be before release date!", getTitle(), "noValidDates");
             }
         });
+    }
+
+    @Override
+    public Boolean isQuizExam() {
+        return false;
     }
 
     @Override

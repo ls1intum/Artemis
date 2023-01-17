@@ -13,8 +13,8 @@ import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entiti
 import { GradeType } from 'app/entities/grading-scale.model';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { getRelativeWorkingTimeExtension, normalWorkingTime } from 'app/exam/participate/exam.utils';
-import { Exercise } from 'app/entities/exercise.model';
 import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExamExercise } from 'app/entities/exam-exercise.model';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -179,7 +179,7 @@ export class StudentExamDetailComponent implements OnInit {
      * @param exercise which should be included in the total points calculations.
      * @private
      */
-    private initExercise(exercise: Exercise) {
+    private initExercise(exercise: ExamExercise) {
         if (exercise.studentParticipations?.[0]?.submissions?.[0]) {
             exercise.studentParticipations[0].submissions[0].results = exercise.studentParticipations[0].results;
             setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
