@@ -149,7 +149,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST);
         // Api should return not found.
-        request.postWithoutLocation("/api/programming-submissions/" + fakeParticipationId, obj, HttpStatus.NOT_FOUND, new HttpHeaders());
+        request.postWithoutLocation("/api/public/programming-submissions/" + fakeParticipationId, obj, HttpStatus.NOT_FOUND, new HttpHeaders());
         // No submission should be created for the fake participation.
         assertThat(submissionRepository.findAllByParticipationIdWithResults(fakeParticipationId)).isEmpty();
     }
@@ -894,7 +894,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         changes.get(0).put("toHash", TEST_COMMIT);
 
         // Api should return ok.
-        request.postWithoutLocation("/api/programming-exercises/test-cases-changed/" + exerciseId, obj, HttpStatus.OK, new HttpHeaders());
+        request.postWithoutLocation("/api/public/programming-exercises/test-cases-changed/" + exerciseId, obj, HttpStatus.OK, new HttpHeaders());
     }
 
     /**
@@ -904,7 +904,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     private void postTestRepositorySubmissionWithoutCommit(HttpStatus status) throws Exception {
         JSONParser jsonParser = new JSONParser();
         Object obj = jsonParser.parse(BITBUCKET_PUSH_EVENT_REQUEST_WITHOUT_COMMIT);
-        request.postWithoutLocation("/api/programming-exercises/test-cases-changed/" + exerciseId, obj, status, new HttpHeaders());
+        request.postWithoutLocation("/api/public/programming-exercises/test-cases-changed/" + exerciseId, obj, status, new HttpHeaders());
     }
 
     private String getBuildPlanIdByParticipationType(IntegrationTestParticipationType participationType, int participationIndex) {
