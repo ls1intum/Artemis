@@ -74,7 +74,11 @@ under ``localhost:7990``. You will probably have to change the respective URLs i
    in all 3 applications.
    For the Bamboo database you can choose H2.
    Also, you can select the evaluation/internal/test/dev setups if you are asked.
-   Follow the additional steps for Jira and Bitbucket.
+
+   Put the admin username into ``application-local.yml`` at ``artemis.version-control.user``
+   and ``artemis.continuous-integration.user``.
+
+   Follow the additional steps for Jira and Bitbucket:
 
    - Jira:
 
