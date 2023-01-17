@@ -232,7 +232,7 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
     downloadRepository(programmingExerciseId: number | undefined, repositoryType: ProgrammingExerciseInstructorRepositoryType) {
         if (programmingExerciseId) {
             // Repository type cannot be 'AUXILIARY' as auxiliary repositories are currently not supported for the local VCS.
-            this.programmingExerciseService.exportInstructorRepository(programmingExerciseId, repositoryType, undefined).subscribe((response) => {
+            this.programmingExerciseService.exportInstructorRepository(programmingExerciseId, repositoryType, undefined).subscribe((response: HttpResponse<Blob>) => {
                 downloadZipFileFromResponse(response);
                 this.alertService.success('artemisApp.programmingExercise.export.successMessageRepos');
             });

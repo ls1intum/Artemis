@@ -411,6 +411,11 @@ public class LocalVCFilterUtilService {
         }
     }
 
+    /**
+     * @param commitHash the hash of the commit that leads to a new submission.
+     * @param repository the JGit repository this submission belongs to.
+     * @param localVCRepositoryUrl the repository URL object describing the repository.
+     */
     public void createNewSubmission(String commitHash, Repository repository, LocalVCRepositoryUrl localVCRepositoryUrl) {
 
         Commit commit = extractCommitInfo(commitHash, repository);
