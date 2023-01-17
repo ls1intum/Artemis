@@ -1,8 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
-import { ActivatedRoute } from '@angular/router';
-import { Subject, switchMap, take, takeUntil } from 'rxjs';
+import { Subject, takeUntil } from 'rxjs';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
@@ -10,7 +9,6 @@ import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
     styleUrls: ['./course-conversations.component.scss'],
-    // providers: [MetisService, MetisConversationService],
     encapsulation: ViewEncapsulation.None,
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
@@ -22,7 +20,8 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     showPostThread = false;
     activeConversation?: ConversationDto = undefined;
     conversationsOfUser: ConversationDto[] = [];
-    constructor(private activatedRoute: ActivatedRoute, public metisConversationService: MetisConversationService) {}
+    // MetisConversationService is created in course overview, so we can use it here
+    constructor(public metisConversationService: MetisConversationService) {}
 
     getAsChannel = getAsChannelDto;
     setPostInThread(post?: Post) {
