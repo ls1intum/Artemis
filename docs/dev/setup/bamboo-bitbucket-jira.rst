@@ -352,6 +352,7 @@ e.g.:
 
    --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling
 
+All of these profiles are enabled by default when using one of the run configurations in IntelliJ.
 Please read :ref:`Server Setup` for more details.
 
 How to verify the connection works?
