@@ -71,6 +71,7 @@ describe('Exam assessment', () => {
         });
 
         beforeEach('Create exam, exercise and submission', () => {
+            cy.login(admin);
             courseManagementRequests
                 .createProgrammingExercise(
                     { exerciseGroup },
@@ -117,6 +118,7 @@ describe('Exam assessment', () => {
 
         describe('Modeling exercise assessment', () => {
             beforeEach('Create exercise and submission', () => {
+                cy.login(admin);
                 courseManagementRequests.createModelingExercise({ exerciseGroup }).then(() => {
                     courseManagementRequests.generateMissingIndividualExams(exam);
                     courseManagementRequests.prepareExerciseStartForExam(exam);
@@ -151,6 +153,7 @@ describe('Exam assessment', () => {
 
         describe('Text exercise assessment', () => {
             beforeEach('Create exercise and submission', () => {
+                cy.login(admin);
                 const exerciseTitle = 'Cypress Text Exercise';
                 courseManagementRequests.createTextExercise({ exerciseGroup }, exerciseTitle);
                 courseManagementRequests.generateMissingIndividualExams(exam);
@@ -190,6 +193,7 @@ describe('Exam assessment', () => {
         });
 
         beforeEach('Create exercise and submission', () => {
+            cy.login(admin);
             courseManagementRequests.createQuizExercise({ exerciseGroup }, [multipleChoiceQuizTemplate], 'Cypress Quiz').then((quizResponse) => {
                 courseManagementRequests.generateMissingIndividualExams(exam);
                 courseManagementRequests.prepareExerciseStartForExam(exam);
