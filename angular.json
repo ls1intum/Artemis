@@ -115,7 +115,12 @@
                 "fonts": true
               },
               "outputHashing": "all",
-              "sourceMap": true,
+              "sourceMap": {
+                "scripts": true,
+                "styles": false,
+                "hidden": false,
+                "vendor": false
+              },
               "namedChunks": false,
               "aot": true,
               "extractLicenses": true,
@@ -126,8 +131,8 @@
               "budgets": [
                 {
                   "type": "initial",
-                  "maximumWarning": "2.3mb",
-                  "maximumError": "2.4mb"
+                  "maximumWarning": "2.4mb",
+                  "maximumError": "2.5mb"
                 },
                 {
                   "type": "anyComponentStyle",
