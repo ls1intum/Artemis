@@ -5,6 +5,7 @@ import { CourseLearningGoalProgress, LearningGoal, LearningGoalProgress, Learnin
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { map, tap } from 'rxjs/operators';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 type EntityResponseType = HttpResponse<LearningGoal>;
 type EntityArrayResponseType = HttpResponse<LearningGoal[]>;
@@ -47,7 +48,7 @@ export class LearningGoalService {
     findById(learningGoalId: number, courseId: number) {
         return this.httpClient.get<LearningGoal>(`${this.resourceURL}/courses/${courseId}/learning-goals/${learningGoalId}`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
-                this.convertLectureUnitArrayResponseDateFromServer(res);
+                this.convertLearningGoalResponseFromServer(res);
                 this.sendTitlesToEntityTitleService(res?.body);
                 return res;
             }),
@@ -55,7 +56,7 @@ export class LearningGoalService {
     }
 
     create(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
-        const copy = this.convertLearningGoalDatesFromClient(learningGoal);
+        const copy = this.convertLearningGoalFromClient(learningGoal);
         return this.httpClient.post<LearningGoal>(`${this.resourceURL}/courses/${courseId}/learning-goals`, copy, { observe: 'response' });
     }
 
@@ -64,7 +65,7 @@ export class LearningGoalService {
     }
 
     update(learningGoal: LearningGoal, courseId: number): Observable<EntityResponseType> {
-        const copy = this.convertLearningGoalDatesFromClient(learningGoal);
+        const copy = this.convertLearningGoalFromClient(learningGoal);
         return this.httpClient.put(`${this.resourceURL}/courses/${courseId}/learning-goals`, copy, { observe: 'response' });
     }
 
@@ -97,17 +98,24 @@ export class LearningGoalService {
         });
     }
 
-    convertLectureUnitArrayResponseDateFromServer(res: EntityResponseType): EntityResponseType {
+    convertLearningGoalResponseFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body?.lectureUnits) {
             res.body.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromServer(res.body.lectureUnits);
+        }
+        if (res.body?.exercises) {
+            res.body.exercises = ExerciseService.convertExercisesDateFromServer(res.body.exercises);
+            res.body.exercises.forEach((exercise) => ExerciseService.parseExerciseCategories(exercise));
         }
         return res;
     }
 
-    convertLearningGoalDatesFromClient(learningGoal: LearningGoal): LearningGoal {
+    convertLearningGoalFromClient(learningGoal: LearningGoal): LearningGoal {
         const copy = Object.assign({}, learningGoal);
         if (copy.lectureUnits) {
             copy.lectureUnits = this.lectureUnitService.convertLectureUnitArrayDatesFromClient(copy.lectureUnits);
+        }
+        if (copy.exercises) {
+            copy.exercises = copy.exercises.map((exercise) => ExerciseService.convertExerciseFromClient(exercise));
         }
         return copy;
     }
