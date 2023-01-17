@@ -353,7 +353,7 @@ e.g.:
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,local
 
 All of these profiles are enabled by default when using one of the run configurations in IntelliJ.
 Please read :ref:`Server Setup` for more details.
