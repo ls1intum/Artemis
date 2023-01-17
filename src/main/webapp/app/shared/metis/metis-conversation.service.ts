@@ -76,19 +76,29 @@ export class MetisConversationService implements OnDestroy {
         return this._isLoading$.asObservable();
     }
 
-    public setActiveConversation = (conversation: ConversationDto | undefined) => {
-        // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation
-        if (this._activeConversation) {
-            this._activeConversation.lastReadDate = dayjs();
-            this._activeConversation.unreadMessagesCount = 0;
+    public setActiveConversation = (conversationIdentifier: ConversationDto | number | undefined) => {
+        this.updateLastReadDateAndNumberOfUnreadMessages();
+        let cachedConversation = undefined;
+        if (conversationIdentifier) {
+            const parameterJustId = typeof conversationIdentifier === 'number';
+            cachedConversation = this._conversationsOfUser.find(
+                (conversationInCache) => conversationInCache.id === (parameterJustId ? conversationIdentifier : conversationIdentifier.id),
+            );
         }
-        const cachedConversation = this._conversationsOfUser.find((conversationInCache) => conversationInCache.id === conversation?.id);
         if (!cachedConversation) {
             throw new Error('The conversation is not part of the cache. Therefore, it cannot be set as active conversation.');
         }
         this._activeConversation = cachedConversation;
         this._activeConversation$.next(this._activeConversation);
     };
+
+    private updateLastReadDateAndNumberOfUnreadMessages() {
+        // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation
+        if (this._activeConversation) {
+            this._activeConversation.lastReadDate = dayjs();
+            this._activeConversation.unreadMessagesCount = 0;
+        }
+    }
 
     public forceRefresh = (notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> => {
         if (!this._course) {
