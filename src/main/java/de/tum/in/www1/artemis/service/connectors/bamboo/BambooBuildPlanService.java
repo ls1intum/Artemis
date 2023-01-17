@@ -439,7 +439,7 @@ public class BambooBuildPlanService {
     private Notification createNotification() {
         return new Notification().type(new PlanCompletedNotification())
                 .recipients(new AnyNotificationRecipient(new AtlassianModule("de.tum.in.www1.bamboo-server:recipient.server"))
-                        .recipientString(artemisServerUrl + "/api/programming-exercises/new-result"));
+                        .recipientString(artemisServerUrl + "/api/public/programming-exercises/new-result"));
     }
 
     private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug, String branch) {
