@@ -197,7 +197,10 @@ under ``localhost:7990``.
 
                 Adding Crowd Server in **Bamboo**
 
-#. Give the test users User access on Bitbucket: Configure → Global permissions
+#. Give the test users User access on Bitbucket: On the Administration interface (settings cogwheel on the top),
+   go to the Global permissions. Type the names of all test users in the search field ("Add Users) and give them
+   the "Bitbucket User" permission. If you skip this step, the users will not be able to log in to Bitbucket or
+   clone repositories.
 
 #. In Bamboo create a global variable named
    SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
