@@ -38,7 +38,10 @@
                         <div jhiTranslate="artemisApp.courseOverview.menu.communication">Communication</div>
                     </div>
                     <div *ngIf="course.postsEnabled" jhiOrionFilter [showInOrionWindow]="false" class="tab-item discussion" routerLink="messages" routerLinkActive="active">
-                        <div jhiTranslate="artemisApp.courseOverview.menu.messages">Messages</div>
+                        <div class="d-flex align-items-center">
+                            <div jhiTranslate="artemisApp.courseOverview.menu.messages" class="d-inline-block me-2">Messages</div>
+                            <span [hidden]="!hasUnreadMessages || isUnderMessagesTab()"><fa-icon [icon]="faMessage" class="text-info d-inline-block"></fa-icon></span>
+                        </div>
                     </div>
                     <div
                         *ngIf="hasTutorialGroups()"

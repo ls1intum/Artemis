@@ -1,8 +1,11 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
 import { Course } from 'app/entities/course.model';
+import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
+import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
+import { MetisService } from 'app/shared/metis/metis.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription, forkJoin } from 'rxjs';
+import { ReplaySubject, Subscription, forkJoin } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -13,7 +16,7 @@ import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
+import { faCircleNotch, faMessage, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
@@ -26,6 +29,7 @@ import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/s
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
     styleUrls: ['course-overview.scss', './tab-bar/tab-bar.scss'],
+    providers: [MetisConversationService, MetisService],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
     private courseId: number;
@@ -34,6 +38,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     public refreshingCourse = false;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
+    public hasUnreadMessages: boolean;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -52,6 +57,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
     // Icons
     faSync = faSync;
+    faMessage = faMessage;
     faCircleNotch = faCircleNotch;
     FeatureToggle = FeatureToggle;
 
@@ -69,6 +75,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private profileService: ProfileService,
         private tutorialGroupService: TutorialGroupsService,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
+        private metisConversationService: MetisConversationService,
     ) {}
 
     async ngOnInit() {
@@ -89,6 +96,15 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
 
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
+        this.metisConversationService
+            .setUpConversationService(this.courseId)
+            .pipe()
+            .subscribe({
+                complete: () => {
+                    // service is fully set up, now we can subscribe to the respective observables
+                    this.subscribeToHasUnreadMessages();
+                },
+            });
     }
 
     ngAfterViewInit() {
@@ -98,6 +114,23 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         } else {
             this.vcSubscription = this.controlsViewContainerAsList.changes.subscribe(() => this.tryRenderControls());
         }
+    }
+
+    private subscribeToHasUnreadMessages() {
+        console.log('subscribeToHasUnreadMessages');
+        this.metisConversationService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages: boolean) => {
+            console.log('hasUnreadMessages', hasUnreadMessages);
+            this.hasUnreadMessages = hasUnreadMessages ?? false;
+        });
+    }
+
+    isUnderMessagesTab(): boolean {
+        if (this.route.snapshot.firstChild?.routeConfig?.path === 'messages') {
+            this.hasUnreadMessages = false;
+            console.log(this.hasUnreadMessages);
+            return true;
+        }
+        return false;
     }
 
     /**

@@ -11,7 +11,7 @@ import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
     selector: 'jhi-course-conversations',
     templateUrl: './course-conversations.component.html',
     styleUrls: ['./course-conversations.component.scss'],
-    providers: [MetisService, MetisConversationService],
+    // providers: [MetisService, MetisConversationService],
     encapsulation: ViewEncapsulation.None,
 })
 export class CourseConversationsComponent implements OnInit, OnDestroy {
