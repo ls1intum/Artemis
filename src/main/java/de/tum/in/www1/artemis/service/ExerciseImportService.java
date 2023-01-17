@@ -28,6 +28,7 @@ public abstract class ExerciseImportService {
     void copyExerciseBasis(final Exercise newExercise, final Exercise importedExercise, final Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         if (importedExercise.isCourseExercise()) {
             newExercise.setCourse(importedExercise.getCourseViaExerciseGroupOrCourseMember());
+            newExercise.setPresentationScoreEnabled(importedExercise.getPresentationScoreEnabled());
         }
         else {
             newExercise.setExerciseGroup(importedExercise.getExerciseGroup());

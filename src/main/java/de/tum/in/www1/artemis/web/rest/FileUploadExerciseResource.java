@@ -119,7 +119,7 @@ public class FileUploadExerciseResource {
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
     }
 
-    @PostMapping("/file-upload-exercises/import/{sourceId}")
+    @PostMapping("file-upload-exercises/import/{sourceId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> importFileUploadExercise(@PathVariable long sourceId, @RequestBody FileUploadExercise importedFileUploadExercise)
             throws URISyntaxException {

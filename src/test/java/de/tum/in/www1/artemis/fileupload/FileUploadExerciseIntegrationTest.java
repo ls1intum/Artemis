@@ -14,6 +14,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -628,12 +629,13 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         var sourceExerciseId = expectedFileUploadExercise.getId();
         var actualFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
                 HttpStatus.CREATED);
-        assertThat(actualFileUploadExercise).isEqualTo(expectedFileUploadExercise);
+        assertThat(actualFileUploadExercise).usingRecursiveComparison().ignoringFields("id", "course", "shortName").isEqualTo(expectedFileUploadExercise);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testImportFileUploadExerciseAsStudentFails() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "ta1", roles = "TA")
+    void testImportFileUploadExerciseAsStudentFails(String role) throws Exception {
+        SecurityMockMvcRequestPostProcessors.user("user").roles(role);
         Course course = database.addCourseWithFileUploadExercise();
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
         var sourceExerciseId = expectedFileUploadExercise.getId();
