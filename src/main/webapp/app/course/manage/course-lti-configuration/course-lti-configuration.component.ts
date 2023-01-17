@@ -82,7 +82,7 @@ export class CourseLtiConfigurationComponent implements OnInit {
      * Gets the LTI 1.0 launch url for an exercise
      */
     getExerciseLti10LaunchUrl(exercise: Exercise): string {
-        return `${location.origin}/api/lti/launch/${exercise.id}`; // Needs to match url in LtiResource
+        return `${location.origin}/api/public/lti/launch/${exercise.id}`; // Needs to match url in LtiResource
     }
 
     /**
