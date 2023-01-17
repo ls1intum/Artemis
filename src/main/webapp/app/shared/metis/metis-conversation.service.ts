@@ -18,6 +18,7 @@ import { ChannelDTO } from 'app/entities/metis/conversation/channel.model';
 import { OneToOneChatDTO } from 'app/entities/metis/conversation/one-to-one-chat.model';
 import { GroupChatService } from 'app/shared/metis/conversations/group-chat.service';
 import dayjs from 'dayjs/esm';
+import { NavigationEnd, Router } from '@angular/router';
 
 /**
  * NOTE: NOT INJECTED IN THE ROOT MODULE
@@ -50,6 +51,7 @@ export class MetisConversationService implements OnDestroy {
         private jhiWebsocketService: JhiWebsocketService,
         private accountService: AccountService,
         private alertService: AlertService,
+        private router: Router,
     ) {
         this.accountService.identity().then((user: User) => {
             this.userId = user.id!;
@@ -189,6 +191,7 @@ export class MetisConversationService implements OnDestroy {
                 this._activeConversation = undefined;
                 this._activeConversation$.next(this._activeConversation);
                 this.subscribeToConversationMembershipTopic(courseId, this.userId);
+                this.subscribeToRouteChange();
                 this.setIsLoading(false);
                 return;
             }),
@@ -227,6 +230,18 @@ export class MetisConversationService implements OnDestroy {
         return courseTopicName + '/conversations/user/' + userId;
     }
 
+    private subscribeToRouteChange() {
+        this.router.events.subscribe((event) => {
+            if (event instanceof NavigationEnd) {
+                // update last read date and number of unread messages of the conversation that is currently active before switching to another conversation
+                if (this._activeConversation) {
+                    this._activeConversation.lastReadDate = dayjs();
+                    this._activeConversation.unreadMessagesCount = 0;
+                    this.hasUnreadMessagesCheck();
+                }
+            }
+        });
+    }
     private subscribeToConversationMembershipTopic(courseId: number, userId: number) {
         // already subscribed to the topic -> nothing to do
         if (this.subscribedConversationMembershipTopic) {
