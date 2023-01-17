@@ -34,24 +34,15 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
         }
     }
     ngOnInit(): void {
-        this.activatedRoute
-            .parent!.parent!.paramMap.pipe(
-                take(1),
-                switchMap((params) => {
-                    const courseId = Number(params.get('courseId'));
-                    return this.metisConversationService.setUpConversationService(courseId);
-                }),
-            )
-            .pipe(takeUntil(this.ngUnsubscribe))
-            .subscribe({
-                complete: () => {
-                    // service is fully set up, now we can subscribe to the respective observables
-                    this.subscribeToActiveConversation();
-                    this.subscribeToConversationsOfUser();
-                    this.subscribeToLoading();
-                    this.isServiceSetUp = true;
-                },
-            });
+        this.metisConversationService.isServiceSetup$.subscribe((isServiceSetUp: boolean) => {
+            if (isServiceSetUp) {
+                // service is fully set up in course-overview, now we can subscribe to the respective observables
+                this.subscribeToActiveConversation();
+                this.subscribeToConversationsOfUser();
+                this.subscribeToLoading();
+                this.isServiceSetUp = true;
+            }
+        });
     }
 
     ngOnDestroy() {

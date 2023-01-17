@@ -42,6 +42,9 @@ export class MetisConversationService implements OnDestroy {
     private subscribedConversationMembershipTopic?: string;
     private userId: number;
     private _courseId: number;
+
+    private _isServiceSetup$: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
+
     constructor(
         private courseManagementService: CourseManagementService,
         private groupChatService: GroupChatService,
@@ -73,6 +76,10 @@ export class MetisConversationService implements OnDestroy {
     }
     get hasUnreadMessages$(): Observable<boolean> {
         return this._hasUnreadMessages$.asObservable();
+    }
+
+    get isServiceSetup$(): Observable<boolean> {
+        return this._isServiceSetup$.asObservable();
     }
 
     get course(): Course | undefined {
@@ -182,6 +189,7 @@ export class MetisConversationService implements OnDestroy {
             catchError((res: HttpErrorResponse) => {
                 onError(this.alertService, res);
                 this.setIsLoading(false);
+                this._isServiceSetup$.next(false);
                 return of([]);
             }),
             map((conversations: ConversationDto[]) => {
@@ -193,6 +201,7 @@ export class MetisConversationService implements OnDestroy {
                 this.subscribeToConversationMembershipTopic(courseId, this.userId);
                 this.subscribeToRouteChange();
                 this.setIsLoading(false);
+                this._isServiceSetup$.next(true);
                 return;
             }),
             finalize(() => {
