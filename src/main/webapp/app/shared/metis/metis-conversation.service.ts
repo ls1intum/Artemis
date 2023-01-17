@@ -30,7 +30,8 @@ export class MetisConversationService implements OnDestroy {
     // Stores the currently selected conversation
     private _activeConversation: ConversationDto | undefined = undefined;
     _activeConversation$: ReplaySubject<ConversationDto | undefined> = new ReplaySubject<ConversationDto | undefined>(1);
-    _hasUnreadMessages$: Subject<boolean> = new Subject<boolean>();
+    private _hasUnreadMessages = false;
+    _hasUnreadMessages$: Subject<boolean> = new ReplaySubject<boolean>(1);
     // Stores the course for which the service is setup -> should not change during the lifetime of the service
     private _course: Course | undefined = undefined;
     // Stores if the service is currently loading data
@@ -68,9 +69,7 @@ export class MetisConversationService implements OnDestroy {
     get activeConversation$(): Observable<ConversationDto | undefined> {
         return this._activeConversation$.asObservable();
     }
-
     get hasUnreadMessages$(): Observable<boolean> {
-        console.log('hasUnreadMessages inside metis');
         return this._hasUnreadMessages$.asObservable();
     }
 
@@ -112,11 +111,7 @@ export class MetisConversationService implements OnDestroy {
             }),
             map((conversations: ConversationDto[]) => {
                 this._conversationsOfUser = conversations;
-
-                console.log(this._hasUnreadMessages$);
-                console.log(conversations.some((conversation) => conversation.unreadMessagesCount! > 0));
-                this._hasUnreadMessages$.next(conversations.some((conversation) => conversation.unreadMessagesCount! > 0));
-                console.log(this._hasUnreadMessages$);
+                this.hasUnreadMessagesCheck();
                 this._conversationsOfUser$.next(this._conversationsOfUser);
 
                 // we check if the active conversation still is part of the conversations of the user, otherwise we reset it
@@ -189,10 +184,7 @@ export class MetisConversationService implements OnDestroy {
             }),
             map((conversations: ConversationDto[]) => {
                 this._conversationsOfUser = conversations;
-                console.log(this._hasUnreadMessages$);
-                console.log(conversations.some((conversation) => conversation.unreadMessagesCount! > 0));
-                this._hasUnreadMessages$.next(conversations.some((conversation) => conversation.unreadMessagesCount! > 0));
-                console.log(this._hasUnreadMessages$);
+                this.hasUnreadMessagesCheck();
                 this._conversationsOfUser$.next(this._conversationsOfUser);
                 this._activeConversation = undefined;
                 this._activeConversation$.next(this._activeConversation);
@@ -206,6 +198,16 @@ export class MetisConversationService implements OnDestroy {
             // service is ready to use and cached values can be received via the respective replay subjects
             switchMap(() => EMPTY),
         );
+    };
+
+    private hasUnreadMessagesCheck = (): void => {
+        const hasNewMessages = this._conversationsOfUser.some((conversation) => {
+            return conversation?.unreadMessagesCount && conversation.unreadMessagesCount > 0;
+        });
+        if (hasNewMessages !== this._hasUnreadMessages) {
+            this._hasUnreadMessages = hasNewMessages;
+            this._hasUnreadMessages$.next(this._hasUnreadMessages);
+        }
     };
 
     private setIsLoading(value: boolean) {
@@ -279,12 +281,8 @@ export class MetisConversationService implements OnDestroy {
             // conversation is already cached -> update it
             conversationsCopy[indexOfCachedConversation] = updatedOrNewConversation;
         }
-        console.log(this._hasUnreadMessages$);
-        console.log(conversationsCopy.some((conversation) => conversation.unreadMessagesCount! > 0));
-        this._hasUnreadMessages$.next(conversationsCopy.some((conversation) => conversation.unreadMessagesCount! > 0));
-        console.log(this._hasUnreadMessages$);
-
         this._conversationsOfUser = conversationsCopy;
+        this.hasUnreadMessagesCheck();
 
         // Note: We do not update the active conversation here because it would cause a UI refresh for all users whenever
         // for example a new users joins.
@@ -313,12 +311,11 @@ export class MetisConversationService implements OnDestroy {
         if (indexOfCachedConversation !== -1) {
             conversationsCopy[indexOfCachedConversation].lastMessageDate = conversationWithNewMessage.lastMessageDate;
             conversationsCopy[indexOfCachedConversation].unreadMessagesCount = (conversationsCopy[indexOfCachedConversation].unreadMessagesCount ?? 0) + 1;
+            if (!this._hasUnreadMessages) {
+                this._hasUnreadMessages = true;
+                this._hasUnreadMessages$.next(this._hasUnreadMessages);
+            }
         }
-
-        console.log(this._hasUnreadMessages$);
-        console.log(conversationsCopy.some((conversation) => conversation.unreadMessagesCount! > 0));
-        this._hasUnreadMessages$.next(conversationsCopy.some((conversation) => conversation.unreadMessagesCount! > 0));
-        console.log(this._hasUnreadMessages$);
         this._conversationsOfUser = conversationsCopy;
     }
 }

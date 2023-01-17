@@ -1,11 +1,10 @@
 import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy, OnInit, QueryList, TemplateRef, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { Conversation, ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { ReplaySubject, Subscription, forkJoin } from 'rxjs';
+import { Subscription, forkJoin } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { TeamService } from 'app/exercises/shared/team/team.service';
@@ -117,9 +116,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     }
 
     private subscribeToHasUnreadMessages() {
-        console.log('subscribeToHasUnreadMessages');
         this.metisConversationService.hasUnreadMessages$.pipe().subscribe((hasUnreadMessages: boolean) => {
-            console.log('hasUnreadMessages', hasUnreadMessages);
             this.hasUnreadMessages = hasUnreadMessages ?? false;
         });
     }
@@ -127,7 +124,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     isUnderMessagesTab(): boolean {
         if (this.route.snapshot.firstChild?.routeConfig?.path === 'messages') {
             this.hasUnreadMessages = false;
-            console.log(this.hasUnreadMessages);
             return true;
         }
         return false;
