@@ -291,7 +291,7 @@ under ``localhost:7990``.
     Navigate to ``BITBUCKET-URL/plugins/servlet/ssh/account/keys`` and add the SSH key by pasting the content of
     the public key.
 
-    ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename).
+    ``<ssh-private-key-folder-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename).
     It will be used in the configuration of Artemis to specify where Artemis should look for the key and
     store the ``known_hosts`` file.
 
