@@ -388,7 +388,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(users3).as("No user was found as expected").isEmpty();
 
         // Check whether a student from a team is found but marked as "assignedToTeam"
-        Team team = database.addTeamForExercise(exercise, tutor);
+        Team team = database.addTeamForExercise(exercise, tutor, TEST_PREFIX);
         User teamStudent = team.getStudents().iterator().next();
 
         List<TeamSearchUserDTO> users4 = request.getList(resourceUrlSearchUsersInCourse(teamStudent.getLogin()), HttpStatus.OK, TeamSearchUserDTO.class);

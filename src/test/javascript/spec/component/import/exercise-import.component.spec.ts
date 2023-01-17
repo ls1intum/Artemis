@@ -1,11 +1,18 @@
+import { Injector } from '@angular/core';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
 import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
+import { ModelingExercisePagingService } from 'app/exercises/modeling/manage/modeling-exercise-paging.service';
+import { CodeAnalysisPagingService } from 'app/exercises/programming/manage/services/code-analysis-paging.service';
+import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 import { QuizExercisePagingService } from 'app/exercises/quiz/manage/quiz-exercise-paging.service';
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
+import { PagingService } from 'app/exercises/shared/manage/paging.service';
+import { TextExercisePagingService } from 'app/exercises/text/manage/text-exercise/text-exercise-paging.service';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ExerciseCourseTitlePipe } from 'app/shared/pipes/exercise-course-title.pipe';
@@ -21,14 +28,15 @@ describe('ExerciseImportComponent', () => {
     let fixture: ComponentFixture<ExerciseImportComponent>;
     let comp: ExerciseImportComponent;
 
-    let pagingService: QuizExercisePagingService;
+    let quizExercisePagingService: QuizExercisePagingService;
     let sortService: SortService;
+    let injector: Injector;
     let activeModal: NgbActiveModal;
     let searchForExercisesStub: jest.SpyInstance;
     let sortByPropertyStub: jest.SpyInstance;
     let searchResult: SearchResult<Exercise>;
     let state: PageableSearch;
-    let exercise: QuizExercise;
+    let quizExercise: QuizExercise;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -46,10 +54,11 @@ describe('ExerciseImportComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseImportComponent);
                 comp = fixture.componentInstance;
-                pagingService = TestBed.get(QuizExercisePagingService);
+                quizExercisePagingService = TestBed.get(QuizExercisePagingService);
                 sortService = TestBed.inject(SortService);
+                injector = TestBed.inject(Injector);
                 activeModal = TestBed.inject(NgbActiveModal);
-                searchForExercisesStub = jest.spyOn(pagingService, 'searchForExercises');
+                searchForExercisesStub = jest.spyOn(quizExercisePagingService, 'searchForExercises');
                 sortByPropertyStub = jest.spyOn(sortService, 'sortByProperty');
             });
     });
@@ -61,9 +70,9 @@ describe('ExerciseImportComponent', () => {
     beforeEach(() => {
         comp.exerciseType = ExerciseType.QUIZ;
         fixture.detectChanges();
-        exercise = new QuizExercise(undefined, undefined);
-        exercise.id = 5;
-        searchResult = { numberOfPages: 3, resultsOnPage: [exercise] };
+        quizExercise = new QuizExercise(undefined, undefined);
+        quizExercise.id = 5;
+        searchResult = { numberOfPages: 3, resultsOnPage: [quizExercise] };
         state = {
             page: 1,
             pageSize: 10,
@@ -108,7 +117,7 @@ describe('ExerciseImportComponent', () => {
     it('should change the page on active modal', fakeAsync(() => {
         const defaultPageSize = 10;
         const numberOfPages = 5;
-        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExercises');
+        const pagingServiceSpy = jest.spyOn(quizExercisePagingService, 'searchForExercises');
         pagingServiceSpy.mockReturnValue(of({ numberOfPages } as SearchResult<TextExercise>));
 
         fixture.detectChanges();
@@ -145,7 +154,7 @@ describe('ExerciseImportComponent', () => {
     });
 
     it('should set search term and search', fakeAsync(() => {
-        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExercises');
+        const pagingServiceSpy = jest.spyOn(quizExercisePagingService, 'searchForExercises');
         pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<TextExercise>));
 
         fixture.detectChanges();
@@ -216,11 +225,11 @@ describe('ExerciseImportComponent', () => {
     }));
 
     it('should return quiz exercise id', () => {
-        expect(comp.trackId(0, exercise)).toEqual(exercise.id);
+        expect(comp.trackId(0, quizExercise)).toEqual(quizExercise.id);
     });
 
     it('should switch courseFilter/examFilter and search', fakeAsync(() => {
-        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExercises');
+        const pagingServiceSpy = jest.spyOn(quizExercisePagingService, 'searchForExercises');
         pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<QuizExercise>));
 
         fixture.detectChanges();
@@ -245,4 +254,45 @@ describe('ExerciseImportComponent', () => {
         };
         expect(pagingServiceSpy).toHaveBeenCalledWith(expectedSearchObject, false, false, undefined);
     }));
+
+    it.each([
+        [ExerciseType.PROGRAMMING, ProgrammingExercisePagingService],
+        [ExerciseType.TEXT, TextExercisePagingService],
+        [ExerciseType.MODELING, ModelingExercisePagingService],
+        [ExerciseType.QUIZ, QuizExercisePagingService],
+    ])(
+        'uses the correct paging service',
+        fakeAsync((exerciseType: ExerciseType, expectedPagingService: typeof PagingService) => {
+            const getSpy = jest.spyOn(injector, 'get');
+            jest.resetAllMocks();
+
+            comp.exerciseType = exerciseType;
+
+            comp.ngOnInit();
+
+            expect(getSpy).toHaveBeenCalledOnceWith(expectedPagingService);
+        }),
+    );
+
+    it('should allow importing SCA configurations', () => {
+        const getSpy = jest.spyOn(injector, 'get');
+        jest.resetAllMocks();
+
+        comp.exerciseType = ExerciseType.PROGRAMMING;
+        comp.programmingLanguage = ProgrammingLanguage.JAVA;
+
+        comp.ngOnInit();
+
+        expect(comp.titleKey).toContain('configureGrading');
+        expect(getSpy).toHaveBeenCalledOnceWith(CodeAnalysisPagingService);
+    });
+
+    it('should sort by exam title when only the exam filter is active', () => {
+        comp.isExamFilter = true;
+        comp.isCourseFilter = false;
+
+        comp.sortedColumn = 'COURSE_TITLE';
+
+        expect(comp.sortedColumn).toBe('EXAM_TITLE');
+    });
 });
