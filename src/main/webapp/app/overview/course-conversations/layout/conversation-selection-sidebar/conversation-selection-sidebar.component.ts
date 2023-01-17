@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import interact from 'interactjs';
-import { faChevronLeft, faChevronRight, faComments, faCompress, faExpand, faGripLinesVertical, faMagnifyingGlass, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faComments, faCompress, faExpand, faFilter, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 import { EMPTY, Subject, delay, from, map, startWith, takeUntil } from 'rxjs';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
@@ -56,7 +56,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     faGripLinesVertical = faGripLinesVertical;
     faConversation = faComments;
     faPlus = faPlus;
-    faMagnifyingGlass = faMagnifyingGlass;
+    faFilter = faFilter;
     faExpand = faExpand;
     faCompress = faCompress;
 
