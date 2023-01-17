@@ -1,13 +1,12 @@
 package de.tum.in.www1.artemis.domain;
 
 import javax.annotation.Nullable;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.util.List;
 
 @Entity
 @Table(name = "build_plan", uniqueConstraints = { @UniqueConstraint(columnNames = { "build_plan" }) })
@@ -18,6 +17,9 @@ public class BuildPlan extends DomainObject {
     @Nullable
     @Column(name = "build_plan", table = "build_plan", length = 10_000)
     private String buildPlan;
+
+    @OneToMany(mappedBy = "buildPlan")
+    private List<ProgrammingExercise> programmingExercises;
 
     public BuildPlan() {
     }
@@ -32,5 +34,13 @@ public class BuildPlan extends DomainObject {
 
     public void setBuildPlan(String buildPlan) {
         this.buildPlan = buildPlan;
+    }
+
+    public List<ProgrammingExercise> getProgrammingExercises() {
+        return programmingExercises;
+    }
+
+    public void setProgrammingExercises(List<ProgrammingExercise> programmingExercises) {
+        this.programmingExercises = programmingExercises;
     }
 }
