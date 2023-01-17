@@ -241,8 +241,8 @@
             "handInEarlyNoticeFirstSentence": "You are about to hand in your submission before the end of the exam.",
             "handInEarlyNoticeSecondSentence": "After finishing the exam you cannot participate any longer.",
             "namePlaceholder": "Enter your full name here",
-            "workingTimeIncreased": "Your working time was extended until {{ date }}.",
-            "workingTimeDecreased": "Your working time was shortened until {{ date }}."
+            "workingTimeIncreased": "The end of working time was extended until {{ date }}.",
+            "workingTimeDecreased": "The end of working time was shortened until {{ date }}."
         },
         "exerciseGroup": {
             "created": "New exercise group created",

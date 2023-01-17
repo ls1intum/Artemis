@@ -591,9 +591,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const dateFormat = startDate.isSame(this.individualStudentEndDate, 'day') ? 'time' : 'short';
             const newIndividualStudentEndDateFormatted = this.artemisDatePipe.transform(this.individualStudentEndDate, dateFormat);
             if (decreased) {
-                this.alertService.error('artemisApp.exam.examParticipation.workingTimeDecreased', { date: newIndividualStudentEndDateFormatted });
+                this.alertService.error('artemisApp.examParticipation.workingTimeDecreased', { date: newIndividualStudentEndDateFormatted });
             } else {
-                this.alertService.success('artemisApp.exam.examParticipation.workingTimeIncreased', { date: newIndividualStudentEndDateFormatted });
+                this.alertService.success('artemisApp.examParticipation.workingTimeIncreased', { date: newIndividualStudentEndDateFormatted });
             }
         });
     }

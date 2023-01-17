@@ -453,36 +453,32 @@ describe('ExamParticipationComponent', () => {
             alertSuccessSpy = jest.spyOn(alertService, 'success');
             alertErrorSpy = jest.spyOn(alertService, 'error');
             artemisDatePipeSpy = jest.spyOn(artemisDatePipe, 'transform');
+            comp.studentExam = { id: 3, workingTime: 420 };
+            comp.studentExamId = comp.studentExam.id!;
         });
 
         it('should correctly increase working time', () => {
-            comp.studentExam = { id: 3, workingTime: 420 };
-            comp.studentExamId = comp.studentExam.id!;
             jest.spyOn(websocketService, 'receive').mockReturnValue(of(1337));
             comp.initIndividualEndDates(startDate);
             expect(comp.studentExam.workingTime).toBe(1337);
             expect(artemisDatePipeSpy).toHaveBeenCalledWith(startDate.add(1337, 'seconds'), 'time');
-            expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.exam.examParticipation.workingTimeIncreased', { date: undefined });
+            expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.examParticipation.workingTimeIncreased', { date: undefined });
         });
 
         it('should correctly increase working time to next day', () => {
-            comp.studentExam = { id: 3, workingTime: 420 };
-            comp.studentExamId = comp.studentExam.id!;
             jest.spyOn(websocketService, 'receive').mockReturnValue(of(9001));
             comp.initIndividualEndDates(startDate);
             expect(comp.studentExam.workingTime).toBe(9001);
             expect(artemisDatePipeSpy).toHaveBeenCalledWith(startDate.add(9001, 'seconds'), 'short');
-            expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.exam.examParticipation.workingTimeIncreased', { date: undefined });
+            expect(alertSuccessSpy).toHaveBeenCalledWith('artemisApp.examParticipation.workingTimeIncreased', { date: undefined });
         });
 
         it('should correctly decrease working time', () => {
-            comp.studentExam = { id: 3, workingTime: 420 };
-            comp.studentExamId = comp.studentExam.id!;
             jest.spyOn(websocketService, 'receive').mockReturnValue(of(42));
             comp.initIndividualEndDates(startDate);
             expect(comp.studentExam.workingTime).toBe(42);
             expect(artemisDatePipeSpy).toHaveBeenCalledWith(startDate.add(42, 'seconds'), 'time');
-            expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.exam.examParticipation.workingTimeDecreased', { date: undefined });
+            expect(alertErrorSpy).toHaveBeenCalledWith('artemisApp.examParticipation.workingTimeDecreased', { date: undefined });
         });
     });
 
