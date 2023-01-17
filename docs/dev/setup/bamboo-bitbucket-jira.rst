@@ -59,7 +59,8 @@ Configure Bamboo, Bitbucket and Jira
 
 By default, the Jira instance is reachable under ``localhost:8081``, the
 Bamboo instance under ``localhost:8085`` and the Bitbucket instance
-under ``localhost:7990``.
+under ``localhost:7990``. You will probably have to change the respective URLs in
+``application-local.yml`` (e.g. set ``artemis.version-control.url`` to ``http://localhost:7990``).
 
 **Get evaluation licenses for Atlassian products:** `Atlassian Licenses <https://my.atlassian.com/license/evaluation>`__
 
