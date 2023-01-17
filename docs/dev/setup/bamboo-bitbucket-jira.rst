@@ -202,7 +202,7 @@ under ``localhost:7990``.
 #. In Bamboo create a global variable named
    SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
    as the secret. The value of this variable should be then stored in
-   ``src/main/resources/config/application-artemis.yml`` as the value of
+   ``src/main/resources/config/application-local.yml`` as the value of
    ``artemis-authentication-token-value``.
    You can create a global variable from settings on Bamboo.
 
@@ -235,7 +235,7 @@ under ``localhost:7990``.
           .. figure:: setup/bamboo-bitbucket-jira/bamboo-create-token.png
              :align: center
 
-      - Insert the generated token into the file ``application-artemis.yml`` in the section ``continuous-integration``:
+      - Insert the generated token into the file ``application-local.yml`` in the section ``continuous-integration``:
 
       .. code:: yaml
 
@@ -253,7 +253,7 @@ under ``localhost:7990``.
           .. figure:: setup/bamboo-bitbucket-jira/bitbucket_create_token.png
              :align: center
 
-      - Insert the generated token into the file ``application-artemis.yml`` in the section ``version-control``:
+      - Insert the generated token into the file ``application-local.yml`` in the section ``version-control``:
 
       .. code:: yaml
 
@@ -334,7 +334,7 @@ Configure Artemis
                empty-commit-necessary: true
                artemis-authentication-token-value: <artemis-authentication-token-value>   # step 7
 
-#. Modify the application-dev.yml
+#. Modify the application-local.yml
 
    .. code:: yaml
 
