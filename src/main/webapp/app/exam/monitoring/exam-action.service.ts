@@ -11,21 +11,18 @@ export const EXAM_MONITORING_ACTION_TOPIC = (examId: number) => `/topic/exam-mon
 export const EXAM_MONITORING_ACTIONS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/actions`;
 export const EXAM_MONITORING_STATUS_TOPIC = (examId: number) => `/topic/exam-monitoring/${examId}/update`;
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
-export interface IExamActionService {}
-
 @Injectable({ providedIn: 'root' })
-export class ExamActionService implements IExamActionService {
+export class ExamActionService {
     cachedExamActions: Map<number, ExamAction[]> = new Map<number, ExamAction[]>();
-    cachedExamActionsGroupedByTimestamp: Map<number, Map<string, number>> = new Map<number, Map<string, number>>();
-    cachedExamActionsGroupedByTimestampAndCategory: Map<number, Map<string, Map<string, number>>> = new Map<number, Map<string, Map<string, number>>>();
+    cachedExamActionsGroupedByTimestamp: Map<number, Map<string, number>> = new Map();
+    cachedExamActionsGroupedByTimestampAndCategory: Map<number, Map<string, Map<string, number>>> = new Map();
     cachedLastActionPerStudent: Map<number, Map<number, ExamAction>> = new Map<number, Map<number, ExamAction>>();
-    cachedNavigationsPerStudent: Map<number, Map<number, Set<number | undefined>>> = new Map<number, Map<number, Set<number | undefined>>>();
-    cachedSubmissionsPerStudent: Map<number, Map<number, Set<number | undefined>>> = new Map<number, Map<number, Set<number | undefined>>>();
+    cachedNavigationsPerStudent: Map<number, Map<number, Set<number | undefined>>> = new Map();
+    cachedSubmissionsPerStudent: Map<number, Map<number, Set<number | undefined>>> = new Map();
     initialActionsLoaded: Map<number, boolean> = new Map<number, boolean>();
-    openExamMonitoringWebsocketSubscriptions: Map<number, string> = new Map<number, string>();
-    examMonitoringStatusObservables: Map<number, BehaviorSubject<boolean>> = new Map<number, BehaviorSubject<boolean>>();
-    openExamMonitoringStatusWebsocketSubscriptions: Map<number, string> = new Map<number, string>();
+    openExamMonitoringWebsocketSubscriptions: Map<number, string> = new Map();
+    examMonitoringStatusObservables: Map<number, BehaviorSubject<boolean>> = new Map();
+    openExamMonitoringStatusWebsocketSubscriptions: Map<number, string> = new Map();
 
     constructor(private jhiWebsocketService: JhiWebsocketService, private http: HttpClient) {}
 
@@ -216,9 +213,12 @@ export class ExamActionService implements IExamActionService {
      * @param exam the exam to unsubscribe
      * */
     public unsubscribeForExamMonitoringUpdate(exam: Exam): void {
-        const topic = EXAM_MONITORING_STATUS_TOPIC(exam.id!);
-        this.jhiWebsocketService.unsubscribe(topic);
-        this.openExamMonitoringStatusWebsocketSubscriptions.delete(exam.id!);
+        // if loading the student exam failed, the exam will not be available
+        if (exam?.id) {
+            const topic = EXAM_MONITORING_STATUS_TOPIC(exam.id);
+            this.jhiWebsocketService.unsubscribe(topic);
+            this.openExamMonitoringStatusWebsocketSubscriptions.delete(exam.id);
+        }
     }
 
     /**

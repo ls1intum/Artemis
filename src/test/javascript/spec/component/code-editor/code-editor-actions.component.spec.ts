@@ -221,7 +221,7 @@ describe('CodeEditorActionsComponent', () => {
         commitObservable.error('error!');
         expect(comp.isBuilding).toBeFalse();
         expect(comp.commitState).toEqual(CommitState.UNCOMMITTED_CHANGES);
-        expect(onErrorSpy).toHaveBeenNthCalledWith(1, 'commitFailed');
+        expect(onErrorSpy).toHaveBeenNthCalledWith(1, 'submitFailed');
 
         fixture.detectChanges();
         expect(commitButton.nativeElement.disabled).toBeFalse();

@@ -430,6 +430,7 @@ public class ExamService {
             }
         }
         catch (AccessForbiddenException e) {
+            // TODO: this is not a good implementation, we should check before if the user has access
             // The current user does not have access to the bonus exam or course, so they should see the grade without bonus.
             return null;
         }
