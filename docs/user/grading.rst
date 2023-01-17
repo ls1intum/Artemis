@@ -16,7 +16,7 @@ There are two configurable special grades that are automatically treated as fail
 - ``No-participation Grade`` (default ``X``) is assigned according to the conditions below for courses and exams:
 
     - For a course, a student receives this grade if they do not start any exercise i.e., number of participations is 0.
-    - For an exam, a student receives this grade if they neither start nor submit the exam.
+    - For an exam, a student receives this grade if they do not submit the exam.
 
 In bonus assignment calculations, these two special grades are treated equivalent as receiving a total score of 0 from the corresponding course or exam.
 
