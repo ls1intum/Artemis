@@ -5,7 +5,6 @@ import { Participation, ParticipationType } from 'app/entities/participation/par
 export class StudentParticipation extends Participation {
     public student?: User;
     public team?: Team;
-    public participantIdentifier?: string;
     public testRun?: boolean;
 
     constructor(type?: ParticipationType) {

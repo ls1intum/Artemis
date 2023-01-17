@@ -1,12 +1,11 @@
 import dayjs from 'dayjs/esm';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ExamParticipationSummaryComponent } from 'app/exam/participate/summary/exam-participation-summary.component';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TestRunRibbonComponent } from 'app/exam/manage/test-runs/test-run-ribbon.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ExamInformationComponent } from 'app/exam/participate/information/exam-information.component';
 import { ExamPointsSummaryComponent } from 'app/exam/participate/summary/points-summary/exam-points-summary.component';
-import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { ProgrammingExamSummaryComponent } from 'app/exam/participate/summary/exercises/programming-exam-summary/programming-exam-summary.component';
 import { FileUploadExamSummaryComponent } from 'app/exam/participate/summary/exercises/file-upload-exam-summary/file-upload-exam-summary.component';
@@ -51,6 +50,7 @@ import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exa
 import { MockExamParticipationService } from '../../../../helpers/mocks/service/mock-exam-participation.service';
 import { SubmissionType } from 'app/entities/submission.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { NgbCollapseMocksModule } from '../../../../helpers/mocks/directive/ngbCollapseMocks.module';
 
 let fixture: ComponentFixture<ExamParticipationSummaryComponent>;
 let component: ExamParticipationSummaryComponent;
@@ -133,7 +133,7 @@ const gradeInfo: StudentExamWithGradeDTO = {
 function sharedSetup(url: string[]) {
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([]), MockModule(NgbModule), HttpClientModule],
+            imports: [RouterTestingModule.withRoutes([]), HttpClientModule, NgbCollapseMocksModule],
             declarations: [
                 ExamParticipationSummaryComponent,
                 MockComponent(TestRunRibbonComponent),
