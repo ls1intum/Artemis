@@ -17,6 +17,7 @@ There are two configurable special grades that are automatically treated as fail
 
     - For a course, a student receives this grade if they do not start any exercise i.e., number of participations is 0.
     - For an exam, a student receives this grade if they neither start nor submit the exam.
+
 In bonus assignment calculations, these two special grades are treated equivalent as receiving a total score of 0 from the corresponding course or exam.
 
 Instructors
@@ -53,14 +54,20 @@ A bonus configuration maps the grade received from a bonus source, which can be 
 In order to configure a bonus, an instructor needs to choose appropriate values for the fields below:
 
 1. **Bonus strategy** defines how the defines the grade obtained from the bonus source will affect the final exam. Artemis currently supports 2 strategies:
+
   - *Grades*: First, calculates the target exam grade. Then, applies the bonus to that.
   - *Points*: First, applies the bonus to the student's points. Then, calculates the final grade by matching the resulting points to the target exam's grading key.
+
 2. **Discreteness** (Only applicable if *grades* bonus strategy is selected) specifies how to combine the bonus grade with the exam grade. Currently only the first discreteness option is implemented.
+
   - *Continuous*: Applies bonus arithmetically to the student's grade. Final grade can be any numeric value between the best and the worst grade step values (e.g. from 1.3 to 1.2).
   - *Discrete*: (Not available yet) Bumps the student's grade to a better grade step. Final grade will be one of the grade steps in the target exam (e.g. from 1.3 to 1.0 or from B to A).
+
 3. **Calculation** defines the sign of the operation to indicate if it is an addition or subtraction.
+
   - *−* (Default option for *grades*): Subtracts bonus from target exam's grades/points. Prefer this when lower means better.
   - *+* (Default option for *points*): Adds bonus to target exam's grades/points. Prefer this when higher means better.
+
 4. **Bonus source** is the course or exam whose grade . The dropdown lists courses and exams with ``Bonus`` type grading keys if the current user is an instructor of it.
 
 Bonus configuration page has a wizard mode where the options appear one by one initially to navigate the new users through the process easily.

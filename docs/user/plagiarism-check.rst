@@ -90,8 +90,10 @@ We visualized the process in the following diagram.
 |tutor-workflow|
 
 1. Open the Exercise via:
+
  a. For course exercises: Course Management → Course → Exercises → Your Exercise.
  b. For exam exercises: Course Management → Course → Exams → Exam → Exercise Groups → Your Exercise.
+
 2. Access the plagiarism tool as seen in the picture
 
  |exercise-page|
@@ -117,6 +119,7 @@ We visualized the process in the following diagram.
 |instructors-workflow|
 
 1. Open the plagiarism cases via:
+
  a. For course exercises: Course Management → Course → Plagiarism Cases.
  b. For exam exercises: Course Management → Course → Exams → Exam → Plagiarism Cases.
 
@@ -156,6 +159,7 @@ The process is visualized in the following diagram.
 |student-workflow|
 
 1. Open the notified plagiarism confirmed case via:
+
  a. For course exercises: Course Overview → Course → Exercise → Plagiarism Case / Resolved Plagiarism Case.
  b. For exam exercises: Course Overview → Course → Exams → Exam → Plagiarism Case / Resolved Plagiarism Case.
 
