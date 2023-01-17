@@ -32,8 +32,6 @@ public class CustomLti13Configurer extends Lti13Configurer {
 
     public static final String LTI13_LOGIN_REDIRECT_PROXY_PATH = LTI13_BASE_PATH + "/auth-callback";
 
-    public static final String JWKS_PATH = "/.well-known/jwks.json";
-
     public CustomLti13Configurer() {
         super.ltiPath(LTI13_BASE_PATH);
         super.loginInitiationPath(LOGIN_INITIATION_PATH);
