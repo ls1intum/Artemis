@@ -46,7 +46,7 @@ describe('AuthServerProvider', () => {
 
             service.login(credentials).subscribe();
 
-            const req = httpMock.expectOne({ method: 'POST', url: `api/authenticate` });
+            const req = httpMock.expectOne({ method: 'POST', url: `api/public/authenticate` });
             req.flush(respPayload);
             tick();
         }));
@@ -56,7 +56,7 @@ describe('AuthServerProvider', () => {
 
             service.login(credentials).subscribe();
 
-            const req = httpMock.expectOne({ method: 'POST', url: `api/authenticate` });
+            const req = httpMock.expectOne({ method: 'POST', url: `api/public/authenticate` });
             req.flush(respPayload);
             tick();
         }));

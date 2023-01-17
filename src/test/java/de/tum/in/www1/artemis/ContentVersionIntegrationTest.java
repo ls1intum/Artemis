@@ -25,7 +25,7 @@ class ContentVersionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testContentVersionHeaderIsSetCorrectly() throws Exception {
-        MvcResult res = request.getMvc().perform(MockMvcRequestBuilders.get(new URI("/api/account"))).andReturn();
+        MvcResult res = request.getMvc().perform(MockMvcRequestBuilders.get(new URI("/api/public/account"))).andReturn();
         final MockHttpServletResponse response = res.getResponse();
         final String contentVersionHeader = response.getHeader(ApplicationVersionFilter.CONTENT_VERSION_HEADER);
         assertThat(contentVersionHeader).isEqualTo("1.3.3-beta7");

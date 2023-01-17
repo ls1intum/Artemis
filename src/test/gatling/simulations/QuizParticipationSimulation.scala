@@ -136,7 +136,7 @@ class QuizParticipationSimulation extends Simulation {
 
     val login: ChainBuilder = exec(
         http("First unauthenticated request")
-            .get("/api/account")
+            .get("/api/public/account")
             .headers(headers_http)
             .check(status.is(401))
             .check(headerRegex("Set-Cookie", "XSRF-TOKEN=([^;]*);[\\s]").saveAs("xsrf_token"))).exitHereIfFailed

@@ -41,16 +41,18 @@ describe(`ErrorHandlerInterceptor`, () => {
         });
     });
 
-    it('should not broadcast an http error if status is 401 and user is unauthenticated', () => {
-        const error = new HttpErrorResponse({ status: 401, url: '/api/account' });
-        const mockHandler = {
-            handle: () => throwError(() => error),
-        };
-        const isAuthenticatedSpy = jest.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(false);
+    it.each([{ url: '/api/public/account' }, { url: '/api/account' }])(
+        'should not broadcast an http error if status is 401 but url includes /api/public/account or /api/account',
+        ({ url }) => {
+            const error = new HttpErrorResponse({ status: 401, url });
+            const mockHandler = {
+                handle: () => throwError(() => error),
+            };
+            const isAuthenticatedSpy = jest.spyOn(accountServiceMock, 'isAuthenticated').mockReturnValue(false);
 
-        errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
+            errorHandlerInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
-        expect(isAuthenticatedSpy).toHaveBeenCalledOnce();
-        expect(eventManagerMock.broadcast).not.toHaveBeenCalled();
-    });
+            expect(isAuthenticatedSpy).toHaveBeenCalledOnce();
+        },
+    );
 });

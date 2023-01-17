@@ -40,7 +40,7 @@ class LtiOutcomeUrlGatlingTest extends Simulation {
 
     val scn = scenario("Test the LtiOutcomeUrl entity")
         .exec(http("First unauthenticated request")
-        .get("/api/account")
+        .get("/api/public/account")
         .headers(headers_http)
         .check(status.is(401))
         .pause(10)
@@ -53,7 +53,7 @@ class LtiOutcomeUrlGatlingTest extends Simulation {
         .formParam("submit", "Login")).exitHereIfFailed
         .pause(1)
         .exec(http("Authenticated request")
-        .get("/api/account")
+        .get("/api/public/account")
         .headers(headers_http_authenticated)
         .check(status.is(200))
         .pause(10)
