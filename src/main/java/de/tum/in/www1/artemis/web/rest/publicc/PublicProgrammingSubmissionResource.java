@@ -72,10 +72,10 @@ public class PublicProgrammingSubmissionResource {
         }
         catch (IllegalArgumentException ex) {
             log.error(
-                "Exception encountered when trying to extract the commit hash from the request body: processing submission for participation {} failed with request object {}: {}",
-                participationId, requestBody, ex);
+                    "Exception encountered when trying to extract the commit hash from the request body: processing submission for participation {} failed with request object {}: {}",
+                    participationId, requestBody, ex);
             throw new BadRequestAlertException("Exception encountered when trying to extract the commit hash from the request body " + ex.getMessage(), "ProgrammingSubmission",
-                "extractCommitHashNotPossible");
+                    "extractCommitHashNotPossible");
         }
         catch (IllegalStateException ex) {
             if (!ex.getMessage().contains("empty setup commit")) {
@@ -86,7 +86,7 @@ public class PublicProgrammingSubmissionResource {
         }
         catch (EntityNotFoundException ex) {
             log.error("Participation with id {} is not a ProgrammingExerciseParticipation: processing submission for participation {} failed with request object {}: {}",
-                participationId, participationId, requestBody, ex);
+                    participationId, participationId, requestBody, ex);
             throw ex;
         }
 
