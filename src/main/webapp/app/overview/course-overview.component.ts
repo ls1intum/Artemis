@@ -38,6 +38,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
     public hasUnreadMessages: boolean;
+    public messagesRouteLoaded: boolean;
 
     // Rendered embedded view for controls in the bar so we can destroy it if needed
     private controlsEmbeddedView?: EmbeddedViewRef<any>;
@@ -121,20 +122,14 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         });
     }
 
-    isUnderMessagesTab(): boolean {
-        if (this.route.snapshot.firstChild?.routeConfig?.path === 'messages') {
-            this.hasUnreadMessages = false;
-            return true;
-        }
-        return false;
-    }
-
     /**
      * Accepts a component reference of the subcomponent rendered based on the current route.
      * If it provides a controlsConfiguration, we try to render the controls component
      * @param componentRef the sub route component that has been mounted into the router outlet
      */
     onSubRouteActivate(componentRef: any) {
+        this.messagesRouteLoaded = this.route.snapshot.firstChild?.routeConfig?.path === 'messages';
+
         if (componentRef.controlConfiguration) {
             const provider = componentRef as BarControlConfigurationProvider;
             this.controlConfiguration = provider.controlConfiguration as BarControlConfiguration;
