@@ -90,7 +90,7 @@ export class MetisConversationService implements OnDestroy {
         this._activeConversation$.next(this._activeConversation);
     };
 
-    public forceRefresh = (): Observable<never> => {
+    public forceRefresh = (notifyActiveConversationSubscribers = true, notifyConversationsSubscribers = true): Observable<never> => {
         if (!this._course) {
             throw new Error('Course is not set. The service does not seem to be initialized.');
         }
@@ -106,8 +106,6 @@ export class MetisConversationService implements OnDestroy {
             }),
             map((conversations: ConversationDto[]) => {
                 this._conversationsOfUser = conversations;
-                this._conversationsOfUser$.next(this._conversationsOfUser);
-
                 // we check if the active conversation still is part of the conversations of the user, otherwise we reset it
                 if (this._activeConversation) {
                     const cachedActiveConversation = this._conversationsOfUser.find((conversationInCache) => conversationInCache.id === this._activeConversation?.id);
@@ -117,7 +115,12 @@ export class MetisConversationService implements OnDestroy {
                         this._activeConversation = cachedActiveConversation;
                     }
                 }
-                this._activeConversation$.next(this._activeConversation);
+                if (notifyConversationsSubscribers) {
+                    this._conversationsOfUser$.next(this._conversationsOfUser);
+                }
+                if (notifyActiveConversationSubscribers) {
+                    this._activeConversation$.next(this._activeConversation);
+                }
                 this.setIsLoading(false);
                 return;
             }),
