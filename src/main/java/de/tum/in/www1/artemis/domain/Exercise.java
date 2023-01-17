@@ -924,6 +924,13 @@ public abstract class Exercise extends BaseExercise implements Completable {
     public void validateGeneralSettings() {
         validateScoreSettings();
         validateDates();
+        validateExamExerciseIncludedInScoreCompletely();
+    }
+
+    private void validateExamExerciseIncludedInScoreCompletely() {
+        if (isExamExercise() && includedInOverallScore != IncludedInOverallScore.INCLUDED_COMPLETELY) {
+            throw new BadRequestAlertException("An exam exercise must be included in the score.", getTitle(), "examExerciseNotIncludedInScore");
+        }
     }
 
     /**

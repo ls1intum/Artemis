@@ -129,6 +129,7 @@ public class FileUploadExerciseResource {
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");
         }
         importedFileUploadExercise.checkCourseAndExerciseGroupExclusivity("File Upload Exercise");
+
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var originalFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(sourceId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedFileUploadExercise, user);
