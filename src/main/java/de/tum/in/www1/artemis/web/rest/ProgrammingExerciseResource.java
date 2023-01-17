@@ -14,7 +14,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -118,8 +117,6 @@ public class ProgrammingExerciseResource {
 
     private final Pattern packageNamePatternForSwift = Pattern.compile(packageNameRegexForSwift);
 
-    private final Environment environment;
-
     public ProgrammingExerciseResource(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository,
             UserRepository userRepository, AuthorizationCheckService authCheckService, CourseService courseService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, ExerciseService exerciseService,
@@ -129,7 +126,7 @@ public class ProgrammingExerciseResource {
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, Environment environment) {
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.userRepository = userRepository;
@@ -151,7 +148,6 @@ public class ProgrammingExerciseResource {
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
-        this.environment = environment;
     }
 
     /**
@@ -222,54 +218,49 @@ public class ProgrammingExerciseResource {
         auxiliaryRepositoryService.validateAndAddAuxiliaryRepositoriesOfProgrammingExercise(programmingExercise, programmingExercise.getAuxiliaryRepositories());
         submissionPolicyService.validateSubmissionPolicyCreation(programmingExercise);
 
-        boolean localCIEnabled = Arrays.asList(this.environment.getActiveProfiles()).contains("localci");
+        ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
+                .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
 
-        if (!localCIEnabled) {
-            ProgrammingLanguageFeature programmingLanguageFeature = programmingLanguageFeatureService.get()
-                    .getProgrammingLanguageFeatures(programmingExercise.getProgrammingLanguage());
-
-            // Check if package name is set
-            if (programmingLanguageFeature.isPackageNameRequired()) {
-                if (programmingExercise.getPackageName() == null) {
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
-                }
-
-                // Check if package name matches regex
-                Matcher packageNameMatcher;
-                if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
-                    packageNameMatcher = packageNamePatternForSwift.matcher(programmingExercise.getPackageName());
-                }
-                else {
-                    packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
-                }
-                if (!packageNameMatcher.matches()) {
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
-                }
+        // Check if package name is set
+        if (programmingLanguageFeature.isPackageNameRequired()) {
+            if (programmingExercise.getPackageName() == null) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
             }
 
-            // Check if project type is selected
-            if (!programmingLanguageFeature.getProjectTypes().isEmpty()) {
-                if (programmingExercise.getProjectType() == null) {
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is not set", "projectTypeNotSet")).body(null);
-                }
-                if (!programmingLanguageFeature.getProjectTypes().contains(programmingExercise.getProjectType())) {
-                    return ResponseEntity.badRequest()
-                            .headers(HeaderUtil.createAlert(applicationName, "The project type is not supported for this programming language", "projectTypeNotSupported"))
-                            .body(null);
-                }
+            // Check if package name matches regex
+            Matcher packageNameMatcher;
+            if (programmingExercise.getProgrammingLanguage() == ProgrammingLanguage.SWIFT) {
+                packageNameMatcher = packageNamePatternForSwift.matcher(programmingExercise.getPackageName());
             }
             else {
-                if (programmingExercise.getProjectType() != null) {
-                    return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is set but not supported", "projectTypeSet")).body(null);
-                }
+                packageNameMatcher = packageNamePattern.matcher(programmingExercise.getPackageName());
             }
+            if (!packageNameMatcher.matches()) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The package name is invalid", "packagenameInvalid")).body(null);
+            }
+        }
 
-            // Check if checkout solution repository is enabled
-            if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.isCheckoutSolutionRepositoryAllowed()) {
-                return ResponseEntity.badRequest()
-                        .headers(HeaderUtil.createAlert(applicationName, "Checking out the solution repository is not supported for this language", "checkoutSolutionNotSupported"))
-                        .body(null);
+        // Check if project type is selected
+        if (!programmingLanguageFeature.getProjectTypes().isEmpty()) {
+            if (programmingExercise.getProjectType() == null) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is not set", "projectTypeNotSet")).body(null);
             }
+            if (!programmingLanguageFeature.getProjectTypes().contains(programmingExercise.getProjectType())) {
+                return ResponseEntity.badRequest()
+                        .headers(HeaderUtil.createAlert(applicationName, "The project type is not supported for this programming language", "projectTypeNotSupported")).body(null);
+            }
+        }
+        else {
+            if (programmingExercise.getProjectType() != null) {
+                return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "The project type is set but not supported", "projectTypeSet")).body(null);
+            }
+        }
+
+        // Check if checkout solution repository is enabled
+        if (programmingExercise.getCheckoutSolutionRepository() && !programmingLanguageFeature.isCheckoutSolutionRepositoryAllowed()) {
+            return ResponseEntity.badRequest()
+                    .headers(HeaderUtil.createAlert(applicationName, "Checking out the solution repository is not supported for this language", "checkoutSolutionNotSupported"))
+                    .body(null);
         }
 
         programmingExerciseRepository.validateCourseSettings(programmingExercise, course);
