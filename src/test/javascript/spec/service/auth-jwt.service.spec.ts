@@ -65,7 +65,7 @@ describe('AuthServerProvider', () => {
     it('should logout', fakeAsync(() => {
         service.logout().subscribe();
 
-        const req = httpMock.expectOne({ method: 'POST', url: `api/logout` });
+        const req = httpMock.expectOne({ method: 'POST', url: `api/public/logout` });
         req.flush(respPayload);
         tick();
     }));
@@ -74,7 +74,7 @@ describe('AuthServerProvider', () => {
         it('should login with SAML2 if login should be remembered', fakeAsync(() => {
             service.loginSAML2(true).subscribe();
 
-            const req = httpMock.expectOne({ method: 'POST', url: `api/saml2` });
+            const req = httpMock.expectOne({ method: 'POST', url: `api/public/saml2` });
             req.flush(respPayload);
             tick();
         }));
@@ -82,7 +82,7 @@ describe('AuthServerProvider', () => {
         it('should login with SAML2 if login should not be remembered', fakeAsync(() => {
             service.loginSAML2(false).subscribe();
 
-            const req = httpMock.expectOne({ method: 'POST', url: `api/saml2` });
+            const req = httpMock.expectOne({ method: 'POST', url: `api/public/saml2` });
             req.flush(respPayload);
             tick();
         }));

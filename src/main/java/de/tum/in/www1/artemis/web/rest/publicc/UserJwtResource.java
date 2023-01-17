@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.publicc;
 
 import java.util.Optional;
 
@@ -34,9 +34,10 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
  * REST controller to authenticate users.
  */
 @RestController
+@RequestMapping("public/")
 public class UserJwtResource {
 
-    private static final Logger log = LoggerFactory.getLogger(UserJwtResource.class);
+    private final Logger log = LoggerFactory.getLogger(UserJwtResource.class);
 
     private final JWTCookieService jwtCookieService;
 
@@ -52,12 +53,12 @@ public class UserJwtResource {
 
     /**
      * Authorizes a User
-     * @param loginVM       user credentials View Mode
-     * @param userAgent     User Agent
-     * @param response      HTTP response
+     *
+     * @param loginVM   user credentials View Mode
+     * @param userAgent User Agent
+     * @param response  HTTP response
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (Captcha required)
      */
-    // TODO: /public
     @PostMapping("authenticate")
     @EnforceNothing
     public ResponseEntity<Void> authorize(@Valid @RequestBody LoginVM loginVM, @RequestHeader("User-Agent") String userAgent, HttpServletResponse response) {
@@ -88,11 +89,10 @@ public class UserJwtResource {
     /**
      * Authorizes a User logged in with SAML2
      *
-     * @param body      the body of the request. "true" to remember the user.
-     * @param response  HTTP response
+     * @param body     the body of the request. "true" to remember the user.
+     * @param response HTTP response
      * @return the ResponseEntity with status 200 (ok), 401 (unauthorized) or 403 (user not activated)
      */
-    // TODO: /public
     @PostMapping("saml2")
     @EnforceNothing
     public ResponseEntity<Void> authorizeSAML2(@RequestBody final String body, HttpServletResponse response) {
@@ -110,8 +110,7 @@ public class UserJwtResource {
         try {
             authentication = saml2Service.get().handleAuthentication(principal);
             SecurityContextHolder.getContext().setAuthentication(authentication);
-        }
-        catch (UserNotActivatedException e) {
+        } catch (UserNotActivatedException e) {
             // If the exception is not caught a 401 is returned.
             // That does not match the actual reason and would trigger authentication in the client
             return ResponseEntity.status(HttpStatus.FORBIDDEN).header("X-artemisApp-error", e.getMessage()).build();
@@ -126,10 +125,11 @@ public class UserJwtResource {
 
     /**
      * Removes the cookie containing the jwt
-     * @param request HTTP request
-     * @param response  HTTP response
+     * Is public to make sure a logout can even occur when there is some issue with the authentication
+     *
+     * @param request  HTTP request
+     * @param response HTTP response
      */
-    // TODO: /public
     @PostMapping("logout")
     @EnforceNothing
     public void logout(HttpServletRequest request, HttpServletResponse response) throws ServletException {
