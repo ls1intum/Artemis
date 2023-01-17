@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -501,7 +502,7 @@ public class FileService implements DisposableBean {
             Files.copy(resource.getInputStream(), copyPath, REPLACE_EXISTING);
             // make gradlew executable
             if (targetFilePath.endsWith("gradlew")) {
-                Files.setPosixFilePermissions(copyPath, Set.of(OWNER_EXECUTE, OWNER_READ, OWNER_WRITE));
+                Files.getPosixFilePermissions(copyPath).add(PosixFilePermission.OWNER_EXECUTE);
             }
         }
     }
