@@ -7,6 +7,9 @@ import javax.annotation.Nullable;
 import javax.persistence.*;
 import javax.validation.constraints.Size;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Entity
@@ -20,6 +23,8 @@ public class BuildPlan extends DomainObject {
     private String buildPlan;
 
     @OneToMany
+    @JoinColumn(name = "build_plan_id")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<ProgrammingExercise> programmingExercises = new HashSet<>();
 
     public String getBuildPlan() {

@@ -2717,7 +2717,7 @@ public class DatabaseUtilService {
     }
 
     public void addBuildPlanAndSecretToProgrammingExercise(ProgrammingExercise programmingExercise, String buildPlan) {
-        buildPlanRepository.updateBuildPlan(programmingExercise, buildPlan, buildPlanRepository);
+        buildPlanRepository.updateBuildPlan(programmingExercise, buildPlan);
         programmingExercise.generateAndSetBuildPlanAccessSecret();
         programmingExerciseRepository.save(programmingExercise);
 
