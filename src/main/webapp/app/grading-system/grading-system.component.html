@@ -1,5 +1,5 @@
 <div class="d-flex align-items-center">
-    <h2 style="margin-bottom: 0">
+    <h2>
         {{ isExam ? ('artemisApp.gradingSystem.titleExam' | artemisTranslate) : ('artemisApp.gradingSystem.titleCourse' | artemisTranslate) }}
         {{ isExam ? childComponent?.exam?.title : childComponent?.course?.title }}
     </h2>
