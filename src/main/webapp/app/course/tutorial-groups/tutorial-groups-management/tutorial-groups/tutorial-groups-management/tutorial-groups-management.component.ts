@@ -37,7 +37,6 @@ export class TutorialGroupsManagementComponent implements OnInit, OnDestroy {
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-
         private cdr: ChangeDetectorRef,
     ) {}
 
