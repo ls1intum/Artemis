@@ -12,5 +12,6 @@
         (formSubmitted)="updateLearningGoal($event)"
         [courseId]="courseId"
         [lecturesOfCourseWithLectureUnits]="lecturesWithLectureUnits"
+        [averageStudentScore]="learningGoal?.courseProgress?.averageStudentScore ?? 0"
     ></jhi-learning-goal-form>
 </div>

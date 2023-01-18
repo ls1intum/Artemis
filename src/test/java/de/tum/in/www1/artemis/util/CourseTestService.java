@@ -630,14 +630,16 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCourseForDashboard() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false);
-        Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+    public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false);
+        Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
 
         // Test that the received course has five exercises
         assertThat(receivedCourse.getExercises()).as("Five exercises are returned").hasSize(5);
         // Test that the received course has two lectures
         assertThat(receivedCourse.getLectures()).as("Two lectures are returned").hasSize(2);
+        // Test that the received course has two learning goals
+        assertThat(receivedCourse.getLearningGoals()).as("Two learning goals are returned").hasSize(2);
 
         // Iterate over all exercises of the remaining course
         for (Exercise exercise : courses.get(0).getExercises()) {

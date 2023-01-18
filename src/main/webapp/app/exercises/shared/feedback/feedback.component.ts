@@ -174,7 +174,7 @@ export class FeedbackComponent implements OnInit {
                     if (feedbacks?.length) {
                         return of(feedbacks);
                     } else {
-                        return this.feedbackService.getDetailsForResult(this.result.participation!.id!, this.result.id!);
+                        return this.feedbackService.getFeedbacksForResult(this.result.participation!.id!, this.result);
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {

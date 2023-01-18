@@ -144,7 +144,8 @@
                 },
                 "endDate": {
                     "invalid": "Must be after the start date of the course"
-                }
+                },
+                "invalidForm": "Please fill in all required fields."
             },
             "courseDashboard": "Course Dashboard",
             "instructorDashboard": "Instructor Course Dashboard",
