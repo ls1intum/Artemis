@@ -1,33 +1,32 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
-import { TranslateService } from '@ngx-translate/core';
-import { AccountService } from 'app/core/auth/account.service';
-import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription, of, zip } from 'rxjs';
-import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
-import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash-es';
-import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
-import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
-import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
-import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
-import { AssessmentType } from 'app/entities/assessment-type.model';
-import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
-import { IssuesMap, ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
-import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
 import { Location } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
+import { TranslateService } from '@ngx-translate/core';
+import { AccountService } from 'app/core/auth/account.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { Course } from 'app/entities/course.model';
+import { IssuesMap, ProgrammingExerciseGradingStatistics, TestCaseStats } from 'app/entities/programming-exercise-test-case-statistics.model';
+import { ProgrammingExerciseTestCase, Visibility } from 'app/entities/programming-exercise-test-case.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { StaticCodeAnalysisCategory, StaticCodeAnalysisCategoryState } from 'app/entities/static-code-analysis-category.model';
+import { SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
+import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
 import {
     ProgrammingExerciseGradingService,
     ProgrammingExerciseTestCaseUpdate,
     StaticCodeAnalysisCategoryUpdate,
 } from 'app/exercises/programming/manage/services/programming-exercise-grading.service';
+import { ProgrammingExerciseWebsocketService } from 'app/exercises/programming/manage/services/programming-exercise-websocket.service';
+import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { SubmissionPolicyService } from 'app/exercises/programming/manage/services/submission-policy.service';
-import { SubmissionPolicy, SubmissionPolicyType } from 'app/entities/submission-policy.model';
-import { faQuestionCircle, faSort, faSortDown, faSortUp, faSquare } from '@fortawesome/free-solid-svg-icons';
-import { ProgrammingGradingChartsDirective } from 'app/exercises/programming/manage/grading/charts/programming-grading-charts.directive';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course } from 'app/entities/course.model';
+import { ComponentCanDeactivate } from 'app/shared/guard/can-deactivate.model';
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { differenceBy as _differenceBy, differenceWith as _differenceWith, intersectionWith as _intersectionWith, unionBy as _unionBy } from 'lodash-es';
+import { Subscription, of, zip } from 'rxjs';
+import { catchError, distinctUntilChanged, map, take, tap } from 'rxjs/operators';
 
 /**
  * Describes the editableField
@@ -807,21 +806,11 @@ export class ProgrammingExerciseConfigureGradingComponent implements OnInit, OnD
     }
 
     /**
-     * The sum of all test weights has to be at least zero. For exercises with purely automatic assessment the weight has to be greater than zero.
+     * The sum of all test weights has to be at least zero.
      * @param testCaseUpdates the changed test cases with not-yet-verified settings.
-     * @private
      */
     private isSumOfWeightsOk(testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): boolean {
-        const totalTestCaseWeights = this.sumOfTestCaseWeights(testCaseUpdates);
-        if (this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC) {
-            // Students can only get points when at least one test case is weighted > 0
-            return totalTestCaseWeights > 0;
-        } else {
-            // When manual assessment is enabled, students can also reach full
-            // marks just with manual feedbacks.
-            // Therefore, it is okay if all weights are set to 0.
-            return totalTestCaseWeights >= 0;
-        }
+        return this.sumOfTestCaseWeights(testCaseUpdates) >= 0;
     }
 
     private sumOfTestCaseWeights(testCaseUpdates: ProgrammingExerciseTestCaseUpdate[]): number {
