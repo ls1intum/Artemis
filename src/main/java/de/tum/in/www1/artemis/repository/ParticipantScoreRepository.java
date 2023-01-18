@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.statistics.ScoreDistribution;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewExerciseStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation;
 
@@ -44,6 +45,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     List<ParticipantScore> findAll();
 
+    @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     List<ParticipantScore> findAllByExercise(Exercise exercise);
 
     @Query("""
@@ -96,7 +98,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     /**
      * Safely removes the result from all participant scores by setting it to null.
      * The scheduler will later evaluate and delete the participant score if no older result exists.
-     * @see de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService
+     * @see ParticipantScoreScheduleService
      * @param resultId the id of the result to be removed
      */
     default void clearAllByResultId(Long resultId) {
@@ -114,7 +116,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             SELECT new de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation(p.exercise.id, AVG(p.lastRatedScore), MAX(p.lastRatedScore))
             FROM ParticipantScore p
             WHERE p.exercise IN :exercises
-            GROUP BY p.exercise
+            GROUP BY p.exercise.id
             """)
     List<ExerciseScoresAggregatedInformation> getAggregatedExerciseScoresInformation(@Param("exercises") Set<Exercise> exercises);
 
@@ -123,7 +125,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             FROM ParticipantScore p
             WHERE p.exercise.id = :exerciseId
             GROUP BY p.id
-            ORDER BY p.lastRatedScore ASC
+            ORDER BY p.lastRatedScore asc
             """)
     List<ScoreDistribution> getScoreDistributionForExercise(@Param("exerciseId") Long exerciseId);
 

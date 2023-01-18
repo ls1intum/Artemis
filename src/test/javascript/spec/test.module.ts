@@ -7,7 +7,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from './helpers/mocks/service/mock-account.service';
 import { MockActivatedRoute } from './helpers/mocks/activated-route/mock-activated-route';
 import { MockRouter } from './helpers/mocks/mock-router';
-import { FaIconComponent, FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import locale from '@angular/common/locales/en';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -22,7 +22,7 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { MockProfileService } from './helpers/mocks/service/mock-profile.service';
 
 @NgModule({
-    imports: [HttpClientTestingModule, FontAwesomeModule],
+    imports: [HttpClientTestingModule],
     providers: [
         DatePipe,
         ParseLinks,

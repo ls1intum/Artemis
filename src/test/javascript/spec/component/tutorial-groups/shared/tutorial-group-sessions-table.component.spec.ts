@@ -3,17 +3,17 @@ import { TutorialGroupSessionsTableComponent } from 'app/course/tutorial-groups/
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TutorialGroupSessionRowStubComponent } from '../stubs/tutorial-group-sessions-table-stub.component';
-import { MockDirective, MockPipe } from 'ng-mocks';
+import { MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { generateExampleTutorialGroupSession } from '../helpers/tutorialGroupSessionExampleModels';
 import dayjs from 'dayjs/esm';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleModels';
-import { NgbCollapse } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { NgbCollapseMocksModule } from '../../../helpers/mocks/directive/ngbCollapseMocks.module';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
-class MockExtraColumn {
+class MockExtraColumnComponent {
     @Input() tutorialGroupSession: TutorialGroupSession;
 }
 
@@ -27,7 +27,7 @@ class MockExtraColumn {
         </jhi-tutorial-group-sessions-table>
     `,
 })
-class MockWrapper {
+class MockWrapperComponent {
     @Input()
     tutorialGroup: TutorialGroup;
 
@@ -40,34 +40,34 @@ class MockWrapper {
     @ViewChild(TutorialGroupSessionsTableComponent)
     sessionTableInstance: TutorialGroupSessionsTableComponent;
 
-    @ViewChildren(MockExtraColumn)
-    mockExtraColumns: QueryList<MockExtraColumn>;
+    @ViewChildren(MockExtraColumnComponent)
+    mockExtraColumns: QueryList<MockExtraColumnComponent>;
 }
 
 describe('TutorialGroupSessionsTableWrapperTest', () => {
-    let fixture: ComponentFixture<MockWrapper>;
-    let component: MockWrapper;
+    let fixture: ComponentFixture<MockWrapperComponent>;
+    let component: MockWrapperComponent;
     let tableInstance: TutorialGroupSessionsTableComponent;
-    let mockExtraColumns: MockExtraColumn[];
+    let mockExtraColumns: MockExtraColumnComponent[];
     let sessionOne: TutorialGroupSession;
     let sessionTwo: TutorialGroupSession;
     let tutorialGroup: TutorialGroup;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
+            imports: [NgbCollapseMocksModule],
             declarations: [
                 TutorialGroupSessionsTableComponent,
                 TutorialGroupSessionRowStubComponent,
-                MockWrapper,
-                MockExtraColumn,
+                MockWrapperComponent,
+                MockExtraColumnComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
-                MockDirective(NgbCollapse),
             ],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(MockWrapper);
+                fixture = TestBed.createComponent(MockWrapperComponent);
                 component = fixture.componentInstance;
                 tutorialGroup = generateExampleTutorialGroup({});
                 sessionOne = generateExampleTutorialGroupSession({ id: 1 });
@@ -112,13 +112,8 @@ describe('TutorialGroupSessionTableComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [
-                TutorialGroupSessionsTableComponent,
-                TutorialGroupSessionRowStubComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockPipe(ArtemisDatePipe),
-                MockDirective(NgbCollapse),
-            ],
+            imports: [NgbCollapseMocksModule],
+            declarations: [TutorialGroupSessionsTableComponent, TutorialGroupSessionRowStubComponent, MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
         })
             .compileComponents()
             .then(() => {

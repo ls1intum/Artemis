@@ -45,7 +45,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
         @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
         @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Exercise extends BaseExercise implements Completable {
+public abstract class Exercise extends BaseExercise implements LearningObject {
 
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
@@ -58,14 +58,15 @@ public abstract class Exercise extends BaseExercise implements Completable {
     private IncludedInOverallScore includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
 
     @Column(name = "problem_statement")
-    @Lob
     private String problemStatement;
 
     @Column(name = "grading_instructions")
-    @Lob
     private String gradingInstructions;
 
-    @ManyToMany(mappedBy = "exercises")
+    @ManyToMany
+    @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
+    @JsonIgnoreProperties({ "exercises", "course" })
+    @JsonView(QuizView.Before.class)
     private Set<LearningGoal> learningGoals = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
@@ -469,7 +470,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      * @return the latest relevant result in the given participation, or null, if none exist
      */
     @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
+    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, boolean ignoreAssessmentDueDate) {
         // for most types of exercises => return latest result (all results are relevant)
         Submission latestSubmission = null;
         // we get the results over the submissions
@@ -678,7 +679,6 @@ public abstract class Exercise extends BaseExercise implements Completable {
      * @return boolean
      */
     public boolean isReleased() {
-        // Exam
         ZonedDateTime releaseDate = getParticipationStartDate();
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
@@ -857,6 +857,17 @@ public abstract class Exercise extends BaseExercise implements Completable {
     }
 
     /**
+     * Checks whether students should be able to see the example solution.
+     *
+     * @return true if example solution publication date is in the past, false otherwise (including null case).
+     */
+    public boolean isExampleSolutionPublished() {
+        ZonedDateTime exampleSolutionPublicationDate = this.isExamExercise() ? this.getExamViaExerciseGroupOrCourseMember().getExampleSolutionPublicationDate()
+                : this.getExampleSolutionPublicationDate();
+        return exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(exampleSolutionPublicationDate);
+    }
+
+    /**
      * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
      *
      * @throws BadRequestAlertException if the dates are not valid
@@ -924,7 +935,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      */
     public enum ExerciseSearchColumn {
 
-        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
+        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title"), EXAM_TITLE("exerciseGroup.exam.title");
 
         private final String mappedColumnName;
 

@@ -3,7 +3,7 @@ import { TreeviewItem } from '../../models/treeview-item';
 import { TreeviewItemTemplateContext } from '../../models/treeview-item-template-context';
 
 @Component({
-    // tslint:disable-next-line:component-selector
+    // eslint-disable-next-line @angular-eslint/component-selector
     selector: 'treeview-item',
     templateUrl: './treeview-item.component.html',
     styleUrls: ['./treeview-item.component.scss'],

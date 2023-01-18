@@ -56,7 +56,7 @@ describe('FileUploadAssessmentComponent', () => {
     let submissionService: SubmissionService;
 
     const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxPoints: 100, bonusPoints: 0 } as FileUploadExercise;
-    const map1 = new Map<string, Object>().set('testRun', true).set('correction-round', 1);
+    const map1 = new Map<string, any>().set('testRun', true).set('correction-round', 1);
     const params1 = { exerciseId: 20, courseId: 123, submissionId: 7 };
     const params2 = { exerciseId: 20, courseId: 123, submissionId: 'new' };
 
@@ -212,7 +212,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(null));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
+            expect(navigateByUrlStub).toHaveBeenCalledOnce();
             expect(comp.busy).toBeTrue();
         });
 
@@ -223,7 +223,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ error: { errorKey: 'lockedSubmissionsLimitReached' } })));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
+            expect(navigateByUrlStub).toHaveBeenCalledOnce();
             expect(comp.busy).toBeTrue();
         });
 
@@ -234,7 +234,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ status: 403 })));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalledOnce();
+            expect(navigateByUrlStub).not.toHaveBeenCalled();
             expect(comp.busy).toBeTrue();
         });
     });
@@ -600,7 +600,7 @@ describe('FileUploadAssessmentComponent', () => {
         comp.submission = createSubmission(exercise);
         navigateByUrlStub.mockReturnValue(Promise.resolve(true));
         comp.navigateBack();
-        expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
+        expect(navigateByUrlStub).toHaveBeenCalledOnce();
     });
 });
 

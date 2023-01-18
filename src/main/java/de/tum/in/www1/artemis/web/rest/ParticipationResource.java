@@ -29,8 +29,10 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.config.GuidedTourConfiguration;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
+import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
+import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
@@ -109,6 +111,8 @@ public class ParticipationResource {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final QuizSubmissionService quizSubmissionService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
@@ -116,7 +120,8 @@ public class ParticipationResource {
             AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
-            QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService) {
+            QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository, GroupNotificationService groupNotificationService,
+            QuizSubmissionService quizSubmissionService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -140,6 +145,7 @@ public class ParticipationResource {
         this.quizScheduleService = quizScheduleService;
         this.submittedAnswerRepository = submittedAnswerRepository;
         this.groupNotificationService = groupNotificationService;
+        this.quizSubmissionService = quizSubmissionService;
     }
 
     /**
@@ -299,13 +305,13 @@ public class ParticipationResource {
 
         var studentParticipation = studentParticipationRepository.findByIdWithResultsElseThrow(participation.getId());
         var result = studentParticipation.findLatestLegalResult();
-        if (Objects.isNull(result) || result.getScore() < 100) {
+        if (result == null || result.getScore() < 100) {
             throw new BadRequestAlertException("User has not reached the conditions to submit a feedback request", "participation", "preconditions not met");
         }
 
         var currentDate = now();
         var participationIndividualDueDate = participation.getIndividualDueDate();
-        if (Objects.nonNull(participationIndividualDueDate) && currentDate.isAfter(participationIndividualDueDate)) {
+        if (participationIndividualDueDate != null && currentDate.isAfter(participationIndividualDueDate)) {
             throw new BadRequestAlertException("Request has already been sent", "participation", "already sent");
         }
 
@@ -646,7 +652,7 @@ public class ParticipationResource {
 
             // quiz has ended => get participation from database and add full quizExercise
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
-            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin());
+            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), null);
             if (participation == null) {
                 return null;
             }
@@ -668,7 +674,7 @@ public class ParticipationResource {
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             quizExercise.filterForStudentsDuringQuiz();
-            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin());
+            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin(), quizBatch.get());
             // set view
             var view = quizExercise.viewForStudentsInQuizExercise(quizBatch.get());
             MappingJacksonValue value = new MappingJacksonValue(participation);
@@ -833,12 +839,13 @@ public class ParticipationResource {
      *
      * @param quizExercise the quiz exercise to attach to the participation
      * @param username     the username of the user that the participation belongs to
+     * @param quizBatch    the quiz batch of quiz exercise which user participated in
      * @return the found or created participation with a result
      */
     // TODO: we should move this method (and others related to quizzes) into a QuizParticipationService (or similar) to make this resource independent of specific quiz exercise
     // functionality
-    private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
-        if (quizExercise.isQuizEnded()) {
+    private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username, QuizBatch quizBatch) {
+        if (quizExercise.isQuizEnded() || (quizExercise.getQuizMode() == QuizMode.BATCHED && quizSubmissionService.isSubmitted(quizBatch, username))) {
             // try getting participation from database
             Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
 

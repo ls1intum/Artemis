@@ -15,6 +15,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -55,9 +56,9 @@ public class QuizExercise extends Exercise {
     private Boolean isOpenForPractice;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "quiz_mode")
+    @Column(name = "quiz_mode", columnDefinition = "varchar(63) default 'SYNCHRONIZED'", nullable = false)
     @JsonView(QuizView.Before.class)
-    private QuizMode quizMode;
+    private QuizMode quizMode = QuizMode.SYNCHRONIZED; // default value
 
     /**
      * The duration of the quiz exercise in seconds
@@ -98,6 +99,7 @@ public class QuizExercise extends Exercise {
         this.allowedNumberOfAttempts = allowedNumberOfAttempts;
     }
 
+    @JsonProperty
     public Integer getRemainingNumberOfAttempts() {
         return remainingNumberOfAttempts;
     }
@@ -162,7 +164,7 @@ public class QuizExercise extends Exercise {
      * @return true if quiz has started, false otherwise
      */
     @JsonView(QuizView.Before.class)
-    public Boolean isQuizStarted() {
+    public boolean isQuizStarted() {
         return isVisibleToStudents();
     }
 
@@ -172,7 +174,7 @@ public class QuizExercise extends Exercise {
      * @return true if quiz has ended, false otherwise
      */
     @JsonView(QuizView.Before.class)
-    public Boolean isQuizEnded() {
+    public boolean isQuizEnded() {
         return getDueDate() != null && ZonedDateTime.now().isAfter(getDueDate());
     }
 
@@ -182,7 +184,7 @@ public class QuizExercise extends Exercise {
      * @return true if quiz should be filtered, false otherwise
      */
     @JsonIgnore
-    public Boolean shouldFilterForStudents() {
+    public boolean shouldFilterForStudents() {
         return !isQuizEnded();
     }
 
@@ -192,7 +194,7 @@ public class QuizExercise extends Exercise {
      * @return true if the quiz is valid, otherwise false
      */
     @JsonIgnore
-    public Boolean isValid() {
+    public boolean isValid() {
         // check title
         if (getTitle() == null || getTitle().isEmpty()) {
             return false;
@@ -351,7 +353,7 @@ public class QuizExercise extends Exercise {
 
     @Override
     @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
+    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, boolean ignoreAssessmentDueDate) {
         // The shouldFilterForStudents() method uses the exercise release/due dates, not the ones of the exam, therefor we can only use them if this exercise is not part of an exam
         // In exams, all results should be seen as relevant as they will only be created once the exam is over
         if (shouldFilterForStudents() && !isExamExercise()) {
@@ -710,7 +712,7 @@ public class QuizExercise extends Exercise {
     public void validateDates() {
         super.validateDates();
         quizBatches.forEach(quizBatch -> {
-            if (quizBatch.getStartTime().isBefore(getReleaseDate())) {
+            if (quizBatch.getStartTime() != null && quizBatch.getStartTime().isBefore(getReleaseDate())) {
                 throw new BadRequestAlertException("Start time must not be before release date!", getTitle(), "noValidDates");
             }
         });

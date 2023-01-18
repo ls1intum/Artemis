@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
 @EntityListeners({ AuditingEntityListener.class, ResultListener.class })
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Result extends DomainObject {
+public class Result extends DomainObject implements Comparable<Result> {
 
     @Column(name = "completion_date")
     @JsonView(QuizView.Before.class)
@@ -460,7 +460,7 @@ public class Result extends DomainObject {
     /**
      * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
      * their assessor.
-     *
+     * <p>
      * Does not filter feedbacks.
      */
     public void filterSensitiveInformation() {
@@ -477,6 +477,7 @@ public class Result extends DomainObject {
         if (isBeforeDueDate) {
             feedbacks.removeIf(Feedback::isAfterDueDate);
         }
+        // TODO: this is not good code!
         setTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).count());
         setPassedTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
     }
@@ -572,5 +573,15 @@ public class Result extends DomainObject {
         setTestCaseCount(originalResult.getTestCaseCount());
         setPassedTestCaseCount(originalResult.getPassedTestCaseCount());
         setCodeIssueCount(originalResult.getCodeIssueCount());
+    }
+
+    @Override
+    public int compareTo(Result other) {
+        if (getCompletionDate() == null || other.getCompletionDate() == null || Objects.equals(getCompletionDate(), other.getCompletionDate())) {
+            // this case should not happen, but in the rare case we can compare the ids (in tests, the submission dates might be identical as ms are not stored in the database)
+            // newer ids are typically later
+            return getId().compareTo(other.getId());
+        }
+        return getCompletionDate().compareTo(other.getCompletionDate());
     }
 }

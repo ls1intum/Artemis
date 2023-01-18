@@ -58,6 +58,15 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
     List<StudentParticipation> findByCourseIdAndStudentIdWithEagerRatedResults(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
 
     @Query("""
+            SELECT COUNT(p.id) > 0
+            FROM StudentParticipation p
+            LEFT JOIN p.team.students ts
+            WHERE p.exercise.course.id = :courseId
+                AND (p.student.id = :studentId OR ts.id = :studentId)
+             """)
+    boolean existsByCourseIdAndStudentId(@Param("courseId") Long courseId, @Param("studentId") Long studentId);
+
+    @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
@@ -389,7 +398,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.feedbacks
             WHERE p.exercise.id = :#{#exerciseId}
-            AND (p.individualDueDate IS NULL OR p.individualDueDate <= :#{#now})
+            AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
             AND p.testRun = false
             AND NOT EXISTS
                 (SELECT prs FROM p.results prs
@@ -538,6 +547,20 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 AND (rs.type <> 'ILLEGAL' or rs.type is null)
             """)
     List<StudentParticipation> findAllWithEagerLegalSubmissionsAndEagerResultsByExerciseId(@Param("exerciseId") long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.results r
+            LEFT JOIN FETCH r.submission rs
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results sr
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.testRun = false
+                AND p.submissions IS NOT EMPTY
+                AND (s.type <> 'ILLEGAL' or s.type is null)
+                AND (rs.type <> 'ILLEGAL' or rs.type is null)
+            """)
+    List<StudentParticipation> findAllForPlagiarism(@Param("exerciseId") long exerciseId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -913,7 +936,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN s.participation p
             WHERE
                 p.exercise.exerciseGroup.exam.id = :examId
-            GROUP BY s.id
+            GROUP BY s.id, p.id
             """)
     List<QuizSubmittedAnswerCount> findSubmittedAnswerCountForQuizzesInExam(@Param("examId") long examId);
 }

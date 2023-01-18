@@ -1,13 +1,14 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import dayjs from 'dayjs/esm';
 import { MockComponent, MockDirective, MockPipe, MockProviders } from 'ng-mocks';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
 
 describe('AttachmentUnitFormComponent', () => {
     let attachmentUnitFormComponentFixture: ComponentFixture<AttachmentUnitFormComponent>;
@@ -15,13 +16,13 @@ describe('AttachmentUnitFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule],
+            imports: [ReactiveFormsModule, FormsModule, MockDirective(NgbTooltip)],
             declarations: [
                 AttachmentUnitFormComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FormDateTimePickerComponent),
                 MockComponent(FaIconComponent),
-                MockDirective(NgbTooltip),
+                MockComponent(LearningGoalSelectionComponent),
             ],
             providers: [MockProviders(TranslateService)],
             schemas: [],
@@ -104,6 +105,7 @@ describe('AttachmentUnitFormComponent', () => {
                 name: exampleName,
                 description: exampleDescription,
                 releaseDate: exampleReleaseDate,
+                learningGoals: null,
                 version: exampleVersion,
                 updateNotificationText: exampleUpdateNotificationText,
             },

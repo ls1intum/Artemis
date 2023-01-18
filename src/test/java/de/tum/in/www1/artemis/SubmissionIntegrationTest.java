@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +20,8 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "submissionintegration";
+
     @Autowired
     private SubmissionRepository submissionRepository;
 
@@ -32,12 +33,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void initTestCase() throws Exception {
-        database.addUsers(1, 1, 0, 1);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
+        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
     }
 
     @Test
@@ -61,7 +57,6 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         var savedSubmission = submissionRepository.save(submission);
         submission = submissionRepository.findWithEagerResultsAndAssessorById(savedSubmission.getId()).orElseThrow();
 
-        assert submission.getResults() != null;
         assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
@@ -92,7 +87,6 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
 
-        assert submission.getResults() != null;
         assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
@@ -129,7 +123,6 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         submission = submissionRepository.findWithEagerResultsAndAssessorById(submission.getId()).orElseThrow();
 
-        assert submission.getResults() != null;
         assertThat(submission.getResults()).hasSize(2);
         assertThat(submission.getFirstResult()).isNotEqualTo(submission.getLatestResult());
         assertThat(submission.getFirstResult()).isEqualTo(result1);
@@ -138,14 +131,14 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize() throws Exception {
         Course course = database.addCourseWithModelingAndTextExercise();
-        TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findFirst().orElse(null);
+        TextExercise textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
         assertThat(textExercise).isNotNull();
         TextSubmission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
-        submission = database.saveTextSubmission(textExercise, submission, "student1");
-        database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin("instructor1"));
+        submission = database.saveTextSubmission(textExercise, submission, TEST_PREFIX + "student1");
+        database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"));
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
 
         var resultPage = request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.OK, SearchResultPageDTO.class,
@@ -154,7 +147,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize_exerciseNotFound() throws Exception {
         long randomExerciseId = 12345L;
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
@@ -162,10 +155,10 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize_isNotAtLeastInstructorInExercise_forbidden() throws Exception {
         Course course = database.addCourseWithModelingAndTextExercise();
-        TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findFirst().orElse(null);
+        TextExercise textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
         assertThat(textExercise).isNotNull();
         course.setInstructorGroupName("test");
         courseRepository.save(course);

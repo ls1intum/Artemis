@@ -102,7 +102,8 @@ export class CategorySelectorComponent implements OnChanges {
     onItemAdd(event: MatChipInputEvent) {
         const categoryString = (event.value || '').trim();
         // prevent adding duplicated categories
-        if (!this.categoriesAsStringArray().includes(categoryString)) {
+        const categoryArray = this.categoriesAsStringArray();
+        if (categoryString && !categoryArray.includes(categoryString) && categoryArray.length < 2) {
             let category = this.findExistingCategory(categoryString);
             if (!category) {
                 category = this.createCategory(categoryString);
@@ -138,14 +139,17 @@ export class CategorySelectorComponent implements OnChanges {
     // only invoked for autocomplete
     onItemSelect(event: MatAutocompleteSelectedEvent): void {
         const categoryString = (event.option.value || '').trim();
-        // check if there is an existing category and reuse the same color
-        let category = this.findExistingCategory(categoryString);
-        if (!category) {
-            category = this.createCategory(categoryString);
-        }
+        const categoryArray = this.categoriesAsStringArray();
+        if (categoryString && !categoryArray.includes(categoryString) && categoryArray.length < 2) {
+            // check if there is an existing category and reuse the same color
+            let category = this.findExistingCategory(categoryString);
+            if (!category) {
+                category = this.createCategory(categoryString);
+            }
 
-        this.categories.push(category);
-        this.selectedCategories.emit(this.categories);
+            this.categories.push(category);
+            this.selectedCategories.emit(this.categories);
+        }
         this.categoryInput.nativeElement.value = '';
         this.categoryCtrl.setValue(null);
     }

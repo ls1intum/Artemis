@@ -202,6 +202,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
     updateMarkdown(): void {
         // make sure that always the correct result is set, before updating markdown
         // looks weird, but in setter of latestResult are setters of sub components invoked
+        // eslint-disable-next-line no-self-assign
         this.latestResult = this.latestResult;
 
         this.injectableContentForMarkdownCallbacks = [];
@@ -247,7 +248,7 @@ export class ProgrammingExerciseInstructionComponent implements OnChanges, OnDes
      */
     loadAndAttachResultDetails(result: Result): Observable<Result> {
         const currentParticipation = result.participation ? result.participation : this.participation;
-        return this.resultService.getFeedbackDetailsForResult(currentParticipation.id!, result.id!).pipe(
+        return this.resultService.getFeedbackDetailsForResult(currentParticipation.id!, result).pipe(
             map((res) => res && res.body),
             map((feedbacks: Feedback[]) => {
                 result.feedbacks = feedbacks;

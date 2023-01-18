@@ -5,7 +5,8 @@ import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUt
 import java.time.*;
 import java.util.*;
 
-import org.jetbrains.annotations.NotNull;
+import javax.validation.constraints.NotNull;
+
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;

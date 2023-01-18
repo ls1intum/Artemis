@@ -282,7 +282,7 @@ export class ProgrammingExerciseService {
      * @param deleteStudentReposBuildPlans indicates if the StudentReposBuildPlans should be also deleted or not
      * @param deleteBaseReposBuildPlans indicates if the BaseReposBuildPlans should be also deleted or not
      */
-    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<{}>> {
+    delete(programmingExerciseId: number, deleteStudentReposBuildPlans: boolean, deleteBaseReposBuildPlans: boolean): Observable<HttpResponse<any>> {
         let params = new HttpParams();
         params = params.set('deleteStudentReposBuildPlans', deleteStudentReposBuildPlans.toString());
         params = params.set('deleteBaseReposBuildPlans', deleteBaseReposBuildPlans.toString());
@@ -330,7 +330,7 @@ export class ProgrammingExerciseService {
      * Unlock all the student repositories of the given exercise so that student can perform commits
      * @param exerciseId of the particular programming exercise
      */
-    unlockAllRepositories(exerciseId: number): Observable<HttpResponse<{}>> {
+    unlockAllRepositories(exerciseId: number): Observable<HttpResponse<any>> {
         return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/unlock-all-repositories`, {}, { observe: 'response' });
     }
 
@@ -338,7 +338,7 @@ export class ProgrammingExerciseService {
      * Lock all the student repositories of the given exercise so that student can perform commits
      * @param exerciseId of the particular programming exercise
      */
-    lockAllRepositories(exerciseId: number): Observable<HttpResponse<{}>> {
+    lockAllRepositories(exerciseId: number): Observable<HttpResponse<any>> {
         return this.http.put<any>(`${this.resourceUrl}/${exerciseId}/lock-all-repositories`, {}, { observe: 'response' });
     }
 
@@ -376,9 +376,13 @@ export class ProgrammingExerciseService {
     /**
      * Exports the example solution repository for a given exercise, suitable for distributing to students.
      * @param exerciseId
+     * @param includeTests flag that indicates whether the tests should also be exported
      */
-    exportSolutionRepository(exerciseId: number): Observable<HttpResponse<Blob>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-solution-repository`, {
+    exportStudentRequestedRepository(exerciseId: number, includeTests: boolean): Observable<HttpResponse<Blob>> {
+        let params = new HttpParams();
+        params = params.set('includeTests', includeTests.toString());
+        return this.http.get(`${this.resourceUrl}/${exerciseId}/export-student-requested-repository`, {
+            params,
             observe: 'response',
             responseType: 'blob',
         });

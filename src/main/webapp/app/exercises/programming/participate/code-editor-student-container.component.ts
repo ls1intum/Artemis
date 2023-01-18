@@ -151,7 +151,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
      * Mutates the input parameter result.
      */
     loadResultDetails(participation: Participation, result: Result): Observable<Feedback[]> {
-        return this.resultService.getFeedbackDetailsForResult(participation.id!, result.id!).pipe(
+        return this.resultService.getFeedbackDetailsForResult(participation.id!, result).pipe(
             map((res) => {
                 return res.body || [];
             }),
@@ -161,7 +161,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     checkForTutorAssessment(dueDateHasPassed: boolean) {
         let isManualResult = false;
         let hasTutorFeedback = false;
-        if (!!this.latestResult) {
+        if (this.latestResult) {
             // latest result is the first element of results, see loadParticipationWithLatestResult
             isManualResult = Result.isManualResult(this.latestResult);
             if (isManualResult) {
@@ -173,7 +173,7 @@ export class CodeEditorStudentContainerComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Check whether or not a latestResult exists and if, returns the unreferenced feedback of it
+     * Check whether a latestResult exists and if, returns the unreferenced feedback of it
      */
     get unreferencedFeedback(): Feedback[] {
         if (this.latestResult && this.latestResult.feedbacks) {

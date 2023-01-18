@@ -68,11 +68,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByLogin(String login);
 
-    @EntityGraph(type = LOAD, attributePaths = { "authorities" })
-    Optional<User> findOneWithAuthoritiesByLogin(String login);
-
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLogin(String login);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
+    Optional<User> findOneWithGroupsAndAuthoritiesByEmail(String email);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
     Optional<User> findOneWithGroupsAndAuthoritiesByLoginAndIsInternal(String login, boolean isInternal);
@@ -104,9 +104,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @Query("select user from User user where :#{#groupName} member of user.groups")
     List<User> findAllInGroup(@Param("groupName") String groupName);
-
-    @Query("select user from User user where user.isInternal = :#{#isInternal}")
-    List<User> findAllByInternal(boolean isInternal);
 
     /**
      * Searches for users in a group by their login or full name.
@@ -148,6 +145,68 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     @Query("select user from User user where :#{#groupName} member of user.groups and "
             + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)")
     Page<User> searchAllByLoginOrNameInGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+             SELECT DISTINCT user
+             FROM User user
+             LEFT JOIN user.groups userGroup
+             WHERE userGroup IN :#{#groupNames}
+             AND (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)
+             AND user.id <> :#{#idOfUser}
+             ORDER BY concat_ws(' ', user.firstName, user.lastName)
+            """)
+    Page<User> searchAllByLoginOrNameInGroups(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("groupNames") Set<String> groupNames,
+            @Param("idOfUser") Long idOfUser);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+             SELECT DISTINCT user
+             FROM User user
+             JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+             JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+             WHERE conversation.id = :#{#conversationId}
+             AND (:#{#loginOrName} = '' OR (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%))
+            """)
+    Page<User> searchAllByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+             SELECT DISTINCT user
+             FROM User user
+             JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+             JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+             WHERE conversation.id = :#{#conversationId}
+             AND (:#{#loginOrName} = '' OR (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%))
+             AND  :#{#groupName} member of user.groups
+            """)
+    Page<User> searchAllByLoginOrNameInConversationWithCourseGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId,
+            @Param("groupName") String groupName);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+             SELECT DISTINCT user
+             FROM User user
+             JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+             JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+             WHERE conversation.id = :#{#conversationId}
+             AND (:#{#loginOrName} = '' OR (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%))
+             AND (:#{#groupName} member of user.groups OR :#{#groupName2} member of user.groups)
+            """)
+    Page<User> searchAllByLoginOrNameInConversationWithEitherCourseGroup(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId,
+            @Param("groupName") String groupName, @Param("groupName2") String groupName2);
+
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("""
+            SELECT DISTINCT user
+            FROM User user
+            JOIN ConversationParticipant conversationParticipant ON conversationParticipant.user.id = user.id
+            JOIN Conversation conversation ON conversation.id = conversationParticipant.conversation.id
+            WHERE conversation.id = :#{#conversationId}
+            AND (:#{#loginOrName} = '' OR (user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%))
+            AND  conversationParticipant.isModerator = true
+               """)
+    Page<User> searchChannelModeratorsByLoginOrNameInConversation(Pageable pageable, @Param("loginOrName") String loginOrName, @Param("conversationId") Long conversationId);
 
     /**
      * Search for all users by login or name in a group and convert them to {@link UserDTO}
@@ -406,6 +465,19 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         return findOneWithGroupsAndAuthoritiesByLogin(login);
     }
 
+    /**
+     * Finds a single user with groups and authorities using the email
+     *
+     * @param email user email string
+     * @return the user with groups and authorities
+     */
+    default Optional<User> findUserWithGroupsAndAuthoritiesByEmail(String email) {
+        if (!StringUtils.hasText(email)) {
+            return Optional.empty();
+        }
+        return findOneWithGroupsAndAuthoritiesByEmail(email);
+    }
+
     @NotNull
     default User findByIdWithGroupsAndAuthoritiesElseThrow(long userId) {
         return findOneWithGroupsAndAuthoritiesById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
@@ -490,7 +562,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         updateUserNotificationReadDate(userId, ZonedDateTime.now());
     }
 
-    @Query(value = "SELECT * from jhi_user u where u.email regexp ?1", nativeQuery = true)
+    @Query(value = "SELECT * FROM jhi_user u WHERE REGEXP_LIKE(u.email, :#{#emailPattern})", nativeQuery = true)
     List<User> findAllMatchingEmailPattern(@Param("emailPattern") String emailPattern);
 
     /**
@@ -499,7 +571,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param userId       the id of the user to add to the organization
      * @param organization the organization to add to the user
      */
-    @NotNull
     default void addOrganizationToUser(Long userId, Organization organization) {
         User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
         if (!user.getOrganizations().contains(organization)) {
@@ -514,7 +585,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @param userId       the id of the user to remove from the organization
      * @param organization the organization to remove from the user
      */
-    @NotNull
     default void removeOrganizationFromUser(Long userId, Organization organization) {
         User user = findByIdWithGroupsAndAuthoritiesAndOrganizationsElseThrow(userId);
         if (user.getOrganizations().contains(organization)) {
@@ -529,14 +599,11 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      * @return true if both logins match
      */
     default boolean isCurrentUser(String login) {
-        var currentUserLogin = SecurityUtils.getCurrentUserLogin();
-        if (currentUserLogin.isEmpty()) {
-            return false;
-        }
-        return currentUserLogin.get().equals(login);
+        return SecurityUtils.getCurrentUserLogin().map(currentLogin -> currentLogin.equals(login)).orElse(false);
     }
 
     default User findByIdElseThrow(long userId) throws EntityNotFoundException {
         return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
     }
+
 }

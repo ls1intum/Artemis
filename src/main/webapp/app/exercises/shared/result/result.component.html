@@ -16,9 +16,7 @@
                 <span class="guided-tour result" [ngbTooltip]="resultTooltip | artemisTranslate">
                     {{ resultString }}
                 </span>
-                <span class="result" [ngbTooltip]="result.submission?.submissionDate ?? result.completionDate | artemisDate">
-                    ({{ result.submission?.submissionDate ?? result.completionDate! | artemisTimeAgo }})
-                </span>
+                <span class="result" [ngbTooltip]="result.completionDate | artemisDate"> ({{ result.completionDate | artemisTimeAgo }}) </span>
             </span>
             <span *ngIf="hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING">
                 <a (click)="downloadBuildResult(participation.id)">
@@ -26,8 +24,9 @@
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>
-            <span *ngIf="showBadge" class="badge" [ngClass]="badgeClass" id="result-score-badge" ngbTooltip="{{ badgeTooltip | artemisTranslate }}">
-                {{ badgeText | artemisTranslate | uppercase }}
+
+            <span *ngIf="showBadge" class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
+                {{ badge.text | artemisTranslate | uppercase }}
             </span>
         </ng-container>
     </ng-container>

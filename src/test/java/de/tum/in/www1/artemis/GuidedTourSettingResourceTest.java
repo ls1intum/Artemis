@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
@@ -16,14 +15,11 @@ import de.tum.in.www1.artemis.domain.User;
 
 class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "gtsettingtest";
+
     @BeforeEach
     void initTestCase() {
-        database.addUsers(1, 0, 0, 0);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
+        database.addUsers(TEST_PREFIX, 3, 0, 0, 0);
     }
 
     private Set<GuidedTourSetting> createGuidedTourSettings() {
@@ -45,14 +41,14 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student1")
     void guidedTourSettingsIsInitiallyNull() throws Exception {
         User user = request.get("/api/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings()).isEmpty();
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student2")
     void updateGuidedTourSettings() throws Exception {
         Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
         Set<?> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
@@ -63,7 +59,7 @@ class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "student1")
+    @WithMockUser(username = TEST_PREFIX + "student3")
     void deleteGuidedTourSetting() throws Exception {
         Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
         request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
