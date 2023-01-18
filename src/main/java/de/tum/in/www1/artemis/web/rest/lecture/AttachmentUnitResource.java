@@ -19,6 +19,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AttachmentUnitService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.LearningGoalProgressService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -41,13 +42,16 @@ public class AttachmentUnitResource {
 
     private final AttachmentUnitService attachmentUnitService;
 
+    private final LearningGoalProgressService learningGoalProgressService;
+
     public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService,
-            GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService) {
+            GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService, LearningGoalProgressService learningGoalProgressService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.groupNotificationService = groupNotificationService;
         this.attachmentUnitService = attachmentUnitService;
+        this.learningGoalProgressService = learningGoalProgressService;
     }
 
     /**
@@ -62,15 +66,9 @@ public class AttachmentUnitResource {
     public ResponseEntity<AttachmentUnit> getAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable Long lectureId) {
         log.debug("REST request to get AttachmentUnit : {}", attachmentUnitId);
         AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
-
-        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {
-            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "AttachmentUnit", "lectureOrCourseMissing");
-        }
-        if (!attachmentUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "AttachmentUnit", "lectureIdMismatch");
-        }
-
+        checkAttachmentUnitCourseAndLecture(attachmentUnit, lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
+
         return ResponseEntity.ok().body(attachmentUnit);
     }
 
@@ -93,19 +91,16 @@ public class AttachmentUnitResource {
             @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         AttachmentUnit existingAttachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
-        if (existingAttachmentUnit.getLecture() == null || existingAttachmentUnit.getLecture().getCourse() == null) {
-            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "AttachmentUnit", "lectureOrCourseMissing");
-        }
-        if (!existingAttachmentUnit.getLecture().getId().equals(lectureId)) {
-            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "AttachmentUnit", "lectureIdMismatch");
-        }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, attachmentUnit.getLecture().getCourse(), null);
+        checkAttachmentUnitCourseAndLecture(existingAttachmentUnit, lectureId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, existingAttachmentUnit.getLecture().getCourse(), null);
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.updateAttachmentUnit(existingAttachmentUnit, attachmentUnit, attachment, file, keepFilename);
 
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(savedAttachmentUnit.getAttachment(), notificationText);
         }
+
+        learningGoalProgressService.updateProgressByLearningObjectAsync(savedAttachmentUnit);
 
         return ResponseEntity.ok(savedAttachmentUnit);
     }
@@ -128,7 +123,6 @@ public class AttachmentUnitResource {
         log.debug("REST request to create AttachmentUnit {} with Attachment {}", attachmentUnit, attachment);
         if (attachmentUnit.getId() != null) {
             throw new BadRequestAlertException("A new attachment unit cannot already have an ID", ENTITY_NAME, "idexists");
-
         }
         if (attachment.getId() != null) {
             throw new BadRequestAlertException("A new attachment cannot already have an ID", ENTITY_NAME, "idexists");
@@ -142,6 +136,22 @@ public class AttachmentUnitResource {
 
         AttachmentUnit savedAttachmentUnit = attachmentUnitService.createAttachmentUnit(attachmentUnit, attachment, lecture, file, keepFilename);
 
+        learningGoalProgressService.updateProgressByLearningObjectAsync(savedAttachmentUnit);
+
         return ResponseEntity.created(new URI("/api/attachment-units/" + savedAttachmentUnit.getId())).body(savedAttachmentUnit);
+    }
+
+    /**
+     * Checks that the attachment unit belongs to the specified lecture.
+     * @param attachmentUnit The attachment unit to check
+     * @param lectureId The id of the lecture to check against
+     */
+    private void checkAttachmentUnitCourseAndLecture(AttachmentUnit attachmentUnit, Long lectureId) {
+        if (attachmentUnit.getLecture() == null || attachmentUnit.getLecture().getCourse() == null) {
+            throw new ConflictException("Lecture unit must be associated to a lecture of a course", "AttachmentUnit", "lectureOrCourseMissing");
+        }
+        if (!attachmentUnit.getLecture().getId().equals(lectureId)) {
+            throw new ConflictException("Requested lecture unit is not part of the specified lecture", "AttachmentUnit", "lectureIdMismatch");
+        }
     }
 }
