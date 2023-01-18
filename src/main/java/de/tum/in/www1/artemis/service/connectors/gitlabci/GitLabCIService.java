@@ -383,7 +383,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         var totalJobDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(jobStarted, jobFinished);
 
         // Set the duration to 0 for the durations, we cannot extract.
-        var time = ZonedDateTime.now();
+        var time = ZonedDateTime.now(); // TODO: this needs to be properly implemented
         var agentSetupDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time);
         var scaDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(time, time);
 
