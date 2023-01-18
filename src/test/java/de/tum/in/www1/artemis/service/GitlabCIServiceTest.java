@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
 import java.net.URL;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 import org.gitlab4j.api.GitLabApiException;
@@ -19,15 +22,20 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
+import de.tum.in.www1.artemis.service.connectors.gitlabci.GitLabCIService;
 
 class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
@@ -44,6 +52,12 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
 
     @Autowired
     private BuildPlanRepository buildPlanRepository;
+
+    @Autowired
+    private GitLabCIService gitlabCIService;
+
+    @Autowired
+    private BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     private Long programmingExerciseId;
 
@@ -112,6 +126,31 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         var result = continuousIntegrationService.getBuildStatus(participation);
 
         assertThat(result).isEqualTo(ContinuousIntegrationService.BuildStatus.INACTIVE);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void testExtractAndPersistBuildLogStatistics() {
+        final var exercise = programmingExerciseRepository.findByIdElseThrow(programmingExerciseId);
+        final var participation = database.addStudentParticipationForProgrammingExercise(exercise, TEST_PREFIX + "student1");
+        final var submission = database.createProgrammingSubmission(participation, false, "hash");
+
+        var buildLogStatisticSizeBefore = buildLogStatisticsEntryRepository.count();
+        List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+        buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "Scanning for projects...", submission));
+        buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry", submission));
+        buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "Total time:", submission));
+        gitlabCIService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, buildLogEntries);
+        var buildLogStatisticSizeAfterSuccessfulSave = buildLogStatisticsEntryRepository.count();
+        assertThat(buildLogStatisticSizeAfterSuccessfulSave).isEqualTo(buildLogStatisticSizeBefore + 1);
+        // TODO: add an assertion on the average data and add more realisitc build log entries
+
+        // should not work
+        gitlabCIService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.JAVA, ProjectType.GRADLE_GRADLE, buildLogEntries);
+        gitlabCIService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.C, ProjectType.GCC, buildLogEntries);
+
+        var buildLogStatisticSizeAfterUnsuccessfulSave = buildLogStatisticsEntryRepository.count();
+        assertThat(buildLogStatisticSizeAfterUnsuccessfulSave).isEqualTo(buildLogStatisticSizeAfterUnsuccessfulSave);
     }
 
     @Test
