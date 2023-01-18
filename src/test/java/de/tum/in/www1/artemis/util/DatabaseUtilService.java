@@ -299,6 +299,9 @@ public class DatabaseUtilService {
     private RatingRepository ratingRepo;
 
     @Autowired
+    private BuildPlanRepository buildPlanRepository;
+
+    @Autowired
     private PasswordService passwordService;
 
     @Autowired
@@ -2708,6 +2711,15 @@ public class DatabaseUtilService {
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
         assertThat(tests).as("test case is initialized").hasSize(3);
+    }
+
+    public void addBuildPlanAndSecretToProgrammingExercise(ProgrammingExercise programmingExercise, String buildPlan) {
+        programmingExerciseRepository.updateBuildPlan(programmingExercise, buildPlan, buildPlanRepository);
+        programmingExercise.generateAndSetBuildPlanAccessSecret();
+        programmingExerciseRepository.save(programmingExercise);
+
+        assertThat(programmingExercise.getBuildPlan()).as("build plan is set").isNotNull();
+        assertThat(programmingExercise.getBuildPlanAccessSecret()).as("build plan access secret is set").isNotNull();
     }
 
     public AuxiliaryRepository addAuxiliaryRepositoryToExercise(ProgrammingExercise programmingExercise) {
