@@ -196,7 +196,7 @@ public class ProgrammingSubmissionResource {
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
+        final Participation participation = participationRepository.findByIdWithLatestSubmissionElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
         }

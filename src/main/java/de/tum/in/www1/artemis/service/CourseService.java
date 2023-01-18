@@ -212,9 +212,10 @@ public class CourseService {
      *
      * @param courseId the course to fetch
      * @param user     the user entity
+     * @param refresh  if the user requested an explicit refresh
      * @return the course including exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
      */
-    public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user) {
+    public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
         Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException();
@@ -224,7 +225,7 @@ public class CourseService {
         course.setExercises(exerciseService.filterExercisesForCourse(course, user));
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
-        course.setLearningGoals(learningGoalService.findAllForCourse(course, user));
+        course.setLearningGoals(learningGoalService.findAllForCourse(course, user, refresh));
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
         course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
         course.setTutorialGroupsConfiguration(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
@@ -314,9 +315,9 @@ public class CourseService {
     public void delete(Course course) {
         log.debug("Request to delete Course : {}", course.getTitle());
 
-        deleteLearningGoalsOfCourse(course);
         deleteExercisesOfCourse(course);
         deleteLecturesOfCourse(course);
+        deleteLearningGoalsOfCourse(course);
         deleteNotificationsOfCourse(course);
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
