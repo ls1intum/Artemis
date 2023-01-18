@@ -39,20 +39,16 @@ export class TutorialGroupDetailComponent implements OnChanges {
     ngOnChanges(changes: SimpleChanges) {
         for (const propName in changes) {
             // eslint-disable-next-line no-prototype-builtins
-            if (changes.hasOwnProperty(propName)) {
+            if (changes.hasOwnProperty(propName) && propName === 'tutorialGroup') {
                 const change = changes[propName];
-                switch (propName) {
-                    case 'tutorialGroup': {
-                        if (change.currentValue && change.currentValue.additionalInformation) {
-                            this.formattedAdditionalInformation = this.artemisMarkdownService.safeHtmlForMarkdown(this.tutorialGroup.additionalInformation);
-                        }
-                        if (change.currentValue && change.currentValue.tutorialGroupSessions) {
-                            this.sessions = change.currentValue.tutorialGroupSessions;
-                        }
-                        this.changeDetectorRef.detectChanges();
-                        break;
-                    }
+
+                if (change.currentValue && change.currentValue.additionalInformation) {
+                    this.formattedAdditionalInformation = this.artemisMarkdownService.safeHtmlForMarkdown(this.tutorialGroup.additionalInformation);
                 }
+                if (change.currentValue && change.currentValue.tutorialGroupSessions) {
+                    this.sessions = change.currentValue.tutorialGroupSessions;
+                }
+                this.changeDetectorRef.detectChanges();
             }
         }
     }
