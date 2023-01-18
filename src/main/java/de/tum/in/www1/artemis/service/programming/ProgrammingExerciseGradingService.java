@@ -195,9 +195,7 @@ public class ProgrammingExerciseGradingService {
     /**
      * Retrieves the submission that is assigned to the specified participation and its commit hash matches the one from the build result.
      *
-     * @param participationId id of the participation
-     * @param buildResult     The build results
-     * @return The submission or empty no submissions exist
+     * @return The submission or empty if no submissions exist
      */
     protected Optional<ProgrammingSubmission> getSubmissionForBuildResult(Long participationId, AbstractBuildResultNotificationDTO buildResult) {
         var submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
@@ -411,7 +409,6 @@ public class ProgrammingExerciseGradingService {
      *
      * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change.
      *
-     * @param exercise whose results should be updated.
      * @return the results of the exercise that have been updated.
      */
     public List<Result> updateAllResults(final ProgrammingExercise exercise) {
@@ -434,7 +431,6 @@ public class ProgrammingExerciseGradingService {
      * Updates the latest results of all participations that do not have an individual due date. This includes the template and solution participation.
      * <p>
      * For details what will be updated for individual results, see {@link ProgrammingExerciseGradingService#updateAllResults}.
-     * @param exercise whose results should be updated.
      * @return the results of the exercise that have been updated.
      */
     public List<Result> updateResultsOnlyRegularDueDateParticipations(final ProgrammingExercise exercise) {
@@ -457,7 +453,6 @@ public class ProgrammingExerciseGradingService {
      * Updates the latest result scores of the given participation.
      * <p>
      * For details what will be updated, see {@link ProgrammingExerciseGradingService#updateAllResults}.
-     * @param participation for which the results should be updated.
      * @return a list of updated results (maximum two: latest automatic, and latest manual result).
      */
     public List<Result> updateParticipationResults(final ProgrammingExerciseStudentParticipation participation) {
@@ -549,7 +544,6 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Filter all test cases from the score calculation that are never visible or ones with visibility "after due date" if the due date has not yet passed.
-     * @param testCases which should be filtered.
      * @return testCases, but the ones based on the described visibility criterion removed.
      */
     private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(Participation participation, Set<ProgrammingExerciseTestCase> testCases) {
@@ -559,8 +553,6 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Filters the test cases to only include the ones a student should be able to see.
-     * @param testCases all test cases of an exercise.
-     * @param isBeforeDueDate true, if the due date has not yet passed.
      * @return a set of test cases that are visible to the student.
      */
     private Set<ProgrammingExerciseTestCase> filterTestCasesForStudents(final Set<ProgrammingExerciseTestCase> testCases, boolean isBeforeDueDate) {
@@ -586,11 +578,6 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Calculates the grading for a result and updates the feedbacks
-     * @param testCases All test cases for the exercise
-     * @param testCasesForCurrentDate Test cases for the exercise for the current date
-     * @param result The result to be updated
-     * @param exercise The current exercise
-     * @param applySubmissionPolicy true, if submission policies should be taken into account when updating the score.
      * @return The updated result
      */
     private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
@@ -665,7 +652,6 @@ public class ProgrammingExerciseGradingService {
     private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final List<Feedback> staticCodeAnalysisFeedback) {
         removeAllTestCaseFeedbackAndSetScoreToZero(result, staticCodeAnalysisFeedback);
 
-        // Add feedbacks for all duplicate test cases
         createFeedbacksForDuplicateTests(result, exercise);
     }
 
@@ -742,8 +728,6 @@ public class ProgrammingExerciseGradingService {
      * Update the score given the positive tests score divided by all tests' score.
      * Takes weight, bonus multiplier and absolute bonus points into account.
      * All tests in this case do not include ones with visibility=never.
-     *
-     * @param hasDuplicateTestCases       indicates duplicate test cases.
      */
     private void updateResultScore(ScoreCalculationData scoreCalculationData, boolean hasDuplicateTestCases, boolean applySubmissionPolicy) {
         double score = 0D;
@@ -768,7 +752,6 @@ public class ProgrammingExerciseGradingService {
     /**
      * Calculates the score of automatic test cases for the given result with possible penalties applied.
      *
-     * @param applySubmissionPolicy      true, if penalties from submission policies should be applied.
      * @return the final total score in percent that should be given to the result.
      */
     private double calculateScore(ScoreCalculationData scoreCalculationData, boolean applySubmissionPolicy) {
@@ -869,7 +852,6 @@ public class ProgrammingExerciseGradingService {
      * <p>
      * This includes the penalties from static code analysis and of submission policies.
      *
-     * @param applySubmissionPolicy determines if the submission policy should be applied.
      * @return a total penalty that should be deducted from the score.
      */
     private double calculateTotalPenalty(ScoreCalculationData scoreCalculationData, boolean applySubmissionPolicy) {
@@ -889,8 +871,6 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Calculates the total penalty over all static code analysis issues
-     * @param staticCodeAnalysisFeedback The list of static code analysis feedback
-     * @param programmingExercise The current exercise
      * @return The sum of all penalties, capped at the maximum allowed penalty
      */
     private double calculateStaticCodeAnalysisPenalty(final List<Feedback> staticCodeAnalysisFeedback, final ProgrammingExercise programmingExercise) {
