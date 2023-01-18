@@ -818,14 +818,11 @@ public class ProgrammingExercise extends Exercise {
         this.exerciseHints = exerciseHints;
     }
 
-    public void setBuildPlanAccessSecret(String buildPlanAccessSecret) {
-        this.buildPlanAccessSecret = buildPlanAccessSecret;
-    }
-
     public boolean hasBuildPlanAccessSecretSet() {
         return buildPlanAccessSecret != null && !buildPlanAccessSecret.isEmpty();
     }
 
+    @Nullable
     public String getBuildPlanAccessSecret() {
         return buildPlanAccessSecret;
     }

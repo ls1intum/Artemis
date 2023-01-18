@@ -27,11 +27,12 @@ public class BuildPlan extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<ProgrammingExercise> programmingExercises = new HashSet<>();
 
+    @Nullable
     public String getBuildPlan() {
         return buildPlan;
     }
 
-    public void setBuildPlan(String buildPlan) {
+    public void setBuildPlan(@Nullable String buildPlan) {
         this.buildPlan = buildPlan;
     }
 
