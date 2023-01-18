@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.annotation.Nullable;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -19,13 +19,8 @@ public class BuildPlan extends DomainObject {
     @Column(name = "build_plan", table = "build_plan", length = 10_000)
     private String buildPlan;
 
-    public BuildPlan() {
-        // explicit constructor needed for Jackson
-    }
-
-    public BuildPlan(String buildPlan) {
-        this.buildPlan = buildPlan;
-    }
+    @OneToMany
+    private Set<ProgrammingExercise> programmingExercises = new HashSet<>();
 
     public String getBuildPlan() {
         return buildPlan;
@@ -33,5 +28,9 @@ public class BuildPlan extends DomainObject {
 
     public void setBuildPlan(String buildPlan) {
         this.buildPlan = buildPlan;
+    }
+
+    public void addProgrammingExercise(ProgrammingExercise exercise) {
+        programmingExercises.add(exercise);
     }
 }

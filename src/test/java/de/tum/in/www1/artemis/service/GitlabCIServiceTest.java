@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.GitLabCIException;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -40,6 +41,9 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
 
     @Autowired
     private ParticipationRepository participationRepository;
+
+    @Autowired
+    private BuildPlanRepository buildPlanRepository;
 
     private Long programmingExerciseId;
 
@@ -175,7 +179,9 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         verify(gitlab.getProjectApi(), atLeastOnce()).getProject(eq(repositoryPath));
         verify(gitlab.getProjectApi(), atLeastOnce()).updateProject(any(Project.class));
         verify(gitlab.getProjectApi(), atLeastOnce()).createVariable(anyString(), anyString(), anyString(), any(), anyBoolean(), anyBoolean());
-        assertThat(exercise.getBuildPlan()).isNotNull();
+        var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_Id(exercise.getId());
+        assertThat(buildPlanOptional).isPresent();
+        assertThat(buildPlanOptional.get().getBuildPlan()).isNotBlank();
     }
 
     @Test

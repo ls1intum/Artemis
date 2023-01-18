@@ -174,8 +174,9 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     private void addBuildPlanToProgrammingExerciseIfUnset(ProgrammingExercise programmingExercise) {
-        if (programmingExercise.getBuildPlan() == null) {
-            programmingExerciseRepository.updateBuildPlan(programmingExercise, buildPlanService.getBuildPlan(programmingExercise), buildPlanRepository);
+        Optional<BuildPlan> optionalBuildPlan = buildPlanRepository.findByProgrammingExercises_Id(programmingExercise.getId());
+        if (optionalBuildPlan.isEmpty()) {
+            buildPlanRepository.updateBuildPlan(programmingExercise, buildPlanService.getBuildPlan(programmingExercise), buildPlanRepository);
         }
     }
 
