@@ -229,9 +229,6 @@ public class CourseService {
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
         course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
         course.setTutorialGroupsConfiguration(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
-        if (authCheckService.isOnlyStudentInCourse(course, user)) {
-            course.setExams(examRepository.filterVisibleExams(course.getExams()));
-        }
         return course;
     }
 
