@@ -48,7 +48,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @BeforeEach
     void setup() {
-        participantScoreSchedulerService.activate();
+        participantScoreScheduleService.activate();
         courseTestService.setup(TEST_PREFIX, this);
         gitlabRequestMockProvider.enableMockingOfRequests();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
@@ -374,7 +374,13 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForDashboard() throws Exception {
-        courseTestService.testGetCourseForDashboard();
+        courseTestService.testGetCourseForDashboard(false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForDashboard_userRefresh() throws Exception {
+        courseTestService.testGetCourseForDashboard(true);
     }
 
     @Test
