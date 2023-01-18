@@ -743,7 +743,7 @@ public class ProgrammingExerciseGradingService {
         // Set credits for successful test cases
         scoreCalculationData.testCases().stream().filter(testCase -> testCase.isSuccessful(scoreCalculationData.result())).forEach(testCase -> {
             double credits = calculatePointsForTestCase(testCase, scoreCalculationData);
-            setCreditsForTestCaseFeedback(testCase, scoreCalculationData.result(), credits);
+            setCreditsForTestCaseFeedback(credits, testCase, scoreCalculationData.result());
         });
 
         scoreCalculationData.result().getFeedbacks().stream().filter(feedback -> feedback.getCredits() == null).forEach(feedback -> feedback.setCredits(0D));
@@ -807,11 +807,11 @@ public class ProgrammingExerciseGradingService {
     /**
      * Updates the feedback corresponding to the test case with the given credits.
      *
-     * @param testCase the feedback that should be updated corresponds to.
-     * @param result   which should be updated.
      * @param credits  that should be set in the feedback.
+     * @param testCase the feedback that should be updated corresponds to.
+     * @param result   from which the result is taken and updated.
      */
-    private void setCreditsForTestCaseFeedback(final ProgrammingExerciseTestCase testCase, final Result result, double credits) {
+    private void setCreditsForTestCaseFeedback(double credits, final ProgrammingExerciseTestCase testCase, final Result result) {
         // We need to compare testcases ignoring the case, because the testcaseRepository is case-insensitive
         result.getFeedbacks().stream().filter(fb -> FeedbackType.AUTOMATIC.equals(fb.getType()) && fb.getText().equalsIgnoreCase(testCase.getTestName())).findFirst()
                 .ifPresent(feedback -> feedback.setCredits(credits));
