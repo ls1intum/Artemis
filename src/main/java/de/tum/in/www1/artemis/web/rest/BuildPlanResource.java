@@ -38,7 +38,7 @@ public class BuildPlanResource {
     @PreAuthorize("permitAll()")
     public ResponseEntity<String> getBuildPlan(@PathVariable Long exerciseId, @RequestParam("secret") String secret) {
         log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
-        BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_Id(exerciseId).orElseThrow();
+        BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(exerciseId).orElseThrow();
         ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId).orElseThrow();
         if (!programmingExercise.hasBuildPlanAccessSecretSet() || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
             throw new AccessForbiddenException();

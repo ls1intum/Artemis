@@ -174,7 +174,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     }
 
     private void addBuildPlanToProgrammingExerciseIfUnset(ProgrammingExercise programmingExercise) {
-        Optional<BuildPlan> optionalBuildPlan = buildPlanRepository.findByProgrammingExercises_Id(programmingExercise.getId());
+        Optional<BuildPlan> optionalBuildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
         if (optionalBuildPlan.isEmpty()) {
             var defaultBuildPlan = buildPlanService.generateDefaultBuildPlan(programmingExercise);
             buildPlanRepository.setBuildPlanForExercise(defaultBuildPlan, programmingExercise);

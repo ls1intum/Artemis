@@ -218,7 +218,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         verify(gitlab.getProjectApi(), atLeastOnce()).getProject(eq(repositoryPath));
         verify(gitlab.getProjectApi(), atLeastOnce()).updateProject(any(Project.class));
         verify(gitlab.getProjectApi(), atLeastOnce()).createVariable(anyString(), anyString(), anyString(), any(), anyBoolean(), anyBoolean());
-        var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_Id(exercise.getId());
+        var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(exercise.getId());
         assertThat(buildPlanOptional).isPresent();
         assertThat(buildPlanOptional.get().getBuildPlan()).isNotBlank();
     }

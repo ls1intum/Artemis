@@ -2721,7 +2721,7 @@ public class DatabaseUtilService {
         programmingExercise.generateAndSetBuildPlanAccessSecret();
         programmingExerciseRepository.save(programmingExercise);
 
-        var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_Id(programmingExercise.getId());
+        var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
         assertThat(buildPlanOptional).isPresent();
         assertThat(buildPlanOptional.get().getBuildPlan()).as("build plan is set").isNotNull();
         assertThat(programmingExercise.getBuildPlanAccessSecret()).as("build plan access secret is set").isNotNull();
