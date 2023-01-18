@@ -36,7 +36,7 @@ examples.forEach((activeConversation) => {
                     MockComponent(ConversationMessagesComponent),
                     MockComponent(ConversationThreadSidebarComponent),
                 ],
-                providers: [MockProvider(AlertService), MockProvider(MetisConversationService), mockedActivatedRoute({}, {}, {}, {}, { courseId: 1 })],
+                providers: [MockProvider(AlertService), MockProvider(MetisConversationService)],
             });
 
             fixture = TestBed.overrideComponent(CourseConversationsComponent, {
@@ -54,6 +54,9 @@ examples.forEach((activeConversation) => {
             Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
             Object.defineProperty(metisConversationService, 'forceRefresh', { value: () => EMPTY });
             Object.defineProperty(metisConversationService, 'setUpConversationService', { value: () => EMPTY });
+            Object.defineProperty(metisConversationService, 'isServiceSetup$', {
+                get: () => new BehaviorSubject(true).asObservable(),
+            });
             Object.defineProperty(metisConversationService, 'conversationsOfUser$', {
                 get: () => new BehaviorSubject([new GroupChatDto()]).asObservable(),
             });
