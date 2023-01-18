@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -38,5 +39,9 @@ public class BuildPlan extends DomainObject {
 
     public void addProgrammingExercise(ProgrammingExercise exercise) {
         programmingExercises.add(exercise);
+    }
+
+    public Optional<ProgrammingExercise> getProgrammingExerciseById(Long exerciseId) {
+        return programmingExercises.stream().filter(programmingExercise -> programmingExercise.getId() == exerciseId).findFirst();
     }
 }
