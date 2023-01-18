@@ -409,6 +409,7 @@ public class ProgrammingExerciseGradingService {
      *
      * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change.
      *
+     * @param exercise whose results should be updated.
      * @return the results of the exercise that have been updated.
      */
     public List<Result> updateAllResults(final ProgrammingExercise exercise) {
@@ -431,6 +432,7 @@ public class ProgrammingExerciseGradingService {
      * Updates the latest results of all participations that do not have an individual due date. This includes the template and solution participation.
      * <p>
      * For details what will be updated for individual results, see {@link ProgrammingExerciseGradingService#updateAllResults}.
+     * @param exercise whose results should be updated.
      * @return the results of the exercise that have been updated.
      */
     public List<Result> updateResultsOnlyRegularDueDateParticipations(final ProgrammingExercise exercise) {
@@ -453,6 +455,7 @@ public class ProgrammingExerciseGradingService {
      * Updates the latest result scores of the given participation.
      * <p>
      * For details what will be updated, see {@link ProgrammingExerciseGradingService#updateAllResults}.
+     * @param participation for which the results should be updated.
      * @return a list of updated results (maximum two: latest automatic, and latest manual result).
      */
     public List<Result> updateParticipationResults(final ProgrammingExerciseStudentParticipation participation) {
