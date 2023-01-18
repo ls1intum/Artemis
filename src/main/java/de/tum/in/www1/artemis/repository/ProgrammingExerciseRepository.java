@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
@@ -58,6 +59,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "auxiliaryRepositories",
             "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(Long exerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "learningGoals", "auxiliaryRepositories",
+            "submissionPolicy" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsById(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(Long exerciseId);
@@ -594,6 +599,13 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsElseThrow(long programmingExerciseId)
+            throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsById(programmingExerciseId);
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
     /**
      * Find a programming exercise by its id, with eagerly loaded template and solution participation, submissions and results
      *
@@ -714,5 +726,18 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     default void validateCourseSettings(ProgrammingExercise programmingExercise, Course course) {
         validateTitle(programmingExercise, course);
         validateCourseAndExerciseShortName(programmingExercise, course);
+    }
+
+    default void generateBuildPlanAccessSecretIfNotExists(ProgrammingExercise exercise) {
+        if (!exercise.hasBuildPlanAccessSecretSet()) {
+            exercise.generateAndSetBuildPlanAccessSecret();
+            save(exercise);
+        }
+    }
+
+    default void updateBuildPlan(ProgrammingExercise exercise, String buildPlan, BuildPlanRepository buildPlanRepository) {
+        BuildPlan buildPlanWrapper = buildPlanRepository.findByBuildPlan(buildPlan).orElseGet(() -> buildPlanRepository.save(new BuildPlan(buildPlan)));
+        exercise.setBuildPlan(buildPlanWrapper);
+        save(exercise);
     }
 }

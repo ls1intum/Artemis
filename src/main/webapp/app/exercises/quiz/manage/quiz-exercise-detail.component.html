@@ -191,6 +191,17 @@
                     </div>
                 </div>
             </div>
+            <div class="row">
+                <div class="form-group" *ngIf="!isExamMode">
+                    <jhi-learning-goal-selection
+                        id="learning-goals"
+                        [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
+                        [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
+                        [(ngModel)]="quizExercise.learningGoals"
+                        name="learningGoals"
+                    ></jhi-learning-goal-selection>
+                </div>
+            </div>
             <div class="text-start mt-1 mb-1">
                 <h4>
                     <span jhiTranslate="artemisApp.quizExercise.questions"> </span>
