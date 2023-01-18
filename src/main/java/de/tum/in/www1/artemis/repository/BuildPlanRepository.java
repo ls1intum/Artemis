@@ -15,10 +15,10 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 public interface BuildPlanRepository extends JpaRepository<BuildPlan, Long> {
 
     @Query("""
-            SELECT buildPlan
-            FROM BuildPlan buildPlan
-                INNER join FETCH buildPlan.programmingExercises programmingExercises
-            WHERE programmingExercises.id = :#{#exerciseId}
+            SELECT b
+            FROM BuildPlan b
+                INNER join b.programmingExercises programmingExercises
+            WHERE programmingExercises.id = :exerciseId
             """)
     Optional<BuildPlan> findByProgrammingExercises_Id(@Param("exerciseId") long exerciseId);
 

@@ -143,7 +143,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
         gitlabCIService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.JAVA, ProjectType.MAVEN_MAVEN, buildLogEntries);
         var buildLogStatisticSizeAfterSuccessfulSave = buildLogStatisticsEntryRepository.count();
         assertThat(buildLogStatisticSizeAfterSuccessfulSave).isEqualTo(buildLogStatisticSizeBefore + 1);
-        // TODO: add an assertion on the average data and add more realisitc build log entries
+        // TODO: add an assertion on the average data and add more realistic build log entries
 
         // should not work
         gitlabCIService.extractAndPersistBuildLogStatistics(submission, ProgrammingLanguage.JAVA, ProjectType.GRADLE_GRADLE, buildLogEntries);
