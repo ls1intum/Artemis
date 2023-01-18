@@ -30,12 +30,12 @@ public class GitLabCIBuildPlanService {
     }
 
     /**
-     * Get the default build plan for the project type of the given programming exercise.
+     * Generate the default build plan for the project type of the given programming exercise.
      *
      * @param programmingExercise the programming exercise for which to get the build plan
      * @return the default build plan
      */
-    public String getBuildPlan(ProgrammingExercise programmingExercise) {
+    public String generateDefaultBuildPlan(ProgrammingExercise programmingExercise) {
         Optional<String> projectTypeName;
         if (programmingExercise.getProgrammingLanguage().equals(ProgrammingLanguage.JAVA)) {
             projectTypeName = Optional.of("maven");
