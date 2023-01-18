@@ -2,7 +2,6 @@ import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed, discardPeriodicTasks, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -38,6 +37,8 @@ import { AlertService } from 'app/core/util/alert.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { NgModel } from '@angular/forms';
 
 // Store a copy of now to avoid timing issues
 const now = dayjs();
@@ -114,7 +115,6 @@ const testBedDeclarations = [
     MockComponent(DragAndDropQuestionComponent),
     MockComponent(ShortAnswerQuestionComponent),
     MockComponent(JhiConnectionStatusComponent),
-    MockDirective(NgbTooltip),
     MockDirective(FeatureToggleDirective),
 ];
 
@@ -129,8 +129,8 @@ describe('QuizParticipationComponent', () => {
     describe('live mode', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule],
-                declarations: testBedDeclarations,
+                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
+                declarations: [testBedDeclarations, MockDirective(NgModel)],
                 providers: [
                     {
                         provide: ActivatedRoute,
@@ -176,7 +176,7 @@ describe('QuizParticipationComponent', () => {
             jest.restoreAllMocks();
         });
 
-        afterEach(fakeAsync(function () {
+        afterEach(fakeAsync(() => {
             discardPeriodicTasks();
         }));
 
@@ -434,7 +434,7 @@ describe('QuizParticipationComponent', () => {
     describe('preview mode', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule],
+                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
                 declarations: testBedDeclarations,
                 providers: [
                     {
@@ -513,7 +513,7 @@ describe('QuizParticipationComponent', () => {
     describe('practice mode', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule],
+                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
                 declarations: testBedDeclarations,
                 providers: [
                     {
@@ -594,7 +594,7 @@ describe('QuizParticipationComponent', () => {
     describe('solution mode', () => {
         beforeEach(() => {
             TestBed.configureTestingModule({
-                imports: [ArtemisTestModule, HttpClientTestingModule],
+                imports: [ArtemisTestModule, HttpClientTestingModule, MockDirective(NgbTooltip)],
                 declarations: testBedDeclarations,
                 providers: [
                     {

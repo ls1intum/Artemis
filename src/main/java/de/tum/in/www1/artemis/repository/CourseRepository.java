@@ -51,51 +51,50 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query("""
             SELECT DISTINCT c FROM Course c
-            WHERE (c.startDate <= :#{#now}
+            WHERE (c.startDate <= :now
             	OR c.startDate IS NULL)
-            AND (c.endDate >= :#{#now}
+            AND (c.endDate >= :now
             	OR c.endDate IS NULL)
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
 
+    // Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
     @Query("""
-            SELECT DISTINCT c FROM Course c
-            WHERE (c.startDate <= :#{#now}
-            	OR c.startDate IS NULL)
-            AND (c.endDate >= :#{#now}
-            	OR c.endDate IS NULL)
+            SELECT DISTINCT c
+            FROM Course c
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
             """)
     List<Course> findAllActiveWithLecturesAndExams(@Param("now") ZonedDateTime now);
 
+    // Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
+    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
+    Optional<Course> findWithLecturesAndExamsById(long courseId);
+
     @Query("""
-            SELECT DISTINCT c FROM Course c
-            LEFT JOIN FETCH c.tutorialGroups tutorialGroups
-            LEFT JOIN FETCH tutorialGroups.teachingAssistant tutor
-            LEFT JOIN FETCH tutorialGroups.registrations registrations
-            LEFT JOIN FETCH registrations.student student
-            WHERE (c.startDate <= :#{#now}
-            	OR c.startDate IS NULL)
-            AND (c.endDate >= :#{#now}
-            	OR c.endDate IS NULL)
-            AND (student.id = :#{#userId} OR tutor.id = :#{#userId})
+            SELECT DISTINCT c
+            FROM Course c
+                LEFT JOIN FETCH c.tutorialGroups tutorialGroups
+                LEFT JOIN FETCH tutorialGroups.teachingAssistant tutor
+                LEFT JOIN FETCH tutorialGroups.registrations registrations
+                LEFT JOIN FETCH registrations.student student
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
+                AND (student.id = :userId OR tutor.id = :userId)
             """)
     List<Course> findAllActiveWithTutorialGroupsWhereUserIsRegisteredOrTutor(@Param("now") ZonedDateTime now, @Param("userId") Long userId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
-    Optional<Course> findWithEagerLecturesAndExamsById(long courseId);
-
     // Note: this is currently only used for testing purposes
     @Query("""
-            SELECT DISTINCT c FROM Course c
-            LEFT JOIN FETCH c.exercises exercises
-            LEFT JOIN FETCH c.lectures lectures
-            LEFT JOIN FETCH lectures.attachments
+            SELECT DISTINCT c
+            FROM Course c
+                LEFT JOIN FETCH c.exercises exercises
+                LEFT JOIN FETCH c.lectures lectures
+                LEFT JOIN FETCH lectures.attachments
                 LEFT JOIN FETCH exercises.categories
-                WHERE (c.startDate <= :#{#now}
-                	OR c.startDate IS NULL)
-                AND (c.endDate >= :#{#now}
-                	OR c.endDate IS NULL)
+            WHERE (c.startDate <= :now OR c.startDate IS NULL)
+                AND (c.endDate >= :now OR c.endDate IS NULL)
                 """)
     List<Course> findAllActiveWithEagerExercisesAndLectures(@Param("now") ZonedDateTime now);
 
@@ -120,7 +119,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
 
-    @Query("select distinct course from Course course left join fetch course.organizations organizations left join fetch course.prerequisites prerequisites where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")
+    @Query("select distinct course from Course course left join fetch course.organizations organizations left join fetch course.prerequisites prerequisites where (course.startDate is null or course.startDate <= :now) and (course.endDate is null or course.endDate >= :now) and course.onlineCourse = false and course.registrationEnabled = true")
     List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
     @Query("select course from Course course left join fetch course.organizations co where course.id = :#{#courseId}")
@@ -191,13 +190,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                substring(s.submissionDate, 1, 10), p.student.login
+                substring(cast(s.submissionDate as string), 1, 10), p.student.login
                 )
             FROM StudentParticipation p JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
-                AND s.submissionDate >= :#{#startDate}
-                AND s.submissionDate <= :#{#endDate}
-                group by substring(s.submissionDate, 1, 10), p.student.login
+                AND s.submissionDate >= cast(:startDate as timestamp)
+                AND s.submissionDate <= cast(:endDate as timestamp)
+                group by substring(cast(s.submissionDate as string), 1, 10), p.student.login
             """)
     List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
@@ -212,7 +211,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             SELECT c
             FROM Course c
-            WHERE (c.endDate IS NULL OR :#{#now} IS NULL OR c.endDate >= :#{#now})
+            WHERE (c.endDate IS NULL OR cast(:now as timestamp) IS NULL OR c.endDate >= cast(:now as timestamp))
                 AND (:isAdmin = TRUE OR c.teachingAssistantGroupName IN :userGroups OR c.editorGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
             """)
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);
@@ -283,7 +282,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     @NotNull
     default Course findByIdWithLecturesAndExamsElseThrow(long courseId) {
-        return findWithEagerLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        return findWithLecturesAndExamsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
     }
 
     /**
@@ -291,7 +290,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @param courseId the id of the course to add to the organization
      * @param organization the organization to add to the course
      */
-    @NotNull
     default void addOrganizationToCourse(long courseId, Organization organization) {
         Course course = findWithEagerOrganizationsElseThrow(courseId);
         if (!course.getOrganizations().contains(organization)) {
@@ -305,7 +303,6 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      * @param courseId the id of the course to remove from the organization
      * @param organization the organization to remove from the course
      */
-    @NotNull
     default void removeOrganizationFromCourse(long courseId, Organization organization) {
         Course course = findWithEagerOrganizationsElseThrow(courseId);
         if (course.getOrganizations().contains(organization)) {

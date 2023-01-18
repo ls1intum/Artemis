@@ -15,6 +15,8 @@ import { ArtemisCoursesRoutingModule } from 'app/overview/courses-routing.module
 import { CopyIconButtonComponent } from 'app/shared/components/copy-icon-button/copy-icon-button.component';
 import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
 import { DocumentationButtonComponent } from 'app/shared/components/documentation-button/documentation-button.component';
+import { ResetRepoButtonComponent } from 'app/shared/components/reset-repo-button/reset-repo-button.component';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, ArtemisCoursesRoutingModule, FeatureToggleModule, ClipboardModule],
@@ -25,6 +27,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
         ConfirmAutofocusButtonComponent,
         ConfirmAutofocusModalComponent,
         CloneRepoButtonComponent,
+        ResetRepoButtonComponent,
         CopyIconButtonComponent,
         StartPracticeModeButtonComponent,
         OpenCodeEditorButtonComponent,
@@ -32,6 +35,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
         CourseExamArchiveButtonComponent,
         NotReleasedTagComponent,
         DocumentationButtonComponent,
+        ExerciseImportComponent,
     ],
     exports: [
         ButtonComponent,
@@ -39,6 +43,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
         HelpIconComponentWithoutTranslationComponent,
         ConfirmAutofocusButtonComponent,
         CloneRepoButtonComponent,
+        ResetRepoButtonComponent,
         CopyIconButtonComponent,
         StartPracticeModeButtonComponent,
         OpenCodeEditorButtonComponent,
@@ -46,6 +51,7 @@ import { DocumentationButtonComponent } from 'app/shared/components/documentatio
         CourseExamArchiveButtonComponent,
         NotReleasedTagComponent,
         DocumentationButtonComponent,
+        ExerciseImportComponent,
     ],
 })
 export class ArtemisSharedComponentModule {}

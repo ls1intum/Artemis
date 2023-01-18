@@ -175,7 +175,7 @@ public class ExerciseHintService {
             }
 
             var hintsInTask = exerciseHints.stream()
-                    .filter(hint -> Objects.nonNull(hint.getProgrammingExerciseTask()) && Objects.equals(hint.getProgrammingExerciseTask().getId(), task.getId()))
+                    .filter(hint -> hint.getProgrammingExerciseTask() != null && Objects.equals(hint.getProgrammingExerciseTask().getId(), task.getId()))
                     .collect(Collectors.toSet());
             // no hints exist for the current task
             if (hintsInTask.isEmpty()) {
@@ -231,7 +231,7 @@ public class ExerciseHintService {
                 student.getId(), true);
         practiceStudentParticipation.ifPresent(participation -> submissions.addAll(participation.getSubmissions()));
 
-        Collections.sort(submissions, Comparator.reverseOrder());
+        submissions.sort(Comparator.reverseOrder());
 
         return submissions;
     }

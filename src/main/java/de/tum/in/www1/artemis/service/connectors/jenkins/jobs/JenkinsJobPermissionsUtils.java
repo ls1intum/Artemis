@@ -1,10 +1,23 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins.jobs;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.w3c.dom.*;
 
 public class JenkinsJobPermissionsUtils {
+
+    /**
+     * Modern versions (>= 3.0) of the Matrix Authorization Strategy Plugin in
+     * Jenkins use a prefix to discern between permissions affecting individual
+     * users or groups.
+     */
+    private static final String USER_PERMISSIONS_PREFIX = "USER:";
+
+    private JenkinsJobPermissionsUtils() {
+        throw new IllegalAccessError("Utility Class");
+    }
 
     public static void removePermissionsFromFolder(Document jobConfig, Set<JenkinsJobPermission> permissionsToRemove, Set<String> userLogins) throws DOMException {
         var folderAuthorizationMatrix = "com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty";
@@ -46,15 +59,20 @@ public class JenkinsJobPermissionsUtils {
      * @param permission the permission to remove
      */
     private static void removePermission(Node authorizationMatrix, String permission) throws DOMException {
-        NodeList permissionNodes = authorizationMatrix.getChildNodes();
-        int nodeCount = permissionNodes.getLength();
+        final NodeList permissionNodes = authorizationMatrix.getChildNodes();
+        final int nodeCount = permissionNodes.getLength();
+
+        final List<Node> toRemove = new ArrayList<>();
+
         for (int i = 0; i < nodeCount; i++) {
-            Node permissionNode = permissionNodes.item(i);
-            if (permissionNode.getTextContent().equals(permission)) {
-                authorizationMatrix.removeChild(permissionNode);
-                return;
+            final Node permissionNode = permissionNodes.item(i);
+            final String existingPermission = permissionNode.getTextContent();
+            if (existingPermission.equals(permission) || existingPermission.equals(USER_PERMISSIONS_PREFIX + permission)) {
+                toRemove.add(permissionNode);
             }
         }
+
+        toRemove.forEach(authorizationMatrix::removeChild);
     }
 
     public static void addPermissionsToFolder(Document folderConfig, Set<JenkinsJobPermission> jenkinsJobPermissions, Set<String> userLogins) throws DOMException {
@@ -109,9 +127,9 @@ public class JenkinsJobPermissionsUtils {
      * {@code
      *      <com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
      *          ...existing permissions
-     *          <permission>hudson.model.the.jenkins.permission1:userLogin</permission>
+     *          <permission>USER:hudson.model.the.jenkins.permission1:userLogin</permission>
      *          ...
-     *          <permission>hudson.model.the.jenkins.permissionn:userLogin</permission>
+     *          <permission>USER:hudson.model.the.jenkins.permission:userLogin</permission>
      *      </com.cloudbees.hudson.plugins.folder.properties.AuthorizationMatrixProperty>
      * }
      * </pre>
@@ -124,12 +142,12 @@ public class JenkinsJobPermissionsUtils {
         NodeList existingPermissionElements = authorizationMatrixElement.getElementsByTagName("permission");
         jenkinsJobPermissions.forEach(jenkinsJobPermission -> {
             // The permission in the xml node has the format: com.jenkins.job.permission:user-login
-            String permission = jenkinsJobPermission.getName() + ":" + userLogin;
+            String permission = USER_PERMISSIONS_PREFIX + jenkinsJobPermission.getName() + ":" + userLogin;
 
             // Add the permission if it doesn't exist.
             boolean permissionExists = permissionExistInPermissionList(existingPermissionElements, permission);
             if (!permissionExists) {
-                // Permission element has format <permission>com.jenkins.job.permission:user-login</permission>
+                // Permission element has format <permission>USER:com.jenkins.job.permission:user-login</permission>
                 Element permissionElement = document.createElement("permission");
                 permissionElement.setTextContent(permission);
                 authorizationMatrixElement.appendChild(permissionElement);

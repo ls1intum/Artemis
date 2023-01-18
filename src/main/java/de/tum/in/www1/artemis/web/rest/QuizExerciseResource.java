@@ -237,7 +237,7 @@ public class QuizExerciseResource {
      * @param examId id of the exam of which all exercises should be fetched
      * @return the ResponseEntity with status 200 (OK) and the list of quiz exercises in body
      */
-    @GetMapping("/{examId}/quiz-exercises")
+    @GetMapping("exams/{examId}/quiz-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public List<QuizExercise> getQuizExercisesForExam(@PathVariable Long examId) {
         log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
@@ -439,7 +439,7 @@ public class QuizExerciseResource {
                             .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started.")).build();
                 }
 
-                // set release date to now, truncated to seconds because the database only stores seconds
+                // set release date to now, truncated to seconds
                 var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
                 quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).setStartTime(now);
                 if (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isAfter(now)) {

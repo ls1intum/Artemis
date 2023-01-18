@@ -152,7 +152,15 @@ export class ExamUpdateComponent implements OnInit {
         const examNumberOfCorrectionsValid = this.isValidNumberOfCorrectionRounds;
         const examMaxPointsValid = this.isValidMaxPoints;
         const examValidWorkingTime = this.validateWorkingTime;
-        return examConductionDatesValid && examReviewDatesValid && examNumberOfCorrectionsValid && examMaxPointsValid && examValidWorkingTime;
+        const examValidExampleSolutionPublicationDate = this.isValidExampleSolutionPublicationDate;
+        return (
+            examConductionDatesValid &&
+            examReviewDatesValid &&
+            examNumberOfCorrectionsValid &&
+            examMaxPointsValid &&
+            examValidWorkingTime &&
+            examValidExampleSolutionPublicationDate
+        );
     }
 
     get isValidVisibleDate(): boolean {
@@ -163,12 +171,13 @@ export class ExamUpdateComponent implements OnInit {
         if (this.exam.testExam) {
             return this.exam.numberOfCorrectionRoundsInExam === 0;
         } else {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-asserted-optional-chain
             return this.exam?.numberOfCorrectionRoundsInExam! < 3 && this.exam?.numberOfCorrectionRoundsInExam! > 0;
         }
     }
 
     get isValidMaxPoints(): boolean {
-        return this.exam?.maxPoints !== undefined && this.exam?.maxPoints > 0;
+        return this.exam?.examMaxPoints !== undefined && this.exam?.examMaxPoints > 0;
     }
 
     /**
@@ -280,6 +289,18 @@ export class ExamUpdateComponent implements OnInit {
         }
         // check for undefined because undefined is otherwise treated as the now dayjs
         return this.exam.examStudentReviewStart !== undefined && dayjs(this.exam.examStudentReviewEnd).isAfter(this.exam.examStudentReviewStart);
+    }
+
+    get isValidExampleSolutionPublicationDate(): boolean {
+        // allow instructors to leave exampleSolutionPublicationDate unset
+        if (!this.exam.exampleSolutionPublicationDate) {
+            return true;
+        }
+        // dayjs.isBefore(null) is always false so exampleSolutionPublicationDate is valid if the visibleDate and endDate are not set
+        return !(
+            dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.visibleDate || null) ||
+            dayjs(this.exam.exampleSolutionPublicationDate).isBefore(this.exam.endDate || null)
+        );
     }
 
     /**

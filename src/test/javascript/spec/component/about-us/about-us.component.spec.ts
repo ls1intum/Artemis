@@ -1,3 +1,4 @@
+import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { ArtemisTestModule } from '../../test.module';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -7,7 +8,7 @@ import { ActivatedRoute } from '@angular/router';
 import { StaticContentService } from 'app/shared/service/static-content.service';
 import { AboutUsModel } from 'app/core/about-us/models/about-us-model';
 import { BehaviorSubject, of } from 'rxjs';
-import { MockProvider } from 'ng-mocks';
+import { MockDirective, MockProvider } from 'ng-mocks';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ContributorModel } from 'app/core/about-us/models/contributor-model';
 
@@ -19,7 +20,7 @@ describe('AboutUsComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [AboutUsComponent, TranslatePipeMock],
+            declarations: [AboutUsComponent, TranslatePipeMock, MockDirective(TranslateDirective)],
             providers: [{ provide: ActivatedRoute, useValue: route }, MockProvider(ProfileService), MockProvider(StaticContentService)],
         })
             .compileComponents()

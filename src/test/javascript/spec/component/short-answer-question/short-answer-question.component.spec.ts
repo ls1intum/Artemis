@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/questions/short-answer-question/short-answer-question.component';
 import { QuizScoringInfoStudentModalComponent } from 'app/exercises/quiz/shared/questions/quiz-scoring-infostudent-modal/quiz-scoring-info-student-modal.component';
 import { ShortAnswerQuestion } from 'app/entities/quiz/short-answer-question.model';
@@ -21,14 +20,7 @@ describe('ShortAnswerQuestionComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
-            declarations: [
-                ShortAnswerQuestionComponent,
-                MockPipe(ArtemisTranslatePipe),
-                MockComponent(QuizScoringInfoStudentModalComponent),
-                MockComponent(FaIconComponent),
-                MockDirective(NgbPopover),
-                MockDirective(NgbTooltip),
-            ],
+            declarations: [ShortAnswerQuestionComponent, MockPipe(ArtemisTranslatePipe), MockComponent(QuizScoringInfoStudentModalComponent), MockComponent(FaIconComponent)],
             providers: [],
         }).compileComponents();
         fixture = TestBed.createComponent(ShortAnswerQuestionComponent);
@@ -77,7 +69,7 @@ describe('ShortAnswerQuestionComponent', () => {
         const spot = new ShortAnswerSpot();
         spot.spotNr = 1;
         alternativeQuestion.spots = [spot];
-        component.fnOnSubmittedTextUpdate = function () {
+        component.fnOnSubmittedTextUpdate = () => {
             return true;
         };
         const returnValue = { value: text } as unknown as HTMLElement;

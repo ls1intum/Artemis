@@ -58,11 +58,9 @@ public abstract class Exercise extends BaseExercise implements Completable {
     private IncludedInOverallScore includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
 
     @Column(name = "problem_statement")
-    @Lob
     private String problemStatement;
 
     @Column(name = "grading_instructions")
-    @Lob
     private String gradingInstructions;
 
     @ManyToMany(mappedBy = "exercises")
@@ -469,7 +467,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      * @return the latest relevant result in the given participation, or null, if none exist
      */
     @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
+    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, boolean ignoreAssessmentDueDate) {
         // for most types of exercises => return latest result (all results are relevant)
         Submission latestSubmission = null;
         // we get the results over the submissions
@@ -678,7 +676,6 @@ public abstract class Exercise extends BaseExercise implements Completable {
      * @return boolean
      */
     public boolean isReleased() {
-        // Exam
         ZonedDateTime releaseDate = getParticipationStartDate();
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
@@ -857,6 +854,17 @@ public abstract class Exercise extends BaseExercise implements Completable {
     }
 
     /**
+     * Checks whether students should be able to see the example solution.
+     *
+     * @return true if example solution publication date is in the past, false otherwise (including null case).
+     */
+    public boolean isExampleSolutionPublished() {
+        ZonedDateTime exampleSolutionPublicationDate = this.isExamExercise() ? this.getExamViaExerciseGroupOrCourseMember().getExampleSolutionPublicationDate()
+                : this.getExampleSolutionPublicationDate();
+        return exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(exampleSolutionPublicationDate);
+    }
+
+    /**
      * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
      *
      * @throws BadRequestAlertException if the dates are not valid
@@ -924,7 +932,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      */
     public enum ExerciseSearchColumn {
 
-        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
+        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title"), EXAM_TITLE("exerciseGroup.exam.title");
 
         private final String mappedColumnName;
 

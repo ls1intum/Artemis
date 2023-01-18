@@ -115,7 +115,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                 tap((params) => {
                     if (!this.isExamMode) {
                         this.exerciseCategories = this.modelingExercise.categories || [];
-                        if (!!this.modelingExercise.course) {
+                        if (this.modelingExercise.course) {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id!).subscribe({
                                 next: (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
@@ -193,7 +193,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.isSaving = true;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
-            .save(this.modelingExercise, this.notificationText)
+            .save(this.modelingExercise, this.isExamMode, this.notificationText)
             .subscribe({
                 next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),

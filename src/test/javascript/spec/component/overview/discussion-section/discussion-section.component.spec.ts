@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testin
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { Course } from 'app/entities/course.model';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
@@ -14,7 +14,6 @@ import { MockPostService } from '../../../helpers/mocks/service/mock-post.servic
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { DiscussionSectionComponent } from 'app/overview/discussion-section/discussion-section.component';
-import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { PostingThreadComponent } from 'app/shared/metis/posting-thread/posting-thread.component';
 import { PostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/post-create-edit-modal/post-create-edit-modal.component';
 import { SortDirection } from 'app/shared/metis/metis.util';
@@ -48,6 +47,7 @@ import {
     post7WithCreationDate,
     postsWithCreationDate,
 } from '../../../helpers/sample/metis-sample-data';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('PageDiscussionSectionComponent', () => {
     let component: DiscussionSectionComponent;
@@ -58,7 +58,7 @@ describe('PageDiscussionSectionComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule)],
+            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule)],
             providers: [
                 FormBuilder,
                 MockProvider(SessionStorageService),
@@ -82,7 +82,6 @@ describe('PageDiscussionSectionComponent', () => {
                 MockComponent(FaIconComponent),
                 MockComponent(ButtonComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
             ],
         })
             .overrideComponent(DiscussionSectionComponent, {

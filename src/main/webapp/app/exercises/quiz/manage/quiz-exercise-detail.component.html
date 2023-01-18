@@ -1,4 +1,4 @@
-<div class="row" *ngIf="quizExercise">
+<div class="row" *ngIf="quizExercise && quizExercise.isEditable">
     <div class="col-lg-12">
         <div class="title">
             <div class="col-sm d-flex align-items-center">
@@ -40,6 +40,7 @@
             </div>
             <div *ngIf="!isExamMode" class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
+                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
                 <jhi-category-selector
                     [categories]="exerciseCategories"
                     [existingCategories]="existingCategories"

@@ -18,7 +18,11 @@
             "text": "Text",
             "detailText": "Detailtext",
             "type": "Type",
-            "result": "Ergebnis"
+            "result": "Ergebnis",
+            "modal": {
+                "submitted": "Abgegeben",
+                "linkedToCommit": "verknüpft mit Commit"
+            }
         }
     }
 }

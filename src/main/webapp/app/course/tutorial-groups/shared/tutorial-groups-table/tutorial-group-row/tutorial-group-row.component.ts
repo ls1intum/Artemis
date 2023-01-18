@@ -4,6 +4,7 @@ import { getDayTranslationKey } from '../../weekdays';
 import { Course, Language } from 'app/entities/course.model';
 
 @Component({
+    // eslint-disable-next-line @angular-eslint/component-selector
     selector: '[jhi-tutorial-group-row]',
     templateUrl: './tutorial-group-row.component.html',
     styleUrls: ['./tutorial-group-row.component.scss'],

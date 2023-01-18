@@ -117,8 +117,7 @@
                         </ng-container>
                     </td>
                     <td>
-                        {{ submission.durationInMinutes }}
-                        minutes
+                        {{ (submission.durationInMinutes ?? 0) * 60 | artemisDurationFromSeconds }}
                     </td>
                     <td>{{ submission.latestResult && submission.latestResult!.assessmentType }}</td>
                     <td>

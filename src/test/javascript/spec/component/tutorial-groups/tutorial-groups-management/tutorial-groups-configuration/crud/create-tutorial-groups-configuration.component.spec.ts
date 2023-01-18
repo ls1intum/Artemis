@@ -1,4 +1,4 @@
-// tslint:disable:max-line-length
+// eslint-disable-next-line max-len
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';

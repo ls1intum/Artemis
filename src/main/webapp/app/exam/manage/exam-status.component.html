@@ -18,11 +18,11 @@
                         <fa-icon *ngIf="!configuredExercises" [icon]="faTimes" class="cross"></fa-icon>
                     </li>
                     <li class="d-flex align-items-center" *ngIf="isTestExam">
-                        <ng-container *ngIf="maxPointExercises === exam.maxPoints">
-                            <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsCorrect' | artemisTranslate }}{{ exam.maxPoints }}</span>
+                        <ng-container *ngIf="maxPointExercises === exam.examMaxPoints">
+                            <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsCorrect' | artemisTranslate }}{{ exam.examMaxPoints }}</span>
                             <fa-icon [icon]="faCheckCircle" class="check"></fa-icon>
                         </ng-container>
-                        <ng-container *ngIf="maxPointExercises !== exam.maxPoints">
+                        <ng-container *ngIf="maxPointExercises !== exam.examMaxPoints">
                             <span>{{ 'artemisApp.examStatus.preparation.testExam.maxPointsWrong' | artemisTranslate : { points: maxPointExercises } }} </span>
                             <fa-icon [icon]="faTimes" class="cross"></fa-icon>
                         </ng-container>

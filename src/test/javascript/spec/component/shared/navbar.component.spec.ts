@@ -1,9 +1,10 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
-import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -19,7 +20,6 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTestModule } from '../../test.module';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
@@ -34,6 +34,11 @@ import dayjs from 'dayjs/esm';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 import { SystemNotificationComponent } from 'app/shared/notification/system-notification/system-notification.component';
+import { NgbTooltipMocksModule } from '../../helpers/mocks/directive/ngbTooltipMocks.module';
+import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollapseMocks.module';
+import { NgbDropdownMocksModule } from '../../helpers/mocks/directive/ngbDropdownMocks.module';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 
 class MockBreadcrumb {
     label: string;
@@ -69,14 +74,27 @@ describe('NavbarComponent', () => {
         uri: '/course-management/1/programming-exercises/',
     } as MockBreadcrumb;
 
+    const profileInfo = {
+        git: {
+            branch: 'clone-repo-button',
+            commit: {
+                id: {
+                    abbrev: '95ef2a',
+                },
+                time: '2022-11-20T20:35:01Z',
+                user: {
+                    name: 'Max Musterman',
+                },
+            },
+        },
+    } as ProfileInfo;
+
     beforeEach(() => {
         return TestBed.configureTestingModule({
-            imports: [ArtemisTestModule],
+            imports: [HttpClientTestingModule, NgbTooltipMocksModule, NgbCollapseMocksModule, NgbDropdownMocksModule],
             declarations: [
                 NavbarComponent,
-                MockDirective(NgbCollapse),
                 MockDirective(HasAnyAuthorityDirective),
-                MockDirective(NgbDropdown),
                 MockDirective(ActiveMenuDirective),
                 MockDirective(TranslateDirective),
                 MockRouterLinkDirective,
@@ -89,14 +107,22 @@ describe('NavbarComponent', () => {
                 MockComponent(JhiConnectionWarningComponent),
                 MockComponent(ThemeSwitchComponent),
                 MockComponent(SystemNotificationComponent),
+                MockComponent(FaIconComponent),
             ],
             providers: [
                 MockProvider(UrlSerializer),
-                MockProvider(MockAccountService),
+                {
+                    provide: AccountService,
+                    useClass: MockAccountService,
+                },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: Router, useValue: router },
+                {
+                    provide: ActivatedRoute,
+                    useValue: new MockActivatedRoute({ id: 123 }),
+                },
             ],
         })
             .compileComponents()
@@ -228,6 +254,18 @@ describe('NavbarComponent', () => {
 
         expect(component.breadcrumbs[0]).toEqual({ label: 'route-without-translation', translate: false, uri: '/admin/route-without-translation/' } as MockBreadcrumb);
     });
+
+    it('should have correct git info', fakeAsync(() => {
+        const profileService: ProfileService = TestBed.inject(ProfileService);
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(profileInfo as any));
+
+        fixture.detectChanges();
+
+        expect(component.gitCommitId).toBe('95ef2a');
+        expect(component.gitBranchName).toBe('clone-repo-button');
+        expect(component.gitTimestamp).toBe('Sun, 20 Nov 2022 20:35:01 GMT');
+        expect(component.gitUsername).toBe('Max Musterman');
+    }));
 
     it('should set the exam active state correctly', fakeAsync(() => {
         const now = dayjs();

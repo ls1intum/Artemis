@@ -4,6 +4,7 @@ import { ExamParticipationComponent } from 'app/exam/participate/exam-participat
 import { PendingChangesGuard } from 'app/shared/guard/pending-changes.guard';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { GradingKeyOverviewComponent } from 'app/grading-system/grading-key-overview/grading-key-overview.component';
+import { ExampleSolutionComponent } from 'app/exercises/shared/example-solution/example-solution.component';
 
 export const examParticipationRoute: Routes = [
     {
@@ -44,6 +45,15 @@ export const examParticipationRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
         canDeactivate: [PendingChangesGuard],
+    },
+    {
+        path: 'exercises/:exerciseId/example-solution',
+        component: ExampleSolutionComponent,
+        data: {
+            authorities: [Authority.USER],
+            pageTitle: 'artemisApp.exam.title',
+        },
+        canActivate: [UserRouteAccessService],
     },
 ];
 
