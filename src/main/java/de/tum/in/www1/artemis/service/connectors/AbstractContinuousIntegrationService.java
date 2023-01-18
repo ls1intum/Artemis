@@ -8,7 +8,6 @@ import java.util.function.Predicate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.client.RestTemplate;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -39,19 +38,12 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
 
     protected final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
-    protected final RestTemplate restTemplate;
-
-    protected final RestTemplate shortTimeoutRestTemplate;
-
     protected final TestwiseCoverageService testwiseCoverageService;
 
     public AbstractContinuousIntegrationService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
-            BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, RestTemplate restTemplate,
-            RestTemplate shortTimeoutRestTemplate, TestwiseCoverageService testwiseCoverageService) {
+            BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, TestwiseCoverageService testwiseCoverageService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.feedbackRepository = feedbackRepository;
-        this.restTemplate = restTemplate;
-        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
         this.buildLogService = buildLogService;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.testwiseCoverageService = testwiseCoverageService;

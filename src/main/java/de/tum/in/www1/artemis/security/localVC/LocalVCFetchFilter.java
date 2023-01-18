@@ -17,10 +17,10 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
 
     private final Logger log = LoggerFactory.getLogger(LocalVCFetchFilter.class);
 
-    private final LocalVCFilterUtilService localVCFilterUtilService;
+    private final LocalVCFilterService localVCFilterService;
 
-    public LocalVCFetchFilter(LocalVCFilterUtilService localVCFilterUtilService) {
-        this.localVCFilterUtilService = localVCFilterUtilService;
+    public LocalVCFetchFilter(LocalVCFilterService localVCFilterService) {
+        this.localVCFilterService = localVCFilterService;
     }
 
     @Override
@@ -31,7 +31,7 @@ public class LocalVCFetchFilter extends OncePerRequestFilter {
         servletResponse.setHeader("WWW-Authenticate", "Basic");
 
         try {
-            localVCFilterUtilService.authenticateAndAuthorizeGitRequest(servletRequest, false);
+            localVCFilterService.authenticateAndAuthorizeGitRequest(servletRequest, false);
         }
         catch (LocalVCAuthException e) {
             servletResponse.setStatus(401);

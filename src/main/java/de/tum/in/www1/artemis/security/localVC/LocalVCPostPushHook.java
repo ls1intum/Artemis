@@ -18,10 +18,10 @@ public class LocalVCPostPushHook implements PostReceiveHook {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCPath;
 
-    private final LocalVCFilterUtilService localVCFilterUtilService;
+    private final LocalVCFilterService localVCFilterService;
 
-    public LocalVCPostPushHook(LocalVCFilterUtilService localVCFilterUtilService) {
-        this.localVCFilterUtilService = localVCFilterUtilService;
+    public LocalVCPostPushHook(LocalVCFilterService localVCFilterService) {
+        this.localVCFilterService = localVCFilterService;
     }
 
     @Override
@@ -53,7 +53,7 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
         // For pushes to the "tests" repository, no submission is created.
         if (!localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.TESTS.getName())) {
-            localVCFilterUtilService.createNewSubmission(commitHash, repository, localVCRepositoryUrl);
+            localVCFilterService.createNewSubmission(commitHash, repository, localVCRepositoryUrl);
         }
 
     }

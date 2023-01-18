@@ -17,10 +17,10 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
 
     private final Logger log = LoggerFactory.getLogger(LocalVCPushFilter.class);
 
-    private final LocalVCFilterUtilService localVCFilterUtilService;
+    private final LocalVCFilterService localVCFilterService;
 
-    public LocalVCPushFilter(LocalVCFilterUtilService localVCFilterUtilService) {
-        this.localVCFilterUtilService = localVCFilterUtilService;
+    public LocalVCPushFilter(LocalVCFilterService localVCFilterService) {
+        this.localVCFilterService = localVCFilterService;
     }
 
     @Override
@@ -31,7 +31,7 @@ public class LocalVCPushFilter extends OncePerRequestFilter {
         servletResponse.setHeader("WWW-Authenticate", "Basic");
 
         try {
-            localVCFilterUtilService.authenticateAndAuthorizeGitRequest(servletRequest, true);
+            localVCFilterService.authenticateAndAuthorizeGitRequest(servletRequest, true);
         }
         catch (LocalVCAuthException e) {
             servletResponse.setStatus(401);

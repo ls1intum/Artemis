@@ -41,9 +41,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Profile("localvc")
-public class LocalVCFilterUtilService {
+public class LocalVCFilterService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalVCFilterUtilService.class);
+    private final Logger log = LoggerFactory.getLogger(LocalVCFilterService.class);
 
     @Value("${artemis.version-control.url}")
     private URL localVCServerUrl;
@@ -78,7 +78,7 @@ public class LocalVCFilterUtilService {
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
-    public LocalVCFilterUtilService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseRepository courseRepository,
+    public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseRepository courseRepository,
             AuthorizationCheckService authorizationCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
@@ -108,7 +108,7 @@ public class LocalVCFilterUtilService {
      */
     public void authenticateAndAuthorizeGitRequest(HttpServletRequest servletRequest, boolean forPush) throws LocalVCAuthException {
 
-        String basicAuthCredentials = checkAuthorizationHeader(servletRequest.getHeader(LocalVCFilterUtilService.AUTHORIZATION_HEADER));
+        String basicAuthCredentials = checkAuthorizationHeader(servletRequest.getHeader(LocalVCFilterService.AUTHORIZATION_HEADER));
 
         String username = basicAuthCredentials.split(":")[0];
         String password = basicAuthCredentials.split(":")[1];

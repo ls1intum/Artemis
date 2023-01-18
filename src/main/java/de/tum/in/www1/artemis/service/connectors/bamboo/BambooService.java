@@ -75,18 +75,23 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final UrlService urlService;
 
+    private final RestTemplate restTemplate;
+
+    private final RestTemplate shortTimeoutRestTemplate;
+
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
             UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate,
-                testwiseCoverageService);
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
         this.gitService = gitService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
         this.mapper = mapper;
         this.urlService = urlService;
+        this.restTemplate = restTemplate;
+        this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     @Override

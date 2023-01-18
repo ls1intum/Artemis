@@ -108,6 +108,10 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
         return courseShortName;
     }
 
+    public String getRepositorySlug() {
+        return repositorySlug;
+    }
+
     public String getRepositoryTypeOrUserName() {
         return repositoryTypeOrUserName;
     }

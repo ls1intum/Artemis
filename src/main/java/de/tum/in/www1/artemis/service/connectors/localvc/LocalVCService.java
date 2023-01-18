@@ -82,7 +82,7 @@ public class LocalVCService extends AbstractVersionControlService {
 
     @Override
     protected void addWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName) {
-        // Webhooks must not be added for the local git server. The LocalVCPushFilter notifies Artemis on every push.
+        // Webhooks must not be added for the local git server. The LocalVCPostPushHook notifies Artemis on every push.
     }
 
     @Override
@@ -140,7 +140,7 @@ public class LocalVCService extends AbstractVersionControlService {
                 return remoteRepositoryRefs.get("HEAD").getTarget().getName();
             }
 
-            throw new LocalVCException("Cannot get default branch of repository " + repositoryUrl.folderNameForRepositoryUrl() + ". ls-remote does not return a HEAD reference.");
+            throw new LocalVCException("Cannot get default branch of repository " + localRepositoryPath + ". ls-remote does not return a HEAD reference.");
         }
         catch (Exception e) {
             log.error("Unable to get default branch for repository {}", repositoryUrl.folderNameForRepositoryUrl(), e);
