@@ -368,22 +368,16 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             return;
         }
 
-        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry;
-        ZonedDateTime testsStarted;
-        ZonedDateTime testsFinished;
-        ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
-        Integer dependenciesDownloadedCount;
-
-        if (ProjectType.isMavenProject(projectType)) {
-            testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
-            testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
-            dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
-        }
-        else {
+        if (!ProjectType.isMavenProject(projectType)) {
             // A new, unsupported project type was used -> Log it but don't store it since it would only contain null-values
             log.warn("Received unsupported project type {} for GitLabCIService.extractAndPersistBuildLogStatistics, will not store any build log statistics.", projectType);
             return;
         }
+        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry;
+        ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
+        ZonedDateTime testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
+        ZonedDateTime testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
+        Integer dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
 
         var testDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(testsStarted, testsFinished);
         var totalJobDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(jobStarted, jobFinished);

@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.service.ResourceLoaderService;
 @Profile("gitlabci")
 public class GitLabCIBuildPlanService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(GitLabCIBuildPlanService.class);
+    private static final Logger log = LoggerFactory.getLogger(GitLabCIBuildPlanService.class);
 
     private static final String FILE_NAME = ".gitlab-ci.yml";
 
@@ -53,10 +53,9 @@ public class GitLabCIBuildPlanService {
         try {
             return StreamUtils.copyToString(resource.getInputStream(), Charset.defaultCharset());
         }
-        catch (IOException e) {
-            final var errorMessage = "Error loading template GitLab CI build configuration " + e.getMessage();
-            LOG.error(errorMessage, e);
-            throw new IllegalStateException(errorMessage, e);
+        catch (IOException ex) {
+            log.error("Error loading template GitLab CI build configuration", ex);
+            throw new IllegalStateException("Error loading template GitLab CI build configuration", ex);
         }
 
     }
