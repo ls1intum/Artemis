@@ -50,7 +50,7 @@ class GitlabCIServiceTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTes
     @BeforeEach
     void initTestCase() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
-        database.addUsers(TEST_PREFIX, 2, 2, 0, 2);
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 1);
         var course = database.addCourseWithOneProgrammingExercise();
         programmingExerciseId = database.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
