@@ -165,6 +165,8 @@ repositories {
     }
 }
 
+ext['jackson.version'] = fasterxml_version
+
 dependencies {
     implementation "com.offbytwo.jenkins:jenkins-client:0.3.8"
     implementation "org.gitlab4j:gitlab4j-api:5.0.1"
