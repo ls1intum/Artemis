@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import static de.tum.in.www1.artemis.config.Constants.ARTEMIS_GROUP_DEFAULT_PREFIX;
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -54,6 +55,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.dto.UserPublicInfoDTO;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementOverviewStatisticsDTO;
@@ -1522,6 +1524,67 @@ public class CourseTestService {
         // should be empty as we only search for students
         List<UserDTO> tutors = request.getList("/api/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params2);
         assertThat(tutors).isEmpty();
+    }
+
+    public void searchUsersInCourse() throws Exception {
+        var course = database.createCourse();
+        // Test 1: search for all (no login or name) tutors and editors (tutors includes also editors)
+        var resultTest1 = searchUsersTest(course, List.of("tutors"), Optional.empty(), numberOfTutors + numberOfEditors, true);
+        assertThat(resultTest1.stream().filter(UserPublicInfoDTO::getIsEditor).collect(Collectors.toList())).hasSize(numberOfEditors);
+        assertThat(resultTest1.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant).collect(Collectors.toList())).hasSize(numberOfTutors);
+
+        // Test 2: search for all (no login or name) instructors
+        var resultTest2 = searchUsersTest(course, List.of("instructors"), Optional.empty(), numberOfInstructors, true);
+        assertThat(resultTest2.stream().filter(UserPublicInfoDTO::getIsInstructor).collect(Collectors.toList())).hasSize(numberOfInstructors);
+
+        // Test 3: Try to search for all students (should fail)
+        searchUsersTest(course, List.of("students"), Optional.empty(), 0, false);
+
+        // Test 4: Try to search for all students with a too short search term (at least 3 as students are included) (should fail)
+        searchUsersTest(course, List.of("students"), Optional.of("st"), 0, false);
+
+        // Test 4: Try to search for students with a long enough search term (at least 3 as students are included)
+        // Note: -1 as student1 is the requesting user and will not be returned
+        var resultTest4 = searchUsersTest(course, List.of("students"), Optional.of(userPrefix + "student"), numberOfStudents - 1, true);
+        assertThat(resultTest4.stream().filter(UserPublicInfoDTO::getIsStudent).collect(Collectors.toList())).hasSize(numberOfStudents - 1);
+
+        // Test 5: Try to search for all tutors, editors and instructors
+        var resultTest5 = searchUsersTest(course, List.of("tutors", "instructors"), Optional.empty(), numberOfTutors + numberOfEditors + numberOfInstructors, true);
+        assertThat(resultTest5.stream().filter(UserPublicInfoDTO::getIsEditor).collect(Collectors.toList())).hasSize(numberOfEditors);
+        assertThat(resultTest5.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant).collect(Collectors.toList())).hasSize(numberOfTutors);
+        assertThat(resultTest5.stream().filter(UserPublicInfoDTO::getIsInstructor).collect(Collectors.toList())).hasSize(numberOfInstructors);
+
+        // Test 6: Try to search for all tutors, editors and instructors with search term
+        var resultTest6 = searchUsersTest(course, List.of("tutors", "instructors"), Optional.of(userPrefix + "tutor"), numberOfTutors, true);
+        assertThat(resultTest6.stream().filter(UserPublicInfoDTO::getIsEditor).collect(Collectors.toList())).hasSize(0);
+        assertThat(resultTest6.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant).collect(Collectors.toList())).hasSize(numberOfTutors);
+        assertThat(resultTest6.stream().filter(UserPublicInfoDTO::getIsInstructor).collect(Collectors.toList())).hasSize(0);
+
+        // Test 7: Try to search or all students, tutors, editors and instructors with a too short search term (at least 3 as students are included)
+        searchUsersTest(course, List.of("students", "tutors", "instructors"), Optional.of("tu"), 0, false);
+
+        // Test 8: Try to search or all students, tutors, editors and instructors with a long enough search term (at least 3 as students are included)
+        // Note: -1 as student1 is the requesting user and will not be returned
+        var resultTest8 = searchUsersTest(course, List.of("students", "tutors", "instructors"), Optional.of(userPrefix + "tutor"), numberOfTutors, true);
+        assertThat(resultTest8.stream().filter(UserPublicInfoDTO::getIsEditor).collect(Collectors.toList())).hasSize(0);
+        assertThat(resultTest8.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant).collect(Collectors.toList())).hasSize(numberOfTutors);
+        assertThat(resultTest8.stream().filter(UserPublicInfoDTO::getIsInstructor).collect(Collectors.toList())).hasSize(0);
+        assertThat(resultTest8.stream().filter(UserPublicInfoDTO::getIsStudent).collect(Collectors.toList())).hasSize(0);
+    }
+
+    private List<UserPublicInfoDTO> searchUsersTest(Course course, List<String> roles, Optional<String> loginOrName, int expectedSize, boolean shouldPass) throws Exception {
+        MultiValueMap<String, String> queryParameter = new LinkedMultiValueMap<>();
+        queryParameter.add("loginOrName", loginOrName.orElse(""));
+        queryParameter.add("roles", String.join(",", roles));
+        var status = shouldPass ? HttpStatus.OK : HttpStatus.BAD_REQUEST;
+        var foundUsers = request.getList("/api/courses/" + course.getId() + "/users/search", status, UserPublicInfoDTO.class, queryParameter);
+        if (shouldPass) {
+            assertThat(foundUsers).hasSize(expectedSize);
+            return foundUsers;
+        }
+        else {
+            return emptyList();
+        }
     }
 
     // Test
