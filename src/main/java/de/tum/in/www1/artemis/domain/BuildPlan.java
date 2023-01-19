@@ -1,11 +1,15 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+
 import javax.annotation.Nullable;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -19,19 +23,25 @@ public class BuildPlan extends DomainObject {
     @Column(name = "build_plan", table = "build_plan", length = 10_000)
     private String buildPlan;
 
-    public BuildPlan() {
-        // explicit constructor needed for Jackson
-    }
+    @OneToMany
+    @JoinColumn(name = "build_plan_id")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private Set<ProgrammingExercise> programmingExercises = new HashSet<>();
 
-    public BuildPlan(String buildPlan) {
-        this.buildPlan = buildPlan;
-    }
-
+    @Nullable
     public String getBuildPlan() {
         return buildPlan;
     }
 
-    public void setBuildPlan(String buildPlan) {
+    public void setBuildPlan(@Nullable String buildPlan) {
         this.buildPlan = buildPlan;
+    }
+
+    public void addProgrammingExercise(ProgrammingExercise exercise) {
+        programmingExercises.add(exercise);
+    }
+
+    public Optional<ProgrammingExercise> getProgrammingExerciseById(Long exerciseId) {
+        return programmingExercises.stream().filter(programmingExercise -> programmingExercise.getId() == exerciseId).findFirst();
     }
 }
