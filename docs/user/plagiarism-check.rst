@@ -146,6 +146,7 @@ We visualized the process in the following diagram.
 6. Make a final verdict by selecting one of 3 available options. The final verdict must be approved by clicking 'Confirm' in the dialog.
 
  |verdict-dialog|
+
  a. No plagiarism. The instructor can deem the accusation invalid and resolve the plagiarism case.
  b. Warning. The instructor can write a warning message to the student and confirm the verdict in the dialog.
  c. Point deduction in % (minimum value 0, maximum 100). Deduct exercise points and confirm  the verdict in the dialog.

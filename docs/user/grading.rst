@@ -70,7 +70,7 @@ In order to configure a bonus, an instructor needs to choose appropriate values 
 
 4. **Bonus source** is the course or exam determining the bonus amount. When calculating the final grade for a student, the grade they received from the bonus source is substituted into the ``Bonus`` parameter in the formula explained below. The dropdown lists courses and exams with ``Bonus`` type grading keys if the current user is an instructor of it.
 
-Bonus configuration page has a wizard mode where the options appear one by one initially to navigate the new users through the process easily.
+The bonus configuration page has a wizard mode where the options appear one by one initially to navigate the new users through the process easily.
 When an instructor opens the bonus configuration page for an exam without a bonus, Artemis displays the options in wizard mode. Artemis shows the grade steps and max points of the selected grading key below the dropdown as a reminder to the instructor.
 
     .. figure:: grading/bonus_create_options.png
@@ -88,6 +88,7 @@ When the instructor is editing an already saved bonus configuration, Artemis hid
        Bonus Options in Edit Mode
 
 After the instructor chose values for all the fields above, Artemis generates the bonus calculation formula along with 5 examples to enable instructors to check the bonus configuration is correct before saving. Artemis tries to generate the examples using a heuristic with the following conditions:
+
 - the exam points are in ascending order,
 - the bonus source student points are in descending order,
 - the first example shows that the bonus is not applied when the exam grade is a failing grade,
