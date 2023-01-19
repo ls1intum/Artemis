@@ -184,8 +184,12 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, IOException {
+        mockCopyRepositoryForParticipation(exercise, username, false);
+    }
+
+    public void mockCopyRepositoryForParticipation(ProgrammingExercise exercise, String username, boolean practiceMode) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
-        final var clonedRepoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
+        final var clonedRepoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + username.toLowerCase();
         mockCreateRepository(exercise, clonedRepoName);
     }
 
@@ -198,8 +202,13 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<User> users, boolean userExists) throws URISyntaxException, IOException {
+        mockConfigureRepository(exercise, username, users, userExists, false);
+    }
+
+    public void mockConfigureRepository(ProgrammingExercise exercise, String username, Set<User> users, boolean userExists, boolean practiceMode)
+            throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
-        final var repoName = projectKey.toLowerCase() + "-" + username.toLowerCase();
+        final var repoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + username.toLowerCase();
         for (User user : users) {
             if (userExists) {
                 mockUserExists(user.getLogin());
