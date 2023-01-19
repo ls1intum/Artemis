@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.regex.Pattern;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.LocalVCException;
@@ -78,7 +79,7 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
         String folderPath = repositoryFolderPath.getPath();
 
         // Extract segments from path.
-        String[] pathSplit = folderPath.split(separator);
+        String[] pathSplit = folderPath.split(Pattern.quote(separator));
 
         if (!pathSplit[0].equals(localVCPath)) {
             throw new LocalVCException("Invalid repository path.");

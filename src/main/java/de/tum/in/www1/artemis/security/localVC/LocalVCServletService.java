@@ -38,7 +38,7 @@ public class LocalVCServletService {
 
         log.debug("Path to resolve repository from: {}", gitDir.getPath());
         if (!gitDir.exists()) {
-            log.debug("Could not find local repository with name {}", repositoryPath);
+            log.info("Could not find local repository with name {}", repositoryPath);
             throw new RepositoryNotFoundException(repositoryPath);
         }
 

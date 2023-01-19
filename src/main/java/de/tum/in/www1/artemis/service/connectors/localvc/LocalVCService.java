@@ -157,9 +157,9 @@ public class LocalVCService extends AbstractVersionControlService {
     /**
      * Check if a project already exists in the file system to make sure the new projectKey is unique.
      *
-     * @param projectKey  to check if a project with this unique key already exists
-     * @param projectName to check if a project with the same name already exists
-     * @return true or false depending
+     * @param projectKey  to check if a project with this unique key already exists.
+     * @param projectName to check if a project with the same name already exists.
+     * @return true or false depending on whether the respective folder exists.
      */
     @Override
     public boolean checkIfProjectExists(String projectKey, String courseShortName, String projectName) {

@@ -12,6 +12,11 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.revwalk.RevCommit;
 import org.eclipse.jgit.transport.URIish;
 
+/**
+ * This class describes a local repository cloned from an origin repository.
+ * In the case of using the local VCS with the local CIS instead of, e.g. Bitbucket and Bamboo, the local VCS contains the origin repositories,
+ * they are just not kept in an external system, but rather in another folder that belongs to Artemis.
+ */
 public class LocalRepository {
 
     public File localRepoFile;

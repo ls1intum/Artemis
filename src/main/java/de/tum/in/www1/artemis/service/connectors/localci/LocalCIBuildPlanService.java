@@ -47,7 +47,6 @@ import com.atlassian.bamboo.specs.builders.task.*;
 import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
 import com.atlassian.bamboo.specs.model.task.ScriptTaskProperties;
 import com.atlassian.bamboo.specs.model.task.TestParserTaskProperties;
-import com.atlassian.bamboo.specs.util.BambooServer;
 
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.AuxiliaryRepository;
@@ -82,16 +81,13 @@ public class LocalCIBuildPlanService {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    private final BambooServer bambooServer;
-
     private final Environment env;
 
     private final Optional<VersionControlService> versionControlService;
 
-    public LocalCIBuildPlanService(ResourceLoaderService resourceLoaderService, BambooServer bambooServer, Environment env, Optional<VersionControlService> versionControlService,
+    public LocalCIBuildPlanService(ResourceLoaderService resourceLoaderService, Environment env, Optional<VersionControlService> versionControlService,
             ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         this.resourceLoaderService = resourceLoaderService;
-        this.bambooServer = bambooServer;
         this.env = env;
         this.versionControlService = versionControlService;
         this.programmingLanguageConfiguration = programmingLanguageConfiguration;
@@ -115,7 +111,7 @@ public class LocalCIBuildPlanService {
      */
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, String repositoryName, String testRepositoryName, String solutionRepositoryName,
             List<AuxiliaryRepository.AuxRepoNameWithSlug> auxiliaryRepositories) {
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
     }
 
     /**
@@ -127,7 +123,7 @@ public class LocalCIBuildPlanService {
      * @param existingRepoUrl the old repository url that will be replaced
      */
     public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, String newRepoUrl, String existingRepoUrl) {
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
     }
 
     private Project createBuildProject(String name, String key) {

@@ -111,7 +111,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
         var buildPlan = participation.getBuildPlanId();
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
     }
 
     @Override
@@ -134,7 +134,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      * @return a list of build plans
      */
     private List<LocalCIBuildPlan> getBuildPlans(String projectKey) {
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
         return List.of();
     }
 
@@ -165,7 +165,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     }
 
     private void executeDelete(String elementKey, String elementValue) {
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
     }
 
     /**
@@ -176,20 +176,20 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public BuildStatus getBuildStatus(ProgrammingExerciseParticipation participation) {
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
         return BuildStatus.INACTIVE;
     }
 
     @Override
     public List<BuildLogEntry> getLatestBuildLogs(ProgrammingSubmission programmingSubmission) {
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
         return List.of();
     }
 
     @Override
     public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
             List<BuildLogEntry> buildLogEntries) {
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
     }
 
     /**
@@ -199,7 +199,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      * @return the build plan
      */
     private LocalCIBuildPlan getBuildPlan(String planKey) {
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
         return null;
     }
 
@@ -208,7 +208,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
             boolean targetProjectExists) {
         final var cleanPlanName = getCleanPlanName(targetPlanName);
         final var targetPlanKey = targetProjectKey + "-" + cleanPlanName;
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
         return targetPlanKey;
     }
 
@@ -229,7 +229,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void enablePlan(String projectKey, String planKey) throws LocalCIException {
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
     }
 
     @Override
@@ -247,13 +247,13 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public String getPlanKey(Object requestBody) throws LocalCIException {
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
         return null;
     }
 
     @Override
     public AbstractBuildResultNotificationDTO convertBuildResult(Object requestBody) {
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
         return null;
     }
 
@@ -264,7 +264,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
-        // No webhooks needed between local CI and local VC, so we return an empty Optional
+        // No webhooks needed between local CI and local VC, so we return an empty Optional.
         return Optional.empty();
     }
 
@@ -275,13 +275,13 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      * @return the html representation of the artifact page.
      */
     public ResponseEntity<byte[]> retrieveLatestArtifact(ProgrammingExerciseParticipation participation) {
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
         return null;
     }
 
     @Override
     public String checkIfProjectExists(String projectKey, String projectName) {
-        // TODO: Empty implementation to not break structure.
+        // TODO: Empty implementation to allow usage of local VCS with local CIS in testing.
         return "Not implemented yet.";
     }
 

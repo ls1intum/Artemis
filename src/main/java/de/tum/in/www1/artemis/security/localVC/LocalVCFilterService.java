@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.security.localVC;
 
+import java.io.File;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Base64;
@@ -47,6 +48,9 @@ public class LocalVCFilterService {
 
     @Value("${artemis.version-control.url}")
     private URL localVCServerUrl;
+
+    @Value("${artemis.version-control.local-vcs-repo-path}")
+    private String localVCPath;
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
@@ -212,6 +216,7 @@ public class LocalVCFilterService {
         if (isRequestingBaseRepository(repositoryTypeOrUserName)) {
             // ---- Requesting one of the base repositories ("exercise", "tests", or "solution") ----
             authorizeUserForBaseRepository(user, repositoryTypeOrUserName, exercise);
+            return;
         }
 
         // ---- Requesting one of the participant repositories. ----
@@ -414,9 +419,16 @@ public class LocalVCFilterService {
     /**
      * @param commitHash the hash of the commit that leads to a new submission.
      * @param repository the JGit repository this submission belongs to.
-     * @param localVCRepositoryUrl the repository URL object describing the repository.
+     * @param repositoryFolderPath the path to the local repository.
      */
-    public void createNewSubmission(String commitHash, Repository repository, LocalVCRepositoryUrl localVCRepositoryUrl) {
+    public void createNewSubmission(String commitHash, Repository repository, File repositoryFolderPath) {
+
+        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(localVCPath, repositoryFolderPath);
+
+        // For pushes to the "tests" repository, no submission is created.
+        if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.TESTS.getName())) {
+            return;
+        }
 
         Commit commit = extractCommitInfo(commitHash, repository);
 
@@ -426,14 +438,20 @@ public class LocalVCFilterService {
         ProgrammingExerciseParticipation participation;
 
         if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.TEMPLATE.getName())) {
-            participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
+            participation = templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exercise.getId()).orElse(null);
         }
         else if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.SOLUTION.getName())) {
-            participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(exercise.getId()).orElse(null);
+            participation = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exercise.getId()).orElse(null);
         }
         else {
-            participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), localVCRepositoryUrl.getRepositoryTypeOrUserName())
-                    .orElse(null);
+            List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository
+                    .findWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), localVCRepositoryUrl.getRepositoryTypeOrUserName());
+            if (participations.size() != 1) {
+                participation = null;
+            }
+            else {
+                participation = participations.get(0);
+            }
         }
 
         if (participation == null) {

@@ -8,15 +8,8 @@ import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.PostReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
-import org.springframework.beans.factory.annotation.Value;
-
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 
 public class LocalVCPostPushHook implements PostReceiveHook {
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCPath;
 
     private final LocalVCFilterService localVCFilterService;
 
@@ -49,12 +42,6 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
         File repositoryFolderPath = repository.getDirectory();
 
-        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(localVCPath, repositoryFolderPath);
-
-        // For pushes to the "tests" repository, no submission is created.
-        if (!localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.TESTS.getName())) {
-            localVCFilterService.createNewSubmission(commitHash, repository, localVCRepositoryUrl);
-        }
-
+        localVCFilterService.createNewSubmission(commitHash, repository, repositoryFolderPath);
     }
 }
