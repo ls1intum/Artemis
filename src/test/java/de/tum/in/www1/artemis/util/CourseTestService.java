@@ -1564,7 +1564,6 @@ public class CourseTestService {
         searchUsersTest(course, List.of("students", "tutors", "instructors"), Optional.of("tu"), 0, false);
 
         // Test 8: Try to search or all students, tutors, editors and instructors with a long enough search term (at least 3 as students are included)
-        // Note: -1 as student1 is the requesting user and will not be returned
         var resultTest8 = searchUsersTest(course, List.of("students", "tutors", "instructors"), Optional.of(userPrefix + "tutor"), numberOfTutors, true);
         assertThat(resultTest8.stream().filter(UserPublicInfoDTO::getIsEditor).collect(Collectors.toList())).hasSize(0);
         assertThat(resultTest8.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant).collect(Collectors.toList())).hasSize(numberOfTutors);
