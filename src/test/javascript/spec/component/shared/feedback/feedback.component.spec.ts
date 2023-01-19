@@ -380,13 +380,13 @@ describe('FeedbackComponent', () => {
         expect(createSpy).toHaveBeenCalledWith(feedbacks, false);
     });
 
-    it('should show test details to editors', () => {
+    it('should show test details to tutors', () => {
         const createSpy = jest.spyOn(feedbackItemService, 'create');
         const { feedbacks } = generateFeedbacksAndExpectedItems();
         comp.exerciseType = ExerciseType.PROGRAMMING;
         comp.result.feedbacks = feedbacks;
 
-        exercise.isAtLeastEditor = true;
+        exercise.isAtLeastTutor = true;
         comp.exercise = exercise;
 
         comp.ngOnInit();
