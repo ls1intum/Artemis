@@ -120,7 +120,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
         Result result = storedComplaint.orElseThrow().getResult();
         assertThat(result.getId()).isEqualTo(storedResult.getId());
-        // set date to UTC for comparison as the date saved in resultBeforeComplaint string is in UTC
+        // set date to UTC for comparison
         storedResult.setCompletionDate(ZonedDateTime.ofInstant(storedResult.getCompletionDate().toInstant(), ZoneId.of("UTC")));
         // TODO add assertion
     }
@@ -844,8 +844,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
         assertThat(storedComplaint.get().isAccepted()).as("accepted flag of complaint is not set").isNull();
         Result storedResult = resultRepo.findByIdWithEagerFeedbacksAndAssessor(textSubmission.getLatestResult().getId()).get();
         assertThat(storedResult.hasComplaint()).as("hasComplaint flag of result is true").isTrue();
-        // set date to UTC for comparison as the date saved in resultBeforeComplaint string is in UTC
+        // set date to UTC for comparison
         storedResult.setCompletionDate(ZonedDateTime.ofInstant(storedResult.getCompletionDate().toInstant(), ZoneId.of("UTC")));
+        // TODO add assertion
     }
 
     @Test

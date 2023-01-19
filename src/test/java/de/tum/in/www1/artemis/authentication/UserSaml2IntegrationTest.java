@@ -19,7 +19,7 @@ import org.springframework.security.saml2.provider.service.authentication.Saml2A
 import org.springframework.security.saml2.provider.service.authentication.Saml2Authentication;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationSaml2Test;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 /**
  * Tests for {@link UserJWTController} and {@link SAML2Service}.
  */
-class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
+class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
     private static final String STUDENT_NAME = "student_saml_test";
 
@@ -45,6 +45,16 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
     private PasswordService passwordService;
 
     @BeforeEach
+    void setup() {
+        gitlabRequestMockProvider.enableMockingOfRequests();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        gitlabRequestMockProvider.reset();
+    }
+
+    @AfterEach
     void clearExistingUser() {
         userRepository.findOneByLogin(STUDENT_NAME).ifPresent(userRepository::delete);
     }
@@ -196,11 +206,13 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
         request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.OK);
     }
 
-    private void mockSAMLAuthentication() {
+    private void mockSAMLAuthentication() throws Exception {
         mockSAMLAuthentication(createPrincipal(STUDENT_REGISTRATION_NUMBER));
     }
 
-    private void mockSAMLAuthentication(Saml2AuthenticatedPrincipal principal) {
+    private void mockSAMLAuthentication(Saml2AuthenticatedPrincipal principal) throws Exception {
+        gitlabRequestMockProvider.mockGetUserID(STUDENT_NAME, new org.gitlab4j.api.models.User().withId(1L));
+
         Authentication authentication = new Saml2Authentication(principal, "Secret Credentials", null);
         TestSecurityContextHolder.setAuthentication(authentication);
     }

@@ -408,16 +408,17 @@ public class CourseResource {
      * GET /courses/{courseId}/for-dashboard
      *
      * @param courseId the courseId for which exercises, lectures, exams and learning goals should be fetched
+     * @param refresh if true, this request was initiated by the user clicking on a refresh button
      * @return a course with all exercises, lectures, exams, learning goals, etc. visible to the user
      */
     // TODO: we should rename this into courses/{courseId}/details
     @GetMapping("courses/{courseId}/for-dashboard")
     @PreAuthorize("hasRole('USER')")
-    public Course getCourseForDashboard(@PathVariable long courseId) {
+    public Course getCourseForDashboard(@PathVariable long courseId, @RequestParam(defaultValue = "false") boolean refresh) {
         long timeNanoStart = System.nanoTime();
         log.debug("REST request to get one course {} with exams, lectures, exercises, participations, submissions and results, etc.", courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user);
+        Course course = courseService.findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(courseId, user, refresh);
         courseService.fetchParticipationsWithSubmissionsAndResultsForCourses(List.of(course), user);
         logDuration(List.of(course), user, timeNanoStart);
         return course;
