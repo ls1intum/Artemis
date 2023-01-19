@@ -833,8 +833,10 @@ public class ProgrammingExerciseGradingService {
         final double testPoints;
         double exerciseMaxPoints = scoreCalculationData.exercise().getMaxPoints();
 
-        // A weight-sum of zero would let the solution show an error to the instructor as the solution score must be
-        // 100% of all reachable points. To prevent this, we weigh all test cases equally in such a case.
+        // In case of a weight-sum of zero the instructor must be able to distinguish between a working solution
+        // (all tests passed, 0 points) and a solution with test failures.
+        // Only the second case should show a warning while the first case is considered as 100%.
+        // Therefore, all test cases have equal weight in such a case.
         if (isWeightSumZero && scoreCalculationData.participation() instanceof SolutionProgrammingExerciseParticipation) {
             testPoints = (1.0 / totalTestCaseCount) * exerciseMaxPoints;
         }
