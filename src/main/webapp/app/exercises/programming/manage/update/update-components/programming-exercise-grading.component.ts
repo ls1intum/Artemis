@@ -81,7 +81,7 @@ export class ProgrammingExerciseGradingComponent {
 
     replacePlaceholders(stringWithPlaceholders: string, replacements: any) {
         return stringWithPlaceholders.replace(/{(\w+)}/g, (placeholderWithDelimiters, placeholderWithoutDelimiters) =>
-            replacements.hasOwnProperty(placeholderWithoutDelimiters) ? replacements[placeholderWithoutDelimiters] : placeholderWithDelimiters,
+            Object.prototype.hasOwnProperty.call(replacements, placeholderWithoutDelimiters) ? replacements[placeholderWithoutDelimiters] : placeholderWithDelimiters,
         );
     }
 }

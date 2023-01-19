@@ -36,7 +36,8 @@ import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.BuildLogParseUtils;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
@@ -243,12 +244,12 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             // Attempt to parse pipeline logs
             final String pipelineLogs = build.details().getConsoleOutputText();
             if (pipelineLogs != null && pipelineLogs.contains("[Pipeline] Start of Pipeline")) {
-                buildLogEntries = JenkinsBuildLogParseUtils.parseBuildLogsFromJenkinsLogs(List.of(pipelineLogs.split("\n")));
+                buildLogEntries = BuildLogParseUtils.parseBuildLogsFromLogs(List.of(pipelineLogs.split("\n")));
             }
             else {
                 // Fallback to legacy logs
                 final var logHtml = Jsoup.parse(build.details().getConsoleOutputHtml()).body();
-                buildLogEntries = JenkinsBuildLogParseUtils.parseLogsLegacy(logHtml);
+                buildLogEntries = BuildLogParseUtils.parseLogsLegacy(logHtml);
             }
 
             // Filter and save build logs

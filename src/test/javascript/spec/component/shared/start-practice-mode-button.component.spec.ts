@@ -2,7 +2,6 @@ import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { NgbPopoverModule } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisTestModule } from '../../test.module';
 import { MockFeatureToggleService } from '../../helpers/mocks/service/mock-feature-toggle.service';
 import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
@@ -19,6 +18,7 @@ import dayjs from 'dayjs/esm';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import { MockCourseExerciseService } from '../../helpers/mocks/service/mock-course-exercise.service';
+import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 
 describe('JhiStartPracticeModeButtonComponent', () => {
     let comp: StartPracticeModeButtonComponent;
@@ -29,7 +29,7 @@ describe('JhiStartPracticeModeButtonComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgbPopoverModule],
+            imports: [ArtemisTestModule, MockDirective(NgbPopover)],
             declarations: [StartPracticeModeButtonComponent, MockComponent(ExerciseActionButtonComponent), MockPipe(ArtemisTranslatePipe), MockDirective(FeatureToggleDirective)],
             providers: [
                 { provide: CourseExerciseService, useClass: MockCourseExerciseService },

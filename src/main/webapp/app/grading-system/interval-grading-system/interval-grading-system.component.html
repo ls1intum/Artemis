@@ -1,51 +1,6 @@
 <div>
     <div>
-        <div class="d-flex">
-            <button (click)="generateDefaultGradingScale()" class="btn btn-primary me-1 mb-1" type="button">
-                <span jhiTranslate="artemisApp.gradingSystem.defaultButton">Generate Default Grading Scale</span>
-            </button>
-            <jhi-grading-system-info-modal></jhi-grading-system-info-modal>
-        </div>
-        <div class="d-flex">
-            <label class="btn btn-primary me-1 mb-1">
-                <span jhiTranslate="artemisApp.gradingSystem.csv.importButton">Import (.csv)</span>
-                <input type="file" accept=".json,.csv" style="display: none" (change)="onCSVFileSelect($event)" />
-            </label>
-            <button (click)="exportGradingStepsToCsv()" class="btn btn-primary me-1 mb-1" type="button">
-                <span jhiTranslate="artemisApp.gradingSystem.csv.exportButton">Export (.csv)</span>
-            </button>
-        </div>
         <div class="dropdown-container">
-            <div class="form-group">
-                <span class="colon-suffix no-flex-shrink">
-                    {{ isExam ? ('artemisApp.examManagement.maxPoints.title' | artemisTranslate) : ('artemisApp.course.maxPoints.title' | artemisTranslate) }}
-                </span>
-                <input type="number" class="form-control" [(ngModel)]="maxPoints" min="1" (change)="onChangeMaxPoints(maxPoints)" />
-            </div>
-            <div class="form-group">
-                <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.gradeType.title">Grade Type</span>
-                <select class="form-select" [(ngModel)]="gradingScale.gradeType" (change)="deleteGradeNames()" title="grade type">
-                    <option value="GRADE" jhiTranslate="artemisApp.gradingSystem.gradeType.grade">Grade</option>
-                    <option value="BONUS" jhiTranslate="artemisApp.gradingSystem.gradeType.bonus">Bonus</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.inclusivity.title">Inclusivity</span>
-                <select class="form-select" [(ngModel)]="lowerBoundInclusivity" (ngModelChange)="setInclusivity()" title="inclusivity">
-                    <option [ngValue]="true" jhiTranslate="artemisApp.gradingSystem.inclusivity.lower">Lower Bound Inclusive</option>
-                    <option [ngValue]="false" jhiTranslate="artemisApp.gradingSystem.inclusivity.upper">Upper Bound Inclusive</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <ng-container *ngIf="this.gradingScale.gradeType == GradeType.GRADE">
-                    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.firstPassingGrade">First Passing Grade</span>
-                    <select class="form-select" title="first passing grade" [(ngModel)]="firstPassingGrade">
-                        <option *ngFor="let gradeStep of gradeStepsWithNonemptyNames()" [ngValue]="gradeStep.gradeName">
-                            {{ gradeStep.gradeName }}
-                        </option>
-                    </select>
-                </ng-container>
-            </div>
             <div class="form-group">
                 <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.intervalTab.mode">Mode</span>
                 <jhi-mode-picker [options]="modePickerOptions" [(value)]="gradeEditMode"></jhi-mode-picker>
@@ -53,7 +8,7 @@
         </div>
     </div>
     <div>
-        <table class="table table-striped">
+        <table class="table table-striped align-middle">
             <thead>
                 <tr>
                     <th>
@@ -85,6 +40,40 @@
                 </tr>
             </thead>
             <tbody>
+                <tr class="grading-scale-table-row">
+                    <td>
+                        {{ 'artemisApp.gradingScale.plagiarismGrade' | artemisTranslate }}
+                        <jhi-help-icon placement="auto" text="artemisApp.gradingSystem.plagiarismGradeHelp"></jhi-help-icon>
+                    </td>
+                    <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
+                    <td>&mdash;</td>
+                    <td>&mdash;</td>
+                    <td>
+                        <input
+                            [(ngModel)]="gradingScale.plagiarismGrade"
+                            type="text"
+                            [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate : { default: GradingScale.DEFAULT_PLAGIARISM_GRADE }"
+                        />
+                    </td>
+                    <td></td>
+                </tr>
+                <tr class="grading-scale-table-row">
+                    <td>
+                        {{ 'artemisApp.gradingScale.noParticipationGrade' | artemisTranslate }}
+                        <jhi-help-icon placement="auto" text="artemisApp.gradingSystem.noParticipationGradeHelp"></jhi-help-icon>
+                    </td>
+                    <!-- &mdash; is used to indicate that this special grade does not correspond to a numeric interval. -->
+                    <td>&mdash;</td>
+                    <td>&mdash;</td>
+                    <td>
+                        <input
+                            [(ngModel)]="gradingScale.noParticipationGrade"
+                            type="text"
+                            [placeholder]="'artemisApp.gradingSystem.defaultGradeName' | artemisTranslate : { default: GradingScale.DEFAULT_NO_PARTICIPATION_GRADE }"
+                        />
+                    </td>
+                    <td></td>
+                </tr>
                 <tr *ngFor="let gradeStep of gradingScale.gradeSteps; let i = index; let last = last" class="grading-scale-table-row">
                     <td *ngIf="last; else intervalInputs">
                         <jhi-help-icon text="artemisApp.gradingSystem.stickyGradeStep"></jhi-help-icon>

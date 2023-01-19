@@ -68,11 +68,13 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
     faSync = faSync;
     farPlayCircle = faPlayCircle;
 
+    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set commitState(commitState: CommitState) {
         this.commitStateValue = commitState;
         this.commitStateChange.emit(commitState);
     }
 
+    // eslint-disable-next-line @typescript-eslint/adjacent-overload-signatures
     set editorState(editorState: EditorState) {
         this.editorStateValue = editorState;
         this.editorStateChange.emit(editorState);
@@ -236,9 +238,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                 error: (error: Error) => {
                     this.commitState = CommitState.UNCOMMITTED_CHANGES;
                     if (error.message === ConnectionError.message) {
-                        this.onError.emit('commitFailed' + error.message);
+                        this.onError.emit('submitFailed' + error.message);
                     } else {
-                        this.onError.emit('commitFailed');
+                        this.onError.emit('submitFailed');
                     }
                 },
             });

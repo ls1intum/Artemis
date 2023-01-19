@@ -621,17 +621,16 @@ export class DragAndDropQuestionEditComponent implements OnInit, OnChanges, Afte
     getMappingIndex(mapping: DragAndDropMapping): number {
         const visitedDropLocations: DropLocation[] = [];
         // Save reference to this due nested some calls
-        const that = this;
         if (
-            this.question.correctMappings!.some(function (correctMapping) {
+            this.question.correctMappings!.some((correctMapping) => {
                 if (
                     !visitedDropLocations.some((dropLocation: DropLocation) => {
-                        return that.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, correctMapping.dropLocation);
+                        return this.dragAndDropQuestionUtil.isSameEntityWithTempId(dropLocation, correctMapping.dropLocation);
                     })
                 ) {
                     visitedDropLocations.push(correctMapping.dropLocation!);
                 }
-                return that.dragAndDropQuestionUtil.isSameEntityWithTempId(correctMapping.dropLocation, mapping.dropLocation);
+                return this.dragAndDropQuestionUtil.isSameEntityWithTempId(correctMapping.dropLocation, mapping.dropLocation);
             })
         ) {
             return visitedDropLocations.length;

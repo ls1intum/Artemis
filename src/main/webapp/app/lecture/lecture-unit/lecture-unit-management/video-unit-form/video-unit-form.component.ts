@@ -3,12 +3,14 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angu
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import urlParser from 'js-video-url-parser';
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { LearningGoal } from 'app/entities/learningGoal.model';
 
 export interface VideoUnitFormData {
     name?: string;
     description?: string;
     releaseDate?: dayjs.Dayjs;
     source?: string;
+    learningGoals?: LearningGoal[];
 }
 
 function videoUrlValidator(control: AbstractControl) {
@@ -30,7 +32,7 @@ function urlValidator(control: AbstractControl) {
     }
 
     try {
-        // tslint:disable-next-line:no-unused-expression-chai
+        // eslint-disable-next-line
         new URL(control.value);
     } catch {
         validUrl = false;
@@ -109,6 +111,7 @@ export class VideoUnitFormComponent implements OnInit, OnChanges {
             releaseDate: [undefined as dayjs.Dayjs | undefined],
             source: [undefined as string | undefined, [Validators.required, this.urlValidator]],
             urlHelper: [undefined as string | undefined, this.videoUrlValidator],
+            learningGoals: [undefined as LearningGoal[] | undefined],
         });
     }
 

@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 
 /**
@@ -67,8 +68,8 @@ public class Post extends Posting {
     private Conversation conversation;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "display_priority")
-    private DisplayPriority displayPriority;
+    @Column(name = "display_priority", columnDefinition = "varchar(25) default 'NONE'")
+    private DisplayPriority displayPriority = DisplayPriority.NONE;
 
     @OneToOne
     @JoinColumn(name = "plagiarism_case_id")

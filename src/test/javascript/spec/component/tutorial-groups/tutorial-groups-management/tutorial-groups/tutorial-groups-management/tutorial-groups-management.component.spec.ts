@@ -56,7 +56,7 @@ describe('TutorialGroupsManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [NgbDropdownModule],
+            imports: [NgbDropdownModule, MockDirective(NgbTooltip)],
             declarations: [
                 TutorialGroupsManagementComponent,
                 MockTutorialGroupsCourseInformationComponent,
@@ -65,7 +65,6 @@ describe('TutorialGroupsManagementComponent', () => {
                 TutorialGroupRowButtonsStubComponent,
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
-                MockDirective(NgbTooltip),
                 MockRouterLinkDirective,
                 MockTutorialGroupsImportButtonComponent,
             ],

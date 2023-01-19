@@ -47,7 +47,7 @@ class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     private ConfigurableEnvironment environmentMock;
 
     @BeforeEach
-    void setUp() throws NoSuchAlgorithmException {
+    void setUp() {
         applicationReadyEventMock = mock(ApplicationReadyEvent.class);
         ConfigurableApplicationContext configurableApplicationContextMock = mock(ConfigurableApplicationContext.class);
         environmentMock = mock(ConfigurableEnvironment.class);
@@ -58,7 +58,7 @@ class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
     @AfterEach
     void teardown() {
-        database.resetDatabase();
+        migrationChangeRepository.deleteAllInBatch();
     }
 
     @Test

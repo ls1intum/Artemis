@@ -69,7 +69,7 @@ export class AccountService implements IAccountService {
         return this.http.get<User>(SERVER_API_URL + 'api/account', { observe: 'response' });
     }
 
-    save(user: User): Observable<HttpResponse<{}>> {
+    save(user: User): Observable<HttpResponse<any>> {
         return this.http.put(SERVER_API_URL + 'api/account', user, { observe: 'response' });
     }
 
@@ -288,7 +288,7 @@ export class AccountService implements IAccountService {
      *
      * @param languageKey The new languageKey
      */
-    updateLanguage(languageKey: String): Observable<void> {
+    updateLanguage(languageKey: string): Observable<void> {
         return this.http.post<void>(`${SERVER_API_URL}api/account/change-language`, languageKey);
     }
 }

@@ -3,9 +3,9 @@ import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-u
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
-import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TextUnit } from 'app/entities/lecture-unit/textUnit.model';
+import { NgbCollapse, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('TextUnitFormComponent', () => {
     const exampleName = 'Test';
@@ -21,15 +21,8 @@ describe('TextUnitFormComponent', () => {
         textUnit.content = exampleMarkdown;
 
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [
-                TextUnitComponent,
-                MockComponent(FaIconComponent),
-                MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbCollapse),
-                MockDirective(NgbTooltip),
-                MockPipe(ArtemisDatePipe),
-            ],
+            imports: [MockDirective(NgbTooltip), MockDirective(NgbCollapse)],
+            declarations: [TextUnitComponent, MockComponent(FaIconComponent), MockPipe(ArtemisTranslatePipe), MockPipe(ArtemisDatePipe)],
             schemas: [],
         })
             .compileComponents()
@@ -90,7 +83,7 @@ describe('TextUnitFormComponent', () => {
         window.document.body.innerHTML = innerHtmlCopy;
     }));
 
-    it('should call completion callback when uncollapsed', () => {
+    it('should call completion callback when expanded', () => {
         return new Promise<void>((done) => {
             textUnitComponent.onCompletion.subscribe((event) => {
                 expect(event.lectureUnit).toEqual(textUnit);

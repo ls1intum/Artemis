@@ -17,6 +17,8 @@ import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.Lti10Service;
@@ -28,9 +30,10 @@ import de.tum.in.www1.artemis.service.notifications.TutorialGroupNotificationSer
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
-import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 
 /**
  * this test should be completely independent of any profiles or configurations (e.g. VCS, CIS)
@@ -102,10 +105,19 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected ScheduleService scheduleService;
 
     @SpyBean
-    protected ParticipantScoreSchedulerService participantScoreSchedulerService;
+    protected ParticipantScoreScheduleService participantScoreScheduleService;
 
     @SpyBean
     protected TextBlockService textBlockService;
+
+    @SpyBean
+    protected ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+
+    @SpyBean
+    protected ExerciseRepository exerciseRepository;
+
+    @Autowired
+    protected QuizScheduleService quizScheduleService;
 
     @Autowired
     protected DatabaseUtilService database;
@@ -121,15 +133,22 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
-    @AfterEach
-    void stopRunningTasks() {
-        participantScoreSchedulerService.shutdown();
+    @AfterEach()
+    void stopQuizScheduler() {
+        quizScheduleService.stopSchedule();
+        quizScheduleService.clearAllQuizData();
     }
 
-    public void resetSpyBeans() {
+    @AfterEach
+    void stopRunningTasks() {
+        participantScoreScheduleService.shutdown();
+    }
+
+    protected void resetSpyBeans() {
         Mockito.reset(lti10Service, gitService, groupNotificationService, tutorialGroupNotificationService, singleUserNotificationService, websocketMessagingService,
                 messagingTemplate, examAccessService, mailService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService,
-                urlService, scheduleService, participantScoreSchedulerService, javaMailSender, programmingTriggerService);
+                urlService, scheduleService, participantScoreScheduleService, javaMailSender, programmingTriggerService, zipFileService,
+                programmingExerciseStudentParticipationRepository, exerciseRepository);
     }
 
     @Override

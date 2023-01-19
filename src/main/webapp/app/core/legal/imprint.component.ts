@@ -34,7 +34,9 @@ export class ImprintComponent implements AfterViewInit, OnInit {
                 if (fragment !== null) {
                     fragment.scrollIntoView();
                 }
-            } catch (e) {}
+            } catch (e) {
+                /* empty */
+            }
         });
     }
 }
