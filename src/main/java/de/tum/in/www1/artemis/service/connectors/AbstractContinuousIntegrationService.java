@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.slf4j.Logger;
@@ -27,8 +28,9 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
 
     private final Logger log = LoggerFactory.getLogger(AbstractContinuousIntegrationService.class);
 
+    // Optional as it is not needed for local CI.
     @Value("${artemis.continuous-integration.url}")
-    protected URL serverUrl;
+    protected Optional<URL> serverUrlOptional;
 
     protected final ProgrammingSubmissionRepository programmingSubmissionRepository;
 

@@ -19,30 +19,24 @@ import org.springframework.stereotype.Service;
 
 import com.atlassian.bamboo.specs.api.builders.AtlassianModule;
 import com.atlassian.bamboo.specs.api.builders.BambooKey;
-import com.atlassian.bamboo.specs.api.builders.applink.ApplicationLink;
 import com.atlassian.bamboo.specs.api.builders.docker.DockerConfiguration;
 import com.atlassian.bamboo.specs.api.builders.notification.AnyNotificationRecipient;
 import com.atlassian.bamboo.specs.api.builders.notification.Notification;
-import com.atlassian.bamboo.specs.api.builders.permission.PermissionType;
-import com.atlassian.bamboo.specs.api.builders.permission.Permissions;
 import com.atlassian.bamboo.specs.api.builders.permission.PlanPermissions;
 import com.atlassian.bamboo.specs.api.builders.plan.Job;
 import com.atlassian.bamboo.specs.api.builders.plan.Plan;
-import com.atlassian.bamboo.specs.api.builders.plan.PlanIdentifier;
 import com.atlassian.bamboo.specs.api.builders.plan.Stage;
 import com.atlassian.bamboo.specs.api.builders.plan.artifact.Artifact;
 import com.atlassian.bamboo.specs.api.builders.plan.branches.BranchCleanup;
 import com.atlassian.bamboo.specs.api.builders.plan.branches.PlanBranchManagement;
 import com.atlassian.bamboo.specs.api.builders.plan.configuration.ConcurrentBuilds;
 import com.atlassian.bamboo.specs.api.builders.project.Project;
-import com.atlassian.bamboo.specs.api.builders.repository.VcsChangeDetection;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepository;
 import com.atlassian.bamboo.specs.api.builders.repository.VcsRepositoryIdentifier;
 import com.atlassian.bamboo.specs.api.builders.requirement.Requirement;
 import com.atlassian.bamboo.specs.api.builders.task.Task;
 import com.atlassian.bamboo.specs.builders.notification.PlanCompletedNotification;
 import com.atlassian.bamboo.specs.builders.repository.bitbucket.server.BitbucketServerRepository;
-import com.atlassian.bamboo.specs.builders.repository.viewer.BitbucketServerRepositoryViewer;
 import com.atlassian.bamboo.specs.builders.task.*;
 import com.atlassian.bamboo.specs.builders.trigger.BitbucketServerTrigger;
 import com.atlassian.bamboo.specs.model.task.ScriptTaskProperties;
@@ -65,17 +59,8 @@ import tech.jhipster.config.JHipsterConstants;
 @Profile("localci")
 public class LocalCIBuildPlanService {
 
-    @Value("${artemis.continuous-integration.user}")
-    private String bambooUser;
-
-    @Value("${artemis.user-management.external.admin-group-name}")
-    private String adminGroupName;
-
     @Value("${server.url}")
     private URL artemisServerUrl;
-
-    @Value("${artemis.continuous-integration.vcs-application-link-name}")
-    private String vcsApplicationLinkName;
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
@@ -425,26 +410,29 @@ public class LocalCIBuildPlanService {
     }
 
     private BitbucketServerRepository createBuildPlanRepository(String name, String vcsProjectKey, String repositorySlug, String branch) {
-        return new BitbucketServerRepository().name(name).branch(branch).repositoryViewer(new BitbucketServerRepositoryViewer())
-                .server(new ApplicationLink().name(vcsApplicationLinkName))
-                // make sure to use lower case to avoid problems in change detection between
-                // Bamboo and Bitbucket
-                .projectKey(vcsProjectKey).repositorySlug(repositorySlug.toLowerCase()).shallowClonesEnabled(true).remoteAgentCacheEnabled(false)
-                .changeDetection(new VcsChangeDetection());
+        // return new BitbucketServerRepository().name(name).branch(branch).repositoryViewer(new BitbucketServerRepositoryViewer())
+        // .server(new ApplicationLink().name(vcsApplicationLinkName))
+        // // make sure to use lower case to avoid problems in change detection between
+        // // Bamboo and Bitbucket
+        // .projectKey(vcsProjectKey).repositorySlug(repositorySlug.toLowerCase()).shallowClonesEnabled(true).remoteAgentCacheEnabled(false)
+        // .changeDetection(new VcsChangeDetection());
+        return null;
     }
 
     private PlanPermissions generatePlanPermissions(String bambooProjectKey, String bambooPlanKey, @Nullable String teachingAssistantGroupName, @Nullable String editorGroupName,
             String instructorGroupName, String adminGroupName) {
-        var permissions = new Permissions().userPermissions(bambooUser, PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW, PermissionType.ADMIN)
-                .groupPermissions(adminGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
-                .groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
-        if (editorGroupName != null) {
-            permissions = permissions.groupPermissions(editorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
-        }
-        if (teachingAssistantGroupName != null) {
-            permissions = permissions.groupPermissions(teachingAssistantGroupName, PermissionType.VIEW);
-        }
-        return new PlanPermissions(new PlanIdentifier(bambooProjectKey, bambooPlanKey)).permissions(permissions);
+        // var permissions = new Permissions().userPermissions(bambooUser, PermissionType.EDIT, PermissionType.BUILD, PermissionType.CLONE, PermissionType.VIEW,
+        // PermissionType.ADMIN)
+        // .groupPermissions(adminGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN)
+        // .groupPermissions(instructorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
+        // if (editorGroupName != null) {
+        // permissions = permissions.groupPermissions(editorGroupName, PermissionType.CLONE, PermissionType.BUILD, PermissionType.EDIT, PermissionType.VIEW, PermissionType.ADMIN);
+        // }
+        // if (teachingAssistantGroupName != null) {
+        // permissions = permissions.groupPermissions(teachingAssistantGroupName, PermissionType.VIEW);
+        // }
+        // return new PlanPermissions(new PlanIdentifier(bambooProjectKey, bambooPlanKey)).permissions(permissions);
+        return null;
     }
 
     private List<Task<?, ?>> readScriptTasksFromTemplate(final ProgrammingLanguage programmingLanguage, String subDirectory, final boolean sequentialBuildRuns,

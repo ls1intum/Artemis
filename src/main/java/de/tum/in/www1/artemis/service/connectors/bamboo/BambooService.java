@@ -5,6 +5,7 @@ import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
 import static de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
 
 import java.io.IOException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -78,6 +79,9 @@ public class BambooService extends AbstractContinuousIntegrationService {
     private final RestTemplate restTemplate;
 
     private final RestTemplate shortTimeoutRestTemplate;
+
+    // TODO: Test if this still works fine for "bamboo"
+    private final URL serverUrl = serverUrlOptional.orElse(null);
 
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,

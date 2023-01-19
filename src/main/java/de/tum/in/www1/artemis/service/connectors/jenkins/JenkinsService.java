@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service.connectors.jenkins;
 import static de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
 
 import java.io.IOException;
+import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     private final JenkinsInternalUrlService jenkinsInternalUrlService;
 
     private final RestTemplate shortTimeoutRestTemplate;
+
+    private final URL serverUrl = serverUrlOptional.orElse(null);
 
     public JenkinsService(JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
             RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
