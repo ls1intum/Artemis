@@ -512,7 +512,7 @@ You can specify the moment when Artemis publishes the results of the exam, see `
 
 4.2. Exam Solutions
 ^^^^^^^^^^^^^^^^^^^
-Optionally, you can publish the example solutions of text, modeling, file upload and programming exercises to the participated students after a desired date by setting ``Example Solution Publication Date`` of the exam to a non-empty date.
+Optionally, you can publish the example solutions of text, modeling, file upload and programming exercises to students with submissions after a desired date by setting ``Example Solution Publication Date`` of the exam to a non-empty date.
 All exercises in the exam with the given types are published according to this date, as opposed to the course exercises which have their own individual example solution publication dates.
 
 - Example solution publication date can be empty, in this case solutions are never published. This is the default value.

@@ -49,11 +49,11 @@ This means the students can track their relative performance during the semester
 
 Bonus
 -----
-Instructors can create bonus configurations for exams with ``Grade`` type grading keys by clicking on |bonus| button in the exam detail page.
+Instructors can create bonus configurations for exams with ``Grade`` type grading keys by clicking on |bonus| on the exam detail page.
 A bonus configuration maps the grade received from a bonus source, which can be a course or another exam, as an improvement to the final exam grade.
 In order to configure a bonus, an instructor needs to choose appropriate values for the fields below:
 
-1. **Bonus strategy** defines how the defines the grade obtained from the bonus source will affect the final exam. Artemis currently supports 2 strategies:
+1. **Bonus strategy** defines how the grade obtained from the bonus source will affect the final exam. Artemis currently supports 2 strategies:
 
   - *Grades*: First, calculates the target exam grade. Then, applies the bonus to that.
   - *Points*: First, applies the bonus to the student's points. Then, calculates the final grade by matching the resulting points to the target exam's grading key.

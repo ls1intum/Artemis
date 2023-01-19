@@ -148,8 +148,8 @@ We visualized the process in the following diagram.
  |verdict-dialog|
  a. No plagiarism. The instructor can deem the accusation invalid and resolve the plagiarism case.
  b. Warning. The instructor can write a warning message to the student and confirm the verdict in the dialog.
- c. Point deduction in % (minimum value 0%, maximum 100). Deduct exercise points and confirm  the verdict in the dialog.
- d. Plagiarism. If a grading key exists, the student receives the :doc:`plagiarism special grade <grading>` for the exam or course that the corresponding exercise belongs. Next steps must be made manually by contacting responsible persons in the university to mark the student grade as "Unterschleif".
+ c. Point deduction in % (minimum value 0, maximum 100). Deduct exercise points and confirm  the verdict in the dialog.
+ d. Plagiarism. If a grading key exists, the student receives the :doc:`plagiarism special grade <grading>` for the exam or course that the corresponding exercise belongs to. The next steps must be made manually by contacting responsible persons in the university to mark the student's grade as "Unterschleif".
 
 Students
 ^^^^^^^^
