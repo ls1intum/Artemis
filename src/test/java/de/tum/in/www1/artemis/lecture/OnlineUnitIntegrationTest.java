@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.net.URL;
 import java.util.List;
 
 import org.jsoup.Connection;
@@ -11,6 +12,8 @@ import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -90,10 +93,24 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createOnlineUnit_invalidUrl_shouldReturnBadRequest() throws Exception {
+        onlineUnit.setSource("abc123");
+        request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createOnlineUnit_withId_shouldReturnBadRequest() throws Exception {
+        onlineUnit.setId(999L);
+        request.postWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -157,6 +174,16 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateOnlineUnit_noLecture_shouldReturnConflict() throws Exception {
+        persistOnlineUnitWithLecture();
+
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
+        this.onlineUnit.setLecture(null);
+        this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getOnlineUnit_correctId_shouldReturnOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
@@ -166,9 +193,19 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void getOnlineUnit_incorrectId_shouldReturnConflict() throws Exception {
+        persistOnlineUnitWithLecture();
+
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
+        request.get("/api/lectures/" + "999" + "/online-units/" + this.onlineUnit.getId(), HttpStatus.CONFLICT, OnlineUnit.class);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(strings = { "https://www.google.de", "HTTP://example.com:80?query=1" })
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void getOnlineResource() throws Exception {
-        String url = "https://www.google.de";
+    void getOnlineResource(String link) throws Exception {
+        var url = new URL(link).toString();
         var connectionMock = mock(Connection.class);
         jsoupMock.when(() -> Jsoup.connect(url)).thenReturn(connectionMock);
         when(connectionMock.timeout(anyInt())).thenReturn(connectionMock);
@@ -176,11 +213,20 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         when(connectionMock.get()).thenReturn(new Document(url));
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("link", url);
+        params.add("link", link);
         OnlineResourceDTO onlineResourceDTO = request.get("/api/lectures/online-units/fetch-online-resource", HttpStatus.OK, OnlineResourceDTO.class, params);
         assertThat(onlineResourceDTO.url()).isEqualTo(url);
         assertThat(onlineResourceDTO.title()).isNull();
         assertThat(onlineResourceDTO.description()).isNull();
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(strings = { "abc", "123", "file://", "ftp://", "http://127.0.0.1", "http://localhost:80" })
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void getOnlineResource_malformedUrl(String link) throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("link", link);
+        request.get("/api/lectures/online-units/fetch-online-resource", HttpStatus.BAD_REQUEST, OnlineResourceDTO.class, params);
     }
 
     @Test
