@@ -18,6 +18,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 
@@ -46,6 +48,9 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Autowired
     private ObjectMapper mapper;
+
+    @Autowired
+    private FileService fileService;
 
     @BeforeEach
     void initTestCase() {
@@ -82,8 +87,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void splitLectureFile_asInstructor_shouldGetUnitsInformation() throws Exception {
         var createResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
         LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(createResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
-        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
-        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
+        assertThat(lectureUnitSplitInfo.units).hasSize(2);
+        assertThat(lectureUnitSplitInfo.numberOfPages).isEqualTo(20);
     }
 
     @Test
@@ -92,8 +97,10 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
         var splitResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
         LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
 
-        assertThat(lectureUnitSplitInfo.units()).hasSize(2);
-        assertThat(lectureUnitSplitInfo.numberOfPages()).isEqualTo(20);
+        assertThat(lectureUnitSplitInfo.units).hasSize(2);
+        assertThat(lectureUnitSplitInfo.numberOfPages).isEqualTo(20);
+
+        lectureUnitSplitInfo.removeBreakSlides = false;
 
         var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo)).andExpect(status().isOk()).andReturn();
         List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
@@ -106,7 +113,42 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
         assertThat(attachmentUnitList).hasSize(2);
         assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
+    }
 
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void splitLectureFile_asInstructor_shouldCreateAttachmentUnits_and_removeBreakSlides() throws Exception {
+        var splitResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
+        LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
+
+        assertThat(lectureUnitSplitInfo.units).hasSize(2);
+        assertThat(lectureUnitSplitInfo.numberOfPages).isEqualTo(20);
+
+        lectureUnitSplitInfo.removeBreakSlides = true;
+
+        var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo)).andExpect(status().isOk()).andReturn();
+        List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
+                mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
+
+        assertThat(attachmentUnits).hasSize(2);
+
+        List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
+        List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
+
+        String attachmentPath = attachmentUnitList.get(0).getAttachment().getLink();
+        // var fileResult = request.get(attachmentPath, HttpStatus.OK, Byte.class);
+        // mapper.readValue(fileResult.(), LectureUnitInformationDTO.class);
+        request.get(attachmentPath, HttpStatus.OK, byte[].class);
+
+        // byte[] file = fileService.getFileForPath(attachmentPath);
+        //// buildFileResponse
+        //
+        // try (PDDocument doc1 = PDDocument.load(file)) {
+        // assertThat(doc1.getNumberOfPages()).isEqualTo(10);
+        // }
+
+        assertThat(attachmentUnitList).hasSize(2);
+        assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -143,6 +185,19 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
             for (int i = 1; i <= 20; i++) {
                 doc1.addPage(new PDPage());
                 PDPageContentStream contentStream = new PDPageContentStream(doc1, doc1.getPage(i - 1));
+
+                if (i == 6 || i == 13) {
+                    contentStream.beginText();
+                    contentStream.setFont(PDType1Font.TIMES_ROMAN, 12);
+                    contentStream.newLineAtOffset(25, -15);
+                    contentStream.showText("itp20..");
+                    contentStream.newLineAtOffset(25, 500);
+                    contentStream.showText("Break");
+                    contentStream.newLineAtOffset(0, -15);
+                    contentStream.showText("Have fun");
+                    contentStream.close();
+                    continue;
+                }
 
                 if (i == 7 || i == 14) {
                     contentStream.beginText();

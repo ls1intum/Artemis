@@ -45,7 +45,7 @@ public class LectureUnitProcessingService {
             List<LectureUnitDTO> units = new ArrayList<>();
             Splitter pdfSplitter = new Splitter();
 
-            for (LectureUnitSplitDTO lectureUnit : lectureUnitInformationDTO.units()) {
+            for (LectureUnitSplitDTO lectureUnit : lectureUnitInformationDTO.units) {
                 AttachmentUnit attachmentUnit = new AttachmentUnit();
                 Attachment attachment = new Attachment();
                 PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
@@ -56,7 +56,7 @@ public class LectureUnitProcessingService {
 
                 List<PDDocument> documentUnits = pdfSplitter.split(document);
                 pdDocumentInformation.setTitle(lectureUnit.unitName());
-                if (lectureUnitInformationDTO.removeBreakSlides() != null && lectureUnitInformationDTO.removeBreakSlides()) {
+                if (lectureUnitInformationDTO.removeBreakSlides) {
                     removeBreakSlides(documentUnits.get(0));
                 }
                 documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
@@ -223,6 +223,9 @@ public class LectureUnitProcessingService {
     private record LectureUnitSplit(String unitName, int startPage, int endPage) {
     }
 
+    /**
+     * Map that contains all unit
+     */
     private record Outline(Map<Integer, LectureUnitSplit> splits, int totalPages) {
     }
 }

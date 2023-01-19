@@ -90,7 +90,7 @@ public class AttachmentUnitService {
         List<Long> ids = new ArrayList<>();
         List<LectureUnitDTO> lectureUnitsDTO = null;
         try {
-            log.debug("Splitting attachment file {} with info {}", file, lectureUnitInformationDTO.units());
+            log.debug("Splitting attachment file {} with info {}", file, lectureUnitInformationDTO.units);
             lectureUnitsDTO = lectureUnitProcessingService.splitUnits(lectureUnitInformationDTO, file);
             lectureUnitsDTO.forEach(lectureUnit -> {
                 lectureUnit.attachmentUnit().setLecture(null);
