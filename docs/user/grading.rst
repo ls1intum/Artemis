@@ -68,7 +68,7 @@ In order to configure a bonus, an instructor needs to choose appropriate values 
   - *−* (Default option for *grades*): Subtracts bonus from target exam's grades/points. Prefer this when lower means better.
   - *+* (Default option for *points*): Adds bonus to target exam's grades/points. Prefer this when higher means better.
 
-4. **Bonus source** is the course or exam whose grade . The dropdown lists courses and exams with ``Bonus`` type grading keys if the current user is an instructor of it.
+4. **Bonus source** is the course or exam determining the bonus amount. When calculating the final grade for a student, the grade they received from the bonus source is substituted into the ``Bonus`` parameter in the formula explained below. The dropdown lists courses and exams with ``Bonus`` type grading keys if the current user is an instructor of it.
 
 Bonus configuration page has a wizard mode where the options appear one by one initially to navigate the new users through the process easily.
 When an instructor opens the bonus configuration page for an exam without a bonus, Artemis displays the options in wizard mode. Artemis shows the grade steps and max points of the selected grading key below the dropdown as a reminder to the instructor.
