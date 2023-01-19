@@ -33,7 +33,7 @@ class ProgrammingExerciseBuildPlanTest extends AbstractSpringIntegrationGitlabCI
 
     @BeforeEach
     void init() {
-        database.addUsers(TEST_PREFIX, 2, 2, 0, 2);
+        // no users needed for this test
         var course = database.addCourseWithOneProgrammingExercise();
         programmingExerciseId = database.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }

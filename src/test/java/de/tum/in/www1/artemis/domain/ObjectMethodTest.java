@@ -25,7 +25,7 @@ import io.github.classgraph.ClassInfo;
  */
 class ObjectMethodTest {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ObjectMethodTest.class);
+    private static final Logger log = LoggerFactory.getLogger(ObjectMethodTest.class);
 
     private static final String GENERATE_TESTS = "Generate tests";
 
@@ -137,7 +137,7 @@ class ObjectMethodTest {
             }
         }
         else {
-            LOG.warn("{} does not have a no-args constructor", domainClass);
+            log.warn("{} does not have a no-args constructor", domainClass);
         }
     }
 

@@ -334,6 +334,9 @@ public class DatabaseUtilService {
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
 
+    @Autowired
+    private BuildLogEntryRepository buildLogEntryRepository;
+
     // TODO: this should probably be moved into another service
     public void changeUser(String username) {
         User user = getUserByLogin(username);
@@ -2714,11 +2717,13 @@ public class DatabaseUtilService {
     }
 
     public void addBuildPlanAndSecretToProgrammingExercise(ProgrammingExercise programmingExercise, String buildPlan) {
-        programmingExerciseRepository.updateBuildPlan(programmingExercise, buildPlan, buildPlanRepository);
+        buildPlanRepository.setBuildPlanForExercise(buildPlan, programmingExercise);
         programmingExercise.generateAndSetBuildPlanAccessSecret();
         programmingExerciseRepository.save(programmingExercise);
 
-        assertThat(programmingExercise.getBuildPlan()).as("build plan is set").isNotNull();
+        var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
+        assertThat(buildPlanOptional).isPresent();
+        assertThat(buildPlanOptional.get().getBuildPlan()).as("build plan is set").isNotNull();
         assertThat(programmingExercise.getBuildPlanAccessSecret()).as("build plan access secret is set").isNotNull();
     }
 
