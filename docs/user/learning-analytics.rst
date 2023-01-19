@@ -41,11 +41,11 @@ To get a quick overview about the achieved points per exercise, a bar chart show
 
 Learning Goal Statistics
 ^^^^^^^^^^^^^^^^^^^^^^^^
-In case learning goals are defined and connected to different lecture units, students can get an overview of their progress for the different learning goals on the learning goals page.
+In case learning goals are defined, students can get an overview of their progress and confidence for the different learning goals on the learning goals page.
 
 |students-learning-goals-statistics|
 
-When clicking on a learning goal, a modal opens and shows detailed statistics about the learning goal and the students progress in the associated lecture unit(s).
+When clicking on a learning goal, a page opens and shows detailed statistics about the learning goal and the student's advancement towards mastery.
 
 |students-learning-goals-statistics-detail|
 
@@ -78,13 +78,9 @@ To get to this view, instructors can either click on one of the average score ba
 
 Learning Goal Statistics
 ^^^^^^^^^^^^^^^^^^^^^^^^
-In case learning goals are defined and connected to different lecture units, the progress of the learning goals is shown on the learning goals management page.
+In case learning goals are defined, the number of students that mastered the learning goals is shown on the learning goals management page.
 
 |instructors-learning-goals-statistics|
-
-When clicking on a learning goal, a modal opens and shows detailed statistics about the learning goal and its associated lecture unit(s).
-
-|instructors-learning-goals-statistics-detail|
 
 
 .. |students-statistics| image:: learning-analytics/students-statistics.png
@@ -109,5 +105,3 @@ When clicking on a learning goal, a modal opens and shows detailed statistics ab
     :width: 1000
 .. |instructors-learning-goals-statistics| image:: learning-analytics/instructors-learning-goals-statistics.png
     :width: 1000
-.. |instructors-learning-goals-statistics-detail| image:: learning-analytics/instructors-learning-goals-statistics-detail.png
-    :width: 600

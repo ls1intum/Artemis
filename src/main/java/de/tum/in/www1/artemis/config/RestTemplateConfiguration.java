@@ -31,7 +31,7 @@ public class RestTemplateConfiguration {
     private static final int SHORT_READ_TIMEOUT = 10 * 1000;
 
     @Bean
-    @Profile("gitlab")
+    @Profile("gitlab | gitlabci")
     @Autowired // ok
     public RestTemplate gitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor, createRestTemplate());
@@ -79,7 +79,7 @@ public class RestTemplateConfiguration {
     // it is recommended to keep the timeout settings constant per rest template
 
     @Bean
-    @Profile("gitlab")
+    @Profile("gitlab | gitlabci")
     @Autowired // ok
     public RestTemplate shortTimeoutGitlabRestTemplate(GitLabAuthorizationInterceptor gitlabInterceptor) {
         return initializeRestTemplateWithInterceptors(gitlabInterceptor, createShortTimeoutRestTemplate());

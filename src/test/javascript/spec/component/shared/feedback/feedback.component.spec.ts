@@ -281,7 +281,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.participation!.id!, comp.result.id);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.participation!.id!, comp.result);
         expect(comp.isLoading).toBeFalse();
     });
 
@@ -354,14 +354,5 @@ describe('FeedbackComponent', () => {
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
         expect(comp.loadingFailed).toBeTrue();
         expect(comp.isLoading).toBeFalse();
-    });
-
-    it('should hide chart if no exercise available', () => {
-        comp.showScoreChart = true;
-        comp.exercise = undefined;
-
-        comp.ngOnInit();
-
-        expect(comp.showScoreChart).toBeFalse();
     });
 });
