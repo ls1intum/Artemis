@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.repository.AttachmentUnitRepository;
-import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LectureUnitSplitDTO;
 
@@ -48,9 +47,6 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @Autowired
     private ObjectMapper mapper;
-
-    @Autowired
-    private FileService fileService;
 
     @BeforeEach
     void initTestCase() {
@@ -120,33 +116,24 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
     void splitLectureFile_asInstructor_shouldCreateAttachmentUnits_and_removeBreakSlides() throws Exception {
         var splitResult = request.getMvc().perform(buildGetSplitInformation()).andExpect(status().isOk()).andReturn();
         LectureUnitInformationDTO lectureUnitSplitInfo = mapper.readValue(splitResult.getResponse().getContentAsString(), LectureUnitInformationDTO.class);
-
         assertThat(lectureUnitSplitInfo.units).hasSize(2);
         assertThat(lectureUnitSplitInfo.numberOfPages).isEqualTo(20);
-
         lectureUnitSplitInfo.removeBreakSlides = true;
-
         var createUnitsResult = request.getMvc().perform(buildSplitAndCreateAttachmentUnits(lectureUnitSplitInfo)).andExpect(status().isOk()).andReturn();
         List<AttachmentUnit> attachmentUnits = mapper.readValue(createUnitsResult.getResponse().getContentAsString(),
                 mapper.getTypeFactory().constructCollectionType(List.class, AttachmentUnit.class));
-
         assertThat(attachmentUnits).hasSize(2);
 
         List<Long> attachmentUnitIds = attachmentUnits.stream().map(AttachmentUnit::getId).toList();
         List<AttachmentUnit> attachmentUnitList = attachmentUnitRepository.findAllById(attachmentUnitIds);
-
         String attachmentPath = attachmentUnitList.get(0).getAttachment().getLink();
-        // var fileResult = request.get(attachmentPath, HttpStatus.OK, Byte.class);
-        // mapper.readValue(fileResult.(), LectureUnitInformationDTO.class);
-        request.get(attachmentPath, HttpStatus.OK, byte[].class);
+        byte[] fileBytes = request.get(attachmentPath, HttpStatus.OK, byte[].class);
 
-        // byte[] file = fileService.getFileForPath(attachmentPath);
-        //// buildFileResponse
-        //
-        // try (PDDocument doc1 = PDDocument.load(file)) {
-        // assertThat(doc1.getNumberOfPages()).isEqualTo(10);
-        // }
-
+        try (PDDocument document = PDDocument.load(fileBytes)) {
+            // 12 is the number of pages for the first unit without the break slide
+            assertThat(document.getNumberOfPages()).isEqualTo(12);
+            document.close();
+        }
         assertThat(attachmentUnitList).hasSize(2);
         assertThat(attachmentUnitList).isEqualTo(attachmentUnits);
     }
@@ -180,11 +167,11 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
      */
     private MockMultipartFile createLecturePdf() throws IOException {
 
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument doc1 = new PDDocument()) {
+        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream(); PDDocument document = new PDDocument()) {
 
             for (int i = 1; i <= 20; i++) {
-                doc1.addPage(new PDPage());
-                PDPageContentStream contentStream = new PDPageContentStream(doc1, doc1.getPage(i - 1));
+                document.addPage(new PDPage());
+                PDPageContentStream contentStream = new PDPageContentStream(document, document.getPage(i - 1));
 
                 if (i == 6 || i == 13) {
                     contentStream.beginText();
@@ -222,8 +209,8 @@ class AttachmentUnitsIntegrationTest extends AbstractSpringIntegrationBambooBitb
                 contentStream.endText();
                 contentStream.close();
             }
-            doc1.save(outputStream);
-            doc1.close();
+            document.save(outputStream);
+            document.close();
             return new MockMultipartFile("file", "lectureFile.pdf", "application/json", outputStream.toByteArray());
         }
     }

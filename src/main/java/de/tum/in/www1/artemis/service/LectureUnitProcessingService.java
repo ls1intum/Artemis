@@ -96,7 +96,7 @@ public class LectureUnitProcessingService {
             while (iterator.hasNext()) {
                 PDDocument currentPage = iterator.next();
                 String slideText = pdfTextStripper.getText(currentPage);
-                if (slideText.contains("Break")) {
+                if (slideText.contains("Break") || slideText.contains("Pause")) {
                     document.removePage(index);
                     break;
                 }
@@ -190,9 +190,7 @@ public class LectureUnitProcessingService {
                     String unitName = lines[outlineCount + 1].replaceAll("[^a-zA-Z0-9\\s()_-]", "").replaceFirst("^\\s*", "");
                     outlineMap.put(outlineCount, new LectureUnitSplit(unitName, outlineCount == 1 ? 1 : index, numberOfPages));
 
-                    if (outlineCount > 1) {
-                        updatePreviousUnitEndPage(outlineCount, outlineMap, index);
-                    }
+                    updatePreviousUnitEndPage(outlineCount, outlineMap, index);
                 }
                 currentPage.close(); // make sure to close the document
                 index++;
@@ -210,21 +208,23 @@ public class LectureUnitProcessingService {
      * @param index        index that shows current page
      */
     private void updatePreviousUnitEndPage(int outlineCount, @NotNull Map<Integer, LectureUnitSplit> outlineMap, int index) {
-        int previousOutlineCount = outlineCount - 1;
-        int previousStart = outlineMap.get(previousOutlineCount).startPage;
-        String previousUnitName = outlineMap.get(previousOutlineCount).unitName;
-        outlineMap.put(previousOutlineCount, new LectureUnitSplit(previousUnitName, previousStart, index - 1));
+        if (outlineCount > 1) {
+            int previousOutlineCount = outlineCount - 1;
+            int previousStart = outlineMap.get(previousOutlineCount).startPage;
+            String previousUnitName = outlineMap.get(previousOutlineCount).unitName;
+            outlineMap.put(previousOutlineCount, new LectureUnitSplit(previousUnitName, previousStart, index - 1));
+        }
     }
 
     private boolean isOutlineSlide(final String slideText) {
-        return slideText.contains("Outline");
+        return slideText.contains("Outline") || slideText.contains("Gliederung");
     }
 
     private record LectureUnitSplit(String unitName, int startPage, int endPage) {
     }
 
     /**
-     * Map that contains all unit
+     * Map contains unit number as key and unit information as value
      */
     private record Outline(Map<Integer, LectureUnitSplit> splits, int totalPages) {
     }
