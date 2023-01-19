@@ -109,11 +109,13 @@ describe('ExamInformationComponent', () => {
         exam.testExam = true;
         component.exam = exam;
         component.studentExam = studentExam;
+        const minimumNowRange = dayjs();
         fixture.detectChanges();
+        const maximumNowRange = dayjs();
         expect(component.isTestExam).toBeTrue();
         expect(component.currentDate).toBeDefined();
-        const acceptanceRange = dayjs().subtract(20, 's');
-        expect(component.currentDate!.isBetween(acceptanceRange, dayjs())).toBeTrue();
+        // test execution could slow down the check
+        expect(component.currentDate!.isBetween(minimumNowRange, maximumNowRange, 's', '[]')).toBeTrue();
     });
 
     it('should detect an RealExam and not set the currentDate', () => {

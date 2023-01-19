@@ -63,9 +63,7 @@ public class AssessmentService {
     }
 
     /**
-     * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about. Note, that it
-     * updates the score and the feedback of the original Result, but NOT the assessor. The user that is responsible for the update can be found in the 'reviewer' field of the
-     * complaint. The original Result gets stored in the 'resultBeforeComplaint' field of the ComplaintResponse for future lookup.
+     * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about.
      *
      * @param originalResult   the original assessment that was complained about
      * @param exercise         the exercise to which the result belongs
