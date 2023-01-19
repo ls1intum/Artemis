@@ -36,12 +36,13 @@ export class CreateOnlineUnitComponent implements OnInit {
             return;
         }
 
-        const { name, description, releaseDate, source } = formData;
+        const { name, description, releaseDate, source, learningGoals } = formData;
 
         this.onlineUnitToCreate.name = name || undefined;
         this.onlineUnitToCreate.releaseDate = releaseDate || undefined;
         this.onlineUnitToCreate.description = description || undefined;
         this.onlineUnitToCreate.source = source || undefined;
+        this.onlineUnitToCreate.learningGoals = learningGoals || [];
 
         this.isLoading = true;
 
