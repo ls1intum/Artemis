@@ -97,7 +97,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     // listener, will get notified upon loading of feedback
     @Output() onFeedbackLoaded = new EventEmitter();
     // function override, if set will be executed instead of going to the next submission page
-    @Input() overrideNextSubmission?: (submissionId: number) => {} = undefined;
+    @Input() overrideNextSubmission?: (submissionId: number) => any = undefined;
 
     // Icons
     faTimesCircle = faTimesCircle;
@@ -544,7 +544,6 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.setFeedbacksForManualResult();
         // Manual result is always rated and has feedback
         this.manualResult!.rated = true;
-        this.manualResult!.hasFeedback = true;
         this.isFirstAssessment = false;
 
         this.manualResult!.score = (totalScore / this.exercise.maxPoints!) * 100;

@@ -1,11 +1,12 @@
 .card-second-header {
-    padding: 10px 15px;
+    padding: 1rem;
     background-color: var(--programming-exercise-instruction-step-wizard-card-header-background);
     border-bottom: 1px solid var(--programming-exercise-instruction-step-wizard-card-header-border);
 }
 
 .stepwizard-row {
-    display: table-row;
+    display: flex;
+    justify-content: space-between;
 }
 
 .stepwizard {
@@ -14,15 +15,9 @@
     position: relative;
 }
 
-.stepwizard-row:before {
-    top: 14px;
-    bottom: 0;
-    position: absolute;
-    content: ' ';
-    width: 100%;
-    height: 1px;
-    background-color: var(--programming-exercise-instruction-step-wizard-row-before-background);
-    z-order: 0;
+.stepwizard-title {
+    display: flex;
+    align-items: center;
 }
 
 .stepwizard-step {

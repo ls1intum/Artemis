@@ -208,7 +208,7 @@ public class SubmissionService {
     public Optional<Submission> getNextAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
         var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
 
-        return assessableSubmissions.stream().filter(a -> Objects.nonNull(a.getParticipation().getIndividualDueDate()))
+        return assessableSubmissions.stream().filter(a -> a.getParticipation().getIndividualDueDate() != null)
                 .min(Comparator.comparing(a -> a.getParticipation().getIndividualDueDate()));
     }
 
@@ -367,7 +367,6 @@ public class SubmissionService {
      */
     private Result copyResultContentAndAddToSubmission(Submission submission, Result newResult, Result oldResult) {
         newResult.setScore(oldResult.getScore());
-        newResult.setHasFeedback(oldResult.getHasFeedback());
         newResult.setRated(oldResult.isRated());
         newResult.copyProgrammingExerciseCounters(oldResult);
         var savedResult = resultRepository.save(newResult);

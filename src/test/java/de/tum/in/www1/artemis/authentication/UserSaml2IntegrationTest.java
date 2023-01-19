@@ -1,12 +1,14 @@
 package de.tum.in.www1.artemis.authentication;
 
-import static org.assertj.core.api.AssertionsForClassTypes.*;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -17,10 +19,9 @@ import org.springframework.security.saml2.provider.service.authentication.Saml2A
 import org.springframework.security.saml2.provider.service.authentication.Saml2Authentication;
 import org.springframework.security.test.context.TestSecurityContextHolder;
 
-import de.tum.in.www1.artemis.AbstractSpringIntegrationSaml2Test;
+import de.tum.in.www1.artemis.AbstractSpringIntegrationGitlabCIGitlabSamlTest;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.connectors.SAML2Service;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.web.rest.UserJWTController;
@@ -29,16 +30,13 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 /**
  * Tests for {@link UserJWTController} and {@link SAML2Service}.
  */
-class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
+class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIGitlabSamlTest {
 
-    private static final String STUDENT_NAME = "student1";
+    private static final String STUDENT_NAME = "student_saml_test";
 
     private static final String STUDENT_PASSWORD = "test1234";
 
     private static final String STUDENT_REGISTRATION_NUMBER = "12345678";
-
-    @Autowired
-    private TokenProvider tokenProvider;
 
     @Autowired
     private UserRepository userRepository;
@@ -46,15 +44,29 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
     @Autowired
     private PasswordService passwordService;
 
+    @BeforeEach
+    void setup() {
+        gitlabRequestMockProvider.enableMockingOfRequests();
+    }
+
+    @AfterEach
+    void tearDown() throws Exception {
+        gitlabRequestMockProvider.reset();
+    }
+
+    @AfterEach
+    void clearExistingUser() {
+        userRepository.findOneByLogin(STUDENT_NAME).ifPresent(userRepository::delete);
+    }
+
     @AfterEach
     void clearAuthentication() {
         TestSecurityContextHolder.clearContext();
-        this.database.resetDatabase();
     }
 
     @Test
     void testAuthenticationRedirect() throws Exception {
-        request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.UNAUTHORIZED);
+        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);
         final String redirectTarget = request.getRedirectTarget("/saml2/authenticate", HttpStatus.FOUND);
         assertThat(redirectTarget).endsWith("/login");
     }
@@ -152,7 +164,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
         // Create user
         mockSAMLAuthentication();
-        request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
+        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.OK);
         assertStudentExists();
 
         // Change Password
@@ -165,9 +177,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        // Test whether authorize generates a valid token
-        UserJWTController.JWTToken result = request.postWithResponseBody("/api/authenticate", createLoginVM(), UserJWTController.JWTToken.class, HttpStatus.OK, httpHeaders);
-        assertValidToken(result);
+        request.postWithoutResponseBody("/api/authenticate", createLoginVM(), HttpStatus.OK, httpHeaders);
 
         // Check SAML Login afterwards ..
 
@@ -175,8 +185,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
         // Mock existing SAML2 Auth
         mockSAMLAuthentication();
         // Test whether authorizeSAML2 generates a valid token
-        result = request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
-        assertValidToken(result);
+        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.OK);
     }
 
     /**
@@ -194,15 +203,16 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
     private void authenticate(Saml2AuthenticatedPrincipal principal) throws Exception {
         mockSAMLAuthentication(principal);
-        UserJWTController.JWTToken result = request.postWithResponseBody("/api/saml2", Boolean.FALSE, UserJWTController.JWTToken.class, HttpStatus.OK);
-        assertValidToken(result);
+        request.postWithoutResponseBody("/api/saml2", Boolean.FALSE, HttpStatus.OK);
     }
 
-    private void mockSAMLAuthentication() {
+    private void mockSAMLAuthentication() throws Exception {
         mockSAMLAuthentication(createPrincipal(STUDENT_REGISTRATION_NUMBER));
     }
 
-    private void mockSAMLAuthentication(Saml2AuthenticatedPrincipal principal) {
+    private void mockSAMLAuthentication(Saml2AuthenticatedPrincipal principal) throws Exception {
+        gitlabRequestMockProvider.mockGetUserID(STUDENT_NAME, new org.gitlab4j.api.models.User().withId(1L));
+
         Authentication authentication = new Saml2Authentication(principal, "Secret Credentials", null);
         TestSecurityContextHolder.setAuthentication(authentication);
     }
@@ -236,7 +246,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
     private void assertStudentNotExists() {
         assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Provided login student1 does not exist in database");
+                .hasMessage("Provided login " + STUDENT_NAME + " does not exist in database");
     }
 
     private void assertStudentExists() {
@@ -245,9 +255,5 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
     private void assertRegistrationNumber(String registrationNumber) {
         assertThat(this.database.getUserByLogin(STUDENT_NAME).getRegistrationNumber()).isEqualTo(registrationNumber);
-    }
-
-    private void assertValidToken(UserJWTController.JWTToken token) {
-        assertThat(this.tokenProvider.validateTokenForAuthority(token.getIdToken())).as("JWT Token is Valid").isTrue();
     }
 }

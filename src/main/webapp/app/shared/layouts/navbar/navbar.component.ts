@@ -64,8 +64,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
     readonly SERVER_API_URL = SERVER_API_URL;
 
     inProduction: boolean;
+    testServer: boolean;
     isNavbarCollapsed: boolean;
     isTourAvailable: boolean;
+    gitCommitId: string;
+    gitBranchName: string;
+    gitTimestamp: string;
+    gitUsername: string;
     languages = LANGUAGES;
     openApiEnabled?: boolean;
     modalRef: NgbModalRef;
@@ -177,7 +182,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
+                this.testServer = profileInfo.testServer ?? false;
                 this.openApiEnabled = profileInfo.openApiEnabled;
+                this.gitCommitId = profileInfo.git.commit.id.abbrev;
+                this.gitBranchName = profileInfo.git.branch;
+                this.gitTimestamp = new Date(profileInfo.git.commit.time).toUTCString();
+                this.gitUsername = profileInfo.git.commit.user.name;
             }
         });
 
@@ -324,7 +334,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         learning_goals: 'artemisApp.courseOverview.menu.learningGoals',
         statistics: 'artemisApp.courseOverview.menu.statistics',
         discussion: 'artemisApp.metis.communication.label',
-        messages: 'artemisApp.messages.label',
+        messages: 'artemisApp.conversationsLayout.breadCrumbLabel',
         code_editor: 'artemisApp.editor.breadCrumbTitle',
         participate: 'artemisApp.submission.detail.title',
         live: 'artemisApp.submission.detail.title',
@@ -373,7 +383,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.lastRouteUrlSegment = segment;
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            /* empty */
+        }
     }
 
     /**
@@ -431,6 +443,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'exercise-hints':
                 // obtain the exerciseId of the current path
                 // current path of form '/course-management/:courseId/exercises/:exerciseId/...
+
                 const exerciseId = currentPath.split('/')[4];
                 this.addResolvedTitleAsCrumb(EntityType.HINT, [Number(segment), Number(exerciseId)], currentPath, segment);
                 break;
@@ -439,6 +452,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             case 'lectures':
                 this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
+                break;
+            case 'learning-goals':
+                this.addResolvedTitleAsCrumb(EntityType.LEARNING_GOAL, [Number(segment)], currentPath, segment);
                 break;
             case 'exams':
                 this.routeExamId = Number(segment);

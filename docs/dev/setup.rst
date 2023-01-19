@@ -28,7 +28,7 @@ following dependencies/tools on your machine:
    Artemis uses Hibernate to store entities in a MySQL database.
    Download and install the MySQL Community Server (8.0.x) and configure it according to section
    `MySQL Setup <#mysql-setup>`__.
-3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=16.13.0 < 17) to compile
+3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=18.10.0 < 19) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
 4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=8.1.0) to
@@ -42,7 +42,7 @@ following dependencies/tools on your machine:
    There are multiple stacks available for the integration with Artemis:
 
    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
-   * GitLab and GitLab CI (under development, not yet production ready)
+   * `GitLab and GitLab CI <#gitlab-ci-and-gitlab-setup>`__ (experimental, not yet production ready)
    * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__)
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -471,26 +471,19 @@ above in `Server Setup <#server-setup>`__) and if you have configured
 ``application-artemis.yml`` correctly, then you should be able to login
 with your TUM Online account.
 
-In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run serve`` or any other
-scripts from ``package.json``,
-you can add a memory limit parameter (``--max_old_space_size=5120``) in the script.
-You can do it by changing the **start** script in ``package.json`` from:
+.. HINT::
+   In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run serve`` or
+   any other scripts from ``package.json``, you can adjust a
+   `memory limit parameter <https://nodejs.org/docs/latest-v16.x/api/cli.html#--max-old-space-sizesize-in-megabytes>`__
+   (``node-options=--max-old-space-size=6144``) which is set by default in the project-wide `.npmrc` file.
 
-::
+   If you still face the issue, you can try to set a lower/higher value than 6144 MB.
+   Recommended values are 3072 (3GB), 4096 (4GB), 5120 (5GB) , 6144 (6GB), 7168 (7GB), and 8192 (8GB).
 
-   "start": "ng serve --hmr",
+   You can override the project-wide `.npmrc` file by
+   `using a per-user config file (~/.npmrc) <https://docs.npmjs.com/cli/v8/configuring-npm/npmrc>`__.
 
-to
-
-::
-
-   "start": "node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng serve --hmr",
-
-If you still face the issue, you can try to set a higher value than 5120. Possible values are 6144, 7168, and 8192.
-
-The same change could be applied to each **ng** command as in the example above.
-
-Make sure to **not commit this change** in ``package.json``.
+   Make sure to **not commit changes** in the project-wide ``.npmrc`` unless the Github build also needs these settings.
 
 
 For more information, review `Working with
@@ -515,17 +508,22 @@ instead of the TUM defaults:
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/programming-exercises.rst.txt
+.. include:: setup/programming-exercises.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/bamboo-bitbucket-jira.rst.txt
+.. include:: setup/bamboo-bitbucket-jira.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/jenkins-gitlab.rst.txt
+.. include:: setup/jenkins-gitlab.rst
 
 ------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/gitlabci-gitlab.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
 
 Athene Service
 --------------
@@ -576,7 +574,7 @@ Enable the ``apollon`` Spring profile:
 Configure API Endpoints:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Apollon conversion service is running on a dedicated machine and is adressed via
+The Apollon conversion service is running on a dedicated machine and is addressed via
 HTTP. We need to extend the configuration in the file
 ``src/main/resources/config/application-artemis.yml`` like so:
 
@@ -590,11 +588,11 @@ HTTP. We need to extend the configuration in the file
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/common-problems.rst.txt
+.. include:: setup/common-problems.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/distributed.rst.txt
+.. include:: setup/distributed.rst
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -636,4 +634,4 @@ Other useful commands
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/kubernetes.rst.txt
+.. include:: setup/kubernetes.rst

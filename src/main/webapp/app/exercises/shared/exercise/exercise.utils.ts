@@ -31,7 +31,7 @@ export class SaveExerciseCommand<T extends Exercise> {
         private alertService: AlertService,
     ) {}
 
-    save(exercise: T, notificationText?: string): Observable<T> {
+    save(exercise: T, isExamMode: boolean, notificationText?: string): Observable<T> {
         const prepareRequestOptions = (): any => {
             switch (this.editType) {
                 case EditType.UPDATE:
@@ -66,22 +66,20 @@ export class SaveExerciseCommand<T extends Exercise> {
 
         let saveObservable = of([false, prepareRequestOptions()]);
 
-        if (exercise.gradingInstructionFeedbackUsed) {
-            const popupRefObs = from(this.popupService.checkExerciseBeforeUpdate(exercise, this.backupExercise));
+        const popupRefObs = from(this.popupService.checkExerciseBeforeUpdate(exercise, this.backupExercise, isExamMode));
 
-            if (this.modalService.hasOpenModals()) {
-                const confirmedCase = popupRefObs.pipe(
-                    mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).confirmed.pipe(map(() => [false, prepareRequestOptions()]))),
-                );
-                const reEvaluatedCase = popupRefObs.pipe(
-                    mergeMap((ref) =>
-                        (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(map(() => [true, { deleteFeedback: ref.componentInstance.deleteFeedback }])),
-                    ),
-                );
-                const canceledCase = popupRefObs.pipe(mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).canceled));
+        if (this.modalService.hasOpenModals()) {
+            const confirmedCase = popupRefObs.pipe(
+                mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).confirmed.pipe(map(() => [false, prepareRequestOptions()]))),
+            );
+            const reEvaluatedCase = popupRefObs.pipe(
+                mergeMap((ref) =>
+                    (ref.componentInstance as ExerciseUpdateWarningComponent).reEvaluated.pipe(map(() => [true, { deleteFeedback: ref.componentInstance.deleteFeedback }])),
+                ),
+            );
+            const canceledCase = popupRefObs.pipe(mergeMap((ref) => (ref.componentInstance as ExerciseUpdateWarningComponent).canceled));
 
-                saveObservable = confirmedCase.pipe(mergeWith(reEvaluatedCase), takeUntil(canceledCase));
-            }
+            saveObservable = confirmedCase.pipe(mergeWith(reEvaluatedCase), takeUntil(canceledCase));
         }
 
         return saveObservable.pipe(
@@ -185,7 +183,9 @@ export const participationStatus = (exercise: Exercise, testRun?: boolean): Part
 
     // The following evaluations are relevant for programming exercises in general and for modeling, text and file upload exercises that don't have participations.
     if (!studentParticipation || programmingExerciseStates.includes(studentParticipation.initializationState!)) {
-        if (exercise.type === ExerciseType.PROGRAMMING && !isStartExerciseAvailable(exercise as ProgrammingExercise) && !testRun) {
+        const relevantDueDate = getExerciseDueDate(exercise, studentParticipation);
+        const isAfterDueDate = relevantDueDate && dayjs().isAfter(relevantDueDate);
+        if (exercise.type === ExerciseType.PROGRAMMING && isAfterDueDate && !testRun) {
             return ParticipationStatus.EXERCISE_MISSED;
         } else {
             return ParticipationStatus.UNINITIALIZED;
@@ -196,10 +196,21 @@ export const participationStatus = (exercise: Exercise, testRun?: boolean): Part
     return ParticipationStatus.INACTIVE;
 };
 
-export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean => {
-    return !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
+/**
+ * Determines if the exercise can be started, this is the case if:
+ * - It is after the start date or the participant is at least a tutor
+ * - In case of a programming exercise it is not before the due date
+ * @param exercise the exercise that should be started
+ */
+export const isStartExerciseAvailable = (exercise: Exercise): boolean => {
+    return exercise.type !== ExerciseType.PROGRAMMING || !exercise.dueDate || dayjs().isBefore(exercise.dueDate);
 };
 
+/**
+ * Determines if the student can resume
+ * @param exercise the exercise that should be started
+ * @param studentParticipation the optional student participation with possibly an individual due date
+ */
 export const isResumeExerciseAvailable = (exercise: Exercise, studentParticipation?: StudentParticipation): boolean => {
     if (!studentParticipation?.individualDueDate) {
         return isStartExerciseAvailable(exercise);

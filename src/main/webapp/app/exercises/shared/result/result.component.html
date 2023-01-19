@@ -12,38 +12,21 @@
     <ng-container *ngSwitchCase="ResultTemplateStatus.HAS_RESULT">
         <ng-container *ngIf="result">
             <fa-icon *ngIf="showIcon" class="result-score-icon" [ngClass]="textColorClass" [icon]="resultIconClass" size="lg"></fa-icon>
-            <span
-                *ngIf="resultIsPreliminary(result) || hasFeedback; else notPreliminaryAndNoFeedback"
-                [ngClass]="textColorClass"
-                class="guided-tour result"
-                id="result-score"
-                (click)="showDetails(result)"
-            >
+            <span [ngClass]="textColorClass" class="guided-tour result" id="result-score" (click)="showDetails(result)">
                 <span class="guided-tour result" [ngbTooltip]="resultTooltip | artemisTranslate">
                     {{ resultString }}
                 </span>
-                <span class="result" [ngbTooltip]="result.submission?.submissionDate ?? result.completionDate | artemisDate">
-                    ({{ result.submission?.submissionDate ?? result.completionDate! | artemisTimeAgo }})
-                </span>
+                <span class="result" [ngbTooltip]="result.completionDate | artemisDate"> ({{ result.completionDate | artemisTimeAgo }}) </span>
             </span>
-            <ng-template #notPreliminaryAndNoFeedback>
-                <span [ngClass]="textColorClass" class="guided-tour result" id="result-score">
-                    <span class="result" [ngbTooltip]="resultTooltip | artemisTranslate">
-                        {{ resultString }}
-                    </span>
-                    <span class="result" [ngbTooltip]="result.submission?.submissionDate ?? result.completionDate | artemisDate">
-                        ({{ result.submission?.submissionDate ?? result.completionDate! | artemisTimeAgo }})
-                    </span>
-                </span>
-            </ng-template>
             <span *ngIf="hasBuildArtifact() && participation.type === ParticipationType.PROGRAMMING">
                 <a (click)="downloadBuildResult(participation.id)">
                     &nbsp; <fa-icon [icon]="faFile"></fa-icon>
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>
-            <span *ngIf="showBadge" class="badge" [ngClass]="badgeClass" id="result-score-badge" ngbTooltip="{{ badgeTooltip | artemisTranslate }}">
-                {{ badgeText | artemisTranslate | uppercase }}
+
+            <span *ngIf="showBadge" class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
+                {{ badge.text | artemisTranslate | uppercase }}
             </span>
         </ng-container>
     </ng-container>

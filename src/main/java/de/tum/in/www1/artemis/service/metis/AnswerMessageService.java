@@ -8,15 +8,19 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.Conversation;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.conversation.Channel;
+import de.tum.in.www1.artemis.domain.metis.conversation.Conversation;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
-import de.tum.in.www1.artemis.repository.metis.MessageRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationMessageRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.metis.conversation.ConversationService;
+import de.tum.in.www1.artemis.service.metis.conversation.auth.ChannelAuthorizationService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
@@ -29,17 +33,22 @@ public class AnswerMessageService extends PostingService {
 
     private final AnswerPostRepository answerPostRepository;
 
-    private final MessageRepository messageRepository;
+    private final ConversationMessageRepository conversationMessageRepository;
 
     private final ConversationService conversationService;
 
+    private final ChannelAuthorizationService channelAuthorizationService;
+
+    @SuppressWarnings("PMD.ExcessiveParameterList")
     public AnswerMessageService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            AnswerPostRepository answerPostRepository, MessageRepository messageRepository, ConversationService conversationService, ExerciseRepository exerciseRepository,
-            LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate) {
-        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
+            AnswerPostRepository answerPostRepository, ConversationMessageRepository conversationMessageRepository, ConversationService conversationService,
+            ExerciseRepository exerciseRepository, LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate,
+            ConversationParticipantRepository conversationParticipantRepository, ChannelAuthorizationService channelAuthorizationService) {
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate, conversationParticipantRepository);
         this.answerPostRepository = answerPostRepository;
-        this.messageRepository = messageRepository;
+        this.conversationMessageRepository = conversationMessageRepository;
         this.conversationService = conversationService;
+        this.channelAuthorizationService = channelAuthorizationService;
     }
 
     /**
@@ -60,8 +69,12 @@ public class AnswerMessageService extends PostingService {
         }
 
         final Course course = preCheckUserAndCourse(user, courseId);
-        Post post = messageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
+        Post post = conversationMessageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
         Conversation conversation = conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation().getId(), user);
+
+        if (conversation instanceof Channel channel) {
+            channelAuthorizationService.isAllowedToCreateNewAnswerPostInChannel(channel, user);
+        }
 
         // use post from database rather than user input
         answerMessage.setPost(post);

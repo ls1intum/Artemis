@@ -7,7 +7,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.constraints.NotNull;
 
@@ -18,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -31,24 +35,22 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.ArtemisInternalAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
 class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
+    private static final String TEST_PREFIX = "internalauth";
+
     @Autowired
     private PasswordService passwordService;
 
     @Autowired
     private ArtemisInternalAuthenticationProvider artemisInternalAuthenticationProvider;
-
-    @Autowired
-    private TokenProvider tokenProvider;
 
     @Autowired
     private CourseRepository courseRepository;
@@ -82,7 +84,9 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     private User student;
 
-    private static final String USERNAME = "student1";
+    private Course course;
+
+    private static final String USERNAME = TEST_PREFIX + "student1";
 
     private ProgrammingExercise programmingExercise;
 
@@ -92,11 +96,12 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     void setUp() {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
 
-        database.addUsers(1, 0, 0, 0);
-        Course course = database.addCourseWithOneProgrammingExercise();
+        database.addUsers(TEST_PREFIX, 1, 0, 0, 0);
+        course = database.addCourseWithOneProgrammingExercise();
         database.addOnlineCourseConfigurationToCourse(course);
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
 
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         doReturn(null).when(lti10Service).verifyRequest(any(), any());
 
@@ -116,15 +121,25 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @AfterEach
     void teardown() {
-        database.resetDatabase();
+        // Set the student group to some other group because only one group can have the tutorialGroupStudents-group
+        SecurityUtils.setAuthorizationObject();
+        var tutorialCourse = courseRepository.findCourseByStudentGroupName(tutorialGroupStudents.get());
+        if (tutorialCourse != null) {
+            tutorialCourse.setStudentGroupName("non-tutorial-course");
+            tutorialCourse.setTeachingAssistantGroupName("non-tutorial-course");
+            tutorialCourse.setEditorGroupName("non-tutorial-course");
+            tutorialCourse.setInstructorGroupName("non-tutorial-course");
+            courseRepository.save(tutorialCourse);
+        }
     }
 
     @Test
     void launchLtiRequest_authViaEmail_success() throws Exception {
         request.postForm("/api/lti/launch/" + programmingExercise.getId(), ltiLaunchRequest, HttpStatus.FOUND);
 
-        final var user = userRepository.findAll().get(0);
-        final var ltiOutcome = ltiOutcomeUrlRepository.findAll().get(0);
+        final var user = database.getUserByLogin(USERNAME);
+        final var ltiOutcome = ltiOutcomeUrlRepository.findByUserAndExercise(user, programmingExercise).get();
+
         assertThat(ltiOutcome.getUser()).isEqualTo(user);
         assertThat(ltiOutcome.getExercise()).isEqualTo(programmingExercise);
         assertThat(ltiOutcome.getUrl()).isEqualTo(ltiLaunchRequest.getLis_outcome_service_url());
@@ -150,8 +165,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
     @WithMockUser(username = "ab12cde")
     void registerForCourse_internalAuth_success() throws Exception {
         gitlabRequestMockProvider.enableMockingOfRequests();
-        final var student = ModelFactory.generateActivatedUser("ab12cde");
-        userRepository.save(student);
+        final var student = database.createAndSaveUser("ab12cde");
 
         final var pastTimestamp = ZonedDateTime.now().minusDays(5);
         final var futureTimestamp = ZonedDateTime.now().plusDays(5);
@@ -166,6 +180,7 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
 
     @NotNull
     private User createUserWithRestApi(Set<Authority> authorities) throws Exception {
+        userRepository.findOneByLogin("user1").ifPresent(userRepository::delete);
         gitlabRequestMockProvider.enableMockingOfRequests();
         gitlabRequestMockProvider.mockGetUserID();
         database.addTutorialCourse();
@@ -251,9 +266,29 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
 
-        UserJWTController.JWTToken jwtToken = request.postWithResponseBody("/api/authenticate", loginVM, UserJWTController.JWTToken.class, HttpStatus.OK, httpHeaders);
-        assertThat(jwtToken.getIdToken()).as("JWT token is present").isNotNull();
-        assertThat(this.tokenProvider.validateTokenForAuthority(jwtToken.getIdToken())).as("JWT token is valid").isTrue();
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/authenticate", loginVM, HttpStatus.OK, httpHeaders);
+        AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), false);
+    }
+
+    @Test
+    @WithAnonymousUser
+    void testJWTAuthenticationLogoutUnauthorized() throws Exception {
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        request.postWithoutResponseBody("/api/logout", HttpStatus.UNAUTHORIZED, httpHeaders);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testJWTAuthenticationLogout() throws Exception {
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36");
+
+        MockHttpServletResponse response = request.postWithoutResponseBody("/api/logout", HttpStatus.OK, httpHeaders);
+        AuthenticationIntegrationTestHelper.authenticationCookieAssertions(response.getCookie("jwt"), true);
     }
 
     @Test

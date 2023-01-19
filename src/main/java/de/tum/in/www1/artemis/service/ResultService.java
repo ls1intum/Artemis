@@ -77,10 +77,6 @@ public class ResultService {
      * @return updated result with eagerly loaded Submission and Feedback items.
      */
     public Result createNewManualResult(Result result, boolean isProgrammingExerciseWithFeedback, boolean ratedResult) {
-        if (!result.getFeedbacks().isEmpty()) {
-            result.setHasFeedback(isProgrammingExerciseWithFeedback);
-        }
-
         User user = userRepository.getUserWithGroupsAndAuthorities();
 
         result.setAssessmentType(AssessmentType.MANUAL);
@@ -114,7 +110,6 @@ public class ResultService {
     }
 
     /**
-     * NOTE: As we use delete methods with underscores, we need a transactional context here!
      * Deletes result with corresponding complaint and complaint response
      *
      * @param result                      the result to delete
@@ -122,13 +117,25 @@ public class ResultService {
      */
     public void deleteResult(Result result, boolean shouldClearParticipantScore) {
         log.debug("Delete result {}", result.getId());
-        complaintResponseRepository.deleteByComplaint_Result_Id(result.getId());
-        complaintRepository.deleteByResult_Id(result.getId());
-        ratingRepository.deleteByResult_Id(result.getId());
-        if (shouldClearParticipantScore) {
-            participantScoreRepository.clearAllByResultId(result.getId());
-        }
+        deleteResultReferences(result.getId(), shouldClearParticipantScore);
         resultRepository.delete(result);
+    }
+
+    /**
+     * NOTE: this method DOES NOT delete the result itself (e.g. because this will be done automatically when the submission is deleted)
+     * Deletes result with corresponding complaint and complaint response
+     *
+     * @param resultId                    the id of the result for which all references should be deleted
+     * @param shouldClearParticipantScore determines whether the participant scores should be cleared. This should be true, if only one single result is deleted. If the whole participation or exercise is deleted, the participant scores have been deleted before and clearing is not necessary, then this value should be false
+     */
+    public void deleteResultReferences(Long resultId, boolean shouldClearParticipantScore) {
+        log.debug("Delete result references {}", resultId);
+        complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
+        complaintRepository.deleteByResult_Id(resultId);
+        ratingRepository.deleteByResult_Id(resultId);
+        if (shouldClearParticipantScore) {
+            participantScoreRepository.clearAllByResultId(resultId);
+        }
     }
 
     /**
@@ -222,13 +229,12 @@ public class ResultService {
                 feedbacks = feedbacks.stream().filter(feedback -> feedback.getType() != null && feedback.getType() == FeedbackType.AUTOMATIC).toList();
             }
         }
+
         // remove unnecessary data to keep the json payload smaller
         for (Feedback feedback : feedbacks) {
-            if (feedback.getResult() != null) {
-                feedback.getResult().setSubmission(null);
-                feedback.getResult().setParticipation(null);
-            }
+            feedback.setResult(null);
         }
+
         return feedbacks;
     }
 

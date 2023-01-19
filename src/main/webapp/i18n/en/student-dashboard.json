@@ -30,7 +30,7 @@
                 "statistics": "Statistics",
                 "lectures": "Lectures",
                 "tutorialGroups": "Tutorial Groups",
-                "learningGoals": "Learning Goals",
+                "learningGoals": "Competencies",
                 "exams": "Exams",
                 "testExam": "Test Exam",
                 "communication": "Communication",
@@ -46,7 +46,7 @@
                 "overdue": "Hide overdue",
                 "optional": "Hide optional",
                 "noExerciseDate": "No date associated",
-                "exerciseGroupHeader": "Exercises: {{ total }}",
+                "exerciseGroupHeader": "(Exercises: {{ total }})",
                 "currentExerciseGroupHeader": "Current exercise active until {{ date }}:",
                 "currentExerciseGroupHeaderWithoutDueDate": "Current exercise:",
                 "sortExercises": "Sort exercises",
@@ -139,10 +139,10 @@
                 "pointsPerExercise": "Points per Exercise"
             },
             "learningGoals": {
-                "noData": "No learning goals available for this course."
+                "noData": "No competencies available for this course."
             },
             "lectureList": {
-                "lectureGroupHeader": "Lectures: {{ total }}",
+                "lectureGroupHeader": "(Lectures: {{ total }})",
                 "totalLectures": "Total lectures:",
                 "totalAttachments": "Total attachments:",
                 "isLecture": "This is a lecture",
@@ -192,6 +192,8 @@
                 "rated": "Rated",
                 "practice": "Practice",
                 "assessmentType": "Assessment:",
+                "startDate": "Start date:",
+                "startDateTooltip": "Students can work on this exercise from {{date}}.",
                 "submissionDue": "Submission due:",
                 "submissionDueTooltip": "The submission is due by {{date}}.",
                 "assessmentDue": "Assessment due:",

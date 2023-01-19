@@ -5,18 +5,17 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.*;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.*;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
@@ -26,6 +25,8 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
 class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "codehintservice";
 
     @Autowired
     private CodeHintService codeHintService;
@@ -40,23 +41,15 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
     private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
     private ProgrammingExercise exercise;
 
     @BeforeEach
-    void initTestCase() throws Exception {
-        database.addUsers(0, 0, 0, 1);
-        database.addCourseWithOneProgrammingExercise();
-        exercise = programmingExerciseRepository.findAll().get(0);
-    }
-
-    @AfterEach
-    void tearDown() {
-        database.resetDatabase();
+    void initTestCase() {
+        database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
+        final Course course = database.addCourseWithOneProgrammingExercise();
+        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
     private ProgrammingExerciseTestCase addTestCaseToExercise(String name) {
@@ -106,7 +99,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerationWithNoSolutionEntry() {
         var testCase = addTestCaseToExercise("TestCase1");
         addTaskToExercise("Task1", Arrays.asList(testCase));
@@ -116,7 +109,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerationWithOneSolutionEntry() {
         var testCase = addTestCaseToExercise("TestCase1");
         var solutionEntry = addSolutionEntryToTestCase(testCase);
@@ -129,7 +122,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerationTwiceShouldDeleteOldHint() {
         var testCase = addTestCaseToExercise("TestCase1");
         var solutionEntry = addSolutionEntryToTestCase(testCase);
@@ -144,12 +137,14 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(codeHints.get(0)).isNotEqualTo(codeHint);
         assertThat(codeHints.get(0).getProgrammingExerciseTask()).isEqualTo(task);
         assertThat(codeHints.get(0).getSolutionEntries()).containsExactly(solutionEntry);
-        assertThat(codeHintRepository.findAll()).hasSize(1);
-        assertThat(codeHintRepository.findAll().get(0)).isNotEqualTo(codeHint).isEqualTo(codeHints.get(0));
+
+        final Set<CodeHint> codeHintsAfterSaving = codeHintRepository.findByExerciseId(exercise.getId());
+        assertThat(codeHintsAfterSaving).hasSize(1);
+        assertThat(codeHintsAfterSaving.stream().findAny().orElseThrow()).isNotEqualTo(codeHint).isEqualTo(codeHints.get(0));
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGenerationTwiceShouldNotDeleteOldHint() {
         var testCase = addTestCaseToExercise("TestCase1");
         var solutionEntry = addSolutionEntryToTestCase(testCase);
@@ -164,11 +159,11 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(codeHints.get(0)).isNotEqualTo(codeHint);
         assertThat(codeHints.get(0).getProgrammingExerciseTask()).isEqualTo(task);
         assertThat(codeHints.get(0).getSolutionEntries()).containsExactly(solutionEntry);
-        assertThat(codeHintRepository.findAll()).containsExactlyInAnyOrder(codeHint, codeHints.get(0));
+        assertThat(codeHintRepository.findByExerciseId(exercise.getId())).containsExactlyInAnyOrder(codeHint, codeHints.get(0));
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdateTestCaseOfSolutionEntry() {
         var testCase1 = addTestCaseToExercise("testCase1");
         var testCase2 = addTestCaseToExercise("testCase2");
@@ -180,13 +175,13 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         entryToUpdate.setTestCase(testCase2);
         codeHintService.updateSolutionEntriesForCodeHint(codeHint);
 
-        var allEntries = solutionEntryRepository.findAll();
+        var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
         assertThat(allEntries).hasSize(1);
-        assertThat(allEntries.get(0).getTestCase().getId()).isEqualTo(testCase2.getId());
+        assertThat(allEntries.stream().findAny().orElseThrow().getTestCase().getId()).isEqualTo(testCase2.getId());
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testUpdatedContentOfSolutionEntry() {
         var testCase1 = addTestCaseToExercise("testCase");
         var entry = addSolutionEntryToTestCase(testCase1);
@@ -201,13 +196,13 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         entry.setFilePath("Updated file path");
         codeHintService.updateSolutionEntriesForCodeHint(codeHint);
 
-        var allEntries = solutionEntryRepository.findAll();
+        var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
         assertThat(allEntries).hasSize(1);
-        assertThat(allEntries.get(0)).isEqualTo(entryToUpdate);
+        assertThat(allEntries.stream().findAny().orElseThrow()).isEqualTo(entryToUpdate);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveWithNewSolutionEntry() {
         // the entry has been created and persisted, but not assigned to the hint yet
         var testCase = addTestCaseToExercise("testCase");
@@ -219,12 +214,11 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         codeHintService.updateSolutionEntriesForCodeHint(codeHint);
 
         var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
-        assertThat(allEntries).hasSize(1);
-        assertThat(allEntries).contains(manuallyCreatedEntry);
+        assertThat(allEntries).containsExactly(manuallyCreatedEntry);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testSaveWithRemovedSolutionEntry() {
         // the entry has been created and persisted, but not assigned to the hint yet
         var testCase = addTestCaseToExercise("testCase");
@@ -239,12 +233,11 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(entriesForHint).isEmpty();
 
         var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
-        assertThat(allEntries).hasSize(1);
-        assertThat(allEntries).contains(entryToRemove);
+        assertThat(allEntries).containsExactly(entryToRemove);
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testSaveEntryWithTestCaseUnrelatedToHintTask() {
         // the test case of an entry belongs to a task unequal to the task of the hint that is updated
         var unrelatedTestCase = addTestCaseToExercise("unrelatedTaskTestCase");

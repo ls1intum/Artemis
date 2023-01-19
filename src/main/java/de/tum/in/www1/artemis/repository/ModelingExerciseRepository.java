@@ -34,8 +34,8 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
             """)
     List<ModelingExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "exampleSubmissions.submission.results" })
-    Optional<ModelingExercise> findWithEagerExampleSubmissionsById(@Param("exerciseId") Long exerciseId);
+    @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "learningGoals", "exampleSubmissions.submission.results" })
+    Optional<ModelingExercise> findWithEagerExampleSubmissionsAndLearningGoalsById(@Param("exerciseId") Long exerciseId);
 
     @Query("select modelingExercise from ModelingExercise modelingExercise left join fetch modelingExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results results left join fetch results.feedbacks left join fetch results.assessor left join fetch modelingExercise.teamAssignmentConfig where modelingExercise.id = :#{#exerciseId}")
     Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
@@ -102,7 +102,7 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
      */
     @Query("""
             select distinct exercise from ModelingExercise exercise
-            where (exercise.assessmentType = 'SEMI_AUTOMATIC' and exercise.dueDate > :#{#now})
+            where (exercise.assessmentType = 'SEMI_AUTOMATIC' and exercise.dueDate > :now)
             """)
     List<ModelingExercise> findAllToBeScheduled(@Param("now") ZonedDateTime now);
 
@@ -125,8 +125,8 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     }
 
     @NotNull
-    default ModelingExercise findWithEagerExampleSubmissionsByIdElseThrow(long exerciseId) {
-        return findWithEagerExampleSubmissionsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
+    default ModelingExercise findWithEagerExampleSubmissionsAndLearningGoalsByIdElseThrow(long exerciseId) {
+        return findWithEagerExampleSubmissionsAndLearningGoalsById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Modeling Exercise", exerciseId));
     }
 
     @NotNull

@@ -6,6 +6,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 
 import org.apache.http.HttpResponse;
@@ -120,7 +121,7 @@ public class Lti10Service {
      * @return the username for the LTI user
      */
     @NotNull
-    protected String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest, OnlineCourseConfiguration onlineCourseConfiguration) {
+    public String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest, OnlineCourseConfiguration onlineCourseConfiguration) {
         String username;
 
         if (!StringUtils.isEmpty(launchRequest.getExt_user_username())) {
@@ -156,7 +157,7 @@ public class Lti10Service {
      * @param launchRequest the LTI launch request
      * @return the last name for the LTI user
      */
-    protected String getUserLastNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
+    public String getUserLastNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
         if (!StringUtils.isEmpty(launchRequest.getLis_person_name_family())) {
             return launchRequest.getLis_person_name_family();
         }
@@ -192,12 +193,13 @@ public class Lti10Service {
     }
 
     /**
-     * Adds the necessary query params for an LTI launch.
+     * Build the response for the LTI launch.
      *
      * @param uriComponentsBuilder the uri builder to add the query params to
+     * @param response the response to add the JWT cookie to
      */
-    public void addLtiQueryParams(UriComponentsBuilder uriComponentsBuilder) {
-        ltiService.addLtiQueryParams(uriComponentsBuilder);
+    public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
+        ltiService.buildLtiResponse(uriComponentsBuilder, response);
     }
 
     /**

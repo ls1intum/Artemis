@@ -8,7 +8,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,7 +18,10 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.GraphType;
 import de.tum.in.www1.artemis.domain.enumeration.SpanType;
@@ -36,6 +38,8 @@ import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
 
 class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    private static final String TEST_PREFIX = "statisticsintegration";
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -56,20 +60,23 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private TextExercise exercise;
 
-    private final List<GraphType> artemisGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.LOGGED_IN_USERS, GraphType.RELEASED_EXERCISES,
+    private final List<GraphType> artemisGraphs = List.of(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.LOGGED_IN_USERS, GraphType.RELEASED_EXERCISES,
             GraphType.EXERCISES_DUE, GraphType.CONDUCTED_EXAMS, GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS,
             GraphType.CREATED_FEEDBACKS);
 
-    private final List<GraphType> courseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.RELEASED_EXERCISES, GraphType.EXERCISES_DUE,
+    private final List<GraphType> courseGraphs = List.of(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.RELEASED_EXERCISES, GraphType.EXERCISES_DUE,
             GraphType.CONDUCTED_EXAMS, GraphType.EXAM_PARTICIPATIONS, GraphType.EXAM_REGISTRATIONS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS, GraphType.CREATED_FEEDBACKS,
             GraphType.POSTS, GraphType.RESOLVED_POSTS);
 
-    private final List<GraphType> exerciseGraphs = Arrays.asList(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS,
+    private final List<GraphType> exerciseGraphs = List.of(GraphType.SUBMISSIONS, GraphType.ACTIVE_USERS, GraphType.ACTIVE_TUTORS, GraphType.CREATED_RESULTS,
             GraphType.CREATED_FEEDBACKS, GraphType.POSTS, GraphType.RESOLVED_POSTS);
+
+    private static final int NUMBER_OF_STUDENTS = 5;
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(12, 10, 0, 10);
+        participantScoreScheduleService.activate();
+        database.addUsers(TEST_PREFIX, NUMBER_OF_STUDENTS, 1, 0, 1);
 
         course = database.addCourseWithOneModelingExercise();
         var now = ZonedDateTime.now();
@@ -81,11 +88,11 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         post.setContent("Test Student Question 1");
         post.setVisibleForStudents(true);
         post.setCreationDate(ZonedDateTime.now().minusSeconds(11));
-        post.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
+        post.setAuthor(database.getUserByLoginWithoutAuthorities(TEST_PREFIX + "student1"));
         postRepository.save(post);
 
         AnswerPost answerPost = new AnswerPost();
-        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
+        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities(TEST_PREFIX + "student1"));
         answerPost.setContent("Test Answer");
         answerPost.setCreationDate(ZonedDateTime.now().minusSeconds(10));
         answerPost.setPost(post);
@@ -94,20 +101,15 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         // one submission today
         TextSubmission textSubmission = new TextSubmission();
         textSubmission.submissionDate(ZonedDateTime.now().minusSeconds(1));
-        var submission = database.addSubmission(exercise, textSubmission, "student1");
+        var submission = database.addSubmission(exercise, textSubmission, TEST_PREFIX + "student1");
         database.addResultToSubmission(submission, AssessmentType.MANUAL);
 
-        for (int i = 2; i <= 12; i++) {
+        for (int i = 2; i <= NUMBER_OF_STUDENTS; i++) {
             textSubmission = new TextSubmission();
             textSubmission.submissionDate(ZonedDateTime.now().minusMonths(i - 1).withDayOfMonth(10));
-            submission = database.addSubmission(exercise, textSubmission, "student" + i);
+            submission = database.addSubmission(exercise, textSubmission, TEST_PREFIX + "student" + i);
             database.addResultToSubmission(submission, AssessmentType.MANUAL);
         }
-    }
-
-    @AfterEach
-    void resetDatabase() {
-        database.resetDatabase();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -137,7 +139,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetChartDataForCourse() throws Exception {
         SpanType span = SpanType.WEEK;
         int periodIndex = 0;
@@ -151,7 +153,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetChartDataForExercise() throws Exception {
         SpanType span = SpanType.WEEK;
         int periodIndex = 0;
@@ -165,7 +167,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetCourseStatistics() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         TextExercise laterTextExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
@@ -173,8 +175,8 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         var laterTextExerciseId = laterTextExercise.getId();
         var earlierTextExerciseId = earlierTextExercise.getId();
-        User student1 = userRepository.findOneByLogin("student1").orElseThrow();
-        User student2 = userRepository.findOneByLogin("student2").orElseThrow();
+        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
 
         // Creating result for student1 and student2 for the later exercise
         database.createParticipationSubmissionAndResult(laterTextExerciseId, student1, 10.0, 0.0, 50, true);
@@ -184,7 +186,8 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         database.createParticipationSubmissionAndResult(earlierTextExerciseId, student1, 10.0, 0.0, 0, true);
         database.createParticipationSubmissionAndResult(earlierTextExerciseId, student2, 10.0, 0.0, 80, true);
 
-        await().until(() -> participantScoreRepository.findAll().size() == 4);
+        await().until(() -> participantScoreRepository.findAllByExercise(laterTextExercise).size() == 2);
+        await().until(() -> participantScoreRepository.findAllByExercise(earlierTextExercise).size() == 2);
 
         Long courseId = course.getId();
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -208,14 +211,14 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetExerciseStatistics() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
 
         var firstTextExerciseId = textExercise.getId();
-        User student1 = userRepository.findOneByLogin("student1").orElseThrow();
-        User student2 = userRepository.findOneByLogin("student2").orElseThrow();
+        User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").orElseThrow();
+        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").orElseThrow();
 
         // Creating result for student1 and student2 for firstExercise
         database.createParticipationSubmissionAndResult(firstTextExerciseId, student1, 10.0, 0.0, 50, true);
@@ -226,18 +229,18 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         post.setContent("Test Student Question 1");
         post.setVisibleForStudents(true);
         post.setCreationDate(ZonedDateTime.now().minusHours(2));
-        post.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
+        post.setAuthor(database.getUserByLoginWithoutAuthorities(TEST_PREFIX + "student1"));
         postRepository.save(post);
 
         AnswerPost answerPost = new AnswerPost();
-        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities("student1"));
+        answerPost.setAuthor(database.getUserByLoginWithoutAuthorities(TEST_PREFIX + "student1"));
         answerPost.setContent("Test Answer");
         answerPost.setCreationDate(ZonedDateTime.now().minusHours(1));
         answerPost.setResolvesPost(true);
         answerPost.setPost(post);
         answerPostRepository.save(answerPost);
 
-        await().until(() -> participantScoreRepository.findAll().size() == 2);
+        await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 2);
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("exerciseId", "" + firstTextExerciseId);
@@ -247,7 +250,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(result.getMaxPointsOfExercise()).isEqualTo(10);
         assertThat(result.getNumberOfExerciseScores()).isEqualTo(2);
         assertThat(result.getNumberOfParticipations()).isEqualTo(2);
-        assertThat(result.getNumberOfStudentsOrTeamsInCourse()).isEqualTo(12);
+        assertThat(result.getNumberOfStudentsOrTeamsInCourse()).isEqualTo(userRepository.countUserInGroup(course.getStudentGroupName()));
         assertThat(result.getNumberOfPosts()).isEqualTo(1);
         assertThat(result.getNumberOfResolvedPosts()).isEqualTo(1);
         var expectedScoresResult = new int[10];

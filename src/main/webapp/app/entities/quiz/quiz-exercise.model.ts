@@ -32,7 +32,6 @@ export class QuizBatch {
 }
 
 export class QuizExercise extends Exercise {
-    public id?: number;
     public visibleToStudents?: boolean; // (computed by server)
     public allowedNumberOfAttempts?: number;
     public remainingNumberOfAttempts?: number;
@@ -51,6 +50,7 @@ export class QuizExercise extends Exercise {
 
     public isActiveQuiz?: boolean;
     public isPracticeModeAvailable?: boolean;
+    public isEditable?: boolean;
 
     constructor(course: Course | undefined, exerciseGroup: ExerciseGroup | undefined) {
         super(ExerciseType.QUIZ);
@@ -60,5 +60,6 @@ export class QuizExercise extends Exercise {
         this.isOpenForPractice = false; // default value (set by server)
         this.isActiveQuiz = false; // default value (set by client, might need to be computed before evaluated)
         this.isPracticeModeAvailable = true; // default value (set by client, might need to be computed before evaluated)
+        this.isEditable = false; // default value (set by client, might need to be computed before evaluated)
     }
 }

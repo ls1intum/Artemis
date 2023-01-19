@@ -36,8 +36,8 @@
                     <label class="form-control-label" jhiTranslate="artemisApp.course.shortName" for="field_shortName">Short Name</label>
                     <input required type="text" class="form-control" name="shortName" id="field_shortName" formControlName="shortName" [readOnly]="course.id" />
                     <ng-container *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)">
-                        <div *ngIf="(shortName.errors! | keyvalue | removekeys: ['required']).length > 0" class="alert alert-danger">
-                            <div *ngFor="let e of shortName.errors! | keyvalue | removekeys: ['required']">
+                        <div *ngIf="(shortName.errors! | keyvalue | removekeys : ['required']).length > 0" class="alert alert-danger">
+                            <div *ngFor="let e of shortName.errors! | keyvalue | removekeys : ['required']">
                                 <div [jhiTranslate]="'artemisApp.course.form.shortname' + '.' + e.key"></div>
                             </div>
                         </div>
@@ -395,7 +395,7 @@
                 <button type="button" id="cancel-save" class="btn btn-secondary" (click)="previousState()">
                     <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
-                <span *ngIf="courseForm.invalid; else saveButtonTpl" data-toggle="tooltip" title="Please fill in all required fields.">
+                <span *ngIf="courseForm.invalid; else saveButtonTpl" [ngbTooltip]="'artemisApp.course.form.invalidForm' | artemisTranslate">
                     <ng-container *ngTemplateOutlet="saveButtonTpl"></ng-container>
                 </span>
                 <ng-template #saveButtonTpl>

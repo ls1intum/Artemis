@@ -9,7 +9,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { SortService } from '../../../../../../main/webapp/app/shared/service/sort.service';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
-class MockHeader {
+class MockHeaderComponent {
     @Input() tutorialGroup: TutorialGroup;
 }
 
@@ -23,32 +23,32 @@ class MockHeader {
         </jhi-tutorial-group-detail>
     `,
 })
-class MockWrapper {
+class MockWrapperComponent {
     @Input()
     tutorialGroup: TutorialGroup;
 
     @ViewChild(TutorialGroupDetailComponent)
     tutorialGroupDetailInstance: TutorialGroupDetailComponent;
 
-    @ViewChild(MockHeader)
-    mockHeaderInstance: MockHeader;
+    @ViewChild(MockHeaderComponent)
+    mockHeaderInstance: MockHeaderComponent;
 }
 
 describe('TutorialGroupDetailWrapperTest', () => {
-    let fixture: ComponentFixture<MockWrapper>;
-    let component: MockWrapper;
+    let fixture: ComponentFixture<MockWrapperComponent>;
+    let component: MockWrapperComponent;
     let detailInstance: TutorialGroupDetailComponent;
-    let headerInstance: MockHeader;
+    let headerInstance: MockHeaderComponent;
     let exampleTutorialGroup: TutorialGroup;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TutorialGroupDetailComponent, MockWrapper, MockHeader, MockPipe(ArtemisTranslatePipe)],
+            declarations: [TutorialGroupDetailComponent, MockWrapperComponent, MockHeaderComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [MockProvider(ArtemisMarkdownService), MockProvider(SortService)],
         })
             .compileComponents()
             .then(() => {
-                fixture = TestBed.createComponent(MockWrapper);
+                fixture = TestBed.createComponent(MockWrapperComponent);
                 component = fixture.componentInstance;
                 exampleTutorialGroup = generateExampleTutorialGroup({});
                 component.tutorialGroup = exampleTutorialGroup;

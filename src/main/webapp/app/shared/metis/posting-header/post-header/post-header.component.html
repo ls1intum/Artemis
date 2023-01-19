@@ -8,14 +8,16 @@
                 {{ posting.author!.name }}
             </span>
             <span class="today-flag" *ngIf="postingIsOfToday">{{ todayFlag | artemisTranslate }}</span>
-            <span [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
-                {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
+            <span [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate : 'time' }}">
+                {{ postingIsOfToday ? (posting.creationDate | artemisDate : 'time') : (posting.creationDate | artemisDate : 'short-date') }}
             </span>
         </span>
         <fa-icon
             *ngIf="
                 !previewMode &&
+                !readOnlyMode &&
                 ((!isCourseMessagesPage && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT))) ||
+                    (isCourseMessagesPage && hasChannelModerationRights) ||
                     isAuthorOfPosting)
             "
             size="xs"
@@ -33,7 +35,9 @@
         <jhi-confirm-icon
             *ngIf="
                 !previewMode &&
+                !readOnlyMode &&
                 ((!isCourseMessagesPage && (isAtLeastInstructorInCourse || (isAtLeastTutorInCourse && posting.courseWideContext !== CourseWideContext.ANNOUNCEMENT))) ||
+                    (isCourseMessagesPage && hasChannelModerationRights) ||
                     isAuthorOfPosting)
             "
             iconSize="xs"
@@ -43,5 +47,10 @@
             [confirmTooltip]="'artemisApp.metis.confirmDeletePost' | artemisTranslate"
         >
         </jhi-confirm-icon>
+        <span
+            *ngIf="!!(!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting"
+            class="badge bg-secondary hideAfter5Seconds"
+            >{{ 'global.generic.new' | artemisTranslate }}</span
+        >
     </div>
 </div>

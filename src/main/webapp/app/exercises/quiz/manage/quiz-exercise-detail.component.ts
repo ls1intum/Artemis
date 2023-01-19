@@ -43,6 +43,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
 import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { isQuizEditable } from 'app/exercises/quiz/shared/quiz-manage-util.service';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -68,6 +69,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     notificationText?: string;
 
     isImport = false;
+    goBackAfterSaving = false;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
@@ -161,6 +163,12 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             this.isImport = true;
         }
 
+        this.route.queryParams.subscribe((params) => {
+            if (params.shouldHaveBackButtonToWizard) {
+                this.goBackAfterSaving = true;
+            }
+        });
+
         /** Query the courseService for the participationId given by the params */
         if (this.courseId) {
             this.courseService.find(this.courseId).subscribe((response: HttpResponse<Course>) => {
@@ -192,6 +200,9 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.init();
+                if (!this.quizExercise.isEditable) {
+                    this.alertService.error('error.http.403');
+                }
                 if (this.testRunExistsAndShouldNotBeIgnored()) {
                     this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
                 }
@@ -215,6 +226,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         newQuiz.quizQuestions = [];
         newQuiz.quizMode = QuizMode.SYNCHRONIZED;
         newQuiz.allowedNumberOfAttempts = 1;
+        newQuiz.isEditable = true;
         this.prepareEntity(newQuiz);
         return newQuiz;
     }
@@ -225,10 +237,13 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     init(): void {
         if (!this.quizExercise) {
             this.quizExercise = this.initializeNewQuizExercise();
+        } else {
+            this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         }
 
         if (this.isImport || this.isExamMode) {
             this.quizExercise.quizBatches = [];
+            this.quizExercise.isEditable = true;
             resetDates(this.quizExercise);
         }
 
@@ -280,9 +295,8 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     cacheValidation() {
-        this.validateDate();
-
         if (this.quizExercise.quizMode === QuizMode.SYNCHRONIZED) {
+            this.quizExercise.dueDate = undefined; // Due date is calculated on server side
             if (this.scheduleQuizStart) {
                 if ((this.quizExercise.quizBatches?.length ?? 0) !== 1) {
                     this.quizExercise.quizBatches = [this.quizExercise.quizBatches?.[0] ?? new QuizBatch()];
@@ -294,6 +308,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             }
         }
 
+        this.validateDate();
         return super.cacheValidation(this.changeDetector);
     }
 
@@ -884,9 +899,16 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.pendingChangesCache = false;
         this.prepareEntity(quizExercise);
         this.quizExercise = quizExercise;
+        this.quizExercise.isEditable = isQuizEditable(this.quizExercise);
         this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(quizExercise);
         this.changeDetector.detectChanges();
+
+        if (this.goBackAfterSaving) {
+            this.navigationUtilService.navigateBack();
+
+            return;
+        }
 
         // Navigate back only if it's an import
         // If we edit the exercise, a user might just want to save the current state of the added quiz questions without going back
@@ -1018,6 +1040,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             return [];
         }
         // Release Date valid but lies in the past
+        // eslint-disable-next-line no-constant-condition
         if (false /*this.quizExercise.isPlannedToStart*/) {
             // TODO: quiz cleanup: properly validate dates and deduplicate the checks (see isValidQuiz)
             if (!this.quizExercise.releaseDate || !dayjs(this.quizExercise.releaseDate).isValid()) {
@@ -1040,7 +1063,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     isSaveDisabled(): boolean {
-        // tslint:disable-next-line:max-line-length
+        // eslint-disable-next-line max-len
         return this.isSaving || !this.pendingChangesCache || !this.quizIsValid || this.hasSavedQuizStarted || this.quizExercise.dueDateError || this.hasErrorInQuizBatches();
     }
 

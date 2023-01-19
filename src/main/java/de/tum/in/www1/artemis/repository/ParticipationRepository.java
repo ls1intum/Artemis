@@ -31,9 +31,22 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             WHERE p.id = :participationId
-                AND (s.id = (SELECT max(id) FROM p.submissions) OR s.id = NULL)
+                AND (s.id = (SELECT max(s2.id) FROM p.submissions s2) OR s.id = NULL)
             """)
     Optional<Participation> findByIdWithLatestSubmissionAndResult(@Param("participationId") Long participationId);
+
+    @Query("""
+            SELECT p
+            FROM Participation p
+                LEFT JOIN FETCH p.submissions s
+            WHERE p.id = :participationId
+                AND (s.id = (SELECT max(s2.id) FROM p.submissions s2) OR s.id = NULL)
+            """)
+    Optional<Participation> findByIdWithLatestSubmission(@Param("participationId") Long participationId);
+
+    default Participation findByIdWithLatestSubmissionElseThrow(Long participationId) {
+        return findByIdWithLatestSubmission(participationId).orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
+    }
 
     @Query("""
             SELECT p FROM Participation p
@@ -72,10 +85,17 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     @Query("""
             SELECT p
             FROM Participation p
-            WHERE p.exercise.id = :#{#exerciseId}
+            WHERE p.exercise.id = :exerciseId
                 AND p.individualDueDate IS NOT null
             """)
     Set<Participation> findWithIndividualDueDateByExerciseId(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT p
+            FROM Participation p
+            WHERE p.exercise.id = :exerciseId
+            """)
+    Set<Participation> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
     /**
      * Removes all individual due dates of participations for which the individual due date is before the updated due date of the exercise.

@@ -53,6 +53,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     isImport: boolean;
     isExamMode: boolean;
     semiAutomaticAssessmentAvailable = true;
+    goBackAfterSaving = false;
 
     // Icons
     faSave = faSave;
@@ -111,7 +112,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
                 tap((params) => {
                     if (!this.isExamMode) {
                         this.exerciseCategories = this.modelingExercise.categories || [];
-                        if (!!this.modelingExercise.course) {
+                        if (this.modelingExercise.course) {
                             this.courseService.findAllCategoriesOfCourse(this.modelingExercise.course!.id!).subscribe({
                                 next: (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
@@ -159,6 +160,12 @@ export class ModelingExerciseUpdateComponent implements OnInit {
             )
             .subscribe();
 
+        this.activatedRoute.queryParams.subscribe((params) => {
+            if (params.shouldHaveBackButtonToWizard) {
+                this.goBackAfterSaving = true;
+            }
+        });
+
         this.isSaving = false;
         this.notificationText = undefined;
     }
@@ -183,7 +190,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         this.isSaving = true;
 
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
-            .save(this.modelingExercise, this.notificationText)
+            .save(this.modelingExercise, this.isExamMode, this.notificationText)
             .subscribe({
                 next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),
@@ -203,6 +210,13 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     private onSaveSuccess(exercise: ModelingExercise): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
+
+        if (this.goBackAfterSaving) {
+            this.navigationUtilService.navigateBack();
+
+            return;
+        }
+
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 

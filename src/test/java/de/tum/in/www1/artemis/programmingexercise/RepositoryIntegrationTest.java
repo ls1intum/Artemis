@@ -63,6 +63,8 @@ import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
 
 class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "repositoryintegration";
+
     private final String studentRepoBaseUrl = "/api/repository/";
 
     @Autowired
@@ -121,10 +123,13 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void setup() throws Exception {
-        database.addUsers(2, 1, 1, 1);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
+        database.addUsers(TEST_PREFIX, 2, 1, 1, 1);
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
 
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(1));
+        programmingExerciseRepository.save(programmingExercise);
 
         studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");
 
@@ -137,11 +142,10 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // add folder to the repository folder
         Path folderPath = Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName);
-        Files.createDirectory(folderPath).toFile();
+        Files.createDirectory(folderPath);
 
         var localRepoUrl = new GitUtilService.MockFileRepositoryUrl(studentRepository.localRepoFile);
-        database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURI());
-        participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findAll().get(0);
+        participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, TEST_PREFIX + "student1", localRepoUrl.getURI());
         programmingExercise.setTestRepositoryUrl(localRepoUrl.toString());
 
         // Create template repo
@@ -157,7 +161,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // add folder to the template repo folder
         Path templateFolderPath = Path.of(templateRepository.localRepoFile + "/" + currentLocalFolderName);
-        Files.createDirectory(templateFolderPath).toFile();
+        Files.createDirectory(templateFolderPath);
 
         programmingExercise = database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
@@ -199,13 +203,12 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @AfterEach
     void tearDown() throws IOException {
-        database.resetDatabase();
         reset(gitService);
         studentRepository.resetLocalRepo();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFiles() throws Exception {
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
@@ -217,7 +220,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithContent() throws Exception {
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content", HttpStatus.OK, String.class, String.class);
         assertThat(files).isNotEmpty();
@@ -230,7 +233,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithContent_shouldNotThrowException() throws Exception {
         Map<de.tum.in.www1.artemis.domain.File, FileType> mockedFiles = new HashMap<>();
         mockedFiles.put(mock(de.tum.in.www1.artemis.domain.File.class), FileType.FILE);
@@ -245,7 +248,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithInfoAboutChange_noChange() throws Exception {
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-change", HttpStatus.OK, String.class, Boolean.class);
         assertThat(files).isNotEmpty();
@@ -258,7 +261,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithInfoAboutChange_withChange() throws Exception {
         FileUtils.write(studentFile, "newContent123", Charset.defaultCharset());
 
@@ -273,7 +276,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetFilesWithInfoAboutChange_withNewFile() throws Exception {
         FileUtils.write(studentFile, "newContent123", Charset.defaultCharset());
 
@@ -293,7 +296,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetFiles_solutionParticipation() throws Exception {
         // Create template repo
         var solutionRepository = new LocalRepository(defaultBranch);
@@ -308,7 +311,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // add folder to the template repo folder
         Path solutionFolderPath = Path.of(solutionRepository.localRepoFile + "/" + currentLocalFolderName);
-        Files.createDirectory(solutionFolderPath).toFile();
+        Files.createDirectory(solutionFolderPath);
 
         programmingExercise = database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
@@ -325,7 +328,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFile() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
@@ -335,13 +338,13 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetFilesAsDifferentStudentForbidden() throws Exception {
         request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetFileAsDifferentStudentForbidden() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -367,10 +370,11 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         plagiarismComparison.setSubmissionB(plagiarismSubmissionB);
 
         PlagiarismCase plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(programmingExercise);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 
         Post post = new Post();
-        post.setAuthor(database.getUserByLogin("instructor1"));
+        post.setAuthor(database.getUserByLogin(TEST_PREFIX + "instructor1"));
         post.setTitle("Title Plagiarism Case Post");
         post.setContent("Content Plagiarism Case Post");
         post.setVisibleForStudents(true);
@@ -382,9 +386,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFilesAsDifferentStudentWithRelevantPlagiarismCase() throws Exception {
-        addPlagiarismCaseToProgrammingExercise("student1", "student2");
+        addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
 
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
@@ -396,11 +400,11 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student2", roles = "USER")
     void testGetFileAsDifferentStudentWithRelevantPlagiarismCase() throws Exception {
         programmingExerciseRepository.save(programmingExercise);
 
-        addPlagiarismCaseToProgrammingExercise("student1", "student2");
+        addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
@@ -410,7 +414,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFileWithRelevantPlagiarismCaseAfterExam() throws Exception {
         programmingExercise = createProgrammingExerciseForExam();
         Exam exam = programmingExercise.getExerciseGroup().getExam();
@@ -420,7 +424,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         exam.setStartDate(ZonedDateTime.now().minusHours(3));
         examRepository.save(exam);
 
-        addPlagiarismCaseToProgrammingExercise("student2", "student1");
+        addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student2", TEST_PREFIX + "student1");
 
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
@@ -430,7 +434,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFilesWithRelevantPlagiarismCaseAfterExam_forbidden() throws Exception {
         programmingExercise = createProgrammingExerciseForExam();
         Exam exam = programmingExercise.getExerciseGroup().getExam();
@@ -441,13 +445,13 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         examRepository.save(exam);
 
         // student1 is NOT notified yet.
-        addPlagiarismCaseToProgrammingExercise("student1", "student2");
+        addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student1", TEST_PREFIX + "student2");
 
         request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFilesWithRelevantPlagiarismCaseAfterExam() throws Exception {
         programmingExercise = createProgrammingExerciseForExam();
         Exam exam = programmingExercise.getExerciseGroup().getExam();
@@ -458,7 +462,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         examRepository.save(exam);
 
         // student1 is notified.
-        addPlagiarismCaseToProgrammingExercise("student2", "student1");
+        addPlagiarismCaseToProgrammingExercise(TEST_PREFIX + "student2", TEST_PREFIX + "student1");
 
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
@@ -470,7 +474,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetFile_shouldThrowException() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
@@ -481,7 +485,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateFile() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", "newFile");
@@ -491,7 +495,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateFolder() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("folder", "newFolder");
@@ -501,7 +505,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRenameFile() throws Exception {
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
         String newLocalFileName = "newFileName";
@@ -513,7 +517,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testRenameFolder() throws Exception {
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName))).isTrue();
         String newLocalFolderName = "newFolderName";
@@ -525,7 +529,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteFile() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
@@ -535,7 +539,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCommitChanges() throws Exception {
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus()).hasToString("UNCOMMITTED_CHANGES");
@@ -544,11 +548,11 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(receivedStatusAfterCommit.repositoryStatus()).hasToString("CLEAN");
         var testRepoCommits = studentRepository.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
-        assertThat(database.getUserByLogin("student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+        assertThat(database.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveFiles() throws Exception {
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
@@ -556,7 +560,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testSaveFilesAndCommit() throws Exception {
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
 
@@ -572,12 +576,12 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         var testRepoCommits = studentRepository.getAllLocalCommits();
         assertThat(testRepoCommits).hasSize(1);
-        assertThat(database.getUserByLogin("student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
+        assertThat(database.getUserByLogin(TEST_PREFIX + "student1").getName()).isEqualTo(testRepoCommits.get(0).getAuthorIdent().getName());
     }
 
     @Test
     @DisabledOnOs(OS.WINDOWS) // git file locking issues
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testPullChanges() throws Exception {
         String fileName = "remoteFile";
 
@@ -611,7 +615,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @DisabledOnOs(OS.WINDOWS) // git file locking issues
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testResetToLastCommit() throws Exception {
         String fileName = "testFile";
         var localRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null);
@@ -664,7 +668,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetStatus() throws Exception {
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
 
@@ -680,21 +684,21 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsNoSubmission() throws Exception {
         var receivedLogs = request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull().isEmpty();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsWithSubmissionBuildSuccessful() throws Exception {
         database.createProgrammingSubmission(participation, false);
         request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsWithManualResult() throws Exception {
         var submission = database.createProgrammingSubmission(participation, true);
         doReturn(logs).when(continuousIntegrationService).getLatestBuildLogs(submission);
@@ -703,11 +707,11 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(receivedLogs).hasSize(2);
         assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
         // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
-        assertThat(receivedLogs).usingElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
+        assertThat(receivedLogs).usingRecursiveFieldByFieldElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogs() throws Exception {
         var submission = database.createProgrammingSubmission(participation, true);
 
@@ -718,11 +722,11 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(receivedLogs).hasSize(2);
         assertThat(receivedLogs.get(0).getTime()).isEqualTo(logs.get(0).getTime());
         // due to timezone assertThat isEqualTo issues, we compare those directly first and ignore them afterwards
-        assertThat(receivedLogs).usingElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
+        assertThat(receivedLogs).usingRecursiveFieldByFieldElementComparatorIgnoringFields("time", "id").isEqualTo(logs);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsFromDatabase() throws Exception {
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
@@ -736,14 +740,14 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry2", submission));
         buildLogEntries.add(new BuildLogEntry(ZonedDateTime.now(), "LogEntry3", submission));
         submission.setBuildLogEntries(buildLogEntries);
-        database.addProgrammingSubmission(programmingExercise, submission, "student1");
+        database.addProgrammingSubmission(programmingExercise, submission, TEST_PREFIX + "student1");
 
         var receivedLogs = request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, BuildLogEntry.class);
         assertThat(receivedLogs).hasSize(3).isEqualTo(buildLogEntries);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsFromDatabaseForSpecificResults() throws Exception {
         // FIRST SUBMISSION
         var submission1 = new ProgrammingSubmission();
@@ -758,7 +762,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         submission1Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 1 - Log 2", submission1));
 
         submission1.setBuildLogEntries(submission1Logs);
-        database.addProgrammingSubmission(programmingExercise, submission1, "student1");
+        database.addProgrammingSubmission(programmingExercise, submission1, TEST_PREFIX + "student1");
         var result1 = database.addResultToSubmission(submission1, AssessmentType.AUTOMATIC).getFirstResult();
 
         // SECOND SUBMISSION
@@ -774,7 +778,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         submission2Logs.add(new BuildLogEntry(ZonedDateTime.now(), "Submission 2 - Log 2", submission2));
 
         submission2.setBuildLogEntries(submission2Logs);
-        database.addProgrammingSubmission(programmingExercise, submission2, "student1");
+        database.addProgrammingSubmission(programmingExercise, submission2, TEST_PREFIX + "student1");
         var result2 = database.addResultToSubmission(submission2, AssessmentType.AUTOMATIC).getFirstResult();
 
         // Specify to use result1
@@ -793,18 +797,17 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testBuildLogsFromDatabaseForSpecificResults_otherParticipation() throws Exception {
-        var result = database.addProgrammingParticipationWithResultForExercise(programmingExercise, "tutor1");
+        var result = database.addProgrammingParticipationWithResultForExercise(programmingExercise, TEST_PREFIX + "tutor1");
         database.addProgrammingSubmissionToResultAndParticipation(result, (StudentParticipation) result.getParticipation(), "xyz");
 
         request.getList(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, BuildLogEntry.class, parameters(Map.of("resultId", result.getId())));
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCommitChangesAllowedForPracticeModeAfterDueDate() throws Exception {
-        programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         programmingExercise.setAssessmentType(AssessmentType.MANUAL);
@@ -841,14 +844,14 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCommitChangesNotAllowedForBuildAndTestAfterDueDate() throws Exception {
         setBuildAndTestForProgrammingExercise();
         assertUnchangedRepositoryStatusForForbiddenCommit();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCommitChangesNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
         setManualAssessmentForProgrammingExercise();
         assertUnchangedRepositoryStatusForForbiddenCommit();
@@ -863,21 +866,21 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testResetNotAllowedForBuildAndTestAfterDueDate() throws Exception {
         setBuildAndTestForProgrammingExercise();
         assertUnchangedRepositoryStatusForForbiddenReset();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testResetNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
         setManualAssessmentForProgrammingExercise();
         assertUnchangedRepositoryStatusForForbiddenReset();
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testResetNotAllowedBeforeDueDate() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
@@ -889,7 +892,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testResetNotAllowedForExamBeforeDueDate() throws Exception {
         programmingExercise = createProgrammingExerciseForExam();
         // A tutor is not allowed to reset the repository during the exam time
@@ -915,7 +918,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStashChanges() throws Exception {
         // Make initial commit and save files afterwards
         initialCommitAndSaveFiles(HttpStatus.OK);
@@ -928,7 +931,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStashChangesInStudentRepositoryAfterDueDateHasPassed_beforeStateRepoConfigured() {
         participation.setInitializationState(InitializationState.REPO_COPIED);
         // Try to stash changes
@@ -941,7 +944,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStashChangesInStudentRepositoryAfterDueDateHasPassed_dueDatePassed() throws Exception {
         // Make initial commit and save files afterwards
         initialCommitAndSaveFiles(HttpStatus.OK);
@@ -953,7 +956,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testStashChangesInStudentRepositoryAfterDueDateHasPassed_throwError() {
         // Try to stash changes, but it will throw error as the HEAD is not initialized in the remote repo (this is done with the initial commit)
         programmingExerciseParticipationService.stashChangesInStudentRepositoryAfterDueDateHasPassed(programmingExercise, participation);
@@ -964,7 +967,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCanAccessParticipation_asInstructor() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -989,7 +992,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCanAccessParticipation_asInstructor_edgeCase_exercise_null() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -1015,7 +1018,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCanAccessParticipation_asInstructor_edgeCase_programmingExercise_null() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -1030,7 +1033,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testCanAccessParticipation_asInstructor_edgeCase_programmingExercise_unknownId() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -1048,7 +1051,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCanAccessParticipation_asStudent() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -1058,7 +1061,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCanAccessParticipation_asTutor() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -1068,7 +1071,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testCanAccessParticipation_asEditor() {
         // Set solution and template participation
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
@@ -1078,7 +1081,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testFindStudentParticipation() {
         var response = studentParticipationRepository.findById(participation.getId());
         assertThat(response).isPresent();
@@ -1086,7 +1089,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUnlockStudentRepository() {
         doAnswer((Answer<Void>) invocation -> {
             ((ProgrammingExercise) participation.getExercise()).setBuildAndTestStudentSubmissionsAfterDueDate(null);
@@ -1100,7 +1103,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUnlockStudentRepository_beforeStateRepoConfigured() {
         participation.setInitializationState(InitializationState.REPO_COPIED);
         programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, participation);
@@ -1112,7 +1115,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testLockStudentRepository() {
         doAnswer((Answer<Void>) invocation -> {
             participation.getExercise().setDueDate(ZonedDateTime.now().minusHours(1));
@@ -1124,7 +1127,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testLockStudentRepository_beforeStateRepoConfigured() {
         participation.setInitializationState(InitializationState.REPO_COPIED);
         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
@@ -1136,7 +1139,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetSolutionFileNames() throws Exception {
         var fileNames = request.get(studentRepoBaseUrl + participation.getId() + "/file-names", HttpStatus.OK, String[].class);
         assertThat(fileNames).containsExactly("currentFileName");

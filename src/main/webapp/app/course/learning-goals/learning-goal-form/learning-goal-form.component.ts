@@ -9,6 +9,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { intersection } from 'lodash-es';
 import { LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Async Validator to make sure that a learning goal title is unique within a course
@@ -47,6 +48,7 @@ export interface LearningGoalFormData {
     title?: string;
     description?: string;
     taxonomy?: LearningGoalTaxonomy;
+    masteryThreshold?: number;
     connectedLectureUnits?: LectureUnit[];
 }
 
@@ -62,15 +64,24 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         title: undefined,
         description: undefined,
         taxonomy: undefined,
+        masteryThreshold: undefined,
         connectedLectureUnits: undefined,
     };
 
     @Input()
     isEditMode = false;
     @Input()
+    isInSingleLectureMode = false;
+    @Input()
     courseId: number;
     @Input()
     lecturesOfCourseWithLectureUnits: Lecture[] = [];
+    @Input()
+    averageStudentScore?: number;
+    @Input()
+    hasCancelButton: boolean;
+    @Output()
+    onCancel: EventEmitter<any> = new EventEmitter<any>();
 
     titleUniqueValidator = titleUniqueValidator;
     learningGoalTaxonomy = LearningGoalTaxonomy;
@@ -81,6 +92,8 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     form: FormGroup;
     selectedLectureInDropdown: Lecture;
     selectedLectureUnitsInTable: LectureUnit[] = [];
+
+    faTimes = faTimes;
 
     constructor(
         private fb: FormBuilder,
@@ -95,6 +108,10 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
 
     get descriptionControl() {
         return this.form.get('description');
+    }
+
+    get masteryThresholdControl() {
+        return this.form.get('masteryThreshold');
     }
 
     ngOnChanges(): void {
@@ -124,8 +141,13 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             ],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
+            masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
         });
         this.selectedLectureUnitsInTable = [];
+
+        if (this.isInSingleLectureMode) {
+            this.selectLectureInDropdown(this.lecturesOfCourseWithLectureUnits.first()!);
+        }
     }
 
     private setFormValues(formData: LearningGoalFormData) {
@@ -133,6 +155,10 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         if (formData.connectedLectureUnits) {
             this.selectedLectureUnitsInTable = formData.connectedLectureUnits;
         }
+    }
+
+    cancelForm() {
+        this.onCancel.emit();
     }
 
     submitForm() {

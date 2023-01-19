@@ -2,7 +2,7 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ProgrammingExerciseInstructionService, TestCaseState } from 'app/exercises/programming/shared/instructions-render/service/programming-exercise-instruction.service';
 import { TaskArray } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
+import { FeedbackComponent } from 'app/exercises/shared/feedback/feedback.component';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { faCheck, faQuestion, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -44,27 +44,25 @@ export class ProgrammingExerciseInstructionStepWizardComponent implements OnChan
     }
 
     /**
-     * Opens the ResultDetailComponent as popup; displays test results
+     * Opens the FeedbackComponent as popup; displays test results
      * @param {string[]} tests - Identifies the testcase
      * @param taskName - the name of the selected task
      */
     public showDetailsForTests(tests: string[], taskName: string) {
-        if (!this.latestResult || !this.latestResult.feedbacks) {
+        if (!this.latestResult) {
             return;
         }
         const {
-            detailed: { failedTests, notExecutedTests },
+            detailed: { notExecutedTests },
         } = this.instructionService.testStatusForTask(tests, this.latestResult);
-        if (failedTests.length + notExecutedTests.length <= 0) {
-            return;
-        }
-        const modalRef = this.modalService.open(ResultDetailComponent, { keyboard: true, size: 'lg' });
-        const componentInstance = modalRef.componentInstance as ResultDetailComponent;
+        const modalRef = this.modalService.open(FeedbackComponent, { keyboard: true, size: 'lg' });
+        const componentInstance = modalRef.componentInstance as FeedbackComponent;
         componentInstance.exercise = this.exercise;
         componentInstance.result = this.latestResult;
         componentInstance.feedbackFilter = tests;
         componentInstance.exerciseType = ExerciseType.PROGRAMMING;
         componentInstance.showTestDetails = this.showTestDetails || false;
         componentInstance.taskName = taskName;
+        componentInstance.numberOfNotExecutedTests = notExecutedTests.length;
     }
 }

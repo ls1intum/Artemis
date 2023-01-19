@@ -9,6 +9,7 @@ import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -22,8 +23,10 @@ public class LearningGoal extends DomainObject {
     private String title;
 
     @Column(name = "description")
-    @Lob
     private String description;
+
+    @Column(name = "mastery_threshold")
+    private Integer masteryThreshold;
 
     /**
      * The type of learning goal according to Bloom's revised taxonomy.
@@ -31,6 +34,7 @@ public class LearningGoal extends DomainObject {
      */
     @Column(name = "taxonomy")
     @Convert(converter = LearningGoalTaxonomy.TaxonomyConverter.class)
+    @JsonInclude
     private LearningGoalTaxonomy taxonomy;
 
     @ManyToOne
@@ -38,16 +42,12 @@ public class LearningGoal extends DomainObject {
     @JsonIgnoreProperties({ "learningGoals", "prerequisites" })
     private Course course;
 
-    @ManyToMany
-    @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
+    @ManyToMany(mappedBy = "learningGoals")
     @JsonIgnoreProperties({ "learningGoals", "course" })
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Exercise> exercises = new HashSet<>();
 
-    @ManyToMany
-    @JoinTable(name = "learning_goal_lecture_unit", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "lecture_unit_id", referencedColumnName = "id"))
+    @ManyToMany(mappedBy = "learningGoals")
     @JsonIgnoreProperties("learningGoals")
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<LectureUnit> lectureUnits = new HashSet<>();
 
     /**
@@ -58,6 +58,10 @@ public class LearningGoal extends DomainObject {
     @JsonIgnoreProperties({ "learningGoals", "prerequisites" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Course> consecutiveCourses = new HashSet<>();
+
+    @OneToMany(mappedBy = "learningGoal", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnoreProperties({ "user", "learningGoal" })
+    private Set<LearningGoalProgress> userProgress = new HashSet<>();
 
     public String getTitle() {
         return title;
@@ -73,6 +77,14 @@ public class LearningGoal extends DomainObject {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public int getMasteryThreshold() {
+        return masteryThreshold == null ? 100 : this.masteryThreshold;
+    }
+
+    public void setMasteryThreshold(Integer masteryThreshold) {
+        this.masteryThreshold = masteryThreshold;
     }
 
     public LearningGoalTaxonomy getTaxonomy() {
@@ -151,6 +163,14 @@ public class LearningGoal extends DomainObject {
 
     public void setConsecutiveCourses(Set<Course> consecutiveCourses) {
         this.consecutiveCourses = consecutiveCourses;
+    }
+
+    public Set<LearningGoalProgress> getUserProgress() {
+        return userProgress;
+    }
+
+    public void setUserProgress(Set<LearningGoalProgress> userProgress) {
+        this.userProgress = userProgress;
     }
 
     /**

@@ -22,7 +22,7 @@
                 (ngModelChange)="onTeamNameChanged($event)"
                 #name="ngModel"
             />
-            <ng-container *ngFor="let e of name.errors! | keyvalue | removekeys: ['required']">
+            <ng-container *ngFor="let e of name.errors! | keyvalue | removekeys : ['required']">
                 <div class="form-control-error text-danger" *ngIf="name.invalid && (name.dirty || name.touched)">
                     <span [jhiTranslate]="'artemisApp.team.name' + '.' + e.key"></span>
                 </div>
@@ -46,7 +46,7 @@
                 [readonly]="shortNameReadOnly"
                 #shortName="ngModel"
             />
-            <ng-container *ngFor="let e of shortName.errors! | keyvalue | removekeys: ['required']">
+            <ng-container *ngFor="let e of shortName.errors! | keyvalue | removekeys : ['required']">
                 <div class="form-control-error text-danger" *ngIf="shortName.invalid && (shortName.dirty || shortName.touched)">
                     <span [jhiTranslate]="'artemisApp.team.shortName' + '.' + e.key"></span>
                 </div>

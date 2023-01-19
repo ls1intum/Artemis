@@ -18,7 +18,6 @@
                 }
             },
             "detail": {
-                "title": "Bewertung",
                 "feedback": "Feedback",
                 "feedbackForTask": "Feedback for task: {{ taskName }}",
                 "codeIssue": {
@@ -32,10 +31,8 @@
                 "test": {
                     "name": "Test Case",
                     "noInfo": "No result information for {{ name }}",
-                    "passed": "Test {{ name }} passed",
-                    "failed": "Test {{ name }} failed",
-                    "passedTest": "1 passed test",
-                    "passedTests": "{{ number }} passed tests"
+                    "passed": "{{ name }} passed",
+                    "failed": "{{ name }} failed"
                 }
             },
             "noResult": "No result",
@@ -55,12 +52,11 @@
             "successful": "Successful",
             "buildArtifact": "Build Artifact",
             "buildError": "Build Error:",
-            "score": "Score {{score}}%",
+            "score": "Your overall score is {{score}}%",
             "scorePercentage": "Score (in %)",
-            "scoreWithPoints": "Score {{score}}%, {{points}} points",
+            "scoreWithPoints": "Your score is {{score}}%, {{points}} points",
             "currentScore": "Current Score",
             "rated": "Rated",
-            "hasFeedback": "Has Feedback",
             "assessmentType": "Assessment Type",
             "assessor": "Reviewer",
             "feedbacks": "Feedback",
@@ -111,6 +107,8 @@
             "noFeedback": "No feedback available",
             "afterDueDateFeedbackHidden": "Even after the due date not for all test cases a detailed feedback is shown. This could be the case if other students are still working on the exercise (e.g. to allow for the compensation of sick days). Those feedbacks will automatically become visible after {{date}}.",
             "testCount": "You passed {{passed}} of {{total}} tests.",
+            "notExecutedTests": "{{numberOfNotExecutedTests}} tests were not executed.",
+            "notExecutedTestsTooltip": "The tests might only get executed after the due date or there was an issue during the execution of the tests.",
             "scaIssueCount": "You have {{issues}} code issues.",
             "manualFeedbackCount": "You received {{feedbacks}} manual feedbacks."
         }

@@ -32,7 +32,7 @@ public abstract class BaseExercise extends DomainObject {
     private Double maxPoints;
 
     @Column(name = "bonus_points")
-    private Double bonusPoints;
+    private Double bonusPoints = 0.0;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "assessment_type")
@@ -41,6 +41,11 @@ public abstract class BaseExercise extends DomainObject {
     @Column(name = "release_date")
     @JsonView(QuizView.Before.class)
     private ZonedDateTime releaseDate;
+
+    // TODO: Also use for quiz exercises
+    @Column(name = "start_date")
+    @JsonView(QuizView.Before.class)
+    private ZonedDateTime startDate;
 
     @Column(name = "due_date")
     @JsonView(QuizView.Before.class)
@@ -60,8 +65,8 @@ public abstract class BaseExercise extends DomainObject {
     private DifficultyLevel difficulty;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "mode")
-    private ExerciseMode mode;
+    @Column(name = "mode", columnDefinition = "varchar(255) default 'INDIVIDUAL'", nullable = false)
+    private ExerciseMode mode = ExerciseMode.INDIVIDUAL;
 
     public String getTitle() {
         return title;
@@ -115,6 +120,14 @@ public abstract class BaseExercise extends DomainObject {
 
     public void setReleaseDate(ZonedDateTime releaseDate) {
         this.releaseDate = releaseDate;
+    }
+
+    public ZonedDateTime getStartDate() {
+        return startDate;
+    }
+
+    public void setStartDate(ZonedDateTime startDate) {
+        this.startDate = startDate;
     }
 
     public ZonedDateTime getDueDate() {
@@ -173,28 +186,14 @@ public abstract class BaseExercise extends DomainObject {
     }
 
     /**
-     * Checks whether students should be able to see the example solution.
-     *
-     * @return true if example solution publication date is in the past, false otherwise (including null case).
-     */
-    public boolean isExampleSolutionPublished() {
-        if (this.isExamExercise()) {
-            // This feature is currently not available for exam exercises, this should return false
-            // for exam exercises until the conditions for them is fully implemented.
-            return false;
-        }
-        return this.exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(this.exampleSolutionPublicationDate);
-    }
-
-    /**
      * check if students are allowed to see this exercise
      *
      * @return true, if students are allowed to see this exercise, otherwise false
      */
     @JsonView(QuizView.Before.class)
-    public Boolean isVisibleToStudents() {
+    public boolean isVisibleToStudents() {
         if (releaseDate == null) {  // no release date means the exercise is visible to students
-            return Boolean.TRUE;
+            return true;
         }
         return releaseDate.isBefore(ZonedDateTime.now());
     }

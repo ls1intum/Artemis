@@ -15,6 +15,7 @@
         </div>
         <div *ngIf="!isExamMode" class="form-group position-relative">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
+            <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
             <jhi-category-selector
                 [categories]="exerciseCategories"
                 [existingCategories]="existingCategories"
@@ -32,7 +33,7 @@
             <div class="form-group flex-grow-1">
                 <jhi-date-time-picker
                     class="form-element"
-                    id="pick-modeling-releaseDate"
+                    id="pick-releaseDate"
                     labelName="{{ 'artemisApp.exercise.releaseDate' | artemisTranslate }}"
                     [(ngModel)]="modelingExercise.releaseDate"
                     (valueChange)="validateDate()"
@@ -43,7 +44,21 @@
             <div class="form-group flex-grow-1 ms-3">
                 <jhi-date-time-picker
                     class="form-element"
-                    id="pick-modeling-dueDate"
+                    id="pick-startDate"
+                    name="startDate"
+                    [error]="!!modelingExercise.startDateError"
+                    labelName="{{ 'artemisApp.exercise.startDate' | artemisTranslate }}"
+                    (valueChange)="validateDate()"
+                    [(ngModel)]="modelingExercise.startDate"
+                ></jhi-date-time-picker>
+                <span *ngIf="modelingExercise.startDateError" class="invalid-feedback">{{ 'artemisApp.exercise.startDateError' | artemisTranslate }}</span>
+            </div>
+        </div>
+        <div class="d-flex" *ngIf="!isExamMode">
+            <div class="form-group flex-grow-1">
+                <jhi-date-time-picker
+                    class="form-element"
+                    id="pick-dueDate"
                     name="dueDate"
                     [error]="!!modelingExercise.dueDateError"
                     labelName="{{ 'artemisApp.exercise.dueDate' | artemisTranslate }}"
@@ -52,18 +67,18 @@
                 ></jhi-date-time-picker>
                 <span *ngIf="modelingExercise.dueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.dueDateError' | artemisTranslate }}</span>
             </div>
-        </div>
-        <div class="form-group" *ngIf="!isExamMode">
-            <jhi-date-time-picker
-                class="form-element"
-                id="pick-modeling-assessmentDueDate"
-                name="assessmentDueDate"
-                [error]="!!modelingExercise.assessmentDueDateError"
-                labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
-                (valueChange)="validateDate()"
-                [(ngModel)]="modelingExercise.assessmentDueDate"
-            ></jhi-date-time-picker>
-            <span *ngIf="modelingExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
+            <div class="form-group flex-grow-1 ms-3">
+                <jhi-date-time-picker
+                    class="form-element"
+                    id="pick-assessmentDueDate"
+                    name="assessmentDueDate"
+                    [error]="!!modelingExercise.assessmentDueDateError"
+                    labelName="{{ 'artemisApp.exercise.assessmentDueDate' | artemisTranslate }}"
+                    (valueChange)="validateDate()"
+                    [(ngModel)]="modelingExercise.assessmentDueDate"
+                ></jhi-date-time-picker>
+                <span *ngIf="modelingExercise.assessmentDueDateError" class="invalid-feedback">{{ 'artemisApp.exercise.assessmentDueDateError' | artemisTranslate }}</span>
+            </div>
         </div>
         <div class="form-group">
             <label class="form-control-label">{{
@@ -201,6 +216,15 @@
             <span *ngIf="modelingExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
                 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
             }}</span>
+        </div>
+        <div class="form-group" *ngIf="!isExamMode">
+            <jhi-learning-goal-selection
+                id="learning-goals"
+                [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
+                [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
+                [(ngModel)]="modelingExercise.learningGoals"
+                name="learningGoals"
+            ></jhi-learning-goal-selection>
         </div>
         <div class="form-group" *ngIf="modelingExercise.id && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>

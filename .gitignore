@@ -177,7 +177,16 @@ repos-download/
 /src/main/generated
 /coverage
 /exports
+/src/main/docker/.env
 /src/main/resources/config/application-local*.yml
+/src/main/resources/id_*
+/src/main/resources/known_hosts
 /src/test/cypress/screenshots/
 /src/test/cypress/videos/
 /src/test/cypress/build
+
+######################
+# Coverage Files
+######################
+/src/test/cypress/coverage
+/src/test/cypress/jacoco

@@ -56,7 +56,7 @@ describe('FileUploadAssessmentComponent', () => {
     let submissionService: SubmissionService;
 
     const exercise = { id: 20, type: ExerciseType.FILE_UPLOAD, maxPoints: 100, bonusPoints: 0 } as FileUploadExercise;
-    const map1 = new Map<string, Object>().set('testRun', true).set('correction-round', 1);
+    const map1 = new Map<string, any>().set('testRun', true).set('correction-round', 1);
     const params1 = { exerciseId: 20, courseId: 123, submissionId: 7 };
     const params2 = { exerciseId: 20, courseId: 123, submissionId: 'new' };
 
@@ -212,7 +212,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(of(null));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
+            expect(navigateByUrlStub).toHaveBeenCalledOnce();
             expect(comp.busy).toBeTrue();
         });
 
@@ -223,7 +223,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ error: { errorKey: 'lockedSubmissionsLimitReached' } })));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
+            expect(navigateByUrlStub).toHaveBeenCalledOnce();
             expect(comp.busy).toBeTrue();
         });
 
@@ -234,7 +234,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ status: 403 })));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalledOnce();
+            expect(navigateByUrlStub).not.toHaveBeenCalled();
             expect(comp.busy).toBeTrue();
         });
     });
@@ -242,7 +242,6 @@ describe('FileUploadAssessmentComponent', () => {
     it('should load correct feedbacks and update general feedback', () => {
         const submission = createSubmission(exercise);
         const result = createResult(submission);
-        result.hasFeedback = true;
         const feedback1 = new Feedback();
         feedback1.type = FeedbackType.MANUAL_UNREFERENCED;
         feedback1.credits = 5;
@@ -313,7 +312,6 @@ describe('FileUploadAssessmentComponent', () => {
             feedback.type = FeedbackType.MANUAL;
             const changedResult = cloneDeep(initResult);
             changedResult.feedbacks = [feedback];
-            changedResult.hasFeedback = true;
             jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of({ body: submission } as EntityResponseType));
             jest.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(of(changedResult));
             comp.submission = submission;
@@ -339,7 +337,6 @@ describe('FileUploadAssessmentComponent', () => {
             feedback.type = FeedbackType.AUTOMATIC;
             const changedResult = cloneDeep(initResult);
             changedResult.feedbacks = [feedback];
-            changedResult.hasFeedback = true;
             jest.spyOn(fileUploadSubmissionService, 'get').mockReturnValue(of({ body: submission } as EntityResponseType));
             jest.spyOn(fileUploadAssessmentService, 'saveAssessment').mockReturnValue(throwError(() => errorResponse));
             comp.submission = submission;
@@ -361,7 +358,6 @@ describe('FileUploadAssessmentComponent', () => {
         // initial result
         const initResult = createResult(submission);
         initResult.assessmentType = AssessmentType.MANUAL;
-        initResult.hasFeedback = true;
         initResult.feedbacks = [feedback];
         // changed result
         const changedResult = cloneDeep(initResult);
@@ -389,7 +385,6 @@ describe('FileUploadAssessmentComponent', () => {
             // initial result
             const initResult = createResult(submission);
             initResult.assessmentType = AssessmentType.MANUAL;
-            initResult.hasFeedback = true;
             initResult.feedbacks = [feedback];
             // changed result
             const changedResult = cloneDeep(initResult);
@@ -425,7 +420,6 @@ describe('FileUploadAssessmentComponent', () => {
             // initial result
             const initResult = createResult(submission);
             initResult.assessmentType = AssessmentType.MANUAL;
-            initResult.hasFeedback = true;
             initResult.feedbacks = [feedback];
             // changed result
             const changedResult = cloneDeep(initResult);
@@ -460,7 +454,6 @@ describe('FileUploadAssessmentComponent', () => {
             // initial result
             const initResult = createResult(submission);
             feedback.type = FeedbackType.MANUAL_UNREFERENCED;
-            initResult.hasFeedback = true;
             initResult.feedbacks = [feedback];
             // changed result
             const changedResult = cloneDeep(initResult);
@@ -607,7 +600,7 @@ describe('FileUploadAssessmentComponent', () => {
         comp.submission = createSubmission(exercise);
         navigateByUrlStub.mockReturnValue(Promise.resolve(true));
         comp.navigateBack();
-        expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
+        expect(navigateByUrlStub).toHaveBeenCalledOnce();
     });
 });
 
@@ -629,7 +622,6 @@ const createResult = (submission: FileUploadSubmission) => {
     result.successful = false;
     result.score = 1;
     result.rated = true;
-    result.hasFeedback = false;
     result.submission = submission;
     result.participation = undefined;
     result.assessmentType = AssessmentType.MANUAL;

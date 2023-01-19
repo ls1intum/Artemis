@@ -1,4 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ExerciseType } from 'app/entities/exercise.model';
+import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -12,7 +14,6 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { Course } from 'app/entities/course.model';
 import { ExerciseFilter } from 'app/entities/exercise-filter.model';
-import { TextExerciseImportComponent } from 'app/exercises/text/manage/text-exercise-import.component';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
@@ -24,7 +25,7 @@ describe('TextExercise Management Component', () => {
 
     const course = { id: 123 } as Course;
     const textExercise: TextExercise = { id: 456, title: 'Text Exercise', type: 'text' } as TextExercise;
-    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
+    const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, queryParams: of({}) } as any as ActivatedRoute;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -73,13 +74,17 @@ describe('TextExercise Management Component', () => {
         expect(courseExerciseService.findAllTextExercisesForCourse).toHaveBeenCalledOnce();
     });
 
-    it('should open modal', () => {
-        const mockReturnValue = { result: Promise.resolve({ id: 456 } as TextExercise) } as NgbModalRef;
+    it('should open import modal', () => {
+        const mockReturnValue = {
+            result: Promise.resolve({ id: 456 } as TextExercise),
+            componentInstance: {},
+        } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
         comp.openImportModal();
-        expect(modalService.open).toHaveBeenCalledWith(TextExerciseImportComponent, { size: 'lg', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledWith(ExerciseImportComponent, { size: 'lg', backdrop: 'static' });
         expect(modalService.open).toHaveBeenCalledOnce();
+        expect(mockReturnValue.componentInstance.exerciseType).toEqual(ExerciseType.TEXT);
     });
 
     it('should return exercise id', () => {

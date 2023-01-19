@@ -2,8 +2,9 @@ import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, 
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faQuestionCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { LearningGoal } from 'app/entities/learningGoal.model';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;
@@ -17,6 +18,7 @@ export interface FormProperties {
     releaseDate?: dayjs.Dayjs;
     version?: number;
     updateNotificationText?: string;
+    learningGoals?: LearningGoal[];
 }
 
 // file input is a special case and is not included in the reactive form structure
@@ -45,6 +47,13 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @Output()
     formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
     form: FormGroup;
+
+    @Input()
+    hasCancelButton: boolean;
+    @Output()
+    onCancel: EventEmitter<any> = new EventEmitter<any>();
+
+    faTimes = faTimes;
 
     // have to handle the file input as a special case at is not part of the reactive form
     @ViewChild('fileInput', { static: false })
@@ -76,6 +85,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             releaseDate: [undefined as dayjs.Dayjs | undefined],
             version: [1],
             updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
+            learningGoals: [undefined as LearningGoal[] | undefined],
         });
     }
 
@@ -135,5 +145,9 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         if (formData?.fileProperties?.fileName) {
             this.fileName = formData?.fileProperties?.fileName;
         }
+    }
+
+    cancelForm() {
+        this.onCancel.emit();
     }
 }

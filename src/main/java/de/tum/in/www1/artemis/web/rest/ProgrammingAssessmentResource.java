@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.time.ZonedDateTime;
 import java.util.Comparator;
-import java.util.Objects;
 import java.util.Optional;
 
 import org.hibernate.Hibernate;
@@ -205,9 +204,9 @@ public class ProgrammingAssessmentResource extends AssessmentResource {
             messagingService.broadcastNewResult(newManualResult.getParticipation(), newManualResult);
         }
 
-        var isManualFeedbackRequest = programmingExercise.getAllowManualFeedbackRequests() && Objects.nonNull(participation.getIndividualDueDate())
+        var isManualFeedbackRequest = programmingExercise.getAllowManualFeedbackRequests() && participation.getIndividualDueDate() != null
                 && participation.getIndividualDueDate().isBefore(ZonedDateTime.now());
-        var isBeforeDueDate = Objects.nonNull(programmingExercise.getDueDate()) && programmingExercise.getDueDate().isAfter(ZonedDateTime.now());
+        var isBeforeDueDate = programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isAfter(ZonedDateTime.now());
         if (isManualFeedbackRequest && isBeforeDueDate) {
             participation.setIndividualDueDate(null);
             studentParticipationRepository.save(participation);

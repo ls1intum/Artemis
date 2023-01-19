@@ -167,15 +167,21 @@ public class QuizBatchService {
     }
 
     /**
-     * Return the batch that a user the currently participating in for a given exercise
+     * Return the batch that a user the currently participating in for a given quiz exercise
+     * Note: This method will definitely include a database read query
      * @param quizExercise the quiz for that the batch should be look up for
      * @param login the login of the user that the batch should be looked up for
      * @return the batch that the user currently takes part in or empty
      */
     public Optional<QuizBatch> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
         var batchIdOptional = quizScheduleService.getQuizBatchForStudentByLogin(quizExercise, login);
-        if (batchIdOptional.isEmpty() && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
-            return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
+        if (batchIdOptional.isEmpty()) {
+            if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+                return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
+            }
+            else if (quizExercise.getQuizMode() == QuizMode.BATCHED) {
+                return quizBatchRepository.findAllByQuizExerciseAndStudentLogin(quizExercise, login).stream().findFirst();
+            }
         }
         if (quizExercise.getQuizBatches() != null && batchIdOptional.isPresent()) {
             final Long batchId = batchIdOptional.get();

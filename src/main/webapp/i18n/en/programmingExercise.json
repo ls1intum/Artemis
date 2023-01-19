@@ -31,7 +31,6 @@
                 "showTemplateSubmissions": "Show Template Submissions",
                 "showSolutionSubmissions": "Show Solution Submissions"
             },
-            "noReleaseDateWarning": "You have not defined a release date for this exercise, this means that it will be immediately published and made visible to the students.",
             "unsavedChangesLanguageChange": "The problem statement still contains unsaved changes. Do you really want to change the programming language?",
             "unsavedChangesProjectTypeChange": "The problem statement still contains unsaved changes. Do you really want to change the project type?",
             "templateRepositoryUrl": "Template Repository Url",
@@ -126,7 +125,8 @@
             "problemStatement": {
                 "title": "Problem Statement",
                 "taskCommand": "Task",
-                "testCaseCommand": "Insert Test Case"
+                "testCaseCommand": "Insert Test Case",
+                "tasksOfExercise": "Tasks:"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
@@ -232,6 +232,10 @@
             },
             "export": {
                 "downloadRepo": "Download Repo",
+                "downloadExampleSolutionRepo": "Download Solution Repo",
+                "downloadExampleSolution": "Download example solution",
+                "downloadTests": "Download tests",
+                "downloadTestsWithExampleSolution": "Download tests with example solution",
                 "downloadExercise": "Download Exercise",
                 "downloadAllStudents": "Or download the repositories of all students",
                 "downloadAllTeams": "Or download the repositories of all teams",
@@ -263,7 +267,6 @@
             "resultETATooltip": "Shows how long an average submission must wait for its result. Depends on the current utilization of the build system.",
             "titleTooltip": "The title of the exercise can always be changed after creating it. It will be part of the project name of the for the exercise created project on the VCS server",
             "shortNameTooltip": "The short name of the exercise can NOT be edited after creating the exercise! Together with the course short name, it is used as a unique identifier for the exercise in all parts of Artemis (incl. repositories and build plans)",
-            "categoriesTooltip": "You can define up to two categories per exercise (Enter category and press ENTER). You are free in defining them, though it might be best to use them consistently. They will be visible to students",
             "projectTypeTooltip": "This value defines the project type of the template and solution repositories.",
             "testRepositoryProjectTypeTooltip": "This value defines the project type of the test repository.",
             "timeline": {
@@ -279,7 +282,8 @@
                 "automaticTestsAfterDueDateTooltip": "As soon as the specified due date passes, all submissions will be tested again using ALL tests in the test repository, including tests specified to be run after the due date.",
                 "assessmentTypeTooltipAutomaticAssessment": "The type of assessment after the deadline: No manual assessment",
                 "assessmentTypeTooltipManualAssessment": "The type of assessment after the deadline: Manual assessment by a tutors and complaints allowed if possible",
-                "releaseDateTooltip": "The release date of the exercise. Students will only be able to participate in the exercise starting on the specified date.",
+                "releaseDateTooltip": "The release date of the exercise. Students will be able to see the exercise starting on the specified date. If no start date is defined, students can also start their participation after this date.",
+                "startDateTooltip": "The start date of the exercise. If this date is set, students can only see the exercise before but only participate after this date.",
                 "dueDateTooltip": "The deadline, upon which submitting and committing new code will be deactivated for all students.",
                 "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. These generated results will be marked as 'graded' even though the due date has passed.",
                 "alertNewDueDate": "The due date has been set to the release date!",
@@ -290,20 +294,17 @@
                 "assessmentDueDateTooltip": "The deadline for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
                 "notSet": "not set",
                 "allowFeedbackRequests": "Allow feedback requests",
-                "feedbackRequestsEnabledTooltip": "Students can request manual feedback before the deadline",
-                "feedbackRequestsDisabledTooltip": "Students cannot request manual feedback before the deadline",
-                "feedbackRequestsEnabled": "Feedback requests are possible",
-                "feedbackRequestsDisabled": "Feedback requests are not possible",
+                "manualFeedbackRequests": "Manual feedback requests",
+                "manualFeedbackRequestsTooltip": "Students can request manual feedback before the deadline to receive feedback.",
                 "complaintOnAutomaticAssessment": "Complaint on Automatic Assessment",
-                "allowComplaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment",
-                "disallowComplaintOnAutomaticAssessmentTooltip": "Students cannot complain after receiving an automatic assessment",
-                "complaintOnAutomaticAssessmentEnabled": "Complaints are possible",
-                "complaintOnAutomaticAssessmentDisabled": "Complaints are not possible",
-                "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable."
+                "complaintOnAutomaticAssessmentTooltip": "Students can complain after receiving an automatic assessment. Which will be evaluated by a tutor afterwards.",
+                "exampleSolutionPublicationDateTooltip": "The date when the Solution Repository becomes available to download for students. Leave blank to disable.",
+                "releaseTestsWithExampleSolution": "Publish tests",
+                "releaseTestsWithExampleSolutionTooltip": "In addition to the example solution the automatic tests can be published after the deadline."
             },
             "repositoryIsLocked": {
                 "title": "Your repository is locked.",
-                "tooltip": "The due date has passed, your repository is locked. You may still read the code but you may not make any changes to it."
+                "tooltip": "You are outside of the participation timeframe, your repository is locked. You may still read the code but you may not make any changes to it."
             },
             "preview": {
                 "label": "Preview",
@@ -453,7 +454,8 @@
                 "totalJobDuration": "Total Job",
                 "dependenciesDownloadedCount": "Number of downloaded dependencies",
                 "tooltip": "The average build duration is calculated based on all builds (template, solution and student submissions). The number of downloaded dependencies can be reduced by caching dependencies in the Docker image."
-            }
+            },
+            "studentDownloadTestsTooltip": "Here you can download the tests. The example solution is automatically inserted in the place where you have to put your submission for testing."
         },
         "error": {
             "noparticipations": "No existing user was specified or no submission exists."

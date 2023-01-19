@@ -78,6 +78,7 @@ export class ConnectionState {
 export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     stompClient: Client | null;
     connection: Promise<void>;
+    // eslint-disable-next-line @typescript-eslint/ban-types
     connectedPromise: Function;
     subscribers = new Map<string, StompSubscription>();
     myListeners = new Map<string, Observable<any>>();
@@ -152,11 +153,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         if (!this.connectedPromise) {
             this.connection = this.createConnection();
         }
-        let url = `//${window.location.host}/websocket/tracker`;
-        const authToken = this.authServerProvider.getToken();
-        if (authToken) {
-            url += '?access_token=' + authToken;
-        }
+        const url = `//${window.location.host}/websocket/tracker`;
         // NOTE: only support real websockets transports and disable http poll, http stream and other exotic workarounds.
         // nowadays, all modern browsers support websockets and workarounds are not necessary anymore and might only lead to problems
         this.socket = new SockJS(url, undefined, { transports: 'websocket' });
@@ -167,7 +164,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         };
         this.stompClient = Stomp.over(this.socket, options);
         // Note: at the moment, debugging is deactivated to prevent console log statements
-        this.stompClient.debug = function () {};
+        this.stompClient.debug = () => {};
         const headers = <ConnectionHeaders>{};
 
         this.stompClient.connect(
@@ -308,6 +305,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * Create a new connection.
      */
     private createConnection(): Promise<void> {
+        // eslint-disable-next-line @typescript-eslint/ban-types
         return new Promise((resolve: Function) => (this.connectedPromise = resolve));
     }
 

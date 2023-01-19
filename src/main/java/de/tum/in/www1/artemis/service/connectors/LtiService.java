@@ -5,10 +5,13 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -27,7 +30,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.security.jwt.TokenProvider;
+import de.tum.in.www1.artemis.security.jwt.JWTCookieService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 
 @Service
@@ -45,14 +48,14 @@ public class LtiService {
 
     private final ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
-    private final TokenProvider tokenProvider;
+    private final JWTCookieService jwtCookieService;
 
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, ArtemisAuthenticationProvider artemisAuthenticationProvider,
-            TokenProvider tokenProvider) {
+            JWTCookieService jwtCookieService) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
-        this.tokenProvider = tokenProvider;
+        this.jwtCookieService = jwtCookieService;
     }
 
     /**
@@ -158,21 +161,24 @@ public class LtiService {
     }
 
     /**
-     * Adds the necessary query params for an LTI launch.
+     * Build the response for the LTI launch to include the necessary query params and the JWT cookie.
      *
      * @param uriComponentsBuilder the uri builder to add the query params to
+     * @param response the response to add the JWT cookie to
      */
-    public void addLtiQueryParams(UriComponentsBuilder uriComponentsBuilder) {
+    public void buildLtiResponse(UriComponentsBuilder uriComponentsBuilder, HttpServletResponse response) {
         User user = userRepository.getUser();
 
         if (!user.getActivated()) {
+            ResponseCookie responseCookie = jwtCookieService.buildLoginCookie(true);
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
             uriComponentsBuilder.queryParam("initialize", "");
-            String jwt = tokenProvider.createToken(SecurityContextHolder.getContext().getAuthentication(), true);
-            log.debug("created jwt token: {}", jwt);
-            uriComponentsBuilder.queryParam("jwt", jwt);
         }
         else {
-            uriComponentsBuilder.queryParam("jwt", "");
+            ResponseCookie responseCookie = jwtCookieService.buildLogoutCookie();
+            response.addHeader(HttpHeaders.SET_COOKIE, responseCookie.toString());
+
             uriComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
         }
     }

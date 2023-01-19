@@ -8,8 +8,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { getElement } from '../../../helpers/utils/general.utils';
-import { NgbPaginationModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -41,6 +40,8 @@ import {
     metisLecturePosts,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
+import { VirtualScrollComponent } from 'app/shared/virtual-scroll/virtual-scroll.component';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CourseDiscussionComponent', () => {
     let component: CourseDiscussionComponent;
@@ -62,14 +63,14 @@ describe('CourseDiscussionComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbPaginationModule)],
+            imports: [HttpClientTestingModule, MockModule(FormsModule), MockModule(ReactiveFormsModule), MockModule(NgbTooltipModule)],
             declarations: [
                 CourseDiscussionComponent,
+                MockComponent(VirtualScrollComponent),
                 MockComponent(PostingThreadComponent),
                 MockComponent(PostCreateEditModalComponent),
                 MockComponent(FaIconComponent),
                 MockPipe(ArtemisTranslatePipe),
-                MockDirective(NgbTooltip),
                 MockComponent(ButtonComponent),
                 MockComponent(ItemCountComponent),
             ],
@@ -372,17 +373,14 @@ describe('CourseDiscussionComponent', () => {
         );
     }));
 
-    it('should call fetchNextPage at course discussions when scrolled to bottom and do nothing when scrolled to top', fakeAsync(() => {
-        component.itemsPerPage = 5;
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
+    it('should call fetchNextPage when virtual scroller component renders last part of fetched posts', fakeAsync(() => {
+        prepareComponent();
 
-        const scrollableDiv = getElement(fixture.debugElement, 'div[id=scrollableDiv]');
-        scrollableDiv.dispatchEvent(new Event('scrolledUp'));
-        expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
+        const onEndOfOriginalItemsReachedEvent = new CustomEvent('onEndOfOriginalItemsReached');
 
-        scrollableDiv.dispatchEvent(new Event('scrolled'));
+        const scrollableDiv = getElement(fixture.debugElement, 'jhi-virtual-scroll');
+        scrollableDiv.dispatchEvent(onEndOfOriginalItemsReachedEvent);
+
         expect(fetchNextPageSpy).toHaveBeenCalledOnce();
     }));
 
@@ -421,4 +419,11 @@ describe('CourseDiscussionComponent', () => {
             expect(result).toBeFalse();
         });
     });
+
+    function prepareComponent() {
+        component.itemsPerPage = 5;
+        component.ngOnInit();
+        tick();
+        fixture.detectChanges();
+    }
 });

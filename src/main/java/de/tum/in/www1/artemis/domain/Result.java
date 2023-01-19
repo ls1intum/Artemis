@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
 @EntityListeners({ AuditingEntityListener.class, ResultListener.class })
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class Result extends DomainObject {
+public class Result extends DomainObject implements Comparable<Result> {
 
     @Column(name = "completion_date")
     @JsonView(QuizView.Before.class)
@@ -65,14 +65,6 @@ public class Result extends DomainObject {
     @Column(name = "rated")
     @JsonView(QuizView.Before.class)
     private Boolean rated;
-
-    // This explicit flag exists intentionally, as sometimes a Result is loaded from the database without
-    // loading its Feedback list. In this case you still want to know if Feedback for this Result exists
-    // without querying the server/database again.
-    // IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the moment
-    // all other exercise types should set this flag to false
-    @Column(name = "has_feedback")
-    private Boolean hasFeedback;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JsonView(QuizView.Before.class)
@@ -164,41 +156,6 @@ public class Result extends DomainObject {
 
     public Instant getLastModifiedDate() {
         return lastModifiedDate;
-    }
-
-    /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
-     * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
-     * moment all other exercise types should set this flag to false
-     *
-     * @param hasFeedback explicit flag used only by Programming Exercise
-     */
-    public void setHasFeedback(Boolean hasFeedback) {
-        this.hasFeedback = hasFeedback;
-    }
-
-    /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
-     * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
-     * moment all other exercise types should set this flag to false
-     *
-     * @return true if the result has feedback, otherwise false
-     */
-    public Boolean getHasFeedback() {
-        return hasFeedback;
-    }
-
-    /**
-     * This explicit flag exists intentionally, as sometimes a Result is loaded from the database without loading its Feedback list. In this case you still want to know, if
-     * Feedback for this Result exists without querying the server/database again. IMPORTANT: Please note, that this flag should only be used for Programming Exercises at the
-     * moment all other exercise types should set this flag to false
-     *
-     * @param hasFeedback explicit flag used only by Programming Exercise
-     * @return result with newly set hasFeedback property
-     */
-    public Result hasFeedback(Boolean hasFeedback) {
-        this.hasFeedback = hasFeedback;
-        return this;
     }
 
     /**
@@ -503,7 +460,7 @@ public class Result extends DomainObject {
     /**
      * Removes the assessor from the result, can be invoked to make sure that sensitive information is not sent to the client. E.g. students should not see information about
      * their assessor.
-     *
+     * <p>
      * Does not filter feedbacks.
      */
     public void filterSensitiveInformation() {
@@ -520,6 +477,7 @@ public class Result extends DomainObject {
         if (isBeforeDueDate) {
             feedbacks.removeIf(Feedback::isAfterDueDate);
         }
+        // TODO: this is not good code!
         setTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).count());
         setPassedTestCaseCount((int) feedbacks.stream().filter(Feedback::isTestFeedback).filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
     }
@@ -546,9 +504,9 @@ public class Result extends DomainObject {
 
     @Override
     public String toString() {
-        return "Result{" + "id" + getId() + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score + ", rated=" + rated + ", hasFeedback="
-                + hasFeedback + ", assessmentType=" + assessmentType + ", hasComplaint=" + hasComplaint + ", testCaseCount=" + testCaseCount + ", passedTestCaseCount="
-                + passedTestCaseCount + ", codeIssueCount=" + codeIssueCount + '}';
+        return "Result{" + "id" + getId() + ", completionDate=" + completionDate + ", successful=" + successful + ", score=" + score + ", rated=" + rated + ", assessmentType="
+                + assessmentType + ", hasComplaint=" + hasComplaint + ", testCaseCount=" + testCaseCount + ", passedTestCaseCount=" + passedTestCaseCount + ", codeIssueCount="
+                + codeIssueCount + '}';
     }
 
     /**
@@ -615,5 +573,15 @@ public class Result extends DomainObject {
         setTestCaseCount(originalResult.getTestCaseCount());
         setPassedTestCaseCount(originalResult.getPassedTestCaseCount());
         setCodeIssueCount(originalResult.getCodeIssueCount());
+    }
+
+    @Override
+    public int compareTo(Result other) {
+        if (getCompletionDate() == null || other.getCompletionDate() == null || Objects.equals(getCompletionDate(), other.getCompletionDate())) {
+            // this case should not happen, but in the rare case we can compare the ids (in tests, the submission dates might be identical as ms are not stored in the database)
+            // newer ids are typically later
+            return getId().compareTo(other.getId());
+        }
+        return getCompletionDate().compareTo(other.getCompletionDate());
     }
 }

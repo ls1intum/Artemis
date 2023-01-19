@@ -6,8 +6,8 @@
 @import 'node_modules/bootstrap/scss/bootstrap';
 @import 'node_modules/@danielmoncada/angular-datetime-picker/assets/style/picker.min';
 // Needed for mathematical formulas in markdown editor
-@import '~katex/dist/katex.css';
-@import '~@flaviosantoro92/ngx-datatable/themes/bootstrap.css';
+@import 'node_modules/katex/dist/katex.min.css';
+@import 'node_modules/@flaviosantoro92/ngx-datatable/themes/bootstrap';
 // Needed for emojis in metis reactions
 @import 'node_modules/@ctrl/ngx-emoji-mart/picker';
 
@@ -25,7 +25,7 @@ h1,
 h2,
 h3,
 h4 {
-    font-weight: 300;
+    font-weight: 400;
 }
 
 /* like fw-bold or fw-normal, but with weight 500 */
@@ -37,7 +37,6 @@ h4 {
 a,
 a:not(.btn):not(.dropdown-item):not(.page-link):not(.nav-link):hover {
     color: $link-color;
-    font-weight: bold;
     /* make sure browsers use the pointer cursor for anchors, even with no href */
     cursor: pointer;
 }
@@ -101,35 +100,6 @@ a.btn {
     color: $default-btn-font;
     background-color: $default-btn-background;
     border-color: $default-btn-border;
-}
-
-.footer {
-    &.fixed {
-        position: absolute;
-        left: 15px;
-        right: 15px;
-        bottom: 0;
-        background-color: $footer-bg;
-        padding: 5px 0;
-    }
-
-    .footer-text {
-        font-weight: normal;
-        font-size: small;
-
-        &:hover {
-            font-weight: normal;
-        }
-    }
-}
-
-// make sure to align with the bootstrap rule here
-// workaround for unsupported justify-content-evenly by bootstrap
-@media (max-width: 576px) {
-    .footer::before,
-    .footer::after {
-        content: '';
-    }
 }
 
 .popover {
@@ -295,11 +265,10 @@ Generic styles
 }
 
 .page-wrapper {
-    @media (min-width: 768px) {
-        padding-bottom: 46px;
-        min-height: 100vh;
-        position: relative;
-    }
+    //Space reserved at bottom for footer
+    padding-bottom: 5rem;
+    min-height: 100vh;
+    position: relative;
 }
 
 .main-container {
@@ -452,7 +421,7 @@ ui bootstrap tweaks
         max-width: 100%;
     }
 
-    padding: 1.25rem 1.25rem;
+    padding: 1rem 1rem;
 }
 
 .header-container {
@@ -515,6 +484,10 @@ span.score {
 
 span.bold {
     font-weight: bold;
+}
+
+bold {
+    font-weight: 500;
 }
 
 .negative,
@@ -721,8 +694,8 @@ Course Info Bar
 ========================================================================== */
 .course-info-bar {
     background-color: $artemis-dark;
-    padding: 1em 1em;
-    margin: -1.25rem -1.25rem 0 -1.25rem;
+    padding: 1rem 1rem;
+    margin: -1rem -1rem 0 -1rem;
     display: flex;
     color: $white;
     flex-direction: column;
@@ -745,7 +718,7 @@ Course Info Bar
     }
 
     blockquote {
-        padding: 0 1em;
+        padding: 0 1rem;
         color: $markdown-preview-blockquote;
         border-left: 0.25em solid $markdown-preview-blockquote-border;
     }
@@ -767,6 +740,13 @@ Course Info Bar
 
     > div {
         margin: auto !important;
+    }
+}
+
+.git-info {
+    --bs-tooltip-max-width: 500px;
+    .tooltip-inner {
+        text-align: left;
     }
 }
 
@@ -953,7 +933,7 @@ Course Info Bar
 }
 
 .mat-form-field-outline {
-    top: -0.1em !important;
+    top: -0.1rem !important;
     color: $mat-form-field-outline;
 }
 

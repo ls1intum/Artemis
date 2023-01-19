@@ -25,17 +25,18 @@ import { CypressCredentials } from './users';
 // -- This will overwrite an existing command --
 // Cypress.Commands.overwrite('visit', (originalFn, url, options) => { ... })
 
-import { BASE_API, POST, authTokenKey } from './constants';
+import { BASE_API, POST } from './constants';
 
 export {};
 
 declare global {
+    // eslint-disable-next-line @typescript-eslint/no-namespace
     namespace Cypress {
         interface Chainable {
             login(credentials: CypressCredentials, url?: string): any;
             logout(): any;
             loginWithGUI(credentials: CypressCredentials): any;
-            getSettled(selector: string, options?: {}): Chainable<unknown>;
+            getSettled(selector: string, options?: any): Chainable<unknown>;
             reloadUntilFound(selector: string, interval?: number, timeout?: number): Chainable<undefined>;
             formRequest(url: string, method: string, formData: FormData): Chainable<any>;
         }
@@ -43,25 +44,7 @@ declare global {
 }
 
 /**
- * Overwrite the normal cypress request to always add the authorization token.
- */
-Cypress.Commands.overwrite('request', (originalFn, options) => {
-    const token = localStorage.getItem(authTokenKey)?.replace(/"/g, '');
-    if (!!token) {
-        const authHeader = 'Bearer ' + token;
-        if (!!options.headers) {
-            options.headers.Authorization = authHeader;
-        } else {
-            options.headers = { Authorization: authHeader };
-        }
-        return originalFn(options);
-    }
-
-    return originalFn(options);
-});
-
-/**
- * Logs in using API and sets authToken in Cypress.env
+ * Logs in using API
  * */
 Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
     const username = credentials.username;
@@ -82,7 +65,6 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
         failOnStatusCode: false,
     }).then((response) => {
         expect(response.status).to.equal(200);
-        localStorage.setItem(authTokenKey, '"' + response.body.id_token + '"');
         if (url) {
             cy.visit(url);
         }
@@ -92,7 +74,7 @@ Cypress.Commands.add('login', (credentials: CypressCredentials, url) => {
 /** recursively gets an element, returning only after it's determined to be attached to the DOM for good
  *  this prevents the "Element is detached from DOM" issue in some cases
  */
-Cypress.Commands.add('getSettled', (selector, opts = {}) => {
+Cypress.Commands.add('getSettled', (selector: any, opts: { retries?: number; delay?: number } = {}) => {
     const retries = opts.retries || 3;
     const delay = opts.delay || 100;
 
@@ -149,8 +131,8 @@ Cypress.Commands.add('formRequest', (url: string, method: string, formData: Form
         .then((win) => {
             const xhr = new win.XMLHttpRequest();
             xhr.open(method, url);
-            const token = localStorage.getItem(authTokenKey)?.replace(/"/g, '');
-            if (!!token) {
+            const token = localStorage.getItem('authTokenKey')?.replace(/"/g, '');
+            if (token) {
                 const authHeader = 'Bearer ' + token;
                 xhr.setRequestHeader('Authorization', authHeader);
             }

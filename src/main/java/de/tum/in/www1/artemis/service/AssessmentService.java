@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -64,9 +63,7 @@ public class AssessmentService {
     }
 
     /**
-     * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about. Note, that it
-     * updates the score and the feedback of the original Result, but NOT the assessor. The user that is responsible for the update can be found in the 'reviewer' field of the
-     * complaint. The original Result gets stored in the 'resultBeforeComplaint' field of the ComplaintResponse for future lookup.
+     * Handles an assessment update after a complaint. It first saves the corresponding complaint response and then updates the Result that was complaint about.
      *
      * @param originalResult   the original assessment that was complained about
      * @param exercise         the exercise to which the result belongs
@@ -90,7 +87,6 @@ public class AssessmentService {
         if (exercise instanceof ProgrammingExercise programmingExercise) {
             newResult.calculateScoreForProgrammingExercise(programmingExercise);
             newResult.setCompletionDate(ZonedDateTime.now());
-            newResult.setHasFeedback(true);
             newResult.setRated(true);
             newResult.copyProgrammingExerciseCounters(originalResult);
 
@@ -159,7 +155,6 @@ public class AssessmentService {
      *
      * @param submission the submission for which the current assessment should be canceled
      */
-    @Transactional // NOTE: As we use delete methods with underscores, we need a transactional context here!
     public void cancelAssessmentOfSubmission(Submission submission) {
         StudentParticipation participation = studentParticipationRepository.findWithEagerResultsById(submission.getParticipation().getId())
                 .orElseThrow(() -> new BadRequestAlertException("Participation could not be found", "participation", "notfound"));
@@ -169,7 +164,6 @@ public class AssessmentService {
         // We only want to be able to cancel a result if it is not of the AUTOMATIC AssessmentType
         if (result != null && result.getAssessmentType() != null && result.getAssessmentType() != AssessmentType.AUTOMATIC) {
             participation.removeResult(result);
-            feedbackRepository.deleteByResult_Id(result.getId());
             resultService.deleteResult(result, true);
         }
     }
@@ -211,7 +205,7 @@ public class AssessmentService {
     /**
      * This function is used for submitting a manual assessment/result. It gets the result that belongs to the given resultId, updates the completion date, sets the assessment type
      * to MANUAL and sets the assessor attribute. Afterwards, it saves the update result in the database again.
-     *
+     * <p>
      * For programming exercises we use a different approach see {@link ResultRepository#submitManualAssessment(long)})}
      *
      * @param resultId the id of the result that should be submitted
@@ -233,7 +227,7 @@ public class AssessmentService {
     /**
      * This function is used for saving a manual assessment/result. It sets the assessment type to MANUAL and sets the assessor attribute. Furthermore, it saves the result in the
      * database. If a result with the given id exists, it will be overridden. if not, a new result will be created.
-     *
+     * <p>
      * For programming exercises we use a different approach see {@link ProgrammingAssessmentService#saveManualAssessment(Result)}
      *
      * @param submission the file upload submission to which the feedback belongs to
@@ -259,8 +253,6 @@ public class AssessmentService {
         result.setAssessor(user);
 
         result.updateAllFeedbackItems(feedbackList, false);
-        // Note: this boolean flag is only used for programming exercises
-        result.setHasFeedback(false);
         result.determineAssessmentType();
 
         if (result.getSubmission() == null) {
@@ -281,16 +273,14 @@ public class AssessmentService {
      * @param submission - the submission which the result belongs to
      * @param result     - the result that should get deleted
      */
-    @Transactional // NOTE: As we use delete methods with underscores, we need a transactional context here!
     public void deleteAssessment(Submission submission, Result result) {
 
         if (complaintRepository.findByResultId(result.getId()).isPresent()) {
             throw new BadRequestAlertException("Result has a complaint", "result", "hasComplaint");
         }
         submission.getResults().remove(result);
-        feedbackRepository.deleteByResult_Id(result.getId());
-        resultService.deleteResult(result, true);
-        // this keeps the result order intact
+        resultService.deleteResultReferences(result.getId(), true);
+        // this keeps the result order intact and automatically deletes the result
         submissionRepository.save(submission);
     }
 }

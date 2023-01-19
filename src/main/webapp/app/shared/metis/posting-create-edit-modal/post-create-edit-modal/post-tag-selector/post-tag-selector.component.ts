@@ -67,27 +67,35 @@ export class PostTagSelectorComponent implements OnInit, OnChanges, OnDestroy, A
     }
 
     /**
-     * set color if not selected and add exerciseCategory
-     * @param event a new category was added
+     * Called when the user selects a tag
+     * @param event a new tag was added
      */
     onItemAdd(event: MatChipInputEvent) {
-        if (this.tags) {
-            this.tags.push(event.value);
-        } else {
-            this.tags = [event.value];
+        const tagString = (event.value || '').trim();
+        // also test for duplicated tag
+        if (tagString && !this.tags?.includes(tagString) && this.tags?.length < 3) {
+            if (!this.tags) {
+                this.tags = [];
+            }
+            this.tags.push(tagString);
+            this.postTagsChange.emit(this.tags);
         }
 
         // Clear the input value
         event.chipInput!.clear();
         this.tagCtrl.setValue(null);
-        this.postTagsChange.emit(this.tags);
     }
 
     onItemSelect(event: MatAutocompleteSelectedEvent): void {
-        this.tags.push(event.option.viewValue);
+        if (!this.tags?.includes(event.option.viewValue) && this.tags?.length < 3) {
+            if (!this.tags) {
+                this.tags = [];
+            }
+            this.tags.push(event.option.viewValue);
+            this.postTagsChange.emit(this.tags);
+        }
         this.tagInput.nativeElement.value = '';
         this.tagCtrl.setValue(null);
-        this.postTagsChange.emit(this.tags);
     }
 
     /**

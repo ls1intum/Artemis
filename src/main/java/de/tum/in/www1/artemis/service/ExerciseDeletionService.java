@@ -124,21 +124,12 @@ public class ExerciseDeletionService {
         var exercise = exerciseRepository.findByIdWithLearningGoalsElseThrow(exerciseId);
 
         log.debug("Checking if exercise {} is modeling exercise", exercise.getId());
-        if (exercise instanceof ModelingExercise) {
+        if (exercise instanceof ModelingExercise modelingExercise) {
             log.info("Deleting clusters, elements and cancel scheduled operations of exercise {}", exercise.getId());
 
-            modelingExerciseService.deleteClustersAndElements((ModelingExercise) exercise);
+            modelingExerciseService.deleteClustersAndElements(modelingExercise);
             modelingExerciseService.cancelScheduledOperations(exerciseId);
         }
-
-        // Remove the connection to learning goals
-        var updatedLearningGoals = new HashSet<LearningGoal>();
-        for (LearningGoal learningGoal : exercise.getLearningGoals()) {
-            learningGoal = learningGoalRepository.findByIdWithExercisesElseThrow(learningGoal.getId());
-            learningGoal.removeExercise(exercise);
-            updatedLearningGoals.add(learningGoal);
-        }
-        learningGoalRepository.saveAll(updatedLearningGoals);
 
         // delete all exercise units linking to the exercise
         List<ExerciseUnit> exerciseUnits = this.exerciseUnitRepository.findByIdWithLearningGoalsBidirectional(exerciseId);
@@ -173,7 +164,6 @@ public class ExerciseDeletionService {
 
         // Programming exercises have some special stuff that needs to be cleaned up (solution/template participation, build plans, etc.).
         if (exercise instanceof ProgrammingExercise) {
-            // TODO: delete all schedules related to this programming exercise
             programmingExerciseService.delete(exercise.getId(), deleteBaseReposBuildPlans);
         }
         else {
@@ -203,7 +193,7 @@ public class ExerciseDeletionService {
                     modelAssessmentKnowledgeService.deleteKnowledgeIfUnused(knowledgeId);
                 }
             }
-            exerciseRepository.delete(exercise);
+            exerciseRepository.deleteById(exercise.getId());
         }
     }
 

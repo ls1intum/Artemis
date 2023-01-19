@@ -6,12 +6,10 @@ import java.util.Objects;
 import java.util.Optional;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
-import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -34,9 +32,11 @@ public class ExampleSubmissionService {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
+    private final TutorParticipationRepository tutorParticipationRepository;
+
     public ExampleSubmissionService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ExerciseRepository exerciseRepository,
             TextExerciseImportService textExerciseImportService, ModelingExerciseImportService modelingExerciseImportService, TextSubmissionRepository textSubmissionRepository,
-            GradingCriterionRepository gradingCriterionRepository) {
+            GradingCriterionRepository gradingCriterionRepository, TutorParticipationRepository tutorParticipationRepository) {
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.submissionRepository = submissionRepository;
         this.exerciseRepository = exerciseRepository;
@@ -44,6 +44,7 @@ public class ExampleSubmissionService {
         this.textExerciseImportService = textExerciseImportService;
         this.textSubmissionRepository = textSubmissionRepository;
         this.gradingCriterionRepository = gradingCriterionRepository;
+        this.tutorParticipationRepository = tutorParticipationRepository;
     }
 
     /**
@@ -69,22 +70,23 @@ public class ExampleSubmissionService {
      * Deletes a ExampleSubmission with the given ID, cleans up the tutor participations, removes the result and the submission
      * @param exampleSubmissionId the ID of the ExampleSubmission which should be deleted
      */
-    @Transactional // ok because of delete
     public void deleteById(long exampleSubmissionId) {
         Optional<ExampleSubmission> optionalExampleSubmission = exampleSubmissionRepository.findByIdWithResultsAndTutorParticipations(exampleSubmissionId);
 
         if (optionalExampleSubmission.isPresent()) {
             ExampleSubmission exampleSubmission = optionalExampleSubmission.get();
 
-            for (TutorParticipation tutorParticipation : exampleSubmission.getTutorParticipations()) {
-                tutorParticipation.getTrainedExampleSubmissions().remove(exampleSubmission);
-            }
+            tutorParticipationRepository.deleteAll(exampleSubmission.getTutorParticipations());
+            exampleSubmission.setTutorParticipations(null);
 
             Long exerciseId = exampleSubmission.getExercise().getId();
-            Optional<Exercise> exerciseWithExampleSubmission = exerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId);
+            Optional<Exercise> optionalExercise = exerciseRepository.findByIdWithEagerExampleSubmissions(exerciseId);
 
             // Remove the reference to the exercise when the example submission is deleted
-            exerciseWithExampleSubmission.ifPresent(exercise -> exercise.removeExampleSubmission(exampleSubmission));
+            optionalExercise.ifPresent(exercise -> {
+                exercise.removeExampleSubmission(exampleSubmission);
+                exerciseRepository.save(exercise);
+            });
 
             // due to Cascade.Remove this will also remove the submission and the result(s) in case they exist
             exampleSubmissionRepository.delete(exampleSubmission);

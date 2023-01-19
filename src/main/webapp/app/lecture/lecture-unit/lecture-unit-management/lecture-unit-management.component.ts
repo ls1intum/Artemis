@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { Lecture } from 'app/entities/lecture.model';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -21,7 +21,15 @@ import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
     styleUrls: ['./lecture-unit-management.component.scss'],
 })
 export class LectureUnitManagementComponent implements OnInit, OnDestroy {
-    lectureId: number;
+    @Input() showCreationCard = true;
+    @Input() showLearningGoals = true;
+    @Input() emitEditEvents = false;
+
+    @Input() lectureId: number | undefined;
+
+    @Output()
+    onEditLectureUnitClicked: EventEmitter<LectureUnit> = new EventEmitter<LectureUnit>();
+
     lectureUnits: LectureUnit[] = [];
     lecture: Lecture;
     isLoading = false;
@@ -59,7 +67,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
 
         this.updateOrderSubject = new Subject();
         this.activatedRoute.parent!.params.subscribe((params) => {
-            this.lectureId = +params['lectureId'];
+            this.lectureId ??= +params['lectureId'];
             if (this.lectureId) {
                 // TODO: the lecture (without units) is already available through the lecture.route.ts resolver, it's not really good that we load it twice
                 this.loadData();
@@ -77,7 +85,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
         // TODO: we actually would like to have the lecture with all units! Posts and learning goals are not required here
         // we could also simply load all units for the lecture (as the lecture is already available through the route, see TODO above)
         this.lectureService
-            .findWithDetails(this.lectureId)
+            .findWithDetails(this.lectureId!)
             .pipe(
                 map((response: HttpResponse<Lecture>) => response.body!),
                 finalize(() => {
@@ -98,8 +106,12 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     updateOrder() {
+        if (this.lectureId === undefined || isNaN(this.lectureId)) {
+            return;
+        }
+
         this.lectureUnitService
-            .updateOrder(this.lectureId, this.lectureUnits)
+            .updateOrder(this.lectureId!, this.lectureUnits)
             .pipe(map((response: HttpResponse<LectureUnit[]>) => response.body!))
             .subscribe({
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
@@ -125,6 +137,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return 'artemisApp.videoUnit.delete.question';
             case LectureUnitType.TEXT:
                 return 'artemisApp.textUnit.delete.question';
+            case LectureUnitType.ONLINE:
+                return 'artemisApp.onlineUnit.delete.question';
             default:
                 return '';
         }
@@ -140,6 +154,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return 'artemisApp.videoUnit.delete.typeNameToConfirm';
             case LectureUnitType.TEXT:
                 return 'artemisApp.textUnit.delete.typeNameToConfirm';
+            case LectureUnitType.ONLINE:
+                return 'artemisApp.onlineUnit.delete.typeNameToConfirm';
             default:
                 return '';
         }
@@ -154,7 +170,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     }
 
     deleteLectureUnit(lectureUnitId: number) {
-        this.lectureUnitService.delete(lectureUnitId, this.lectureId).subscribe({
+        this.lectureUnitService.delete(lectureUnitId, this.lectureId!).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.loadData();
@@ -173,6 +189,15 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             default:
                 return false;
         }
+    }
+
+    onEditButtonClicked(lectureUnit: LectureUnit) {
+        if (!this.emitEditEvents) {
+            this.router.navigate(this.editButtonRouterLink(lectureUnit)!, { relativeTo: this.activatedRoute });
+            return;
+        }
+
+        this.onEditLectureUnitClicked.emit(lectureUnit);
     }
 
     editButtonRouterLink(lectureUnit: LectureUnit) {

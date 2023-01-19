@@ -1,10 +1,10 @@
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { Subject, of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SortService } from 'app/shared/service/sort.service';
-import { NgbActiveModal, NgbPagination } from '@ng-bootstrap/ng-bootstrap';
+import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { FormsModule } from '@angular/forms';
 import { SortDirective } from 'app/shared/sort/sort.directive';
@@ -18,10 +18,10 @@ import { ModelingExercise, UMLDiagramType } from 'app/entities/modeling-exercise
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
-import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { ButtonComponent } from 'app/shared/components/button.component';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { DifficultyBadgeComponent } from 'app/exercises/shared/exercise-headers/difficulty-badge.component';
+import { NgbPaginationMocksModule } from '../../../helpers/mocks/directive/ngbPaginationMocks.module';
 
 describe('Exam Import Component', () => {
     let component: ExamImportComponent;
@@ -44,15 +44,13 @@ describe('Exam Import Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(FormsModule)],
+            imports: [ArtemisTestModule, FormsModule, NgbPaginationMocksModule],
             declarations: [
                 ExamImportComponent,
                 ExamExerciseImportComponent,
-                MockComponent(NgbPagination),
                 MockPipe(ArtemisTranslatePipe),
                 MockDirective(SortByDirective),
                 MockDirective(SortDirective),
-                MockComponent(FaIconComponent),
                 MockComponent(ButtonComponent),
                 MockComponent(HelpIconComponent),
                 MockComponent(DifficultyBadgeComponent),

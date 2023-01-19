@@ -1,24 +1,26 @@
 import dayjs from 'dayjs/esm';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { AbstractControl, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { map } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
 import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/onlineUnit.service';
+import { LearningGoal } from 'app/entities/learningGoal.model';
 
 export interface OnlineUnitFormData {
     name?: string;
     description?: string;
     releaseDate?: dayjs.Dayjs;
     source?: string;
+    learningGoals?: LearningGoal[];
 }
 
 function urlValidator(control: AbstractControl) {
     let validUrl = true;
 
     try {
-        // tslint:disable-next-line:no-unused-expression-chai
+        // eslint-disable-next-line
         new URL(control.value);
     } catch {
         validUrl = false;
@@ -40,6 +42,13 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
     @Output()
     formSubmitted: EventEmitter<OnlineUnitFormData> = new EventEmitter<OnlineUnitFormData>();
     form: FormGroup;
+
+    @Input()
+    hasCancelButton: boolean;
+    @Output()
+    onCancel: EventEmitter<any> = new EventEmitter<any>();
+
+    faTimes = faTimes;
 
     urlValidator = urlValidator;
 
@@ -84,6 +93,7 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
             description: [undefined, [Validators.maxLength(1000)]],
             releaseDate: [undefined],
             source: [undefined, [Validators.required, this.urlValidator]],
+            learningGoals: [undefined as LearningGoal[] | undefined],
         });
     }
 
@@ -126,5 +136,9 @@ export class OnlineUnitFormComponent implements OnInit, OnChanges {
 
     get isSubmitPossible() {
         return !this.form.invalid;
+    }
+
+    cancelForm() {
+        this.onCancel.emit();
     }
 }

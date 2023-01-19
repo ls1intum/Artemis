@@ -71,7 +71,6 @@ public class CompassService {
         modelElementRepository.saveAll(modelClusters.stream().flatMap(modelCluster -> modelCluster.getModelElements().stream()).toList());
         log.info("ModelClusterTimeLog: building and saving clusters of {} submissions for exercise {} done in {}", submissions.size(), modelingExercise.getId(),
                 TimeLogUtil.formatDurationFrom(start));
-
     }
 
     /**
@@ -95,6 +94,7 @@ public class CompassService {
                 return null;
             }
 
+            // Note: this code assumes that the model element id is globally unique
             List<ModelElement> modelElements = modelElementRepository.findByModelElementIdIn(elements.stream().map(UMLElement::getJSONElementID).toList());
             List<Long> clusterIds = modelElements.stream().map(ModelElement::getCluster).map(ModelCluster::getId).toList();
             List<ModelCluster> modelClusters = modelClusterRepository.findAllByIdInWithEagerElements(clusterIds);
@@ -118,7 +118,6 @@ public class CompassService {
             }
             result.getFeedbacks().clear(); // Note, that a result is always initialized with an empty list -> no NPE here
             result.getFeedbacks().addAll(feedbacksForSuggestion);
-            result.setHasFeedback(false);
             result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         }
         return result;

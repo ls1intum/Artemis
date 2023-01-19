@@ -13,7 +13,9 @@ import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
 
-import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
+import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.metis.Post;
@@ -43,7 +45,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
         @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
         @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Exercise extends BaseExercise implements Completable {
+public abstract class Exercise extends BaseExercise implements LearningObject {
 
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
@@ -56,14 +58,15 @@ public abstract class Exercise extends BaseExercise implements Completable {
     private IncludedInOverallScore includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
 
     @Column(name = "problem_statement")
-    @Lob
     private String problemStatement;
 
     @Column(name = "grading_instructions")
-    @Lob
     private String gradingInstructions;
 
-    @ManyToMany(mappedBy = "exercises")
+    @ManyToMany
+    @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"))
+    @JsonIgnoreProperties({ "exercises", "course" })
+    @JsonView(QuizView.Before.class)
     private Set<LearningGoal> learningGoals = new HashSet<>();
 
     @ElementCollection(fetch = FetchType.LAZY)
@@ -467,7 +470,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      * @return the latest relevant result in the given participation, or null, if none exist
      */
     @Nullable
-    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, Boolean ignoreAssessmentDueDate) {
+    public Submission findLatestSubmissionWithRatedResultWithCompletionDate(Participation participation, boolean ignoreAssessmentDueDate) {
         // for most types of exercises => return latest result (all results are relevant)
         Submission latestSubmission = null;
         // we get the results over the submissions
@@ -676,14 +679,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      * @return boolean
      */
     public boolean isReleased() {
-        // Exam
-        ZonedDateTime releaseDate;
-        if (this.isExamExercise()) {
-            releaseDate = getExerciseGroup().getExam().getStartDate();
-        }
-        else {
-            releaseDate = getReleaseDate();
-        }
+        ZonedDateTime releaseDate = getParticipationStartDate();
         return releaseDate == null || releaseDate.isBefore(ZonedDateTime.now());
     }
 
@@ -785,19 +781,19 @@ public abstract class Exercise extends BaseExercise implements Completable {
     }
 
     /**
-     * Return the individual release date for the exercise of the participation's user
+     * Return the date from when students can participate in the exercise
      * <p>
      * Currently, exercise start dates are the same for all users
      *
-     * @return the time from which on access to the exercise is allowed, for exercises that are not part of an exam, this is just the release date.
+     * @return the time from which on access to the participation is allowed, for exercises that are not part of an exam, this is just the release date or start date.
      */
     @JsonIgnore
-    public ZonedDateTime getIndividualReleaseDate() {
+    public ZonedDateTime getParticipationStartDate() {
         if (isExamExercise()) {
             return getExerciseGroup().getExam().getStartDate();
         }
         else {
-            return getReleaseDate();
+            return getStartDate() != null ? getStartDate() : getReleaseDate();
         }
     }
 
@@ -861,13 +857,24 @@ public abstract class Exercise extends BaseExercise implements Completable {
     }
 
     /**
+     * Checks whether students should be able to see the example solution.
+     *
+     * @return true if example solution publication date is in the past, false otherwise (including null case).
+     */
+    public boolean isExampleSolutionPublished() {
+        ZonedDateTime exampleSolutionPublicationDate = this.isExamExercise() ? this.getExamViaExerciseGroupOrCourseMember().getExampleSolutionPublicationDate()
+                : this.getExampleSolutionPublicationDate();
+        return exampleSolutionPublicationDate != null && ZonedDateTime.now().isAfter(exampleSolutionPublicationDate);
+    }
+
+    /**
      * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
      *
      * @throws BadRequestAlertException if the dates are not valid
      */
     public void validateDates() {
         // All fields are optional, so there is no error if none of them is set
-        if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
+        if (getReleaseDate() == null && getStartDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
             return;
         }
         if (isExamExercise()) {
@@ -875,8 +882,15 @@ public abstract class Exercise extends BaseExercise implements Completable {
         }
 
         // at least one is set, so we have to check the three possible errors
-        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+        //@formatter:off
+        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate())
+                && isNotAfterAndNotNull(getReleaseDate(), getStartDate())
+                && isNotAfterAndNotNull(getStartDate(), getDueDate())
+                && isValidAssessmentDueDate(getStartDate(), getDueDate(), getAssessmentDueDate())
+                && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+                && isValidExampleSolutionPublicationDate(getStartDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore())
                 && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
+        //@formatter:on
 
         if (!areDatesValid) {
             throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
@@ -921,7 +935,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
      */
     public enum ExerciseSearchColumn {
 
-        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title");
+        ID("id"), TITLE("title"), PROGRAMMING_LANGUAGE("programmingLanguage"), COURSE_TITLE("course.title"), EXAM_TITLE("exerciseGroup.exam.title");
 
         private final String mappedColumnName;
 

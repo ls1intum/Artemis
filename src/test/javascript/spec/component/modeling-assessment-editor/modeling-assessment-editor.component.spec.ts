@@ -51,7 +51,7 @@ describe('ModelingAssessmentEditorComponent', () => {
     let complaintService: ComplaintService;
     let modelingSubmissionSpy: jest.SpyInstance;
     let complaintSpy: jest.SpyInstance;
-    let router: any;
+    let router: Router;
     let submissionService: SubmissionService;
     let exampleSubmissionService: ExampleSubmissionService;
 
@@ -80,7 +80,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 service = TestBed.inject(ModelingAssessmentService);
                 modelingSubmissionService = TestBed.inject(ModelingSubmissionService);
                 complaintService = TestBed.inject(ComplaintService);
-                router = TestBed.inject(Router);
                 submissionService = TestBed.inject(SubmissionService);
                 mockAuth = fixture.debugElement.injector.get(AccountService) as any as MockAccountService;
                 exampleSubmissionService = TestBed.inject(ExampleSubmissionService);
@@ -88,6 +87,7 @@ describe('ModelingAssessmentEditorComponent', () => {
                 mockAuth.identity();
                 fixture.detectChanges();
             });
+        router = TestBed.inject(Router);
     });
 
     afterEach(() => {
@@ -122,7 +122,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                         id: 2374,
                         score: 8,
                         rated: true,
-                        hasFeedback: true,
                         hasComplaint: true,
                         feedbacks: [
                             {
@@ -214,7 +213,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             id: 2374,
             score: 8,
             rated: true,
-            hasFeedback: true,
             hasComplaint: false,
         } as unknown as Result;
 
@@ -260,7 +258,6 @@ describe('ModelingAssessmentEditorComponent', () => {
                 id: 2374,
                 score: 8,
                 rated: true,
-                hasFeedback: true,
                 hasComplaint: false,
             } as unknown as Result,
         ];
@@ -309,7 +306,6 @@ describe('ModelingAssessmentEditorComponent', () => {
             id: 2374,
             score: 8,
             rated: true,
-            hasFeedback: true,
             hasComplaint: false,
             participation: {
                 type: ParticipationType.SOLUTION,
