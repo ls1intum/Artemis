@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, Output, ViewEncapsulation } from '@angular/core';
 import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-question.model';
-import { faCheck, faExclamationCircle, faExclamationTriangle, faPlus, faQuestionCircle, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faExclamationCircle, faExclamationTriangle, faPlus, faQuestionCircle, faTrash, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { faCheckSquare, faCircle, faDotCircle, faSquare } from '@fortawesome/free-regular-svg-icons';
 import { AnswerOption } from 'app/entities/quiz/answer-option.model';
 
@@ -30,12 +30,11 @@ export class MultipleChoiceVisualQuestionComponent {
     faExclamationTriangle = faExclamationTriangle;
     faExclamationCircle = faExclamationCircle;
     faSquare = faSquare;
-    faCheckSquare = faCheckSquare;
     faCheck = faCheck;
     faCircle = faCircle;
     faPlus = faPlus;
-    faDotCircle = faDotCircle;
     faTrash = faTrash;
+    faXmark = faXmark;
 
     constructor() {}
 

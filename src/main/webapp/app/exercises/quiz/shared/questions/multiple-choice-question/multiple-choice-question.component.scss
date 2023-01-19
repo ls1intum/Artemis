@@ -146,6 +146,17 @@
     border-radius: 2px;
 }
 
+.visual-answer-wrong-container {
+    background: #eb3223;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    width: 2.5%;
+    margin-right: 0.2rem;
+    border-radius: 2px;
+}
+
 .visual-answer-add-container {
     background: #508ac7;
     align-items: center;
@@ -182,12 +193,12 @@
     background: #90c48e;
 }
 
-.visual-answer-correct {
-    color: white;
+.visual-answer-wrong-container:hover {
+    background: #f3837a;
 }
 
-.visual-answer-wrong {
-    color: gray;
+.visual-answer {
+    color: white;
 }
 
 .visual-new-answer-title {

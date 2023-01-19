@@ -34,11 +34,11 @@
     <div *ngFor="let answerOption of question.answerOptions; let i = index" id="answer-option-{{ i }}" class="visual-answer-option form-group-narrow">
         <div class="form-group-narrow visual-answer-question-container">
             <div
-                class="visual-answer-correct-container"
-                [ngClass]="answerOption.isCorrect ? 'visual-answer-correct' : 'visual-answer-wrong'"
+                class="visual-answer"
+                [ngClass]="answerOption.isCorrect ? 'visual-answer-correct-container' : 'visual-answer-wrong-container'"
                 (click)="toggleIsCorrect(answerOption)"
             >
-                <fa-icon [icon]="faCheck"></fa-icon>
+                <fa-icon [icon]="answerOption.isCorrect ? faCheck : faXmark"></fa-icon>
             </div>
             <input
                 class="form-control"
@@ -80,8 +80,8 @@
     <h4 class="visual-new-answer-title">{{ 'artemisApp.multipleChoiceQuestion.visualEditor.newAnswerTitle' | artemisTranslate }}</h4>
     <div class="visual-answer-option form-group-narrow">
         <div class="form-group-narrow visual-answer-question-container">
-            <div class="visual-answer-correct-container" [ngClass]="newOption.isCorrect ? 'visual-answer-correct' : 'visual-answer-wrong'" (click)="toggleIsCorrect(newOption)">
-                <fa-icon [icon]="faCheck"></fa-icon>
+            <div class="visual-answer" [ngClass]="newOption.isCorrect ? 'visual-answer-correct-container' : 'visual-answer-wrong-container'" (click)="toggleIsCorrect(newOption)">
+                <fa-icon [icon]="newOption.isCorrect ? faCheck : faXmark"></fa-icon>
             </div>
             <input class="form-control" [(ngModel)]="newOption.text" placeholder="{{ 'artemisApp.multipleChoiceQuestion.visualEditor.textPlaceholder' | artemisTranslate }}" />
             <div [ngClass]="newOption.text ? 'visual-answer-add-container' : 'visual-answer-add-container-disabled'" (click)="addNewAnswer()">
