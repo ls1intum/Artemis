@@ -181,7 +181,7 @@ describe('CodeEditorStudentIntegration', () => {
         getFeedbackDetailsForResultSubject.next({ body: feedbacks });
 
         expect(getStudentParticipationWithLatestResultStub).toHaveBeenNthCalledWith(1, participation.id);
-        expect(getFeedbackDetailsForResultStub).toHaveBeenNthCalledWith(1, participation.id, result.id);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenNthCalledWith(1, participation.id, result);
         expect(container.loadingParticipation).toBeFalse();
         expect(container.participationCouldNotBeFetched).toBeFalse();
         expect(container.participation).toEqual({ ...participation, results: [{ ...result, feedbacks }] });
