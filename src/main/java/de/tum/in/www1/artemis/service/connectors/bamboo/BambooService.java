@@ -63,6 +63,9 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(BambooService.class);
 
+    @Value("${artemis.continuous-integration.url}")
+    protected URL serverUrl;
+
     @Value("${artemis.continuous-integration.empty-commit-necessary}")
     private Boolean isEmptyCommitNecessary;
 
@@ -79,9 +82,6 @@ public class BambooService extends AbstractContinuousIntegrationService {
     private final RestTemplate restTemplate;
 
     private final RestTemplate shortTimeoutRestTemplate;
-
-    // TODO: Test if this still works fine for "bamboo"
-    private final URL serverUrl = serverUrlOptional.orElse(null);
 
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,

@@ -47,6 +47,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(JenkinsService.class);
 
+    @Value("${artemis.continuous-integration.url}")
+    protected URL serverUrl;
+
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
 
@@ -59,8 +62,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     private final JenkinsInternalUrlService jenkinsInternalUrlService;
 
     private final RestTemplate shortTimeoutRestTemplate;
-
-    private final URL serverUrl = serverUrlOptional.orElse(null);
 
     public JenkinsService(JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
             RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,

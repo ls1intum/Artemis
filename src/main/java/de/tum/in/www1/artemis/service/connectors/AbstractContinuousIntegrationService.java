@@ -1,14 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -27,10 +24,6 @@ import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 public abstract class AbstractContinuousIntegrationService implements ContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(AbstractContinuousIntegrationService.class);
-
-    // Optional as it is not needed for local CI.
-    @Value("${artemis.continuous-integration.url}")
-    protected Optional<URL> serverUrlOptional;
 
     protected final ProgrammingSubmissionRepository programmingSubmissionRepository;
 
