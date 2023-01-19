@@ -19,6 +19,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { ArtemisTestModule } from '../../test.module';
 import { NgbCollapseMocksModule } from '../../helpers/mocks/directive/ngbCollapseMocks.module';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { MultipleChoiceVisualQuestionComponent } from 'app/exercises/quiz/shared/questions/multiple-choice-question/multiple-choice-visual-question.component';
 
 describe('MultipleChoiceQuestionEditComponent', () => {
     let fixture: ComponentFixture<MultipleChoiceQuestionEditComponent>;
@@ -46,6 +47,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
                 MockComponent(SecuredImageComponent),
                 MockComponent(DragAndDropQuestionComponent),
                 MockComponent(MultipleChoiceQuestionComponent),
+                MockComponent(MultipleChoiceVisualQuestionComponent),
             ],
         }).compileComponents();
         fixture = TestBed.createComponent(MultipleChoiceQuestionEditComponent);
