@@ -14,14 +14,6 @@ import { Exercise } from 'app/entities/exercise.model';
 import { cloneDeep } from 'lodash-es';
 import { faPlus, faTrash, faUndo } from '@fortawesome/free-solid-svg-icons';
 
-export enum GradingInstructionTableColumn {
-    CREDITS = 'CREDITS',
-    SCALE = 'SCALE',
-    DESCRIPTION = 'DESCRIPTION',
-    FEEDBACK = 'FEEDBACK',
-    LIMIT = 'LIMIT',
-}
-
 @Component({
     selector: 'jhi-grading-instructions-details',
     templateUrl: './grading-instructions-details.component.html',
@@ -50,7 +42,6 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     usageCountCommand = new UsageCountCommand();
 
     showEditMode: boolean;
-    readonly gradingInstructionTableColumn = GradingInstructionTableColumn;
 
     domainCommands: DomainCommand[] = [
         this.creditsCommand,
