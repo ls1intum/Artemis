@@ -522,40 +522,12 @@ export class GradingInstructionsDetailsComponent implements OnInit, AfterContent
     /**
      * Updates given grading instruction in exercise
      *
-     * @param gradingInstruction needs to be updated
+     * @param instruction needs to be updated
      * @param criterion includes instruction needs to be updated
      */
     updateGradingInstruction(instruction: GradingInstruction, criterion: GradingCriterion) {
         const criterionIndex = this.exercise.gradingCriteria!.indexOf(criterion);
         const instructionIndex = this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions.indexOf(instruction);
         this.exercise.gradingCriteria![criterionIndex].structuredGradingInstructions![instructionIndex] = instruction;
-    }
-
-    /**
-     * Updates changed properties of the GradingInstruction.
-     *
-     * @param gradingInstruction that needs to be updated
-     * @param criterion that includes the instruction needs to be updated
-     * @param column that is updated
-     */
-    updateGradingInstructionProperty($event: any, instruction: GradingInstruction, criterion: GradingCriterion, column: GradingInstructionTableColumn) {
-        switch (column) {
-            case GradingInstructionTableColumn.CREDITS:
-                instruction.credits = $event.target.value;
-                break;
-            case GradingInstructionTableColumn.SCALE:
-                instruction.gradingScale = $event.target.value;
-                break;
-            case GradingInstructionTableColumn.DESCRIPTION:
-                instruction.instructionDescription = $event.target.value;
-                break;
-            case GradingInstructionTableColumn.FEEDBACK:
-                instruction.feedback = $event.target.value;
-                break;
-            case GradingInstructionTableColumn.LIMIT:
-                instruction.usageCount = $event.target.value;
-                break;
-        }
-        this.updateGradingInstruction(instruction, criterion);
     }
 }

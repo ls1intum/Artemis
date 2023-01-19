@@ -44,7 +44,7 @@ public class GradingCriterion extends DomainObject {
         return structuredGradingInstructions;
     }
 
-    public void addStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
+    public void addStructuredGradingInstruction(GradingInstruction structuredGradingInstruction) {
         this.structuredGradingInstructions.add(structuredGradingInstruction);
         structuredGradingInstruction.setGradingCriterion(this);
     }
