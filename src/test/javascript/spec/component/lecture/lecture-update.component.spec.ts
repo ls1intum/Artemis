@@ -97,7 +97,7 @@ describe('LectureUpdateComponent', () => {
         const navigateSpy = jest.spyOn(router, 'navigate');
 
         const createSpy = jest.spyOn(lectureService, 'create').mockReturnValue(
-            of<HttpResponse<Lecture>>(
+            of(
                 new HttpResponse({
                     body: {
                         id: 3,

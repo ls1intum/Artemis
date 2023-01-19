@@ -116,17 +116,17 @@
             "notReleasedTooltip": "Nur sichtbar für Tutor:innen und Lehrende. Veröffentlichungsdatum:",
             "createAttachmentUnits": {
                 "informativeText": {
-                    "firstLine": "Artemis sucht nach der Gliederung und unterteilt das PDF in Einheiten.",
-                    "secondLine": "Artemis extrahiert den Namen der Einheit in der Gliederung.",
-                    "note": "Hinweis: Sie haben die Möglichkeit, die Informationen zu bearbeiten, bevor Sie die angehängten Einheiten endgültig übermitteln."
+                    "firstLine": "Artemis sucht nach der Gliederung (Folie mit Titel 'Outline' und Stichpunkten mit Kapitelüberschriften) und unterteilt das PDF in Einheiten.",
+                    "secondLine": "Artemis erwartet eine Wiederholung der Gliederungsfolie vor jeder Einheit.",
+                    "note": "Hinweis: Du kannst die Informationen bearbeiten, bevor die angehängten Einheiten übermittelt werden."
                 },
-                "noUnitDetected": "Es wurde keine Einheit erkannt und konnte nicht automatisch geteilt werden. Bitte fügen Sie Informationen für jede Einheit hinzu!",
+                "noUnitDetected": "Es wurde keine Einheit erkannt und konnte nicht automatisch geteilt werden. Bitte füge Informationen für jede Einheit hinzu!",
                 "pageTitle": "Einheiten",
                 "addUnit": "Einheit hinzufügen",
                 "processUnits": "Einheiten festlegen",
                 "processAutomatically": "Automatische Einheitenverarbeitung",
-                "removeBreakSlide": "Bruchschieber entfernen",
-                "removeBreakSlideTooltip": "Wenn die Folie das Wort 'Break' enthält, wird die Folie aus dem Gerät entfernt.",
+                "removeBreakSlide": "Entferne Pausenfolien",
+                "removeBreakSlideTooltip": "Folien, die 'Break' enthalten, werden entfernt.",
                 "validation": {
                     "invalidPages": "Die Startseite oder die letzte Seite von {{ unitName }} sind falsch eingestellt.",
                     "empty": {

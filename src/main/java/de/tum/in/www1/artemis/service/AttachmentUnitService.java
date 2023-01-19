@@ -142,7 +142,8 @@ public class AttachmentUnitService {
 
         updateAttachment(existingAttachment, updateAttachment, savedAttachmentUnit);
         handleFile(updateFile, existingAttachment, keepFilename);
-        existingAttachment.setVersion(existingAttachment.getVersion() != null ? existingAttachment.getVersion() + 1 : 1);
+        final int revision = existingAttachment.getVersion() == null ? 1 : existingAttachment.getVersion() + 1;
+        existingAttachment.setVersion(revision);
         Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
         prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachment);
         evictCache(updateFile, savedAttachmentUnit);

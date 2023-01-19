@@ -117,8 +117,8 @@
             "notReleasedTooltip": "Attachment only visible to teaching assistants and instructors. Release date:",
             "createAttachmentUnits": {
                 "informativeText": {
-                    "firstLine": "Artemis searches for the Outline and splits the PDF into units.",
-                    "secondLine": "Artemis extracts the name of the unit from the outline.",
+                    "firstLine": "Artemis searches for the Outline (slide with title 'Outline' and bullet points with unit headings) to split the PDF into units.",
+                    "secondLine": "Artemis expects a repetition of the Outline slide at the start of every unit.",
                     "note": "Note: You will have the option to edit the information before finally submitting the attachment units."
                 },
                 "noUnitDetected": "No unit was detected and could not split automatically. Please add information for each unit!",
