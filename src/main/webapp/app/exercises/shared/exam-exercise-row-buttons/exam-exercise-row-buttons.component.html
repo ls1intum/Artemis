@@ -26,15 +26,6 @@
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.exercise.participations">Participations</span>
     </a>
 
-    <a
-        *ngIf="course.isAtLeastInstructor && exercise.type !== exerciseType.QUIZ"
-        [routerLink]="['/course-management', course.id, 'exams', exam.id, 'exercise-groups', exerciseGroupId, exercise.type + '-exercises', exercise.id, 'submissions']"
-        class="btn btn-success btn-sm me-1"
-    >
-        <fa-icon [icon]="faBook"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.courseOverview.exerciseDetails.instructorActions.submissions">Submissions</span>
-    </a>
-
     <!-- Example Submission -->
     <a
         *ngIf="course.isAtLeastEditor && exercise.type !== exerciseType.QUIZ && exercise.type !== exerciseType.PROGRAMMING && exercise.type !== exerciseType.FILE_UPLOAD"

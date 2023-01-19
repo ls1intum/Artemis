@@ -157,6 +157,7 @@
             "showSuccessful": "Nur erfolgreiche anzeigen",
             "showManual": "Nur manuelle anzeigen",
             "showAutomatic": "Nur automatische anzeigen",
+            "showLocked": "Nur gesperrte anzeigen",
             "showNoPracticeMode": "Nur bewertete Abgaben anzeigen",
             "showAll": "Alle anzeigen",
             "showingOnlyInRange": "Zeige nur Ergebnisse im Bereich: {{ range }}",

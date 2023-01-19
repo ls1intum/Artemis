@@ -1,10 +1,11 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { Subscription, forkJoin, of, zip } from 'rxjs';
+import { Participation } from 'app/entities/participation/participation.model';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { Subscription, forkJoin } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { take } from 'rxjs/operators';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -18,7 +19,6 @@ import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { SubmissionExerciseType } from 'app/entities/submission.model';
 import { formatTeamAsSearchResult } from 'app/exercises/shared/team/team.utils';
 import { AccountService } from 'app/core/auth/account.service';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
@@ -36,6 +36,7 @@ enum FilterProp {
     BUILD_FAILED = 'build-failed',
     MANUAL = 'manual',
     AUTOMATIC = 'automatic',
+    LOCKED = 'locked',
 }
 
 @Component({
@@ -49,6 +50,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     readonly FilterProp = FilterProp;
     readonly ExerciseType = ExerciseType;
     readonly FeatureToggle = FeatureToggle;
+    readonly AssessmentType = AssessmentType;
     // represents all intervals selectable in the score distribution on the exercise statistics
     readonly scoreRanges = [
         new Range(0, 10),
@@ -67,20 +69,15 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     exercise: Exercise;
     paramSub: Subscription;
     reverse: boolean;
-    results: Result[];
-    filteredResults: Result[];
-    filteredResultsSize: number;
+    participations: Participation[] = [];
+    filteredParticipations: Participation[] = [];
     eventSubscriber: Subscription;
     newManualResultAllowed: boolean;
     rangeFilter?: Range;
 
-    resultCriteria: {
-        filterProp: FilterProp;
-    };
+    resultCriteria: { filterProp: FilterProp } = { filterProp: FilterProp.ALL };
 
     isLoading: boolean;
-
-    isAdmin = false;
 
     // Icons
     faDownload = faDownload;
@@ -98,14 +95,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         private resultService: ResultService,
         private profileService: ProfileService,
         private programmingSubmissionService: ProgrammingSubmissionService,
-    ) {
-        this.resultCriteria = {
-            filterProp: FilterProp.ALL,
-        };
-        this.results = [];
-        this.filteredResults = [];
-        this.filteredResultsSize = 0;
-    }
+        private participationService: ParticipationService,
+    ) {}
 
     /**
      * Fetches the course and exercise from the server
@@ -119,18 +110,16 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             if (filterValue) {
                 this.rangeFilter = this.scoreRanges[Number(filterValue)];
             }
+
             forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
                 this.course = courseRes.body!;
                 this.exercise = exerciseRes.body!;
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
-                zip(this.resultService.getResults(this.exercise), this.loadAndCacheProgrammingExerciseSubmissionState())
-                    .pipe(take(1))
-                    .subscribe((results) => {
-                        this.handleNewResults(results[0]);
-                    });
+                this.participationService.findAllParticipationsByExercise(this.exercise.id!, true).subscribe((participationsResponse) => {
+                    this.handleNewParticipations(participationsResponse);
+                });
 
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
-                this.isAdmin = this.accountService.isAdmin();
             });
         });
     }
@@ -160,83 +149,66 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
               ];
     }
 
-    private handleNewResults(results: HttpResponse<Result[]>) {
-        this.results = results.body || [];
-        this.filteredResults = this.filterByScoreRange(this.results);
+    private handleNewParticipations(participationsResponse: HttpResponse<Participation[]>) {
+        this.participations = participationsResponse.body ?? [];
+        this.filteredParticipations = this.filterByScoreRange(this.participations);
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
-            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                setBuildPlanUrlForProgrammingParticipations(
-                    profileInfo,
-                    this.results.map<ProgrammingExerciseStudentParticipation>((result) => result.participation as ProgrammingExerciseStudentParticipation),
-                    (this.exercise as ProgrammingExercise).projectKey,
-                );
-            });
+            const programmingExercise = this.exercise as ProgrammingExercise;
+            if (programmingExercise.projectKey) {
+                this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                    setBuildPlanUrlForProgrammingParticipations(profileInfo, this.participations, programmingExercise.projectKey);
+                });
+            }
         }
         this.isLoading = false;
-    }
 
-    /**
-     * We need to preload the pending submissions here, otherwise every updating-result would trigger a single REST call.
-     * Will return immediately if the exercise is not of type PROGRAMMING.
-     */
-    private loadAndCacheProgrammingExerciseSubmissionState() {
-        // TODO: this is deactivated because of performance reasons as it would lead quickly to thousands of subscribed websocket topics
-        // return this.exercise.type === ExerciseType.PROGRAMMING ? this.programmingSubmissionService.getSubmissionStateOfExercise(this.exercise.id) : of(undefined);
-        return of(undefined);
+        console.log(this.participations);
     }
 
     /**
      * Updates the criteria by which to filter results
      * @param newValue New filter prop value
      */
-    updateResultFilter(newValue: FilterProp) {
+    updateParticipationFilter(newValue: FilterProp) {
+        console.log(newValue);
         this.isLoading = true;
         setTimeout(() => {
             this.resultCriteria.filterProp = newValue;
+            console.log(this.resultCriteria.filterProp);
             this.isLoading = false;
         });
     }
 
     /**
-     * Predicate used to filter results by the current filter prop setting
-     * @param result Result for which to evaluate the predicate
+     * Predicate used to filter participations by the current filter prop setting
+     * @param participation Participation for which to evaluate the predicate
      */
-    filterResultByProp = (result: Result): boolean => {
+    filterParticipationsByProp(participation: Participation): boolean {
         switch (this.resultCriteria.filterProp) {
             case FilterProp.SUCCESSFUL:
-                return !!result.successful;
+                return !!participation.results?.[0]?.successful;
             case FilterProp.UNSUCCESSFUL:
-                return !result.successful;
+                return !participation.results?.[0]?.successful;
             case FilterProp.BUILD_FAILED:
-                return (
-                    !!result.submission &&
-                    result.submission.submissionExerciseType === SubmissionExerciseType.PROGRAMMING &&
-                    !!(result.submission as ProgrammingSubmission).buildFailed
-                );
+                return !!participation.results?.[0]?.submission && !!(participation.results?.[0]?.submission as ProgrammingSubmission).buildFailed;
             case FilterProp.MANUAL:
-                return Result.isManualResult(result);
+                return !!participation.results?.[0] && Result.isManualResult(participation.results[0]!);
             case FilterProp.AUTOMATIC:
-                return result.assessmentType === AssessmentType.AUTOMATIC;
+                return participation.results?.[0]?.assessmentType === AssessmentType.AUTOMATIC;
+            case FilterProp.LOCKED:
+                return !!participation.results?.[0] && !participation.results?.[0]?.completionDate;
+            case FilterProp.ALL:
             default:
                 return true;
         }
-    };
+    }
 
     /**
-     * Update the number of filtered results
-     *
-     * @param filteredResultsSize Total number of results after filters have been applied
+     * Returns the build plan id for a participation
+     * @param participation Participation for which to return the build plan id
      */
-    handleResultsSizeChange = (filteredResultsSize: number) => {
-        this.filteredResultsSize = filteredResultsSize;
-    };
-
-    /**
-     * Returns the build plan id for a result
-     * @param result Result for which to return the build plan id
-     */
-    buildPlanId(result: Result) {
-        return (result.participation as ProgrammingExerciseStudentParticipation)?.buildPlanId;
+    buildPlanId(participation: Participation) {
+        return (participation as ProgrammingExerciseStudentParticipation)?.buildPlanId;
     }
 
     /**
@@ -247,21 +219,21 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Returns the link to the repository of a result
-     * @param result Result for which to get the link for
+     * Returns the link to the repository of a participation
+     * @param participation Üarticipation for which to get the link for
      */
-    getRepositoryLink(result: Result) {
-        return (result.participation! as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;
+    getRepositoryLink(participation: Participation) {
+        return (participation! as ProgrammingExerciseStudentParticipation).userIndependentRepositoryUrl;
     }
 
     /**
      * Exports the names of exercise participants as a csv file
      */
     exportNames() {
-        if (this.results.length > 0) {
+        if (this.participations.length) {
             const rows: string[] = [];
-            this.results.forEach((result, index) => {
-                const studentParticipation = result.participation! as StudentParticipation;
+            this.participations.forEach((participation, index) => {
+                const studentParticipation = participation as StudentParticipation;
                 const { participantName } = studentParticipation;
                 if (studentParticipation.team) {
                     if (index === 0) {
@@ -278,17 +250,17 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Formats the results in the autocomplete overlay.
+     * Formats the participations in the autocomplete overlay.
      *
-     * @param result
+     * @param participation
      */
-    searchResultFormatter = (result: Result): string => {
-        const participation = result.participation as StudentParticipation;
-        if (participation.student) {
-            const { login, name } = participation.student;
+    searchParticipationFormatter = (participation: Participation): string => {
+        const studentParticipation = participation as StudentParticipation;
+        if (studentParticipation.student) {
+            const { login, name } = studentParticipation.student;
             return `${login} (${name})`;
-        } else if (participation.team) {
-            return formatTeamAsSearchResult(participation.team);
+        } else if (studentParticipation.team) {
+            return formatTeamAsSearchResult(studentParticipation.team);
         }
         return '';
     };
@@ -297,10 +269,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * Converts a result object to a string that can be searched for. This is
      * used by the autocomplete select inside the data table.
      *
-     * @param result
+     * @param participation
      */
-    searchTextFromResult = (result: Result): string => {
-        return (result.participation as StudentParticipation).participantIdentifier || '';
+    searchTextFromParticipation = (participation: Participation): string => {
+        return (participation as StudentParticipation).participantIdentifier || '';
     };
 
     /**
@@ -308,9 +280,10 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      */
     refresh() {
         this.isLoading = true;
-        this.results = [];
-        this.resultService.getResults(this.exercise).subscribe((results) => {
-            this.handleNewResults(results);
+        this.participations = [];
+        this.filteredParticipations = [];
+        this.participationService.findAllParticipationsByExercise(this.exercise.id!, true).subscribe((participationsResponse) => {
+            this.handleNewParticipations(participationsResponse);
         });
     }
 
@@ -323,24 +296,30 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * filters the displayable results based on the given range filter
-     * @param results all results for the given exercise
-     * @returns results falling into the given score range
+     * filters the displayable participations based on the given range filter
+     * @param participations all participations for the given exercise
+     * @returns participations falling into the given score range
      */
-    filterByScoreRange(results: Result[]): Result[] {
+    filterByScoreRange(participations: Participation[]): Participation[] {
         if (!this.rangeFilter) {
-            return results;
+            return participations;
         }
         let filterFunction;
         // If the range to filter against is [90%, 100%], a score of 100% also satisfies this range
         if (this.rangeFilter.upperBound === 100) {
-            filterFunction = (result: Result) => !!result.score && result.score >= this.rangeFilter!.lowerBound && result.score <= this.rangeFilter!.upperBound;
+            filterFunction = (participation: Participation) => {
+                const result = participation.results?.[0];
+                return !!result?.score && result?.score >= this.rangeFilter!.lowerBound && result.score <= this.rangeFilter!.upperBound;
+            };
         } else {
             // For any other range, the score must be strictly below the upper bound
-            filterFunction = (result: Result) => result.score !== undefined && result.score >= this.rangeFilter!.lowerBound && result.score < this.rangeFilter!.upperBound;
+            filterFunction = (participation: Participation) => {
+                const result = participation.results?.[0];
+                return result?.score !== undefined && result.score >= this.rangeFilter!.lowerBound && result.score < this.rangeFilter!.upperBound;
+            };
         }
 
-        return results.filter(filterFunction);
+        return participations.filter(filterFunction);
     }
 
     /**
@@ -348,7 +327,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      */
     resetFilterOptions(): void {
         this.rangeFilter = undefined;
-        this.filteredResults = this.results;
+        this.filteredParticipations = this.participations;
         this.resultCriteria.filterProp = FilterProp.ALL;
     }
 }

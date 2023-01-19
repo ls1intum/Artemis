@@ -32,7 +32,6 @@ export interface Badge {
 
 export interface IResultService {
     find: (resultId: number) => Observable<EntityResponseType>;
-    getResultsForExercise: (courseId: number, exerciseId: number, req?: any) => Observable<EntityArrayResponseType>;
     getResultsForExerciseWithPointsPerGradingCriterion: (exerciseId: number, req?: any) => Observable<ResultsWithPointsArrayResponseType>;
     getFeedbackDetailsForResult: (participationId: number, result: Result) => Observable<HttpResponse<Feedback[]>>;
     delete: (participationId: number, resultId: number) => Observable<HttpResponse<void>>;
@@ -183,16 +182,6 @@ export class ResultService implements IResultService {
         }
     }
 
-    getResultsForExercise(exerciseId: number, req?: any): Observable<EntityArrayResponseType> {
-        const options = createRequestOption(req);
-        return this.http
-            .get<Result[]>(`${this.exerciseResourceUrl}/${exerciseId}/results`, {
-                params: options,
-                observe: 'response',
-            })
-            .pipe(map((res: EntityArrayResponseType) => this.convertArrayResponse(res)));
-    }
-
     getResultsForExerciseWithPointsPerGradingCriterion(exerciseId: number, req?: any): Observable<ResultsWithPointsArrayResponseType> {
         const options = createRequestOption(req);
         return this.http
@@ -256,20 +245,6 @@ export class ResultService implements IResultService {
             this.convertResultDatesFromServer(res.body);
         }
         return res;
-    }
-
-    /**
-     * Fetches all results for an exercise and returns them
-     * @param exercise of which the results with points should be fetched.
-     */
-    getResults(exercise: Exercise): Observable<HttpResponse<Result[]>> {
-        return this.getResultsForExercise(exercise.id!, {
-            withSubmissions: exercise.type === ExerciseType.MODELING,
-        }).pipe(
-            tap((res: HttpResponse<Result[]>) => {
-                return res.body!.map((result) => ResultService.processReceivedResult(exercise, result));
-            }),
-        );
     }
 
     /**

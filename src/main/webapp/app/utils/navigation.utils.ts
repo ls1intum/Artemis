@@ -182,24 +182,6 @@ export const getExerciseDashboardLink = (courseId: number, exerciseId: number, e
         : ['/course-management', courseId.toString(), 'assessment-dashboard', exerciseId.toString()];
 };
 
-export const getExerciseSubmissionsLink = (exerciseType: ExerciseType, courseId: number, exerciseId: number, examId = 0, exerciseGroupId = 0): string[] => {
-    if (examId > 0 && exerciseGroupId > 0) {
-        return [
-            '/course-management',
-            courseId.toString(),
-            'exams',
-            examId.toString(),
-            'exercise-groups',
-            exerciseGroupId.toString(),
-            exerciseType + '-exercises',
-            exerciseId.toString(),
-            'submissions',
-        ];
-    }
-
-    return ['/course-management', courseId.toString(), exerciseType + '-exercises', exerciseId.toString(), 'submissions'];
-};
-
 /**
  * A generic method which navigates into a subpage of an exam exercise
  * @router the router th component uses to navigate into different webpages

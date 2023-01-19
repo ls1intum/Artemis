@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, Routes } from '@angular/router';
 import { of } from 'rxjs';
-
 import { UserRouteAccessService } from 'app/core/auth/user-route-access-service';
 import { TextSubmissionAssessmentComponent } from './text-submission-assessment.component';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -10,7 +9,6 @@ import { TextSubmissionService } from 'app/exercises/text/participate/text-submi
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextFeedbackConflictsComponent } from './conflicts/text-feedback-conflicts.component';
 import { Authority } from 'app/shared/constants/authority.constants';
-import { TextAssessmentDashboardComponent } from 'app/exercises/text/assess/text-assessment-dashboard/text-assessment-dashboard.component';
 import { catchError, map } from 'rxjs/operators';
 
 @Injectable({ providedIn: 'root' })
@@ -78,15 +76,6 @@ export class FeedbackConflictResolver implements Resolve<TextSubmission[] | unde
 
 export const NEW_ASSESSMENT_PATH = 'submissions/new/assessment';
 export const textSubmissionAssessmentRoutes: Routes = [
-    {
-        path: 'submissions',
-        component: TextAssessmentDashboardComponent,
-        data: {
-            authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'artemisApp.assessmentDashboard.home.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
     {
         path: NEW_ASSESSMENT_PATH,
         component: TextSubmissionAssessmentComponent,
