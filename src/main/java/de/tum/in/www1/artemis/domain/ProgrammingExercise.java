@@ -93,10 +93,6 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "build_plan_access_secret", table = "programming_exercise_details", length = 36)
     private String buildPlanAccessSecret;
 
-    @ManyToOne
-    @JoinColumn(name = "build_plan_id", table = "programming_exercise_details")
-    private BuildPlan buildPlan;
-
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
     @JsonIgnoreProperties("programmingExercise")
@@ -822,23 +818,11 @@ public class ProgrammingExercise extends Exercise {
         this.exerciseHints = exerciseHints;
     }
 
-    public void setBuildPlan(BuildPlan buildPlan) {
-        this.buildPlan = buildPlan;
-    }
-
-    // TODO: Save build plan when exercise is created
-    public BuildPlan getBuildPlan() {
-        return buildPlan;
-    }
-
-    public void setBuildPlanAccessSecret(String buildPlanAccessSecret) {
-        this.buildPlanAccessSecret = buildPlanAccessSecret;
-    }
-
     public boolean hasBuildPlanAccessSecretSet() {
         return buildPlanAccessSecret != null && !buildPlanAccessSecret.isEmpty();
     }
 
+    @Nullable
     public String getBuildPlanAccessSecret() {
         return buildPlanAccessSecret;
     }

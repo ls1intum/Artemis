@@ -22,7 +22,6 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry;
@@ -733,11 +732,5 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             exercise.generateAndSetBuildPlanAccessSecret();
             save(exercise);
         }
-    }
-
-    default void updateBuildPlan(ProgrammingExercise exercise, String buildPlan, BuildPlanRepository buildPlanRepository) {
-        BuildPlan buildPlanWrapper = buildPlanRepository.findByBuildPlan(buildPlan).orElseGet(() -> buildPlanRepository.save(new BuildPlan(buildPlan)));
-        exercise.setBuildPlan(buildPlanWrapper);
-        save(exercise);
     }
 }
