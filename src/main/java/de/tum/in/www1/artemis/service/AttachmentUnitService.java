@@ -87,7 +87,7 @@ public class AttachmentUnitService {
      * @return The created attachment units
      */
     public List<AttachmentUnit> createAttachmentUnits(LectureUnitInformationDTO lectureUnitInformationDTO, Lecture lecture, MultipartFile file) {
-        List<Long> ids = new ArrayList<>();
+        List<AttachmentUnit> createdUnits = new ArrayList<>();
         List<LectureUnitDTO> lectureUnitsDTO = null;
         try {
             log.debug("Splitting attachment file {} with info {}", file, lectureUnitInformationDTO.units);
@@ -95,10 +95,9 @@ public class AttachmentUnitService {
             lectureUnitsDTO.forEach(lectureUnit -> {
                 lectureUnit.attachmentUnit().setLecture(null);
                 AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(lectureUnit.attachmentUnit());
-                ids.add(savedAttachmentUnit.getId());
+                createdUnits.add(savedAttachmentUnit);
                 lectureUnit.attachmentUnit().setLecture(lecture);
                 lecture.addLectureUnit(savedAttachmentUnit);
-                lectureRepository.save(lecture);
 
                 handleFile(lectureUnit.file(), lectureUnit.attachment(), true);
 
@@ -109,13 +108,14 @@ public class AttachmentUnitService {
                 lectureUnit.attachmentUnit().setAttachment(savedAttachment);
                 evictCache(lectureUnit.file(), savedAttachmentUnit);
             });
+            lectureRepository.save(lecture);
         }
         catch (IOException e) {
             log.error("Error while splitting attachment file", e);
             throw new InternalServerErrorException("Could not create attachment units");
         }
 
-        return attachmentUnitRepository.findAllById(ids);
+        return createdUnits;
     }
 
     /**
