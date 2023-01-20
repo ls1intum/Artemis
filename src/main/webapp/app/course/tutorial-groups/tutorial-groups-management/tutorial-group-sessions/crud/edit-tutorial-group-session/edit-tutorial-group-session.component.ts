@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { AlertService } from 'app/core/util/alert.service';
@@ -13,6 +13,7 @@ import { Subject } from 'rxjs';
 @Component({
     selector: 'jhi-edit-tutorial-group-session',
     templateUrl: './edit-tutorial-group-session.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditTutorialGroupSessionComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();

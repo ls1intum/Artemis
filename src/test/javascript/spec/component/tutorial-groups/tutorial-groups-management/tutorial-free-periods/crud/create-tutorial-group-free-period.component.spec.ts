@@ -47,6 +47,7 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
                 component.course = course;
                 component.initialize();
                 tutorialGroupFreePeriodService = TestBed.inject(TutorialGroupFreePeriodService);
+                fixture.detectChanges();
             });
     });
 
@@ -55,12 +56,10 @@ describe('CreateTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
     it('should send POST request upon form submission and close modal', () => {
-        fixture.detectChanges();
         const exampleFreePeriod = generateExampleTutorialGroupFreePeriod({});
         delete exampleFreePeriod.id;
 

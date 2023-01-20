@@ -74,7 +74,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
 
     clear() {
         if (this.channelModificationPerformed) {
-            this.close();
+            this.close([undefined, true]);
         } else {
             this.dismiss();
         }
@@ -109,7 +109,7 @@ export class ChannelsOverviewDialogComponent extends AbstractDialogComponent imp
                     });
                 break;
             case 'view':
-                this.close(channelAction.channel);
+                this.close([channelAction.channel, this.channelModificationPerformed]);
                 break;
             case 'create':
                 this.createChannelFn(channelAction.channel)
