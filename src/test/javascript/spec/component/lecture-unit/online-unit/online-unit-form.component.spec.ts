@@ -10,6 +10,7 @@ import { OnlineUnitService } from 'app/lecture/lecture-unit/lecture-unit-managem
 import { OnlineResourceDTO } from 'app/lecture/lecture-unit/lecture-unit-management/online-resource-dto.model';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
 
 describe('OnlineUnitFormComponent', () => {
     let onlineUnitFormComponentFixture: ComponentFixture<OnlineUnitFormComponent>;
@@ -18,7 +19,13 @@ describe('OnlineUnitFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule],
-            declarations: [OnlineUnitFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent), MockComponent(FaIconComponent)],
+            declarations: [
+                OnlineUnitFormComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(FaIconComponent),
+                MockComponent(LearningGoalSelectionComponent),
+            ],
             providers: [MockProvider(OnlineUnitService)],
         })
             .compileComponents()
@@ -104,6 +111,7 @@ describe('OnlineUnitFormComponent', () => {
                 name: exampleName,
                 description: exampleDescription,
                 releaseDate: exampleReleaseDate,
+                learningGoals: null,
                 source: 'https://www.example.com',
             });
 
