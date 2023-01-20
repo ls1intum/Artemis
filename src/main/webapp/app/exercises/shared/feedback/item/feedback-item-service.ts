@@ -27,13 +27,12 @@ export interface FeedbackItemService {
 export class FeedbackItemServiceImpl implements FeedbackItemService {
     constructor(private translateService: TranslateService) {}
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
         return feedbacks.map((feedback) => this.createFeedbackItem(feedback, showTestDetails));
     }
 
     createFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
-        if ((feedback.type === FeedbackType.MANUAL || feedback.type === FeedbackType.MANUAL_UNREFERENCED) && feedback.gradingInstruction) {
+        if (feedback.gradingInstruction) {
             return this.createGradingInstructionFeedbackItem(feedback, showTestDetails);
         }
 
@@ -51,7 +50,6 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
      * Creates a feedback item for a manual feedback where the tutor used a grading instruction.
      * @param feedback The manual feedback where a grading instruction was used.
      * @param showTestDetails
-     * @private
      */
     private createGradingInstructionFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         const gradingInstruction = feedback.gradingInstruction!;
