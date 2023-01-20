@@ -1,4 +1,4 @@
-import { Result } from 'app/entities/result.model';
+import { Result, ResultStatus } from 'app/entities/result.model';
 import { cloneDeep } from 'lodash-es';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { Feedback, FeedbackType } from 'app/entities/feedback.model';
@@ -13,7 +13,7 @@ import { faCheckCircle, faQuestionCircle, faTimesCircle } from '@fortawesome/fre
 import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOrQuiz } from 'app/exercises/shared/participation/participation.utils';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
 import { Exercise } from 'app/entities/exercise.model';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import dayjs from 'dayjs/esm';
 
 /**
@@ -287,4 +287,20 @@ export const isBuildFailed = (submission?: Submission) => {
  */
 export const isManualResult = (result?: Result) => {
     return result?.assessmentType !== AssessmentType.AUTOMATIC;
+};
+
+// TODO: Someone please review if the order is correct. TS docs
+export const evaluateStatus = (result: Result, participation: Participation): ResultStatus => {
+    if (resultIsPreliminary(result)) {
+        return 'preliminary';
+    }
+
+    if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
+        const studentParticipation = participation as StudentParticipation;
+        if (studentParticipation.testRun) {
+            return 'testRun';
+        }
+    }
+
+    return result.rated ? 'graded' : 'ungraded';
 };

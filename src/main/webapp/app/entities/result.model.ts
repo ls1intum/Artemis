@@ -6,6 +6,8 @@ import { Submission } from 'app/entities/submission.model';
 import { Feedback } from 'app/entities/feedback.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 
+export type ResultStatus = 'graded' | 'ungraded' | 'testRun' | 'preliminary';
+
 export class Result implements BaseEntity {
     public id?: number;
     public completionDate?: dayjs.Dayjs;
