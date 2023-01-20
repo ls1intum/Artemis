@@ -153,7 +153,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         if (!this.connectedPromise) {
             this.connection = this.createConnection();
         }
-        const url = `//${window.location.host}/websocket/tracker`;
+        const url = `//${window.location.host}/websocket`;
         // NOTE: only support real websockets transports and disable http poll, http stream and other exotic workarounds.
         // nowadays, all modern browsers support websockets and workarounds are not necessary anymore and might only lead to problems
         this.socket = new SockJS(url, undefined, { transports: 'websocket' });
@@ -344,7 +344,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     // https://stackoverflow.com/a/35651029/3802758
     private getSessionId(): string {
         if (this.socket && this.socket._transport && this.socket._transport.url) {
-            return this.socket._transport.url.match('.*\\/websocket\\/tracker\\/\\d*\\/(.*)\\/websocket.*')[1];
+            return this.socket._transport.url.match('.*\\/websocket\\/\\d*\\/(.*)\\/websocket.*')[1];
         } else {
             return 'unsubscribed';
         }
