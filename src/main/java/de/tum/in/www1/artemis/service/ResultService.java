@@ -229,13 +229,12 @@ public class ResultService {
                 feedbacks = feedbacks.stream().filter(feedback -> feedback.getType() != null && feedback.getType() == FeedbackType.AUTOMATIC).toList();
             }
         }
+
         // remove unnecessary data to keep the json payload smaller
         for (Feedback feedback : feedbacks) {
-            if (feedback.getResult() != null) {
-                feedback.getResult().setSubmission(null);
-                feedback.getResult().setParticipation(null);
-            }
+            feedback.setResult(null);
         }
+
         return feedbacks;
     }
 

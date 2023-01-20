@@ -125,7 +125,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         fixture.detectChanges();
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id, result.id);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id, result);
         expect(getBuildLogsStub).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true);
@@ -168,7 +168,7 @@ describe('CodeEditorBuildOutputComponent', () => {
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, result.id!);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, result);
         expect(getBuildLogsStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs).toStrictEqual(new BuildLogEntryArray());
 

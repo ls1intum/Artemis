@@ -39,7 +39,7 @@
                 "text": "<a href={{ teamExercisesUrl }}>Gruppenaufgaben</a> mit Echtzeitzusammenarbeit und eigenen Tutoren pro Gruppe."
             },
             "lectures": {
-                "text": "<a href={{ lecturesUrl }}>Vorlesungen:</a> Hochladen von Vorlesungsfolien für mehrere Einheiten, integrieren von Videostreams, Vorlesungsaufzeichnungen und Aufgaben in Vorlesungen und definieren von Lernzielen."
+                "text": "<a href={{ lecturesUrl }}>Vorlesungen:</a> Hochladen von Vorlesungsfolien für mehrere Einheiten, integrieren von Videostreams, Vorlesungsaufzeichnungen und Aufgaben in Vorlesungen und definieren von Kompetenzen."
             },
             "integratedMarkdownEditor": {
                 "text": "<a href={{ markdownEditorUrl }}>Integrierter Markdown-Editor:</a> Markdown wird verwendet, um Textinhalte auf der Plattform mit einem integrierten Markdown-Editor zu formatieren."
@@ -48,7 +48,7 @@
                 "text": "<a href={{ plagiarismChecksUrl }}>Plagiatsüberprüfungen:</a> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href={{ jPlagUrl }}>JPlag</a>), Text- und Modellierungsaufgaben."
             },
             "learningAnalytics": {
-                "text": "<a href={{ learningAnalyticsUrl }}>Lernanalytik:</a> Statistiken, mit denen sich die Studierenden mit dem Kursdurchschnitt vergleichen können. Bewerten der durchschnittliche Leistung der Studierenden anhand von Aufgaben und Lernzielen."
+                "text": "<a href={{ learningAnalyticsUrl }}>Lernanalytik:</a> Statistiken, mit denen sich die Studierenden mit dem Kursdurchschnitt vergleichen können. Bewerten der durchschnittliche Leistung der Studierenden anhand von Aufgaben und Kompetenzen."
             },
             "scalable": {
                 "text": "<a href={{ scalingUrl }}>Skalierbar</a> auf mehrere Kurse mit Tausenden von Studierenden. Konfigurieren von zusätzlichen Build-Agenten in der kontinuierlichen Integrationsumgebung."

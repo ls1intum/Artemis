@@ -267,7 +267,7 @@ public class QuizExerciseResource {
         // TODO: Split this route in two: One for normal and one for exam exercises
         log.info("REST request to get quiz exercise : {}", quizExerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
+        var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsAndLearningGoalsElseThrow(quizExerciseId);
         if (quizExercise.isExamExercise()) {
             authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
             studentParticipationRepository.checkTestRunsExist(quizExercise);
@@ -439,7 +439,7 @@ public class QuizExerciseResource {
                             .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAlreadyStarted", "Quiz has already started.")).build();
                 }
 
-                // set release date to now, truncated to seconds because the database only stores seconds
+                // set release date to now, truncated to seconds
                 var now = ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS);
                 quizBatchService.getOrCreateSynchronizedQuizBatch(quizExercise).setStartTime(now);
                 if (quizExercise.getReleaseDate() != null && quizExercise.getReleaseDate().isAfter(now)) {

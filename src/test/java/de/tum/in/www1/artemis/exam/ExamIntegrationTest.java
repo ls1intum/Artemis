@@ -10,6 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -54,6 +55,7 @@ import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -196,13 +198,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         bitbucketRequestMockProvider.enableMockingOfRequests();
 
-        participantScoreSchedulerService.activate();
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
+        participantScoreScheduleService.activate();
     }
 
     @AfterEach
     void tearDown() {
         bitbucketRequestMockProvider.reset();
-        participantScoreSchedulerService.shutdown();
+
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+        participantScoreScheduleService.shutdown();
     }
 
     @Test
@@ -1819,7 +1824,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetExamScore(boolean withCourseBonus) throws Exception {
-        participantScoreRepository.deleteAll();
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // TODO avoid duplicated code with StudentExamIntegrationTest
 
@@ -1956,14 +1960,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         gradingScale.setExam(exam);
         gradingScaleRepository.save(gradingScale);
 
-        long bonusCourseParticipationCount = 0;
         if (withCourseBonus) {
             configureCourseAsBonusWithIndividualAndTeamResults(course, gradingScale);
-            bonusCourseParticipationCount = 5; // Participations from the bonus course should be included in expected participation count.
         }
 
-        final long expectedParticipationCount = 90 + bonusCourseParticipationCount; // 90 participations from the exam.
-        await().until(() -> participantScoreRepository.count() == expectedParticipationCount);
+        await().timeout(Duration.ofMinutes(1)).until(() -> {
+            for (Exercise exercise : exercisesInExam) {
+                if (participantScoreRepository.findAllByExercise(exercise).size() != exercise.getStudentParticipations().size()) {
+                    return false;
+                }
+            }
+            return true;
+        });
 
         var examScores = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 
@@ -2138,6 +2146,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(examChecklistDTO.getNumberOfTotalParticipationsForAssessment()).isEqualTo(size * 5L);
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isNull();
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(90L, 90L);
+
+        await().until(() -> participantScoreScheduleService.isIdle());
 
         // change back to instructor user
         database.changeUser(TEST_PREFIX + "instructor1");

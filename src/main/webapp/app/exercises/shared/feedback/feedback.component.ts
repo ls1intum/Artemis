@@ -126,9 +126,7 @@ export class FeedbackComponent implements OnInit {
         this.initializeExerciseInformation();
 
         this.feedbackItemService = this.exerciseType === ExerciseType.PROGRAMMING ? this.injector.get(ProgrammingFeedbackItemService) : this.injector.get(FeedbackItemServiceImpl);
-        this.fetchAdditionalInformation();
-
-        this.badge = ResultService.evaluateBadge(this.result.participation!, this.result);
+        this.initFeedbackInformation();
 
         this.commitHash = this.getCommitHash().slice(0, 11);
 
@@ -162,7 +160,7 @@ export class FeedbackComponent implements OnInit {
      * Fetches additional information about feedbacks and build logs if required.
      * @private
      */
-    private fetchAdditionalInformation() {
+    private initFeedbackInformation() {
         of(this.result.feedbacks)
             .pipe(
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
@@ -170,7 +168,7 @@ export class FeedbackComponent implements OnInit {
                     if (feedbacks?.length) {
                         return of(feedbacks);
                     } else {
-                        return this.feedbackService.getDetailsForResult(this.result.participation!.id!, this.result.id!);
+                        return this.feedbackService.getFeedbacksForResult(this.result.participation!.id!, this.result);
                     }
                 }),
                 switchMap((feedbacks: Feedback[] | undefined | null) => {
@@ -181,10 +179,6 @@ export class FeedbackComponent implements OnInit {
 
                         const feedbackItems = this.feedbackItemService.create(filteredFeedback, this.showTestDetails);
                         this.feedbackItemNodes = this.feedbackItemService.group(feedbackItems, this.exercise!);
-
-                        if (this.showScoreChart) {
-                            this.updateChart(this.feedbackItemNodes);
-                        }
                     }
 
                     // If we don't receive a submission or the submission is marked with buildFailed, fetch the build logs.
@@ -195,6 +189,12 @@ export class FeedbackComponent implements OnInit {
                     ) {
                         return this.fetchAndSetBuildLogs(this.result.participation.id!, this.result.id);
                     }
+
+                    if (this.showScoreChart) {
+                        this.updateChart(this.feedbackItemNodes);
+                    }
+
+                    this.badge = ResultService.evaluateBadge(this.result.participation!, this.result);
 
                     return of(null);
                 }),

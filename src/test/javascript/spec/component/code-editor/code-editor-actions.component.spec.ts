@@ -18,6 +18,7 @@ import { MockModule } from 'ng-mocks';
 import { TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-editor.module';
+import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('CodeEditorActionsComponent', () => {
     let comp: CodeEditorActionsComponent;
@@ -30,7 +31,7 @@ describe('CodeEditorActionsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(AceEditorModule)],
+            imports: [ArtemisTestModule, MockModule(AceEditorModule), MockModule(NgbTooltipModule)],
             declarations: [CodeEditorActionsComponent, TranslatePipeMock, FeatureToggleDirective],
             providers: [
                 { provide: CodeEditorRepositoryService, useClass: MockCodeEditorRepositoryService },
@@ -221,7 +222,7 @@ describe('CodeEditorActionsComponent', () => {
         commitObservable.error('error!');
         expect(comp.isBuilding).toBeFalse();
         expect(comp.commitState).toEqual(CommitState.UNCOMMITTED_CHANGES);
-        expect(onErrorSpy).toHaveBeenNthCalledWith(1, 'commitFailed');
+        expect(onErrorSpy).toHaveBeenNthCalledWith(1, 'submitFailed');
 
         fixture.detectChanges();
         expect(commitButton.nativeElement.disabled).toBeFalse();

@@ -281,7 +281,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.participation!.id!, comp.result.id);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.participation!.id!, comp.result);
         expect(comp.isLoading).toBeFalse();
     });
 

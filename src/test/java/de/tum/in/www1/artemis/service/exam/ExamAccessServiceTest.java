@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -69,12 +69,12 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
 
     @AfterEach
     void cleanup() {
-        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
     }
 
     @BeforeEach
     void init() {
-        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 100;
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
         database.addUsers(TEST_PREFIX, 2, 1, 1, 2);
         User instructor1 = database.getUserByLogin(TEST_PREFIX + "instructor1");
         User instructor2 = database.getUserByLogin(TEST_PREFIX + "instructor2");
