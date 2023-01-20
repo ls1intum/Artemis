@@ -1574,9 +1574,9 @@ public class CourseTestService {
         var course = database.createCourse();
         // Test : Try to search for all tutors (tutors includes also editors) and instructors with search term
         var result = searchUsersTest(course, List.of("tutors", "instructors"), Optional.of(userPrefix + "tutor"), numberOfTutors, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(0);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).isEmpty();
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(0);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).isEmpty();
     }
 
     public void searchUsersInCourse_searchForStudentsTutorsAndInstructorsAndTooShortSearchTerm_shouldReturnBadRequest() throws Exception {
@@ -1592,10 +1592,10 @@ public class CourseTestService {
         // Test: Try to search or all students, tutors (tutors includes also editors)
         // and instructors with a long enough search term (at least 3 as students are included)
         var result = searchUsersTest(course, List.of("students", "tutors", "instructors"), Optional.of(userPrefix + "tutor"), numberOfTutors, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(0);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).isEmpty();
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(0);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).hasSize(0);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).isEmpty();
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).isEmpty();
     }
 
     private List<UserPublicInfoDTO> searchUsersTest(Course course, List<String> roles, Optional<String> loginOrName, int expectedSize, boolean shouldPass) throws Exception {
