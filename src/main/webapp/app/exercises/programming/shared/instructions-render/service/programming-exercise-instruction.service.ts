@@ -39,8 +39,14 @@ export class ProgrammingExerciseInstructionService {
             // Case 2: At least one test case is not successful, tests need to checked to find out if they were not fulfilled
             const { failed, notExecuted, successful } = this.separateTests(tests, latestResult);
 
-            // Exercise is done if none of the tests failed
-            const testCaseState = failed.length > 0 ? TestCaseState.FAIL : notExecuted.length > 0 || tests.length === 0 ? TestCaseState.NOT_EXECUTED : TestCaseState.SUCCESS;
+            let testCaseState;
+            if (failed.length > 0) {
+                testCaseState = TestCaseState.FAIL;
+            } else if (notExecuted.length > 0 || tests.length === 0) {
+                testCaseState = TestCaseState.NOT_EXECUTED;
+            } else {
+                testCaseState = TestCaseState.SUCCESS;
+            }
             return { testCaseState, detailed: { successfulTests: successful, failedTests: failed, notExecutedTests: notExecuted } };
         } else {
             // Case 3: There are no results
