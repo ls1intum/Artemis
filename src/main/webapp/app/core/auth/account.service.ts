@@ -156,7 +156,7 @@ export class AccountService implements IAccountService {
                     return this.userIdentity;
                 }),
                 catchError(() => {
-                    if (this.websocketService.stompClient && this.websocketService.stompClient.connected) {
+                    if (this.websocketService.isConnected()) {
                         this.websocketService.disconnect();
                     }
                     this.userIdentity = undefined;
