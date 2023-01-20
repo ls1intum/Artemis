@@ -119,7 +119,7 @@ describe('ChannelsOverviewDialogComponent', () => {
         channelItems[0].channelAction.emit(channelAction);
         fixture.detectChanges();
         tick(501);
-        expect(closeSpy).toHaveBeenCalledWith(channelOne);
+        expect(closeSpy).toHaveBeenCalledWith([channelOne, false]);
         expect(closeSpy).toHaveBeenCalledOnce();
     }));
 

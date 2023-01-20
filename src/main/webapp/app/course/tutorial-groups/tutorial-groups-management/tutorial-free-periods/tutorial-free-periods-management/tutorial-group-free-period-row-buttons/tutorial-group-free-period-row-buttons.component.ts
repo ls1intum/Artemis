@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -13,6 +13,7 @@ import { catchError, takeUntil } from 'rxjs/operators';
 @Component({
     selector: 'jhi-tutorial-group-free-period-row-buttons',
     templateUrl: './tutorial-group-free-period-row-buttons.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
     @Input() course: Course;
@@ -47,7 +48,7 @@ export class TutorialGroupFreePeriodRowButtonsComponent implements OnDestroy {
 
     openEditFreeDayDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(EditTutorialGroupFreePeriodComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(EditTutorialGroupFreePeriodComponent, { size: 'lg', scrollable: false, backdrop: 'static', animation: false });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroupFreePeriod = this.tutorialFreePeriod;
         modalRef.componentInstance.tutorialGroupsConfiguration = this.tutorialGroupConfiguration;

@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -15,6 +15,7 @@ import { Subject } from 'rxjs';
 @Component({
     selector: 'jhi-registered-students',
     templateUrl: './registered-students.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisteredStudentsComponent implements OnDestroy {
     @Input()
@@ -53,6 +54,7 @@ export class RegisteredStudentsComponent implements OnDestroy {
         private alertService: AlertService,
         private accountService: AccountService,
         private courseService: CourseManagementService,
+        private cdr: ChangeDetectorRef,
     ) {}
 
     ngOnDestroy(): void {
@@ -121,7 +123,8 @@ export class RegisteredStudentsComponent implements OnDestroy {
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     };
 
     clear() {
