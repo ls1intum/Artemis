@@ -2,18 +2,14 @@ package de.tum.in.www1.artemis.service.connectors.localci;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 
-import java.net.URL;
 import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
@@ -39,24 +35,15 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    @Value("${artemis.version-control.url}")
-    private URL localVCServerUrl;
-
-    private final GitService gitService;
-
     private final LocalCIBuildPlanService localCIBuildPlanService;
-
-    private final ObjectMapper mapper;
 
     private final UrlService urlService;
 
-    public LocalCIService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository, LocalCIBuildPlanService localCIBuildPlanService,
-            FeedbackRepository feedbackRepository, ObjectMapper mapper, UrlService urlService, BuildLogEntryService buildLogService,
-            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+    public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, LocalCIBuildPlanService localCIBuildPlanService, FeedbackRepository feedbackRepository,
+            UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
-        this.gitService = gitService;
         this.localCIBuildPlanService = localCIBuildPlanService;
-        this.mapper = mapper;
         this.urlService = urlService;
     }
 
@@ -90,7 +77,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
         // allow student or team access to the build plan in case this option was specified (only available for course exercises)
         ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
-        // TODO: Set publishBuildPlanUrl to false for all programming exercises create for local VC and local CI.
+        // TODO: Set publishBuildPlanUrl to false for all programming exercises created for local VC and local CI.
     }
 
     @Override

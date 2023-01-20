@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
@@ -25,11 +27,14 @@ public class ConsistencyCheckService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private final Environment environment;
+
     public ConsistencyCheckService(Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            ProgrammingExerciseRepository programmingExerciseRepository, Environment environment) {
         this.versionControlService = versionControlService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.environment = environment;
     }
 
     /**
@@ -110,6 +115,11 @@ public class ConsistencyCheckService {
      */
     private List<ConsistencyErrorDTO> checkCIConsistency(ProgrammingExercise programmingExercise) {
         List<ConsistencyErrorDTO> result = new ArrayList<>();
+
+        // TODO: Remove check when local CI is implemented.
+        if (Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
+            return result;
+        }
 
         if (!continuousIntegrationService.get().checkIfBuildPlanExists(programmingExercise.getProjectKey(), programmingExercise.getTemplateBuildPlanId())) {
             result.add(new ConsistencyErrorDTO(programmingExercise, ConsistencyErrorDTO.ErrorType.TEMPLATE_BUILD_PLAN_MISSING));

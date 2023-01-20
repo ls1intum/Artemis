@@ -240,7 +240,7 @@ public class ParticipationService {
         // Step 1b) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(exercise, participation);
         // TODO: Remove when "localci" is implemented.
-        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
+        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
             // Step 2a) create the build plan (based on the BASE build plan)
             participation = copyBuildPlan(participation);
             // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
