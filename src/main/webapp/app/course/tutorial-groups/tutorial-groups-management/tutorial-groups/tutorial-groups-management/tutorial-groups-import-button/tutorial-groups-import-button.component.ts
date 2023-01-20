@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output, TemplateRef, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output, TemplateRef, ViewChild } from '@angular/core';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsRegistrationImportDialogComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 import { EMPTY, Subject, from } from 'rxjs';
@@ -7,6 +7,7 @@ import { catchError, takeUntil } from 'rxjs/operators';
 @Component({
     selector: 'jhi-tutorial-groups-import-button',
     templateUrl: './tutorial-groups-import-button.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupsImportButtonComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();
@@ -22,7 +23,12 @@ export class TutorialGroupsImportButtonComponent implements OnDestroy {
 
     openTutorialGroupImportDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupsRegistrationImportDialogComponent, { size: 'xl', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupsRegistrationImportDialogComponent, {
+            size: 'xl',
+            scrollable: false,
+            backdrop: 'static',
+            animation: false,
+        });
         modalRef.componentInstance.courseId = this.courseId;
 
         from(modalRef.result)
@@ -37,7 +43,7 @@ export class TutorialGroupsImportButtonComponent implements OnDestroy {
 
     openWarning() {
         if (this.warningRef) {
-            const modalRef: NgbModalRef = this.modalService.open(this.warningRef, { centered: true });
+            const modalRef: NgbModalRef = this.modalService.open(this.warningRef, { centered: true, animation: false });
             from(modalRef.result)
                 .pipe(
                     catchError(() => EMPTY),

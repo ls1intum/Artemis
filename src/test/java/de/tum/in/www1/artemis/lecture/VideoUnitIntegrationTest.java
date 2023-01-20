@@ -73,6 +73,20 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createVideoUnit_withId_shouldReturnBadRequest() throws Exception {
+        videoUnit.setId(99L);
+        request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createVideoUnit_invalidUrl_shouldReturnBadRequest() throws Exception {
+        videoUnit.setSource("abc123");
+        request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
@@ -89,6 +103,16 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         this.videoUnit.setDescription("Changed");
         this.videoUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.OK);
         assertThat(this.videoUnit.getDescription()).isEqualTo("Changed");
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateVideoUnit_withoutLecture_shouldReturnConflict() throws Exception {
+        persistVideoUnitWithLecture();
+
+        this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.videoUnit.setLecture(null);
+        request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/video-units", this.videoUnit, VideoUnit.class, HttpStatus.CONFLICT);
     }
 
     @Test

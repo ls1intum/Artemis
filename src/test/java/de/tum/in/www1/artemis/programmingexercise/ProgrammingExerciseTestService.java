@@ -334,9 +334,13 @@ public class ProgrammingExerciseTestService {
      * can be invoked for teams and students
      */
     public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo) throws Exception {
+        setupRepositoryMocksParticipant(exercise, participantName, studentRepo, false);
+    }
+
+    public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo, boolean practiceMode) throws Exception {
         final var projectKey = exercise.getProjectKey();
         final var courseShortname = exercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        String participantRepoName = projectKey.toLowerCase() + "-" + participantName;
+        String participantRepoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + participantName;
         var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentRepo);
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, courseShortname, participantRepoName);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,

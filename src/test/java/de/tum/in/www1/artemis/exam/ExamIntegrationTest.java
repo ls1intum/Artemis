@@ -55,7 +55,7 @@ import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
-import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -198,15 +198,16 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         bitbucketRequestMockProvider.enableMockingOfRequests();
 
-        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
-        participantScoreSchedulerService.activate();
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 200;
+        participantScoreScheduleService.activate();
     }
 
     @AfterEach
     void tearDown() {
         bitbucketRequestMockProvider.reset();
-        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
-        participantScoreSchedulerService.shutdown();
+
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+        participantScoreScheduleService.shutdown();
     }
 
     @Test
@@ -2146,7 +2147,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(examChecklistDTO.getNumberOfTestRuns()).isNull();
         assertThat(examChecklistDTO.getNumberOfTotalExamAssessmentsFinishedByCorrectionRound()).hasSize(2).containsExactly(90L, 90L);
 
-        await().until(() -> participantScoreSchedulerService.isIdle());
+        await().until(() -> participantScoreScheduleService.isIdle());
 
         // change back to instructor user
         database.changeUser(TEST_PREFIX + "instructor1");

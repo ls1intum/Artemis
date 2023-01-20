@@ -40,9 +40,7 @@ describe('TutorialGroupSessionRowComponent', () => {
 
     it('should set class of cancelled sessions correctly', () => {
         component.session = { ...session, status: TutorialGroupSessionStatus.CANCELLED };
-        fixture.detectChanges();
         component.ngOnChanges();
-        fixture.detectChanges();
 
         // all columns should have the table danger class
         const tableCells = fixture.debugElement.queryAll(By.css('td'));

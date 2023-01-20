@@ -299,6 +299,9 @@ public class DatabaseUtilService {
     private RatingRepository ratingRepo;
 
     @Autowired
+    private BuildPlanRepository buildPlanRepository;
+
+    @Autowired
     private PasswordService passwordService;
 
     @Autowired
@@ -316,6 +319,9 @@ public class DatabaseUtilService {
     @Autowired
     private TutorialGroupSessionRepository tutorialGroupSessionRepository;
 
+    @Autowired
+    private LectureUnitRepository lectureUnitRepository;
+
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
@@ -327,6 +333,9 @@ public class DatabaseUtilService {
 
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
+
+    @Autowired
+    private BuildLogEntryRepository buildLogEntryRepository;
 
     // TODO: this should probably be moved into another service
     public void changeUser(String username) {
@@ -851,6 +860,27 @@ public class DatabaseUtilService {
             }
             course.setLectures(new HashSet<>(lectures));
         }).toList();
+    }
+
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(String userPrefix, boolean withParticipations, boolean withFiles) throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles);
+        return courses.stream().peek(course -> {
+            List<Lecture> lectures = new ArrayList<>(course.getLectures());
+            for (int i = 0; i < lectures.size(); i++) {
+                LearningGoal learningGoal = createLearningGoal(course);
+                lectures.set(i, addLearningGoalToLectureUnits(lectures.get(i), Set.of(learningGoal)));
+            }
+            course.setLectures(new HashSet<>(lectures));
+        }).toList();
+    }
+
+    public Lecture addLearningGoalToLectureUnits(Lecture lecture, Set<LearningGoal> learningGoals) {
+        Lecture l = lectureRepo.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture.getId());
+        l.getLectureUnits().forEach(lectureUnit -> {
+            lectureUnit.setLearningGoals(learningGoals);
+            lectureUnitRepository.save(lectureUnit);
+        });
+        return l;
     }
 
     public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
@@ -2684,6 +2714,17 @@ public class DatabaseUtilService {
 
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
         assertThat(tests).as("test case is initialized").hasSize(3);
+    }
+
+    public void addBuildPlanAndSecretToProgrammingExercise(ProgrammingExercise programmingExercise, String buildPlan) {
+        buildPlanRepository.setBuildPlanForExercise(buildPlan, programmingExercise);
+        programmingExercise.generateAndSetBuildPlanAccessSecret();
+        programmingExerciseRepository.save(programmingExercise);
+
+        var buildPlanOptional = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(programmingExercise.getId());
+        assertThat(buildPlanOptional).isPresent();
+        assertThat(buildPlanOptional.get().getBuildPlan()).as("build plan is set").isNotNull();
+        assertThat(programmingExercise.getBuildPlanAccessSecret()).as("build plan access secret is set").isNotNull();
     }
 
     public AuxiliaryRepository addAuxiliaryRepositoryToExercise(ProgrammingExercise programmingExercise) {
