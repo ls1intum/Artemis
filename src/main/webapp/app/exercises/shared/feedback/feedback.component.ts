@@ -5,7 +5,7 @@ import { catchError, switchMap, tap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { BuildLogEntry, BuildLogEntryArray, BuildLogType } from 'app/entities/build-log.model';
 import { Feedback, checkSubsequentFeedbackInAssessment } from 'app/entities/feedback.model';
-import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
+import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Exercise, ExerciseType, getCourseFromExercise } from 'app/entities/exercise.model';
 import { Result } from 'app/entities/result.model';
 import { BuildLogService } from 'app/exercises/programming/shared/service/build-log.service';
@@ -26,7 +26,6 @@ import dayjs from 'dayjs/esm';
 import { FeedbackItemService, FeedbackItemServiceImpl } from 'app/exercises/shared/feedback/item/feedback-item-service';
 import { ProgrammingFeedbackItemService } from 'app/exercises/shared/feedback/item/programming-feedback-item.service';
 import { FeedbackService } from 'app/exercises/shared/feedback/feedback-service';
-import { resultIsPreliminary } from '../result/result.utils';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
 import { ChartData } from 'app/exercises/shared/feedback/chart/feedback-chart-data';
 import { FeedbackChartService } from 'app/exercises/shared/feedback/chart/feedback-chart.service';
@@ -41,7 +40,6 @@ export class FeedbackComponent implements OnInit {
     readonly BuildLogType = BuildLogType;
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
-    readonly resultIsPreliminary = resultIsPreliminary;
     readonly roundValueSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
     readonly xAxisFormatting = axisTickFormattingWithPercentageSign;
 
@@ -95,8 +93,6 @@ export class FeedbackComponent implements OnInit {
     // Static chart settings
     labels: string[];
     legendPosition = LegendPosition.Below;
-
-    badge: Badge;
 
     feedbackItemService: FeedbackItemService;
     feedbackItemNodes: FeedbackNode[];
@@ -193,8 +189,6 @@ export class FeedbackComponent implements OnInit {
                     if (this.showScoreChart) {
                         this.updateChart(this.feedbackItemNodes);
                     }
-
-                    this.badge = ResultService.evaluateBadge(this.result.participation!, this.result);
 
                     return of(null);
                 }),

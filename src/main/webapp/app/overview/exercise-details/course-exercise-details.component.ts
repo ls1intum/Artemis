@@ -41,7 +41,6 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/e
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
-import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
 import { Course } from 'app/entities/course.model';
 
@@ -60,7 +59,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
-    readonly evaluateBadge = ResultService.evaluateBadge;
     readonly dayjs = dayjs;
 
     private currentUser: User;

@@ -21,7 +21,7 @@ import { captureException } from '@sentry/browser';
 import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { faCircleNotch, faExclamationCircle, faFile } from '@fortawesome/free-solid-svg-icons';
 import { faCircle } from '@fortawesome/free-regular-svg-icons';
-import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
+import { ResultService } from 'app/exercises/shared/result/result.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
@@ -60,7 +60,6 @@ export class ResultComponent implements OnInit, OnChanges {
     resultString: string;
     templateStatus: ResultTemplateStatus;
     submission?: Submission;
-    badge: Badge;
     resultTooltip?: string;
 
     latestIndividualDueDate?: dayjs.Dayjs;
@@ -132,10 +131,6 @@ export class ResultComponent implements OnInit, OnChanges {
                 this.resultString = this.resultService.getResultString(this.result, this.exercise, this.short);
             }
         });
-
-        if (this.showBadge && this.result) {
-            this.badge = ResultService.evaluateBadge(this.participation, this.result);
-        }
     }
 
     /**

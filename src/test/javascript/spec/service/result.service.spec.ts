@@ -247,36 +247,4 @@ describe('ResultService', () => {
             expect(captureExceptionSpy).toHaveBeenCalledWith('Tried to generate a result string, but either the result or exercise was undefined');
         });
     });
-
-    describe('evaluateBadge', () => {
-        it('should be calculated correctly for practice mode', () => {
-            const participation: StudentParticipation = { testRun: true, type: ParticipationType.STUDENT };
-            const result: Result = {};
-            expect(ResultService.evaluateBadge(participation, result)).toEqual({
-                class: 'bg-secondary',
-                text: 'artemisApp.result.practice',
-                tooltip: 'artemisApp.result.practiceTooltip',
-            });
-        });
-
-        it('should be calculated correctly for rated submission', () => {
-            const participation: Participation = {};
-            const result: Result = { rated: true };
-            expect(ResultService.evaluateBadge(participation, result)).toEqual({
-                class: 'bg-success',
-                text: 'artemisApp.result.graded',
-                tooltip: 'artemisApp.result.gradedTooltip',
-            });
-        });
-
-        it('should be calculated correctly for unrated submission', () => {
-            const participation: Participation = {};
-            const result: Result = { rated: false };
-            expect(ResultService.evaluateBadge(participation, result)).toEqual({
-                class: 'bg-info',
-                text: 'artemisApp.result.notGraded',
-                tooltip: 'artemisApp.result.notGradedTooltip',
-            });
-        });
-    });
 });
