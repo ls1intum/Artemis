@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
 import { Subject, finalize } from 'rxjs';
 import { BarControlConfiguration } from 'app/overview/tab-bar/tab-bar';
 import { Course } from 'app/entities/course.model';
@@ -18,6 +18,7 @@ type filter = 'all' | 'registered';
 @Component({
     selector: 'jhi-course-tutorial-groups',
     templateUrl: './course-tutorial-groups.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();
@@ -42,6 +43,7 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
         private tutorialGroupService: TutorialGroupsService,
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
+        private cdr: ChangeDetectorRef,
     ) {}
 
     ngOnDestroy(): void {
@@ -54,14 +56,17 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
     }
 
     ngOnInit(): void {
-        this.activatedRoute.parent?.parent?.paramMap.pipe(takeUntil(this.ngUnsubscribe)).subscribe((parentParams) => {
-            this.courseId = Number(parentParams.get('courseId'));
-            if (this.courseId) {
-                this.setCourse();
-                this.setTutorialGroups();
-                this.subscribeToCourseUpdates();
-            }
-        });
+        this.activatedRoute.parent?.parent?.paramMap
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((parentParams) => {
+                this.courseId = Number(parentParams.get('courseId'));
+                if (this.courseId) {
+                    this.setCourse();
+                    this.setTutorialGroups();
+                    this.subscribeToCourseUpdates();
+                }
+            })
+            .add(() => this.cdr.detectChanges());
         this.subscribeToQueryParameter();
         this.updateQueryParameters();
     }
@@ -71,11 +76,14 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
     }
 
     subscribeToQueryParameter() {
-        this.activatedRoute.queryParams.pipe(takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
-            if (queryParams.filter) {
-                this.selectedFilter = queryParams.filter as filter;
-            }
-        });
+        this.activatedRoute.queryParams
+            .pipe(takeUntil(this.ngUnsubscribe))
+            .subscribe((queryParams) => {
+                if (queryParams.filter) {
+                    this.selectedFilter = queryParams.filter as filter;
+                }
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     subscribeToCourseUpdates() {
@@ -86,7 +94,8 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
                 this.course = course;
                 this.setFreeDays();
                 this.setTutorialGroups();
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     private setFreeDays() {
@@ -157,7 +166,8 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
                     this.updateCachedTutorialGroups();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     loadCourseFromServer() {
@@ -177,7 +187,8 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
                     this.setFreeDays();
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     renderTopBarControls() {
@@ -187,14 +198,16 @@ export class CourseTutorialGroupsComponent implements AfterViewInit, OnInit, OnD
     }
 
     updateQueryParameters() {
-        this.router.navigate([], {
-            relativeTo: this.activatedRoute,
-            queryParams: {
-                filter: this.selectedFilter,
-            },
-            replaceUrl: true,
-            queryParamsHandling: 'merge',
-        });
+        this.router
+            .navigate([], {
+                relativeTo: this.activatedRoute,
+                queryParams: {
+                    filter: this.selectedFilter,
+                },
+                replaceUrl: true,
+                queryParamsHandling: 'merge',
+            })
+            .finally(() => this.cdr.detectChanges());
     }
 
     onFilterChange(newFilter: filter) {
