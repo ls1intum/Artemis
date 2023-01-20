@@ -92,7 +92,10 @@ public class SubmissionResource {
         for (Result result : results) {
             resultService.deleteResult(result, true);
         }
-        buildLogEntryRepository.deleteByProgrammingSubmissionId(submission.get().getId());
+        if (submission.get() instanceof ProgrammingSubmission) {
+            ((ProgrammingSubmission) submission.get()).setBuildLogEntries(List.of());
+            submissionRepository.save(submission.get());
+        }
         buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.get().getId());
         submissionRepository.deleteById(id);
 
