@@ -197,6 +197,7 @@ export function startParticipationInProgrammingExercise(courseId: number, exerci
  */
 export class ProgrammingExerciseSubmission {
     files: ProgrammingExerciseFile[];
+    expectedResult: string;
 }
 
 class ProgrammingExerciseFile {
