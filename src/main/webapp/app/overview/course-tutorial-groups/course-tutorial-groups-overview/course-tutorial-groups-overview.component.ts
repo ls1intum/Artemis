@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Router } from '@angular/router';
 import { Course } from 'app/entities/course.model';
@@ -6,6 +6,7 @@ import { Course } from 'app/entities/course.model';
 @Component({
     selector: 'jhi-course-tutorial-groups-overview',
     templateUrl: './course-tutorial-groups-overview.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CourseTutorialGroupsOverviewComponent {
     @Input()
