@@ -55,7 +55,7 @@
         </span>
         <ng-template #no_session></ng-template>
     </td>
-    <td *ngIf="extraColumn">
+    <td>
         <div class="extra-buttons">
             <ng-template [ngTemplateOutlet]="extraColumn" [ngTemplateOutletContext]="{ $implicit: tutorialGroup }"></ng-template>
         </div>

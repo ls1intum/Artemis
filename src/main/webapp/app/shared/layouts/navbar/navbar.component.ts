@@ -453,6 +453,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'lectures':
                 this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
                 break;
+            case 'learning-goals':
+                this.addResolvedTitleAsCrumb(EntityType.LEARNING_GOAL, [Number(segment)], currentPath, segment);
+                break;
             case 'exams':
                 this.routeExamId = Number(segment);
                 this.addResolvedTitleAsCrumb(EntityType.EXAM, [this.routeExamId], currentPath, segment);
