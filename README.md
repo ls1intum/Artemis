@@ -76,7 +76,7 @@ You can find a guide on [how to write documentation](docs/README.md).
 
 ### Server setup
 
-You can set up Artemis in conjunction with either [`GitLab and Jenkins`](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup) or with [`Jira, Bitbucket and Bamboo`](https://docs.artemis.cit.tum.de/dev/setup/#bamboo-bitbucket-and-jira-setup).
+You can set up Artemis in conjunction with either [`GitLab and Jenkins`](https://docs.artemis.cit.tum.de/dev/setup/#jenkins-and-gitlab-setup), [`GitLab and GitLab CI (experimental)`](https://docs.artemis.cit.tum.de/dev/setup/#gitlab-ci-and-gitlab-setup) or with [`Jira, Bitbucket and Bamboo`](https://docs.artemis.cit.tum.de/dev/setup/#bamboo-bitbucket-and-jira-setup).
 Artemis uses these external tools for user management and the configuration of programming exercises.
 
 ### Administration setup
@@ -178,7 +178,7 @@ The following universities are actively using Artemis or are currently evaluatin
   Main contact person: [Steffen Becker](mailto:steffen.becker@informatik.uni-stuttgart.de)  
   
 * **Universität Passau**  
-  https://artemis.fim.uni-passau.de  
+  https://artemis.fim.uni-passau.de (only accessible via the university network/VPN)  
   Main contact person: [Benedikt Fein](mailto:fein@fim.uni-passau.de)  
   
 * **Karlsruhe Institute of Technology**  

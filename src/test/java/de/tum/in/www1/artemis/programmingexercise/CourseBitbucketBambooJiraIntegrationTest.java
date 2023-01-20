@@ -38,7 +38,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @BeforeEach
     void setup() {
-        participantScoreSchedulerService.activate();
+        participantScoreScheduleService.activate();
         courseTestService.setup(TEST_PREFIX, this);
         jiraRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -210,7 +210,13 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForDashboard() throws Exception {
-        courseTestService.testGetCourseForDashboard();
+        courseTestService.testGetCourseForDashboard(false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForDashboard_userRefresh() throws Exception {
+        courseTestService.testGetCourseForDashboard(true);
     }
 
     @Test
@@ -702,11 +708,12 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
         String group = "students";
         String registrationNumber1 = "1234567";
         String registrationNumber2 = "2345678";
+        String email = "test@mail";
         jiraRequestMockProvider.mockAddUserToGroup(group, false);
         jiraRequestMockProvider.mockAddUserToGroup(group, false);
         doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber1);
         doReturn(Optional.empty()).when(ldapUserService).findByRegistrationNumber(registrationNumber2);
-        courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2);
+        courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2, email);
     }
 
     @Test

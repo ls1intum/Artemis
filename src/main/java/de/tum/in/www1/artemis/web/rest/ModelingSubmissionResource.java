@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 import javax.validation.Valid;
@@ -258,7 +257,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         var submission = modelingSubmissionService.findRandomSubmissionWithoutExistingAssessment(lockSubmission, correctionRound, modelingExercise, isExamMode)
             .orElse(null);
 
-        if (Objects.nonNull(submission)) {
+        if (submission != null) {
             // needed to show the grading criteria in the assessment view
             List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
             modelingExercise.setGradingCriteria(gradingCriteria);

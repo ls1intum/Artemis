@@ -13,7 +13,6 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -86,10 +85,9 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @AfterEach
     void tearDown() throws InterruptedException {
         // not yet finished scheduled futures may otherwise affect following tests
-        for (final var lifecycle : ExerciseLifecycle.values()) {
-            scheduleService.cancelScheduledTaskForLifecycle(programmingExercise.getId(), lifecycle);
-        }
+        scheduleService.clearAllTasks();
 
+        // TODO: find a better solution in the future, because this makes the tests slower
         // Some futures might already run while all tasks are cancelled. Waiting a bit makes sure the mocks are not called by the futures after the reset.
         // Otherwise, the following test might fail.
         Thread.sleep(500);  // ok
@@ -113,7 +111,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
             ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation = (ProgrammingExerciseStudentParticipation) studentParticipation;
             verify(versionControlService, timeout(timeoutInMs).times(callCount)).setRepositoryPermissionsToReadOnly(programmingExerciseStudentParticipation.getVcsRepositoryUrl(),
                     programmingExercise.getProjectKey(), programmingExerciseStudentParticipation.getStudents());
-
         }
     }
 
@@ -215,7 +212,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldScheduleExercisesWithBuildAndTestDateInFuture() throws Exception {
         mockStudentRepoLocks();
-        long delayMS = 200;
+        long delayMS = 800;
         programmingExercise.setDueDate(plusMillis(ZonedDateTime.now(), delayMS / 2));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(plusMillis(ZonedDateTime.now(), delayMS));
         programmingExerciseRepository.save(programmingExercise);
@@ -251,12 +248,11 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verify(programmingTriggerService, never()).triggerInstructorBuildForExercise(programmingExercise.getId());
     }
 
-    @Disabled("TODO FIX SERVER TEST")
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldUpdateScoresIfHasTestsAfterDueDateAndNoBuildAfterDueDate() throws Exception {
         mockStudentRepoLocks();
-        final var dueDateDelayMS = 200;
+        final var dueDateDelayMS = 500;
         programmingExercise.setDueDate(ZonedDateTime.now().plus(dueDateDelayMS / 2, ChronoUnit.MILLIS));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
         programmingExerciseRepository.save(programmingExercise);
@@ -280,7 +276,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldNotUpdateScoresIfHasTestsAfterDueDateAndBuildAfterDueDate() throws Exception {
         mockStudentRepoLocks();
-        final var dueDateDelayMS = 200;
+        final var dueDateDelayMS = 500;
         programmingExercise.setDueDate(ZonedDateTime.now().plus(dueDateDelayMS / 2, ChronoUnit.MILLIS));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(plusMillis(ZonedDateTime.now(), dueDateDelayMS));
         programmingExerciseRepository.save(programmingExercise);
@@ -298,7 +294,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verify(programmingExerciseGradingService, never()).updateAllResults(programmingExercise);
     }
 
-    @Disabled("TODO FIX SERVER TEST")
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "admin", roles = "ADMIN")
@@ -375,10 +370,10 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         verifyLockStudentRepositoryOperation(true, participationIndividualDueDate, 3 * delayMS + SCHEDULER_TASK_TRIGGER_DELAY_MS);
     }
 
-    @Disabled("TODO FIX SERVER TEST")
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateBetweenDueDateAndBuildAndTestDate() throws Exception {
+        bitbucketRequestMockProvider.reset();
         mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
@@ -433,7 +428,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void scheduleIndividualDueDateTestsAfterDueDateNoBuildAndTestDate() throws Exception {
         mockStudentRepoLocks();
-        final long delayMS = 200;
+        final long delayMS = 500;
         final ZonedDateTime now = ZonedDateTime.now();
 
         // no build and test date, but after_due_date tests ⇒ score update needed
@@ -458,7 +453,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void cancelAllSchedulesOnRemovingExerciseDueDate() throws Exception {
         mockStudentRepoLocks();
-        final long delayMS = 200;
+        final long delayMS = 500;
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, delayMS / 2, null);
@@ -495,7 +490,6 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         }
     }
 
-    @Disabled("TODO FIX SERVER TEST")
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void cancelIndividualSchedulesOnRemovingIndividualDueDate() throws Exception {
@@ -529,7 +523,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void updateIndividualScheduleOnIndividualDueDateChange() throws Exception {
         mockStudentRepoLocks();
-        final long delayMS = 200;
+        final long delayMS = 500;
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, delayMS / 2, null);
@@ -557,7 +551,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "admin", roles = "ADMIN")
     void keepIndividualScheduleOnExerciseDueDateChange() throws Exception {
         mockStudentRepoLocks();
-        final long delayMS = 200;
+        final long delayMS = 500;
         final ZonedDateTime now = ZonedDateTime.now();
 
         setupProgrammingExerciseDates(now, delayMS / 2, null);

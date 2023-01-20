@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { onError } from 'app/shared/util/global.utils';
@@ -14,6 +14,7 @@ import { takeUntil } from 'rxjs/operators';
 @Component({
     selector: 'jhi-edit-tutorial-group-free-period',
     templateUrl: './edit-tutorial-group-free-period.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditTutorialGroupFreePeriodComponent implements OnDestroy {
     isLoading = false;

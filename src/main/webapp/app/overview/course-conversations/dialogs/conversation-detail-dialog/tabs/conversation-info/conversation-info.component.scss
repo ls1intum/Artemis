@@ -1,0 +1,35 @@
+.conversation-info {
+    .info-container {
+        .info-section {
+            padding: 0.5rem;
+
+            .action-button {
+                margin: 0.25rem;
+                text-decoration: none;
+
+                &:hover {
+                    text-decoration: underline;
+                }
+
+                &.right {
+                    position: absolute;
+                    top: 0;
+                    right: 0;
+                }
+            }
+
+            .wide-button {
+                width: 50%;
+            }
+
+            textarea {
+                min-height: 5rem;
+                resize: none;
+
+                &.large {
+                    min-height: 8rem;
+                }
+            }
+        }
+    }
+}

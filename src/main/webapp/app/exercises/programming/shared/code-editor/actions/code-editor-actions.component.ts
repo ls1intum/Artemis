@@ -238,9 +238,9 @@ export class CodeEditorActionsComponent implements OnInit, OnDestroy, OnChanges 
                 error: (error: Error) => {
                     this.commitState = CommitState.UNCOMMITTED_CHANGES;
                     if (error.message === ConnectionError.message) {
-                        this.onError.emit('commitFailed' + error.message);
+                        this.onError.emit('submitFailed' + error.message);
                     } else {
-                        this.onError.emit('commitFailed');
+                        this.onError.emit('submitFailed');
                     }
                 },
             });

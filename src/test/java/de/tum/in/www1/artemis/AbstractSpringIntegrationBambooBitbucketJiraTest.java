@@ -96,7 +96,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     protected PasswordService passwordService;
 
     @AfterEach
-    public void resetSpyBeans() {
+    protected void resetSpyBeans() {
         Mockito.reset(ldapUserService, continuousIntegrationUpdateService, continuousIntegrationService, versionControlService, bambooServer, textBlockService);
         super.resetSpyBeans();
     }
@@ -125,6 +125,24 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
     }
 
+    public void mockConnectorRequestsForStartPractice(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists, HttpStatus status)
+            throws IOException, URISyntaxException {
+        // Step 1a)
+        bitbucketRequestMockProvider.mockCopyRepositoryForParticipation(exercise, username, true);
+        // Step 1b)
+        bitbucketRequestMockProvider.mockConfigureRepository(exercise, username, users, ltiUserExists, true);
+        // Step 2a)
+        bambooRequestMockProvider.mockCopyBuildPlanForParticipation(exercise, username, true);
+        // Step 2b)
+        // Note: no need to mock empty commit (Step 2c) because this is done on a git repository
+        mockUpdatePlanRepositoryForParticipation(exercise, username, true);
+        // Step 1c)
+        bitbucketRequestMockProvider.mockAddWebHooks(exercise);
+
+        // Mock Default Branch
+        bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, exercise.getProjectKey());
+    }
+
     @Override
     public void mockConnectorRequestsForResumeParticipation(ProgrammingExercise exercise, String username, Set<User> users, boolean ltiUserExists)
             throws IOException, URISyntaxException {
@@ -137,8 +155,12 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
     @Override
     public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username) throws IOException, URISyntaxException {
+        mockUpdatePlanRepositoryForParticipation(exercise, username, false);
+    }
+
+    public void mockUpdatePlanRepositoryForParticipation(ProgrammingExercise exercise, String username, boolean practiceMode) throws IOException, URISyntaxException {
         final var projectKey = exercise.getProjectKey();
-        final var bitbucketRepoName = projectKey.toLowerCase() + "-" + username;
+        final var bitbucketRepoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + username;
         mockUpdatePlanRepository(exercise, username, ASSIGNMENT_REPO_NAME, bitbucketRepoName, List.of());
         bambooRequestMockProvider.mockEnablePlan(exercise.getProjectKey(), username, true, false);
     }

@@ -42,7 +42,7 @@ describe('Programming Exercise Management', () => {
                 });
         });
 
-        it('Deletes an existing programming exercise', function () {
+        it('Deletes an existing programming exercise', () => {
             cy.login(admin, '/').wait(500);
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(course.shortName!);
@@ -62,7 +62,7 @@ describe('Programming Exercise Management', () => {
     });
 
     describe('Programming exercise creation', () => {
-        it('Creates a new programming exercise', function () {
+        it('Creates a new programming exercise', () => {
             cy.login(admin, '/');
             navigationBar.openCourseManagement();
             courseManagementPage.openExercisesOfCourse(course.shortName!);

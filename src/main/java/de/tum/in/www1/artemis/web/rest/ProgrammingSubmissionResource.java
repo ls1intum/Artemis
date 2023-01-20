@@ -196,7 +196,7 @@ public class ProgrammingSubmissionResource {
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
-        Participation participation = participationRepository.findByIdElseThrow(participationId);
+        final Participation participation = participationRepository.findByIdElseThrow(participationId);
         if (!(participation instanceof ProgrammingExerciseParticipation programmingExerciseParticipation)) {
             throw new EntityNotFoundException("Participation is not a ProgrammingExerciseParticipation");
         }
@@ -446,8 +446,7 @@ public class ProgrammingSubmissionResource {
 
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         ProgrammingSubmission submission;
-        if (programmingExercise.getAllowManualFeedbackRequests() && Objects.nonNull(programmingExercise.getDueDate())
-                && programmingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
+        if (programmingExercise.getAllowManualFeedbackRequests() && programmingExercise.getDueDate() != null && programmingExercise.getDueDate().isAfter(ZonedDateTime.now())) {
             // Assess manual feedback request before the deadline
             submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
         }
@@ -458,7 +457,7 @@ public class ProgrammingSubmissionResource {
             programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
         }
 
-        if (Objects.nonNull(submission)) {
+        if (submission != null) {
             if (lockSubmission) {
                 Result lockedResult = programmingSubmissionService.lockSubmission(submission, correctionRound);
                 submission = (ProgrammingSubmission) lockedResult.getSubmission();

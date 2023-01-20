@@ -28,7 +28,7 @@ following dependencies/tools on your machine:
    Artemis uses Hibernate to store entities in a MySQL database.
    Download and install the MySQL Community Server (8.0.x) and configure it according to section
    `MySQL Setup <#mysql-setup>`__.
-3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=16.13.0 < 17) to compile
+3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=18.10.0 < 19) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
 4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=8.1.0) to
@@ -42,7 +42,7 @@ following dependencies/tools on your machine:
    There are multiple stacks available for the integration with Artemis:
 
    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
-   * GitLab and GitLab CI (under development, not yet production ready)
+   * `GitLab and GitLab CI <#gitlab-ci-and-gitlab-setup>`__ (experimental, not yet production ready)
    * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__)
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -519,6 +519,11 @@ instead of the TUM defaults:
 .. include:: setup/jenkins-gitlab.rst
 
 ------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/gitlabci-gitlab.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
 
 Athene Service
 --------------

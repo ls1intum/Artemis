@@ -56,6 +56,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void initTestCase() {
         this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.attachment = ModelFactory.generateAttachment(null);
+        this.attachment.setName("          LoremIpsum              ");
         this.attachment.setLink("files/temp/example.txt");
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.attachmentUnit = new AttachmentUnit();
@@ -124,12 +125,27 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(persistedAttachment.getId()).isNotNull();
         var updatedAttachmentUnit = attachmentUnitRepository.findById(persistedAttachmentUnit.getId()).get();
         assertThat(updatedAttachmentUnit.getAttachment()).isEqualTo(persistedAttachment);
+        assertThat(updatedAttachmentUnit.getAttachment().getName()).isEqualTo("LoremIpsum");
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createAttachmentUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentUnit_withUnitId_shouldReturnBadRequest() throws Exception {
+        attachmentUnit.setId(99L);
+        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentUnit_withAttachmentId_shouldReturnBadRequest() throws Exception {
+        attachment.setId(99L);
+        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isBadRequest());
     }
 
     @Test
@@ -181,8 +197,15 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void updateAttachmentUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
         persistAttachmentUnitWithLecture();
-
         request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentUnit_withoutLecture_shouldReturnConflict() throws Exception {
+        persistAttachmentUnitWithLecture();
+        attachmentUnit.setLecture(null);
+        request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isConflict());
     }
 
     @Test
