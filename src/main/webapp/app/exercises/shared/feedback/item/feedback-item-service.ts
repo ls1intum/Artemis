@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Feedback, FeedbackType } from 'app/entities/feedback.model';
+import { Feedback } from 'app/entities/feedback.model';
 import { TranslateService } from '@ngx-translate/core';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { Exercise } from 'app/entities/exercise.model';
