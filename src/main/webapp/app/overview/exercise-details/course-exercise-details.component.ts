@@ -44,11 +44,13 @@ import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/Plagia
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { MAX_RESULT_HISTORY_LENGTH } from 'app/overview/result-history/result-history.component';
 import { Course } from 'app/entities/course.model';
+import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
     styleUrls: ['../course-overview.scss', '../tab-bar/tab-bar.scss'],
+    providers: [ExerciseCacheService],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
