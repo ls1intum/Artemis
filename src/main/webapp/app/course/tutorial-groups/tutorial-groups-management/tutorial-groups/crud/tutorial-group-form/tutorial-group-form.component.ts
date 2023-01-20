@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, CourseGroup, Language } from 'app/entities/course.model';
@@ -38,6 +38,7 @@ export const titleRegex = new RegExp('^[a-zA-Z0-9]{1}[a-zA-Z0-9- ]{0,19}$');
 @Component({
     selector: 'jhi-tutorial-group-form',
     templateUrl: './tutorial-group-form.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy {
     @Input()
@@ -119,8 +120,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges, OnDestroy 
 
     get isSubmitPossible() {
         if (this.configureSchedule) {
+            // check all controls
             return !this.form.invalid;
         } else {
+            // only check the parts of the form not covered by the schedule form
             return !(
                 this.titleControl!.invalid ||
                 this.teachingAssistantControl!.invalid ||
