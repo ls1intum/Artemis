@@ -1609,6 +1609,7 @@ public class CourseTestService {
             return foundUsers;
         }
         else {
+            assertThat(foundUsers).isNull();
             return emptyList();
         }
     }
