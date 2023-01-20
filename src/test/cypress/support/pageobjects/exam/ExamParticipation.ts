@@ -27,7 +27,7 @@ export class ExamParticipation {
                 this.makeQuizExerciseSubmission(exerciseID, additionalData!.quizExerciseID!);
                 break;
             case EXERCISE_TYPE.Programming:
-                this.makeProgrammingExerciseSubmission(exerciseID, additionalData!.submission!, additionalData!.expectedScore!);
+                this.makeProgrammingExerciseSubmission(exerciseID, additionalData!.submission!);
                 break;
         }
     }
@@ -40,7 +40,7 @@ export class ExamParticipation {
         cy.wait(1000);
     }
 
-    private makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission, expectedScore: number) {
+    private makeProgrammingExerciseSubmission(exerciseID: number, submission: ProgrammingExerciseSubmission) {
         const onlineEditor = artemis.pageobjects.exercise.programming.editor;
         onlineEditor.toggleCompressFileTree(exerciseID);
         onlineEditor.deleteFile(exerciseID, 'Client.java');
@@ -48,7 +48,7 @@ export class ExamParticipation {
         onlineEditor.deleteFile(exerciseID, 'MergeSort.java');
         onlineEditor.typeSubmission(exerciseID, submission, 'de.test');
         onlineEditor.submit(exerciseID);
-        onlineEditor.getResultScoreFromExercise(exerciseID).contains(`${expectedScore}%`).and('be.visible');
+        onlineEditor.getResultScoreFromExercise(exerciseID).contains(submission.expectedResult).and('be.visible');
     }
 
     makeModelingExerciseSubmission(exerciseID: number) {
