@@ -1530,15 +1530,15 @@ public class CourseTestService {
         var course = database.createCourse();
         // Test: search for all (no login or name) tutors (tutors includes also editors)
         var result = searchUsersTest(course, List.of("tutors"), Optional.empty(), numberOfTutors + numberOfEditors, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor).collect(Collectors.toList())).hasSize(numberOfEditors);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant).collect(Collectors.toList())).hasSize(numberOfTutors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(numberOfEditors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
     }
 
     public void searchUsersInCourse_searchForAllInstructor_shouldReturnAllInstructors() throws Exception {
         var course = database.createCourse();
         // Test: search for all (no login or name) instructors
         var result = searchUsersTest(course, List.of("instructors"), Optional.empty(), numberOfInstructors, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor).collect(Collectors.toList())).hasSize(numberOfInstructors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(numberOfInstructors);
     }
 
     public void searchUsersInCourse_searchForAllStudents_shouldReturnBadRequest() throws Exception {
@@ -1558,25 +1558,25 @@ public class CourseTestService {
         // Test: Try to search for students with a long enough search term (at least 3 as students are included)
         // Note: -1 as student1 is the requesting user and will not be returned
         var result = searchUsersTest(course, List.of("students"), Optional.of(userPrefix + "student"), numberOfStudents - 1, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent).collect(Collectors.toList())).hasSize(numberOfStudents - 1);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).hasSize(numberOfStudents - 1);
     }
 
     public void searchUsersInCourse_searchForAllTutorsAndInstructors_shouldReturnAllTutorsEditorsAndInstructors() throws Exception {
         var course = database.createCourse();
         // Test: Try to search for all tutors (tutors includes also editors) and instructors
         var result = searchUsersTest(course, List.of("tutors", "instructors"), Optional.empty(), numberOfTutors + numberOfEditors + numberOfInstructors, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor).collect(Collectors.toList())).hasSize(numberOfEditors);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant).collect(Collectors.toList())).hasSize(numberOfTutors);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor).collect(Collectors.toList())).hasSize(numberOfInstructors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(numberOfEditors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(numberOfInstructors);
     }
 
     public void searchUsersInCourse_searchForTutorsAndInstructors_shouldReturnUsersMatchingSearchTerm() throws Exception {
         var course = database.createCourse();
         // Test : Try to search for all tutors (tutors includes also editors) and instructors with search term
         var result = searchUsersTest(course, List.of("tutors", "instructors"), Optional.of(userPrefix + "tutor"), numberOfTutors, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor).collect(Collectors.toList())).hasSize(0);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant).collect(Collectors.toList())).hasSize(numberOfTutors);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor).collect(Collectors.toList())).hasSize(0);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(0);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(0);
     }
 
     public void searchUsersInCourse_searchForStudentsTutorsAndInstructorsAndTooShortSearchTerm_shouldReturnBadRequest() throws Exception {
@@ -1592,10 +1592,10 @@ public class CourseTestService {
         // Test: Try to search or all students, tutors (tutors includes also editors)
         // and instructors with a long enough search term (at least 3 as students are included)
         var result = searchUsersTest(course, List.of("students", "tutors", "instructors"), Optional.of(userPrefix + "tutor"), numberOfTutors, true);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor).collect(Collectors.toList())).hasSize(0);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant).collect(Collectors.toList())).hasSize(numberOfTutors);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor).collect(Collectors.toList())).hasSize(0);
-        assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent).collect(Collectors.toList())).hasSize(0);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsEditor)).hasSize(0);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(0);
+        assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).hasSize(0);
     }
 
     private List<UserPublicInfoDTO> searchUsersTest(Course course, List<String> roles, Optional<String> loginOrName, int expectedSize, boolean shouldPass) throws Exception {
