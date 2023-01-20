@@ -19,8 +19,8 @@ import de.tum.in.www1.artemis.domain.notification.Notification;
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
     @Query("""
-            SELECT notification FROM Notification notification LEFT JOIN notification.course LEFT JOIN notification.recipient
-            WHERE notification.notificationDate IS NOT NULL
+                SELECT notification FROM Notification notification LEFT JOIN notification.course LEFT JOIN notification.recipient
+                WHERE notification.notificationDate IS NOT NULL
                 AND (cast(:hideUntil as timestamp ) IS NULL OR notification.notificationDate > :hideUntil)
                 AND (
                     (type(notification) = GroupNotification
@@ -31,21 +31,22 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                         )
                     )
                     OR type(notification) = SingleUserNotification and notification.recipient.login = :#{#login}
+                    OR type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :#{#tutorialGroupIds}
                 )
             """)
     Page<Notification> findAllNotificationsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
-            @Param("hideUntil") ZonedDateTime hideUntil, Pageable pageable);
+            @Param("hideUntil") ZonedDateTime hideUntil, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds, Pageable pageable);
 
     @Query("""
-            SELECT notification FROM Notification notification LEFT JOIN notification.course LEFT JOIN notification.recipient
-            WHERE notification.notificationDate IS NOT NULL
-                AND (:#{#hideUntil} IS NULL OR notification.notificationDate > :#{#hideUntil})
-                AND (
-                     (type(notification) = GroupNotification
-                        AND (notification.title NOT IN :#{#deactivatedTitles}
-                            OR notification.title IS NULL
-                        )
-                        AND ((notification.course.instructorGroupName IN :#{#currentGroups} AND notification.type = 'INSTRUCTOR')
+                SELECT notification FROM Notification notification LEFT JOIN notification.course LEFT JOIN notification.recipient
+                WHERE notification.notificationDate IS NOT NULL
+                    AND (:#{#hideUntil} IS NULL OR notification.notificationDate > :#{#hideUntil})
+                    AND (
+                         (type(notification) = GroupNotification
+                            AND (notification.title NOT IN :#{#deactivatedTitles}
+                                OR notification.title IS NULL
+                            )
+                            AND ((notification.course.instructorGroupName IN :#{#currentGroups} AND notification.type = 'INSTRUCTOR')
                            OR (notification.course.teachingAssistantGroupName IN :#{#currentGroups} AND notification.type = 'TA')
                            OR (notification.course.editorGroupName IN :#{#currentGroups} AND notification.type = 'EDITOR')
                            OR (notification.course.studentGroupName IN :#{#currentGroups} AND notification.type = 'STUDENT'))
@@ -56,8 +57,14 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
                             OR notification.title IS NULL
                         )
                      )
+                     OR (type(notification) = TutorialGroupNotification and notification.tutorialGroup.id IN :#{#tutorialGroupIds}
+                        AND (notification.title NOT IN :#{#deactivatedTitles}
+                            OR notification.title IS NULL
+                        )
+                     )
                 )
             """)
     Page<Notification> findAllNotificationsFilteredBySettingsForRecipientWithLogin(@Param("currentGroups") Set<String> currentUserGroups, @Param("login") String login,
-            @Param("hideUntil") ZonedDateTime hideUntil, @Param("deactivatedTitles") Set<String> deactivatedTitles, Pageable pageable);
+            @Param("hideUntil") ZonedDateTime hideUntil, @Param("deactivatedTitles") Set<String> deactivatedTitles, @Param("tutorialGroupIds") Set<Long> tutorialGroupIds,
+            Pageable pageable);
 }
