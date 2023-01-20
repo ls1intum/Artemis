@@ -645,7 +645,7 @@ public class FileService implements DisposableBean {
         if (startPath.contains(targetString)) {
             log.debug("Target String found, replacing..");
             String targetPath = startPath.replace(targetString, replacementString);
-            renameDirectory(Paths.get(startPath), Paths.get(targetPath));
+            renameDirectory(Paths.get(startPath).normalize(), Paths.get(targetPath).normalize());
             directory = new File(targetPath);
         }
 
