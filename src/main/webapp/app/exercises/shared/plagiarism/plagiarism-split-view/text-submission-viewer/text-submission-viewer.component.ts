@@ -176,7 +176,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 this.repositoryService.getFile(file, domain).subscribe({
                     next: ({ fileContent }) => {
                         this.loading = false;
-                        this.fileContent = this.insertMatchTokens(escape(fileContent));
+                        this.fileContent = this.insertMatchTokens(fileContent);
                     },
                     error: () => {
                         this.loading = false;
@@ -206,7 +206,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
         if (position < 0) {
             position = 0;
         }
-        return [text.slice(0, position), token, text.slice(position)].join('');
+        return escape(text.slice(0, position)) + token + escape(text.slice(position));
     }
 
     insertMatchTokens(fileContent: string) {
