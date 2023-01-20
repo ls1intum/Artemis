@@ -48,7 +48,7 @@
         >
         </jhi-confirm-icon>
         <span
-            *ngIf="!!(!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting"
+            *ngIf="!!isCourseMessagesPage && (!lastReadDate || (lastReadDate && posting.creationDate && posting.creationDate.isAfter(lastReadDate))) && !isAuthorOfPosting"
             class="badge bg-secondary hideAfter5Seconds"
             >{{ 'global.generic.new' | artemisTranslate }}</span
         >

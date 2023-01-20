@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
@@ -15,6 +15,7 @@ import { Subject } from 'rxjs';
 @Component({
     selector: 'jhi-create-tutorial-groups-configuration',
     templateUrl: './create-tutorial-groups-configuration.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();
@@ -30,6 +31,8 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
         private courseManagementService: CourseManagementService,
         private alertService: AlertService,
         private courseCalculationService: CourseScoreCalculationService,
+
+        private cdr: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
@@ -52,7 +55,8 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit, OnDes
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     createTutorialsGroupConfiguration(formData: TutorialGroupsConfigurationFormData) {
