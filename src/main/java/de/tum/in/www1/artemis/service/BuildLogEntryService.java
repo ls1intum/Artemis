@@ -74,10 +74,6 @@ public class BuildLogEntryService {
         return logString.startsWith("WARNING") && ILLEGAL_REFLECTION_LOGS.stream().anyMatch(logString::contains);
     }
 
-    private static final Set<String> UNNECESSARY_JAVA_LOGS = Set.of("NOTE: Picked up JDK_JAVA_OPTIONS", "Picked up JAVA_TOOL_OPTIONS", "[withMaven]", "$ docker");
-
-    private static final Set<String> UNNECESSARY_SWIFT_LOGS = Set.of("Unable to find image", ": Already exists", ": Pull", ": Waiting", ": Verifying", ": Download");
-
     /**
      * Determines if a given build log string can be categorized as an unnecessary log which does not need to be shown to the student
      *
@@ -86,18 +82,29 @@ public class BuildLogEntryService {
      * @return boolean indicating an unnecessary build log or not
      */
     public boolean isUnnecessaryBuildLogForProgrammingLanguage(String logString, ProgrammingLanguage programmingLanguage) {
-        boolean isInfoWarningOrErrorLog = isInfoLog(logString) || isWarningLog(logString) || isDockerImageLog(logString) || isGitLog(logString) || isTaskLog(logString);
-        if (isInfoWarningOrErrorLog) {
+        boolean isUnnecessaryLog = isInfoLog(logString) || isWarningLog(logString) || isDockerImageLog(logString) || isGitLog(logString) || isTaskLog(logString);
+        if (isUnnecessaryLog) {
             return true;
         }
-        if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
-            return isMavenErrorLog(logString) || isGradleErrorLog(logString) || isGradleInfoLog(logString) || UNNECESSARY_JAVA_LOGS.stream().anyMatch(logString::startsWith);
+        if (programmingLanguage == ProgrammingLanguage.JAVA) {
+            return isUnnecessaryJavaLog(logString);
         }
-        else if (ProgrammingLanguage.SWIFT.equals(programmingLanguage) || ProgrammingLanguage.C.equals(programmingLanguage)) {
-            return UNNECESSARY_SWIFT_LOGS.stream().anyMatch(logString::contains) || logString.startsWith("Digest:") || logString.startsWith("Status:")
-                    || logString.contains("github.com");
+        else if (programmingLanguage == ProgrammingLanguage.SWIFT || programmingLanguage == ProgrammingLanguage.C) {
+            return isUnnecessarySwiftLog(logString);
         }
         return false;
+    }
+
+    private static final Set<String> UNNECESSARY_JAVA_LOGS = Set.of("NOTE: Picked up JDK_JAVA_OPTIONS", "Picked up JAVA_TOOL_OPTIONS", "[withMaven]", "$ docker");
+
+    private boolean isUnnecessaryJavaLog(String log) {
+        return isMavenErrorLog(log) || isGradleErrorLog(log) || isGradleInfoLog(log) || UNNECESSARY_JAVA_LOGS.stream().anyMatch(log::startsWith);
+    }
+
+    private static final Set<String> UNNECESSARY_SWIFT_LOGS = Set.of("Unable to find image", ": Already exists", ": Pull", ": Waiting", ": Verifying", ": Download");
+
+    private boolean isUnnecessarySwiftLog(String log) {
+        return UNNECESSARY_SWIFT_LOGS.stream().anyMatch(log::contains) || log.startsWith("Digest:") || log.startsWith("Status:") || log.contains("github.com");
     }
 
     private boolean isInfoLog(String log) {
