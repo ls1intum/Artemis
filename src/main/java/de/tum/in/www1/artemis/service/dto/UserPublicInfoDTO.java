@@ -53,10 +53,10 @@ public class UserPublicInfoDTO {
      * @param userPublicInfoDTO the DTO to assign the roles to
      */
     public static void assignRoleProperties(Course course, User user, UserPublicInfoDTO userPublicInfoDTO) {
-        userPublicInfoDTO.setIsStudent(course.getStudentGroupName() != null && user.getGroups().contains(course.getStudentGroupName()));
-        userPublicInfoDTO.setIsTeachingAssistant(course.getTeachingAssistantGroupName() != null && user.getGroups().contains(course.getTeachingAssistantGroupName()));
-        userPublicInfoDTO.setIsInstructor(course.getInstructorGroupName() != null && user.getGroups().contains(course.getInstructorGroupName()));
-        userPublicInfoDTO.setIsEditor(course.getEditorGroupName() != null && user.getGroups().contains(course.getEditorGroupName()));
+        userPublicInfoDTO.setIsStudent(user.getGroups().contains(course.getStudentGroupName()));
+        userPublicInfoDTO.setIsTeachingAssistant(user.getGroups().contains(course.getTeachingAssistantGroupName()));
+        userPublicInfoDTO.setIsInstructor(user.getGroups().contains(course.getInstructorGroupName()));
+        userPublicInfoDTO.setIsEditor(user.getGroups().contains(course.getEditorGroupName()));
     }
 
     @SuppressWarnings("PMD.ShortVariable")
