@@ -8,6 +8,7 @@ services:
         extra_hosts:
             - "host.docker.internal:host-gateway"
         build: .
+        platform: amd64
         volumes:
             - artemis-gitlab-data:/var/opt/gitlab
             - artemis-gitlab-logs:/var/log/gitlab

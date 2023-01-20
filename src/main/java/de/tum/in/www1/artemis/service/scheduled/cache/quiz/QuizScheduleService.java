@@ -527,7 +527,8 @@ public class QuizScheduleService {
     }
 
     public Optional<Long> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
-        return Optional.ofNullable(((QuizExerciseCache)quizCache.getReadCacheFor(quizExercise.getId())).getBatches().get(login));
+        var quizExerciseCache = (QuizExerciseCache)quizCache.getReadCacheFor(quizExercise.getId());
+        return Optional.ofNullable(quizExerciseCache.getBatches().get(login));
     }
 
     private void removeCachedQuiz(QuizExerciseCache cachedQuiz) {

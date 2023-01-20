@@ -1,4 +1,4 @@
-import { Component, ElementRef, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorFileBrowserNodeComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-node.component';
@@ -11,8 +11,6 @@ import { TreeviewItem } from 'app/exercises/programming/shared/code-editor/treev
     providers: [NgbModal],
 })
 export class CodeEditorFileBrowserFolderComponent extends CodeEditorFileBrowserNodeComponent {
-    @ViewChild('renamingInput', { static: false }) renamingInput: ElementRef;
-
     @Input() onCollapseExpand: () => void;
     @Input() isCompressed = false;
     @Input() disableActions: boolean;
