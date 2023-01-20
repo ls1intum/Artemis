@@ -146,7 +146,7 @@ public class LectureUnitProcessingService {
             Map<Integer, LectureUnitSplit> unitsDocumentMap = unitsInformation.splits;
             int numberOfPages = unitsInformation.totalPages;
 
-           List<LectureUnitSplitDTO> units = unitsDocumentMap.values().stream()
+            List<LectureUnitSplitDTO> units = unitsDocumentMap.values().stream()
                     .map(lectureUnitSplit -> new LectureUnitSplitDTO(lectureUnitSplit.unitName, ZonedDateTime.now(), lectureUnitSplit.startPage, lectureUnitSplit.endPage))
                     .toList();
             // return units information, maximum number of pages and by default remove break slides is false
