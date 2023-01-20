@@ -229,24 +229,16 @@ public class LocalVCFilterService {
             return;
         }
 
-        // Check that a participation exists.
-        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(),
-                user.getLogin());
-
-        if (participation.isEmpty()) {
-            throw new LocalVCInternalException();
-        }
-
         // Check that offline IDE usage is allowed.
         if (Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
             throw new LocalVCForbiddenException();
         }
 
         if (exercise.isExamExercise()) {
-            authorizeUserForExamExercise(participation.get(), repositoryTypeOrUserName, exercise, forPush, user);
+            authorizeUserForExamExercise(repositoryTypeOrUserName, exercise, forPush, user);
         }
         else {
-            authorizeUserForCourseExercise(course, repositoryTypeOrUserName, user, participation.get(), exercise, forPush);
+            authorizeUserForCourseExercise(course, repositoryTypeOrUserName, user, exercise, forPush);
         }
     }
 
@@ -290,8 +282,10 @@ public class LocalVCFilterService {
         }
     }
 
-    private void authorizeUserForExamExercise(ProgrammingExerciseStudentParticipation participation, String userName, ProgrammingExercise exercise, boolean forPush, User user)
-            throws LocalVCAuthException, LocalVCForbiddenException {
+    private void authorizeUserForExamExercise(String userName, ProgrammingExercise exercise, boolean forPush, User user) throws LocalVCAuthException, LocalVCForbiddenException {
+
+        ProgrammingExerciseStudentParticipation participation = getStudentParticipation(exercise.getId(), user.getLogin());
+
         // Check that the student owns the participation.
         if (participation.getStudent().isEmpty() || !participation.getStudent().get().getLogin().equals(userName)) {
             throw new LocalVCAuthException();
@@ -300,7 +294,7 @@ public class LocalVCFilterService {
         Exam exam = exercise.getExerciseGroup().getExam();
 
         // Start date of the exam must be in the past.
-        if (exam.getStartDate() != null && ZonedDateTime.now().isAfter(exam.getStartDate())) {
+        if (exam.getStartDate() != null && ZonedDateTime.now().isBefore(exam.getStartDate())) {
             throw new LocalVCForbiddenException();
         }
 
@@ -328,29 +322,26 @@ public class LocalVCFilterService {
         }
     }
 
-    private void authorizeUserForCourseExercise(Course course, String userName, User user, ProgrammingExerciseStudentParticipation participation, ProgrammingExercise exercise,
-            boolean forPush) {
+    private void authorizeUserForCourseExercise(Course course, String userName, User user, ProgrammingExercise exercise, boolean forPush) {
+        ProgrammingExerciseStudentParticipation participation;
         // Check if the repository belongs to a team.
         if (exercise.isTeamMode()) {
-            authorizeTeam(course.getId(), userName, user, participation);
+            participation = authorizeTeam(course.getId(), userName, user, exercise.getId());
         }
         else {
-            // Repository belongs to a single student.
+            // ---- Repository belongs to a single student. ----
 
             // Check that the username in the repository name corresponds to the username used for Basic Auth.
             if (!user.getLogin().equals(userName)) {
                 throw new LocalVCAuthException();
             }
 
+            participation = getStudentParticipation(exercise.getId(), user.getLogin());
+
             // Check that the student owns the participation.
             if (!participation.isOwnedBy(user)) {
                 throw new LocalVCAuthException();
             }
-        }
-
-        // Start date of the exercise must be in the past.
-        if (exercise.getParticipationStartDate() != null && ZonedDateTime.now().isAfter(exercise.getParticipationStartDate())) {
-            throw new LocalVCForbiddenException();
         }
 
         // Students can commit code for test runs after the due date.
@@ -360,6 +351,11 @@ public class LocalVCFilterService {
         }
 
         Optional<ZonedDateTime> dueDate = ExerciseDateService.getDueDate(participation);
+
+        // Start date of the exercise must be in the past.
+        if (exercise.getParticipationStartDate() != null && ZonedDateTime.now().isBefore(exercise.getParticipationStartDate())) {
+            throw new LocalVCForbiddenException();
+        }
 
         // Due date of the exercise must be in the future.
         if (dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
@@ -375,26 +371,44 @@ public class LocalVCFilterService {
         }
     }
 
-    private void authorizeTeam(Long courseId, String userNameFromUrl, User user, ProgrammingExerciseStudentParticipation participation)
+    private ProgrammingExerciseStudentParticipation getStudentParticipation(long exerciseId, String userLogin) {
+        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, userLogin);
+
+        if (participation.isEmpty()) {
+            throw new LocalVCInternalException();
+        }
+
+        return participation.get();
+    }
+
+    private ProgrammingExerciseStudentParticipation authorizeTeam(long courseId, String userNameFromUrl, User user, long exerciseId)
             throws LocalVCInternalException, LocalVCAuthException {
 
         List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(courseId, userNameFromUrl);
-        if (teams.size() > 0) {
-            if (teams.size() > 1) {
-                throw new LocalVCInternalException("Multiple teams with the same team short name for one exercise.");
-            }
 
-            // Check that the authenticated user is part of the team.
-            Team team = teams.get(0);
-            if (!team.hasStudent(user)) {
-                throw new LocalVCAuthException();
-            }
-
-            // Check that the team owns the participation.
-            if (participation.getTeam().isEmpty() || !participation.getTeam().get().getShortName().equals(team.getShortName())) {
-                throw new LocalVCAuthException();
-            }
+        if (teams.size() != 1) {
+            throw new LocalVCInternalException();
         }
+
+        // Check that the authenticated user is part of the team.
+        Team team = teams.get(0);
+        if (!team.hasStudent(user)) {
+            throw new LocalVCAuthException();
+        }
+
+        // Check that team participation exists.
+        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndTeamId(exerciseId, team.getId());
+
+        if (participation.isEmpty()) {
+            throw new LocalVCInternalException();
+        }
+
+        // Check that the team owns the participation.
+        if (participation.get().getTeam().isEmpty() || !participation.get().getTeam().get().getShortName().equals(team.getShortName())) {
+            throw new LocalVCAuthException();
+        }
+
+        return participation.get();
     }
 
     private void checkSubmissionPolicy(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation)
