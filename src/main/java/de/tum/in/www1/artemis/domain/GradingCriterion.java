@@ -44,7 +44,7 @@ public class GradingCriterion extends DomainObject {
         return structuredGradingInstructions;
     }
 
-    public void addStructuredGradingInstructions(GradingInstruction structuredGradingInstruction) {
+    public void addStructuredGradingInstruction(GradingInstruction structuredGradingInstruction) {
         this.structuredGradingInstructions.add(structuredGradingInstruction);
         structuredGradingInstruction.setGradingCriterion(this);
     }
@@ -55,9 +55,7 @@ public class GradingCriterion extends DomainObject {
     public void setStructuredGradingInstructions(List<GradingInstruction> structuredGradingInstructions) {
         this.structuredGradingInstructions = structuredGradingInstructions;
         if (structuredGradingInstructions != null) {
-            this.structuredGradingInstructions.forEach(structuredGradingInstruction -> {
-                structuredGradingInstruction.setGradingCriterion(this);
-            });
+            this.structuredGradingInstructions.forEach(structuredGradingInstruction -> structuredGradingInstruction.setGradingCriterion(this));
         }
     }
 

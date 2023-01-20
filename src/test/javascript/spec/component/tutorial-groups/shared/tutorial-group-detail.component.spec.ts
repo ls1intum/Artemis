@@ -7,6 +7,7 @@ import { generateExampleTutorialGroup } from '../helpers/tutorialGroupExampleMod
 import { Component, Input, ViewChild } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from '../../../../../../main/webapp/app/shared/service/sort.service';
+import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
 
 @Component({ selector: 'jhi-mock-header', template: '<div id="mockHeader"></div>' })
 class MockHeaderComponent {
@@ -93,14 +94,13 @@ describe('TutorialGroupDetailComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
     it('should call courseClickHandler', () => {
         const courseClickHandler = jest.fn();
         component.courseClickHandler = courseClickHandler;
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         const courseLink = fixture.debugElement.nativeElement.querySelector('#courseLink');
         courseLink.click();
         expect(courseClickHandler).toHaveBeenCalledOnce();
@@ -109,7 +109,7 @@ describe('TutorialGroupDetailComponent', () => {
     it('should call registrationClickHandler', () => {
         const registrationClickHandler = jest.fn();
         component.registrationClickHandler = registrationClickHandler;
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         const registrationLink = fixture.debugElement.nativeElement.querySelector('#registrationLink');
         registrationLink.click();
         expect(registrationClickHandler).toHaveBeenCalledOnce();
