@@ -1,9 +1,8 @@
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
 import { AlertService } from 'app/core/util/alert.service';
-import { mockedActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
@@ -27,6 +26,7 @@ examples.forEach((activeConversation) => {
         let metisConversationService: MetisConversationService;
         const course = { id: 1 } as Course;
         let queryParamsSubject: BehaviorSubject<Params>;
+        const router = new MockRouter();
 
         beforeEach(waitForAsync(() => {
             queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
@@ -40,10 +40,10 @@ examples.forEach((activeConversation) => {
                     MockComponent(ConversationMessagesComponent),
                     MockComponent(ConversationThreadSidebarComponent),
                 ],
-                providers: [MockProvider(AlertService), MockProvider(MetisConversationService)],
                 providers: [
                     MockProvider(AlertService),
                     MockProvider(MetisConversationService),
+                    { provide: Router, useValue: router },
                     {
                         provide: ActivatedRoute,
                         useValue: {
