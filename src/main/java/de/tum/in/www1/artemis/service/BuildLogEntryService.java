@@ -87,15 +87,17 @@ public class BuildLogEntryService {
      */
     public boolean isUnnecessaryBuildLogForProgrammingLanguage(String logString, ProgrammingLanguage programmingLanguage) {
         boolean isInfoWarningOrErrorLog = isInfoLog(logString) || isWarningLog(logString) || isDockerImageLog(logString) || isGitLog(logString) || isTaskLog(logString);
+        if (isInfoWarningOrErrorLog) {
+            return true;
+        }
         if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
-            return isInfoWarningOrErrorLog || isMavenErrorLog(logString) || isGradleErrorLog(logString) || isGradleInfoLog(logString)
-                    || UNNECESSARY_JAVA_LOGS.stream().anyMatch(logString::startsWith);
+            return isMavenErrorLog(logString) || isGradleErrorLog(logString) || isGradleInfoLog(logString) || UNNECESSARY_JAVA_LOGS.stream().anyMatch(logString::startsWith);
         }
         else if (ProgrammingLanguage.SWIFT.equals(programmingLanguage) || ProgrammingLanguage.C.equals(programmingLanguage)) {
-            return isInfoWarningOrErrorLog || UNNECESSARY_SWIFT_LOGS.stream().anyMatch(logString::contains) || logString.startsWith("Digest:") || logString.startsWith("Status:")
+            return UNNECESSARY_SWIFT_LOGS.stream().anyMatch(logString::contains) || logString.startsWith("Digest:") || logString.startsWith("Status:")
                     || logString.contains("github.com");
         }
-        return isInfoWarningOrErrorLog;
+        return false;
     }
 
     private boolean isInfoLog(String log) {
