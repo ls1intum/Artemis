@@ -307,8 +307,8 @@ class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         Path targetDir = Path.of("./exportTest/some-path2");
         Path targetFile = Path.of("./exportTest/some-path2/some-file");
         assertDoesNotThrow(() -> fileService.renameDirectory(sourceDir, targetDir));
-        assertThat(targetFile.toFile().exists()).isTrue();
-        assertThat(targetDir.toFile().exists()).isTrue();
-        assertThat(sourceDir.toFile().exists()).isFalse();
+        assertThat(Files.exists(targetFile)).isTrue();
+        assertThat(Files.exists(targetDir)).isTrue();
+        assertThat(Files.exists(sourceDir)).isFalse();
     }
 }

@@ -9,7 +9,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFilePermission;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -476,17 +475,17 @@ public class FileService implements DisposableBean {
      * @param keepParentFolder    if true also creates the resources with the folder they are currently in (e.g. current/parent/* -> new/parent/*)
      * @throws IOException if the copying operation fails.
      */
-
-    public void copyResources(Resource[] resources, String prefix, Path targetDirectoryPath, Boolean keepParentFolder) throws IOException {
-
+    public void copyResources(Resource[] resources, String prefix, Path targetDirectoryPath, boolean keepParentFolder) throws IOException {
         for (Resource resource : resources) {
             // Replace windows separator with "/"
-            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8).replaceAll("\\\\", "/");
+            String fileUrl = java.net.URLDecoder.decode(resource.getURL().toString(), StandardCharsets.UTF_8).replace("\\\\", "/");
             // cut the prefix (e.g. 'exercise', 'solution', 'test') from the actual path
             int index = fileUrl.indexOf(prefix);
 
-            // We use prefix.length() + 1 to also cut the "/" after the prefix
-            String targetFilePath = keepParentFolder ? fileUrl.substring(index + prefix.length() + 1) : resource.getFilename();
+            // We use prefix.length() + 1 to also cut the "/" after the prefix if applicable
+            int substringIndex = index + prefix.length();
+            substringIndex = fileUrl.charAt(substringIndex) == '/' ? substringIndex + 1 : substringIndex;
+            String targetFilePath = keepParentFolder ? fileUrl.substring(substringIndex) : resource.getFilename();
             targetFilePath = applySpecialFilenameReplacements(targetFilePath);
 
             if (isIgnoredDirectory(targetFilePath)) {
@@ -502,7 +501,7 @@ public class FileService implements DisposableBean {
             Files.copy(resource.getInputStream(), copyPath, REPLACE_EXISTING);
             // make gradlew executable
             if (targetFilePath.endsWith("gradlew")) {
-                Files.getPosixFilePermissions(copyPath).add(PosixFilePermission.OWNER_EXECUTE);
+                copyPath.toFile().setExecutable(true);
             }
         }
     }
@@ -646,7 +645,7 @@ public class FileService implements DisposableBean {
         if (startPath.contains(targetString)) {
             log.debug("Target String found, replacing..");
             String targetPath = startPath.replace(targetString, replacementString);
-            renameDirectory(Path.of(startPath), Path.of(targetPath));
+            renameDirectory(Paths.get(startPath), Paths.get(targetPath));
             directory = new File(targetPath);
         }
 
