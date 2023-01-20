@@ -103,13 +103,15 @@ public class UserService {
 
     private final SingleUserNotificationRepository singleUserNotificationRepository;
 
+    private final NotificationRepository notificationRepository;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository,
             LearningGoalProgressRepository learningGoalProgressRepository, InstanceMessageSendService instanceMessageSendService,
             ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository, SingleUserNotificationRepository singleUserNotificationRepository) {
+            TutorialGroupRepository tutorialGroupRepository, SingleUserNotificationRepository singleUserNotificationRepository, NotificationRepository notificationRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -128,6 +130,7 @@ public class UserService {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.singleUserNotificationRepository = singleUserNotificationRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     /**
@@ -463,7 +466,7 @@ public class UserService {
         // 12) Set teaching assistant to null for all tutorial groups taught by the user
 
         singleUserNotificationRepository.deleteByRecipientId(user.getId());
-
+        notificationRepository.removeAuthor(user.getId());
         studentScoreRepository.deleteAllByUserId(user.getId());
         learningGoalProgressRepository.deleteAllByUserId(user.getId());
         exerciseHintActivationRepository.deleteAllByUser(user);

@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 @Repository
 public interface SingleUserNotificationRepository extends JpaRepository<SingleUserNotification, Long> {
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteByRecipientId(long userId);
 }
