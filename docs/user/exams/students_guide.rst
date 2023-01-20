@@ -331,7 +331,7 @@ Summary
 
 Example Solutions
 ^^^^^^^^^^^^^^^^^
-- If the instructors sets the example solution publication date of the exam, the solutions will be available after that date.
+- If the instructor sets the example solution publication date of the exam, the solutions will be available after that date.
 - Text, modeling, file upload and programming exercises can have example solutions.
 
     .. warning::
