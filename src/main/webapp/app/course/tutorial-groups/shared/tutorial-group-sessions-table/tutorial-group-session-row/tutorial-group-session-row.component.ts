@@ -1,4 +1,4 @@
-import { Component, HostBinding, Input, OnChanges, TemplateRef, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, HostBinding, Input, OnChanges, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
@@ -9,6 +9,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
     templateUrl: './tutorial-group-session-row.component.html',
     styleUrls: ['./tutorial-group-session-row.component.scss'],
     encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupSessionRowComponent implements OnChanges {
     @HostBinding('class') class = 'tutorial-group-session-row';
@@ -32,6 +33,8 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
 
     hasSchedule = false;
 
+    constructor(private changeDetectorRef: ChangeDetectorRef) {}
+
     ngOnChanges() {
         if (this.session) {
             this.isCancelled = this.session.status === TutorialGroupSessionStatus.CANCELLED;
@@ -44,6 +47,7 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
                     this.cancellationReason = this.session.statusExplanation ? this.session.statusExplanation : undefined;
                 }
             }
+            this.changeDetectorRef.detectChanges();
         }
     }
 }

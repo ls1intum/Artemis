@@ -17,6 +17,7 @@ import {
     TutorialGroupsConfigurationFormComponent,
     TutorialGroupsConfigurationFormData,
 } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
+import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
 
 type SupportedForms = TutorialGroupFreePeriodFormComponent | TutorialGroupSessionFormComponent | TutorialGroupsConfigurationFormComponent | TutorialGroupFormComponent;
 type SupportedFixtures = ComponentFixture<SupportedForms>;
@@ -52,7 +53,7 @@ export const generateTestFormIsInvalidOnMissingRequiredProperty = (
     return (controlName: string, subFormName?: string) => {
         setValidFormValues();
 
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();
 
@@ -61,7 +62,7 @@ export const generateTestFormIsInvalidOnMissingRequiredProperty = (
         } else {
             component.form.get(controlName)!.setValue(undefined);
         }
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         expect(component.form.invalid).toBeTrue();
         expect(component.isSubmitPossible).toBeFalse();
 
