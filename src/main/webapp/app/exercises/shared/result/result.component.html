@@ -25,9 +25,7 @@
                 </a>
             </span>
 
-            <span *ngIf="showBadge" class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
-                {{ badge.text | artemisTranslate | uppercase }}
-            </span>
+            <jhi-result-badge [result]="result" [participation]="participation"></jhi-result-badge>
         </ng-container>
     </ng-container>
     <ng-container *ngSwitchCase="ResultTemplateStatus.LATE">
