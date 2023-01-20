@@ -174,7 +174,6 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testDeleteParticipation_removesBuildLogEntries() {
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         var programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
