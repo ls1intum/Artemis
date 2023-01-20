@@ -50,6 +50,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
                 component.tutorialGroupFreePeriod = examplePeriod;
                 component.tutorialGroupsConfiguration = exampleConfiguration;
                 component.initialize();
+                fixture.detectChanges();
             });
     });
 
@@ -58,21 +59,16 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
     it('should set form data correctly', () => {
-        fixture.detectChanges();
-
         const formStub: TutorialGroupFreePeriodFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFreePeriodFormStubComponent)).componentInstance;
         expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(examplePeriod, 'Europe/Berlin'));
         expect(formStub.formData).toEqual(component.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {
-        fixture.detectChanges();
-
         const changedPeriod: TutorialGroupFreePeriod = {
             ...examplePeriod,
             reason: 'Changed',

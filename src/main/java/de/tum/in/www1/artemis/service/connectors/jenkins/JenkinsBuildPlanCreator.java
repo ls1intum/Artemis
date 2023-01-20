@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 @Component
 public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JenkinsBuildPlanCreator.class);
+    private static final Logger log = LoggerFactory.getLogger(JenkinsBuildPlanCreator.class);
 
     private static final String STATIC_CODE_ANALYSIS_REPORT_DIR = "staticCodeAnalysisReports";
 
@@ -209,7 +209,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         }
         catch (IOException e) {
             final var errorMessage = "Error loading template Jenkins build XML: " + e.getMessage();
-            LOG.error(errorMessage, e);
+            log.error(errorMessage, e);
             throw new IllegalStateException(errorMessage, e);
         }
     }
