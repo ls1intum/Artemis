@@ -25,7 +25,7 @@ import { faCheckCircle, faSync, faTimesCircle } from '@fortawesome/free-solid-sv
     ],
 })
 export class ShortAnswerQuestionStatisticComponent extends QuestionStatisticComponent {
-    question: ShortAnswerQuestion;
+    declare question: ShortAnswerQuestion;
 
     textParts: string[][];
     lettersForSolutions: number[] = [];

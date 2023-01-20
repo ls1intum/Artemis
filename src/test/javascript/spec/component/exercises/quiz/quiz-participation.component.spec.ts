@@ -176,7 +176,7 @@ describe('QuizParticipationComponent', () => {
             jest.restoreAllMocks();
         });
 
-        afterEach(fakeAsync(function () {
+        afterEach(fakeAsync(() => {
             discardPeriodicTasks();
         }));
 

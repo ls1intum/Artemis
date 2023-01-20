@@ -28,6 +28,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -72,6 +73,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Autowired
     protected QuizScheduleService quizScheduleService;
 
+    @Autowired
+    private ProgrammingExerciseTestService programmingExerciseTestService;
+
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
@@ -84,7 +88,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
-    void initTestCase() {
+    void initTestCase() throws Exception {
         database.addUsers(TEST_PREFIX, 2, 2, 0, 2);
 
         // Add users that are not in the course/exercise
@@ -113,11 +117,14 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         doReturn("Success").when(continuousIntegrationService).copyBuildPlan(any(), any(), any(), any(), any(), anyBoolean());
         doNothing().when(continuousIntegrationService).configureBuildPlan(any(), any());
         doNothing().when(continuousIntegrationService).performEmptySetupCommit(any());
+
+        programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService, programmingExerciseStudentParticipationRepository);
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDown() throws Exception {
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
+        programmingExerciseTestService.tearDown();
     }
 
     @Test
@@ -258,6 +265,50 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         programmingExercise.setMode(ExerciseMode.TEAM);
         exerciseRepo.save(programmingExercise);
         request.post("/api/exercises/" + programmingExercise.getId() + "/participations", null, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void practiceProgrammingExercise_successful() throws Exception {
+        programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
+        exerciseRepo.save(programmingExercise);
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        User user = database.getUserByLogin(TEST_PREFIX + "student1");
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+
+        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
+        var repo = new LocalRepository(defaultBranch);
+        repo.configureRepos("studentRepo", "studentOriginRepo");
+        programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo, true);
+        mockConnectorRequestsForStartPractice(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true, HttpStatus.CREATED);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations/practice", null,
+                StudentParticipation.class, HttpStatus.CREATED);
+        assertThat(participation).isNotNull();
+        assertThat(participation.isTestRun()).isTrue();
+        assertThat(participation.getStudent()).contains(user);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1")
+    void participateInProgrammingExercise_successful() throws Exception {
+        database.addTemplateParticipationForProgrammingExercise(programmingExercise);
+        User user = database.getUserByLogin(TEST_PREFIX + "student1");
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+
+        programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
+        var repo = new LocalRepository(defaultBranch);
+        repo.configureRepos("studentRepo", "studentOriginRepo");
+        programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
+        mockConnectorRequestsForStartParticipation(programmingExercise, TEST_PREFIX + "student1", Set.of(user), true, HttpStatus.CREATED);
+
+        StudentParticipation participation = request.postWithResponseBody("/api/exercises/" + programmingExercise.getId() + "/participations", null, StudentParticipation.class,
+                HttpStatus.CREATED);
+        assertThat(participation).isNotNull();
+        assertThat(participation.isTestRun()).isFalse();
+        assertThat(participation.getStudent()).contains(user);
     }
 
     @Test

@@ -162,27 +162,8 @@ public class CourseTestService {
         database.createAndSaveUser(userPrefix + "instructor2");
     }
 
-    public void adjustUserGroupsToCustomGroups(String suffix) {
-        for (int i = 1; i <= numberOfStudents; i++) {
-            var user = database.getUserByLogin(userPrefix + "student" + i);
-            user.setGroups(Set.of(userPrefix + "student" + suffix));
-            userRepo.save(user);
-        }
-        for (int i = 1; i <= numberOfEditors; i++) {
-            var user = database.getUserByLogin(userPrefix + "editor" + i);
-            user.setGroups(Set.of(userPrefix + "editor" + suffix));
-            userRepo.save(user);
-        }
-        for (int i = 1; i <= numberOfTutors; i++) {
-            var user = database.getUserByLogin(userPrefix + "tutor" + i);
-            user.setGroups(Set.of(userPrefix + "tutor" + suffix));
-            userRepo.save(user);
-        }
-        for (int i = 1; i <= numberOfInstructors; i++) {
-            var user = database.getUserByLogin(userPrefix + "instructor" + i);
-            user.setGroups(Set.of(userPrefix + "instructor" + suffix));
-            userRepo.save(user);
-        }
+    private void adjustUserGroupsToCustomGroups(String suffix) {
+        database.adjustUserGroupsToCustomGroups(userPrefix, suffix, numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
     }
 
     public void adjustUserGroupsToCustomGroups() {
@@ -649,14 +630,16 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCourseForDashboard() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false);
-        Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
+    public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false);
+        Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
 
         // Test that the received course has five exercises
         assertThat(receivedCourse.getExercises()).as("Five exercises are returned").hasSize(5);
         // Test that the received course has two lectures
         assertThat(receivedCourse.getLectures()).as("Two lectures are returned").hasSize(2);
+        // Test that the received course has two learning goals
+        assertThat(receivedCourse.getLearningGoals()).as("Two learning goals are returned").hasSize(2);
 
         // Iterate over all exercises of the remaining course
         for (Exercise exercise : courses.get(0).getExercises()) {
@@ -691,7 +674,7 @@ public class CourseTestService {
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
         List<Course> coursesCreated = database.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false);
         for (var course : coursesCreated) {
-            updateCourseGroups(course, suffix);
+            database.updateCourseGroups(userPrefix, course, suffix);
         }
 
         // Perform the request that is being tested here
@@ -1108,14 +1091,6 @@ public class CourseTestService {
         assertThat(stats.getTutorLeaderboardEntries().get(3).getNumberOfComplaintResponses()).isZero();
         // 9 exercises, for each one there are 5 complaintResponses
         assertThat(stats.getTutorLeaderboardEntries().get(4).getNumberOfComplaintResponses()).isEqualTo(exercises * complaints);
-    }
-
-    private void updateCourseGroups(Course course, String suffix) {
-        course.setStudentGroupName(userPrefix + "student" + suffix);
-        course.setTeachingAssistantGroupName(userPrefix + "tutor" + suffix);
-        course.setEditorGroupName(userPrefix + "editor" + suffix);
-        course.setInstructorGroupName(userPrefix + "instructor" + suffix);
-        courseRepo.save(course);
     }
 
     // Test

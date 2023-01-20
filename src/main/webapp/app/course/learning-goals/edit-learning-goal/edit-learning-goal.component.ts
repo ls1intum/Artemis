@@ -10,6 +10,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { LectureService } from 'app/lecture/lecture.service';
 import { combineLatest, forkJoin } from 'rxjs';
 import { Lecture } from 'app/entities/lecture.model';
+import { LectureUnitType } from 'app/entities/lecture-unit/lectureUnit.model';
 
 @Component({
     selector: 'jhi-edit-learning-goal',
@@ -41,15 +42,19 @@ export class EditLearningGoalComponent implements OnInit {
                     this.courseId = Number(parentParams.get('courseId'));
 
                     const learningGoalObservable = this.learningGoalService.findById(learningGoalId, this.courseId);
+                    const learningGoalCourseProgressObservable = this.learningGoalService.getCourseProgress(learningGoalId, this.courseId);
                     const lecturesObservable = this.lectureService.findAllByCourseId(this.courseId, true);
-                    return forkJoin([learningGoalObservable, lecturesObservable]);
+                    return forkJoin([learningGoalObservable, learningGoalCourseProgressObservable, lecturesObservable]);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
             .subscribe({
-                next: ([learningGoalResult, lecturesResult]) => {
+                next: ([learningGoalResult, courseProgressResult, lecturesResult]) => {
                     if (learningGoalResult.body) {
                         this.learningGoal = learningGoalResult.body;
+                        if (courseProgressResult.body) {
+                            this.learningGoal.courseProgress = courseProgressResult.body;
+                        }
                         // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
                         if (!this.learningGoal.lectureUnits) {
                             this.learningGoal.lectureUnits = [];
@@ -61,6 +66,10 @@ export class EditLearningGoalComponent implements OnInit {
                             // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
                             if (!lecture.lectureUnits) {
                                 lecture.lectureUnits = [];
+                            } else {
+                                // Filter out exercise units, they should be added via the exercise management for now
+                                // TODO: User experience improvements for linking learning objects when editing a learning goal
+                                lecture.lectureUnits = lecture.lectureUnits.filter((lectureUnit) => lectureUnit.type !== LectureUnitType.EXERCISE);
                             }
                         }
                     }
@@ -71,6 +80,7 @@ export class EditLearningGoalComponent implements OnInit {
                         description: this.learningGoal.description,
                         connectedLectureUnits: this.learningGoal.lectureUnits,
                         taxonomy: this.learningGoal.taxonomy,
+                        masteryThreshold: this.learningGoal.masteryThreshold,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -78,11 +88,12 @@ export class EditLearningGoalComponent implements OnInit {
     }
 
     updateLearningGoal(formData: LearningGoalFormData) {
-        const { title, description, taxonomy, connectedLectureUnits } = formData;
+        const { title, description, taxonomy, masteryThreshold, connectedLectureUnits } = formData;
 
         this.learningGoal.title = title;
         this.learningGoal.description = description;
         this.learningGoal.taxonomy = taxonomy;
+        this.learningGoal.masteryThreshold = masteryThreshold;
         this.learningGoal.lectureUnits = connectedLectureUnits;
 
         this.isLoading = true;

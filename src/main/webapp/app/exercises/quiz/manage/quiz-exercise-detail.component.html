@@ -35,6 +35,7 @@
             </div>
             <div *ngIf="!isExamMode" class="form-group position-relative">
                 <label class="form-control-label" jhiTranslate="artemisApp.exercise.categories">Categories</label>
+                <jhi-help-icon text="artemisApp.exercise.categoriesTooltip"></jhi-help-icon>
                 <jhi-category-selector
                     [categories]="exerciseCategories"
                     [existingCategories]="existingCategories"
@@ -188,6 +189,17 @@
                             ></jhi-included-in-overall-score-picker>
                         </div>
                     </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="form-group" *ngIf="!isExamMode">
+                    <jhi-learning-goal-selection
+                        id="learning-goals"
+                        [labelName]="'artemisApp.learningGoal.link.title' | artemisTranslate"
+                        [labelTooltip]="'artemisApp.learningGoal.link.exercise' | artemisTranslate"
+                        [(ngModel)]="quizExercise.learningGoals"
+                        name="learningGoals"
+                    ></jhi-learning-goal-selection>
                 </div>
             </div>
             <div class="text-start mt-1 mb-1">
