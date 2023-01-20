@@ -1,0 +1,5 @@
+<div class="d-flex gap-2">
+    <span *ngFor="let badge of badges" class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
+        {{ badge.text | artemisTranslate | uppercase }}
+    </span>
+</div>
