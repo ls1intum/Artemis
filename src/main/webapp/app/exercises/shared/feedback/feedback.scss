@@ -40,4 +40,8 @@
     :host::ng-deep .legend-label-color {
         border: 1px solid;
     }
+
+    .modal-footer {
+        min-width: 100%;
+    }
 }

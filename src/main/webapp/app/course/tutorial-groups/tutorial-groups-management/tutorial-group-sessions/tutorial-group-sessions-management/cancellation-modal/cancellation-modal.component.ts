@@ -1,4 +1,4 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { onError } from 'app/shared/util/global.utils';
@@ -13,6 +13,7 @@ import { takeUntil } from 'rxjs/operators';
 @Component({
     selector: 'jhi-cancellation-modal',
     templateUrl: './cancellation-modal.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CancellationModalComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();
