@@ -1,9 +1,8 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
-import { MetisService } from 'app/shared/metis/metis.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subject, switchMap, take, takeUntil } from 'rxjs';
+import { Subject, take, takeUntil } from 'rxjs';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
@@ -23,7 +22,6 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     activeConversation?: ConversationDto = undefined;
     conversationsOfUser: ConversationDto[] = [];
     // MetisConversationService is created in course overview, so we can use it here
-    constructor(public metisConversationService: MetisConversationService) {}
     constructor(private router: Router, private activatedRoute: ActivatedRoute, public metisConversationService: MetisConversationService) {}
 
     getAsChannel = getAsChannelDto;
