@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core';
-import { ResultBadgesComponent } from 'app/exercises/shared/result-badges/result-badges.component';
+import { ResultBadgeComponent } from 'app/exercises/shared/result-badges/result-badge.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 
 @NgModule({
     imports: [ArtemisSharedModule],
-    declarations: [ResultBadgesComponent],
-    exports: [ResultBadgesComponent],
+    declarations: [ResultBadgeComponent],
+    exports: [ResultBadgeComponent],
 })
-export class ArtemisResultBadgesModule {}
+export class ArtemisResultBadgeModule {}

@@ -11,10 +11,10 @@ interface Badge {
 type Status = 'graded' | 'ungraded' | 'testRun';
 
 @Component({
-    selector: 'jhi-result-badges',
-    templateUrl: './result-badges.component.html',
+    selector: 'jhi-result-badge',
+    templateUrl: './result-badge.component.html',
 })
-export class ResultBadgesComponent implements OnInit {
+export class ResultBadgeComponent implements OnInit {
     @Input() result: Result;
     @Input() participation: Participation;
 
