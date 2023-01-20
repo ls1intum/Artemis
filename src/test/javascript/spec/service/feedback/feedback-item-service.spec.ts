@@ -22,7 +22,7 @@ describe('FeedbackItemService', () => {
 
         const expected = {
             name: 'artemisApp.result.detail.feedback',
-            type: 'Feedback',
+            type: 'Reviewer',
             title: feedback.text,
             text: feedback.detailText,
             credits: feedback.credits,
