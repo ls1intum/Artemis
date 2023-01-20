@@ -101,13 +101,15 @@ public class UserService {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
+    private final SingleUserNotificationRepository singleUserNotificationRepository;
+
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
             ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository,
             LearningGoalProgressRepository learningGoalProgressRepository, InstanceMessageSendService instanceMessageSendService,
             ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            TutorialGroupRepository tutorialGroupRepository) {
+            TutorialGroupRepository tutorialGroupRepository, SingleUserNotificationRepository singleUserNotificationRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.authorityService = authorityService;
@@ -125,6 +127,7 @@ public class UserService {
         this.exerciseHintActivationRepository = exerciseHintActivationRepository;
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
+        this.singleUserNotificationRepository = singleUserNotificationRepository;
     }
 
     /**
@@ -447,7 +450,7 @@ public class UserService {
     protected void deleteUser(User user) {
         // TODO: before we can delete the user, we need to make sure that all associated objects are deleted as well (or the connection to user is set to null)
         // 1) All participation connected to the user (as student)
-        // 2) All notifications connected to the user
+        // 2) All notifications connected to the user (as author)
         // 3) All results connected to the user (as assessor)
         // 4) All complaints and complaints responses associated to the user
         // 5) All student exams associated to the user
@@ -458,6 +461,8 @@ public class UserService {
         // 10) Delete the tutor participation
         // 11) All tutorial group registrations of the student
         // 12) Set teaching assistant to null for all tutorial groups taught by the user
+
+        singleUserNotificationRepository.deleteByRecipientId(user.getId());
 
         studentScoreRepository.deleteAllByUserId(user.getId());
         learningGoalProgressRepository.deleteAllByUserId(user.getId());
