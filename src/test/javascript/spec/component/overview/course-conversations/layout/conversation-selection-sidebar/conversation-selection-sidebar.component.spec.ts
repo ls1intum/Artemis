@@ -209,7 +209,7 @@ examples.forEach((activeConversation) => {
                     createChannelFn: undefined,
                     initialize: () => {},
                 },
-                result: Promise.resolve(new GroupChatDto()),
+                result: Promise.resolve([new GroupChatDto(), true]),
             };
             const openDialogSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
             fixture.detectChanges();
