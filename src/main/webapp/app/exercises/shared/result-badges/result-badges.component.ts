@@ -8,7 +8,7 @@ interface Badge {
     text: string;
     tooltip: string;
 }
-type Status = 'graded' | 'ungraded' | 'testRun' | undefined;
+type Status = 'graded' | 'ungraded' | 'testRun';
 
 @Component({
     selector: 'jhi-result-badges',
@@ -16,34 +16,31 @@ type Status = 'graded' | 'ungraded' | 'testRun' | undefined;
 })
 export class ResultBadgesComponent implements OnInit {
     @Input() result: Result;
+    @Input() participation: Participation;
 
-    badges: Badge[];
+    badge: Badge;
 
     ngOnInit(): void {
-        const statuses = [this.evaluateIsGraded(this.result), this.evaluateIsTestRun(this.result.participation!)];
-        this.badges = statuses.map(this.getBadge).filter((b) => b !== undefined) as Badge[];
+        const status = this.evaluateStatus(this.result, this.participation);
+        this.badge = this.getBadge(status);
     }
 
-    private evaluateIsGraded(result: Result): Status {
-        return result.rated ? 'graded' : 'ungraded';
-    }
-
-    private evaluateIsTestRun(participation: Participation): Status {
+    private evaluateStatus(result: Result, participation: Participation) {
         if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
             const studentParticipation = participation as StudentParticipation;
             if (studentParticipation.testRun) {
                 return 'testRun';
             }
         }
+
+        return result.rated ? 'graded' : 'ungraded';
     }
 
-    private getBadge(status: Status): Badge | undefined {
-        if (status) {
-            return {
-                graded: { class: 'bg-success', text: 'artemisApp.result.graded', tooltip: 'artemisApp.result.gradedTooltip' },
-                ungraded: { class: 'bg-info', text: 'artemisApp.result.notGraded', tooltip: 'artemisApp.result.notGradedTooltip' },
-                testRun: { class: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' },
-            }[status];
-        }
+    private getBadge(status: Status): Badge {
+        return {
+            graded: { class: 'bg-success', text: 'artemisApp.result.graded', tooltip: 'artemisApp.result.gradedTooltip' },
+            ungraded: { class: 'bg-info', text: 'artemisApp.result.notGraded', tooltip: 'artemisApp.result.notGradedTooltip' },
+            testRun: { class: 'bg-secondary', text: 'artemisApp.result.practice', tooltip: 'artemisApp.result.practiceTooltip' },
+        }[status];
     }
 }

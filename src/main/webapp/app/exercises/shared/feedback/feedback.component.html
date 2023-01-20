@@ -44,9 +44,7 @@
                         </ng-template>
                     </h4>
 
-                    <span *ngIf="badge" class="badge" [ngClass]="badge.class" id="result-score-badge" ngbTooltip="{{ badge.tooltip | artemisTranslate }}">
-                        {{ badge.text | artemisTranslate | uppercase }}
-                    </span>
+                    <jhi-result-badges [result]="result" [participation]="result.participation!"></jhi-result-badges>
                 </div>
 
                 <!-- Show and link to the commit hash in case of programming exercise results -->
