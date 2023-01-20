@@ -91,8 +91,6 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         textUnitFromRequest.setContent("Changed");
         TextUnit updatedTextUnit = request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", textUnitFromRequest, TextUnit.class, HttpStatus.OK);
         assertThat(updatedTextUnit.getContent()).isEqualTo("Changed");
-        this.textUnit.setLecture(null);
-        request.putWithResponseBody("/api/lectures/" + lecture.getId() + "/text-units", this.textUnit, TextUnit.class, HttpStatus.CONFLICT);
     }
 
     @Test

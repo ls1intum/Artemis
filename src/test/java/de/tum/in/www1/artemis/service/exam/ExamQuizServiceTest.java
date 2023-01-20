@@ -235,8 +235,8 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     private void waitForParticipantScores() {
-        participantScoreSchedulerService.executeScheduledTasks();
-        await().until(() -> participantScoreSchedulerService.isIdle());
+        participantScoreScheduleService.executeScheduledTasks();
+        await().until(() -> participantScoreScheduleService.isIdle());
     }
 
     @Test

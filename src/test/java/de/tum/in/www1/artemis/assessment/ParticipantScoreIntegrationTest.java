@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
-import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
@@ -82,8 +82,8 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @BeforeEach
     void setupTestScenario() {
-        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
-        participantScoreSchedulerService.activate();
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
+        participantScoreScheduleService.activate();
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
         this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
@@ -157,7 +157,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @AfterEach
     void tearDown() {
-        ParticipantScoreSchedulerService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
     }
 
     private void testAllPreAuthorize() throws Exception {

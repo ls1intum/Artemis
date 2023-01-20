@@ -12,6 +12,7 @@ import {
 } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 import { ArtemisDateRangePipe } from 'app/shared/pipes/artemis-date-range.pipe';
+import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 
 describe('TutorialGroupsConfigurationFormComponent', () => {
     let fixture: ComponentFixture<TutorialGroupsConfigurationFormComponent>;
@@ -33,13 +34,12 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(TutorialGroupsConfigurationFormComponent);
                 component = fixture.componentInstance;
-                fixture.detectChanges();
-
                 clickSubmit = generateClickSubmitButton(component, fixture, {
                     period: validPeriod,
                 });
 
                 testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
+                fixture.detectChanges();
             });
     });
 
@@ -49,17 +49,15 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
     it('should correctly set form values in edit mode', () => {
         component.isEditMode = true;
+        runOnPushChangeDetection(fixture);
         const formData: TutorialGroupsConfigurationFormData = {
             period: validPeriod,
         };
-        fixture.detectChanges();
-
         component.formData = formData;
         component.ngOnChanges();
 
@@ -71,6 +69,7 @@ describe('TutorialGroupsConfigurationFormComponent', () => {
 
     it('should submit valid form', fakeAsync(() => {
         setValidFormValues();
+        runOnPushChangeDetection(fixture);
         fixture.detectChanges();
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();

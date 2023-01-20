@@ -12,7 +12,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
     `,
 })
 export class TutorialGroupDetailStubComponent {
-    @ContentChild(TemplateRef) header: TemplateRef<any>;
+    @ContentChild(TemplateRef, { static: true }) header: TemplateRef<any>;
 
     @Input()
     tutorialGroup: TutorialGroup;
