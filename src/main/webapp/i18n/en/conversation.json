@@ -67,7 +67,7 @@
             "grantChannelModerator": {
                 "title": "Make {{ userName }} an moderator of {{ channelName }} ?",
                 "question": "Do you really want to make {{ userName }} an moderator of {{ channelName }} ?",
-                "description": "This will allow {{ userName }} to manage the channel and its members. He or she can also edit and delete messages in the channel.",
+                "description": "This will allow {{ userName }} to manage the channel and its members. They can also edit and delete messages in the channel.",
                 "confirmButton": "Grant Moderator Role"
             },
             "revokeChannelModerator": {
@@ -79,19 +79,19 @@
             "removeUserPrivateChannel": {
                 "title": "Remove user from private channel?",
                 "question": "Remove {{ userName }} from private channel {{ channelName }} ?",
-                "warning": "This member will not be able to access this channel anymore unless he/she is invited again.",
+                "warning": "This member will not be able to access this channel anymore unless they are invited again.",
                 "remove": "Remove user"
             },
             "removeUserPublicChannel": {
                 "title": "Remove user from public channel?",
                 "question": "Remove {{ userName }} from public channel {{ channelName }} ?",
-                "warning": "This member will not be able to access this channel anymore unless he/she joins again.",
+                "warning": "This member will not be able to access this channel anymore unless they join again.",
                 "remove": "Remove user"
             },
             "removeUserGroupChat": {
                 "title": "Remove user from group chat?",
                 "question": "Remove {{ userName }} from group chat?",
-                "warning": "This member will not be able to access this group chat anymore unless he/she is invited again.",
+                "warning": "This member will not be able to access this group chat anymore unless they are invited again.",
                 "remove": "Remove user"
             },
             "conversationSettings": {
