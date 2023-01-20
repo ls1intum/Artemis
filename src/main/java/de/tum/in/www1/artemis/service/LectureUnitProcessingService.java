@@ -142,17 +142,13 @@ public class LectureUnitProcessingService {
 
         try {
             log.debug("Start preparing information of split units for the file {}", file);
-
-            List<LectureUnitSplitDTO> units = new ArrayList<>();
-
             Outline unitsInformation = separateIntoUnits(file);
             Map<Integer, LectureUnitSplit> unitsDocumentMap = unitsInformation.splits;
             int numberOfPages = unitsInformation.totalPages;
 
-            unitsDocumentMap.forEach((key, value) -> {
-                LectureUnitSplitDTO newLectureUnit = new LectureUnitSplitDTO(value.unitName, ZonedDateTime.now(), value.startPage, value.endPage);
-                units.add(newLectureUnit);
-            });
+           List<LectureUnitSplitDTO> units = unitsDocumentMap.values().stream()
+                    .map(lectureUnitSplit -> new LectureUnitSplitDTO(lectureUnitSplit.unitName, ZonedDateTime.now(), lectureUnitSplit.startPage, lectureUnitSplit.endPage))
+                    .toList();
             // return units information, maximum number of pages and by default remove break slides is false
             return new LectureUnitInformationDTO(units, numberOfPages, false);
         }
