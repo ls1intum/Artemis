@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync } from '@angular/core/testing';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { MockProvider } from 'ng-mocks';
 import { take } from 'rxjs/operators';
@@ -51,7 +51,7 @@ describe('AttachmentUnitService', () => {
         httpMock.verify();
     });
 
-    it('should find a AttachmentUnit', async () => {
+    it('should find a AttachmentUnit', fakeAsync(() => {
         const returnedFromService = { ...elemDefault };
         service
             .findById(1, 1)
@@ -60,9 +60,9 @@ describe('AttachmentUnitService', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
         expect(expectedResult.body).toEqual(elemDefault);
-    });
+    }));
 
-    it('should create an AttachmentUnit', async () => {
+    it('should create an AttachmentUnit', fakeAsync(() => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         const formData = new FormData();
@@ -76,9 +76,9 @@ describe('AttachmentUnitService', () => {
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         expect(expectedResult.body).toEqual(expected);
-    });
+    }));
 
-    it('should update a AttachmentUnit', async () => {
+    it('should update a AttachmentUnit', fakeAsync(() => {
         const returnedFromService = { ...elemDefault, name: 'Test' };
         const expected = { ...returnedFromService };
         elemDefault.id = 42;
@@ -92,9 +92,9 @@ describe('AttachmentUnitService', () => {
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
         expect(expectedResult.body).toEqual(expected);
-    });
+    }));
 
-    it('should create AttachmentUnits', async () => {
+    it('should create AttachmentUnits', fakeAsync(() => {
         const returnedAttachmentUnits = [
             {
                 type: 'attachment',
@@ -142,9 +142,9 @@ describe('AttachmentUnitService', () => {
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         expect(response.body).toEqual(expected);
-    });
+    }));
 
-    it('should get units information', async () => {
+    it('should get units information', fakeAsync(() => {
         const unit1 = {
             unitName: 'Unit 1',
             releaseDate: dayjs().year(2022).month(3).date(5),
@@ -168,5 +168,5 @@ describe('AttachmentUnitService', () => {
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(returnedFromService);
         expect(response.body).toEqual(expected);
-    });
+    }));
 });

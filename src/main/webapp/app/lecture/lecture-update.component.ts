@@ -24,11 +24,6 @@ import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants'
 export class LectureUpdateComponent implements OnInit {
     @ViewChild(LectureUpdateWizardComponent, { static: false }) wizardComponent: LectureUpdateWizardComponent;
 
-    // A human-readable list of allowed file extensions
-    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
-    // The list of file extensions for the "accept" attribute of the file input field
-    readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
-
     EditorMode = EditorMode;
     lecture: Lecture;
     isSaving: boolean;
@@ -41,6 +36,9 @@ export class LectureUpdateComponent implements OnInit {
     endDate: string;
 
     domainCommandsDescription = [new KatexCommand()];
+    file: File;
+    fileName: string;
+    fileInputTouched = false;
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -48,9 +46,11 @@ export class LectureUpdateComponent implements OnInit {
     faPuzzleProcess = faPuzzlePiece;
     faBan = faBan;
     faHandShakeAngle = faHandshakeAngle;
-    file: File;
-    fileName: string;
-    fileInputTouched = false;
+
+    // A human-readable list of allowed file extensions
+    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
+    // The list of file extensions for the "accept" attribute of the file input field
+    readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
 
     toggleModeFunction = () => this.toggleWizardMode();
     saveLectureFunction = () => this.save();

@@ -96,7 +96,7 @@ public class LectureUnitProcessingService {
             while (iterator.hasNext()) {
                 PDDocument currentPage = iterator.next();
                 String slideText = pdfTextStripper.getText(currentPage);
-                if (slideText.contains("Break") || slideText.contains("Pause")) {
+                if (isBreakSlide(slideText)) {
                     document.removePage(index);
                     break;
                 }
@@ -108,6 +108,10 @@ public class LectureUnitProcessingService {
             log.error("Error while removing break slides from document", e);
             throw new InternalServerErrorException("Error while removing break slides from document");
         }
+    }
+
+    private boolean isBreakSlide(String slideText) {
+        return slideText.contains("Break") || slideText.contains("Pause");
     }
 
     /**

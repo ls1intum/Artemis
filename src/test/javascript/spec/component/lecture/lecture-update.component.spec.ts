@@ -85,6 +85,7 @@ describe('LectureUpdateComponent', () => {
 
                 lectureService = TestBed.inject(LectureService);
                 router = TestBed.get(Router);
+                activatedRoute = TestBed.inject(ActivatedRoute);
             });
     });
 
@@ -165,7 +166,6 @@ describe('LectureUpdateComponent', () => {
     });
 
     it('should edit a lecture', fakeAsync(() => {
-        activatedRoute = TestBed.inject(ActivatedRoute);
         activatedRoute.parent!.data = of({ course: { id: 1 }, lecture: { id: 6 } });
 
         lectureUpdateComponentFixture.detectChanges();
