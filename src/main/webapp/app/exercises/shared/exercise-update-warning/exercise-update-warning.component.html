@@ -23,7 +23,6 @@
     </div>
     <div class="edit-modal-footer-content">
         <div class="warning"><span jhiTranslate="artemisApp.exercise.update.warning.confirmText"></span></div>
-        &nbsp;
         <div class="form-group">
             <button type="button" class="btn btn-secondary" id="cancel-button" data-dismiss="modal" (click)="clear()">
                 <fa-icon [icon]="faBan"></fa-icon>
@@ -39,7 +38,7 @@
                     class="btn btn-warning"
                 >
                     <fa-icon [icon]="faExclamationTriangle"></fa-icon>
-                    &nbsp<span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation">Do not re-evaluate</span>
+                    <span jhiTranslate="artemisApp.exercise.update.warning.saveExerciseWithoutReevaluation">Do not re-evaluate</span>
                 </button>
                 <button
                     type="submit"
@@ -49,13 +48,13 @@
                     class="btn btn-success"
                 >
                     <fa-icon [icon]="faCheck"></fa-icon>
-                    &nbsp;<span jhiTranslate="artemisApp.exercise.update.warning.reevaluateExercise">Re-evaluate</span>
+                    <span jhiTranslate="artemisApp.exercise.update.warning.reevaluateExercise">Re-evaluate</span>
                 </button>
             </ng-container>
             <ng-template #noReevaluation>
                 <button type="submit" id="save-button" (click)="saveExerciseWithoutReevaluation()" class="btn btn-primary">
                     <fa-icon [icon]="faCheck"></fa-icon>
-                    &nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                    <span jhiTranslate="entity.action.save">Save</span>
                 </button>
             </ng-template>
         </div>
