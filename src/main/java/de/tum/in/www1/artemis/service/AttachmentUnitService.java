@@ -89,7 +89,7 @@ public class AttachmentUnitService {
     public List<AttachmentUnit> createAttachmentUnits(LectureUnitInformationDTO lectureUnitInformationDTO, Lecture lecture, MultipartFile file) {
         List<AttachmentUnit> createdUnits = new ArrayList<>();
         try {
-            log.debug("Splitting attachment file {} with info {}", file, lectureUnitInformationDTO.units);
+            log.debug("Splitting attachment file {} with info {}", file, lectureUnitInformationDTO.units());
             List<LectureUnitDTO> lectureUnitsDTO = lectureUnitProcessingService.splitUnits(lectureUnitInformationDTO, file);
             lectureUnitsDTO.forEach(lectureUnit -> {
                 lectureUnit.attachmentUnit().setLecture(null);

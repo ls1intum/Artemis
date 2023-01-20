@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import javax.validation.constraints.NotNull;
+
 import org.apache.commons.fileupload.*;
 import org.apache.commons.fileupload.disk.DiskFileItem;
 import org.apache.pdfbox.multipdf.Splitter;
@@ -13,7 +15,6 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.apache.tomcat.util.http.fileupload.IOUtils;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -45,7 +46,7 @@ public class LectureUnitProcessingService {
             List<LectureUnitDTO> units = new ArrayList<>();
             Splitter pdfSplitter = new Splitter();
 
-            for (LectureUnitSplitDTO lectureUnit : lectureUnitInformationDTO.units) {
+            for (LectureUnitSplitDTO lectureUnit : lectureUnitInformationDTO.units()) {
                 AttachmentUnit attachmentUnit = new AttachmentUnit();
                 Attachment attachment = new Attachment();
                 PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
@@ -56,7 +57,7 @@ public class LectureUnitProcessingService {
 
                 List<PDDocument> documentUnits = pdfSplitter.split(document);
                 pdDocumentInformation.setTitle(lectureUnit.unitName());
-                if (lectureUnitInformationDTO.removeBreakSlides) {
+                if (lectureUnitInformationDTO.removeBreakSlides()) {
                     removeBreakSlides(documentUnits.get(0));
                 }
                 documentUnits.get(0).setDocumentInformation(pdDocumentInformation);
