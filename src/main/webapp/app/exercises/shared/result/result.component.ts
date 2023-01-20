@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, Optional, SimpleChanges } from '@angular/core';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { MissingResultInformation, ResultTemplateStatus, evaluateTemplateStatus, getResultIconClass, getTextColorClass } from 'app/exercises/shared/result/result.utils';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -24,6 +24,7 @@ import { faCircle } from '@fortawesome/free-regular-svg-icons';
 import { Badge, ResultService } from 'app/exercises/shared/result/result.service';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
+import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 
 @Component({
     selector: 'jhi-result',
@@ -77,7 +78,8 @@ export class ResultComponent implements OnInit, OnChanges {
         private translate: TranslateService,
         private http: HttpClient,
         private modalService: NgbModal,
-        private exerciseCacheService: ExerciseCacheService,
+        private exerciseService: ExerciseService,
+        @Optional() private exerciseCacheService: ExerciseCacheService,
         private resultService: ResultService,
     ) {}
 
@@ -266,7 +268,13 @@ export class ResultComponent implements OnInit, OnChanges {
      */
     private determineShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackComponent) {
         if (!this.latestIndividualDueDate) {
-            this.latestIndividualDueDate = this.exerciseCacheService.getLatestDueDate(this.exercise!.id!);
+            if (this.exerciseCacheService) {
+                this.latestIndividualDueDate = this.exerciseCacheService.getLatestDueDate(this.exercise!.id!);
+            } else {
+                this.exerciseService.getLatestDueDate(this.exercise!.id!).subscribe((latestDueDate) => {
+                    this.latestIndividualDueDate = latestDueDate;
+                });
+            }
         }
 
         componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);

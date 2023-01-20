@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import dayjs from 'dayjs/esm';
 
-@Injectable({ providedIn: 'root' })
+@Injectable()
 export class ExerciseCacheService {
     constructor(private exerciseService: ExerciseService) {}
 
