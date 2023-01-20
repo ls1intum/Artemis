@@ -19,8 +19,8 @@ interface Badge {
 export class ResultBadgeComponent implements OnInit {
     @Input() result: Result;
     @Input() participation: Participation;
-    exercise: Exercise;
 
+    exercise: Exercise;
     badge: Badge;
 
     ngOnInit(): void {
