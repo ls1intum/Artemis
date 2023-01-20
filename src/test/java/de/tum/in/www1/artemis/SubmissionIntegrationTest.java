@@ -2,9 +2,6 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.ZonedDateTime;
-import java.util.List;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,11 +11,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
-import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.SubmissionRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -35,9 +28,6 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private CourseRepository courseRepository;
-
-    @Autowired
-    private BuildLogEntryRepository buildLogEntryRepository;
 
     @BeforeEach
     void initTestCase() throws Exception {
@@ -172,36 +162,6 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         courseRepository.save(course);
         PageableSearchDTO<String> search = database.configureStudentParticipationSearch("");
         request.get("/api/exercises/" + textExercise.getId() + "/submissions-for-import", HttpStatus.FORBIDDEN, SearchResultPageDTO.class, database.searchMapping(search));
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testDeleteSubmissionWithBuildLogEntry() throws Exception {
-        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        var programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
-        var submission = database.createProgrammingSubmission(participation, true);
-        BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
-        submission.setBuildLogEntries(List.of(buildLogEntry));
-        submissionRepository.save(submission);
-        assertThat(buildLogEntryRepository.count()).isEqualTo(1);
-
-        final String projectKey = programmingExercise.getProjectKey();
-        final var templateRepoName = programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE);
-        final var solutionRepoName = programmingExercise.generateRepositoryName(RepositoryType.SOLUTION);
-        final var testsRepoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
-
-        this.mockDeleteBuildPlan(projectKey, programmingExercise.getTemplateBuildPlanId(), false);
-        this.mockDeleteBuildPlan(projectKey, programmingExercise.getSolutionBuildPlanId(), false);
-        this.mockDeleteBuildPlanProject(projectKey, false);
-        this.mockDeleteRepository(projectKey, templateRepoName, false);
-        this.mockDeleteRepository(projectKey, solutionRepoName, false);
-        this.mockDeleteRepository(projectKey, testsRepoName, false);
-        this.mockDeleteProjectInVcs(projectKey, false);
-
-        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
-
-        assertThat(buildLogEntryRepository.count()).isEqualTo(0);
     }
 
 }

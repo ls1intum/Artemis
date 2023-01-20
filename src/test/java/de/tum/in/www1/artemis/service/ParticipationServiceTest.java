@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -24,7 +25,9 @@ import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.BuildLogEntryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
@@ -39,6 +42,15 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private BuildLogEntryService buildLogEntryService;
+
+    @Autowired
+    private BuildLogEntryRepository buildLogEntryRepository;
+
+    @Autowired
+    private ProgrammingSubmissionRepository programmingSubmissionRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -159,6 +171,26 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         assertTrue(ZonedDateTime.now().minusSeconds(10).isBefore(studentParticipationReceived.getInitializationDate()));
         assertTrue(ZonedDateTime.now().plusSeconds(10).isAfter(studentParticipationReceived.getInitializationDate()));
         assertEquals(InitializationState.INITIALIZED, studentParticipationReceived.getInitializationState());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testDeleteParticipation_removesBuildLogEntries() {
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        var programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, TEST_PREFIX + "student1");
+        var submission = database.createProgrammingSubmission(participation, true);
+        BuildLogEntry buildLogEntry = new BuildLogEntry(ZonedDateTime.now(), "Some sample build log");
+        var savedBuildLogs = buildLogEntryService.saveBuildLogs(List.of(buildLogEntry), submission);
+
+        submission.setBuildLogEntries(savedBuildLogs);
+        programmingSubmissionRepository.save(submission);
+
+        assertThat(buildLogEntryRepository.findById(savedBuildLogs.get(0).getId())).isPresent();
+
+        participationService.deleteResultsAndSubmissionsOfParticipation(participation.getId(), true);
+
+        assertThat(buildLogEntryRepository.findById(savedBuildLogs.get(0).getId())).isEmpty();
     }
 
     private void mockCreationOfExerciseParticipation(boolean useGradedParticipationOfResult, Result gradedResult) throws URISyntaxException {

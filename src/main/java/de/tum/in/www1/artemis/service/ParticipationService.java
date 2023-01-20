@@ -55,6 +55,8 @@ public class ParticipationService {
 
     private final CoverageReportRepository coverageReportRepository;
 
+    private final BuildLogEntryRepository buildLogEntryRepository;
+
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     private final ParticipantScoreRepository participantScoreRepository;
@@ -67,7 +69,7 @@ public class ParticipationService {
             ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService, ResultService resultService,
-            CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
+            CoverageReportRepository coverageReportRepository, BuildLogEntryRepository buildLogEntryRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository,
             ParticipantScoreRepository participantScoreRepository, StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
@@ -81,6 +83,7 @@ public class ParticipationService {
         this.urlService = urlService;
         this.resultService = resultService;
         this.coverageReportRepository = coverageReportRepository;
+        this.buildLogEntryRepository = buildLogEntryRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.studentScoreRepository = studentScoreRepository;
@@ -771,6 +774,7 @@ public class ParticipationService {
         submissions.forEach(submission -> {
             if (submission instanceof ProgrammingSubmission) {
                 coverageReportRepository.deleteBySubmissionId(submission.getId());
+                buildLogEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
                 buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
             }
             submissionRepository.deleteById(submission.getId());

@@ -51,11 +51,13 @@ public class SubmissionResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final BuildLogEntryRepository buildLogEntryRepository;
+
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     public SubmissionResource(SubmissionService submissionService, SubmissionRepository submissionRepository, ResultService resultService,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authCheckService, UserRepository userRepository,
-            ExerciseRepository exerciseRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+            ExerciseRepository exerciseRepository, BuildLogEntryRepository buildLogEntryRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         this.submissionService = submissionService;
         this.submissionRepository = submissionRepository;
         this.resultService = resultService;
@@ -63,6 +65,7 @@ public class SubmissionResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.authCheckService = authCheckService;
         this.userRepository = userRepository;
+        this.buildLogEntryRepository = buildLogEntryRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
     }
 
@@ -89,6 +92,7 @@ public class SubmissionResource {
         for (Result result : results) {
             resultService.deleteResult(result, true);
         }
+        buildLogEntryRepository.deleteByProgrammingSubmissionId(submission.get().getId());
         buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.get().getId());
         submissionRepository.deleteById(id);
 
