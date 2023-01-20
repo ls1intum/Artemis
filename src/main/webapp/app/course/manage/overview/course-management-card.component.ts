@@ -33,6 +33,7 @@ export class CourseManagementCardComponent implements OnChanges {
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
 
     CachingStrategy = CachingStrategy;
+    // TODO: can we merge the 3 courses here?
     @Input() course: Course;
     @Input() courseStatistics: CourseManagementOverviewStatisticsDto;
     @Input() courseWithExercises: Course;

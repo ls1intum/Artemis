@@ -30,10 +30,7 @@ import de.tum.in.www1.artemis.exception.AccountRegistrationBlockedException;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.UsernameAlreadyUsedException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.GuidedTourSettingsRepository;
-import de.tum.in.www1.artemis.repository.StudentScoreRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
@@ -88,6 +85,8 @@ public class UserService {
 
     private final StudentScoreRepository studentScoreRepository;
 
+    private final LearningGoalProgressRepository learningGoalProgressRepository;
+
     private final CacheManager cacheManager;
 
     private final AuthorityRepository authorityRepository;
@@ -105,7 +104,8 @@ public class UserService {
     public UserService(UserCreationService userCreationService, UserRepository userRepository, AuthorityService authorityService, AuthorityRepository authorityRepository,
             CacheManager cacheManager, Optional<LdapUserService> ldapUserService, GuidedTourSettingsRepository guidedTourSettingsRepository, PasswordService passwordService,
             Optional<VcsUserManagementService> optionalVcsUserManagementService, Optional<CIUserManagementService> optionalCIUserManagementService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository, InstanceMessageSendService instanceMessageSendService,
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, StudentScoreRepository studentScoreRepository,
+            LearningGoalProgressRepository learningGoalProgressRepository, InstanceMessageSendService instanceMessageSendService,
             ExerciseHintActivationRepository exerciseHintActivationRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
             TutorialGroupRepository tutorialGroupRepository) {
         this.userCreationService = userCreationService;
@@ -120,6 +120,7 @@ public class UserService {
         this.optionalCIUserManagementService = optionalCIUserManagementService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.studentScoreRepository = studentScoreRepository;
+        this.learningGoalProgressRepository = learningGoalProgressRepository;
         this.instanceMessageSendService = instanceMessageSendService;
         this.exerciseHintActivationRepository = exerciseHintActivationRepository;
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
@@ -459,6 +460,7 @@ public class UserService {
         // 12) Set teaching assistant to null for all tutorial groups taught by the user
 
         studentScoreRepository.deleteAllByUserId(user.getId());
+        learningGoalProgressRepository.deleteAllByUserId(user.getId());
         exerciseHintActivationRepository.deleteAllByUser(user);
 
         tutorialGroupRegistrationRepository.deleteAllByStudent(user);

@@ -96,7 +96,6 @@ describe('TutorialGroupSessionsTableWrapperTest', () => {
     });
 
     it('should return the correct number of columns', () => {
-        fixture.detectChanges();
         expect(tableInstance.numberOfColumns).toBe(5);
     });
 });
@@ -138,6 +137,7 @@ describe('TutorialGroupSessionTableComponent', () => {
                 component.tutorialGroup = tutorialGroup;
                 component.timeZone = timeZone;
                 jest.spyOn(component, 'getCurrentDate').mockReturnValue(currentDate);
+                fixture.detectChanges();
             });
     });
 
@@ -146,12 +146,10 @@ describe('TutorialGroupSessionTableComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
     it('should split sessions into upcoming and past', () => {
-        fixture.detectChanges();
         const changes = {} as SimpleChanges;
         changes.sessions = new SimpleChange([], component.sessions, true);
         component.ngOnChanges(changes);
@@ -162,7 +160,6 @@ describe('TutorialGroupSessionTableComponent', () => {
     });
 
     it('should return the correct number of columns', () => {
-        fixture.detectChanges();
         expect(component.numberOfColumns).toBe(3);
     });
 });

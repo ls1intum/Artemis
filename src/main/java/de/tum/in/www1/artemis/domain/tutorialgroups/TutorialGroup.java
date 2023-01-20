@@ -10,9 +10,10 @@ import javax.validation.constraints.Size;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -64,42 +65,36 @@ public class TutorialGroup extends DomainObject {
      * This transient field is set to true if the user who requested the entity is registered for this tutorial group
      */
     @Transient
-    @JsonSerialize
     private Boolean isUserRegistered;
 
     /**
      * This transient field is set to true if the user who requested the entity is the teaching assistant of this tutorial group
      */
     @Transient
-    @JsonSerialize
     private Boolean isUserTutor;
 
     /**
      * This transient fields is set to the number of registered students for this tutorial group
      */
     @Transient
-    @JsonSerialize
     private Integer numberOfRegisteredUsers;
 
     /**
      * This transient fields is set to the name of the teaching assistant of this tutorial group
      */
     @Transient
-    @JsonSerialize
     private String teachingAssistantName;
 
     /**
      * This transient fields is set to the course title to which this tutorial group belongs
      */
     @Transient
-    @JsonSerialize
     private String courseTitle;
 
     /**
      * This transient field is set to the next session of this tutorial group
      */
     @Transient
-    @JsonSerialize
     private TutorialGroupSession nextSession;
 
     @OneToOne(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)
@@ -221,6 +216,8 @@ public class TutorialGroup extends DomainObject {
         this.campus = campus;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty
     public Boolean getIsUserRegistered() {
         return isUserRegistered;
     }
@@ -229,6 +226,8 @@ public class TutorialGroup extends DomainObject {
         isUserRegistered = userRegistered;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty
     public Boolean getIsUserTutor() {
         return isUserTutor;
     }
@@ -237,6 +236,8 @@ public class TutorialGroup extends DomainObject {
         isUserTutor = userTutor;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty
     public Integer getNumberOfRegisteredUsers() {
         return numberOfRegisteredUsers;
     }
@@ -245,6 +246,8 @@ public class TutorialGroup extends DomainObject {
         this.numberOfRegisteredUsers = numberOfRegisteredUsers;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty
     public String getTeachingAssistantName() {
         return teachingAssistantName;
     }
@@ -253,6 +256,8 @@ public class TutorialGroup extends DomainObject {
         this.teachingAssistantName = teachingAssistantName;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty
     public String getCourseTitle() {
         return courseTitle;
     }
@@ -261,6 +266,8 @@ public class TutorialGroup extends DomainObject {
         this.courseTitle = courseTitle;
     }
 
+    @JsonIgnore(false)
+    @JsonProperty
     public TutorialGroupSession getNextSession() {
         return nextSession;
     }

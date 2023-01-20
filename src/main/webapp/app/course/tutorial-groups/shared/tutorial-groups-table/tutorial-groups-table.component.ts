@@ -1,4 +1,4 @@
-import { Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
 import { faSort } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -9,9 +9,10 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-tutorial-groups-table',
     templateUrl: './tutorial-groups-table.component.html',
     styleUrls: ['./tutorial-groups-table.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupsTableComponent implements OnChanges {
-    @ContentChild(TemplateRef) extraColumn: TemplateRef<any>;
+    @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 
     @Input()
     showIdColumn = false;
@@ -34,7 +35,7 @@ export class TutorialGroupsTableComponent implements OnChanges {
     ascending = true;
     faSort = faSort;
 
-    constructor(private sortService: SortService) {}
+    constructor(private sortService: SortService, private cdr: ChangeDetectorRef) {}
 
     trackId(index: number, item: TutorialGroup) {
         return item.id;
@@ -42,6 +43,7 @@ export class TutorialGroupsTableComponent implements OnChanges {
 
     sortRows() {
         this.sortService.sortByProperty(this.tutorialGroups, this.sortingPredicate, this.ascending);
+        this.cdr.detectChanges();
     }
 
     ngOnChanges(changes: SimpleChanges) {
@@ -53,6 +55,7 @@ export class TutorialGroupsTableComponent implements OnChanges {
                     case 'timeZone': {
                         if (change.currentValue) {
                             this.timeZoneUsedForDisplay = change.currentValue;
+                            this.cdr.detectChanges();
                         }
                         break;
                     }

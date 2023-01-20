@@ -136,6 +136,20 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentUnit_withUnitId_shouldReturnBadRequest() throws Exception {
+        attachmentUnit.setId(99L);
+        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createAttachmentUnit_withAttachmentId_shouldReturnBadRequest() throws Exception {
+        attachment.setId(99L);
+        request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentUnit_asInstructor_shouldUpdateAttachmentUnit() throws Exception {
         var createResult = request.getMvc().perform(buildCreateAttachmentUnit(attachmentUnit, attachment, "Hello World")).andExpect(status().isCreated()).andReturn();
         var attachmentUnit = mapper.readValue(createResult.getResponse().getContentAsString(), AttachmentUnit.class);
@@ -183,8 +197,15 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void updateAttachmentUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
         persistAttachmentUnitWithLecture();
-
         request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateAttachmentUnit_withoutLecture_shouldReturnConflict() throws Exception {
+        persistAttachmentUnitWithLecture();
+        attachmentUnit.setLecture(null);
+        request.getMvc().perform(buildUpdateAttachmentUnit(attachmentUnit, attachment)).andExpect(status().isConflict());
     }
 
     @Test

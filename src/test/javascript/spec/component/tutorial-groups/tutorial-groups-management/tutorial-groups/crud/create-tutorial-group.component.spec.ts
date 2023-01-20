@@ -35,6 +35,7 @@ describe('CreateTutorialGroupComponent', () => {
                 fixture = TestBed.createComponent(CreateTutorialGroupComponent);
                 component = fixture.componentInstance;
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);
+                fixture.detectChanges();
             });
     });
 
@@ -43,12 +44,10 @@ describe('CreateTutorialGroupComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
     it('should send POST request upon form submission and navigate', () => {
-        fixture.detectChanges();
         const exampleTutorialGroup = generateExampleTutorialGroup({});
         delete exampleTutorialGroup.id;
         delete exampleTutorialGroup.isUserRegistered;
