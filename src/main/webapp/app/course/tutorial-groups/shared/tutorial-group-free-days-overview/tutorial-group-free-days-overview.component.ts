@@ -1,5 +1,4 @@
-import { Component, DoCheck, Input, IterableDiffer, IterableDiffers, OnInit } from '@angular/core';
-import { faInfo } from '@fortawesome/free-solid-svg-icons';
+import { ChangeDetectionStrategy, Component, DoCheck, Input, IterableDiffer, IterableDiffers, OnInit } from '@angular/core';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { SortService } from 'app/shared/service/sort.service';
 import dayjs from 'dayjs/esm';
@@ -8,6 +7,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-tutorial-group-free-days-overview',
     templateUrl: './tutorial-group-free-days-overview.component.html',
     styleUrls: ['./tutorial-group-free-days-overview.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupFreeDaysOverviewComponent implements OnInit, DoCheck {
     constructor(private sortService: SortService, private iterableDiffers: IterableDiffers) {}
@@ -17,8 +17,6 @@ export class TutorialGroupFreeDaysOverviewComponent implements OnInit, DoCheck {
 
     @Input()
     timeZone?: string = undefined;
-
-    public faInfo = faInfo;
 
     public isInThePast(tutorialGroupFreeDay: TutorialGroupFreePeriod): boolean {
         return tutorialGroupFreeDay.start!.isBefore(this.getCurrentDate());
