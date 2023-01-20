@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -59,6 +60,10 @@ public class BuildLogEntryService {
                 .orElseGet(Collections::emptyList);
     }
 
+    private static final Set<String> ILLEGAL_REFLECTION_LOGS = Set.of("An illegal reflective access operation has occurred", "WARNING: Illegal reflective access by",
+            "WARNING: Please consider reporting this to the maintainers of", "to enable warnings of further illegal reflective access operations",
+            "All illegal access operations will be denied in a future release");
+
     /**
      * Determines if a given build log string can be categorized as an illegal reflection
      *
@@ -66,11 +71,12 @@ public class BuildLogEntryService {
      * @return boolean indicating an illegal reflection log or not
      */
     public boolean isIllegalReflectionLog(String logString) {
-        return logString.startsWith("WARNING") && (logString.contains("An illegal reflective access operation has occurred")
-                || logString.contains("WARNING: Illegal reflective access by") || logString.contains("WARNING: Please consider reporting this to the maintainers of")
-                || logString.contains("to enable warnings of further illegal reflective access operations")
-                || logString.contains("All illegal access operations will be denied in a future release"));
+        return logString.startsWith("WARNING") && ILLEGAL_REFLECTION_LOGS.stream().anyMatch(logString::contains);
     }
+
+    private static final Set<String> UNNECESSARY_JAVA_LOGS = Set.of("NOTE: Picked up JDK_JAVA_OPTIONS", "Picked up JAVA_TOOL_OPTIONS", "[withMaven]", "$ docker");
+
+    private static final Set<String> UNNECESSARY_SWIFT_LOGS = Set.of("Unable to find image", ": Already exists", ": Pull", ": Waiting", ": Verifying", ": Download");
 
     /**
      * Determines if a given build log string can be categorized as an unnecessary log which does not need to be shown to the student
@@ -83,13 +89,11 @@ public class BuildLogEntryService {
         boolean isInfoWarningOrErrorLog = isInfoLog(logString) || isWarningLog(logString) || isDockerImageLog(logString) || isGitLog(logString) || isTaskLog(logString);
         if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
             return isInfoWarningOrErrorLog || isMavenErrorLog(logString) || isGradleErrorLog(logString) || isGradleInfoLog(logString)
-                    || logString.startsWith("NOTE: Picked up JDK_JAVA_OPTIONS") || logString.startsWith("Picked up JAVA_TOOL_OPTIONS") || logString.startsWith("[withMaven]")
-                    || logString.startsWith("$ docker");
+                    || UNNECESSARY_JAVA_LOGS.stream().anyMatch(logString::startsWith);
         }
         else if (ProgrammingLanguage.SWIFT.equals(programmingLanguage) || ProgrammingLanguage.C.equals(programmingLanguage)) {
-            return isInfoWarningOrErrorLog || logString.contains("Unable to find image") || logString.contains(": Already exists") || logString.contains(": Pull")
-                    || logString.contains(": Waiting") || logString.contains(": Verifying") || logString.contains(": Download") || logString.startsWith("Digest:")
-                    || logString.startsWith("Status:") || logString.contains("github.com");
+            return isInfoWarningOrErrorLog || UNNECESSARY_SWIFT_LOGS.stream().anyMatch(logString::contains) || logString.startsWith("Digest:") || logString.startsWith("Status:")
+                    || logString.contains("github.com");
         }
         return isInfoWarningOrErrorLog;
     }
@@ -98,24 +102,28 @@ public class BuildLogEntryService {
         return (log.startsWith("[INFO]") && !log.contains("error")) || log.startsWith("[INFO] Downloading") || log.startsWith("[INFO] Downloaded");
     }
 
+    private static final Set<String> GRADLE_LOGS = Set.of("Downloading https://services.gradle.org", "...........10%", "Here are the highlights of this release:", "- ",
+            "For more details see", "Starting a Gradle Daemon");
+
     private boolean isGradleInfoLog(String log) {
-        return log.startsWith("Downloading https://services.gradle.org") || log.startsWith("...........10%") || log.startsWith("Here are the highlights of this release:")
-                || log.startsWith("- ") || log.startsWith("For more details see") || log.startsWith("Starting a Gradle Daemon");
+        return GRADLE_LOGS.stream().anyMatch(log::startsWith);
     }
 
     private boolean isWarningLog(String log) {
         return log.startsWith("[WARNING]");
     }
 
+    private static final Set<String> MAVEN_ERROR_LOGS = Set.of("[ERROR] [Help 1]", "[ERROR] For more information about the errors and possible solutions",
+            "[ERROR] Re-run Maven using", "[ERROR] To see the full stack trace of the errors", "[ERROR] -> [Help 1]", "[ERROR] Failed to execute goal org.apache.maven.plugins");
+
     private boolean isMavenErrorLog(String log) {
-        return log.startsWith("[ERROR] [Help 1]") || log.startsWith("[ERROR] For more information about the errors and possible solutions")
-                || log.startsWith("[ERROR] Re-run Maven using") || log.startsWith("[ERROR] To see the full stack trace of the errors") || log.startsWith("[ERROR] -> [Help 1]")
-                || log.startsWith("[ERROR] Failed to execute goal org.apache.maven.plugins") || "[ERROR]".equals(log.strip());
+        return "[ERROR]".equals(log.strip()) || MAVEN_ERROR_LOGS.stream().anyMatch(log::startsWith);
     }
 
+    private static final Set<String> GRADLE_ERROR_LOGS = Set.of("> Run with", "FAILURE", "* What went wrong:", "Execution failed", "* Get more help", "* Try:");
+
     private boolean isGradleErrorLog(String log) {
-        return log.startsWith("> Run with") || log.startsWith("FAILURE") || log.startsWith("* What went wrong:") || log.startsWith("Execution failed")
-                || log.contains("actionable tasks:") || log.startsWith("* Get more help") || log.startsWith("* Try:");
+        return log.contains("actionable tasks:") || GRADLE_ERROR_LOGS.stream().anyMatch(log::startsWith);
     }
 
     private boolean isDockerImageLog(String log) {
@@ -128,19 +136,19 @@ public class BuildLogEntryService {
                 || (log.endsWith(": Pull complete") && log.length() == 27);
     }
 
+    private static final Set<String> GIT_LOGS = Set.of("Checking out", "Switched to branch", ".git", "Fetching 'refs/heads", "Updating source code to revision",
+            "Updated source code to revision", "Creating local git repository", "hint: ", "Initialized empty Git", "Warning: Permanently added", "From ssh://");
+
     private boolean isGitLog(String log) {
-        return log.startsWith("Checking out") || log.startsWith("Switched to branch") || log.startsWith(".git") || log.startsWith("Fetching 'refs/heads")
-                || log.startsWith("Updating source code to revision") || log.startsWith("Updated source code to revision") || log.startsWith("Creating local git repository")
-                || log.startsWith("hint: ") || log.startsWith("Initialized empty Git") || log.startsWith("Warning: Permanently added") || log.contains("* [new branch]")
-                || log.startsWith("From ssh://");
+        return log.contains("* [new branch]") || GIT_LOGS.stream().anyMatch(log::startsWith);
     }
 
+    private static final Set<String> BUILD_TASK_LOGS = Set.of("Executing build", "Starting task", "Finished task", "Running pre-build action", "Failing task", "Running post build",
+            "Running on server", "Finalising the build...", "Stopping timer.", "Finished building", "All post build plugins have finished", "Publishing an artifact",
+            "Unable to publish artifact", "The artifact hasn't been successfully published", "Beginning to execute", "Substituting variable", "Pipeline Maven Plugin");
+
     private boolean isTaskLog(String log) {
-        return log.startsWith("Executing build") || log.startsWith("Starting task") || log.startsWith("Finished task") || log.startsWith("Running pre-build action")
-                || log.startsWith("Failing task") || log.startsWith("Running post build") || log.startsWith("Running on server") || log.startsWith("Finalising the build...")
-                || log.startsWith("Stopping timer.") || log.startsWith("Finished building") || log.startsWith("All post build plugins have finished")
-                || log.startsWith("Publishing an artifact") || log.startsWith("Unable to publish artifact") || log.startsWith("The artifact hasn't been successfully published")
-                || log.startsWith("Beginning to execute") || log.startsWith("Substituting variable") || log.startsWith("Pipeline Maven Plugin");
+        return BUILD_TASK_LOGS.stream().anyMatch(log::startsWith);
     }
 
     /**
