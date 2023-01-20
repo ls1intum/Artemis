@@ -1,7 +1,9 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { Post } from 'app/entities/metis/post.model';
-import { Subject, takeUntil } from 'rxjs';
+import { MetisService } from 'app/shared/metis/metis.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subject, switchMap, take, takeUntil } from 'rxjs';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { getAsChannelDto } from 'app/entities/metis/conversation/channel.model';
 
@@ -22,6 +24,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     conversationsOfUser: ConversationDto[] = [];
     // MetisConversationService is created in course overview, so we can use it here
     constructor(public metisConversationService: MetisConversationService) {}
+    constructor(private router: Router, private activatedRoute: ActivatedRoute, public metisConversationService: MetisConversationService) {}
 
     getAsChannel = getAsChannelDto;
     setPostInThread(post?: Post) {
@@ -35,12 +38,33 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.metisConversationService.isServiceSetup$.subscribe((isServiceSetUp: boolean) => {
             if (isServiceSetUp) {
+                this.subscribeToQueryParameter();
                 // service is fully set up in course-overview, now we can subscribe to the respective observables
                 this.subscribeToActiveConversation();
                 this.subscribeToConversationsOfUser();
                 this.subscribeToLoading();
                 this.isServiceSetUp = true;
+                this.updateQueryParameters();
             }
+        });
+    }
+
+    subscribeToQueryParameter() {
+        this.activatedRoute.queryParams.pipe(take(1), takeUntil(this.ngUnsubscribe)).subscribe((queryParams) => {
+            if (queryParams.conversationId) {
+                this.metisConversationService.setActiveConversation(Number(queryParams.conversationId));
+            }
+        });
+    }
+
+    updateQueryParameters() {
+        this.router.navigate([], {
+            relativeTo: this.activatedRoute,
+            queryParams: {
+                conversationId: this.activeConversation?.id,
+            },
+            replaceUrl: true,
+            queryParamsHandling: 'merge',
         });
     }
 
@@ -52,6 +76,7 @@ export class CourseConversationsComponent implements OnInit, OnDestroy {
     private subscribeToActiveConversation() {
         this.metisConversationService.activeConversation$.pipe(takeUntil(this.ngUnsubscribe)).subscribe((conversation: ConversationDto) => {
             this.activeConversation = conversation;
+            this.updateQueryParameters();
         });
     }
 

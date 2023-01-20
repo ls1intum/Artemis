@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { TutorialGroupsConfigurationFormData } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { AlertService } from 'app/core/util/alert.service';
@@ -14,6 +14,7 @@ import { Course } from 'app/entities/course.model';
 @Component({
     selector: 'jhi-edit-tutorial-groups-configuration',
     templateUrl: './edit-tutorial-groups-configuration.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();
@@ -30,6 +31,8 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
         private courseManagementService: CourseManagementService,
         private alertService: AlertService,
+
+        private cdr: ChangeDetectorRef,
     ) {}
 
     ngOnInit(): void {
@@ -58,7 +61,8 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     ngOnDestroy(): void {
@@ -86,6 +90,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit, OnDestr
                     this.courseManagementService.courseWasUpdated(this.course);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 }
