@@ -18,6 +18,7 @@ export class DeleteButtonDirective implements OnInit {
     @Input() requireConfirmationOnlyForAdditionalChecks = false;
     @Input() dialogError: Observable<string>;
     @Output() delete = new EventEmitter<{ [key: string]: boolean }>();
+    @Input() animation = true;
 
     deleteTextSpan: HTMLElement;
 
@@ -66,7 +67,7 @@ export class DeleteButtonDirective implements OnInit {
             dialogError: this.dialogError,
             requireConfirmationOnlyForAdditionalChecks: this.requireConfirmationOnlyForAdditionalChecks,
         };
-        this.deleteDialogService.openDeleteDialog(deleteDialogData);
+        this.deleteDialogService.openDeleteDialog(deleteDialogData, this.animation);
     }
 
     /**

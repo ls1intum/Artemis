@@ -12,6 +12,7 @@ import '@angular/localize/init';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { runOnPushChangeDetection } from '../../../../../helpers/on-push-change-detection.helper';
 
 describe('TutorialGroupSessionForm', () => {
     let fixture: ComponentFixture<TutorialGroupSessionFormComponent>;
@@ -44,6 +45,7 @@ describe('TutorialGroupSessionForm', () => {
                 });
 
                 testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
+                fixture.detectChanges();
             });
     });
 
@@ -52,7 +54,6 @@ describe('TutorialGroupSessionForm', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
@@ -63,8 +64,6 @@ describe('TutorialGroupSessionForm', () => {
             startTime: validStartTime,
             endTime: validEndTime,
         };
-        fixture.detectChanges();
-
         component.formData = formData;
         component.ngOnChanges();
 
@@ -76,7 +75,7 @@ describe('TutorialGroupSessionForm', () => {
 
     it('should submit valid form', fakeAsync(() => {
         setValidFormValues();
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();
 
@@ -85,14 +84,14 @@ describe('TutorialGroupSessionForm', () => {
 
     it('should block submit when time range is invalid', fakeAsync(() => {
         setValidFormValues();
+        runOnPushChangeDetection(fixture);
 
-        fixture.detectChanges();
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();
 
         component.endTimeControl!.setValue('11:00:00');
         component.startTimeControl!.setValue('12:00:00');
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         expect(component.form.invalid).toBeTrue();
         expect(component.isSubmitPossible).toBeFalse();
 
