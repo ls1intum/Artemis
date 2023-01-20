@@ -141,7 +141,7 @@
                 },
                 "split": {
                     "empty": "",
-                    "unit": "Units",
+                    "unit": "Vortragseinheiten",
                     "unitName": "Einheitenname",
                     "releaseDate": "Veröffentlichungsdatum",
                     "startPage": "Startseite",
