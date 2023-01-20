@@ -37,7 +37,7 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
         }
 
         return {
-            type: 'Feedback',
+            type: 'Reviewer',
             name: this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
             text: feedback.detailText,
