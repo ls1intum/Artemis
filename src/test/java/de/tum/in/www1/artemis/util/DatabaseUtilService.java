@@ -846,8 +846,9 @@ public class DatabaseUtilService {
         return courseRepo.save(course);
     }
 
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles) throws Exception {
-        List<Course> courses = this.createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles);
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(String userPrefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations)
+            throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLectures(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
             for (int i = 0; i < lectures.size(); i++) {
@@ -862,14 +863,12 @@ public class DatabaseUtilService {
         }).toList();
     }
 
-    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(String userPrefix, boolean withParticipations, boolean withFiles) throws Exception {
-        List<Course> courses = this.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles);
+    public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(String userPrefix, boolean withParticipations, boolean withFiles,
+            int numberOfTutorParticipations) throws Exception {
+        List<Course> courses = this.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, withParticipations, withFiles, numberOfTutorParticipations);
         return courses.stream().peek(course -> {
             List<Lecture> lectures = new ArrayList<>(course.getLectures());
-            for (int i = 0; i < lectures.size(); i++) {
-                LearningGoal learningGoal = createLearningGoal(course);
-                lectures.set(i, addLearningGoalToLectureUnits(lectures.get(i), Set.of(learningGoal)));
-            }
+            lectures.replaceAll(lecture -> addLearningGoalToLectureUnits(lecture, Set.of(createLearningGoal(course))));
             course.setLectures(new HashSet<>(lectures));
         }).toList();
     }
@@ -929,11 +928,11 @@ public class DatabaseUtilService {
         return onlineUnitRepository.save(onlineUnit);
     }
 
-    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations) throws Exception {
-        return createCoursesWithExercisesAndLectures(prefix, withParticipations, false);
+    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, int numberOfTutorParticipations) throws Exception {
+        return createCoursesWithExercisesAndLectures(prefix, withParticipations, false, numberOfTutorParticipations);
     }
 
-    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, boolean withFiles) throws Exception {
+    public List<Course> createCoursesWithExercisesAndLectures(String prefix, boolean withParticipations, boolean withFiles, int numberOfTutorParticipations) throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
         ZonedDateTime futureFutureTimestamp = ZonedDateTime.now().plusDays(8);
@@ -1007,21 +1006,19 @@ public class DatabaseUtilService {
         if (withParticipations) {
 
             // create 5 tutor participations and 5 example submissions and connect all of them (to test the many-to-many relationship)
-            var tutorParticipations = new ArrayList<TutorParticipation>();
-            for (int i = 1; i < 6; i++) {
+            Set<TutorParticipation> tutorParticipations = new HashSet<>();
+            for (int i = 1; i < numberOfTutorParticipations + 1; i++) {
                 var tutorParticipation = new TutorParticipation().tutor(getUserByLogin(prefix + "tutor" + i)).status(TutorParticipationStatus.NOT_PARTICIPATED)
                         .assessedExercise(modelingExercise);
                 tutorParticipationRepo.save(tutorParticipation);
                 tutorParticipations.add(tutorParticipation);
             }
 
-            for (int i = 0; i < 5; i++) {
+            for (int i = 1; i < numberOfTutorParticipations + 1; i++) {
                 String validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
                 var exampleSubmission = addExampleSubmission(generateExampleSubmission(validModel, modelingExercise, true));
                 exampleSubmission.assessmentExplanation("exp");
-                for (var tutorParticipation : tutorParticipations) {
-                    exampleSubmission.addTutorParticipations(tutorParticipation);
-                }
+                exampleSubmission.setTutorParticipations(tutorParticipations);
                 exampleSubmissionRepo.save(exampleSubmission);
             }
 
@@ -1232,14 +1229,15 @@ public class DatabaseUtilService {
         return answerPosts;
     }
 
-    public List<Course> createMultipleCoursesWithAllExercisesAndLectures(String userPrefix, int numberOfCoursesWithExercises, int numberOfCoursesWithLectures) throws Exception {
+    public List<Course> createMultipleCoursesWithAllExercisesAndLectures(String userPrefix, int numberOfCoursesWithExercises, int numberOfCoursesWithLectures,
+            int numberOfTutorParticipations) throws Exception {
         List<Course> courses = new ArrayList<>();
         for (int i = 0; i < numberOfCoursesWithExercises; i++) {
             var course = createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(userPrefix, true);
             courses.add(course);
         }
         for (int i = 0; i < numberOfCoursesWithLectures; i++) {
-            var coursesWithLectures = createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, true);
+            var coursesWithLectures = createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, true, numberOfTutorParticipations);
             courses.addAll(coursesWithLectures);
         }
         return courses;

@@ -731,12 +731,11 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     void getComplaintsByExerciseId_tutor_sensitiveDataHidden() throws Exception {
         complaint.setParticipant(database.getUserByLogin(TEST_PREFIX + "student1"));
         complaintRepo.save(complaint);
-        final var params = new LinkedMultiValueMap<String, String>();
+        var params = new LinkedMultiValueMap<String, String>();
         params.add("complaintType", ComplaintType.COMPLAINT.name());
-        final var complaints = request.getList("/api/exercises/" + complaint.getResult().getParticipation().getExercise().getId() + "/complaints", HttpStatus.OK, Complaint.class,
-                params);
-
-        complaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
+        var exercise = complaint.getResult().getParticipation().getExercise();
+        var complaints = request.getList("/api/exercises/" + exercise.getId() + "/complaints", HttpStatus.OK, Complaint.class, params);
+        complaints.forEach(complaint -> checkComplaintContainsNoSensitiveData(complaint, true));
     }
 
     @Test

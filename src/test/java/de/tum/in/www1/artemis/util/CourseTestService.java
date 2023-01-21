@@ -349,7 +349,7 @@ public class CourseTestService {
     // Test
     public void testDeleteCourseWithPermission() throws Exception {
         // add to new list so that we can add another course with ARTEMIS_GROUP_DEFAULT_PREFIX so that delete group will be tested properly
-        List<Course> courses = new ArrayList<>(database.createCoursesWithExercisesAndLectures(userPrefix, true));
+        List<Course> courses = new ArrayList<>(database.createCoursesWithExercisesAndLectures(userPrefix, true, 5));
         Course course3 = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(8), ZonedDateTime.now().minusDays(4), new HashSet<>(), null, null, null, null);
         course3.setStudentGroupName(course3.getDefaultStudentGroupName());
         course3.setTeachingAssistantGroupName(course3.getDefaultTeachingAssistantGroupName());
@@ -590,14 +590,14 @@ public class CourseTestService {
 
     // Test
     public void testGetCourse_tutorNotInCourse() throws Exception {
-        var courses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        var courses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         request.getList("/api/courses/" + courses.get(0).getId(), HttpStatus.FORBIDDEN, Course.class);
         request.get("/api/courses/" + courses.get(0).getId() + "/with-exercises", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
     public void testGetCoursesWithPermission() throws Exception {
-        List<Course> coursesCreated = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> coursesCreated = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         List<Course> courses = request.getList("/api/courses", HttpStatus.OK, Course.class);
 
         for (Course course : coursesCreated) {
@@ -613,7 +613,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCoursesWithQuizExercises() throws Exception {
-        List<Course> coursesCreated = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> coursesCreated = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         Course activeCourse = coursesCreated.get(0);
         Course inactiveCourse = coursesCreated.get(1);
 
@@ -633,7 +633,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForDashboard(boolean userRefresh) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnitsAndLearningGoals(userPrefix, true, false, numberOfTutors);
         Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
 
         // Test that the received course has five exercises
@@ -674,7 +674,7 @@ public class CourseTestService {
         String suffix = "getall";
         adjustUserGroupsToCustomGroups(suffix);
         // Note: with the suffix, we reduce the amount of courses loaded below to prevent test issues
-        List<Course> coursesCreated = database.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false);
+        List<Course> coursesCreated = database.createCoursesWithExercisesAndLecturesAndLectureUnits(userPrefix, true, false, numberOfTutors);
         for (var course : coursesCreated) {
             database.updateCourseGroups(userPrefix, course, suffix);
         }
@@ -778,7 +778,7 @@ public class CourseTestService {
     // Test
     public void testGetAllCoursesWithUserStats() throws Exception {
         adjustUserGroupsToCustomGroups();
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         Course course = testCourses.get(0);
         course.setStudentGroupName(userPrefix + "student");
         course.setTeachingAssistantGroupName(userPrefix + "tutor");
@@ -820,7 +820,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForAssessmentDashboardWithStats() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         for (Course testCourse : testCourses) {
             Course course = request.get("/api/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
             for (Exercise exercise : course.getExercises()) {
@@ -867,7 +867,7 @@ public class CourseTestService {
 
     // Tests that average rating and number of ratings are computed correctly in '/for-assessment-dashboard'
     public void testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly() throws Exception {
-        var testCourse = database.createCoursesWithExercisesAndLectures(userPrefix, true).get(0);
+        var testCourse = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5).get(0);
         var exercise = database.getFirstExerciseWithType(testCourse, TextExercise.class);
 
         int[] ratings = { 3, 4, 5 };
@@ -888,13 +888,13 @@ public class CourseTestService {
 
     // Test
     public void testGetCourseForInstructorDashboardWithStats_instructorNotInCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
     }
 
     // Test
     public void testGetCourseForAssessmentDashboardWithStats_tutorNotInCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Course.class);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, StatsForDashboardDTO.class);
     }
@@ -1098,7 +1098,7 @@ public class CourseTestService {
     // Test
     public void testGetCourse() throws Exception {
         adjustUserGroupsToCustomGroups();
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         for (Course testCourse : testCourses) {
             testCourse.setInstructorGroupName(userPrefix + "instructor");
             testCourse.setTeachingAssistantGroupName(userPrefix + "tutor");
@@ -1139,7 +1139,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCategoriesInCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         Course course1 = testCourses.get(0);
         Course course2 = testCourses.get(1);
         List<String> categories1 = request.getList("/api/courses/" + course1.getId() + "/categories", HttpStatus.OK, String.class);
@@ -1150,7 +1150,7 @@ public class CourseTestService {
 
     // Test
     public void testGetCategoriesInCourse_instructorNotInCourse() throws Exception {
-        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        List<Course> testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         request.get("/api/courses/" + testCourses.get(0).getId() + "/categories", HttpStatus.FORBIDDEN, Set.class);
     }
 
@@ -1894,7 +1894,7 @@ public class CourseTestService {
     // Test
     public void testGetAllCoursesForManagementOverview() throws Exception {
         // Add two courses, containing one not belonging to the instructor
-        var testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        var testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         var instructorsCourse = testCourses.get(0);
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepo.save(instructorsCourse);
@@ -1921,7 +1921,7 @@ public class CourseTestService {
     public void testGetExercisesForCourseOverview() throws Exception {
 
         // Add two courses, containing one not belonging to the instructor
-        var testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        var testCourses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         var instructorsCourse = testCourses.get(0);
         instructorsCourse.setInstructorGroupName("test-instructors");
         courseRepo.save(instructorsCourse);
@@ -2182,7 +2182,7 @@ public class CourseTestService {
         adjustUserGroupsToCustomGroups();
         ZonedDateTime now = ZonedDateTime.now();
         // add courses with exercises
-        var courses = database.createCoursesWithExercisesAndLectures(userPrefix, true);
+        var courses = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5);
         var course1 = courses.get(0);
         var course2 = courses.get(1);
         course1.setStartDate(now.minusWeeks(2));
@@ -2396,7 +2396,7 @@ public class CourseTestService {
 
     // Test
     public void testAddUsersToCourseGroup(String group, String registrationNumber1, String registrationNumber2, String email) throws Exception {
-        var course = database.createCoursesWithExercisesAndLectures(userPrefix, true).get(0);
+        var course = database.createCoursesWithExercisesAndLectures(userPrefix, true, 5).get(0);
         StudentDTO dto1 = new StudentDTO().registrationNumber(registrationNumber1);
         dto1.setLogin("newstudent1");
         StudentDTO dto2 = new StudentDTO().registrationNumber(registrationNumber2);
