@@ -58,7 +58,7 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @BeforeEach
     void initTestCase() throws Exception {
         this.database.addUsers(TEST_PREFIX, 6, 6, 0, 1);
-        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
+        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();
 
