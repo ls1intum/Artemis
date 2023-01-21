@@ -1526,6 +1526,9 @@ public class CourseTestService {
         assertThat(tutors).isEmpty();
     }
 
+    /**
+     * Test
+     */
     public void searchUsersInCourse_searchForAllTutors_shouldReturnAllTutorsAndEditors() throws Exception {
         var course = database.createCourse();
         // Test: search for all (no login or name) tutors (tutors includes also editors)
@@ -1534,6 +1537,9 @@ public class CourseTestService {
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsTeachingAssistant)).hasSize(numberOfTutors);
     }
 
+    /**
+     * Test
+     */
     public void searchUsersInCourse_searchForAllInstructor_shouldReturnAllInstructors() throws Exception {
         var course = database.createCourse();
         // Test: search for all (no login or name) instructors
@@ -1541,18 +1547,27 @@ public class CourseTestService {
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(numberOfInstructors);
     }
 
+    /**
+     * Test
+     */
     public void searchUsersInCourse_searchForAllStudents_shouldReturnBadRequest() throws Exception {
         var course = database.createCourse();
         // Test: Try to search for all students (should fail)
         searchUsersTest(course, List.of("students"), Optional.empty(), 0, false);
     }
 
+    /**
+     * Test
+     */
     public void searchUsersInCourse_searchForStudentsAndTooShortSearchTerm_shouldReturnBadRequest() throws Exception {
         var course = database.createCourse();
         // Test: Try to search for all students with a too short search term (at least 3 as students are included) (should fail)
         searchUsersTest(course, List.of("students"), Optional.of("st"), 0, false);
     }
 
+    /**
+     * Test
+     */
     public void searchUsersInCourse_searchForStudents_shouldReturnUsersMatchingSearchTerm() throws Exception {
         var course = database.createCourse();
         // Test: Try to search for students with a long enough search term (at least 3 as students are included)
@@ -1561,6 +1576,9 @@ public class CourseTestService {
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsStudent)).hasSize(numberOfStudents - 1);
     }
 
+    /**
+     * Test
+     */
     public void searchUsersInCourse_searchForAllTutorsAndInstructors_shouldReturnAllTutorsEditorsAndInstructors() throws Exception {
         var course = database.createCourse();
         // Test: Try to search for all tutors (tutors includes also editors) and instructors
@@ -1570,6 +1588,9 @@ public class CourseTestService {
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).hasSize(numberOfInstructors);
     }
 
+    /**
+     * Test
+     */
     public void searchUsersInCourse_searchForTutorsAndInstructors_shouldReturnUsersMatchingSearchTerm() throws Exception {
         var course = database.createCourse();
         // Test : Try to search for all tutors (tutors includes also editors) and instructors with search term
@@ -1579,6 +1600,9 @@ public class CourseTestService {
         assertThat(result.stream().filter(UserPublicInfoDTO::getIsInstructor)).isEmpty();
     }
 
+    /**
+     * Test
+     */
     public void searchUsersInCourse_searchForStudentsTutorsAndInstructorsAndTooShortSearchTerm_shouldReturnBadRequest() throws Exception {
         var course = database.createCourse();
         // Test: Try to search or all students, tutors (tutors includes also editors) and instructors
@@ -1586,6 +1610,9 @@ public class CourseTestService {
         searchUsersTest(course, List.of("students", "tutors", "instructors"), Optional.of("tu"), 0, false);
     }
 
+    /**
+     * Test
+     */
     public void searchUsersInCourse_searchForStudentsTutorsEditorsAndInstructors_shouldReturnUsersMatchingSearchTerm() throws Exception {
         var course = database.createCourse();
 
@@ -1605,8 +1632,9 @@ public class CourseTestService {
         var status = shouldPass ? HttpStatus.OK : HttpStatus.BAD_REQUEST;
         var foundUsers = request.getList("/api/courses/" + course.getId() + "/users/search", status, UserPublicInfoDTO.class, queryParameter);
         if (shouldPass) {
-            assertThat(foundUsers).hasSize(expectedSize);
-            return foundUsers;
+            var foundUsersWithPrefix = foundUsers.stream().filter(user -> user.getLogin().startsWith(userPrefix)).toList();
+            assertThat(foundUsersWithPrefix).hasSize(expectedSize);
+            return foundUsersWithPrefix;
         }
         else {
             assertThat(foundUsers).isNull();
