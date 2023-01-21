@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.lecture;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,9 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AttachmentUnitService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.LearningGoalProgressService;
+import de.tum.in.www1.artemis.service.LectureUnitProcessingService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.web.rest.dto.LectureUnitInformationDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
@@ -42,11 +45,15 @@ public class AttachmentUnitResource {
 
     private final AttachmentUnitService attachmentUnitService;
 
+    private final LectureUnitProcessingService lectureUnitProcessingService;
+
     private final LearningGoalProgressService learningGoalProgressService;
 
-    public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, AuthorizationCheckService authorizationCheckService,
-            GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService, LearningGoalProgressService learningGoalProgressService) {
+    public AttachmentUnitResource(AttachmentUnitRepository attachmentUnitRepository, LectureRepository lectureRepository, LectureUnitProcessingService lectureUnitProcessingService,
+            AuthorizationCheckService authorizationCheckService, GroupNotificationService groupNotificationService, AttachmentUnitService attachmentUnitService,
+            LearningGoalProgressService learningGoalProgressService) {
         this.attachmentUnitRepository = attachmentUnitRepository;
+        this.lectureUnitProcessingService = lectureUnitProcessingService;
         this.lectureRepository = lectureRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.groupNotificationService = groupNotificationService;
@@ -139,6 +146,52 @@ public class AttachmentUnitResource {
         learningGoalProgressService.updateProgressByLearningObjectAsync(savedAttachmentUnit);
 
         return ResponseEntity.created(new URI("/api/attachment-units/" + savedAttachmentUnit.getId())).body(savedAttachmentUnit);
+    }
+
+    /**
+     * POST lectures/:lectureId/attachment-units/split : creates new attachment units.
+     *
+     * @param lectureId            the id of the lecture to which the attachment units should be added
+     * @param lectureUnitInformationDTO the units that should be created
+     * @param file                 the file to be splitted
+     * @return the ResponseEntity with status 200 (ok) and with body the newly created attachment units
+     */
+    @PostMapping("lectures/{lectureId}/attachment-units/split")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<List<AttachmentUnit>> createAttachmentUnits(@PathVariable Long lectureId, @RequestPart LectureUnitInformationDTO lectureUnitInformationDTO,
+            @RequestPart MultipartFile file) {
+        log.debug("REST request to create AttachmentUnits {} with lectureId {}", lectureUnitInformationDTO, lectureId);
+
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        if (lecture.getCourse() == null) {
+            throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+
+        List<AttachmentUnit> savedAttachmentUnits = attachmentUnitService.createAttachmentUnits(lectureUnitInformationDTO, lecture, file);
+        return ResponseEntity.ok().body(savedAttachmentUnits);
+    }
+
+    /**
+     * POST lectures/:lectureId/process-units : Prepare attachment units information
+     *
+     * @param file       the file to get the units data
+     * @param lectureId  the id of the lecture to which the file is going to be splitted
+     * @return the ResponseEntity with status 200 (ok) and with body attachmentUnitsData
+     */
+    @PostMapping("lectures/{lectureId}/process-units")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<LectureUnitInformationDTO> getAttachmentUnitsData(@PathVariable Long lectureId, @RequestParam("file") MultipartFile file) {
+        log.debug("REST request to split lecture file : {}", file.getOriginalFilename());
+
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+        if (lecture.getCourse() == null) {
+            throw new ConflictException("Specified lecture is not part of a course", "AttachmentUnit", "courseMissing");
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
+
+        LectureUnitInformationDTO attachmentUnitsData = lectureUnitProcessingService.getSplitUnitData(file);
+        return ResponseEntity.ok().body(attachmentUnitsData);
     }
 
     /**
