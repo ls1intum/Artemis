@@ -206,14 +206,23 @@ export class TextSubmissionViewerComponent implements OnChanges {
         if (position < 0) {
             position = 0;
         }
-        return text.slice(0, position) + token + text.slice(position);
+        return escape(text.slice(0, position)) + token + escape(text.slice(position));
     }
 
-    insertMatchTokens(fileContent: string) {
-        let rows = fileContent.split('\n');
-        rows = rows.map(escape);
-        const matches = this.getMatchesForCurrentFile();
+    insertMatchTokens(fileContent: string): string {
+        const matches = this.getMatchesForCurrentFile().sort((m1, m2) => m1.from.line - m2.from.line);
+        if (!matches.length) {
+            return fileContent;
+        }
+
+        const rows = fileContent.split('\n');
         const offsets = new Array(rows.length).fill(0);
+
+        for (let i = 0; i < matches[0].from.line - 1; i++) {
+            if (rows[i]) {
+                rows[i] = escape(rows[i]);
+            }
+        }
 
         matches.forEach((match) => {
             if (!match.from) {
@@ -235,6 +244,12 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 offsets[idxLineFrom] += this.tokenStart.length;
             }
 
+            for (let i = idxLineFrom + 1; i < idxLineTo; i++) {
+                if (rows[i]) {
+                    rows[i] = escape(rows[i]);
+                }
+            }
+
             const idxColumnTo = match.to.column + match.to.length - 1 + offsets[idxLineTo];
 
             if (rows[idxLineTo]) {
@@ -242,6 +257,12 @@ export class TextSubmissionViewerComponent implements OnChanges {
                 offsets[idxLineTo] += this.tokenEnd.length;
             }
         });
+
+        for (let i = matches.last()!.from.line; i < rows.length; i++) {
+            if (rows[i]) {
+                rows[i] = escape(rows[i]);
+            }
+        }
 
         return rows.join('\n');
     }
