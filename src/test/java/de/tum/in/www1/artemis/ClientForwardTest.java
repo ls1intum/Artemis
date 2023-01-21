@@ -56,7 +56,7 @@ class ClientForwardTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
     @Test
     void getWebsocketInfoEndpoint() throws Exception {
-        request.getMvc().perform(get("/websocket/info")).andExpect(status().isNotFound());
+        request.getMvc().perform(get("/websocket/info")).andExpect(status().isOk());
     }
 
     @Test
