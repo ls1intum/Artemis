@@ -18,7 +18,7 @@ import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExampleSolutionInfo, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
-import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { getExerciseDueDate, hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
 import { AlertService } from 'app/core/util/alert.service';
@@ -194,7 +194,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
         this.filterUnfinishedResults(this.exercise.studentParticipations);
         this.mergeResultsAndSubmissionsForParticipations();
-        this.exercise.participationStatus = participationStatus(this.exercise, false);
         this.isAfterAssessmentDueDate = !this.exercise.assessmentDueDate || dayjs().isAfter(this.exercise.assessmentDueDate);
         this.exerciseCategories = this.exercise.categories || [];
         this.allowComplaintsForAutomaticAssessments = false;
@@ -347,7 +346,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             .subscribe((teamAssignment) => {
                 this.exercise!.studentAssignedTeamId = teamAssignment.teamId;
                 this.exercise!.studentParticipations = teamAssignment.studentParticipations;
-                this.exercise!.participationStatus = participationStatus(this.exercise!, false);
             });
     }
 
