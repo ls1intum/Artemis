@@ -229,6 +229,9 @@ public class CourseService {
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
         course.setTutorialGroups(tutorialGroupService.findAllForCourse(course, user));
         course.setTutorialGroupsConfiguration(tutorialGroupsConfigurationRepository.findByCourseIdWithEagerTutorialGroupFreePeriods(courseId).orElse(null));
+        if (authCheckService.isOnlyStudentInCourse(course, user)) {
+            course.setExams(examRepository.filterVisibleExams(course.getExams()));
+        }
         return course;
     }
 
@@ -252,14 +255,16 @@ public class CourseService {
         long start = System.nanoTime();
         var userVisibleCourses = courseRepository.findAllActiveWithLectures().stream().filter(course -> isCourseVisibleForUser(user, course)).toList();
 
-        log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
-
+        if (log.isDebugEnabled()) {
+            log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
+        }
         long startFindAllExercises = System.nanoTime();
         var courseIds = userVisibleCourses.stream().map(DomainObject::getId).collect(Collectors.toSet());
         Set<Exercise> allExercises = exerciseRepository.findByCourseIdsWithCategories(courseIds);
-        Set<Exam> allExams = examRepository.fingByCourseIdsForUser(courseIds, user.getId(), user.getGroups(), ZonedDateTime.now());
-        log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises and {} exams after {}", allExercises.size(), allExams.size(),
-                TimeLogUtil.formatDurationFrom(startFindAllExercises));
+        if (log.isDebugEnabled()) {
+            log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises and {} exams after {}", allExercises.size(), allExams.size(),
+                    TimeLogUtil.formatDurationFrom(startFindAllExercises));
+        }
 
         long startFilterAll = System.nanoTime();
         var courses = userVisibleCourses.stream().peek(course -> {
@@ -271,8 +276,10 @@ public class CourseService {
             course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
         }).toList();
 
-        log.debug("all {} filterExercisesForCourse individually finished together after {}", courses.size(), TimeLogUtil.formatDurationFrom(startFilterAll));
-        log.debug("Filter exercises, lectures, and exams finished after {}", TimeLogUtil.formatDurationFrom(start));
+        if (log.isDebugEnabled()) {
+            log.debug("all {} filterExercisesForCourse individually finished together after {}", courses.size(), TimeLogUtil.formatDurationFrom(startFilterAll));
+            log.debug("Filter exercises, lectures, and exams finished after {}", TimeLogUtil.formatDurationFrom(start));
+        }
         return courses;
     }
 

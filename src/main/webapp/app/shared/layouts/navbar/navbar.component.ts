@@ -228,6 +228,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     breadcrumbTranslation = {
         new: 'global.generic.create',
+        process: 'artemisApp.attachmentUnit.createAttachmentUnits.pageTitle',
         create: 'global.generic.create',
         start: 'global.generic.start',
         edit: 'global.generic.edit',

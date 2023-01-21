@@ -46,7 +46,7 @@ describe('FeedbackComponent', () => {
     };
 
     const makeFeedbackItem = (item: FeedbackItem) => {
-        return Object.assign({ type: 'Feedback', credits: 0, title: undefined, positive: undefined } as FeedbackItem, item);
+        return Object.assign({ type: 'Reviewer', credits: 0, title: undefined, positive: undefined } as FeedbackItem, item);
     };
 
     const generateSCAFeedbackPair = (
@@ -110,7 +110,7 @@ describe('FeedbackComponent', () => {
                 positive: credits > 0,
             }),
             item: makeFeedbackItem({
-                type: 'Feedback',
+                type: 'Reviewer',
                 name: showDetails ? 'artemisApp.course.tutor' : 'artemisApp.result.detail.feedback',
                 title,
                 text,

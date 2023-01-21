@@ -27,7 +27,7 @@
                         <td>&mdash;</td>
                         <td *ngIf="hasPointsSet()">&mdash;</td>
                     </tr>
-                    <tr *ngFor="let gradeStep of gradeSteps; let last = last" [class.highlighted]="gradeStep.gradeName == studentGrade">
+                    <tr *ngFor="let gradeStep of gradeSteps; let last = last" [class.highlighted]="gradeStep.gradeName == studentGrade || +gradeStep.gradeName === +studentGrade!">
                         <td>{{ gradeStep.gradeName }}</td>
                         <td>
                             <span [innerHTML]="gradeStep | gradeStepBounds : GradeEditMode.PERCENTAGE : last | safeHtml"></span>
