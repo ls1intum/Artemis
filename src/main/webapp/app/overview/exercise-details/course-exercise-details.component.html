@@ -218,7 +218,7 @@
                         ></jhi-modeling-editor>
                     </dd>
                     <dd *ngIf="exampleSolutionInfo?.exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolutionInfo?.exampleSolution"></dd>
-                    <ng-container *ngIf="exercise?.exampleSolutionPublished">
+                    <ng-container *ngIf="exampleSolutionInfo?.programmingExercise?.exampleSolutionPublished">
                         <dd class="editor-outline-background">
                             <jhi-programming-exercise-example-solution-repo-download
                                 class="ms-2"
