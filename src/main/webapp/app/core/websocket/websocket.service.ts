@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subscriber, Subscription, filter, first, take } from 'rxjs';
+import { BehaviorSubject, Observable, Subscriber, Subscription, first } from 'rxjs';
 import SockJS from 'sockjs-client';
 import Stomp, { Client, ConnectionHeaders, Subscription as StompSubscription } from 'webstomp-client';
 
