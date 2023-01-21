@@ -90,7 +90,8 @@ public class TeamService {
             // Users in the updated team that were not yet part of the existing team need to be added
             Set<User> usersToAdd = new HashSet<>(updatedTeam.getStudents());
             usersToAdd.removeAll(existingTeam.getStudents());
-            usersToAdd.forEach(user -> versionControlService.get().addMemberToRepository(participation.getVcsRepositoryUrl(), user));
+            usersToAdd.forEach(
+                    user -> versionControlService.get().addMemberToRepository(participation.getVcsRepositoryUrl(), user, VersionControlService.RepositoryPermissions.READ_WRITE));
         });
     }
 
