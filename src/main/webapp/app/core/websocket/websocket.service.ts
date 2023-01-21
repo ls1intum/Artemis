@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subscriber, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, Subscriber, Subscription, filter, take } from 'rxjs';
 import SockJS from 'sockjs-client';
 import Stomp, { Client, ConnectionHeaders, Subscription as StompSubscription } from 'webstomp-client';
 
@@ -256,16 +256,19 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * @param channel
      */
     subscribe(channel: string): IWebsocketService {
-        const subscription = this.connectionState.subscribe((connectionState) => {
-            if (connectionState.connected) {
+        const subscription = this.connectionState
+            .pipe(
+                filter((connectionState) => connectionState.connected),
+                take(1),
+            )
+            .subscribe(() => {
                 if (channel != undefined && (this.observables.size === 0 || !this.observables.has(channel))) {
                     this.observables.set(channel, this.createObservable(channel));
                 }
                 if (!this.stompSubscriptions.has(channel)) {
                     this.addSubscription(channel);
                 }
-            }
-        });
+            });
         this.channelSubscriptions.set(channel, subscription);
         return this;
     }
