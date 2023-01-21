@@ -156,6 +156,7 @@ export class AccountService implements IAccountService {
                     return this.userIdentity;
                 }),
                 catchError(() => {
+                    // this will be called during logout
                     if (this.websocketService.isConnected()) {
                         this.websocketService.disconnect();
                     }

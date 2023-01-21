@@ -211,7 +211,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     }
 
     /**
-     * Close the connection to the websocket, unsubscribe all observables and distribute "intended disconnect" state.
+     * Close the connection to the websocket (e.g. due to logout), unsubscribe all observables and set alreadyConnectedOnce to false
      */
     disconnect() {
         this.connectionSubject = new ReplaySubject(1);
