@@ -4,8 +4,8 @@ import { artemis } from '../../support/ArtemisTesting';
 import dayjs from 'dayjs/esm';
 import submission from '../../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import { Course } from 'app/entities/course.model';
+import { ExerciseType } from 'app/entities/exercise.model';
 import { generateUUID } from '../../support/utils';
-import { EXERCISE_TYPE } from '../../support/constants';
 import { AdditionalData, Exercise } from 'src/test/cypress/support/pageobjects/exam/ExamParticipation';
 
 // User management
@@ -43,13 +43,13 @@ describe('Exam participation', () => {
                 .build();
             courseRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                addGroupWithExercise(exam, EXERCISE_TYPE.Text, { textFixture });
+                addGroupWithExercise(exam, ExerciseType.TEXT, { textFixture });
 
-                addGroupWithExercise(exam, EXERCISE_TYPE.Programming, { submission });
+                addGroupWithExercise(exam, ExerciseType.PROGRAMMING, { submission });
 
-                addGroupWithExercise(exam, EXERCISE_TYPE.Quiz, { quizExerciseID: 0 });
+                addGroupWithExercise(exam, ExerciseType.QUIZ, { quizExerciseID: 0 });
 
-                addGroupWithExercise(exam, EXERCISE_TYPE.Modeling);
+                addGroupWithExercise(exam, ExerciseType.MODELING);
 
                 courseRequests.registerStudentForExam(exam, student);
                 courseRequests.generateMissingIndividualExams(exam);
@@ -69,7 +69,7 @@ describe('Exam participation', () => {
         for (let j = 0; j < exerciseArray.length; j++) {
             const exercise = exerciseArray[j];
             examParticipation.verifyExerciseTitleOnFinalPage(exercise.id, exercise.title);
-            if (exercise.type === EXERCISE_TYPE.Text) {
+            if (exercise.type === ExerciseType.TEXT) {
                 examParticipation.verifyTextExerciseOnFinalPage(exercise.additionalData!.textFixture!);
             }
         }
@@ -84,15 +84,15 @@ describe('Exam participation', () => {
     });
 });
 
-function addGroupWithExercise(exam: Exam, exerciseType: EXERCISE_TYPE, additionalData?: AdditionalData) {
+function addGroupWithExercise(exam: Exam, exerciseType: ExerciseType, additionalData?: AdditionalData) {
     exerciseGroupCreation.addGroupWithExercise(exam, 'Exercise ' + generateUUID(), exerciseType, (response) => {
-        if (exerciseType == EXERCISE_TYPE.Quiz) {
+        if (exerciseType == ExerciseType.QUIZ) {
             additionalData!.quizExerciseID = response.body.quizQuestions![0].id;
         }
         addExerciseToArray(exerciseArray, exerciseType, response, additionalData);
     });
 }
 
-function addExerciseToArray(exerciseArray: Array<Exercise>, type: EXERCISE_TYPE, response: any, additionalData?: AdditionalData) {
+function addExerciseToArray(exerciseArray: Array<Exercise>, type: ExerciseType, response: any, additionalData?: AdditionalData) {
     exerciseArray.push({ title: response.body.title, type, id: response.body.id, additionalData });
 }
