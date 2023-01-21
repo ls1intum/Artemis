@@ -206,11 +206,12 @@ export class TextSubmissionViewerComponent implements OnChanges {
         if (position < 0) {
             position = 0;
         }
-        return escape(text.slice(0, position)) + token + escape(text.slice(position));
+        return text.slice(0, position) + token + text.slice(position);
     }
 
     insertMatchTokens(fileContent: string) {
-        const rows = fileContent.split('\n');
+        let rows = fileContent.split('\n');
+        rows = rows.map(escape);
         const matches = this.getMatchesForCurrentFile();
         const offsets = new Array(rows.length).fill(0);
 
