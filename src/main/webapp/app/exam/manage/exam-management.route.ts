@@ -287,6 +287,16 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: ':examId/student-exams/:studentExamId/summary/overview/bonus-grading-key',
+        component: GradingKeyOverviewComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.examManagement.title',
+            forBonus: true,
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':examId/test-runs/:testRunId/conduction',
         component: ExamParticipationComponent,
         data: {

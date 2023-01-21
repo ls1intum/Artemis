@@ -55,17 +55,8 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @BeforeEach
     void initTestCase() throws Exception {
-        log.debug("Test setup start");
         // creating the users student1, tutor1-tutor3 and instructor1
         this.database.addUsers(TEST_PREFIX, 1, 3, 0, 1);
-        // Add users that are not in the course
-        log.debug("0 Test setup 25 users done");
-        database.createAndSaveUser(TEST_PREFIX + "student42");
-        database.createAndSaveUser(TEST_PREFIX + "tutor42");
-        database.createAndSaveUser(TEST_PREFIX + "instructor42");
-        userRepository.flush();
-
-        log.debug("1 Test setup 3 additional users done");
 
         // creating course
         // students: student1 | tutors: tutor1-tutor3 | instructors: instructor1
@@ -75,8 +66,6 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise = exerciseRepository.saveAndFlush(textExercise);
-
-        log.debug("2 Test setup course and exercise done");
 
         // creating participation of student1 by starting the exercise
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
@@ -99,7 +88,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
 
         submission.addResult(result);
         result.setSubmission(submission);
-        submissionRepository.saveAndFlush(submission);
+        submissionRepository.save(submission);
 
         log.debug("3 Test setup submissions done");
 
@@ -112,7 +101,7 @@ class ComplaintResponseIntegrationTest extends AbstractSpringIntegrationBambooBi
         complaint.setSubmittedTime(null);
         complaint.setParticipant(student1);
 
-        complaint = complaintRepository.saveAndFlush(complaint);
+        complaint = complaintRepository.save(complaint);
 
         log.debug("4 Test setup complaints done");
     }

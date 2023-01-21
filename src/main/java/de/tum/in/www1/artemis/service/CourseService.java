@@ -260,12 +260,15 @@ public class CourseService {
                 // remove courses the user should not be able to see
                 .filter(course -> isCourseVisibleForUser(user, course)).toList();
 
-        log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
-
+        if (log.isDebugEnabled()) {
+            log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
+        }
         long startFindAllExercises = System.nanoTime();
         var courseIds = userVisibleCourses.stream().map(DomainObject::getId).collect(Collectors.toSet());
         Set<Exercise> allExercises = exerciseRepository.findByCourseIdsWithCategories(courseIds);
-        log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises after {}", allExercises.size(), TimeLogUtil.formatDurationFrom(startFindAllExercises));
+        if (log.isDebugEnabled()) {
+            log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises after {}", allExercises.size(), TimeLogUtil.formatDurationFrom(startFindAllExercises));
+        }
 
         long startFilterAll = System.nanoTime();
         var courses = userVisibleCourses.stream().peek(course -> {
@@ -279,8 +282,10 @@ public class CourseService {
             }
         }).toList();
 
-        log.debug("all {} filterExercisesForCourse individually finished together after {}", courses.size(), TimeLogUtil.formatDurationFrom(startFilterAll));
-        log.debug("Filter exercises, lectures, and exams finished after {}", TimeLogUtil.formatDurationFrom(start));
+        if (log.isDebugEnabled()) {
+            log.debug("all {} filterExercisesForCourse individually finished together after {}", courses.size(), TimeLogUtil.formatDurationFrom(startFilterAll));
+            log.debug("Filter exercises, lectures, and exams finished after {}", TimeLogUtil.formatDurationFrom(start));
+        }
         return courses;
     }
 

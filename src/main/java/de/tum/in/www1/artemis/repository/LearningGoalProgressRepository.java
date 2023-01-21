@@ -15,11 +15,11 @@ import de.tum.in.www1.artemis.domain.LearningGoalProgress;
 @Repository
 public interface LearningGoalProgressRepository extends JpaRepository<LearningGoalProgress, Long> {
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteAllByLearningGoalId(Long learningGoalId);
 
-    @Transactional
+    @Transactional // ok because of delete
     @Modifying
     void deleteAllByUserId(Long userId);
 
