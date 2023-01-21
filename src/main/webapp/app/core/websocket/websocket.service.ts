@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, ReplaySubject, Subscriber, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subscriber } from 'rxjs';
 import SockJS from 'sockjs-client';
 import Stomp, { Client, ConnectionHeaders, Subscription as StompSubscription } from 'webstomp-client';
 
@@ -83,7 +83,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     // we store the subscribers (represent the components who want to receive messages) per channel so that we can notify them in case a message was received from the server
     private subscribers = new Map<string, Subscriber<any>>();
     private alreadyConnectedOnce = false;
-    private subscription?: Subscription;
     private shouldReconnect = false;
     private readonly connectionStateInternal: BehaviorSubject<ConnectionState>;
     private consecutiveFailedAttempts = 0;
@@ -222,10 +221,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             if (this.connectionStateInternal.getValue().connected || !this.connectionStateInternal.getValue().intendedDisconnect) {
                 this.connectionStateInternal.next(new ConnectionState(false, this.alreadyConnectedOnce, true));
             }
-        }
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-            this.subscription = undefined;
         }
         this.alreadyConnectedOnce = false;
     }
