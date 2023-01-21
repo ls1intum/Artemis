@@ -877,6 +877,26 @@ public class ProgrammingExerciseTestService {
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
     }
 
+    void startProgrammingExercise(Boolean offlineIde) throws Exception {
+        exercise.setAllowOnlineEditor(true);
+        exercise.setAllowOfflineIde(offlineIde);
+        exercise = programmingExerciseRepository.save(exercise);
+
+        startProgrammingExercise_correctInitializationState(INDIVIDUAL);
+
+        final VersionControlService.RepositoryPermissions permissions;
+        if (offlineIde == null || Boolean.TRUE.equals(offlineIde)) {
+            permissions = VersionControlService.RepositoryPermissions.READ_WRITE;
+        }
+        else {
+            permissions = VersionControlService.RepositoryPermissions.READ_ONLY;
+        }
+
+        final User participant = userRepo.getUserByLoginElseThrow(userPrefix + studentLogin);
+
+        verify(versionControlService).addMemberToRepository(any(), eq(participant), eq(permissions));
+    }
+
     private Course setupCourseWithProgrammingExercise(ExerciseMode exerciseMode) {
         final var course = exercise.getCourseViaExerciseGroupOrCourseMember();
         exercise.setMode(exerciseMode);
