@@ -476,7 +476,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCourseWithExercisesAndParticipationsForTeam_AsTutor() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
         Course course = courses.get(0);
 
         ProgrammingExercise programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);

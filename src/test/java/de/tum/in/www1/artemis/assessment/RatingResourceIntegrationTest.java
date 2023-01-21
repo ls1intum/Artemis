@@ -36,7 +36,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() {
-        database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
+        database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         course = database.addCourseWithOneReleasedTextExercise();
         TextExercise exercise = database.getFirstExerciseWithType(course, TextExercise.class);
         User student1 = database.getUserByLogin(TEST_PREFIX + "student1");
