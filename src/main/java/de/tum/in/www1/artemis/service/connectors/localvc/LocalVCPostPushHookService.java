@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
@@ -15,14 +16,12 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
+import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.LocalVCException;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
-import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
-import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.localvc.LocalVCInternalException;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
@@ -49,17 +48,20 @@ public class LocalVCPostPushHookService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
+    private final TeamRepository teamRepository;
+
     public LocalVCPostPushHookService(ProgrammingExerciseRepository programmingExerciseRepository,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService) {
+            ProgrammingMessagingService programmingMessagingService, TeamRepository teamRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
+        this.teamRepository = teamRepository;
     }
 
     /**
@@ -85,7 +87,7 @@ public class LocalVCPostPushHookService {
         ProgrammingExercise exercise = exercises.get(0);
 
         // Retrieve participation for the repository.
-        ProgrammingExerciseParticipation participation;
+        ProgrammingExerciseParticipation participation = null;
 
         if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.TEMPLATE.getName())) {
             participation = templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exercise.getId()).orElse(null);
@@ -94,13 +96,22 @@ public class LocalVCPostPushHookService {
             participation = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exercise.getId()).orElse(null);
         }
         else {
-            List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository
-                    .findWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), localVCRepositoryUrl.getRepositoryTypeOrUserName());
-            if (participations.size() != 1) {
-                participation = null;
+            if (exercise.isTeamMode()) {
+                List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMember().getId(),
+                        localVCRepositoryUrl.getRepositoryTypeOrUserName());
+                Team team = teams.get(0);
+                Optional<ProgrammingExerciseStudentParticipation> teamParticipation = programmingExerciseStudentParticipationRepository
+                        .findWithSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId());
+                if (teamParticipation.isPresent()) {
+                    participation = teamParticipation.get();
+                }
             }
             else {
-                participation = participations.get(0);
+                Optional<ProgrammingExerciseStudentParticipation> studentParticipation = programmingExerciseStudentParticipationRepository
+                        .findWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), localVCRepositoryUrl.getRepositoryTypeOrUserName());
+                if (studentParticipation.isPresent()) {
+                    participation = studentParticipation.get();
+                }
             }
         }
 

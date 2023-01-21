@@ -70,6 +70,14 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
 
     Optional<ProgrammingExerciseStudentParticipation> findByExerciseIdAndTeamId(Long exerciseId, Long teamId);
 
+    @Query("""
+            select participation from ProgrammingExerciseStudentParticipation participation
+            left join fetch participation.submissions
+            where participation.exercise.id = :#{#exerciseId}
+            and participation.team.id = :#{#teamId}
+            """)
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+
     List<ProgrammingExerciseStudentParticipation> findByExerciseId(Long exerciseId);
 
     @EntityGraph(type = LOAD, attributePaths = { "submissions" })
@@ -97,7 +105,7 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             where participation.exercise.id = :#{#exerciseId}
             and participation.student.login = :#{#username}
             """)
-    List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
+    Optional<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
 
     @Query("""
             SELECT p
