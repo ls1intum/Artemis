@@ -261,6 +261,7 @@ public class CourseService {
         long startFindAllExercises = System.nanoTime();
         var courseIds = userVisibleCourses.stream().map(DomainObject::getId).collect(Collectors.toSet());
         Set<Exercise> allExercises = exerciseRepository.findByCourseIdsWithCategories(courseIds);
+        Set<Exam> allExams = examRepository.fingByCourseIdsForUser(courseIds, user.getId(), user.getGroups(), ZonedDateTime.now());
         if (log.isDebugEnabled()) {
             log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises and {} exams after {}", allExercises.size(), allExams.size(),
                     TimeLogUtil.formatDurationFrom(startFindAllExercises));

@@ -404,6 +404,19 @@ public class Exam extends DomainObject {
     }
 
     /**
+     * check if students are allowed to see this exam
+     *
+     * @return true, if students are allowed to see this exam, otherwise false, null if this cannot be determined
+     */
+    @JsonIgnore
+    public Boolean isVisibleToStudents() {
+        if (visibleDate == null) {  // no visible date means the exam is configured wrongly and should not be visible!
+            return null;
+        }
+        return visibleDate.isBefore(ZonedDateTime.now());
+    }
+
+    /**
      * check if the exam has started
      *
      * @return true, if the exam has started, otherwise false, null if this cannot be determined

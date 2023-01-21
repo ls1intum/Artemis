@@ -285,6 +285,16 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     }
 
     /**
+     * Filters the visible exams (excluding the ones that are not visible yet)
+     *
+     * @param exams a set of exams (e.g. the ones of a course)
+     * @return only the visible exams
+     */
+    default Set<Exam> filterVisibleExams(Set<Exam> exams) {
+        return exams.stream().filter(exam -> Boolean.TRUE.equals(exam.isVisibleToStudents())).collect(Collectors.toSet());
+    }
+
+    /**
      * Sets the transient attribute numberOfRegisteredUsers for all given exams
      *
      * @param exams Exams for which to compute and set the number of registered users
