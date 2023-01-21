@@ -44,10 +44,14 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     private Lecture lecture1;
 
+    private final int numberOfStudents = 1;
+
+    private final int numberOfTutors = 5;
+
     @BeforeEach
     void initTestCase() throws Exception {
-        this.database.addUsers(TEST_PREFIX, 6, 6, 0, 1);
-        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true);
+        this.database.addUsers(TEST_PREFIX, numberOfStudents, numberOfTutors, 0, 1);
+        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, true, numberOfTutors);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         var lecture = this.course1.getLectures().stream().findFirst().get();
         lecture.setTitle("Lecture " + new Random().nextInt()); // needed for search by title
@@ -55,7 +59,6 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         // Add users that are not in the course
         database.createAndSaveUser(TEST_PREFIX + "student42");
-        database.createAndSaveUser(TEST_PREFIX + "tutor42");
         database.createAndSaveUser(TEST_PREFIX + "instructor42");
 
         // Setting up a lecture with various kinds of content
