@@ -24,6 +24,7 @@ import { EditOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-m
 import { CreateOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-online-unit/create-online-unit.component';
 import { OnlineUnitFormComponent } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
 import { DragDropModule } from '@angular/cdk/drag-drop';
+import { AttachmentUnitsComponent } from './attachment-units/attachment-units.component';
 
 @NgModule({
     imports: [
@@ -59,6 +60,7 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
         CreateOnlineUnitComponent,
         EditOnlineUnitComponent,
         OnlineUnitFormComponent,
+        AttachmentUnitsComponent,
     ],
     exports: [
         LectureUnitManagementComponent,
