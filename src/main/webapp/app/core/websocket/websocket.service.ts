@@ -218,6 +218,7 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      */
     disconnect() {
         this.observables.forEach((observable, channel) => this.unsubscribe(channel));
+        this.waitUntilConnectionSubscriptions.forEach((subscription) => subscription.unsubscribe());
         if (this.stompClient) {
             this.stompClient.disconnect();
             this.stompClient = undefined;
