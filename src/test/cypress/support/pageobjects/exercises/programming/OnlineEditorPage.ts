@@ -164,6 +164,7 @@ export function startParticipationInProgrammingExercise(courseId: number, exerci
     courses.openCourse(courseId!);
     cy.url().should('include', '/exercises');
     courseOverview.startExercise(exerciseId);
+    cy.reloadUntilFound('#open-exercise-' + exerciseId);
     courseOverview.openRunningProgrammingExercise(exerciseId);
 }
 

@@ -132,8 +132,13 @@ public interface VersionControlService {
      *
      * @param repositoryUrl     The repository url of the repository to which to add the user. It contains the project key & the repository name.
      * @param user              User which to add to the repository
+     * @param permissions       The permissions the user should get for the repository.
      */
-    void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user);
+    void addMemberToRepository(VcsRepositoryUrl repositoryUrl, User user, RepositoryPermissions permissions);
+
+    enum RepositoryPermissions {
+        READ_ONLY, READ_WRITE
+    }
 
     /**
      * Remove the user from the repository
