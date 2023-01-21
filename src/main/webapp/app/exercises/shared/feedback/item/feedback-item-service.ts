@@ -31,7 +31,13 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
         return feedbacks.map((feedback) => this.createFeedbackItem(feedback, showTestDetails));
     }
 
-    createFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
+    group(feedbackItems: FeedbackItem[]): FeedbackNode[] {
+        return getAllFeedbackGroups() //
+            .map((group: FeedbackGroup) => group.addAllItems(feedbackItems.filter(group.shouldContain)))
+            .filter((group: FeedbackGroup) => !group.isEmpty());
+    }
+
+    private createFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
         if (feedback.gradingInstruction) {
             return this.createGradingInstructionFeedbackItem(feedback, showTestDetails);
         }
@@ -62,11 +68,5 @@ export class FeedbackItemServiceImpl implements FeedbackItemService {
             positive: feedback.positive,
             credits: feedback.credits,
         };
-    }
-
-    group(feedbackItems: FeedbackItem[]): FeedbackNode[] {
-        return getAllFeedbackGroups() //
-            .map((group: FeedbackGroup) => group.addAllItems(feedbackItems.filter(group.shouldContain)))
-            .filter((group: FeedbackGroup) => !group.isEmpty());
     }
 }
