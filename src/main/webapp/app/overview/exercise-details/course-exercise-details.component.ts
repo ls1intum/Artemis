@@ -177,8 +177,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     loadExercise() {
         this.exercise = undefined;
         this.studentParticipations = this.participationWebsocketService.getParticipationsForExercise(this.exerciseId);
-        this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
-        this.practiceStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
+        this.updateStudentParticipations();
         this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.gradedStudentParticipation?.results);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
@@ -270,8 +269,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (this.exercise?.studentParticipations?.length) {
             this.studentParticipations = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
             this.exercise.studentParticipations = this.studentParticipations;
-            this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
-            this.practiceStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
+            this.updateStudentParticipations();
             this.sortResults();
             // Add exercise to studentParticipation, as the result component is dependent on its existence.
             this.studentParticipations.forEach((participation) => (participation.exercise = this.exercise));
@@ -313,6 +311,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 } else {
                     this.exercise.studentParticipations = [...this.studentParticipations, changedParticipation];
                 }
+                this.updateStudentParticipations();
                 this.mergeResultsAndSubmissionsForParticipations();
 
                 if (ExerciseType.PROGRAMMING === this.exercise?.type) {
@@ -335,6 +334,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 }
             }
         });
+    }
+
+    private updateStudentParticipations() {
+        this.gradedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
+        this.practiceStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
     }
 
     /**
