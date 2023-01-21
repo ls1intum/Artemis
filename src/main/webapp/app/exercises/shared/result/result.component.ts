@@ -25,6 +25,7 @@ import { Badge, ResultService } from 'app/exercises/shared/result/result.service
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { mergeMap, of } from 'rxjs';
 
 @Component({
     selector: 'jhi-result',
@@ -267,17 +268,21 @@ export class ResultComponent implements OnInit, OnChanges {
      * @param componentInstance the detailed result view
      */
     private determineShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackComponent) {
-        if (!this.latestIndividualDueDate) {
-            if (this.exerciseCacheService) {
-                this.latestIndividualDueDate = this.exerciseCacheService.getLatestDueDate(this.exercise!.id!);
-            } else {
-                this.exerciseService.getLatestDueDate(this.exercise!.id!).subscribe((latestDueDate) => {
-                    this.latestIndividualDueDate = latestDueDate;
-                });
-            }
-        }
+        of(this.latestIndividualDueDate)
+            .pipe(
+                mergeMap((latestDueDate) => {
+                    if (latestDueDate) {
+                        return of(latestDueDate);
+                    }
 
-        componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
-        componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
+                    const service = this.exerciseCacheService ?? this.exerciseService;
+                    return service.getLatestDueDate(this.exercise!.id!);
+                }),
+            )
+            .subscribe((latestDueDate) => {
+                this.latestIndividualDueDate = latestDueDate;
+                componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
+                componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
+            });
     }
 }
