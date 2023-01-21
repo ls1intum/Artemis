@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, ReplaySubject, Subscriber } from 'rxjs';
+import { BehaviorSubject, Observable, ReplaySubject, Subscriber, Subscription } from 'rxjs';
 import SockJS from 'sockjs-client';
 import Stomp, { Client, ConnectionHeaders, Subscription as StompSubscription } from 'webstomp-client';
 
@@ -75,19 +75,19 @@ export class ConnectionState {
 @Injectable({ providedIn: 'root' })
 export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     private stompClient?: Client;
-    private connectionSubject: ReplaySubject<void> = new ReplaySubject(1);
     // we store the STOMP subscriptions per channel so that we can unsubscribe in case we are not interested any more
     private stompSubscriptions = new Map<string, StompSubscription>();
     // we store the observables per channel to make sure we can resubscribe them in case of connection issues
     private observables = new Map<string, Observable<any>>();
     // we store the subscribers (represent the components who want to receive messages) per channel so that we can notify them in case a message was received from the server
     private subscribers = new Map<string, Subscriber<any>>();
+
+    private channelSubscriptions = new Map<string, Subscription>();
     private alreadyConnectedOnce = false;
     private shouldReconnect = false;
     private readonly connectionStateInternal: BehaviorSubject<ConnectionState>;
     private consecutiveFailedAttempts = 0;
     private connecting = false;
-
     private socket: any = undefined;
     private subscriptionCounter = 0;
 
@@ -164,7 +164,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
         this.stompClient.connect(
             headers,
             () => {
-                this.connectionSubject.next();
                 this.connecting = false;
                 if (!this.connectionStateInternal.getValue().connected) {
                     this.connectionStateInternal.next(new ConnectionState(true, this.alreadyConnectedOnce, false));
@@ -213,7 +212,6 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * Close the connection to the websocket (e.g. due to logout), unsubscribe all observables and set alreadyConnectedOnce to false
      */
     disconnect() {
-        this.connectionSubject = new ReplaySubject(1);
         this.observables.forEach((observable, channel) => this.unsubscribe(channel));
         if (this.stompClient) {
             this.stompClient.disconnect();
@@ -253,14 +251,17 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * @param channel
      */
     subscribe(channel: string): IWebsocketService {
-        this.connectionSubject.subscribe(() => {
-            if (channel != undefined && (this.observables.size === 0 || !this.observables.has(channel))) {
-                this.observables.set(channel, this.createObservable(channel));
-            }
-            if (!this.stompSubscriptions.has(channel)) {
-                this.addSubscription(channel);
+        const subscription = this.connectionState.subscribe((connectionState) => {
+            if (connectionState.connected) {
+                if (channel != undefined && (this.observables.size === 0 || !this.observables.has(channel))) {
+                    this.observables.set(channel, this.createObservable(channel));
+                }
+                if (!this.stompSubscriptions.has(channel)) {
+                    this.addSubscription(channel);
+                }
             }
         });
+        this.channelSubscriptions.set(channel, subscription);
         return this;
     }
 
@@ -274,6 +275,10 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             this.stompSubscriptions.delete(channel);
             this.observables.delete(channel);
             this.subscribers.delete(channel);
+            if (this.channelSubscriptions.has(channel)) {
+                this.channelSubscriptions.get(channel)!.unsubscribe();
+                this.channelSubscriptions.delete(channel);
+            }
         }
     }
 
