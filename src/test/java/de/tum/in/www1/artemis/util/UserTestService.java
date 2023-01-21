@@ -20,11 +20,9 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.LtiUserId;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.notification.SingleUserNotification;
 import de.tum.in.www1.artemis.programmingexercise.MockDelegate;
-import de.tum.in.www1.artemis.repository.AuthorityRepository;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.LtiUserIdRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
@@ -72,6 +70,9 @@ public class UserTestService {
     @Autowired
     private Optional<CIUserManagementService> optionalCIUserManagementService;
 
+    @Autowired
+    private SingleUserNotificationRepository singleUserNotificationRepository;
+
     private String TEST_PREFIX;
 
     private MockDelegate mockDelegate;
@@ -112,11 +113,13 @@ public class UserTestService {
         student.setInternal(true);
         userRepository.save(student);
         mockDelegate.mockDeleteUserInUserManagement(student, true, false, false);
+        var notification = singleUserNotificationRepository.save(new SingleUserNotification(student, "title", "text"));
 
         request.delete("/api/admin/users/" + student.getLogin(), HttpStatus.OK);
 
         var deletedUser = userRepository.findById(student.getId());
         assertThat(deletedUser).isEmpty();
+        assertThat(singleUserNotificationRepository.findById(notification.getId())).isEmpty();
     }
 
     // Test
