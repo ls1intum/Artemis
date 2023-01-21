@@ -64,7 +64,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     private selectedProgrammingLanguageValue: ProgrammingLanguage;
     // This is used to revert the select if the user cancels to override the new selected project type.
     private selectedProjectTypeValue: ProjectType;
-    // This is used to switch off auxiliary repositories for when the "localvc" profile is active. Auxiliary repositories are not supported yet for local VC.
+    // This is used to switch off auxiliary repositories for when the "localvc" profile is active. Auxiliary repositories are not supported yet for local VC + local CI.
     localVCEnabled = false;
 
     maxPenaltyPattern = '^([0-9]|([1-9][0-9])|100)$';

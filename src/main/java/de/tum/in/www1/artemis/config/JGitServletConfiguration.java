@@ -10,6 +10,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import de.tum.in.www1.artemis.security.localVC.*;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
 
 /**
  * Configuration of the JGit Servlet that handles fetch and push requests for local Version Control.
@@ -24,9 +25,12 @@ public class JGitServletConfiguration {
 
     private final LocalVCFilterService localVCFilterService;
 
-    public JGitServletConfiguration(LocalVCServletService localVCServletService, LocalVCFilterService localVCFilterService) {
+    private final LocalVCService localVCService;
+
+    public JGitServletConfiguration(LocalVCServletService localVCServletService, LocalVCFilterService localVCFilterService, LocalVCService localVCService) {
         this.localVCServletService = localVCServletService;
         this.localVCFilterService = localVCFilterService;
+        this.localVCService = localVCService;
     }
 
     /**
@@ -45,13 +49,14 @@ public class JGitServletConfiguration {
                 return localVCServletService.resolveRepository(name);
             });
 
+            // Add filters that every request to the JGit Servlet goes through, one for each fetch request, and one for each push request.
             gitServlet.addUploadPackFilter(new LocalVCFetchFilter(localVCFilterService));
             gitServlet.addReceivePackFilter(new LocalVCPushFilter(localVCFilterService));
 
             gitServlet.setReceivePackFactory((req, db) -> {
                 ReceivePack receivePack = new ReceivePack(db);
                 // Add a hook that triggers the creation of a new submission after the push went through successfully.
-                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCFilterService));
+                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCService));
                 return receivePack;
             });
 

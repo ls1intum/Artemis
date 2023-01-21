@@ -239,7 +239,7 @@ public class ParticipationService {
     private StudentParticipation startProgrammingParticipation(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
         // Step 1b) configure the student repository (e.g. access right, etc.)
         participation = configureRepository(exercise, participation);
-        // TODO: Remove when "localci" is implemented.
+        // TODO: Remove when local CI is implemented.
         if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
             // Step 2a) create the build plan (based on the BASE build plan)
             participation = copyBuildPlan(participation);
@@ -391,7 +391,8 @@ public class ParticipationService {
      */
     public ProgrammingExerciseStudentParticipation resumeProgrammingExercise(ProgrammingExerciseStudentParticipation participation) {
         // this method assumes that the student git repository already exists (compare startProgrammingExercise) so steps 1, 2 and 5 are not necessary
-        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
+        // TODO: Remove check when local CI is implemented.
+        if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
             // Step 2a) create the build plan (based on the BASE build plan)
             participation = copyBuildPlan(participation);
             // Step 2b) configure the build plan (e.g. access right, hooks, etc.)
@@ -728,8 +729,8 @@ public class ParticipationService {
             var repositoryUrl = programmingExerciseParticipation.getVcsRepositoryUrl();
             String buildPlanId = programmingExerciseParticipation.getBuildPlanId();
 
-            // TODO: Remove check for "localvc" when "localci" is implemented.
-            if (deleteBuildPlan && buildPlanId != null && !Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
+            // TODO: Remove check when local CI is implemented.
+            if (deleteBuildPlan && buildPlanId != null && !Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
                 final var projectKey = programmingExerciseParticipation.getProgrammingExercise().getProjectKey();
                 continuousIntegrationService.get().deleteBuildPlan(projectKey, buildPlanId);
             }

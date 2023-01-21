@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.localci;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -22,10 +20,7 @@ import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
-import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
@@ -35,25 +30,15 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     private final Logger log = LoggerFactory.getLogger(LocalCIService.class);
 
-    private final LocalCIBuildPlanService localCIBuildPlanService;
-
-    private final UrlService urlService;
-
-    public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, LocalCIBuildPlanService localCIBuildPlanService, FeedbackRepository feedbackRepository,
-            UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService,
-            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+    public LocalCIService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository, BuildLogEntryService buildLogService,
+            TestwiseCoverageService testwiseCoverageService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, testwiseCoverageService);
-        this.localCIBuildPlanService = localCIBuildPlanService;
-        this.urlService = urlService;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        var additionalRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan().stream()
-                .map(repo -> new AuxiliaryRepository.AuxRepoNameWithSlug(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsRepositoryUrl()))).toList();
-        localCIBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
-                urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL), additionalRepositories);
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
     }
 
     @Override
@@ -68,15 +53,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch) {
-        String buildPlanId = participation.getBuildPlanId();
-        LocalVCRepositoryUrl repositoryUrl = (LocalVCRepositoryUrl) participation.getVcsRepositoryUrl();
-        String projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
-        String repoProjectName = repositoryUrl.getProjectKey();
-        updatePlanRepository(projectKey, buildPlanId, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, branch, Optional.empty());
-        enablePlan(projectKey, buildPlanId);
-
-        // allow student or team access to the build plan in case this option was specified (only available for course exercises)
-        ProgrammingExercise programmingExercise = participation.getProgrammingExercise();
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
         // TODO: Set publishBuildPlanUrl to false for all programming exercises created for local VC and local CI.
     }
 
@@ -97,7 +74,6 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
      */
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws LocalCIException {
-        var buildPlan = participation.getBuildPlanId();
         // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
     }
 
@@ -222,7 +198,7 @@ public class LocalCIService extends AbstractContinuousIntegrationService {
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             String newBranch, Optional<List<String>> optionalTriggeredByRepositories) throws LocalCIException {
-        localCIBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, newRepoUrl, existingRepoUrl);
+        // TODO: Empty implementation to allow usage of 'localvc' with 'localci' in testing.
     }
 
     /**

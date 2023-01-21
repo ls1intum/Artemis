@@ -435,7 +435,6 @@ public class GitService {
      */
     public Repository getOrCheckoutRepository(VcsRepositoryUrl sourceRepoUrl, VcsRepositoryUrl targetRepoUrl, Path localPath, boolean pullOnGet, String defaultBranch)
             throws GitAPIException, GitException, InvalidPathException {
-
         // First try to just retrieve the git repository from our server, as it might already be checked out.
         // If the sourceRepoUrl differs from the targetRepoUrl, we attempt to clone the source repo into the target directory
         Repository repository = getExistingCheckedOutRepositoryByLocalPath(localPath, targetRepoUrl, defaultBranch);
@@ -470,7 +469,6 @@ public class GitService {
                 cloneInProgressOperations.put(localPath, localPath);
                 // make sure the directory to copy into is empty
                 FileUtils.deleteDirectory(localPath.toFile());
-
                 Git git = cloneCommand().setURI(gitUriAsString).setDirectory(localPath.toFile()).call();
                 git.close();
             }
@@ -778,7 +776,7 @@ public class GitService {
             log.warn("Cannot set remoteUrl because it is null!");
             return;
         }
-        // Note: we reset the remote url, because it might have changed from https to ssh or ssh to https.
+        // Note: we reset the remote url, because it might have changed from https to ssh or ssh to https
         try {
             var existingRemoteUrl = repo.getConfig().getString(ConfigConstants.CONFIG_REMOTE_SECTION, REMOTE_NAME, "url");
             var newRemoteUrl = getGitUriAsString(repo.getRemoteRepositoryUrl());

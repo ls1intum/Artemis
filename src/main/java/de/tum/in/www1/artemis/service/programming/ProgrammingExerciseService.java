@@ -161,13 +161,11 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise that should be setup
      * @return The new setup exercise
-     * @throws GitAPIException If something during the communication with the remote
-     *                         Git repository went wrong
+     * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException     If the template files couldn't be read
      */
     @Transactional // TODO: apply the transaction on a smaller scope
-    // ok because we create many objects in a rather complex way and need a rollback
-    // in case of exceptions
+    // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
@@ -188,12 +186,11 @@ public class ProgrammingExerciseService {
         // Save programming exercise to prevent transient exception
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
-        // The local git repository (profile "localvc") cannot be integrated with Bamboo
+        // The local VCS (profile "localvc") cannot be integrated with Bamboo
         // and Jenkins (e.g. to automatically trigger build plans on push).
-        // We will only allow "localvc" together with some "localci" profile that is to
-        // be implemented. In the meantime build plans are not set up at all when
-        // "localvc" is used.
-        // TODO: Remove check once "localci" is implemented.
+        // We will only allow "localvc" together with the "localci" profile.
+        // Until the local CIS is implemented, build plans are not set up at all when "localvc" is used.
+        // TODO: Remove check once local CI is implemented.
         if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
             setupBuildPlansForNewExercise(programmingExercise);
         }
@@ -203,12 +200,9 @@ public class ProgrammingExerciseService {
 
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
 
-        // The creation of the webhooks must occur after the initial push, because the
-        // participation is
-        // not yet saved in the database, so we cannot save the submission accordingly
-        // (see ProgrammingSubmissionService.processNewProgrammingSubmission)
+        // The creation of the webhooks must occur after the initial push, because the participation is
+        // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.processNewProgrammingSubmission)
         versionControlService.get().addWebHooksForExercise(programmingExercise);
-
         scheduleOperations(programmingExercise.getId());
         groupNotificationScheduleService.checkNotificationsForNewExercise(programmingExercise);
         return programmingExercise;
@@ -228,10 +222,8 @@ public class ProgrammingExerciseService {
      * 2. Create template and solution build plan in this project
      * 3. Configure CI permissions
      *
-     * @param programmingExercise Programming exercise for the build plans should be
-     *                            generated. The programming
-     *                            exercise should contain a fully initialized
-     *                            template and solution participation.
+     * @param programmingExercise Programming exercise for the build plans should be generated. The programming
+     *                            exercise should contain a fully initialized template and solution participation.
      */
     public void setupBuildPlansForNewExercise(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
@@ -253,8 +245,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * This method connects the new programming exercise with the template and
-     * solution participation
+     * This method connects the new programming exercise with the template and solution participation
      *
      * @param programmingExercise the new programming exercise
      */
@@ -307,13 +298,11 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Set up the exercise template by determining the files needed for the template
-     * and copying them. Commit and push the changes to all repositories for this
-     * programming exercise.
+     * Set up the exercise template by determining the files needed for the template and copying them.
+     * Commit and push the changes to all repositories for this programming exercise.
      *
      * @param programmingExercise the programming exercise that should be set up
-     * @param exerciseCreator     the User that performed the action (used as Git
-     *                            commit author)
+     * @param exerciseCreator     the User that performed the action (used as Git commit author)
      */
     private void setupExerciseTemplate(ProgrammingExercise programmingExercise, User exerciseCreator) throws GitAPIException {
 
@@ -327,8 +316,7 @@ public class ProgrammingExerciseService {
         Repository testRepo = gitService.getOrCheckoutRepository(testsRepoUrl, true);
         Repository solutionRepo = gitService.getOrCheckoutRepository(solutionRepoUrl, true);
 
-        // Get path, files and prefix for the programming-language dependent files. They
-        // are copied first.
+        // Get path, files and prefix for the programming-language dependent files. They are copied first.
         String programmingLanguage = programmingExercise.getProgrammingLanguage().toString().toLowerCase();
         String programmingLanguageTemplate = getProgrammingLanguageTemplatePath(programmingExercise.getProgrammingLanguage());
         String exercisePath = programmingLanguageTemplate + "/exercise/**/*.*";
@@ -343,8 +331,7 @@ public class ProgrammingExerciseService {
         String testPrefix = programmingLanguage + "/test";
         String solutionPrefix = programmingLanguage + "/solution";
 
-        // Initialize project type dependent resources with null as they might not be
-        // used
+        // Initialize project type dependent resources with null as they might not be used
         Resource[] projectTypeExerciseResources = null;
         Resource[] projectTypeTestResources = null;
         Resource[] projectTypeSolutionResources = null;
@@ -355,8 +342,7 @@ public class ProgrammingExerciseService {
 
         // Find the project type specific files if present
         if (programmingExercise.getProjectType() != null && !ProjectType.PLAIN.equals(programmingExercise.getProjectType())) {
-            // Get path, files and prefix for the project-type dependent files. They are
-            // copied last and can overwrite the resources from the programming language.
+            // Get path, files and prefix for the project-type dependent files. They are copied last and can overwrite the resources from the programming language.
             String programmingLanguageProjectTypePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), programmingExercise.getProjectType());
             String projectType = programmingExercise.getProjectType().name().toLowerCase();
             String projectTypePrefix = programmingLanguage + "/" + projectType;
@@ -420,13 +406,14 @@ public class ProgrammingExerciseService {
     private void createRepositoriesForNewExercise(ProgrammingExercise programmingExercise) throws GitAPIException {
         final String projectKey = programmingExercise.getProjectKey();
         final String courseShortName = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName();
-        versionControlService.get().createProjectForExercise(programmingExercise); // Create project
-        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null); // Create template
-        // repository
-        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null); // Create tests
-        // repository
-        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null); // Create solution
-        // repository
+        // Create project
+        versionControlService.get().createProjectForExercise(programmingExercise);
+        // Create template repository.
+        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.TEMPLATE), null);
+        // Create tests repository
+        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.TESTS), null);
+        // Create solution repository
+        versionControlService.get().createRepository(projectKey, courseShortName, programmingExercise.generateRepositoryName(RepositoryType.SOLUTION), null);
 
         // Create auxiliary repositories
         createAndInitializeAuxiliaryRepositories(projectKey, courseShortName, programmingExercise);
@@ -445,12 +432,9 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * @param programmingExerciseBeforeUpdate the original programming exercise with
-     *                                        its old values
-     * @param updatedProgrammingExercise      the changed programming exercise with
-     *                                        its new values
-     * @param notificationText                optional text about the changes for a
-     *                                        notification
+     * @param programmingExerciseBeforeUpdate the original programming exercise with its old values
+     * @param updatedProgrammingExercise      the changed programming exercise with its new values
+     * @param notificationText                optional text about the changes for a notification
      * @return the updates programming exercise from the database
      */
     public ProgrammingExercise updateProgrammingExercise(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise,
@@ -469,8 +453,7 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * These methods set the values (initialization date and initialization state)
-     * of the template and solution participation.
+     * These methods set the values (initialization date and initialization state) of the template and solution participation.
      * If either participation is null, a new one will be created.
      *
      * @param programmingExercise The programming exercise
@@ -500,26 +483,20 @@ public class ProgrammingExerciseService {
      * Copy template and push, if no file is currently in the repository.
      *
      * @param repository           The repository to push to
-     * @param resources            An array of resources that should be copied.
-     *                             Might be overwritten by projectTypeResources.
-     * @param prefix               A prefix that should be replaced for all
-     *                             Resources inside the resources.
-     * @param projectTypeResources An array of resources that should be copied AFTER
-     *                             the resources array has been copied. Can be null.
-     * @param projectTypePrefix    A prefix that should be replaced for all
-     *                             Resources inside the projectTypeResources.
+     * @param resources            An array of resources that should be copied. Might be overwritten by projectTypeResources.
+     * @param prefix               A prefix that should be replaced for all Resources inside the resources.
+     * @param projectTypeResources An array of resources that should be copied AFTER the resources array has been copied. Can be null.
+     * @param projectTypePrefix    A prefix that should be replaced for all Resources inside the projectTypeResources.
      * @param templateName         The name of the template
      * @param programmingExercise  the programming exercise
-     * @param user                 The user that triggered the action (used as Git
-     *                             commit author)
+     * @param user                 The user that triggered the action (used as Git commit author)
      * @throws Exception An exception in case something went wrong
      */
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, @Nullable Resource[] projectTypeResources, String projectTypePrefix,
             String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
         if (gitService.listFiles(repository).isEmpty()) { // Only copy template if repo is empty
             fileService.copyResources(resources, prefix, repository.getLocalPath().toAbsolutePath().toString(), true);
-            // Also copy project type specific files AFTERWARDS (so that they might
-            // overwrite the default files)
+            // Also copy project type specific files AFTERWARDS (so that they might overwrite the default files)
             if (projectTypeResources != null) {
                 fileService.copyResources(projectTypeResources, projectTypePrefix, repository.getLocalPath().toAbsolutePath().toString(), true);
             }
@@ -530,19 +507,14 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Set up the test repository. This method differentiates non-sequential and
-     * sequential test repositories (more than 1 test job).
+     * Set up the test repository. This method differentiates non-sequential and sequential test repositories (more than 1 test job).
      *
      * @param repository          The repository to be set up
-     * @param resources           The resources which should get added to the
-     *                            template
-     * @param prefix              The prefix for the path to which the resources
-     *                            should get copied to
+     * @param resources           The resources which should get added to the template
+     * @param prefix              The prefix for the path to which the resources should get copied to
      * @param templateName        The name of the template
-     * @param programmingExercise The related programming exercise for which the
-     *                            template should get created
-     * @param user                the user who has initiated the generation of the
-     *                            programming exercise
+     * @param programmingExercise The related programming exercise for which the template should get created
+     * @param user                the user who has initiated the generation of the programming exercise
      * @throws Exception If anything goes wrong
      */
     private void setupTestTemplateAndPush(Repository repository, Resource[] resources, String prefix, Resource[] projectTypeResources, String projectTypePrefix,
@@ -567,8 +539,7 @@ public class ProgrammingExerciseService {
             // keep the folder structure
             fileService.copyResources(projectTemplate, "projectTemplate", repository.getLocalPath().toAbsolutePath().toString(), true);
 
-            // These resources might override the programming language dependent resources
-            // as they are project type dependent.
+            // These resources might override the programming language dependent resources as they are project type dependent.
             if (projectType != null) {
                 String projectTypeTemplatePath = getProgrammingLanguageProjectTypePath(programmingExercise.getProgrammingLanguage(), projectType) + "/test";
                 String projectTypeProjectTemplatePath = projectTypeTemplatePath + "/projectTemplate/**/*.*";
@@ -583,8 +554,7 @@ public class ProgrammingExerciseService {
 
             Map<String, Boolean> sectionsMap = new HashMap<>();
 
-            // Keep or delete static code analysis configuration in the build configuration
-            // file
+            // Keep or delete static code analysis configuration in the build configuration file
             sectionsMap.put("static-code-analysis", Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()));
 
             // Keep or delete testwise coverage configuration in the build file
@@ -640,8 +610,7 @@ public class ProgrammingExerciseService {
                 }
             }
             else {
-                // maven configuration should be set for kotlin and older exercises where no
-                // project type has been introduced where no project type is defined
+                // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
                 boolean isMaven = ProjectType.isMavenProject(projectType);
                 sectionsMap.put("non-sequential", false);
                 sectionsMap.put("sequential", true);
@@ -665,8 +634,7 @@ public class ProgrammingExerciseService {
                     stagePomXml = resourceLoaderService.getResource(stagePomXmlPath);
                 }
 
-                // This is done to prepare for a feature where instructors/tas can add multiple
-                // build stages.
+                // This is done to prepare for a feature where instructors/tas can add multiple build stages.
                 List<String> sequentialTestTasks = new ArrayList<>();
                 sequentialTestTasks.add("structural");
                 sequentialTestTasks.add("behavior");
@@ -708,8 +676,7 @@ public class ProgrammingExerciseService {
             commitAndPushRepository(repository, templateName + "-Template pushed by Artemis", true, user);
         }
         else {
-            // If there is no special test structure for a programming language, just copy
-            // all the test files.
+            // If there is no special test structure for a programming language, just copy all the test files.
             setupTemplateAndPush(repository, resources, prefix, projectTypeResources, projectTypePrefix, templateName, programmingExercise, user);
         }
     }
@@ -718,10 +685,8 @@ public class ProgrammingExerciseService {
      * Replace placeholders in repository files (e.g. ${placeholder}).
      *
      * @param programmingExercise The related programming exercise
-     * @param repository          The repository in which the placeholders should
-     *                            get replaced
-     * @throws IOException If replacing the directory name, or file variables throws
-     *                     an exception
+     * @param repository          The repository in which the placeholders should get replaced
+     * @throws IOException If replacing the directory name, or file variables throws an exception
      */
     public void replacePlaceholders(ProgrammingExercise programmingExercise, Repository repository) throws IOException {
         Map<String, String> replacements = new HashMap<>();
@@ -753,8 +718,7 @@ public class ProgrammingExerciseService {
 
         // there is no need in python to replace package names
 
-        replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in
-                                                                                                        // artifactId
+        replacements.put("${exerciseNamePomXml}", programmingExercise.getTitle().replaceAll(" ", "-")); // Used e.g. in artifactId
         replacements.put("${exerciseName}", programmingExercise.getTitle());
         replacements.put("${studentWorkingDirectory}", Constants.STUDENT_WORKING_DIRECTORY);
         replacements.put("${packaging}", programmingExercise.hasSequentialTestRuns() ? "pom" : "jar");
@@ -767,32 +731,26 @@ public class ProgrammingExerciseService {
      * @param repository  The repository to which the changes should get pushed
      * @param message     The commit message
      * @param emptyCommit whether an empty commit should be created or not
-     * @param user        the user who has initiated the generation of the
-     *                    programming exercise
-     * @throws GitAPIException If committing, or pushing to the repo throws an
-     *                         exception
+     * @param user        the user who has initiated the generation of the programming exercise
+     * @throws GitAPIException If committing, or pushing to the repo throws an exception
      */
     public void commitAndPushRepository(Repository repository, String message, boolean emptyCommit, User user) throws GitAPIException {
         gitService.stageAllChanges(repository);
         gitService.commitAndPush(repository, message, emptyCommit, user);
-        repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted
-                                   // between attempts
+        repository.setFiles(null); // Clear cache to avoid multiple commits when Artemis server is not restarted between attempts
     }
 
     /**
      * Updates the timeline attributes of the given programming exercise
      *
-     * @param updatedProgrammingExercise containing the changes that have to be
-     *                                   saved
-     * @param notificationText           optional text for a notification to all
-     *                                   students about the update
+     * @param updatedProgrammingExercise containing the changes that have to be saved
+     * @param notificationText           optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      */
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
         ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdElseThrow(updatedProgrammingExercise.getId());
 
-        // create slim copy of programmingExercise before the update - needed for
-        // notifications (only release date needed)
+        // create slim copy of programmingExercise before the update - needed for notifications (only release date needed)
         ProgrammingExercise programmingExerciseBeforeUpdate = new ProgrammingExercise();
         programmingExerciseBeforeUpdate.setReleaseDate(programmingExercise.getReleaseDate());
         programmingExerciseBeforeUpdate.setStartDate(programmingExercise.getStartDate());
@@ -815,14 +773,11 @@ public class ProgrammingExerciseService {
     /**
      * Updates the problem statement of the given programming exercise.
      *
-     * @param programmingExercise The ProgrammingExercise of which the problem
-     *                            statement is updated.
+     * @param programmingExercise The ProgrammingExercise of which the problem statement is updated.
      * @param problemStatement    markdown of the problem statement.
-     * @param notificationText    optional text for a notification to all students
-     *                            about the update
+     * @param notificationText    optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
-     * @throws EntityNotFoundException if there is no ProgrammingExercise for the
-     *                                 given id.
+     * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
      */
     public ProgrammingExercise updateProblemStatement(ProgrammingExercise programmingExercise, String problemStatement, @Nullable String notificationText)
             throws EntityNotFoundException {
@@ -838,23 +793,16 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * This method calls the StructureOracleGenerator, generates the string out of
-     * the JSON representation of the structure oracle of the programming exercise
-     * and returns true if
-     * the file was updated or generated, false otherwise. This can happen if the
-     * contents of the file have not changed.
+     * This method calls the StructureOracleGenerator, generates the string out of the JSON representation of the structure oracle of the programming exercise and returns true if
+     * the file was updated or generated, false otherwise. This can happen if the contents of the file have not changed.
      *
      * @param solutionRepoURL The URL of the solution repository.
      * @param exerciseRepoURL The URL of the exercise repository.
      * @param testRepoURL     The URL of the tests' repository.
-     * @param testsPath       The path to the tests' folder, e.g. the path inside
-     *                        the repository where the structure oracle file will be
-     *                        saved in.
+     * @param testsPath       The path to the tests' folder, e.g. the path inside the repository where the structure oracle file will be saved in.
      * @param user            The user who has initiated the action
-     * @return True, if the structure oracle was successfully generated or updated,
-     *         false if no changes to the file were made.
-     * @throws IOException     If the URLs cannot be converted to actual {@link Path
-     *                         paths}
+     * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
+     * @throws IOException     If the URLs cannot be converted to actual {@link Path paths}
      * @throws GitAPIException If the checkout fails
      */
     public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
@@ -879,10 +827,8 @@ public class ProgrammingExerciseService {
     }
 
     private boolean saveAndPushStructuralOracle(User user, Repository testRepository, Path structureOraclePath, String structureOracleJSON) throws IOException {
-        // If the oracle file does not already exist, then save the generated string to
-        // the file.
-        // If it does, check if the contents of the existing file are the same as the
-        // generated one.
+        // If the oracle file does not already exist, then save the generated string to the file.
+        // If it does, check if the contents of the existing file are the same as the generated one.
         // If they are, do not push anything and inform the user about it.
         // If not, then update the oracle file by rewriting it and push the changes.
         if (!Files.exists(structureOraclePath)) {
@@ -921,35 +867,28 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Delete a programming exercise, including its template and solution
-     * participations.
+     * Delete a programming exercise, including its template and solution participations.
      *
      * @param programmingExerciseId     id of the programming exercise to delete.
-     * @param deleteBaseReposBuildPlans if true will also delete build plans and
-     *                                  projects.
+     * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
-        // Note: This method does not accept a programming exercise to solve issues with
-        // nested Transactions.
-        // It would be good to refactor the delete calls and move the validity checks
-        // down from the resources to the service methods (e.g. EntityNotFound).
+        // Note: This method does not accept a programming exercise to solve issues with nested Transactions.
+        // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).
         var programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
         final var templateRepositoryUrlAsUrl = programmingExercise.getVcsTemplateRepositoryUrl();
         final var solutionRepositoryUrlAsUrl = programmingExercise.getVcsSolutionRepositoryUrl();
         final var testRepositoryUrlAsUrl = programmingExercise.getVcsTestRepositoryUrl();
 
-        // The delete operation cancels scheduled tasks (like locking/unlocking
-        // repositories)
-        // As the programming exercise might already be deleted once the scheduling node
-        // receives the message, only the
-        // id is used to cancel the scheduling. No interaction with the database is
-        // required.
+        // The delete operation cancels scheduled tasks (like locking/unlocking repositories)
+        // As the programming exercise might already be deleted once the scheduling node receives the message, only the
+        // id is used to cancel the scheduling. No interaction with the database is required.
         cancelScheduledOperations(programmingExercise.getId());
 
         if (deleteBaseReposBuildPlans) {
-            // TODO: Remove when "localci" profile is implemented.
-            if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
+            // TODO: Remove check when local CI is implemented.
+            if (!Arrays.asList(this.environment.getActiveProfiles()).contains("localci")) {
                 final var templateBuildPlanId = programmingExercise.getTemplateBuildPlanId();
                 if (templateBuildPlanId != null) {
                     continuousIntegrationService.get().deleteBuildPlan(programmingExercise.getProjectKey(), templateBuildPlanId);
@@ -1012,12 +951,10 @@ public class ProgrammingExerciseService {
             participationService.deleteResultsAndSubmissionsOfParticipation(templateProgrammingExerciseParticipation.getId(), true);
         }
 
-        // Note: we fetch the programming exercise again here with student
-        // participations to avoid Hibernate issues during the delete operation below
+        // Note: we fetch the programming exercise again here with student participations to avoid Hibernate issues during the delete operation below
         programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(programmingExerciseId);
         log.debug("Delete programming exercises with student participations: {}", programmingExercise.getStudentParticipations());
-        // This will also delete the template & solution participation: we explicitly
-        // use deleteById to avoid potential Hibernate issues during deletion
+        // This will also delete the template & solution participation: we explicitly use deleteById to avoid potential Hibernate issues during deletion
         programmingExerciseRepository.deleteById(programmingExerciseId);
     }
 
@@ -1032,20 +969,16 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Search for all programming exercises fitting a {@link PageableSearchDTO
-     * search query}. The result is paged,
-     * meaning that there is only a predefined portion of the result returned to the
-     * user, so that the server doesn't
-     * have to send hundreds/thousands of exercises if there are that many in
-     * Artemis.
+     * Search for all programming exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
      * @param search         The search query defining the search term and the size
      *                       of the returned page
      * @param isCourseFilter Whether to search in the courses for exercises
      * @param isExamFilter   Whether to search in the groups for exercises
      * @param user           The user for whom to fetch all available exercises
-     * @return A wrapper object containing a list of all found exercises and the
-     *         total number of pages
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
             final User user) {
@@ -1080,8 +1013,7 @@ public class ProgrammingExerciseService {
     /**
      * add project permissions to project of the build plans of the given exercise
      *
-     * @param exercise the exercise whose build plans projects should be configured
-     *                 with permissions
+     * @param exercise the exercise whose build plans projects should be configured with permissions
      */
     public void giveCIProjectPermissions(ProgrammingExercise exercise) {
         Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -1121,18 +1053,12 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Checks if the project for the given programming exercise already exists in
-     * the version control system (VCS) and in the continuous integration system
-     * (CIS).
-     * The check is done based on the project key (course short name + exercise
-     * short name) and the project name (course short name + exercise title).
+     * Checks if the project for the given programming exercise already exists in the version control system (VCS) and in the continuous integration system (CIS).
+     * The check is done based on the project key (course short name + exercise short name) and the project name (course short name + exercise title).
      * This prevents errors then the actual projects will be generated later on.
-     * An error response is returned in case the project does already exist. This
-     * will then e.g. stop the generation (or import) of the programming exercise.
+     * An error response is returned in case the project does already exist. This will then e.g. stop the generation (or import) of the programming exercise.
      *
-     * @param programmingExercise a typically new programming exercise for which the
-     *                            corresponding VCS and CIS projects should not yet
-     *                            exist.
+     * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
      */
     public void checkIfProjectExists(ProgrammingExercise programmingExercise) {
         String projectKey = programmingExercise.getProjectKey();
@@ -1150,45 +1076,34 @@ public class ProgrammingExerciseService {
                 throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
             }
         }
-        // means the project does not exist in version control server and does not exist
-        // in continuous integration server
+        // means the project does not exist in version control server and does not exist in continuous integration server
     }
 
     /**
-     * Pre-Checks if a project with the same ProjectKey or ProjectName already
-     * exists in the version control system (VCS) and in the continuous integration
-     * system (CIS).
-     * The check is done based on a generated project key (course short name +
-     * exercise short name) and the project name (course short name + exercise
-     * title).
+     * Pre-Checks if a project with the same ProjectKey or ProjectName already exists in the version control system (VCS) and in the continuous integration system (CIS).
+     * The check is done based on a generated project key (course short name + exercise short name) and the project name (course short name + exercise title).
      *
-     * @param programmingExercise a typically new programming exercise for which the
-     *                            corresponding VCS and CIS projects should not yet
-     *                            exist.
-     * @param courseShortName     the shortName of the course the programming
-     *                            exercise should be imported in
-     * @return TRUE if a project with the same ProjectKey or ProjectName already
-     *         exists, otherwise false
+     * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
+     * @param courseShortName     the shortName of the course the programming exercise should be imported in
+     * @return TRUE if a project with the same ProjectKey or ProjectName already exists, otherwise false
      */
     public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
         String projectKey = courseShortName + programmingExercise.getShortName().toUpperCase().replaceAll("\\s+", "");
         String projectName = courseShortName + " " + programmingExercise.getTitle();
-        log.debug("Project Key {}", projectKey);
-        log.debug("Project Name {}", projectName);
+        log.debug("Project Key: {}", projectKey);
+        log.debug("Project Name: {}", projectName);
         boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, courseShortName, projectName);
         if (projectExists) {
             return true;
         }
         String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
         return errorMessageCis != null;
-        // means the project does not exist in version control server and does not exist
-        // in continuous integration server
+        // means the project does not exist in version control server and does not exist in continuous integration server
     }
 
     /**
      * Delete all tasks with solution entries for an existing ProgrammingExercise.
-     * This method can be used to reset the mappings in case of unconsidered edge
-     * cases.
+     * This method can be used to reset the mappings in case of unconsidered edge cases.
      *
      * @param exerciseId of the exercise
      */
@@ -1201,12 +1116,10 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Locks or unlocks the repository if necessary due to the changes in the
-     * programming exercise.
+     * Locks or unlocks the repository if necessary due to the changes in the programming exercise.
      * Notice: isAllowOfflineIde() == null means that the offline IDE is allowed
      *
-     * @param programmingExerciseBeforeUpdate the original exercise with unchanged
-     *                                        values
+     * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
      * @param updatedProgrammingExercise      the updated exercise with new values
      */
     public void handleRepoAccessRightChanges(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
@@ -1234,15 +1147,11 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Checks if the repos have to be locked/unlocked based on the new due date.
-     * Individual due dates are considered, so not all repositories might get
-     * locked/unlocked
+     * Checks if the repos have to be locked/unlocked based on the new due date. Individual due dates are considered, so not all repositories might get locked/unlocked
      *
-     * @param programmingExerciseBeforeUpdate the original exercise with unchanged
-     *                                        values
+     * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
      * @param updatedProgrammingExercise      the updated exercise with new values
-     * @return true if the repos were locked/unlocked and no further lock/unlocks
-     *         should be done; false otherwise
+     * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
      */
     private boolean handleRepoAccessRightChangesDueDates(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (!Boolean.FALSE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
@@ -1256,8 +1165,7 @@ public class ProgrammingExerciseService {
             }
             else if ((programmingExerciseBeforeUpdate.getDueDate() == null || programmingExerciseBeforeUpdate.getDueDate().isAfter(now))
                     && updatedProgrammingExercise.getDueDate() != null && updatedProgrammingExercise.getDueDate().isBefore(now)) {
-                // New due date forbids students to continue working on exercise, if their
-                // individual due date does not override the new due date
+                // New due date forbids students to continue working on exercise, if their individual due date does not override the new due date
                 instanceMessageSendService.sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExerciseBeforeUpdate.getId());
                 return true;
             }
@@ -1266,15 +1174,11 @@ public class ProgrammingExerciseService {
     }
 
     /**
-     * Checks if the repos have to be locked/unlocked based on the allowance of
-     * offline IDEs. The read access in the VCS is only necessary when working with
-     * an offline IDE
+     * Checks if the repos have to be locked/unlocked based on the allowance of offline IDEs. The read access in the VCS is only necessary when working with an offline IDE
      *
-     * @param programmingExerciseBeforeUpdate the original exercise with unchanged
-     *                                        values
+     * @param programmingExerciseBeforeUpdate the original exercise with unchanged values
      * @param updatedProgrammingExercise      the updated exercise with new values
-     * @return true if the repos were locked/unlocked and no further lock/unlocks
-     *         should be done; false otherwise
+     * @return true if the repos were locked/unlocked and no further lock/unlocks should be done; false otherwise
      */
     private boolean handleRepoAccessRightChangesChangesOfflineIDE(ProgrammingExercise programmingExerciseBeforeUpdate, ProgrammingExercise updatedProgrammingExercise) {
         if (updatedProgrammingExercise.getDueDate() == null || updatedProgrammingExercise.getDueDate().isAfter(ZonedDateTime.now())) {

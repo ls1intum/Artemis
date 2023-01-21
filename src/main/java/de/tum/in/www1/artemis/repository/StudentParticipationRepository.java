@@ -815,7 +815,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Get all participations for the given studentExam and exercises combined with their submissions, but without results and assessors.
      * Distinguishes between student exams and test runs and only loads the respective participations
      *
-     * @param studentExam studentExam with exercises loaded
+     * @param studentExam  studentExam with exercises loaded
      * @return student's participations with submissions and results
      */
     default List<StudentParticipation> findByStudentExamWithEagerSubmissions(StudentExam studentExam) {

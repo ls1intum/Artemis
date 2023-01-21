@@ -92,10 +92,10 @@ public interface ProgrammingExerciseStudentParticipationRepository extends JpaRe
             @Param("participationIds") Collection<Long> participationIds);
 
     @Query("""
-                        select participation from ProgrammingExerciseStudentParticipation participation
-                        left join fetch participation.submissions
-                        where participation.exercise.id = :#{#exerciseId}
-                        and participation.student.login = :#{#username}
+            select participation from ProgrammingExerciseStudentParticipation participation
+            left join fetch participation.submissions
+            where participation.exercise.id = :#{#exerciseId}
+            and participation.student.login = :#{#username}
             """)
     List<ProgrammingExerciseStudentParticipation> findWithSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
 

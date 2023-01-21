@@ -44,7 +44,6 @@ public class UrlService {
 
     /**
      * Gets the repository slug from the given URL
-     *
      * Example 1: https://ga42xab@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga42xab.git --> RMEXERCISE-ga42xab
      * Example 2: https://ga63fup@repobruegge.in.tum.de/scm/EIST2016RME/RMEXERCISE-ga63fup.git --> RMEXERCISE-ga63fup
      * Example 3: https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git --> testadapter-exercise
@@ -85,7 +84,7 @@ public class UrlService {
     /**
      * Gets the project key + repository slug from the given URL
      *
-     * Examples: https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git --> TESTADAPTER/testadapter-exercise
+     * Example: https://artemistest2gitlab.ase.in.tum.de/TESTADAPTER/testadapter-exercise.git --> TESTADAPTER/testadapter-exercise
      *
      * @param url The complete repository url (including protocol, host and the complete path)
      * @throws VersionControlException if the URL is invalid and no project key could be extracted

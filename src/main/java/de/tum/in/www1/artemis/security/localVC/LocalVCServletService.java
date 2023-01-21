@@ -22,10 +22,9 @@ public class LocalVCServletService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCPath;
 
+    // Cache the retrieved repositories for quicker access.
+    // The resolveRepository method is called multiple times per request.
     private final Map<String, Repository> repositories = new HashMap<>();
-
-    public LocalVCServletService() {
-    }
 
     /**
      *

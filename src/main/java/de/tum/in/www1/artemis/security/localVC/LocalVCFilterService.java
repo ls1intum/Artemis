@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.security.localVC;
 
-import java.io.File;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Base64;
@@ -9,11 +8,6 @@ import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.eclipse.jgit.lib.ObjectId;
-import org.eclipse.jgit.lib.Repository;
-import org.eclipse.jgit.revwalk.RevCommit;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -35,8 +29,6 @@ import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -44,13 +36,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @Profile("localvc")
 public class LocalVCFilterService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalVCFilterService.class);
-
     @Value("${artemis.version-control.url}")
     private URL localVCServerUrl;
-
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCPath;
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
@@ -76,10 +63,6 @@ public class LocalVCFilterService {
 
     private final TeamRepository teamRepository;
 
-    private final ProgrammingSubmissionService programmingSubmissionService;
-
-    private final ProgrammingMessagingService programmingMessagingService;
-
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
     public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseRepository courseRepository,
@@ -87,8 +70,7 @@ public class LocalVCFilterService {
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ExamSubmissionService examSubmissionService,
-            SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService, TeamRepository teamRepository,
-            ProgrammingSubmissionService programmingSubmissionService, ProgrammingMessagingService programmingMessagingService) {
+            SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService, TeamRepository teamRepository) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
@@ -101,8 +83,6 @@ public class LocalVCFilterService {
         this.submissionPolicyService = submissionPolicyService;
         this.plagiarismService = plagiarismService;
         this.teamRepository = teamRepository;
-        this.programmingSubmissionService = programmingSubmissionService;
-        this.programmingMessagingService = programmingMessagingService;
     }
 
     /**
@@ -429,89 +409,4 @@ public class LocalVCFilterService {
             throw new LocalVCForbiddenException();
         }
     }
-
-    /**
-     * @param commitHash the hash of the commit that leads to a new submission.
-     * @param repository the JGit repository this submission belongs to.
-     * @param repositoryFolderPath the path to the local repository.
-     */
-    public void createNewSubmission(String commitHash, Repository repository, File repositoryFolderPath) {
-
-        LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(localVCPath, repositoryFolderPath);
-
-        // For pushes to the "tests" repository, no submission is created.
-        if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.TESTS.getName())) {
-            return;
-        }
-
-        Commit commit = extractCommitInfo(commitHash, repository);
-
-        ProgrammingExercise exercise = findExerciseForRepository(localVCRepositoryUrl.getProjectKey());
-
-        // Retrieve participation for the repository.
-        ProgrammingExerciseParticipation participation;
-
-        if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.TEMPLATE.getName())) {
-            participation = templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exercise.getId()).orElse(null);
-        }
-        else if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.SOLUTION.getName())) {
-            participation = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exercise.getId()).orElse(null);
-        }
-        else {
-            List<ProgrammingExerciseStudentParticipation> participations = programmingExerciseStudentParticipationRepository
-                    .findWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), localVCRepositoryUrl.getRepositoryTypeOrUserName());
-            if (participations.size() != 1) {
-                participation = null;
-            }
-            else {
-                participation = participations.get(0);
-            }
-        }
-
-        if (participation == null) {
-            throw new LocalVCInternalException("No participation found for repository " + repository.getDirectory().getPath());
-        }
-
-        try {
-            // The 'user' is not properly logged into Artemis, this leads to an issue when accessing custom repository methods.
-            // Therefore, a mock auth object has to be created.
-            SecurityUtils.setAuthorizationObject();
-            ProgrammingSubmission submission = programmingSubmissionService.processNewProgrammingSubmission(participation, commit);
-            // Remove unnecessary information from the new submission.
-            submission.getParticipation().setSubmissions(null);
-            programmingMessagingService.notifyUserAboutSubmission(submission);
-        }
-        catch (Exception ex) {
-            log.error("Exception encountered when trying to create a new submission for participation {} with the following commit: {}", participation.getId(), commit, ex);
-            throw new LocalVCInternalException();
-        }
-    }
-
-    private Commit extractCommitInfo(String commitHash, Repository repository) {
-        RevCommit revCommit;
-        String branch;
-
-        try {
-            ObjectId objectId = repository.resolve(commitHash);
-            revCommit = repository.parseCommit(objectId);
-            branch = repository.getBranch();
-        }
-        catch (Exception e) {
-            throw new LocalVCInternalException(e.getMessage());
-        }
-
-        if (revCommit == null || branch == null) {
-            throw new LocalVCInternalException();
-        }
-
-        Commit commit = new Commit();
-        commit.setCommitHash(commitHash);
-        commit.setAuthorName(revCommit.getAuthorIdent().getName());
-        commit.setAuthorEmail(revCommit.getAuthorIdent().getEmailAddress());
-        commit.setBranch(branch);
-        commit.setMessage(revCommit.getFullMessage());
-
-        return commit;
-    }
-
 }

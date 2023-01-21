@@ -88,6 +88,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         if (Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
             return;
         }
+
         final var artemisTemplateHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + exercise.getTemplateParticipation().getId();
         final var artemisSolutionHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + exercise.getSolutionParticipation().getId();
         final var artemisTestsHookPath = ARTEMIS_SERVER_URL + TEST_CASE_CHANGED_API_PATH + exercise.getId();
