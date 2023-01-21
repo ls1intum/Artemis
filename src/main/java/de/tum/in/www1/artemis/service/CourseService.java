@@ -250,14 +250,16 @@ public class CourseService {
      */
     public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
         long start = System.nanoTime();
-        var userVisibleCourses = courseRepository.findAllActiveWithLecturesAndRelevantExams(user).stream().filter(course -> isCourseVisibleForUser(user, course)).toList();
+        var userVisibleCourses = courseRepository.findAllActiveWithLectures().stream().filter(course -> isCourseVisibleForUser(user, course)).toList();
 
         log.debug("Find user visible courses finished after {}", TimeLogUtil.formatDurationFrom(start));
 
         long startFindAllExercises = System.nanoTime();
         var courseIds = userVisibleCourses.stream().map(DomainObject::getId).collect(Collectors.toSet());
         Set<Exercise> allExercises = exerciseRepository.findByCourseIdsWithCategories(courseIds);
-        log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises after {}", allExercises.size(), TimeLogUtil.formatDurationFrom(startFindAllExercises));
+        Set<Exam> allExams = examRepository.fingByCourseIdsForUser(courseIds, user.getId(), user.getGroups(), ZonedDateTime.now());
+        log.debug("findAllExercisesByCourseIdsWithCategories finished with {} exercises and {} exams after {}", allExercises.size(), allExams.size(),
+                TimeLogUtil.formatDurationFrom(startFindAllExercises));
 
         long startFilterAll = System.nanoTime();
         var courses = userVisibleCourses.stream().peek(course -> {
@@ -265,6 +267,7 @@ public class CourseService {
             course.setExercises(allExercises.stream().filter(ex -> ex.getCourseViaExerciseGroupOrCourseMember().getId().equals(course.getId())).collect(Collectors.toSet()));
             course.setExercises(exerciseService.filterExercisesForCourse(course, user));
             exerciseService.loadExerciseDetailsIfNecessary(course, user);
+            course.setExams(allExams.stream().filter(ex -> ex.getCourse().getId().equals(course.getId())).collect(Collectors.toSet()));
             course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
         }).toList();
 

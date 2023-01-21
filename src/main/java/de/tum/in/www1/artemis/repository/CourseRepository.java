@@ -61,14 +61,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             SELECT DISTINCT c
             FROM Course c
-                LEFT JOIN FETCH c.exams exams
-                LEFT JOIN exams.registeredUsers registeredUsers
             WHERE (c.startDate <= :now OR c.startDate IS NULL)
                 AND (c.endDate >= :now OR c.endDate IS NULL)
-                AND (registeredUsers.id = :userId OR c.instructorGroupName IN :groupNames OR exams IS NULL)
-                AND (exams.visibleDate <= :now OR exams IS NULL)
             """)
-    List<Course> findAllActiveWithLecturesAndRelevantExams(@Param("now") ZonedDateTime now, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames);
+    List<Course> findAllActiveWithLectures(@Param("now") ZonedDateTime now);
 
     // Note: you should not add exercises or exercises+categories here, because this would make the query too complex and would take significantly longer
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
@@ -264,11 +260,10 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     /**
      * Get all the courses.
      *
-     * @param user the user for which the visible courses should be found
      * @return the list of entities
      */
-    default List<Course> findAllActiveWithLecturesAndRelevantExams(User user) {
-        return findAllActiveWithLecturesAndRelevantExams(ZonedDateTime.now(), user.getId(), user.getGroups());
+    default List<Course> findAllActiveWithLectures() {
+        return findAllActiveWithLectures(ZonedDateTime.now());
     }
 
     /**

@@ -41,6 +41,19 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     List<Exam> findByCourseIdWithExerciseGroupsAndExercises(@Param("courseId") long courseId);
 
     @Query("""
+            SELECT e
+            FROM Exam e
+                LEFT JOIN e.registeredUsers registeredUsers
+            WHERE e.course.id IN :courseIds
+                AND (registeredUsers.id = :userId AND e.visibleDate <= :now
+                    OR e.course.teachingAssistantGroupName IN :groupNames
+                    OR e.course.editorGroupName IN :groupNames
+                    OR e.course.instructorGroupName IN :groupNames)
+            """)
+    Set<Exam> fingByCourseIdsForUser(@Param("courseIds") Set<Long> courseIds, @Param("userId") Long userId, @Param("groupNames") Set<String> groupNames,
+            @Param("now") ZonedDateTime now);
+
+    @Query("""
             SELECT exam
             FROM Exam exam
             WHERE exam.course.testCourse = false
