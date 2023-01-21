@@ -9,8 +9,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
-import de.tum.in.www1.artemis.security.localVC.*;
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
+import de.tum.in.www1.artemis.security.localvc.*;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPostPushHookService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCServletService;
 
 /**
  * Configuration of the JGit Servlet that handles fetch and push requests for local Version Control.
@@ -25,12 +26,12 @@ public class JGitServletConfiguration {
 
     private final LocalVCFilterService localVCFilterService;
 
-    private final LocalVCService localVCService;
+    private final LocalVCPostPushHookService localVCPostPushHookService;
 
-    public JGitServletConfiguration(LocalVCServletService localVCServletService, LocalVCFilterService localVCFilterService, LocalVCService localVCService) {
+    public JGitServletConfiguration(LocalVCServletService localVCServletService, LocalVCFilterService localVCFilterService, LocalVCPostPushHookService localVCPostPushHookService) {
         this.localVCServletService = localVCServletService;
         this.localVCFilterService = localVCFilterService;
-        this.localVCService = localVCService;
+        this.localVCPostPushHookService = localVCPostPushHookService;
     }
 
     /**
@@ -56,7 +57,7 @@ public class JGitServletConfiguration {
             gitServlet.setReceivePackFactory((req, db) -> {
                 ReceivePack receivePack = new ReceivePack(db);
                 // Add a hook that triggers the creation of a new submission after the push went through successfully.
-                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCService));
+                receivePack.setPostReceiveHook(new LocalVCPostPushHook(localVCPostPushHookService));
                 return receivePack;
             });
 

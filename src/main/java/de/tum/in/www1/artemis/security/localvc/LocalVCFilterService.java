@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.localVC;
+package de.tum.in.www1.artemis.security.localvc;
 
 import java.net.URL;
 import java.time.ZonedDateTime;

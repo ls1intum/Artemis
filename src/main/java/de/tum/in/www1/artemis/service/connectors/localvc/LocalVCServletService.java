@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.localVC;
+package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import java.io.File;
 import java.io.IOException;

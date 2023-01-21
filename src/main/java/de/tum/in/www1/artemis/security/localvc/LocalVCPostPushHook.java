@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.security.localVC;
+package de.tum.in.www1.artemis.security.localvc;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -8,14 +8,14 @@ import org.eclipse.jgit.transport.PostReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPostPushHookService;
 
 public class LocalVCPostPushHook implements PostReceiveHook {
 
-    private final LocalVCService localVCService;
+    private final LocalVCPostPushHookService localVCPostPushHookService;
 
-    public LocalVCPostPushHook(LocalVCService localVCService) {
-        this.localVCService = localVCService;
+    public LocalVCPostPushHook(LocalVCPostPushHookService localVCPostPushHookService) {
+        this.localVCPostPushHookService = localVCPostPushHookService;
     }
 
     @Override
@@ -41,6 +41,6 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
         Repository repository = rp.getRepository();
 
-        localVCService.createNewSubmission(commitHash, repository);
+        localVCPostPushHookService.createNewSubmission(commitHash, repository);
     }
 }
