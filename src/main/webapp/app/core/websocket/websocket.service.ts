@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { BehaviorSubject, Observable, Subscriber, Subscription, filter, take } from 'rxjs';
+import { BehaviorSubject, Observable, Subscriber, Subscription, filter, first, take } from 'rxjs';
 import SockJS from 'sockjs-client';
 import Stomp, { Client, ConnectionHeaders, Subscription as StompSubscription } from 'webstomp-client';
 
@@ -85,8 +85,8 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
     private observables = new Map<string, Observable<any>>();
     // we store the subscribers (represent the components who want to receive messages) per channel so that we can notify them in case a message was received from the server
     private subscribers = new Map<string, Subscriber<any>>();
-    // we store the channel subscription for the edge case: a component subscribes to a channel, but it already unsubscribes before a connection takes place
-    private channelSubscriptions = new Map<string, Subscription>();
+    // we store the subscription that waits for a connection before subscribing to a channel for the edge case: a component subscribes to a channel, but it already unsubscribes before a connection takes place
+    private waitUntilConnectionSubscriptions = new Map<string, Subscription>();
 
     private alreadyConnectedOnce = false;
     private shouldReconnect = false;
@@ -256,20 +256,18 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
      * @param channel
      */
     subscribe(channel: string): IWebsocketService {
-        const subscription = this.connectionState
-            .pipe(
-                filter((connectionState) => connectionState.connected),
-                take(1),
-            )
-            .subscribe(() => {
-                if (channel != undefined && (this.observables.size === 0 || !this.observables.has(channel))) {
-                    this.observables.set(channel, this.createObservable(channel));
-                }
-                if (!this.stompSubscriptions.has(channel)) {
-                    this.addSubscription(channel);
-                }
-            });
-        this.channelSubscriptions.set(channel, subscription);
+        if (channel == undefined) {
+            return this;
+        }
+        const subscription = this.connectionState.pipe(first((connectionState) => connectionState.connected)).subscribe(() => {
+            if (!this.observables.has(channel)) {
+                this.observables.set(channel, this.createObservable(channel));
+            }
+            if (!this.stompSubscriptions.has(channel)) {
+                this.addSubscription(channel);
+            }
+        });
+        this.waitUntilConnectionSubscriptions.set(channel, subscription);
         return this;
     }
 
@@ -283,9 +281,9 @@ export class JhiWebsocketService implements IWebsocketService, OnDestroy {
             this.stompSubscriptions.delete(channel);
             this.observables.delete(channel);
             this.subscribers.delete(channel);
-            if (this.channelSubscriptions.has(channel)) {
-                this.channelSubscriptions.get(channel)!.unsubscribe();
-                this.channelSubscriptions.delete(channel);
+            if (this.waitUntilConnectionSubscriptions.has(channel)) {
+                this.waitUntilConnectionSubscriptions.get(channel)!.unsubscribe();
+                this.waitUntilConnectionSubscriptions.delete(channel);
             }
         }
     }
