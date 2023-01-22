@@ -176,6 +176,19 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    void createProgrammingExercise_offlineMode(boolean offlineIde) throws Exception {
+        programmingExerciseTestService.startProgrammingExercise(offlineIde);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    void createProgrammingExercise_validExercise_noExplicitOfflineMode() throws Exception {
+        programmingExerciseTestService.startProgrammingExercise(null);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
     void resumeProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {

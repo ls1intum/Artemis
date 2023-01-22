@@ -16,7 +16,7 @@ import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modelin
 import { ModelingSubmissionService } from 'app/exercises/modeling/participate/modeling-submission.service';
 import { ModelingEditorComponent } from 'app/exercises/modeling/shared/modeling-editor.component';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { hasExerciseDueDatePassed, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
+import { hasExerciseDueDatePassed } from 'app/exercises/shared/exercise/exercise.utils';
 import { addParticipationToResult, getUnreferencedFeedback } from 'app/exercises/shared/result/result.utils';
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { AccountService } from 'app/core/auth/account.service';
@@ -166,7 +166,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
         this.course = getCourseFromExercise(this.modelingExercise);
         this.modelingExercise.studentParticipations = [this.participation];
         this.examMode = !!this.modelingExercise.exerciseGroup;
-        this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
         if (this.modelingExercise.diagramType == undefined) {
             this.modelingExercise.diagramType = UMLDiagramType.ClassDiagram;
         }
@@ -350,7 +349,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.submission.participation!.submissions = [this.submission];
                     this.participationWebsocketService.addParticipation(this.participation, this.modelingExercise);
                     this.modelingExercise.studentParticipations = [this.participation];
-                    this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
                     this.result = getLatestSubmissionResult(this.submission);
                     this.retryStarted = false;
 
@@ -376,7 +374,6 @@ export class ModelingSubmissionComponent implements OnInit, OnDestroy, Component
                     this.participation = this.submission.participation as StudentParticipation;
                     this.participation.exercise = this.modelingExercise;
                     this.modelingExercise.studentParticipations = [this.participation];
-                    this.modelingExercise.participationStatus = participationStatus(this.modelingExercise);
                     this.result = getLatestSubmissionResult(this.submission);
                     if (this.isLate) {
                         this.alertService.warning('artemisApp.modelingEditor.submitDeadlineMissed');
