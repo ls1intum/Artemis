@@ -1,5 +1,6 @@
 import dayjs from 'dayjs/esm';
-import { dayjsToString } from '../../utils';
+import { BASE_API, POST, PUT } from '../../constants';
+import { enterDate } from '../../utils';
 
 /**
  * A class which encapsulates UI selectors and actions for the exam creation page.
@@ -14,24 +15,38 @@ export class ExamCreationPage {
     }
 
     /**
+     * Sets exam to test mode
+     */
+    setTestMode() {
+        cy.get('#exam-mode-picker #test-mode').click();
+    }
+
+    /**
      * @param date the date from when the exam should be visible
      */
     setVisibleDate(date: dayjs.Dayjs) {
-        this.enterDate('#visibleDate', date);
+        enterDate('#visibleDate', date);
     }
 
     /**
      * @param date the date when the exam starts
      */
     setStartDate(date: dayjs.Dayjs) {
-        this.enterDate('#startDate', date);
+        enterDate('#startDate', date);
     }
 
     /**
      * @param date the date when the exam will end
      */
     setEndDate(date: dayjs.Dayjs) {
-        this.enterDate('#endDate', date);
+        enterDate('#endDate', date);
+    }
+
+    /**
+     * @param time the exam working time
+     */
+    setWorkingTime(time: number) {
+        cy.get('#workingTimeInMinutes').clear().type(time.toString());
     }
 
     /**
@@ -87,9 +102,9 @@ export class ExamCreationPage {
      * @returns the query chainable if a test needs to access the response
      */
     submit() {
-        cy.intercept('POST', '/api/courses/*/exams').as('examCreationQuery');
+        cy.intercept(POST, BASE_API + '/courses/*/exams').as('createExamQuery');
         cy.get('#save-exam').click();
-        return cy.wait('@examCreationQuery');
+        return cy.wait('@createExamQuery');
     }
 
     /**
@@ -97,18 +112,12 @@ export class ExamCreationPage {
      * @returns the query chainable if a test needs to access the response
      */
     update() {
-        cy.intercept('PUT', '/api/courses/*/exams').as('examCreationQuery');
+        cy.intercept(PUT, BASE_API + 'courses/*/exams').as('updateExamQuery');
         cy.get('#save-exam').click();
-        return cy.wait('@examCreationQuery');
+        return cy.wait('@updateExamQuery');
     }
 
     private enterText(selector: string, text: string) {
         cy.get(selector).find('.ace_text-input').focus().clear().type(text);
-    }
-
-    private enterDate(selector: string, date: dayjs.Dayjs) {
-        const dateInputField = cy.get(selector).find('#date-input-field');
-        dateInputField.should('not.be.disabled');
-        dateInputField.clear().type(dayjsToString(date), { force: true });
     }
 }
