@@ -13,7 +13,7 @@ public class ClientForwardResource {
      * @return Forward Instruction for Browser
      */
     @IgnoreGlobalMapping(ignoreUniqueMethods = true, ignoreCollision = true)
-    @RequestMapping({ "/{path:[^\\.]*}", "/{path:^(?!websocket).*}/**/{path:[^\\.]*}" })
+    @RequestMapping({ "{path:[^\\.]*}", "{path:^(?!websocket).*}/**/{path:[^\\.]*}" })
     public String forward() {
         return "forward:/";
     }

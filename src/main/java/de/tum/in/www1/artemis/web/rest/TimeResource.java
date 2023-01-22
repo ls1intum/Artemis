@@ -16,7 +16,7 @@ public class TimeResource {
      * @return the current server time as Instant
      */
     @IgnoreGlobalMapping
-    @GetMapping("/time")
+    @GetMapping("time")
     public ResponseEntity<Instant> time() {
         return ResponseEntity.ok(Instant.now());
     }

@@ -103,7 +103,7 @@ public class ProgrammingSubmissionResource {
      * @param requestBody the body of the post request by the VCS.
      * @return the ResponseEntity with status 200 (OK), or with status 400 (Bad Request) if the latest commit was already notified about
      */
-    @PostMapping("/programming-submissions/{participationId}")
+    @PostMapping("programming-submissions/{participationId}")
     public ResponseEntity<?> processNewProgrammingSubmission(@PathVariable("participationId") Long participationId, @RequestBody Object requestBody) {
         log.debug("REST request to inform about new commit+push for participation: {}", participationId);
 
@@ -149,7 +149,7 @@ public class ProgrammingSubmissionResource {
      * @return ok if the participation could be found and has permissions, otherwise forbidden (403) or notFound (404). Will also return notFound if the user's git repository is not available.
      * The REST path would be: "/programming-submissions/{participationId}/trigger-build"
      */
-    @PostMapping("/programming-submissions/{participationId}/trigger-build")
+    @PostMapping("programming-submissions/{participationId}/trigger-build")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "MANUAL") SubmissionType submissionType) {
@@ -190,7 +190,7 @@ public class ProgrammingSubmissionResource {
      * @return 404 if there is no participation for the given id, 403 if the user mustn't access the participation, 200 if the build was triggered, a result already exists or the build is running.
      */
     // TODO: we should definitely change this URL, it does not make sense to use /programming-submissions/{participationId}
-    @PostMapping("/programming-submissions/{participationId}/trigger-failed-build")
+    @PostMapping("programming-submissions/{participationId}/trigger-failed-build")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerFailedBuild(@PathVariable Long participationId, @RequestParam(defaultValue = "false") boolean lastGraded) {
@@ -232,7 +232,7 @@ public class ProgrammingSubmissionResource {
      * @param exerciseId to identify the programming exercise.
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
-    @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build-all")
+    @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build-all")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId) {
@@ -253,7 +253,7 @@ public class ProgrammingSubmissionResource {
      * @param participationIds list of participation ids.
      * @return ok if the operation was successful, notFound (404) if the programming exercise does not exist, forbidden (403) if the user is not allowed to access the exercise.
      */
-    @PostMapping("/programming-exercises/{exerciseId}/trigger-instructor-build")
+    @PostMapping("programming-exercises/{exerciseId}/trigger-instructor-build")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.ProgrammingExercises)
     public ResponseEntity<Void> triggerInstructorBuildForExercise(@PathVariable Long exerciseId, @RequestBody Set<Long> participationIds) {
@@ -324,7 +324,7 @@ public class ProgrammingSubmissionResource {
      * @param assessedByTutor if the submission was assessed by calling tutor.
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body.
      */
-    @GetMapping("/exercises/{exerciseId}/programming-submissions")
+    @GetMapping("exercises/{exerciseId}/programming-submissions")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<List<ProgrammingSubmission>> getAllProgrammingSubmissions(@PathVariable Long exerciseId, @RequestParam(defaultValue = "false") boolean submittedOnly,
             @RequestParam(defaultValue = "false") boolean assessedByTutor, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
@@ -359,7 +359,7 @@ public class ProgrammingSubmissionResource {
      * @param correctionRound correction round for which we prepare the submission
      * @return the ResponseEntity with status 200 (OK) and with body the programmingSubmissions participation
      */
-    @GetMapping("/programming-submissions/{submissionId}/lock")
+    @GetMapping("programming-submissions/{submissionId}/lock")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ProgrammingSubmission> lockAndGetProgrammingSubmission(@PathVariable Long submissionId,
             @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
@@ -424,7 +424,7 @@ public class ProgrammingSubmissionResource {
      * @param correctionRound the correction round for which we want to find the submission
      * @return the ResponseEntity with status 200 (OK) and the list of Programming Submissions in body
      */
-    @GetMapping(value = "/exercises/{exerciseId}/programming-submission-without-assessment")
+    @GetMapping("exercises/{exerciseId}/programming-submission-without-assessment")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {

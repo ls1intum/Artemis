@@ -163,7 +163,7 @@ public class ResultService {
      * <p>
      * With ordered collections (like result and feedback here), we have to be very careful with the way we persist the objects in the database.
      * We must first persist the child object without a relation to the parent object. Then, we recreate the association and persist the parent object.
-     *
+     * <p>
      * If the result is not saved (shouldSave = false), the caller is responsible to save the result (which will persist the feedback changes as well)
      *
      * @param result           the result with should be saved with the given feedback
@@ -182,7 +182,7 @@ public class ResultService {
      * <p>
      * With ordered collections (like result and feedback here), we have to be very careful with the way we persist the objects in the database.
      * We must first persist the child object without a relation to the parent object. Then, we recreate the association and persist the parent object.
-     *
+     * <p>
      * If the result is not saved (shouldSave = false), the caller is responsible to save the result (which will persist the feedback changes as well)
      *
      * @param result           the result with should be saved with the given feedback
