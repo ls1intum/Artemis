@@ -72,6 +72,7 @@ describe('SubmissionResultStatusComponent', () => {
             [{ dueDate: dayjs().add(1, 'hour'), studentParticipations: [{}] } as Exercise, false],
         ])('should determine if it is uninitialized', (exercise: Exercise, expected: boolean) => {
             comp.exercise = exercise;
+            comp.studentParticipation = exercise.studentParticipations?.[0];
             comp.ngOnInit();
             expect(comp.uninitialized).toBe(expected);
         });
@@ -83,6 +84,7 @@ describe('SubmissionResultStatusComponent', () => {
             [{ dueDate: dayjs().add(1, 'hour'), studentParticipations: [{}] } as Exercise, true],
         ])('should determine if it is notSubmitted', (exercise: Exercise, expected: boolean) => {
             comp.exercise = exercise;
+            comp.studentParticipation = exercise.studentParticipations?.[0];
             comp.ngOnInit();
             expect(comp.notSubmitted).toBe(expected);
         });

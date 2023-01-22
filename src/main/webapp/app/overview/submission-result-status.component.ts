@@ -45,7 +45,7 @@ export class SubmissionResultStatusComponent implements OnInit {
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         }
         this.afterDueDate = !!this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs());
-        this.uninitialized = !this.afterDueDate && !this.exercise.studentParticipations?.length;
-        this.notSubmitted = !this.afterDueDate && !!this.exercise.studentParticipations?.length;
+        this.uninitialized = !this.afterDueDate && !this.studentParticipation;
+        this.notSubmitted = !this.afterDueDate && !!this.studentParticipation;
     }
 }
