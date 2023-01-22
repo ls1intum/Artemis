@@ -387,14 +387,15 @@ public class ProgrammingExerciseGradingService {
      */
     public Result calculateScoreForResult(Result result, ProgrammingExercise exercise, boolean isStudentParticipation) {
         Set<ProgrammingExerciseTestCase> testCases = testCaseService.findActiveByExerciseId(exercise.getId());
-        var testCasesForCurrentDate = testCases;
+        var relevantTestCases = testCases;
 
         // We don't filter the test cases for the solution/template participation's results as they are used as indicators for the instructor!
         if (isStudentParticipation) {
-            testCasesForCurrentDate = filterTestCasesForCurrentDate(result.getParticipation(), testCases);
+            relevantTestCases = filterRelevantTestCasesForStudent(testCases, result.getParticipation());
         }
 
-        return calculateScoreForResult(testCases, testCasesForCurrentDate, result, exercise, isStudentParticipation);
+        // We only apply submission policies if it is a student participation
+        return calculateScoreForResult(testCases, relevantTestCases, result, exercise, isStudentParticipation);
     }
 
     /**
@@ -547,16 +548,14 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Filter all test cases from the score calculation that are never visible or ones with visibility "after due date" if the due date has not yet passed.
-     * @return testCases, but the ones based on the described visibility criterion removed.
      */
-    private Set<ProgrammingExerciseTestCase> filterTestCasesForCurrentDate(Participation participation, Set<ProgrammingExerciseTestCase> testCases) {
+    private Set<ProgrammingExerciseTestCase> filterRelevantTestCasesForStudent(Set<ProgrammingExerciseTestCase> testCases, Participation participation) {
         boolean isBeforeDueDate = exerciseDateService.isBeforeDueDate(participation);
         return filterTestCasesForStudents(testCases, isBeforeDueDate);
     }
 
     /**
-     * Filters the test cases to only include the ones a student should be able to see.
-     * @return a set of test cases that are visible to the student.
+     * Filters the test cases to only include the ones a student should be able to see. Based on due date and visibility
      */
     private Set<ProgrammingExerciseTestCase> filterTestCasesForStudents(final Set<ProgrammingExerciseTestCase> testCases, boolean isBeforeDueDate) {
         return testCases.stream().filter(testCase -> !testCase.isInvisible()).filter(testCase -> !(isBeforeDueDate && testCase.isAfterDueDate())).collect(Collectors.toSet());
@@ -570,8 +569,8 @@ public class ProgrammingExerciseGradingService {
             this(exercise, result, testCases, successfulTestCases, staticCodeAnalysisFeedback, calculateWeightSum(testCases));
         }
 
-        private static double calculateWeightSum(final Set<ProgrammingExerciseTestCase> allTests) {
-            return allTests.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
+        private static double calculateWeightSum(final Set<ProgrammingExerciseTestCase> testCases) {
+            return testCases.stream().filter(testCase -> !testCase.isInvisible()).mapToDouble(ProgrammingExerciseTestCase::getWeight).sum();
         }
 
         public Participation participation() {
@@ -581,9 +580,14 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Calculates the grading for a result and updates the feedbacks
-     * @return The updated result
+     *
+     * @param testCases             all test cases
+     * @param relevantTestCases     test cases relevant at the current due date depending on visibility and permissions
+     * @param result                to be updated
+     * @param exercise              the result belongs to
+     * @param applySubmissionPolicy whether a submission policy is applied
      */
-    private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> testCasesForCurrentDate, @NotNull Result result,
+    private Result calculateScoreForResult(Set<ProgrammingExerciseTestCase> testCases, Set<ProgrammingExerciseTestCase> relevantTestCases, @NotNull Result result,
             ProgrammingExercise exercise, boolean applySubmissionPolicy) {
         List<Feedback> automaticFeedbacks = result.getFeedbacks().stream().filter(feedback -> FeedbackType.AUTOMATIC.equals(feedback.getType())).toList();
         List<Feedback> staticCodeAnalysisFeedback = new ArrayList<>();
@@ -607,22 +611,23 @@ public class ProgrammingExerciseGradingService {
         }
 
         // Case 1: There are tests and test case feedback, find out which tests were not executed or should only count to the score after the due date.
-        if (!testCasesForCurrentDate.isEmpty() && !testCaseFeedback.isEmpty() && !result.getFeedbacks().isEmpty()) {
+        if (!relevantTestCases.isEmpty() && !testCaseFeedback.isEmpty() && !result.getFeedbacks().isEmpty()) {
             filterAutomaticFeedbacksWithoutTestCase(result, testCases);
             setVisibilityForFeedbacksWithTestCase(result, testCases);
-            createFeedbackForNotExecutedTests(result, testCasesForCurrentDate);
 
+            createFeedbackForNotExecutedTests(result, relevantTestCases);
             boolean hasDuplicateTestCases = createFeedbacksForDuplicateTests(result, exercise);
             createSubmissionPolicyFeedback(result, exercise);
 
             final Set<ProgrammingExerciseTestCase> successfulTestCases = relevantTestCases.stream().filter(testCase -> testCase.isSuccessful(result)).collect(Collectors.toSet());
 
             var scoreCalculationData = new ScoreCalculationData(exercise, result, testCases, successfulTestCases, staticCodeAnalysisFeedback);
+            // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
 
             updateResultScore(scoreCalculationData, hasDuplicateTestCases, applySubmissionPolicy);
             updateFeedbackCredits(scoreCalculationData);
 
-            result.setTestCaseCount(testCasesForCurrentDate.size());
+            result.setTestCaseCount(relevantTestCases.size());
             result.setPassedTestCaseCount(successfulTestCases.size());
             result.setCodeIssueCount(staticCodeAnalysisFeedback.size());
 
@@ -648,9 +653,10 @@ public class ProgrammingExerciseGradingService {
     }
 
     /**
-     * Adds the appropriate feedback to the result in case the automatic tests were not executed.
-     * @param result to which the feedback should be added.
-     * @param exercise to which the result belongs to.
+     * Adds the appropriate feedback to the result in case the automatic test cases were not executed.
+     *
+     * @param result                     to which the feedback should be added.
+     * @param exercise                   to which the result belongs to.
      * @param staticCodeAnalysisFeedback that has been created for this result.
      */
     private void addFeedbackTestsNotExecuted(final Result result, final ProgrammingExercise exercise, final List<Feedback> staticCodeAnalysisFeedback) {
@@ -674,23 +680,25 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Sets the visibility on all feedbacks associated with a test case with the same name.
-     * @param result of the build run.
-     * @param allTests of the given programming exercise.
+     *
+     * @param result    of the build run.
+     * @param testCases of the given programming exercise.
      */
-    private void setVisibilityForFeedbacksWithTestCase(Result result, final Set<ProgrammingExerciseTestCase> allTests) {
+    private void setVisibilityForFeedbacksWithTestCase(Result result, final Set<ProgrammingExerciseTestCase> testCases) {
         for (Feedback feedback : result.getFeedbacks()) {
-            allTests.stream().filter(testCase -> testCase.getTestName().equalsIgnoreCase(feedback.getText())).findFirst()
+            testCases.stream().filter(testCase -> testCase.getTestName().equalsIgnoreCase(feedback.getText())).findFirst()
                     .ifPresent(testCase -> feedback.setVisibility(testCase.getVisibility()));
         }
     }
 
     /**
-     * Checks which tests were not executed and add a new Feedback for them to the exercise.
-     * @param result   of the build run.
-     * @param allTests of the given programming exercise.
+     * Checks which test cases were not executed and add a new Feedback for them to the exercise.
+     *
+     * @param result    of the build run.
+     * @param testCases of the given programming exercise.
      */
-    private void createFeedbackForNotExecutedTests(Result result, Set<ProgrammingExerciseTestCase> allTests) {
-        List<Feedback> feedbacksForNotExecutedTestCases = allTests.stream().filter(testCase -> testCase.wasNotExecuted(result))
+    private void createFeedbackForNotExecutedTests(Result result, Set<ProgrammingExerciseTestCase> testCases) {
+        List<Feedback> feedbacksForNotExecutedTestCases = testCases.stream().filter(testCase -> testCase.wasNotExecuted(result))
                 .map(testCase -> new Feedback().type(FeedbackType.AUTOMATIC).text(testCase.getTestName()).detailText("Test was not executed.")).toList();
 
         result.addFeedbacks(feedbacksForNotExecutedTestCases);
@@ -824,10 +832,10 @@ public class ProgrammingExerciseGradingService {
     /**
      * Calculates the points that should be awarded for a successful test case.
      *
-     * @param test              for which the points should be calculated.
+     * @param testCase for which the points should be calculated.
      * @return the points which should be awarded for successfully completing the test case.
      */
-    private double calculatePointsForTestCase(final ProgrammingExerciseTestCase test, ScoreCalculationData scoreCalculationData) {
+    private double calculatePointsForTestCase(final ProgrammingExerciseTestCase testCase, ScoreCalculationData scoreCalculationData) {
         final int totalTestCaseCount = scoreCalculationData.testCases().size();
 
         final boolean isWeightSumZero = Precision.equals(scoreCalculationData.weightSum(), 0, 1E-8);
@@ -844,11 +852,11 @@ public class ProgrammingExerciseGradingService {
             testPoints = 0D;
         }
         else {
-            double testWeight = test.getWeight() * test.getBonusMultiplier();
+            double testWeight = testCase.getWeight() * testCase.getBonusMultiplier();
             testPoints = (testWeight / scoreCalculationData.weightSum()) * exerciseMaxPoints;
         }
 
-        return testPoints + test.getBonusPoints();
+        return testPoints + testCase.getBonusPoints();
     }
 
     /**
