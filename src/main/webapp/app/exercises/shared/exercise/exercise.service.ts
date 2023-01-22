@@ -263,8 +263,8 @@ export class ExerciseService {
     isActiveQuiz(exercise: QuizExercise) {
         return (
             exercise?.quizBatches?.some((batch) => batch.started) ||
-            exercise.studentParticipations?.[0].initializationState === InitializationState.INITIALIZED ||
-            exercise.studentParticipations?.[0].initializationState === InitializationState.FINISHED
+            exercise.studentParticipations?.[0]?.initializationState === InitializationState.INITIALIZED ||
+            exercise.studentParticipations?.[0]?.initializationState === InitializationState.FINISHED
         );
     }
 
