@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Profile("gitlabci")
 @RestController
-@RequestMapping("api/")
 public class BuildPlanResource {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
