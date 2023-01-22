@@ -84,6 +84,8 @@ public class CourseResource {
 
     private final CourseRepository courseRepository;
 
+    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
     private final ExerciseService exerciseService;
 
     private final TutorParticipationRepository tutorParticipationRepository;
@@ -103,7 +105,8 @@ public class CourseResource {
     private final TutorialGroupsConfigurationService tutorialGroupsConfigurationService;
 
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService, AuthorizationCheckService authCheckService,
+            OAuth2JWKSService oAuth2JWKSService, OnlineCourseConfigurationService onlineCourseConfigurationService,
+            OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, AuthorizationCheckService authCheckService,
             TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService, Optional<VcsUserManagementService> optionalVcsUserManagementService,
             AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService,
             FileService fileService, TutorialGroupsConfigurationService tutorialGroupsConfigurationService) {
@@ -112,6 +115,7 @@ public class CourseResource {
         this.exerciseService = exerciseService;
         this.oAuth2JWKSService = oAuth2JWKSService;
         this.onlineCourseConfigurationService = onlineCourseConfigurationService;
+        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.submissionService = submissionService;
@@ -254,9 +258,9 @@ public class CourseResource {
         }
 
         onlineCourseConfigurationService.validateOnlineCourseConfiguration(onlineCourseConfiguration);
-        course.setOnlineCourseConfiguration(onlineCourseConfiguration);
+        onlineCourseConfiguration.setCourse(course);
 
-        courseRepository.save(course);
+        onlineCourseConfigurationRepository.save(onlineCourseConfiguration);
 
         oAuth2JWKSService.updateKey(course.getOnlineCourseConfiguration().getRegistrationId());
 
