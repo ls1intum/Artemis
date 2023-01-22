@@ -40,6 +40,12 @@ Object.defineProperty(window, 'getComputedStyle', {
     }),
 });
 
+Object.defineProperty(window, 'location', {
+    value: {
+        noop,
+    },
+});
+
 Object.defineProperty(window, 'matchMedia', {
     writable: true,
     value: jest.fn().mockImplementation((query) => ({
