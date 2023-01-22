@@ -1,7 +1,7 @@
 import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { Component, Input, OnInit } from '@angular/core';
 import { Course } from 'app/entities/course.model';
-import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { FeedbackGroup, isFeedbackGroup } from 'app/exercises/shared/feedback/group/feedback-group';
 import { FeedbackItem } from 'app/exercises/shared/feedback/item/feedback-item';
 import { FeedbackNode } from 'app/exercises/shared/feedback/node/feedback-node';
@@ -23,6 +23,8 @@ export class FeedbackNodeComponent implements OnInit {
 
     // Icons
     faExclamationTriangle = faExclamationTriangle;
+    faAngleUp = faAngleUp;
+    faAngleDown = faAngleDown;
 
     ngOnInit(): void {
         if (isFeedbackGroup(this.feedbackItemNode)) {

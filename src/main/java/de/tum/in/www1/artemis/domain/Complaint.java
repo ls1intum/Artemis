@@ -41,12 +41,6 @@ public class Complaint extends DomainObject {
     @Column(name = "complaint_type", nullable = false)
     private ComplaintType complaintType = ComplaintType.COMPLAINT;      // default value
 
-    // TODO: delete in the next major release
-    @Deprecated
-    @Column(name = "result_before_complaint")
-    @JsonIgnore
-    private String resultBeforeComplaint;
-
     @OneToOne(mappedBy = "complaint")
     @JsonIgnoreProperties(value = "complaint", allowGetters = true)
     private ComplaintResponse complaintResponse;

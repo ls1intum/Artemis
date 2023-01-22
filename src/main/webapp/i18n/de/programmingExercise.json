@@ -125,7 +125,8 @@
             "problemStatement": {
                 "title": "Aufgabenstellung",
                 "taskCommand": "Aufgabe",
-                "testCaseCommand": "Testfall einfügen"
+                "testCaseCommand": "Testfall einfügen",
+                "tasksOfExercise": "Teilaufgaben:"
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",

@@ -57,6 +57,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             "submissionPolicy" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(Long exerciseId);
 
+    @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "teamAssignmentConfig", "categories", "learningGoals", "auxiliaryRepositories",
+            "submissionPolicy" })
+    Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsById(Long exerciseId);
+
     @EntityGraph(type = LOAD, attributePaths = { "templateParticipation", "solutionParticipation", "auxiliaryRepositories" })
     Optional<ProgrammingExercise> findWithTemplateAndSolutionParticipationAndAuxiliaryRepositoriesById(Long exerciseId);
 
@@ -541,6 +545,13 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
         return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
     }
 
+    @NotNull
+    default ProgrammingExercise findByIdWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsElseThrow(long programmingExerciseId)
+            throws EntityNotFoundException {
+        Optional<ProgrammingExercise> programmingExercise = findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesAndLearningGoalsById(programmingExerciseId);
+        return programmingExercise.orElseThrow(() -> new EntityNotFoundException("Programming Exercise", programmingExerciseId));
+    }
+
     /**
      * Find a programming exercise by its id, with eagerly loaded template and solution participation, submissions and results
      *
@@ -661,5 +672,12 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
     default void validateCourseSettings(ProgrammingExercise programmingExercise, Course course) {
         validateTitle(programmingExercise, course);
         validateCourseAndExerciseShortName(programmingExercise, course);
+    }
+
+    default void generateBuildPlanAccessSecretIfNotExists(ProgrammingExercise exercise) {
+        if (!exercise.hasBuildPlanAccessSecretSet()) {
+            exercise.generateAndSetBuildPlanAccessSecret();
+            save(exercise);
+        }
     }
 }

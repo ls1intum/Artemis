@@ -11,7 +11,6 @@
             *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise, showResult: showResults && latestRatedResult }"
             [courseId]="courseId"
             [exercise]="exercise"
-            [studentParticipation]="gradedStudentParticipation"
             [showResult]="showResults && latestRatedResult != undefined"
         >
         </jhi-exercise-details-student-actions>
@@ -128,48 +127,51 @@
                 <div class="row">
                     <jhi-result-history [results]="sortedHistoryResults" [exercise]="exercise"></jhi-result-history>
                 </div>
-                <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults">
-                    <div class="col-auto">
-                        <h3>{{ 'artemisApp.courseOverview.exerciseDetails.allResults' | artemisTranslate }}</h3>
-                    </div>
-                </div>
-                <div class="row" *ngIf="showMoreResults">
-                    <div class="col-12 col-md-12">
-                        <div *ngFor="let result of sortedHistoryResults; let i = index">
-                            <h4
-                                *ngIf="
-                                    result.submission &&
-                                    result.submission.submissionDate &&
-                                    (i === 0 ||
-                                        !sortedHistoryResults[i - 1].submission ||
-                                        !sortedHistoryResults[i - 1].submission?.submissionDate ||
-                                        !dayjs(result.submission.submissionDate).isSame(sortedHistoryResults[i - 1].submission?.submissionDate, 'day'))
-                                "
-                                class="mt-2"
-                            >
-                                {{ result.submission.submissionDate | artemisDate : 'long-date' }}
-                            </h4>
-                            <jhi-result
-                                [result]="result"
-                                [showUngradedResults]="true"
-                                [showBadge]="true"
-                                [showTestDetails]="exampleSolutionInfo?.programmingExercise?.showTestNamesToStudents ?? false"
-                                [exercise]="exercise"
-                            >
-                            </jhi-result>
-                        </div>
-                        <div class="no-results" *ngIf="!sortedHistoryResults">
-                            {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | artemisTranslate }}
-                        </div>
-                    </div>
-                </div>
                 <div class="row mb-2 mt-2 align-items-baseline">
                     <div class="col-auto">
                         <a class="text-primary" (click)="showMoreResults = !showMoreResults">
-                            {{ 'artemisApp.courseOverview.exerciseDetails.' + (showMoreResults ? 'hideResults' : 'showResults') | artemisTranslate }}</a
-                        >
+                            {{ 'artemisApp.courseOverview.exerciseDetails.' + (showMoreResults ? 'hideResults' : 'showResults') | artemisTranslate }}
+                            <fa-icon [icon]="showMoreResults ? faAngleUp : faAngleDown"></fa-icon>
+                        </a>
                     </div>
                 </div>
+                <ng-container *ngIf="showMoreResults">
+                    <div class="row mb-2 mt-2 align-items-baseline">
+                        <div class="col-auto">
+                            <h3>{{ 'artemisApp.courseOverview.exerciseDetails.allResults' | artemisTranslate }}</h3>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 col-md-12">
+                            <div *ngFor="let result of sortedHistoryResults; let i = index">
+                                <h4
+                                    *ngIf="
+                                        result.submission &&
+                                        result.submission.submissionDate &&
+                                        (i === 0 ||
+                                            !sortedHistoryResults[i - 1].submission ||
+                                            !sortedHistoryResults[i - 1].submission?.submissionDate ||
+                                            !dayjs(result.submission.submissionDate).isSame(sortedHistoryResults[i - 1].submission?.submissionDate, 'day'))
+                                    "
+                                    class="mt-2"
+                                >
+                                    {{ result.submission.submissionDate | artemisDate : 'long-date' }}
+                                </h4>
+                                <jhi-result
+                                    [result]="result"
+                                    [showUngradedResults]="true"
+                                    [showBadge]="true"
+                                    [showTestDetails]="exampleSolutionInfo?.programmingExercise?.showTestNamesToStudents ?? false"
+                                    [exercise]="exercise"
+                                >
+                                </jhi-result>
+                            </div>
+                            <div class="no-results" *ngIf="!sortedHistoryResults">
+                                {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | artemisTranslate }}
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
             </div>
             <!-- RESULTS END -->
             <!-- PROBLEM STATEMENT START -->
@@ -215,7 +217,7 @@
                         ></jhi-modeling-editor>
                     </dd>
                     <dd *ngIf="exampleSolutionInfo?.exampleSolution" class="editor-outline-background" [innerHTML]="exampleSolutionInfo?.exampleSolution"></dd>
-                    <ng-container *ngIf="exercise?.exampleSolutionPublished">
+                    <ng-container *ngIf="exampleSolutionInfo?.programmingExercise?.exampleSolutionPublished">
                         <dd class="editor-outline-background">
                             <jhi-programming-exercise-example-solution-repo-download
                                 class="ms-2"
