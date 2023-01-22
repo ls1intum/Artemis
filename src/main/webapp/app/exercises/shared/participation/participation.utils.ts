@@ -74,7 +74,7 @@ export const isModelingOrTextOrFileUpload = (participation: Participation) => {
  * @return {boolean}
  */
 export const hasResults = (participation: Participation) => {
-    return participation.results && participation.results.length > 0;
+    return participation.results?.length;
 };
 /**
  * Check if a given participation is in due time of the given exercise based on its submission at index position 0.
