@@ -212,7 +212,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
     insertMatchTokens(fileContent: string): string {
         const matches = this.getMatchesForCurrentFile().sort((m1, m2) => m1.from.line - m2.from.line);
         if (!matches.length) {
-            return fileContent;
+            return escape(fileContent);
         }
 
         const rows = fileContent.split('\n');
