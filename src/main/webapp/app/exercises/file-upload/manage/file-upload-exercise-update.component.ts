@@ -6,7 +6,7 @@ import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { Exercise, ExerciseMode, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
+import { Exercise, ExerciseMode, getCourseId, IncludedInOverallScore, resetDates } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -81,7 +81,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
             this.fileUploadExercise = fileUploadExercise;
             this.backupExercise = cloneDeep(this.fileUploadExercise);
-            this.examCourseId = this.fileUploadExercise.course?.id || this.fileUploadExercise.exerciseGroup?.exam?.course?.id;
+            getCourseId(fileUploadExercise);
+            this.examCourseId = getCourseId(fileUploadExercise);
         });
 
         this.activatedRoute.queryParams.subscribe((params) => {
@@ -176,7 +177,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.fileUploadExercise.categories = categories;
     }
 
-    onSaveSuccess(exercise: Exercise) {
+    private onSaveSuccess(exercise: Exercise) {
         this.isSaving = false;
 
         if (this.goBackAfterSaving) {
@@ -188,7 +189,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
-    onSaveError(error: HttpErrorResponse) {
+    private onSaveError(error: HttpErrorResponse) {
         const errorMessage = error.headers.get('X-artemisApp-alert')!;
         this.alertService.addAlert({
             type: AlertType.DANGER,

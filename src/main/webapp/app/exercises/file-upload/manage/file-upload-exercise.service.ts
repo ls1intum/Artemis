@@ -96,6 +96,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
         fileUploadExercise.filePattern = fileUploadExercise.filePattern!.replace(/\s/g, '').toLowerCase();
         return fileUploadExercise;
     }
+
     /**
      * Imports a file upload exercise by cloning the entity itself plus example solutions and example submissions
      *
