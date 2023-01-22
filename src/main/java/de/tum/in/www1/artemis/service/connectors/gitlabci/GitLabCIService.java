@@ -395,6 +395,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
         // We need this workaround (&file-extension=.yml) since GitLab only accepts URLs ending with .yml.
         // See https://gitlab.com/gitlab-org/gitlab/-/issues/27526
-        return String.format("%s/api/programming-exercises/%s/build-plan?secret=%s&file-extension=.yml", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
+        return String.format("%s/api/public/programming-exercises/%s/build-plan?secret=%s&file-extension=.yml", artemisServerUrl, exercise.getId(),
+                exercise.getBuildPlanAccessSecret());
     }
 }

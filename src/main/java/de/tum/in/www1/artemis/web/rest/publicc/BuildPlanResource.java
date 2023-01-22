@@ -1,22 +1,20 @@
-package de.tum.in.www1.artemis.web.rest;
-
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.BUILD_PLAN;
+package de.tum.in.www1.artemis.web.rest.publicc;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.BuildPlan;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.security.annotations.EnforceNothing;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
 @Profile("gitlabci")
 @RestController
-@RequestMapping("api/")
+@RequestMapping("api/public/")
 public class BuildPlanResource {
 
     private final Logger log = LoggerFactory.getLogger(getClass());
@@ -34,8 +32,8 @@ public class BuildPlanResource {
      * @param secret the secret to authenticate the request
      * @return the build plan stored in the database
      */
-    @GetMapping(BUILD_PLAN)
-    @PreAuthorize("permitAll()")
+    @GetMapping("programming-exercises/{exerciseId}/build-plan")
+    @EnforceNothing
     public ResponseEntity<String> getBuildPlan(@PathVariable Long exerciseId, @RequestParam("secret") String secret) {
         log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
         BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(exerciseId).orElseThrow();
