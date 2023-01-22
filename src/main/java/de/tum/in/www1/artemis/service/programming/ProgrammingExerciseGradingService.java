@@ -613,14 +613,9 @@ public class ProgrammingExerciseGradingService {
             createFeedbackForNotExecutedTests(result, testCasesForCurrentDate);
 
             boolean hasDuplicateTestCases = createFeedbacksForDuplicateTests(result, exercise);
+            createSubmissionPolicyFeedback(result, exercise);
 
-            if (exercise.getSubmissionPolicy() instanceof SubmissionPenaltyPolicy penaltyPolicy) {
-                submissionPolicyService.createFeedbackForPenaltyPolicy(result, penaltyPolicy);
-            }
-
-            // The score is always calculated from ALL (except visibility=never) test cases, regardless of the current date!
-            final Set<ProgrammingExerciseTestCase> successfulTestCases = testCasesForCurrentDate.stream().filter(testCase -> testCase.isSuccessful(result))
-                    .collect(Collectors.toSet());
+            final Set<ProgrammingExerciseTestCase> successfulTestCases = relevantTestCases.stream().filter(testCase -> testCase.isSuccessful(result)).collect(Collectors.toSet());
 
             var scoreCalculationData = new ScoreCalculationData(exercise, result, testCases, successfulTestCases, staticCodeAnalysisFeedback);
 
@@ -644,6 +639,12 @@ public class ProgrammingExerciseGradingService {
         // changing it.
 
         return result;
+    }
+
+    private void createSubmissionPolicyFeedback(Result result, ProgrammingExercise exercise) {
+        if (exercise.getSubmissionPolicy() instanceof SubmissionPenaltyPolicy penaltyPolicy) {
+            submissionPolicyService.createFeedbackForPenaltyPolicy(result, penaltyPolicy);
+        }
     }
 
     /**
