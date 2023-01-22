@@ -229,7 +229,7 @@ public class LectureResource {
      * @param lectureId the id of the lecture
      * @return the title of the lecture wrapped in an ResponseEntity or 404 Not Found if no lecture with that id exists
      */
-    @GetMapping(value = "/lectures/{lectureId}/title")
+    @GetMapping("/lectures/{lectureId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getLectureTitle(@PathVariable Long lectureId) {
         final var title = lectureRepository.getLectureTitle(lectureId);
@@ -262,7 +262,7 @@ public class LectureResource {
             else {
                 return authCheckService.isAllowedToSeeLectureUnit(lectureUnit, user);
             }
-        }).peek(lectureUnit -> {
+        }).map(lectureUnit -> {
             lectureUnit.setCompleted(lectureUnit.isCompletedFor(user));
 
             if (lectureUnit instanceof ExerciseUnit) {
@@ -272,6 +272,7 @@ public class LectureResource {
                 // re-add the learning goals already loaded with the exercise unit
                 ((ExerciseUnit) lectureUnit).getExercise().setLearningGoals(exercise.getLearningGoals());
             }
+            return lectureUnit;
         }).collect(Collectors.toCollection(ArrayList::new));
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);

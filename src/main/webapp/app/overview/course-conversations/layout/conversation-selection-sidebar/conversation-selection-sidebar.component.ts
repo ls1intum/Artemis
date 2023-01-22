@@ -1,6 +1,6 @@
 import { AfterViewInit, ChangeDetectorRef, Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import interact from 'interactjs';
-import { faChevronLeft, faChevronRight, faComments, faCompress, faExpand, faGripLinesVertical, faMagnifyingGlass, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faComments, faCompress, faExpand, faFilter, faGripLinesVertical, faPlus } from '@fortawesome/free-solid-svg-icons';
 
 import { EMPTY, Subject, delay, from, map, startWith, takeUntil } from 'rxjs';
 import { UserPublicInfoDTO } from 'app/core/user/user.model';
@@ -56,7 +56,7 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
     faGripLinesVertical = faGripLinesVertical;
     faConversation = faComments;
     faPlus = faPlus;
-    faMagnifyingGlass = faMagnifyingGlass;
+    faFilter = faFilter;
     faExpand = faExpand;
     faCompress = faCompress;
 
@@ -329,14 +329,22 @@ export class ConversationSelectionSidebarComponent implements AfterViewInit, OnI
                 catchError(() => EMPTY),
                 takeUntil(this.ngUnsubscribe),
             )
-            .subscribe((newActiveConversation: ConversationDto) => {
-                this.metisConversationService.forceRefresh().subscribe({
-                    complete: () => {
-                        if (newActiveConversation) {
-                            this.metisConversationService.setActiveConversation(newActiveConversation);
-                        }
-                    },
-                });
+            .subscribe((result) => {
+                const [newActiveConversation, isModificationPerformed] = result;
+                if (isModificationPerformed) {
+                    // when new active conversation is explictely set, we do not need to notify subscribers in the force refresh
+                    this.metisConversationService.forceRefresh(!newActiveConversation, true).subscribe({
+                        complete: () => {
+                            if (newActiveConversation) {
+                                this.metisConversationService.setActiveConversation(newActiveConversation);
+                            }
+                        },
+                    });
+                } else {
+                    if (newActiveConversation) {
+                        this.metisConversationService.setActiveConversation(newActiveConversation);
+                    }
+                }
             });
     }
 

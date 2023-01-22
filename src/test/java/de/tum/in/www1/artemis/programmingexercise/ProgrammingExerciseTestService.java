@@ -330,8 +330,12 @@ public class ProgrammingExerciseTestService {
      * can be invoked for teams and students
      */
     public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo) throws Exception {
+        setupRepositoryMocksParticipant(exercise, participantName, studentRepo, false);
+    }
+
+    public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo, boolean practiceMode) throws Exception {
         final var projectKey = exercise.getProjectKey();
-        String participantRepoName = projectKey.toLowerCase() + "-" + participantName;
+        String participantRepoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + participantName;
         var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentRepo);
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, participantRepoName);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,
@@ -870,6 +874,26 @@ public class ProgrammingExerciseTestService {
         final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
+    }
+
+    void startProgrammingExercise(Boolean offlineIde) throws Exception {
+        exercise.setAllowOnlineEditor(true);
+        exercise.setAllowOfflineIde(offlineIde);
+        exercise = programmingExerciseRepository.save(exercise);
+
+        startProgrammingExercise_correctInitializationState(INDIVIDUAL);
+
+        final VersionControlService.RepositoryPermissions permissions;
+        if (offlineIde == null || Boolean.TRUE.equals(offlineIde)) {
+            permissions = VersionControlService.RepositoryPermissions.READ_WRITE;
+        }
+        else {
+            permissions = VersionControlService.RepositoryPermissions.READ_ONLY;
+        }
+
+        final User participant = userRepo.getUserByLoginElseThrow(userPrefix + studentLogin);
+
+        verify(versionControlService).addMemberToRepository(any(), eq(participant), eq(permissions));
     }
 
     private Course setupCourseWithProgrammingExercise(ExerciseMode exerciseMode) {

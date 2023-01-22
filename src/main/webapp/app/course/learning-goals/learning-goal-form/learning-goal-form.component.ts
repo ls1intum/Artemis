@@ -48,6 +48,7 @@ export interface LearningGoalFormData {
     title?: string;
     description?: string;
     taxonomy?: LearningGoalTaxonomy;
+    masteryThreshold?: number;
     connectedLectureUnits?: LectureUnit[];
 }
 
@@ -63,6 +64,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         title: undefined,
         description: undefined,
         taxonomy: undefined,
+        masteryThreshold: undefined,
         connectedLectureUnits: undefined,
     };
 
@@ -74,7 +76,8 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     courseId: number;
     @Input()
     lecturesOfCourseWithLectureUnits: Lecture[] = [];
-
+    @Input()
+    averageStudentScore?: number;
     @Input()
     hasCancelButton: boolean;
     @Output()
@@ -107,6 +110,10 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         return this.form.get('description');
     }
 
+    get masteryThresholdControl() {
+        return this.form.get('masteryThreshold');
+    }
+
     ngOnChanges(): void {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
@@ -134,6 +141,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
             ],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
             taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
+            masteryThreshold: [undefined, [Validators.min(0), Validators.max(100)]],
         });
         this.selectedLectureUnitsInTable = [];
 

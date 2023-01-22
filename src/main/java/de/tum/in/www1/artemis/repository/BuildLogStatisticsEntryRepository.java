@@ -53,7 +53,7 @@ public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLo
 
         BuildLogStatisticsEntry buildLogStatisticsEntry = new BuildLogStatisticsEntry(programmingSubmission, agentSetupDuration.durationInSeconds(),
                 testDuration.durationInSeconds(), scaDuration.durationInSeconds(), totalJobDuration.durationInSeconds(), dependenciesDownloadedCount);
-        return this.save(buildLogStatisticsEntry);
+        return save(buildLogStatisticsEntry);
     }
 
 }

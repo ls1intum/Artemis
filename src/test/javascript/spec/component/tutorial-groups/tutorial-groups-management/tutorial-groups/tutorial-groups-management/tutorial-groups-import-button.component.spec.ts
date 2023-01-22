@@ -41,8 +41,6 @@ describe('TutorialGroupsImportButtonComponent', () => {
             result: Promise.resolve(),
         };
         const modalOpenSpy = jest.spyOn(modalService, 'open').mockReturnValue(mockModalRef as unknown as NgbModalRef);
-
-        fixture.detectChanges();
         const openDialogSpy = jest.spyOn(component, 'openTutorialGroupImportDialog');
 
         const importFinishSpy = jest.spyOn(component.importFinished, 'emit');
@@ -55,7 +53,7 @@ describe('TutorialGroupsImportButtonComponent', () => {
         fixture.whenStable().then(() => {
             expect(openDialogSpy).toHaveBeenCalledOnce();
             expect(modalOpenSpy).toHaveBeenCalledTimes(2);
-            expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupsRegistrationImportDialogComponent, { backdrop: 'static', scrollable: false, size: 'xl' });
+            expect(modalOpenSpy).toHaveBeenCalledWith(TutorialGroupsRegistrationImportDialogComponent, { backdrop: 'static', scrollable: false, size: 'xl', animation: false });
             expect(mockModalRef.componentInstance.courseId).toEqual(exampleCourseId);
             expect(importFinishSpy).toHaveBeenCalledOnce();
         });

@@ -148,7 +148,7 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("""
-             SELECT DISTINCT user
+             SELECT user
              FROM User user
              LEFT JOIN user.groups userGroup
              WHERE userGroup IN :#{#groupNames}

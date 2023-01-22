@@ -210,7 +210,7 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * GET /courses/:courseId/exercises : get all the exercises.
+     * GET /courses/:courseId/modeling-exercises : get all the exercises.
      *
      * @param courseId the id of the course
      * @return the ResponseEntity with status 200 (OK) and the list of modelingExercises in body
@@ -240,7 +240,7 @@ public class ModelingExerciseResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ModelingExercise> getModelingExercise(@PathVariable Long exerciseId) {
         log.debug("REST request to get ModelingExercise : {}", exerciseId);
-        var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsByIdElseThrow(exerciseId);
+        var modelingExercise = modelingExerciseRepository.findWithEagerExampleSubmissionsAndLearningGoalsByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, modelingExercise, null);
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         modelingExercise.setGradingCriteria(gradingCriteria);
