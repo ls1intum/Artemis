@@ -52,22 +52,6 @@ export enum IncludedInOverallScore {
     NOT_INCLUDED = 'NOT_INCLUDED',
 }
 
-export enum ParticipationStatus {
-    QUIZ_UNINITIALIZED = 'quiz-uninitialized',
-    QUIZ_ACTIVE = 'quiz-active',
-    QUIZ_SUBMITTED = 'quiz-submitted',
-    QUIZ_NOT_STARTED = 'quiz-not-started',
-    QUIZ_NOT_PARTICIPATED = 'quiz-not-participated',
-    QUIZ_FINISHED = 'quiz-finished',
-    NO_TEAM_ASSIGNED = 'no-team-assigned',
-    UNINITIALIZED = 'uninitialized',
-    INITIALIZED = 'initialized',
-    INACTIVE = 'inactive',
-    EXERCISE_ACTIVE = 'exercise-active',
-    EXERCISE_SUBMITTED = 'exercise-submitted',
-    EXERCISE_MISSED = 'exercise-missed',
-}
-
 export abstract class Exercise implements BaseEntity {
     public id?: number;
     public problemStatement?: string;
@@ -95,7 +79,6 @@ export abstract class Exercise implements BaseEntity {
     public studentParticipations?: StudentParticipation[];
     public tutorParticipations?: TutorParticipation[];
     public course?: Course;
-    public participationStatus?: ParticipationStatus;
     public exampleSubmissions?: ExampleSubmission[];
     public attachments?: Attachment[];
     public posts?: Post[];
