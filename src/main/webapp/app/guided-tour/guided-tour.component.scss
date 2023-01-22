@@ -158,11 +158,9 @@ jhi-guided-tour {
                         max-height: 75vh;
                     }
 
-                    .ng-star-inserted {
-                        iframe {
-                            aspect-ratio: 16/9;
-                            min-height: auto;
-                        }
+                    iframe {
+                        aspect-ratio: 16/9;
+                        min-height: auto;
                     }
                 }
             }
@@ -299,7 +297,7 @@ jhi-guided-tour {
 
                 iframe {
                     width: 100%;
-                    aspect-ratio: 16/9;
+                    min-height: 400px;
                 }
             }
 
