@@ -203,7 +203,7 @@ under ``localhost:7990``. You will probably have to change the respective URLs i
                 Adding Crowd Server in **Bamboo**
 
 #. Give the test users User access on Bitbucket: On the Administration interface (settings cogwheel on the top),
-   go to the Global permissions. Type the names of all test users in the search field ("Add Users) and give them
+   go to the Global permissions. Type the names of all test users in the search field ("Add Users") and give them
    the "Bitbucket User" permission. If you skip this step, the users will not be able to log in to Bitbucket or
    clone repositories.
 
