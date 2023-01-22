@@ -228,6 +228,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     breadcrumbTranslation = {
         new: 'global.generic.create',
+        process: 'artemisApp.attachmentUnit.createAttachmentUnits.pageTitle',
         create: 'global.generic.create',
         start: 'global.generic.start',
         edit: 'global.generic.edit',
@@ -452,6 +453,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             case 'lectures':
                 this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
+                break;
+            case 'learning-goals':
+                this.addResolvedTitleAsCrumb(EntityType.LEARNING_GOAL, [Number(segment)], currentPath, segment);
                 break;
             case 'exams':
                 this.routeExamId = Number(segment);

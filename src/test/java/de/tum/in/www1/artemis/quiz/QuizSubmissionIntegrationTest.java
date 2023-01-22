@@ -271,7 +271,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student3", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitLiveMode(QuizMode quizMode) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null, quizMode);
         quizExercise.setDuration(600);
@@ -324,7 +324,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student4", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitLiveMode_badRequest_notActive(QuizMode quizMode) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().plusSeconds(20), ZonedDateTime.now().plusSeconds(30), quizMode);
         quizExercise.setDuration(10);
@@ -343,7 +343,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student5", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitLiveMode_badRequest_alreadySubmitted(QuizMode quizMode) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), quizMode);
         quizExercise.setDuration(10);
@@ -406,7 +406,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student8", roles = "USER")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPractice(QuizMode quizMode) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(10), null, quizMode);
         quizExercise.setDueDate(ZonedDateTime.now().minusSeconds(8));
@@ -480,7 +480,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student9", roles = "USER")
     void testQuizSubmitPractice_badRequest() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         Course course = courses.get(0);
         QuizExercise quizExerciseServer = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseServer.setDueDate(ZonedDateTime.now().minusSeconds(2));
@@ -528,7 +528,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student10", roles = "USER")
     void testQuizSubmitPreview_forbidden() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
@@ -538,7 +538,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "student10", roles = "USER")
     void testQuizSubmitPractice_forbidden() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         Course course = courses.get(0);
         course.setStudentGroupName("abc");
         courseRepository.save(course);
@@ -551,7 +551,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testQuizSubmitPreview_forbidden_otherTa() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         Course course = courses.get(0);
         course.setTeachingAssistantGroupName("tutor2");
         courseRepository.save(course);
@@ -575,7 +575,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPreview_badRequest_submissionId() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
@@ -587,7 +587,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testQuizSubmitPractice_badRequest_submissionId() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, QuizMode.SYNCHRONIZED);
         quizExerciseService.save(quizExercise);
@@ -600,7 +600,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     @EnumSource(QuizMode.class)
     void testQuizSubmitPreview(QuizMode quizMode) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         Course course = courses.get(0);
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusSeconds(4), null, quizMode);
         quizExerciseService.save(quizExercise);
@@ -652,7 +652,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
          * The time we wait in between needs to be relatively high to make sure the concurrent tasks are finished in time, especially sending out the exercise can easily take up to
          * 100 ms, so we should leave about 200 ms for that, similar for the completion of all saving/updating/scheduling operations.
          */
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         Course course = courses.get(0);
         String publishQuizPath = "/topic/courses/" + course.getId() + "/quizExercises";
         log.debug("// Creating the quiz exercise 2s in the future");
@@ -825,7 +825,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = TEST_PREFIX + "student6", roles = "USER")
     @ValueSource(booleans = { true, false })
     void submitExercise_shortAnswer_tooLarge(boolean tooLarge) throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
         Course course = courses.get(0);
         QuizExercise quizExercise = ModelFactory.generateQuizExercise(ZonedDateTime.now().minusSeconds(5), ZonedDateTime.now().plusSeconds(10), QuizMode.SYNCHRONIZED, course);
         quizExercise.addQuestions(database.createShortAnswerQuestion());

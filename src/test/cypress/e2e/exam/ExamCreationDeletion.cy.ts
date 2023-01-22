@@ -20,7 +20,7 @@ const examData = {
     visibleDate: dayjs(),
     startDate: dayjs().add(1, 'day'),
     endDate: dayjs().add(2, 'day'),
-    numberOfExercixses: 4,
+    numberOfExercises: 4,
     maxPoints: 40,
     startText: 'Cypress exam start text',
     endText: 'Cypress exam end text',
@@ -33,7 +33,7 @@ const editedExamData = {
     visibleDate: dayjs(),
     startDate: dayjs().add(2, 'day'),
     endDate: dayjs().add(4, 'day'),
-    numberOfExercixses: 3,
+    numberOfExercises: 3,
     maxPoints: 30,
     startText: 'Edited cypress exam start text',
     endText: 'Edited cypress exam end text',
@@ -67,7 +67,7 @@ describe('Exam creation/deletion', () => {
         creationPage.setVisibleDate(examData.visibleDate);
         creationPage.setStartDate(examData.startDate);
         creationPage.setEndDate(examData.endDate);
-        creationPage.setNumberOfExercises(examData.numberOfExercixses);
+        creationPage.setNumberOfExercises(examData.numberOfExercises);
         creationPage.setExamMaxPoints(examData.maxPoints);
 
         creationPage.setStartText(examData.startText);
@@ -83,7 +83,7 @@ describe('Exam creation/deletion', () => {
         cy.get('#exam-visible-date').should('contain.text', examData.visibleDate.format(dateFormat));
         cy.get('#exam-start-date').should('contain.text', examData.startDate.format(dateFormat));
         cy.get('#exam-end-date').should('contain.text', examData.endDate.format(dateFormat));
-        cy.get('#exam-number-of-exercises').should('contain.text', examData.numberOfExercixses);
+        cy.get('#exam-number-of-exercises').should('contain.text', examData.numberOfExercises);
         cy.get('#exam-max-points').should('contain.text', examData.maxPoints);
         cy.get('#exam-start-text').should('contain.text', examData.startText);
         cy.get('#exam-end-text').should('contain.text', examData.endText);
@@ -130,7 +130,7 @@ describe('Exam creation/deletion', () => {
             creationPage.setVisibleDate(editedExamData.visibleDate);
             creationPage.setStartDate(editedExamData.startDate);
             creationPage.setEndDate(editedExamData.endDate);
-            creationPage.setNumberOfExercises(editedExamData.numberOfExercixses);
+            creationPage.setNumberOfExercises(editedExamData.numberOfExercises);
             creationPage.setExamMaxPoints(editedExamData.maxPoints);
 
             creationPage.setStartText(editedExamData.startText);
@@ -146,7 +146,7 @@ describe('Exam creation/deletion', () => {
             cy.get('#exam-visible-date').should('contain.text', editedExamData.visibleDate.format(dateFormat));
             cy.get('#exam-start-date').should('contain.text', editedExamData.startDate.format(dateFormat));
             cy.get('#exam-end-date').should('contain.text', editedExamData.endDate.format(dateFormat));
-            cy.get('#exam-number-of-exercises').should('contain.text', editedExamData.numberOfExercixses);
+            cy.get('#exam-number-of-exercises').should('contain.text', editedExamData.numberOfExercises);
             cy.get('#exam-max-points').should('contain.text', editedExamData.maxPoints);
             cy.get('#exam-start-text').should('contain.text', editedExamData.startText);
             cy.get('#exam-end-text').should('contain.text', editedExamData.endText);

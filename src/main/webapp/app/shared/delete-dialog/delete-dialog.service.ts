@@ -14,10 +14,11 @@ export class DeleteDialogService {
     /**
      * Opens delete dialog
      * @param deleteDialogData data that is used in dialog
+     * @param animation if true, the modal will fade in and out
      */
-    openDeleteDialog(deleteDialogData: DeleteDialogData): void {
+    openDeleteDialog(deleteDialogData: DeleteDialogData, animation = true): void {
         this.alertService.closeAll();
-        this.modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static' });
+        this.modalRef = this.modalService.open(DeleteDialogComponent, { size: 'lg', backdrop: 'static', animation });
         this.modalRef.componentInstance.entityTitle = deleteDialogData.entityTitle;
         this.modalRef.componentInstance.deleteQuestion = deleteDialogData.deleteQuestion;
         this.modalRef.componentInstance.deleteConfirmationText = deleteDialogData.deleteConfirmationText;
