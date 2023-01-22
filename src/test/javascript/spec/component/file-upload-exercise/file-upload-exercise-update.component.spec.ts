@@ -17,6 +17,8 @@ import { MockProvider } from 'ng-mocks';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { Exam } from 'app/entities/exam.model';
 
 describe('FileUploadExercise Management Update Component', () => {
     let comp: FileUploadExerciseUpdateComponent;
@@ -186,6 +188,95 @@ describe('FileUploadExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toBeTrue();
             expect(comp.isExamMode).toBeFalse();
+            expect(comp.fileUploadExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.fileUploadExercise.releaseDate).toBeUndefined();
+            expect(comp.fileUploadExercise.dueDate).toBeUndefined();
+        }));
+    });
+    describe('ngOnInit in import mode: Exam to Course', () => {
+        const fileUploadExercise = new FileUploadExercise(undefined, undefined);
+        fileUploadExercise.exerciseGroup = new ExerciseGroup();
+        fileUploadExercise.exerciseGroup.exam = new Exam();
+        fileUploadExercise.exerciseGroup.exam.course = new Course();
+        fileUploadExercise.exerciseGroup.exam.course.id = 1;
+        fileUploadExercise.id = 1;
+        fileUploadExercise.releaseDate = dayjs();
+        fileUploadExercise.dueDate = dayjs();
+        fileUploadExercise.assessmentDueDate = dayjs();
+        const courseId = 1;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ courseId });
+            route.url = of([{ path: 'import' } as UrlSegment]);
+            route.data = of({ fileUploadExercise });
+        });
+
+        it('should set isImport and remove all dates', fakeAsync(() => {
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+            // THEN
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeFalse();
+            expect(comp.fileUploadExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.fileUploadExercise.releaseDate).toBeUndefined();
+            expect(comp.fileUploadExercise.dueDate).toBeUndefined();
+        }));
+    });
+
+    describe('ngOnInit in import mode: Course to Exam', () => {
+        const fileUploadExercise = new FileUploadExercise(new Course(), undefined);
+        fileUploadExercise.id = 1;
+        fileUploadExercise.releaseDate = dayjs();
+        fileUploadExercise.dueDate = dayjs();
+        fileUploadExercise.assessmentDueDate = dayjs();
+        const groupId = 1;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ groupId });
+            route.url = of([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
+            route.data = of({ fileUploadExercise });
+        });
+
+        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+            // THEN
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeTrue();
+            expect(comp.fileUploadExercise.course).toBeUndefined();
+            expect(comp.fileUploadExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.fileUploadExercise.releaseDate).toBeUndefined();
+            expect(comp.fileUploadExercise.dueDate).toBeUndefined();
+        }));
+    });
+
+    describe('ngOnInit in import mode: Exam to Exam', () => {
+        const fileUploadExercise = new TextExercise(undefined, undefined);
+        fileUploadExercise.exerciseGroup = new ExerciseGroup();
+        fileUploadExercise.id = 1;
+        fileUploadExercise.releaseDate = dayjs();
+        fileUploadExercise.dueDate = dayjs();
+        fileUploadExercise.assessmentDueDate = dayjs();
+        const groupId = 1;
+
+        beforeEach(() => {
+            const route = TestBed.inject(ActivatedRoute);
+            route.params = of({ groupId });
+            route.url = of([{ path: 'exercise-groups' } as UrlSegment, { path: 'import' } as UrlSegment]);
+            route.data = of({ fileUploadExercise });
+        });
+
+        it('should set isImport and isExamMode and remove all dates', fakeAsync(() => {
+            // WHEN
+            comp.ngOnInit();
+            tick(); // simulate async
+            // THEN
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeTrue();
             expect(comp.fileUploadExercise.assessmentDueDate).toBeUndefined();
             expect(comp.fileUploadExercise.releaseDate).toBeUndefined();
             expect(comp.fileUploadExercise.dueDate).toBeUndefined();
