@@ -40,6 +40,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     domainCommandsProblemStatement = [new KatexCommand()];
     domainCommandsSampleSolution = [new KatexCommand()];
     isImport: boolean;
+    examCourseId?: number;
 
     saveCommand: SaveExerciseCommand<FileUploadExercise>;
 
@@ -80,22 +81,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.activatedRoute.data.subscribe(({ fileUploadExercise }) => {
             this.fileUploadExercise = fileUploadExercise;
             this.backupExercise = cloneDeep(this.fileUploadExercise);
-            this.isExamMode = this.fileUploadExercise.exerciseGroup !== undefined;
-            if (!this.isExamMode) {
-                this.exerciseCategories = this.fileUploadExercise.categories || [];
-                this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course!.id!).subscribe({
-                    next: (categoryRes: HttpResponse<string[]>) => {
-                        this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                    },
-                    error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                });
-            }
-            // Exam exercises cannot be not included into the total score
-            if (this.isExamMode && this.fileUploadExercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED) {
-                this.fileUploadExercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
-            }
-
-            this.saveCommand = new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType, this.alertService);
+            this.examCourseId = this.fileUploadExercise.course?.id || this.fileUploadExercise.exerciseGroup?.exam?.course?.id;
         });
 
         this.activatedRoute.queryParams.subscribe((params) => {
@@ -113,15 +99,8 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                 tap((params) => {
                     if (!this.isExamMode) {
                         this.exerciseCategories = this.fileUploadExercise.categories || [];
-                        if (this.fileUploadExercise.course) {
-                            this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.course!.id!).subscribe({
-                                next: (categoryRes: HttpResponse<string[]>) => {
-                                    this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
-                                },
-                                error: (error: HttpErrorResponse) => onError(this.alertService, error),
-                            });
-                        } else {
-                            this.courseService.findAllCategoriesOfCourse(this.fileUploadExercise.exerciseGroup!.exam!.course!.id!).subscribe({
+                        if (this.examCourseId) {
+                            this.courseService.findAllCategoriesOfCourse(this.examCourseId).subscribe({
                                 next: (categoryRes: HttpResponse<string[]>) => {
                                     this.existingCategories = this.exerciseService.convertExerciseCategoriesAsStringFromServer(categoryRes.body!);
                                 },
@@ -140,7 +119,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
                     }
                     if (this.isImport) {
                         if (this.isExamMode) {
-                            // The target exerciseGroupId where we want to import into
+                            // The target exerciseId where we want to import into
                             const exerciseGroupId = params['exerciseGroupId'];
                             const courseId = params['courseId'];
                             const examId = params['examId'];
@@ -171,14 +150,15 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
 
     save() {
         this.isSaving = true;
-
-        this.saveCommand.save(this.fileUploadExercise, this.isExamMode, this.notificationText).subscribe({
-            next: (exercise: Exercise) => this.onSaveSuccess(exercise),
-            error: (res: HttpErrorResponse) => this.onSaveError(res),
-            complete: () => {
-                this.isSaving = false;
-            },
-        });
+        new SaveExerciseCommand(this.modalService, this.popupService, this.fileUploadExerciseService, this.backupExercise, this.editType, this.alertService)
+            .save(this.fileUploadExercise, this.isExamMode, this.notificationText)
+            .subscribe({
+                next: (exercise: Exercise) => this.onSaveSuccess(exercise),
+                error: (res: HttpErrorResponse) => this.onSaveError(res),
+                complete: () => {
+                    this.isSaving = false;
+                },
+            });
     }
 
     /**
@@ -187,6 +167,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     validateDate() {
         this.exerciseService.validateDate(this.fileUploadExercise);
     }
+
     /**
      * Updates categories for file upload exercise
      * @param categories list of exercise categories
@@ -195,7 +176,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.fileUploadExercise.categories = categories;
     }
 
-    private onSaveSuccess(exercise: Exercise) {
+    onSaveSuccess(exercise: Exercise) {
         this.isSaving = false;
 
         if (this.goBackAfterSaving) {
@@ -207,7 +188,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
-    private onSaveError(error: HttpErrorResponse) {
+    onSaveError(error: HttpErrorResponse) {
         const errorMessage = error.headers.get('X-artemisApp-alert')!;
         this.alertService.addAlert({
             type: AlertType.DANGER,

@@ -6,6 +6,7 @@ import { map } from 'rxjs/operators';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { ExerciseServicable, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { TextExercise } from 'app/entities/text-exercise.model';
 
 export type EntityResponseType = HttpResponse<FileUploadExercise>;
 export type EntityArrayResponseType = HttpResponse<FileUploadExercise[]>;
@@ -94,5 +95,20 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
     private static formatFilePattern(fileUploadExercise: FileUploadExercise): FileUploadExercise {
         fileUploadExercise.filePattern = fileUploadExercise.filePattern!.replace(/\s/g, '').toLowerCase();
         return fileUploadExercise;
+    }
+    /**
+     * Imports a file upload exercise by cloning the entity itself plus example solutions and example submissions
+     *
+     * @param adaptedSourceFileUploadExercise The exercise that should be imported, including adapted values for the
+     * new exercise. E.g. with another title than the original exercise. Old values that should get discarded
+     * (like the old ID) will be handled by the server.
+     */
+    import(adaptedSourceFileUploadExercise: FileUploadExercise) {
+        let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceFileUploadExercise);
+        copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
+        copy.categories = ExerciseService.stringifyExerciseCategories(copy);
+        return this.http
+            .post<FileUploadExercise>(`${this.resourceUrl}/import/${adaptedSourceFileUploadExercise.id}`, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.exerciseService.processExerciseEntityResponse(res)));
     }
 }
