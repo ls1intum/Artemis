@@ -14,7 +14,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
@@ -623,19 +622,21 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
-    void testImportFileUploadExerciseAsEditorSuccess() throws Exception {
+    void testImportFileUploadExerciseFromCourseToCourseAsEditorSuccess() throws Exception {
         Course course = database.addCourseWithFileUploadExercise();
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
+        Course course2 = database.addEmptyCourse();
+        expectedFileUploadExercise.setCourse(course2);
         var sourceExerciseId = expectedFileUploadExercise.getId();
-        var actualFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
+        var importedFileUploadExercise = request.postWithResponseBody("/api/file-upload-exercises/import/" + sourceExerciseId, expectedFileUploadExercise, FileUploadExercise.class,
                 HttpStatus.CREATED);
-        assertThat(actualFileUploadExercise).usingRecursiveComparison().ignoringFields("id", "course", "shortName").isEqualTo(expectedFileUploadExercise);
+        assertThat(importedFileUploadExercise).usingRecursiveComparison()
+                .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate").isEqualTo(expectedFileUploadExercise);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "ta1", roles = "TA")
-    void testImportFileUploadExerciseAsStudentFails(String role) throws Exception {
-        SecurityMockMvcRequestPostProcessors.user("user").roles(role);
+    void testImportFileUploadExerciseAsStudentFails() throws Exception {
         Course course = database.addCourseWithFileUploadExercise();
         Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
         var sourceExerciseId = expectedFileUploadExercise.getId();

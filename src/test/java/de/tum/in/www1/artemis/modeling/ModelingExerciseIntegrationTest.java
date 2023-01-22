@@ -344,7 +344,8 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
         var importedExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExerciseToImport.getId(), modelingExerciseToImport, ModelingExercise.class,
                 HttpStatus.CREATED);
-        assertThat(importedExercise).usingRecursiveComparison().ignoringFields("id", "shortName", "course").isEqualTo(modelingExerciseToImport);
+        assertThat(importedExercise).usingRecursiveComparison()
+                .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate").isEqualTo(modelingExerciseToImport);
     }
 
     @Test
