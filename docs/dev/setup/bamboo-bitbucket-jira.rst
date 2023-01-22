@@ -47,7 +47,7 @@ docker networks
 ``ERROR: Pool overlaps with other one on this address space``. Use the
 command ``docker network prune`` to resolve this issue.
 
-Make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Settings -> Resources``
+Make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Settings → Resources``
 
 
 In case you want to enable Swift or C programming exercises, refer to the readme in
@@ -59,8 +59,7 @@ Configure Bamboo, Bitbucket and Jira
 
 By default, the Jira instance is reachable under ``localhost:8081``, the
 Bamboo instance under ``localhost:8085`` and the Bitbucket instance
-under ``localhost:7990``. You will probably have to change the respective URLs in
-``application-local.yml`` (e.g. set ``artemis.version-control.url`` to ``http://localhost:7990``).
+under ``localhost:7990``.
 
 **Get evaluation licenses for Atlassian products:** `Atlassian Licenses <https://my.atlassian.com/license/evaluation>`__
 
@@ -307,7 +306,7 @@ under ``localhost:7990``. You will probably have to change the respective URLs i
 Configure Artemis
 ^^^^^^^^^^^^^^^^^
 
-#. Modify ``src/main/resources/config/application-artemis.yml``
+#. Modify ``src/main/resources/config/application-local.yml`` to include the correct URLs and credentials:
 
    .. code:: yaml
 
@@ -342,7 +341,7 @@ Configure Artemis
                empty-commit-necessary: true
                artemis-authentication-token-value: <artemis-authentication-token-value>   # step 7
 
-#. Modify the application-local.yml
+#. Also, set the server URL in ``src/main/resources/config/application-local.yml``:
 
    .. code:: yaml
 
