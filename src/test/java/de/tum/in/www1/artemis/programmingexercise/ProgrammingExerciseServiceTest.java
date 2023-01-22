@@ -55,8 +55,7 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
 
         List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllWithBuildAndTestAfterDueDateInFuture();
 
-        assertThat(programmingExercises).contains(programmingExercise1);
-        assertThat(programmingExercises).doesNotContain(programmingExercise2);
+        assertThat(programmingExercises).contains(programmingExercise1).doesNotContain(programmingExercise2);
     }
 
     @Test
@@ -98,6 +97,16 @@ class ProgrammingExerciseServiceTest extends AbstractSpringIntegrationBambooBitb
         programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
         verify(instanceMessageSendService, times(2)).sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExercise1.getId());
         verify(instanceMessageSendService, never()).sendUnlockAllRepositories(programmingExercise1.getId());
+    }
+
+    @Test
+    void shouldLockRepositoriesWhenDueDateIsSetInThePastAndNoDueDateBefore() {
+        programmingExercise1.setDueDate(null);
+        programmingExercise2.setDueDate(ZonedDateTime.now().minusHours(1));
+
+        programmingExerciseService.handleRepoAccessRightChanges(programmingExercise1, programmingExercise2);
+
+        verify(instanceMessageSendService, times(1)).sendLockAllRepositoriesWithoutLaterIndividualDueDate(programmingExercise1.getId());
     }
 
     @Test

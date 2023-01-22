@@ -120,7 +120,7 @@ export class ProgrammingFeedbackItemService implements FeedbackItemService {
         const gradingInstruction = feedback.gradingInstruction!;
 
         return {
-            type: feedback.isSubsequent ? 'Subsequent' : 'Feedback',
+            type: feedback.isSubsequent ? 'Subsequent' : 'Reviewer',
             name: showTestDetails ? this.translateService.instant('artemisApp.course.tutor') : this.translateService.instant('artemisApp.result.detail.feedback'),
             title: feedback.text,
             text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),

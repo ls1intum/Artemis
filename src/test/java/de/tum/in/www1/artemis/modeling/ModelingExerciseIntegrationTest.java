@@ -228,7 +228,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         var newInstruction = new GradingInstruction();
         newInstruction.setInstructionDescription("New Instruction");
 
-        modelingExercise.getGradingCriteria().get(1).addStructuredGradingInstructions(newInstruction);
+        modelingExercise.getGradingCriteria().get(1).addStructuredGradingInstruction(newInstruction);
         ModelingExercise createdModelingExercise = request.postWithResponseBody("/api/modeling-exercises", modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
         assertThat(createdModelingExercise.getGradingCriteria().get(1).getStructuredGradingInstructions()).hasSize(currentInstructionsSize + 1);
 

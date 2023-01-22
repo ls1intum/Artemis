@@ -34,7 +34,7 @@ export abstract class FeedbackGroup implements FeedbackNode {
     }
 
     private calculateCredits(): FeedbackGroup {
-        this.credits = this.members.reduce((acc, item) => acc + (item.credits ?? 0), 0);
+        this.credits = this.members.filter((item) => item.type !== 'Subsequent').reduce((acc, item) => acc + (item.credits ?? 0), 0);
         return this;
     }
 }

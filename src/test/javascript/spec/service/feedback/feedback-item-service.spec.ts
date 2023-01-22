@@ -22,10 +22,36 @@ describe('FeedbackItemService', () => {
 
         const expected = {
             name: 'artemisApp.result.detail.feedback',
-            type: 'Feedback',
+            type: 'Reviewer',
             title: feedback.text,
             text: feedback.detailText,
             credits: feedback.credits,
+        } as FeedbackItem;
+
+        expect(service.create([feedback], false)).toEqual([expected]);
+    });
+
+    it('should create grading instruction feedback', () => {
+        const feedback = { text: 'text', detailText: 'detailText', gradingInstruction: { feedback: 'GI feedback' } } as Feedback;
+
+        const expected = {
+            name: 'artemisApp.result.detail.feedback',
+            text: 'GI feedback\ndetailText',
+            title: 'text',
+            type: 'Reviewer',
+        } as FeedbackItem;
+
+        expect(service.create([feedback], false)).toEqual([expected]);
+    });
+
+    it('should propagate subsequent to feedback item type', () => {
+        const feedback = { isSubsequent: true, text: 'text', detailText: 'detailText', gradingInstruction: { feedback: 'GI feedback' } } as Feedback;
+
+        const expected = {
+            name: 'artemisApp.result.detail.feedback',
+            text: 'GI feedback\ndetailText',
+            title: 'text',
+            type: 'Subsequent',
         } as FeedbackItem;
 
         expect(service.create([feedback], false)).toEqual([expected]);
@@ -50,6 +76,25 @@ describe('FeedbackItemService', () => {
         expect(groups.find((group) => group.name === 'wrong')?.members).toBeArrayOfSize(4);
         expect(groups.find((group) => group.name === 'info')?.members).toBeArrayOfSize(3);
         expect(groups.find((group) => group.name === 'correct')?.members).toBeArrayOfSize(2);
+    });
+
+    it('should filter out subsequent SGI feedback for group credit calculation', () => {
+        const gradingInstruction = {
+            feedback: 'grading instruction feedback',
+        };
+
+        const feedbacks = [
+            { gradingInstruction, isSubsequent: true, text: 'pos1', credits: 1 },
+            { gradingInstruction, text: 'positive', credits: 2 },
+        ] as Feedback[];
+
+        const items = service.create(feedbacks, false);
+        const groups = service.group(items) as FeedbackGroup[];
+
+        expect(groups).toBeArrayOfSize(2);
+
+        const infoGroup = groups.find((group) => group.name === 'info');
+        expect(infoGroup?.credits).toBe(0);
     });
 
     it('should have a custom type guard function that works', () => {
