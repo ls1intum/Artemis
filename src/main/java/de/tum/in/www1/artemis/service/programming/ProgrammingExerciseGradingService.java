@@ -561,6 +561,14 @@ public class ProgrammingExerciseGradingService {
         return testCases.stream().filter(testCase -> !testCase.isInvisible()).filter(testCase -> !(isBeforeDueDate && testCase.isAfterDueDate())).collect(Collectors.toSet());
     }
 
+    /**
+     * @param exercise                   the result belongs to
+     * @param result                     of the build run.
+     * @param testCases                  all test cases of a given programming exercise.
+     * @param successfulTestCases        test cases with positive feedback. i.e. there exists a feedback that is positive
+     * @param staticCodeAnalysisFeedback of a given programming exercise.
+     * @param weightSum                  the sum of all weights of test cases that are visible
+     */
     private record ScoreCalculationData(ProgrammingExercise exercise, Result result, Set<ProgrammingExerciseTestCase> testCases,
             Set<ProgrammingExerciseTestCase> successfulTestCases, List<Feedback> staticCodeAnalysisFeedback, double weightSum) {
 
