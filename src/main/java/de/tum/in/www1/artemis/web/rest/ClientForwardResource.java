@@ -10,7 +10,7 @@ public class ClientForwardResource {
      * Forwards any unmapped paths (except those containing a period) to the client index.html
      * @return Forward Instruction for Browser
      */
-    @RequestMapping({ "/{path:[^\\.]*}", "/{path:^(?!websocket).*}/**/{path:[^\\.]*}" })
+    @RequestMapping({ "{path:[^\\.]*}", "{path:^(?!websocket).*}/**/{path:[^\\.]*}" })
     public String forward() {
         return "forward:/";
     }

@@ -37,9 +37,7 @@ public final class Constants {
 
     public static final String NEW_RESULT_TOPIC = "/topic/newResults";
 
-    public static final String NEW_RESULT_RESOURCE_PATH = "programming-exercises/new-result";
-
-    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/" + NEW_RESULT_RESOURCE_PATH;
+    public static final String NEW_RESULT_RESOURCE_API_PATH = "/api/programming-exercises/new-result";
 
     public static final String TEST_CASE_CHANGED_PATH = "/programming-exercises/test-cases-changed/";
 

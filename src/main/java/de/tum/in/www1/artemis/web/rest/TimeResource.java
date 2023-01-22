@@ -13,7 +13,7 @@ public class TimeResource {
      * {@code GET /time}:
      * @return the current server time as Instant
      */
-    @GetMapping("/time")
+    @GetMapping("time")
     public ResponseEntity<Instant> time() {
         return ResponseEntity.ok(Instant.now());
     }
