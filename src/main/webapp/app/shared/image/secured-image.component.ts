@@ -49,8 +49,7 @@ export class SecuredImageComponent implements OnChanges, OnInit {
     dataUrl: Observable<string>;
     private retryCounter = 0;
 
-    @Output()
-    endLoadingProcess = new EventEmitter<ImageLoadingStatus>();
+    @Output() endLoadingProcess = new EventEmitter<ImageLoadingStatus>();
 
     ngOnInit(): void {
         this.srcSubject = new BehaviorSubject(this.src);
