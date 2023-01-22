@@ -84,7 +84,7 @@ describe('ProgrammingFeedbackItemService', () => {
         } as Feedback;
 
         const expected = {
-            type: 'Feedback',
+            type: 'Reviewer',
             name: 'artemisApp.course.tutor',
             text: 'gradingInstruction.feedback',
         } as FeedbackItem;
