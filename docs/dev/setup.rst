@@ -674,11 +674,6 @@ In the directory ``src/main/docker/`` you can find the following *docker compose
 
 * ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
 * ``artemis-prod-mysql.yml``: **Artemis-Prod-MySQL** Setup containing the production build of Artemis and a MySQL DB
-* ``artemis-server-client-mysql.yml``: **(not maintained at the moment)** **Artemis-Server-Client-MySQL** Setup containing a separate client and server
-  container which mount the code as volumes and are therefore just suited for development purposes.
-  As Npm is used with its live reload mode to build and run the client, any change in the client’s codebase will trigger
-  a rebuild automatically. In case of changes in the codebase of the server one has to restart the ``artemis-server``
-  container.
 * ``atlassian.yml``: **Atlassian** Setup containing a Jira, Bitbucket and Bamboo instance
   (see `Bamboo, Bitbucket and Jira Setup Guide <#bamboo-bitbucket-and-jira-setup>`__
   for the configuration of this setup)
