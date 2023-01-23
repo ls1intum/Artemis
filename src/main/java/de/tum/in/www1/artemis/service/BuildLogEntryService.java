@@ -108,14 +108,14 @@ public class BuildLogEntryService {
     }
 
     private boolean isInfoLog(String log) {
-        return (log.startsWith("[INFO]") && !log.contains("error")) || log.startsWith("[INFO] Downloading") || log.startsWith("[INFO] Downloaded");
+        return (log.startsWith("[INFO]") && !log.contains("error")) || log.contains("Downloading") || log.contains("Downloaded") || log.contains("Progress (");
     }
 
     private static final Set<String> GRADLE_LOGS = Set.of("Downloading https://services.gradle.org", "...........10%", "Here are the highlights of this release:", "- ",
-            "For more details see", "Starting a Gradle Daemon");
+            "For more details see", "Starting a Gradle Daemon", "Deprecated Gradle features were used", "You can use '--warning-mode all' to show");
 
     private boolean isGradleInfoLog(String log) {
-        return GRADLE_LOGS.stream().anyMatch(log::startsWith);
+        return log.contains("userguide/command_line_interface.html#sec:command_line_warnings") || GRADLE_LOGS.stream().anyMatch(log::startsWith);
     }
 
     private boolean isWarningLog(String log) {
@@ -154,7 +154,8 @@ public class BuildLogEntryService {
 
     private static final Set<String> BUILD_TASK_LOGS = Set.of("Executing build", "Starting task", "Finished task", "Running pre-build action", "Failing task", "Running post build",
             "Running on server", "Finalising the build...", "Stopping timer.", "Finished building", "All post build plugins have finished", "Publishing an artifact",
-            "Unable to publish artifact", "The artifact hasn't been successfully published", "Beginning to execute", "Substituting variable", "Pipeline Maven Plugin");
+            "Unable to publish artifact", "The artifact hasn't been successfully published", "Beginning to execute", "Substituting variable", "Pipeline Maven Plugin",
+            "Running in ");
 
     private boolean isTaskLog(String log) {
         return BUILD_TASK_LOGS.stream().anyMatch(log::startsWith);
