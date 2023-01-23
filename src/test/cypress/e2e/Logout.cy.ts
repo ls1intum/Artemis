@@ -37,8 +37,8 @@ describe('Logout tests', () => {
         cy.visit(`/courses/${course.id}/exercises`);
         courseOverview.startExercise(modelingExercise.id!);
         courseOverview.openRunningExercise(modelingExercise.id!);
-        modelingEditor.addComponentToModel(1);
-        modelingEditor.addComponentToModel(2);
+        modelingEditor.addComponentToModel(modelingExercise.id!, 1);
+        modelingEditor.addComponentToModel(modelingExercise.id!, 2);
         cy.get('#account-menu').click().get('#logout').click();
     };
 
