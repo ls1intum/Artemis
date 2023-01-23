@@ -306,7 +306,7 @@ public class TeamResource {
     }
 
     /**
-     * GET /courses/:courseId/exercises/:exerciseId/team-search-users : get all users for a given course.
+     * GET /courses/:courseId/exercises/:exerciseId/team-search-users : find the team of a login/name in a given exercise and course.
      *
      * @param courseId    the id of the course for which to search users
      * @param exerciseId  the id of the exercise for which to search users to join a team
@@ -315,7 +315,7 @@ public class TeamResource {
      */
     @GetMapping("/courses/{courseId}/exercises/{exerciseId}/team-search-users")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<TeamSearchUserDTO>> searchUsersInCourse(@PathVariable long courseId, @PathVariable long exerciseId,
+    public ResponseEntity<List<TeamSearchUserDTO>> searchTeamInExercise(@PathVariable long courseId, @PathVariable long exerciseId,
             @RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to search Users for {} in course with id : {}", loginOrName, courseId);
         // restrict result size by only allowing reasonable searches

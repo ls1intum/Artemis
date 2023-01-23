@@ -44,14 +44,16 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
     @Query("""
               SELECT DISTINCT s
               FROM StudentScore s
-              WHERE s.exercise = :exercise AND s.user = :user
+              WHERE s.exercise = :exercise
+                AND s.user = :user
             """)
     Optional<StudentScore> findStudentScoreByExerciseAndUserLazy(@Param("exercise") Exercise exercise, @Param("user") User user);
 
     // TODO: use a custom object instead of Object[] (as in the example above with ParticipantScoreAverageDTO)
     @Query("""
             SELECT u, SUM(sc.lastRatedPoints)
-            FROM StudentScore sc LEFT JOIN sc.user u
+            FROM StudentScore sc
+                LEFT JOIN sc.user u
             WHERE sc.exercise IN :exercises
             GROUP BY u.id
             """)
@@ -59,8 +61,18 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
 
     @Query("""
             SELECT s
-            FROM StudentScore s LEFT JOIN FETCH s.exercise
-            WHERE s.exercise IN :exercises AND s.user = :user
+            FROM StudentScore s
+            WHERE s.user = :user
+                AND s.exercise IN :exercises
+            """)
+    List<StudentScore> findAllByExercisesAndUser(@Param("exercises") List<Exercise> exercises, @Param("user") User user);
+
+    @Query("""
+            SELECT s
+            FROM StudentScore s
+                LEFT JOIN FETCH s.exercise ex
+            WHERE ex IN :exercises
+                AND s.user = :user
             """)
     List<StudentScore> findAllByExerciseAndUserWithEagerExercise(@Param("exercises") Set<Exercise> exercises, @Param("user") User user);
 

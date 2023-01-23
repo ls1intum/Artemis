@@ -28,7 +28,7 @@ export class TutorialGroupsTableStubComponent {
     @Input()
     tutorialGroupClickHandler: (tutorialGroup: TutorialGroup) => void;
 
-    @ContentChild(TemplateRef) extraColumn: TemplateRef<any>;
+    @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 }
 
 @Component({

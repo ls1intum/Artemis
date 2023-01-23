@@ -38,7 +38,7 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
 
     @BeforeEach
     void setup() {
-        participantScoreSchedulerService.activate();
+        participantScoreScheduleService.activate();
         courseTestService.setup(TEST_PREFIX, this);
         jiraRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
@@ -210,7 +210,13 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForDashboard() throws Exception {
-        courseTestService.testGetCourseForDashboard();
+        courseTestService.testGetCourseForDashboard(false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForDashboard_userRefresh() throws Exception {
+        courseTestService.testGetCourseForDashboard(true);
     }
 
     @Test
@@ -411,6 +417,60 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void searchForStudentsInCourse() throws Exception {
         courseTestService.searchStudentsInCourse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForAllTutors_shouldReturnAllTutorsAndEditors() throws Exception {
+        courseTestService.searchUsersInCourse_searchForAllTutors_shouldReturnAllTutorsAndEditors();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForAllInstructor_shouldReturnAllInstructors() throws Exception {
+        courseTestService.searchUsersInCourse_searchForAllInstructor_shouldReturnAllInstructors();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForAllStudents_shouldReturnBadRequest() throws Exception {
+        courseTestService.searchUsersInCourse_searchForAllStudents_shouldReturnBadRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForStudentsAndTooShortSearchTerm_shouldReturnBadRequest() throws Exception {
+        courseTestService.searchUsersInCourse_searchForStudentsAndTooShortSearchTerm_shouldReturnBadRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForStudents_shouldReturnUsersMatchingSearchTerm() throws Exception {
+        courseTestService.searchUsersInCourse_searchForStudents_shouldReturnUsersMatchingSearchTerm();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForAllTutorsAndInstructors_shouldReturnAllTutorsEditorsAndInstructors() throws Exception {
+        courseTestService.searchUsersInCourse_searchForAllTutorsAndInstructors_shouldReturnAllTutorsEditorsAndInstructors();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForTutorsAndInstructors_shouldReturnUsersMatchingSearchTerm() throws Exception {
+        courseTestService.searchUsersInCourse_searchForTutorsAndInstructors_shouldReturnUsersMatchingSearchTerm();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForStudentsTutorsAndInstructorsAndTooShortSearchTerm_shouldReturnBadRequest() throws Exception {
+        courseTestService.searchUsersInCourse_searchForStudentsTutorsAndInstructorsAndTooShortSearchTerm_shouldReturnBadRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForStudentsTutorsEditorsAndInstructors_shouldReturnUsersMatchingSearchTerm() throws Exception {
+        courseTestService.searchUsersInCourse_searchForStudentsTutorsEditorsAndInstructors_shouldReturnUsersMatchingSearchTerm();
     }
 
     @Test

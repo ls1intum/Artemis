@@ -1,9 +1,8 @@
 import { CourseConversationsComponent } from 'app/overview/course-conversations/course-conversations.component';
-import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
+import { ComponentFixture, TestBed, fakeAsync, tick, waitForAsync } from '@angular/core/testing';
 import { ConversationDto } from 'app/entities/metis/conversation/conversation.model';
 import { generateExampleChannelDTO, generateExampleGroupChatDTO, generateOneToOneChatDTO } from './helpers/conversationExampleModels';
 import { AlertService } from 'app/core/util/alert.service';
-import { mockedActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route-query-param-map';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { MetisConversationService } from 'app/shared/metis/metis-conversation.service';
 import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
@@ -16,6 +15,8 @@ import { EMPTY } from 'rxjs';
 import { BehaviorSubject } from 'rxjs';
 import { GroupChatDto } from 'app/entities/metis/conversation/group-chat.model';
 import { Post } from 'app/entities/metis/post.model';
+import { ActivatedRoute, Params, Router, convertToParamMap } from '@angular/router';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 const examples: (ConversationDto | undefined)[] = [undefined, generateOneToOneChatDTO({}), generateExampleGroupChatDTO({}), generateExampleChannelDTO({})];
 
 examples.forEach((activeConversation) => {
@@ -24,8 +25,11 @@ examples.forEach((activeConversation) => {
         let fixture: ComponentFixture<CourseConversationsComponent>;
         let metisConversationService: MetisConversationService;
         const course = { id: 1 } as Course;
+        let queryParamsSubject: BehaviorSubject<Params>;
+        const router = new MockRouter();
 
         beforeEach(waitForAsync(() => {
+            queryParamsSubject = new BehaviorSubject(convertToParamMap({}));
             metisConversationService = {} as MetisConversationService;
             TestBed.configureTestingModule({
                 declarations: [
@@ -36,7 +40,26 @@ examples.forEach((activeConversation) => {
                     MockComponent(ConversationMessagesComponent),
                     MockComponent(ConversationThreadSidebarComponent),
                 ],
-                providers: [MockProvider(AlertService), MockProvider(MetisConversationService), mockedActivatedRoute({}, {}, {}, {}, { courseId: 1 })],
+                providers: [
+                    MockProvider(AlertService),
+                    MockProvider(MetisConversationService),
+                    { provide: Router, useValue: router },
+                    {
+                        provide: ActivatedRoute,
+                        useValue: {
+                            parent: {
+                                parent: {
+                                    paramMap: new BehaviorSubject(
+                                        convertToParamMap({
+                                            courseId: 1,
+                                        }),
+                                    ),
+                                },
+                            },
+                            queryParams: queryParamsSubject,
+                        },
+                    },
+                ],
             });
 
             fixture = TestBed.overrideComponent(CourseConversationsComponent, {
@@ -50,6 +73,7 @@ examples.forEach((activeConversation) => {
                 },
             }).createComponent(CourseConversationsComponent);
 
+            Object.defineProperty(metisConversationService, 'setActiveConversation', { value: jest.fn(), configurable: true, writable: true });
             Object.defineProperty(metisConversationService, 'course', { get: () => course });
             Object.defineProperty(metisConversationService, 'activeConversation$', { get: () => new BehaviorSubject(activeConversation).asObservable() });
             Object.defineProperty(metisConversationService, 'forceRefresh', { value: () => EMPTY });
@@ -81,6 +105,27 @@ examples.forEach((activeConversation) => {
             component.setPostInThread(post);
             expect(component.postInThread).toEqual(post);
             expect(component.showPostThread).toBeTrue();
+        });
+
+        it('should set active conversation depending on the query param', fakeAsync(() => {
+            const setActiveConversationByIdSpy = jest.spyOn(metisConversationService, 'setActiveConversation');
+            queryParamsSubject.next({ conversationId: '12' });
+            // mock setActiveConversationById method
+            fixture.detectChanges();
+            tick();
+            expect(setActiveConversationByIdSpy).toHaveBeenCalledWith(12);
+        }));
+
+        it('should set the query params when an active conversation is selected', () => {
+            const activatedRoute = TestBed.inject(ActivatedRoute);
+            const navigateSpy = jest.spyOn(router, 'navigate');
+            fixture.detectChanges();
+            expect(navigateSpy).toHaveBeenCalledWith([], {
+                relativeTo: activatedRoute,
+                queryParams: { conversationId: activeConversation?.id },
+                queryParamsHandling: 'merge',
+                replaceUrl: true,
+            });
         });
     });
 });

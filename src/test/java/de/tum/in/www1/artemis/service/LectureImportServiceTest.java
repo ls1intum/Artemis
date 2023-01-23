@@ -39,7 +39,7 @@ class LectureImportServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     @BeforeEach
     void initTestCase() throws Exception {
         database.addUsers(TEST_PREFIX, 0, 0, 0, 1);
-        List<Course> courses = this.database.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true);
+        List<Course> courses = this.database.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, true, 0);
         Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         long lecture1Id = course1.getLectures().stream().findFirst().get().getId();
         this.lecture1 = this.lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1Id);
