@@ -367,6 +367,9 @@ public class ExamResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<Exam>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises, PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
+        System.out.println(user.getLogin());
+        System.out.println(user.getFirstName());
+        System.out.println(user.getAuthorities().size());
         return ResponseEntity.ok(examService.getAllOnPageWithSize(search, user, withExercises));
     }
 
@@ -663,6 +666,7 @@ public class ExamResource {
         return ResponseEntity.ok(returnExam);
     }
 
+    // TODO: add @RequestBody dto
     /**
      * POST /courses/:courseId/exams/:examId/students/:studentLogin : Add one single given user (based on the login) to the students of the exam so that the student can access the exam
      *

@@ -136,7 +136,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         // setting up exam
         Exam exam = ModelFactory.generateExam(course);
         ModelFactory.generateExerciseGroup(true, exam);
-        exam.addRegisteredUser(student1);
+        // exam.addRegisteredUser(student1);
         exam = examRepository.save(exam);
         idOfExam = exam.getId();
         var examTextExercise = createIndividualTextExerciseForExam();

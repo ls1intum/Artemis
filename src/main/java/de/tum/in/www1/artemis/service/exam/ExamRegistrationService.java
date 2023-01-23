@@ -37,6 +37,8 @@ public class ExamRegistrationService {
 
     private final UserRepository userRepository;
 
+    private final ExamUserRepository examUserRepository;
+
     private final UserService userService;
 
     private final ParticipationService participationService;
@@ -53,8 +55,8 @@ public class ExamRegistrationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public ExamRegistrationService(ExamRepository examRepository, UserService userService, ParticipationService participationService, UserRepository userRepository,
-            AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
+    public ExamRegistrationService(ExamUserRepository examUserRepository, ExamRepository examRepository, UserService userService, ParticipationService participationService,
+            UserRepository userRepository, AuditEventRepository auditEventRepository, CourseRepository courseRepository, StudentExamRepository studentExamRepository,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService) {
         this.examRepository = examRepository;
         this.userService = userService;
@@ -65,6 +67,7 @@ public class ExamRegistrationService {
         this.studentExamRepository = studentExamRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
+        this.examUserRepository = examUserRepository;
     }
 
     /**
@@ -162,8 +165,10 @@ public class ExamRegistrationService {
         ExamUser registeredExamUser = new ExamUser();
         registeredExamUser.setUser(student);
         registeredExamUser.setExam(exam);
-        exam.addExamUser(registeredExamUser);
 
+        registeredExamUser = examUserRepository.save(registeredExamUser);
+        exam.addExamUser(registeredExamUser);
+        examRepository.save(exam);
         if (!student.getGroups().contains(course.getStudentGroupName())) {
             userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
         }

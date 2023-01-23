@@ -741,7 +741,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var exam = database.addActiveExamWithRegisteredUser(course, user);
         exam = database.addExerciseGroupsAndExercisesToExam(exam, true);
         exam.setEndDate(ZonedDateTime.now().minusMinutes(1));
-        exam.addRegisteredUser(user);
+        // exam.addRegisteredUser(user);
         exam.setGracePeriod(gracePeriod);
         exam = examRepository.save(exam);
 

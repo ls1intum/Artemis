@@ -15,13 +15,19 @@
         <addColumn tableName="exam_user">
             <column name="created_date" type="timestamp"/>
         </addColumn>
-<!--        <addPrimaryKey tableName="exam_user" columnNames="id" constraintName="primary_key_id"/>-->
-<!--        <dropPrimaryKey tableName="exam_user" />-->
-<!--        <addColumn tableName="exam_user">-->
-<!--            <column autoIncrement="true" name="id" type="bigint">-->
-<!--                <constraints nullable="false" primaryKey="true"/>-->
-<!--            </column>-->
-<!--        </addColumn>-->
+        <dropForeignKeyConstraint baseTableName="exam_user" constraintName="FK9kic2piykbv64dc8kjcxnlagu" />
+        <dropForeignKeyConstraint baseTableName="exam_user" constraintName="FKpvet665enmcbtnoecju2epqmp" />
+
+        <dropPrimaryKey tableName="exam_user" />
+        <addColumn tableName="exam_user">
+            <column autoIncrement="true" name="id" type="bigint">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+        </addColumn>
+        <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="exam_user" constraintName="FK_student_id" deferrable="false" initiallyDeferred="false"
+                                 onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="exam_user" constraintName="FK_exam_id" deferrable="false" initiallyDeferred="false"
+                                 onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exam" validate="true"/>
         <addColumn tableName="exam_user">
             <column name="did_check_artemis" type="boolean"/>
         </addColumn>

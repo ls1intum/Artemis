@@ -49,6 +49,7 @@ import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
@@ -1532,7 +1533,15 @@ public class DatabaseUtilService {
         var student4 = getUserByLogin(userPrefix + "student4");
         var registeredUsers = Set.of(student1, student2, student3, student4);
 
-        exam.setRegisteredUsers(registeredUsers);
+        Exam finalExam = exam;
+        var examUsers = registeredUsers.stream().map(user -> {
+            var examUser = new ExamUser();
+            examUser.setUser(user);
+            examUser.setExam(finalExam);
+            return examUser;
+        }).collect(Collectors.toSet());
+
+        exam.setExamUsers(examUsers);
         exam = examRepository.save(exam);
         return exam;
     }
@@ -1551,14 +1560,14 @@ public class DatabaseUtilService {
         Exam exam = ModelFactory.generateTestExam(course);
         HashSet<User> userHashSet = new HashSet<>();
         userHashSet.add(user);
-        exam.setRegisteredUsers(userHashSet);
+        exam.setExamUsers(Set.of(new ExamUser()));
         examRepository.save(exam);
         return exam;
     }
 
     public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
-        exam.addRegisteredUser(user);
+        exam.addExamUser(new ExamUser());
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
@@ -1609,7 +1618,7 @@ public class DatabaseUtilService {
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
-        exam.addRegisteredUser(user);
+        // exam.addRegisteredUser(user);
         exam.setTestExam(false);
         examRepository.save(exam);
         var studentExam = new StudentExam();
@@ -1626,7 +1635,7 @@ public class DatabaseUtilService {
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
         exam.setWorkingTime(2 * 60 * 60);
-        exam.addRegisteredUser(user);
+        // exam.addRegisteredUser(user);
         examRepository.save(exam);
         return exam;
     }

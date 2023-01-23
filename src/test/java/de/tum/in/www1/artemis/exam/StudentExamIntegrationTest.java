@@ -13,6 +13,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -38,6 +39,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
@@ -151,7 +153,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         course1 = database.addEmptyCourse();
         exam1 = database.addActiveExamWithRegisteredUser(course1, student2);
 
-        exam1.addRegisteredUser(student1);
+        exam1.addExamUser(new ExamUser());
         exam1 = examRepository.save(exam1);
 
         exam2 = database.addExam(course1);
@@ -290,14 +292,14 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
         // register users
-        exam.setRegisteredUsers(registeredStudents);
+        exam.setExamUsers(Set.of(new ExamUser()));
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
 
         // generate individual student exams
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
-        assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
+        assertThat(studentExams).hasSize(exam.getExamUsers().size());
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
 
         // start exercises
@@ -308,10 +310,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             programmingExercises.add(programmingExercise);
 
             programmingExerciseTestService.setupRepositoryMocks(programmingExercise);
-            for (var user : exam.getRegisteredUsers()) {
+            for (var user : exam.getExamUsers()) {
                 var repo = new LocalRepository(defaultBranch);
                 repo.configureRepos("studentRepo", "studentOriginRepo");
-                programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getLogin(), repo);
+                programmingExerciseTestService.setupRepositoryMocksParticipant(programmingExercise, user.getUser().getLogin(), repo);
                 studentRepos.add(repo);
             }
         }
@@ -598,7 +600,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // register user
         Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
-        exam.setRegisteredUsers(new HashSet<>(registeredStudents));
+        exam.setExamUsers(new HashSet<>(Set.of(new ExamUser())));
         exam.setNumberOfExercisesInExam(2);
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
@@ -623,7 +625,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // register user
         Set<User> registeredStudents = getRegisteredStudents(NUMBER_OF_STUDENTS);
-        exam.setRegisteredUsers(new HashSet<>(registeredStudents));
+        exam.setExamUsers(new HashSet<>(Set.of(new ExamUser())));
         exam.setRandomizeExerciseOrder(false);
         exam = examRepository.save(exam);
 
@@ -1914,7 +1916,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         SecurityContextHolder.setContext(TestSecurityContextHolder.getContext());
 
         List<String> studentLogins = new ArrayList<>();
-        for (final User user : exam2.getRegisteredUsers()) {
+        for (final User user : exam2.getExamUsers().stream().map(ExamUser::getUser).collect(Collectors.toList())) {
             studentLogins.add(user.getLogin());
         }
         bambooRequestMockProvider.mockDeleteBambooBuildProject(projectKey);

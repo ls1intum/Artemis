@@ -25,7 +25,7 @@ describe('ExamStudentsComponent', () => {
     const course = { id: 1 } as Course;
     const user1 = { id: 1, name: 'name', login: 'login' } as User;
     const user2 = { id: 2, login: 'user2' } as User;
-    const examWithCourse: Exam = { course, id: 2, registeredUsers: [user1, user2] } as Exam;
+    const examWithCourse: Exam = { course, id: 2, examUsers: [user1, user2] } as Exam;
 
     const route = {
         snapshot: { paramMap: convertToParamMap({ courseId: course.id }) },

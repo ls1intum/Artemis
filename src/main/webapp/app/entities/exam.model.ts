@@ -35,7 +35,7 @@ export class Exam implements BaseEntity {
     public course?: Course;
     public exerciseGroups?: ExerciseGroup[];
     public studentExams?: StudentExam[];
-    public registeredUsers?: User[];
+    public examUsers?: User[];
 
     public numberOfRegisteredUsers?: number; // transient
 
