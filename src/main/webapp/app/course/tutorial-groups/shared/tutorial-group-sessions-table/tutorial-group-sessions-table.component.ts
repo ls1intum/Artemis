@@ -27,11 +27,17 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
     @Input()
     showIdColumn = false;
 
+    @Input()
+    isReadOnly = false;
+
     upcomingSessions: TutorialGroupSession[] = [];
     pastSessions: TutorialGroupSession[] = [];
+
+    nextSession: TutorialGroupSession | undefined = undefined;
+
     isCollapsed = true;
     get numberOfColumns(): number {
-        let numberOfColumns = this.tutorialGroup.tutorialGroupSchedule ? 3 : 2;
+        let numberOfColumns = this.tutorialGroup.tutorialGroupSchedule ? 4 : 3;
         if (this.extraColumn) {
             numberOfColumns++;
         }
@@ -58,6 +64,13 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
                     case 'timeZone': {
                         if (change.currentValue) {
                             this.timeZoneUsedForDisplay = change.currentValue;
+                            this.changeDetectorRef.detectChanges();
+                        }
+                        break;
+                    }
+                    case 'tutorialGroup': {
+                        if (change.currentValue) {
+                            this.nextSession = change.currentValue.nextSession;
                             this.changeDetectorRef.detectChanges();
                         }
                         break;
@@ -90,5 +103,21 @@ export class TutorialGroupSessionsTableComponent implements OnChanges {
         this.upcomingSessions = upcoming;
         this.pastSessions = past;
         this.changeDetectorRef.detectChanges();
+    }
+
+    onAttendanceChanged(session: TutorialGroupSession) {
+        // Note: We synchronize the attendance of upcoming or past sessions with the next session and vice versa
+        if (session.id === this.nextSession?.id) {
+            this.nextSession = session;
+            const upcomingIndex = this.upcomingSessions.findIndex((s) => s.id === session.id);
+            if (upcomingIndex !== -1) {
+                this.upcomingSessions[upcomingIndex] = session;
+            }
+            const pastIndex = this.pastSessions.findIndex((s) => s.id === session.id);
+            if (pastIndex !== -1) {
+                this.pastSessions[pastIndex] = session;
+            }
+            this.changeDetectorRef.detectChanges();
+        }
     }
 }
