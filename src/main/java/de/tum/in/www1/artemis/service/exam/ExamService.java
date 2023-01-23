@@ -404,8 +404,11 @@ public class ExamService {
             }
             BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, achievedPointsOfBonusTo, achievedPointsOfSource);
             String bonusGrade = null;
-            if (verdict == PlagiarismVerdict.PLAGIARISM) {
-                bonusGrade = GradeStep.PLAGIARISM_GRADE;
+            if (result == null || !result.hasParticipated()) {
+                bonusGrade = bonus.getSourceGradingScale().getNoParticipationGradeOrDefault();
+            }
+            else if (verdict == PlagiarismVerdict.PLAGIARISM) {
+                bonusGrade = bonus.getSourceGradingScale().getPlagiarismGradeOrDefault();
             }
             else if (bonusExample.bonusGrade() != null) {
                 bonusGrade = bonusExample.bonusGrade().toString();
@@ -427,6 +430,7 @@ public class ExamService {
             }
         }
         catch (AccessForbiddenException e) {
+            // TODO: this is not a good implementation, we should check before if the user has access
             // The current user does not have access to the bonus exam or course, so they should see the grade without bonus.
             return null;
         }
@@ -441,12 +445,14 @@ public class ExamService {
 
             StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummaryAsStudent(targetUser, studentExam);
             var studentResult = studentExamWithGradeDTO.studentResult();
-            return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null));
+            return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null,
+                    Boolean.TRUE.equals(studentResult.submitted())));
         }
         var scores = calculateExamScores(examId);
         var studentIdSet = new HashSet<>(studentIds);
-        return scores.studentResults().stream().filter(studentResult -> studentIdSet.contains(studentResult.userId())).collect(Collectors.toMap(ExamScoresDTO.StudentResult::userId,
-                studentResult -> new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null)));
+        return scores.studentResults().stream().filter(studentResult -> studentIdSet.contains(studentResult.userId()))
+                .collect(Collectors.toMap(ExamScoresDTO.StudentResult::userId, studentResult -> new BonusSourceResultDTO(studentResult.overallPointsAchieved(),
+                        studentResult.mostSeverePlagiarismVerdict(), null, null, Boolean.TRUE.equals(studentResult.submitted()))));
 
     }
 
@@ -465,7 +471,7 @@ public class ExamService {
         loadQuizExercisesForStudentExam(studentExam);
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
-        if (!studentExam.isSubmitted() || !studentExam.areResultsPublishedYet()) {
+        if (!Boolean.TRUE.equals(studentExam.isSubmitted()) || !studentExam.areResultsPublishedYet()) {
             throw new AccessForbiddenException("You are not allowed to access the grade summary of a student exam which was NOT submitted!");
         }
 
@@ -543,6 +549,8 @@ public class ExamService {
         }
 
         if (!isAtLeastInstructor) {
+            // If the exerciseGroup (and the exam) will be filtered out, move example solution publication date to the exercise to preserve this information.
+            exercise.setExampleSolutionPublicationDate(exercise.getExerciseGroup().getExam().getExampleSolutionPublicationDate());
             exercise.setExerciseGroup(null);
         }
 
@@ -632,9 +640,15 @@ public class ExamService {
             PlagiarismMapping plagiarismMapping, ExamBonusCalculator examBonusCalculator) {
         User user = studentExam.getUser();
 
-        if (plagiarismMapping.studentHasVerdict(user.getId(), PlagiarismVerdict.PLAGIARISM)) {
+        if (!Boolean.TRUE.equals(studentExam.isSubmitted())) {
+            String noParticipationGrade = gradingScale.map(GradingScale::getNoParticipationGradeOrDefault).orElse(GradingScale.DEFAULT_NO_PARTICIPATION_GRADE);
             return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
-                    0.0, GradeStep.PLAGIARISM_GRADE, GradeStep.PLAGIARISM_GRADE, false, 0.0, null, null, PlagiarismVerdict.PLAGIARISM);
+                    0.0, noParticipationGrade, noParticipationGrade, false, 0.0, null, null, null);
+        }
+        else if (plagiarismMapping.studentHasVerdict(user.getId(), PlagiarismVerdict.PLAGIARISM)) {
+            String plagiarismGrade = gradingScale.map(GradingScale::getPlagiarismGradeOrDefault).orElse(GradingScale.DEFAULT_PLAGIARISM_GRADE);
+            return new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(), studentExam.isSubmitted(), 0.0,
+                    0.0, plagiarismGrade, plagiarismGrade, false, 0.0, null, null, PlagiarismVerdict.PLAGIARISM);
         }
 
         var overallPointsAchieved = 0.0;
@@ -958,24 +972,31 @@ public class ExamService {
             // number of complaints open
             numberOfComplaintsOpenByExercise.add(complaintRepository.countByResultParticipationExerciseIdAndComplaintTypeIgnoreTestRuns(exercise.getId(), ComplaintType.COMPLAINT));
 
-            log.debug("StatsTimeLog: number of complaints open done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of complaints open done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            }
             // number of complaints finished
             numberOfComplaintResponsesByExercise
                     .add(complaintResponseRepository.countComplaintResponseByExerciseIdAndComplaintTypeAndSubmittedTimeIsNotNull(exercise.getId(), ComplaintType.COMPLAINT));
 
-            log.debug("StatsTimeLog: number of complaints finished done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of complaints finished done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            }
             // number of assessments done
             if (numberOfCorrectionRoundsInExam > 0) {
                 numberOfAssessmentsFinishedOfCorrectionRoundsByExercise
                         .add(resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRoundsInExam));
 
-                log.debug("StatsTimeLog: number of assessments done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+                if (log.isDebugEnabled()) {
+                    log.debug("StatsTimeLog: number of assessments done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+                }
             }
 
             // get number of all generated participations
             numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsByExerciseIdAndTestRun(exercise.getId(), false));
-
-            log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of generated participations in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            }
             if (!(exercise instanceof QuizExercise || AssessmentType.AUTOMATIC == exercise.getAssessmentType())) {
                 numberOfParticipationsForAssessmentGeneratedByExercise.add(submissionRepository.countByExerciseIdSubmittedBeforeDueDateIgnoreTestRuns(exercise.getId()));
             }
@@ -1021,13 +1042,16 @@ public class ExamService {
             long numberOfGeneratedStudentExams = examRepository.countGeneratedStudentExamsByExamWithoutTestRuns(exam.getId());
             examChecklistDTO.setNumberOfGeneratedStudentExams(numberOfGeneratedStudentExams);
 
-            log.debug("StatsTimeLog: number of generated student exams done in {}", TimeLogUtil.formatDurationFrom(start));
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of generated student exams done in {}", TimeLogUtil.formatDurationFrom(start));
+            }
 
             // set number of test runs
             long numberOfTestRuns = studentExamRepository.countTestRunsByExamId(exam.getId());
             examChecklistDTO.setNumberOfTestRuns(numberOfTestRuns);
-
-            log.debug("StatsTimeLog: number of test runs done in {}", TimeLogUtil.formatDurationFrom(start));
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of test runs done in {}", TimeLogUtil.formatDurationFrom(start));
+            }
 
             // check if all exercises have been prepared for all students;
             boolean exercisesPrepared = numberOfGeneratedStudentExams != 0
@@ -1036,9 +1060,13 @@ public class ExamService {
 
             // set started and submitted exam properties
             long numberOfStudentExamsStarted = studentExamRepository.countStudentExamsStartedByExamIdIgnoreTestRuns(exam.getId());
-            log.debug("StatsTimeLog: number of student exams started done in {}", TimeLogUtil.formatDurationFrom(start));
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of student exams started done in {}", TimeLogUtil.formatDurationFrom(start));
+            }
             long numberOfStudentExamsSubmitted = studentExamRepository.countStudentExamsSubmittedByExamIdIgnoreTestRuns(exam.getId());
-            log.debug("StatsTimeLog: number of student exams submitted done in {}", TimeLogUtil.formatDurationFrom(start));
+            if (log.isDebugEnabled()) {
+                log.debug("StatsTimeLog: number of student exams submitted done in {}", TimeLogUtil.formatDurationFrom(start));
+            }
 
             examChecklistDTO.setNumberOfExamsStarted(numberOfStudentExamsStarted);
             examChecklistDTO.setNumberOfExamsSubmitted(numberOfStudentExamsSubmitted);
@@ -1066,11 +1094,12 @@ public class ExamService {
         }
 
         long start = System.nanoTime();
-        log.info("Evaluating {} quiz exercises in exam {}", quizExercises.size(), exam.getId());
+        log.debug("Evaluating {} quiz exercises in exam {}", quizExercises.size(), exam.getId());
         // Evaluate all quizzes for that exercise
         quizExercises.forEach(quiz -> examQuizService.evaluateQuizAndUpdateStatistics(quiz.getId()));
-        log.info("Evaluated {} quiz exercises in exam {} in {}", quizExercises.size(), exam.getId(), TimeLogUtil.formatDurationFrom(start));
-
+        if (log.isDebugEnabled()) {
+            log.debug("Evaluated {} quiz exercises in exam {} in {}", quizExercises.size(), exam.getId(), TimeLogUtil.formatDurationFrom(start));
+        }
         return quizExercises.size();
     }
 

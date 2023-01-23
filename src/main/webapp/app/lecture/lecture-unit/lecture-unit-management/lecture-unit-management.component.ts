@@ -137,6 +137,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return 'artemisApp.videoUnit.delete.question';
             case LectureUnitType.TEXT:
                 return 'artemisApp.textUnit.delete.question';
+            case LectureUnitType.ONLINE:
+                return 'artemisApp.onlineUnit.delete.question';
             default:
                 return '';
         }
@@ -152,6 +154,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return 'artemisApp.videoUnit.delete.typeNameToConfirm';
             case LectureUnitType.TEXT:
                 return 'artemisApp.textUnit.delete.typeNameToConfirm';
+            case LectureUnitType.ONLINE:
+                return 'artemisApp.onlineUnit.delete.typeNameToConfirm';
             default:
                 return '';
         }

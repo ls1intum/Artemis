@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Set;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,7 @@ import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
+import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreScheduleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreDTO;
@@ -80,26 +82,19 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @BeforeEach
     void setupTestScenario() {
-        participantScoreSchedulerService.activate();
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 50;
+        participantScoreScheduleService.activate();
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        // creating the users student1-student5, tutor1-tutor10 and instructors1-instructor10
+        // creating the users student1, tutor1 and instructors1
         this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         // Instructors should only be part of "participantscoreinstructor"
-        for (int i = 1; i <= 1; i++) {
-            var instructor = database.getUserByLogin(TEST_PREFIX + "instructor" + i);
-            instructor.setGroups(Set.of("participantscoreinstructor"));
-            userRepository.save(instructor);
-        }
-        for (int i = 1; i <= 1; i++) {
-            var tutor = database.getUserByLogin(TEST_PREFIX + "tutor" + i);
-            tutor.setGroups(Set.of("participantscoretutor"));
-            userRepository.save(tutor);
-        }
-        for (int i = 1; i <= 1; i++) {
-            var student = database.getUserByLogin(TEST_PREFIX + "student" + i);
-            student.setGroups(Set.of("participantscorestudent"));
-            userRepository.save(student);
-        }
+        var instructor = database.getUserByLogin(TEST_PREFIX + "instructor1");
+        instructor.setGroups(Set.of("participantscoreinstructor"));
+        var tutor = database.getUserByLogin(TEST_PREFIX + "tutor1");
+        tutor.setGroups(Set.of("participantscoretutor"));
+        var student = database.getUserByLogin(TEST_PREFIX + "student1");
+        student.setGroups(Set.of("participantscorestudent"));
+        userRepository.saveAll(List.of(instructor, tutor, student));
 
         // creating course
         Course course = this.database.createCourse();
@@ -150,6 +145,11 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
         await().until(() -> participantScoreRepository.findAllByExercise(teamExercise).size() == 1);
         await().until(() -> participantScoreRepository.findAllByExercise(examTextExercise).size() == 1);
+    }
+
+    @AfterEach
+    void tearDown() {
+        ParticipantScoreScheduleService.DEFAULT_WAITING_TIME_FOR_SCHEDULED_TASKS = 500;
     }
 
     private void testAllPreAuthorize() throws Exception {

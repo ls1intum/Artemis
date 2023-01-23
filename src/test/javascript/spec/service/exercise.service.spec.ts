@@ -1,21 +1,61 @@
-import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import dayjs from 'dayjs/esm';
-import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+import { Exercise, ExerciseType, IncludedInOverallScore } from 'app/entities/exercise.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
-import { TranslateService } from '@ngx-translate/core';
+import dayjs from 'dayjs/esm';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
 import { MockRouter } from '../helpers/mocks/mock-router';
-import { Router } from '@angular/router';
+import { MockSyncStorage } from '../helpers/mocks/service/mock-sync-storage.service';
+import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
+import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { ArtemisMarkdownService } from 'app/shared/markdown.service';
+import { MockProvider } from 'ng-mocks';
+import { SafeHtml } from '@angular/platform-browser';
 
 describe('Exercise Service', () => {
     let service: ExerciseService;
     let httpMock: HttpTestingController;
+    let artemisMarkdown: ArtemisMarkdownService;
     let exercise: Exercise;
     let currentDate: dayjs.Dayjs;
+
+    const modelingExercise = {
+        id: 23,
+        type: ExerciseType.MODELING,
+        studentParticipations: [],
+        exampleSolutionModel: '{ "key": "value" }',
+        exampleSolutionExplanation: 'Solution<br>Explanation',
+    } as unknown as ModelingExercise;
+
+    const textExercise = {
+        id: 24,
+        type: ExerciseType.TEXT,
+        studentParticipations: [],
+        exampleSolution: 'Example<br>Solution',
+    } as unknown as TextExercise;
+
+    const fileUploadExercise = {
+        id: 25,
+        type: ExerciseType.FILE_UPLOAD,
+        studentParticipations: [],
+        exampleSolution: 'Example<br>Solution',
+    } as unknown as FileUploadExercise;
+
+    const programmingExercise = {
+        id: 26,
+        type: ExerciseType.PROGRAMMING,
+        studentParticipations: [],
+        exam: 'Example<br>Solution',
+        exampleSolutionPublished: true,
+    } as unknown as ProgrammingExercise;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [HttpClientTestingModule],
@@ -24,10 +64,12 @@ describe('Exercise Service', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                MockProvider(ArtemisMarkdownService),
             ],
         });
         service = TestBed.inject(ExerciseService);
         httpMock = TestBed.inject(HttpTestingController);
+        artemisMarkdown = TestBed.inject(ArtemisMarkdownService);
         currentDate = dayjs();
 
         exercise = new TextExercise(undefined, undefined);
@@ -190,5 +232,107 @@ describe('Exercise Service', () => {
         expect(exercise.dueDateError).toBeFalse();
         expect(exercise.exampleSolutionPublicationDateError).toBeFalse();
         expect(exercise.exampleSolutionPublicationDateWarning).toBeTrue();
+    });
+
+    it('should fill & empty example modeling solution', () => {
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...modelingExercise }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+    });
+
+    it('should fill & empty example text solution', () => {
+        const artemisMarkdownSpy = jest.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
+
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...textExercise }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeDefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
+        expect(artemisMarkdownSpy).toHaveBeenCalledWith(textExercise.exampleSolution);
+
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+    });
+
+    it('should fill & empty example file upload solution', () => {
+        const artemisMarkdownSpy = jest.spyOn(artemisMarkdown, 'safeHtmlForMarkdown').mockReturnValue({} as SafeHtml);
+
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...fileUploadExercise }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeDefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+        expect(artemisMarkdownSpy).toHaveBeenCalledOnce();
+        expect(artemisMarkdownSpy).toHaveBeenCalledWith(fileUploadExercise.exampleSolution);
+
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+    });
+
+    it('should fill & empty example programming exercise solution', () => {
+        let exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise?.exampleSolutionPublished).toBeTrue();
+
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...programmingExercise, exampleSolutionPublished: false }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise?.exampleSolutionPublished).toBeFalse();
+
+        exampleSolutionInfo = ExerciseService.extractExampleSolutionInfo({ ...exercise }, artemisMarkdown);
+        expect(exampleSolutionInfo.exampleSolution).toBeUndefined();
+        expect(exampleSolutionInfo.exampleSolutionUML).toBeUndefined();
+        expect(exampleSolutionInfo.programmingExercise).toBeUndefined();
+    });
+
+    it('should determine is included in score string', () => {
+        const translateService = TestBed.inject(TranslateService);
+        const translateServiceSpy = jest.spyOn(translateService, 'instant');
+
+        let callCount = 0;
+        const result = service.isIncludedInScore({} as Exercise);
+        expect(result).toBe('');
+        expect(translateServiceSpy).not.toHaveBeenCalled();
+
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_AS_BONUS;
+        service.isIncludedInScore(exercise);
+
+        callCount++;
+        expect(translateServiceSpy).toHaveBeenCalledTimes(callCount);
+        expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.bonus');
+
+        exercise.includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
+        service.isIncludedInScore(exercise);
+
+        callCount++;
+        expect(translateServiceSpy).toHaveBeenCalledTimes(callCount);
+        expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.yes');
+
+        exercise.includedInOverallScore = IncludedInOverallScore.NOT_INCLUDED;
+        service.isIncludedInScore(exercise);
+
+        callCount++;
+        expect(translateServiceSpy).toHaveBeenCalledTimes(callCount);
+        expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exercise.no');
+    });
+
+    it.each([
+        [{ quizBatches: [{ started: false }, { started: true }] } as QuizExercise, true],
+        [{ quizBatches: [{ started: false }, { started: false }] } as QuizExercise, false],
+        [{ studentParticipations: [{ initializationState: InitializationState.INITIALIZED }] } as QuizExercise, true],
+        [{ studentParticipations: [{ initializationState: InitializationState.FINISHED }] } as QuizExercise, true],
+        [{ studentParticipations: [{ initializationState: InitializationState.INACTIVE }] } as QuizExercise, false],
+    ])('should determine correctly if quiz is active', (quizExercise: QuizExercise, expected: boolean) => {
+        expect(service.isActiveQuiz(quizExercise)).toEqual(expected);
     });
 });

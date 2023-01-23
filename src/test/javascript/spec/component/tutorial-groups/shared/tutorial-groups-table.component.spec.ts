@@ -14,6 +14,7 @@ import { TutorialGroupRowStubComponent } from '../stubs/tutorial-groups-table-st
 import { Course } from 'app/entities/course.model';
 import { By } from '@angular/platform-browser';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { runOnPushChangeDetection } from '../../../helpers/on-push-change-detection.helper';
 
 @Component({ selector: 'jhi-mock-extra-column', template: '' })
 class MockExtraColumnComponent {
@@ -135,6 +136,7 @@ describe('TutorialGroupsTableComponent', () => {
                 component.tutorialGroups = [tutorialGroupOne, tutorialGroupTwo];
                 component.course = course;
                 component.showIdColumn = true;
+                fixture.detectChanges();
             });
     });
 
@@ -143,12 +145,10 @@ describe('TutorialGroupsTableComponent', () => {
     });
 
     it('should initialize', () => {
-        fixture.detectChanges();
         expect(component).not.toBeNull();
     });
 
     it('should call sort service', () => {
-        fixture.detectChanges();
         component.sortingPredicate = 'id';
         component.ascending = false;
 
@@ -161,10 +161,9 @@ describe('TutorialGroupsTableComponent', () => {
     });
 
     it('should call tutorialGroupClickHandler', () => {
-        fixture.detectChanges();
         const tutorialGroupClickHandler = jest.fn();
         component.tutorialGroupClickHandler = tutorialGroupClickHandler;
-        fixture.detectChanges();
+        runOnPushChangeDetection(fixture);
         // get first instance of tutorialGroupRowStubComponent
         const tutorialGroupRowStubComponents = fixture.debugElement.queryAll(By.directive(TutorialGroupRowStubComponent));
         expect(tutorialGroupRowStubComponents).toHaveLength(2);

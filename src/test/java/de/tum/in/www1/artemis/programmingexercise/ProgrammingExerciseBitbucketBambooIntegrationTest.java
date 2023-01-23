@@ -172,6 +172,19 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @ValueSource(booleans = { true, false })
+    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    void createProgrammingExercise_offlineMode(boolean offlineIde) throws Exception {
+        programmingExerciseTestService.startProgrammingExercise(offlineIde);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
+    void createProgrammingExercise_validExercise_noExplicitOfflineMode() throws Exception {
+        programmingExerciseTestService.startProgrammingExercise(null);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(ExerciseMode.class)
     @WithMockUser(username = TEST_PREFIX + studentLogin, roles = "USER")
     void resumeProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
@@ -411,6 +424,12 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testExportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
         programmingExerciseTestService.exportSolutionRepository_shouldReturnFileOrForbidden();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testExportExamSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
+        programmingExerciseTestService.exportExamSolutionRepository_shouldReturnFileOrForbidden();
     }
 
     @Test

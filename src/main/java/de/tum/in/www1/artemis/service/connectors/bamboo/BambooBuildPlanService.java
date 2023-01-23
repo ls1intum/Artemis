@@ -175,7 +175,7 @@ public class BambooBuildPlanService {
         // Do not run the builds in extra docker containers if the dev-profile is active
         // Xcode has no dockerfile, it only runs on agents (e.g. sb2-agent-0050562fddde)
         if (!activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT) && !ProjectType.XCODE.equals(projectType)) {
-            defaultJob.dockerConfiguration(dockerConfigurationImageNameFor(programmingLanguage, Optional.ofNullable(projectType)));
+            defaultJob.dockerConfiguration(dockerConfigurationFor(programmingLanguage, Optional.ofNullable(projectType)));
         }
         switch (programmingLanguage) {
             case JAVA, KOTLIN -> {
@@ -500,8 +500,28 @@ public class BambooBuildPlanService {
         }
     }
 
-    private DockerConfiguration dockerConfigurationImageNameFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType) {
-        var dockerImage = programmingLanguageConfiguration.getImage(programmingLanguage, projectType);
-        return new DockerConfiguration().image(dockerImage);
+    /** Assembles a bamboo docker configuration for a given programming exercise and project type
+     *
+     * @param programmingLanguage
+     * @param projectType
+     * @return bamboo docker configuration
+     */
+    private DockerConfiguration dockerConfigurationFor(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType) {
+        var dockerConfiguration = new DockerConfiguration();
+
+        dockerConfiguration.dockerRunArguments(getDefaultDockerRunArguments());
+        dockerConfiguration.image(programmingLanguageConfiguration.getImage(programmingLanguage, projectType));
+
+        return dockerConfiguration;
+    }
+
+    /** Get the docker run arguments for a Bamboo DockerConfiguration.
+     * The configuration is obtained from the programmingLanguageConfiguration.
+     *
+     * @return An array of string containing all the configured docker run argument key-value pairs prefixed with two dashes
+     */
+    private String[] getDefaultDockerRunArguments() {
+        // Bamboo needs all docker run arguments in separate lines
+        return programmingLanguageConfiguration.getDefaultDockerFlags().entrySet().stream().map(entry -> "--" + entry.getKey() + "=" + entry.getValue()).toArray(String[]::new);
     }
 }

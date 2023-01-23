@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 @Component
 public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
-    private static final Logger LOG = LoggerFactory.getLogger(JenkinsBuildPlanCreator.class);
+    private static final Logger log = LoggerFactory.getLogger(JenkinsBuildPlanCreator.class);
 
     private static final String REPLACE_PIPELINE_SCRIPT = "#pipelineScript";
 

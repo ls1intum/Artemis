@@ -28,38 +28,59 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("""
-            SELECT e FROM Exercise e
-            LEFT JOIN FETCH e.categories
-            WHERE e.course.id = :#{#courseId}
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.categories
+            WHERE e.course.id = :courseId
             """)
     Set<Exercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
 
     @Query("""
-                SELECT e
-                FROM Exercise e LEFT JOIN FETCH e.categories WHERE
-                e.id IN :exerciseIds
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.categories
+            WHERE e.course.id IN :courseIds
             """)
-    Set<Exercise> findByExerciseIdWithCategories(@Param("exerciseIds") Set<Long> exerciseIds);
+    Set<Exercise> findByCourseIdsWithCategories(@Param("courseIds") Set<Long> courseIds);
 
     @Query("""
-            SELECT e FROM Exercise e
-            WHERE e.course.id = :#{#courseId}
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.categories
+            WHERE e.id IN :exerciseIds
+            """)
+    Set<Exercise> findByExerciseIdsWithCategories(@Param("exerciseIds") Set<Long> exerciseIds);
+
+    @Query("""
+            SELECT e
+            FROM Exercise e
+            WHERE e.course.id = :courseId
             	AND e.mode = 'TEAM'
             """)
     Set<Exercise> findAllTeamExercisesByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT e FROM Exercise e
-            WHERE e.course.id = :#{#courseId}
+            SELECT e
+            FROM Exercise e
+            WHERE e.course.id = :courseId
             """)
     Set<Exercise> findAllExercisesByCourseId(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT e FROM Exercise e
-            LEFT JOIN FETCH e.learningGoals
+            SELECT e
+            FROM Exercise e
+                LEFT JOIN FETCH e.learningGoals
             WHERE e.id = :exerciseId
             """)
     Optional<Exercise> findByIdWithLearningGoals(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT e FROM Exercise e
+                LEFT JOIN FETCH e.learningGoals lg
+                LEFT JOIN FETCH lg.exercises
+            WHERE e.id = :exerciseId
+            """)
+    Optional<Exercise> findByIdWithLearningGoalsBidirectional(@Param("exerciseId") Long exerciseId);
 
     @Query("""
             SELECT e FROM Exercise e
@@ -425,6 +446,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @NotNull
     default Exercise findByIdWithLearningGoalsElseThrow(Long exerciseId) throws EntityNotFoundException {
         return findByIdWithLearningGoals(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+    }
+
+    @NotNull
+    default Exercise findByIdWithLearningGoalsBidirectionalElseThrow(Long exerciseId) throws EntityNotFoundException {
+        return findByIdWithLearningGoalsBidirectional(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
     /**

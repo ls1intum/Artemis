@@ -24,7 +24,7 @@ import org.springframework.core.env.Profiles;
 import com.vdurmont.semver4j.Semver;
 
 import liquibase.Scope;
-import liquibase.ThreadLocalScopeManager;
+import liquibase.SingletonScopeManager;
 import liquibase.integration.spring.SpringLiquibase;
 import tech.jhipster.config.JHipsterConstants;
 import tech.jhipster.config.liquibase.SpringLiquibaseUtil;
@@ -70,7 +70,7 @@ public class LiquibaseConfiguration {
         }
 
         SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource, dataSourceProperties);
-        Scope.setScopeManager(new ThreadLocalScopeManager());
+        Scope.setScopeManager(new SingletonScopeManager());
         liquibase.setChangeLog("classpath:config/liquibase/master.xml");
         liquibase.setContexts(liquibaseProperties.getContexts());
         liquibase.setDefaultSchema(liquibaseProperties.getDefaultSchema());
@@ -79,7 +79,7 @@ public class LiquibaseConfiguration {
         liquibase.setDatabaseChangeLogLockTable(liquibaseProperties.getDatabaseChangeLogLockTable());
         liquibase.setDatabaseChangeLogTable(liquibaseProperties.getDatabaseChangeLogTable());
         liquibase.setDropFirst(liquibaseProperties.isDropFirst());
-        liquibase.setLabels(liquibaseProperties.getLabels());
+        liquibase.setLabelFilter(liquibaseProperties.getLabels());
         liquibase.setChangeLogParameters(liquibaseProperties.getParameters());
         liquibase.setRollbackFile(liquibaseProperties.getRollbackFile());
         liquibase.setTestRollbackOnUpdate(liquibaseProperties.isTestRollbackOnUpdate());
@@ -117,8 +117,8 @@ public class LiquibaseConfiguration {
             }
             else if (previousVersion.isEqualTo(migrationPathVersion)) {
                 // this means this is the first start after the mandatory previous update, we need to set the checksum of the initial schema to null
-                // TODO: for some reason this does not work and leads to a timeout exception
                 updateInitialChecksum();
+                log.info("Successfully cleaned up initial schema during migration");
             }
         }
 

@@ -331,8 +331,12 @@ public class ProgrammingExerciseTestService {
      * can be invoked for teams and students
      */
     public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo) throws Exception {
+        setupRepositoryMocksParticipant(exercise, participantName, studentRepo, false);
+    }
+
+    public void setupRepositoryMocksParticipant(ProgrammingExercise exercise, String participantName, LocalRepository studentRepo, boolean practiceMode) throws Exception {
         final var projectKey = exercise.getProjectKey();
-        String participantRepoName = projectKey.toLowerCase() + "-" + participantName;
+        String participantRepoName = projectKey.toLowerCase() + "-" + (practiceMode ? "practice-" : "") + participantName;
         var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentRepo);
         doReturn(participantRepoTestUrl).when(versionControlService).getCloneRepositoryUrl(projectKey, participantRepoName);
         doReturn(gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepo.localRepoFile.toPath(), null)).when(gitService).getOrCheckoutRepository(participantRepoTestUrl,
@@ -734,10 +738,10 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, params, HttpStatus.OK);
 
         // Assertions
-        var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(exerciseToBeImported.getId());
+        var staticCodeAnalysisCategories = staticCodeAnalysisCategoryRepository.findWithExerciseByExerciseId(exerciseToBeImported.getId());
         assertThat(exerciseToBeImported.isStaticCodeAnalysisEnabled()).isTrue();
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparatorOnFields("name", "state", "penalty", "maxPenalty")
-                .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
+                .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(sourceExercise.getProgrammingLanguage()));
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);
     }
 
@@ -871,6 +875,26 @@ public class ProgrammingExerciseTestService {
         final var path = "/api/exercises/{exerciseId}/participations".replace("{exerciseId}", String.valueOf(exercise.getId()));
         final var participation = request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
         assertThat(participation.getInitializationState()).as("Participation should be initialized").isEqualTo(InitializationState.INITIALIZED);
+    }
+
+    void startProgrammingExercise(Boolean offlineIde) throws Exception {
+        exercise.setAllowOnlineEditor(true);
+        exercise.setAllowOfflineIde(offlineIde);
+        exercise = programmingExerciseRepository.save(exercise);
+
+        startProgrammingExercise_correctInitializationState(INDIVIDUAL);
+
+        final VersionControlService.RepositoryPermissions permissions;
+        if (offlineIde == null || Boolean.TRUE.equals(offlineIde)) {
+            permissions = VersionControlService.RepositoryPermissions.READ_WRITE;
+        }
+        else {
+            permissions = VersionControlService.RepositoryPermissions.READ_ONLY;
+        }
+
+        final User participant = userRepo.getUserByLoginElseThrow(userPrefix + studentLogin);
+
+        verify(versionControlService).addMemberToRepository(any(), eq(participant), eq(permissions));
     }
 
     private Course setupCourseWithProgrammingExercise(ExerciseMode exerciseMode) {
@@ -1021,7 +1045,8 @@ public class ProgrammingExerciseTestService {
         var url = "/api/programming-exercises/" + exercise.getId() + "/trigger-instructor-build-all";
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
         Awaitility.setDefaultTimeout(Duration.ofSeconds(20));
-        await().until(() -> programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId()).isPresent());
+        await().until(() -> programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(exercise.getId()).isPresent()
+                && participationRepository.findByIdElseThrow(participation.getId()).getInitializationState().hasCompletedState(InitializationState.INITIALIZED));
 
         // Fetch updated participation and assert
         ProgrammingExerciseStudentParticipation updatedParticipation = (ProgrammingExerciseStudentParticipation) participationRepository.findByIdElseThrow(participation.getId());
@@ -1874,6 +1899,42 @@ public class ProgrammingExerciseTestService {
         // Test example solution publication date in the future.
         exercise.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
         programmingExerciseRepository.save(exercise);
+
+        exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
+    }
+
+    // TEST
+    void exportExamSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
+        Exam exam = examExercise.getExerciseGroup().getExam();
+        database.addStudentExamWithUser(exam, userRepo.getUser());
+        exercise = examExercise;
+
+        // Test example solution publication date not set.
+        exam.setExampleSolutionPublicationDate(null);
+        examRepository.save(exam);
+
+        exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
+
+        // Test example solution publication date in the past.
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().minusHours(1));
+        examRepository.save(exam);
+
+        String zip = exportStudentRequestedRepository(HttpStatus.OK, false);
+        assertThat(zip).isNotNull();
+
+        // Test include tests but not allowed
+        exportStudentRequestedRepository(HttpStatus.FORBIDDEN, true);
+
+        // Test include tests
+        exercise.setReleaseTestsWithExampleSolution(true);
+        programmingExerciseRepository.save(exercise);
+
+        zip = exportStudentRequestedRepository(HttpStatus.OK, true);
+        assertThat(zip).isNotNull();
+
+        // Test example solution publication date in the future.
+        exam.setExampleSolutionPublicationDate(ZonedDateTime.now().plusHours(1));
+        examRepository.save(exam);
 
         exportStudentRequestedRepository(HttpStatus.FORBIDDEN, false);
     }

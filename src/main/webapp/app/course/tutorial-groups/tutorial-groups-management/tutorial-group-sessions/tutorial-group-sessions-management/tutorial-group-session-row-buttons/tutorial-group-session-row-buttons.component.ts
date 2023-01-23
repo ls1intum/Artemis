@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { EMPTY, Subject, from } from 'rxjs';
 import { faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
@@ -14,6 +14,7 @@ import { catchError, takeUntil } from 'rxjs/operators';
 @Component({
     selector: 'jhi-tutorial-group-session-row-buttons',
     templateUrl: './tutorial-group-session-row-buttons.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();
@@ -50,7 +51,7 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
     };
 
     openCancellationDialog(session: TutorialGroupSession): void {
-        const modalRef = this.modalService.open(CancellationModalComponent);
+        const modalRef = this.modalService.open(CancellationModalComponent, { size: 'lg', scrollable: false, backdrop: 'static', animation: false });
         modalRef.componentInstance.tutorialGroupSession = session;
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroupId = this.tutorialGroup.id!;
@@ -69,7 +70,7 @@ export class TutorialGroupSessionRowButtonsComponent implements OnDestroy {
 
     openEditSessionDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(EditTutorialGroupSessionComponent, { size: 'lg', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(EditTutorialGroupSessionComponent, { size: 'lg', scrollable: false, backdrop: 'static', animation: false });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroup = this.tutorialGroup;
         modalRef.componentInstance.tutorialGroupSession = this.tutorialGroupSession;

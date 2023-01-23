@@ -3,10 +3,12 @@ package de.tum.in.www1.artemis.lecture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,12 +35,12 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.LectureUnitService;
 import de.tum.in.www1.artemis.service.ModelAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgress;
-import de.tum.in.www1.artemis.web.rest.dto.IndividualLearningGoalProgress;
+import de.tum.in.www1.artemis.web.rest.dto.CourseLearningGoalProgressDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -93,6 +95,9 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Autowired
     private TeamRepository teamRepository;
 
+    @Autowired
+    private LectureUnitService lectureUnitService;
+
     private Long idOfCourse;
 
     private Long idOfCourseTwo;
@@ -123,7 +128,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @BeforeEach
     void setupTestScenario() {
-        participantScoreSchedulerService.activate();
+        participantScoreScheduleService.activate();
         // We can not remove the teams due to the existing participations etc., but we can remove all students from them so that they are no longer accessed
         // The students are reused between tests
         // TODO: Check if this can also be solved by changing ExerciseRepo#calculateStatisticsForTeamCourseExercises to check for the exerciseId
@@ -148,54 +153,45 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
 
+        createLearningGoal();
+        createPrerequisite();
         createLectureOne(course);
         createLectureTwo(course);
-        textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp);
+        var learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        textExercise = createTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(learningGoal));
         createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 50, true);
-        modelingExercise = createModelingExercise(pastTimestamp, pastTimestamp, pastTimestamp);
+        modelingExercise = createModelingExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(learningGoal));
         createParticipationSubmissionAndResult(idOfModelingExercise, student1, 10.0, 0.0, 50, true);
-        teamTextExercise = createTeamTextExercise(pastTimestamp, pastTimestamp, pastTimestamp);
+        teamTextExercise = createTeamTextExercise(pastTimestamp, pastTimestamp, pastTimestamp, Set.of(learningGoal));
         User tutor = userRepository.findOneByLogin(TEST_PREFIX + "tutor1").get();
         // will also create users
         teams = database.addTeamsForExerciseFixedTeamSize(TEST_PREFIX, "lgi", teamTextExercise, 5, tutor, 3);
 
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 50, true);
 
-        await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
-        await().until(() -> participantScoreRepository.findAllByExercise(teamTextExercise).size() == 1);
-        await().until(() -> participantScoreRepository.findAllByExercise(modelingExercise).size() == 1);
-
         creatingLectureUnitsOfLectureOne();
         creatingLectureUnitsOfLectureTwo();
-        createLearningGoal();
-        createPrerequisite();
+
+        await().atMost(Duration.ofSeconds(30)).until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 1);
+        await().atMost(Duration.ofSeconds(30)).until(() -> participantScoreRepository.findAllByExercise(teamTextExercise).size() == 1);
+        await().atMost(Duration.ofSeconds(30)).until(() -> participantScoreRepository.findAllByExercise(modelingExercise).size() == 1);
     }
 
     private void createLearningGoal() {
         Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourse).get();
         LearningGoal learningGoal = new LearningGoal();
-        learningGoal.setTitle("LearningGoalOne");
+        learningGoal.setTitle("LearningGoal" + new Random().nextInt());
         learningGoal.setDescription("This is an example learning goal");
         learningGoal.setTaxonomy(LearningGoalTaxonomy.UNDERSTAND);
         learningGoal.setCourse(course);
+        learningGoal = learningGoalRepository.save(learningGoal);
+        idOfLearningGoal = learningGoal.getId();
 
         LearningGoal otherLearningGoal = new LearningGoal();
         otherLearningGoal.setTitle("Detailed sub learning goal");
         otherLearningGoal.setDescription("A communi observantia non est recedendum.");
         otherLearningGoal.setCourse(course);
         learningGoalRepository.save(otherLearningGoal);
-
-        var lecture1 = lectureRepository.findByIdWithLectureUnits(idOfLectureOne).get();
-        var lecture2 = lectureRepository.findByIdWithLectureUnits(idOfLectureTwo).get();
-        Set<LectureUnit> connectedLectureUnits = new HashSet<>(lecture1.getLectureUnits());
-        connectedLectureUnits.addAll(lecture2.getLectureUnits());
-
-        learningGoal.setLectureUnits(connectedLectureUnits.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet()));
-        learningGoal.setExercises(connectedLectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit)
-                .map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise()).collect(Collectors.toSet()));
-
-        learningGoal = learningGoalRepository.save(learningGoal);
-        idOfLearningGoal = learningGoal.getId();
     }
 
     private void createPrerequisite() {
@@ -208,8 +204,11 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private void creatingLectureUnitsOfLectureOne() {
         // creating lecture units for lecture one
+        var learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
+
         TextUnit textUnit = new TextUnit();
         textUnit.setName("TextUnitOfLectureOne");
+        textUnit.setLearningGoals(Set.of(learningGoal));
         textUnit = textUnitRepository.save(textUnit);
         idOfTextUnitOfLectureOne = textUnit.getId();
 
@@ -275,7 +274,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         idOfLectureTwo = lectureTwo.getId();
     }
 
-    private TextExercise createTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+    private TextExercise createTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp, Set<LearningGoal> learningGoals) {
         Course course;
         // creating text exercise with Result
         course = courseRepository.findWithEagerExercisesById(idOfCourse);
@@ -283,13 +282,15 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
+        textExercise.setLearningGoals(learningGoals);
         textExercise = exerciseRepository.save(textExercise);
         idOfTextExercise = textExercise.getId();
 
         return textExercise;
     }
 
-    private ModelingExercise createModelingExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+    private ModelingExercise createModelingExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp,
+            Set<LearningGoal> learningGoals) {
         Course course;
         // creating text exercise with Result
         course = courseRepository.findWithEagerExercisesById(idOfCourse);
@@ -297,13 +298,14 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         modelingExercise.setMaxPoints(10.0);
         modelingExercise.setBonusPoints(0.0);
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
+        modelingExercise.setLearningGoals(learningGoals);
         modelingExercise = exerciseRepository.save(modelingExercise);
         idOfModelingExercise = modelingExercise.getId();
 
         return modelingExercise;
     }
 
-    private TextExercise createTeamTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp) {
+    private TextExercise createTeamTextExercise(ZonedDateTime pastTimestamp, ZonedDateTime futureTimestamp, ZonedDateTime futureFutureTimestamp, Set<LearningGoal> learningGoals) {
         Course course;
         // creating text exercise with Result
         course = courseRepository.findWithEagerExercisesById(idOfCourse);
@@ -312,6 +314,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExercise.setMaxPoints(10.0);
         textExercise.setBonusPoints(0.0);
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
+        textExercise.setLearningGoals(learningGoals);
         textExercise = exerciseRepository.save(textExercise);
         idOfTeamTextExercise = textExercise.getId();
 
@@ -368,11 +371,10 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     private void testAllPreAuthorize() throws Exception {
-        request.put("/api/courses/" + idOfCourse + "/goals", new LearningGoal(), HttpStatus.FORBIDDEN);
-        request.post("/api/courses/" + idOfCourse + "/goals", new LearningGoal(), HttpStatus.FORBIDDEN);
-        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN, LearningGoal.class);
-        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.FORBIDDEN, CourseLearningGoalProgress.class);
-        request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + idOfCourse + "/learning-goals", new LearningGoal(), HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + idOfCourse + "/learning-goals", new LearningGoal(), HttpStatus.FORBIDDEN);
+        request.get("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal + "/course-progress", HttpStatus.FORBIDDEN, CourseLearningGoalProgressDTO.class);
+        request.delete("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -394,16 +396,36 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getLearningGoal_asInstructor_shouldReturnLearningGoal() throws Exception {
-        LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getTitle_ForLearningGoal() throws Exception {
+        var learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
+        String title = request.get("/api/learning-goals/" + idOfLearningGoal + "/title", HttpStatus.OK, String.class);
+        assertThat(title).isEqualTo(learningGoal.getTitle());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getTitle_ForNonExistingLearningGoal() throws Exception {
+        request.get("/api/learning-goals/12312321321/title", HttpStatus.NOT_FOUND, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLearningGoal_asStudent_shouldReturnLearningGoal() throws Exception {
+        LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
         assertThat(learningGoal.getId()).isEqualTo(idOfLearningGoal);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
-    void getLearningGoal_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
-        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN, LearningGoal.class);
+    void getLearningGoal_asUserNotInCourse_shouldReturnForbidden() throws Exception {
+        request.get("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN, LearningGoal.class);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLearningGoal_asStudent_wrongCourse() throws Exception {
+        request.get("/api/courses/" + idOfCourseTwo + "/learning-goals/" + idOfLearningGoal, HttpStatus.CONFLICT, LearningGoal.class);
     }
 
     @Test
@@ -425,7 +447,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         newLearningGoal.setLectureUnits(new HashSet<>(List.of(unreleasedLectureUnit)));
         learningGoalRepository.save(newLearningGoal);
 
-        List<LearningGoal> learningGoalsOfCourse = request.getList("/api/courses/" + idOfCourse + "/goals", HttpStatus.OK, LearningGoal.class);
+        List<LearningGoal> learningGoalsOfCourse = request.getList("/api/courses/" + idOfCourse + "/learning-goals", HttpStatus.OK, LearningGoal.class);
 
         assertThat(learningGoalsOfCourse.stream().filter(l -> l.getId().equals(idOfLearningGoal)).findFirst()).isPresent();
         assertThat(learningGoalsOfCourse.stream().filter(l -> l.getId().equals(newLearningGoal.getId())).findFirst().get().getLectureUnits()).isEmpty();
@@ -434,14 +456,14 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
     void getLearningGoalsOfCourse_asStudentNotInCourse_shouldReturnForbidden() throws Exception {
-        request.getList("/api/courses/" + idOfCourse + "/goals", HttpStatus.FORBIDDEN, LearningGoal.class);
+        request.getList("/api/courses/" + idOfCourse + "/learning-goals", HttpStatus.FORBIDDEN, LearningGoal.class);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLearningGoal_asInstructor_shouldDeleteLearningGoal() throws Exception {
-        request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK);
-        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.NOT_FOUND, LearningGoal.class);
+        request.delete("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal, HttpStatus.OK);
+        request.get("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal, HttpStatus.NOT_FOUND, LearningGoal.class);
     }
 
     @Test
@@ -458,20 +480,20 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         learningGoalRelationRepository.save(relation);
 
         // Should return bad request, as the learning goal still has relations
-        request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.BAD_REQUEST);
+        request.delete("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void deleteLearningGoal_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
-        request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN);
+        request.delete("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteCourse_asAdmin_shouldAlsoDeleteLearningGoal() throws Exception {
         request.delete("/api/admin/courses/" + idOfCourse, HttpStatus.OK);
-        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.NOT_FOUND, LearningGoal.class);
+        request.get("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal, HttpStatus.NOT_FOUND, LearningGoal.class);
     }
 
     @Test
@@ -480,13 +502,22 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         Long idOfOtherLearningGoal = database.createLearningGoal(course).getId();
 
-        request.postWithoutResponseBody(
-                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type=" + LearningGoalRelation.RelationType.EXTENDS.name(),
-                HttpStatus.OK, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type="
+                + LearningGoalRelation.RelationType.EXTENDS.name(), HttpStatus.OK, new LinkedMultiValueMap<>());
 
         var relations = learningGoalRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
         assertThat(relations).hasSize(1);
         assertThat(relations.stream().findFirst().get().getType()).isEqualTo(LearningGoalRelation.RelationType.EXTENDS);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createLearningGoalRelation_shouldReturnBadRequest() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        Long idOfOtherLearningGoal = database.createLearningGoal(course).getId();
+
+        request.post("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type=" + "abc123xyz", null,
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -495,9 +526,8 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         Long idOfOtherLearningGoal = database.createLearningGoal(course).getId();
 
-        request.post(
-                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type=" + LearningGoalRelation.RelationType.EXTENDS.name(),
-                null, HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type="
+                + LearningGoalRelation.RelationType.EXTENDS.name(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -513,7 +543,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
         relation = learningGoalRelationRepository.save(relation);
 
-        var relations = request.getList("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations", HttpStatus.OK, LearningGoalRelation.class);
+        var relations = request.getList("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal + "/relations", HttpStatus.OK, LearningGoalRelation.class);
 
         assertThat(relations).hasSize(1);
         assertThat(relations.get(0)).isEqualTo(relation);
@@ -532,7 +562,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
         relation = learningGoalRelationRepository.save(relation);
 
-        request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations/" + relation.getId(), HttpStatus.OK);
+        request.delete("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal + "/relations/" + relation.getId(), HttpStatus.OK);
 
         var relations = learningGoalRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
         assertThat(relations).isEmpty();
@@ -540,9 +570,25 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteLearningGoalRelation_shouldReturnBadRequest() throws Exception {
+        LearningGoal learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        LearningGoal otherLearningGoal = database.createLearningGoal(course);
+
+        var relation = new LearningGoalRelation();
+        relation.setTailLearningGoal(otherLearningGoal); // invalid
+        relation.setHeadLearningGoal(learningGoal);
+        relation.setType(LearningGoalRelation.RelationType.EXTENDS);
+        relation = learningGoalRelationRepository.save(relation);
+
+        request.delete("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal + "/relations/" + relation.getId(), HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLecture_asInstructor_shouldUpdateLearningGoal() throws Exception {
         request.delete("/api/lectures/" + idOfLectureTwo, HttpStatus.OK);
-        LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
+        LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
         assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId)).containsAll(Set.of(idOfTextUnitOfLectureOne));
         assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId)).doesNotContainAnyElementsOf(Set.of(idOfTextUnitOfLectureTwo));
     }
@@ -551,54 +597,14 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_asInstructor_shouldUpdateLearningGoal() throws Exception {
         request.delete("/api/lectures/" + idOfLectureTwo + "/lecture-units/" + idOfTextUnitOfLectureTwo, HttpStatus.OK);
-        LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
+        LearningGoal learningGoal = request.get("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal, HttpStatus.OK, LearningGoal.class);
         assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId)).containsAll(Set.of(idOfTextUnitOfLectureOne));
         assertThat(learningGoal.getLectureUnits().stream().map(DomainObject::getId)).doesNotContainAnyElementsOf(Set.of(idOfTextUnitOfLectureTwo));
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getLearningGoalProgress_asStudent1_shouldReturnProgressTenOutOfTwenty() throws Exception {
-        IndividualLearningGoalProgress individualLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress",
-                HttpStatus.OK, IndividualLearningGoalProgress.class);
-        assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
-        assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(10.0);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
-    void getLearningGoalProgress_asStudent1_usingParticipantScores_shouldReturnProgressTenOutOfTwenty() throws Exception {
-        IndividualLearningGoalProgress individualLearningGoalProgress = request.get(
-                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress?useParticipantScoreTable=true", HttpStatus.OK,
-                IndividualLearningGoalProgress.class);
-        assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
-        assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(10.0);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "team1student1", roles = "USER")
-    void getLearningGoalProgress_asTeam1Student1_shouldReturnProgressTenOutOfThirty() throws Exception {
-        IndividualLearningGoalProgress individualLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress",
-                HttpStatus.OK, IndividualLearningGoalProgress.class);
-        assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
-        assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(5.0);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "team1student1", roles = "USER")
-    void getLearningGoalProgress_asTeam1Student1_usingParticipantScores_shouldReturnProgressTenOutOfThirty() throws Exception {
-        IndividualLearningGoalProgress individualLearningGoalProgress = request.get(
-                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress?useParticipantScoreTable=true", HttpStatus.OK,
-                IndividualLearningGoalProgress.class);
-        assertThat(individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
-        assertThat(individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal).isEqualTo(5.0);
-    }
-
-    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getLearningGoalCourseProgressTeamsTest_asInstructorOne() throws Exception {
-        // adjustToCustomGroup("asInstructorOne");
-
         cleanUpInitialParticipations();
 
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(0), 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
@@ -610,13 +616,12 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(2), 10.0, 0.0, 10, true);
         createParticipationSubmissionAndResult(idOfTeamTextExercise, teams.get(3), 10.0, 0.0, 50, true);
 
-        CourseLearningGoalProgress courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.OK,
-                CourseLearningGoalProgress.class);
+        await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(15)).until(() -> participantScoreScheduleService.isIdle());
 
-        assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
-        assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);
+        CourseLearningGoalProgressDTO courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal + "/course-progress",
+                HttpStatus.OK, CourseLearningGoalProgressDTO.class);
 
-        assertThatSpecificCourseLectureUnitProgressExists(courseLearningGoalProgress, 80.0, 4, 30);
+        assertThat(courseLearningGoalProgress.averageStudentScore()).isEqualTo(31.5);
     }
 
     @Test
@@ -645,96 +650,74 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         createParticipationSubmissionAndResult(idOfTextExercise, instructor1, 10.0, 0.0, 100, true); // will be ignored as not a student
 
-        CourseLearningGoalProgress courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress", HttpStatus.OK,
-                CourseLearningGoalProgress.class);
+        await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(15)).until(() -> participantScoreScheduleService.isIdle());
 
-        assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
-        assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);
+        CourseLearningGoalProgressDTO courseLearningGoalProgress = request.get("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal + "/course-progress",
+                HttpStatus.OK, CourseLearningGoalProgressDTO.class);
 
-        assertThatSpecificCourseLectureUnitProgressExists(courseLearningGoalProgress, 20.0, 4, 30.0);
+        assertThat(courseLearningGoalProgress.averageStudentScore()).isEqualTo(46.3);
     }
 
     @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void getLearningGoalCourseProgressIndividualTest_asInstructorOne_usingParticipantScoreTable() throws Exception {
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void getLearningGoalStudentProgressTest() throws Exception {
         var course = courseRepository.findById(idOfCourse).get();
-        course.setStudentGroupName(TEST_PREFIX + "student" + "individualTestTable");
+        course.setStudentGroupName(TEST_PREFIX + "student" + "studentTest");
         courseRepository.save(course);
-        adjustStudentGroupsToCustomGroups("individualTestTable");
+        adjustStudentGroupsToCustomGroups("studentTest");
 
         cleanUpInitialParticipations();
         User student1 = userRepository.findOneByLogin(TEST_PREFIX + "student1").get();
-        User student2 = userRepository.findOneByLogin(TEST_PREFIX + "student2").get();
-        User student3 = userRepository.findOneByLogin(TEST_PREFIX + "student3").get();
-        User student4 = userRepository.findOneByLogin(TEST_PREFIX + "student4").get();
-        User instructor1 = userRepository.findOneByLogin(TEST_PREFIX + "instructor1").get();
 
-        createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from team
-        createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 50, false);
+        lectureUnitService.setLectureUnitCompletion(textUnitRepository.findById(idOfTextUnitOfLectureOne).get(), student1, true);
 
-        createParticipationSubmissionAndResult(idOfTextExercise, student2, 10.0, 0.0, 100, true);  // will be ignored in favor of last submission from student
-        createParticipationSubmissionAndResult(idOfTextExercise, student2, 10.0, 0.0, 10, false);
+        createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 90, true);  // will be ignored in favor of last submission from team
+        createParticipationSubmissionAndResult(idOfTextExercise, student1, 10.0, 0.0, 85, false);
 
-        createParticipationSubmissionAndResult(idOfTextExercise, student3, 10.0, 0.0, 10, true);
-        createParticipationSubmissionAndResult(idOfTextExercise, student4, 10.0, 0.0, 50, true);
+        await().pollDelay(Duration.ofSeconds(2)).atMost(Duration.ofSeconds(15)).until(() -> participantScoreScheduleService.isIdle());
 
-        createParticipationSubmissionAndResult(idOfTextExercise, instructor1, 10.0, 0.0, 100, true); // will be ignored as not a student
+        LearningGoalProgress studentLearningGoalProgress1 = request.get("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal + "/student-progress?refresh=true",
+                HttpStatus.OK, LearningGoalProgress.class);
 
-        await().until(() -> participantScoreRepository.findAllByExercise(textExercise).size() == 5);
+        assertThat(studentLearningGoalProgress1.getProgress()).isEqualTo(50.0);
+        assertThat(studentLearningGoalProgress1.getConfidence()).isEqualTo(85.0);
 
-        CourseLearningGoalProgress courseLearningGoalProgress = request.get(
-                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/course-progress?useParticipantScoreTable=true", HttpStatus.OK, CourseLearningGoalProgress.class);
+        LearningGoalProgress studentLearningGoalProgress2 = request.get("/api/courses/" + idOfCourse + "/learning-goals/" + idOfLearningGoal + "/student-progress?refresh=false",
+                HttpStatus.OK, LearningGoalProgress.class);
 
-        assertThat(courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal).isEqualTo(30.0);
-        assertThat(courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal).isEqualTo(3.0);
-
-        assertThatSpecificCourseLectureUnitProgressExists(courseLearningGoalProgress, 20.0, 4, 30.0);
-    }
-
-    private void assertThatSpecificCourseLectureUnitProgressExists(CourseLearningGoalProgress courseLearningGoalProgress, double expectedParticipationRate,
-            int expectedNoOfParticipants, double expectedAverageScore) {
-        boolean foundProgressWithCorrectNumbers = false;
-        for (CourseLearningGoalProgress.CourseLectureUnitProgress courseLectureUnitProgress : courseLearningGoalProgress.progressInLectureUnits) {
-            if (courseLectureUnitProgress.participationRate.equals(expectedParticipationRate) && courseLectureUnitProgress.noOfParticipants.equals(expectedNoOfParticipants)
-                    && courseLectureUnitProgress.averageScoreAchievedByStudentInLectureUnit.equals(expectedAverageScore)) {
-                foundProgressWithCorrectNumbers = true;
-                break;
-            }
-        }
-
-        assertThat(foundProgressWithCorrectNumbers).isTrue();
+        assertThat(studentLearningGoalProgress2.getProgress()).isEqualTo(50.0);
+        assertThat(studentLearningGoalProgress2.getConfidence()).isEqualTo(85.0);
     }
 
     private void cleanUpInitialParticipations() {
         participationService.deleteAllByExerciseId(idOfTextExercise, true, true);
         participationService.deleteAllByExerciseId(idOfModelingExercise, true, true);
         participationService.deleteAllByExerciseId(idOfTeamTextExercise, true, true);
-        await().until(() -> participantScoreRepository.findAllByExercise(textExercise).isEmpty());
-        await().until(() -> participantScoreRepository.findAllByExercise(modelingExercise).isEmpty());
-        await().until(() -> participantScoreRepository.findAllByExercise(teamTextExercise).isEmpty());
-        await().until(() -> participantScoreSchedulerService.isIdle());
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student42", roles = "USER")
-    void getLearningGoalProgress_asStudentNotInCourse_shouldReturnProgressTenOutOfTwenty() throws Exception {
-        request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/individual-progress", HttpStatus.FORBIDDEN, IndividualLearningGoalProgress.class);
+        await().until(() -> participantScoreScheduleService.isIdle());
     }
 
     @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateLearningGoal_asInstructor_shouldUpdateLearningGoal() throws Exception {
-        LearningGoal existingLearningGoal = learningGoalRepository.findByIdWithLectureUnitsAndCompletions(idOfLearningGoal).orElseThrow();
+        LearningGoal existingLearningGoal = learningGoalRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(idOfLearningGoal);
         LectureUnit textLectureUnit = lectureUnitRepository.findByIdWithLearningGoalsBidirectionalElseThrow(idOfTextUnitOfLectureOne);
         existingLearningGoal.setTitle("Updated");
         existingLearningGoal.removeLectureUnit(textLectureUnit);
         existingLearningGoal.setDescription("Updated Description");
 
-        LearningGoal updatedLearningGoal = request.putWithResponseBody("/api/courses/" + idOfCourse + "/goals", existingLearningGoal, LearningGoal.class, HttpStatus.OK);
+        LearningGoal updatedLearningGoal = request.putWithResponseBody("/api/courses/" + idOfCourse + "/learning-goals", existingLearningGoal, LearningGoal.class, HttpStatus.OK);
 
         assertThat(updatedLearningGoal.getTitle()).isEqualTo("Updated");
         assertThat(updatedLearningGoal.getDescription()).isEqualTo("Updated Description");
         assertThat(updatedLearningGoal.getLectureUnits().stream().map(DomainObject::getId).collect(Collectors.toSet())).doesNotContain(textLectureUnit.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void updateLearningGoal_asInstructor_badRequest() throws Exception {
+        LearningGoal existingLearningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        existingLearningGoal.setId(null);
+        request.putWithResponseBody("/api/courses/" + idOfCourse + "/learning-goals", existingLearningGoal, LearningGoal.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -749,8 +732,20 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Set<LectureUnit> connectedLectureUnits = new HashSet<>(allLectureUnits);
         learningGoal.setLectureUnits(connectedLectureUnits);
 
-        var persistedLearningGoal = request.postWithResponseBody("/api/courses/" + idOfCourse + "/goals", learningGoal, LearningGoal.class, HttpStatus.CREATED);
+        var persistedLearningGoal = request.postWithResponseBody("/api/courses/" + idOfCourse + "/learning-goals", learningGoal, LearningGoal.class, HttpStatus.CREATED);
         assertThat(persistedLearningGoal.getId()).isNotNull();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void createLearningGoal_asInstructor_badRequest() throws Exception {
+        LearningGoal learningGoal = new LearningGoal(); // no title
+        request.postWithResponseBody("/api/courses/" + idOfCourse + "/learning-goals", learningGoal, LearningGoal.class, HttpStatus.BAD_REQUEST);
+        learningGoal.setTitle(" "); // empty title
+        request.postWithResponseBody("/api/courses/" + idOfCourse + "/learning-goals", learningGoal, LearningGoal.class, HttpStatus.BAD_REQUEST);
+        learningGoal.setTitle("Hello");
+        learningGoal.setId(5L); // id is set
+        request.postWithResponseBody("/api/courses/" + idOfCourse + "/learning-goals", learningGoal, LearningGoal.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -758,22 +753,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void createLearningGoal_instructorNotInCourse_shouldReturnForbidden() throws Exception {
         LearningGoal learningGoal = new LearningGoal();
         learningGoal.setTitle("Example Title");
-        request.postWithResponseBody("/api/courses/" + idOfCourse + "/goals", learningGoal, LearningGoal.class, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void createLearningGoal_goalWithNameAlreadyExists_shouldReturnBadRequest() throws Exception {
-        Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourse).get();
-        LearningGoal existingLearningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
-        LearningGoal learningGoal = new LearningGoal();
-        learningGoal.setTitle(existingLearningGoal.getTitle());
-        learningGoal.setDescription("This is an example of a freshly created learning goal");
-        learningGoal.setCourse(course);
-        List<LectureUnit> allLectureUnits = lectureUnitRepository.findAll();
-        Set<LectureUnit> connectedLectureUnits = new HashSet<>(allLectureUnits);
-        learningGoal.setLectureUnits(connectedLectureUnits);
-        request.postWithResponseBody("/api/courses/" + idOfCourse + "/goals", learningGoal, LearningGoal.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + idOfCourse + "/learning-goals", learningGoal, LearningGoal.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -790,7 +770,16 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
         final var search = database.configureSearch(learningGoal.getTitle());
         final var result = request.get("/api/learning-goals/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
-        assertThat(result.getResultsOnPage()).hasSize(10);
+        assertThat(result.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAdminGetsResultsFromAllCourses() throws Exception {
+        LearningGoal learningGoal = learningGoalRepository.findById(idOfLearningGoal).get();
+        final var search = database.configureSearch(learningGoal.getTitle());
+        final var result = request.get("/api/learning-goals/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(1);
     }
 
     @Test
@@ -833,6 +822,12 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         Course course = courseRepository.findWithEagerLearningGoalsById(idOfCourseTwo).orElseThrow();
         assertThat(course.getPrerequisites()).doesNotContain(learningGoal);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void removePrerequisite_conflict() throws Exception {
+        request.delete("/api/courses/" + idOfCourse + "/prerequisites/" + idOfLearningGoal, HttpStatus.CONFLICT);
     }
 
     @Test

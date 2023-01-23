@@ -26,6 +26,13 @@ artemis:
     continuous-integration:
     # Defines the used docker images for certain programming languages
         build:
+            default-docker-flags:
+                cpus: 2
+                # Set `memory-swap` and `memory` to the same value to turn of SWAP.
+                # See -> https://docs.docker.com/config/containers/resource_constraints/#--memory-swap-details
+                memory: 2g
+                memory-swap: 2g
+                pids-limit: 1000
             images:
                 # java intentionally uppercase to make sure both variants are
                 # accepted

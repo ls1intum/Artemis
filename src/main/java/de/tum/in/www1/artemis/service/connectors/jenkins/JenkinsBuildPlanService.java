@@ -42,7 +42,7 @@ import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
-import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
+import de.tum.in.www1.artemis.service.connectors.ci.notification.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;

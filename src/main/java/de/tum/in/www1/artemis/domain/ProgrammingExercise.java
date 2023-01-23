@@ -93,10 +93,6 @@ public class ProgrammingExercise extends Exercise {
     @Column(name = "build_plan_access_secret", table = "programming_exercise_details", length = 36)
     private String buildPlanAccessSecret;
 
-    @ManyToOne
-    @JoinColumn(name = "build_plan_id", table = "programming_exercise_details")
-    private BuildPlan buildPlan;
-
     @OneToOne(cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JoinColumn(unique = true, name = "template_participation_id")
     @JsonIgnoreProperties("programmingExercise")
@@ -380,7 +376,7 @@ public class ProgrammingExercise extends Exercise {
                 return checkForRatedAndAssessedResult(result);
             }
             return this.getDueDate() == null || SubmissionType.INSTRUCTOR.equals(submission.getType()) || SubmissionType.TEST.equals(submission.getType())
-                || submission.getSubmissionDate().isBefore(getRelevantDueDateForSubmission(submission));
+                    || submission.getSubmissionDate().isBefore(getRelevantDueDateForSubmission(submission));
         }).max(Comparator.naturalOrder()).orElse(null);
     }
 
@@ -694,9 +690,9 @@ public class ProgrammingExercise extends Exercise {
     @Override
     public String toString() {
         return "ProgrammingExercise{" + "id=" + getId() + ", templateRepositoryUrl='" + getTemplateRepositoryUrl() + "'" + ", solutionRepositoryUrl='" + getSolutionRepositoryUrl()
-            + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
-            + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
-            + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
+                + "'" + ", templateBuildPlanId='" + getTemplateBuildPlanId() + "'" + ", solutionBuildPlanId='" + getSolutionBuildPlanId() + "'" + ", publishBuildPlanUrl='"
+                + isPublishBuildPlanUrl() + "'" + ", allowOnlineEditor='" + isAllowOnlineEditor() + "'" + ", programmingLanguage='" + getProgrammingLanguage() + "'"
+                + ", packageName='" + getPackageName() + "'" + ", testCasesChanged='" + testCasesChanged + "'" + "}";
     }
 
     public boolean getIsLocalSimulation() {
@@ -784,7 +780,7 @@ public class ProgrammingExercise extends Exercise {
         // Static code analysis max penalty must only be set if static code analysis is enabled
         if (Boolean.FALSE.equals(isStaticCodeAnalysisEnabled()) && getMaxStaticCodeAnalysisPenalty() != null) {
             throw new BadRequestAlertException("Max static code analysis penalty must only be set if static code analysis is enabled", "Exercise",
-                "staticCodeAnalysisDisabledButPenaltySet");
+                    "staticCodeAnalysisDisabledButPenaltySet");
         }
 
         // Static code analysis max penalty must be positive
@@ -805,11 +801,11 @@ public class ProgrammingExercise extends Exercise {
             throw new BadRequestAlertException("Assessment type is not manual", "Exercise", "invalidManualFeedbackSettings");
         }
 
-        if (Objects.isNull(this.getDueDate())) {
+        if (this.getDueDate() == null) {
             throw new BadRequestAlertException("Exercise due date is not set", "Exercise", "invalidManualFeedbackSettings");
         }
 
-        if (Objects.nonNull(this.buildAndTestStudentSubmissionsAfterDueDate)) {
+        if (this.buildAndTestStudentSubmissionsAfterDueDate != null) {
             throw new BadRequestAlertException("Cannot run tests after due date", "Exercise", "invalidManualFeedbackSettings");
         }
     }
@@ -822,29 +818,16 @@ public class ProgrammingExercise extends Exercise {
         this.exerciseHints = exerciseHints;
     }
 
-    public void setBuildPlan(BuildPlan buildPlan) {
-        this.buildPlan = buildPlan;
-    }
-
-    // TODO: Safe build plan when exercise is created
-    public BuildPlan getBuildPlan() {
-        return buildPlan;
-    }
-
-    public void setBuildPlanAccessSecret(String buildPlanAccessSecret) {
-        this.buildPlanAccessSecret = buildPlanAccessSecret;
-    }
-
-    public boolean isBuildPlanAccessSecretSet() {
+    public boolean hasBuildPlanAccessSecretSet() {
         return buildPlanAccessSecret != null && !buildPlanAccessSecret.isEmpty();
     }
 
+    @Nullable
     public String getBuildPlanAccessSecret() {
         return buildPlanAccessSecret;
     }
 
     public void generateAndSetBuildPlanAccessSecret() {
         buildPlanAccessSecret = UUID.randomUUID().toString();
-        // SecureRandom.getInstanceStrong();
     }
 }

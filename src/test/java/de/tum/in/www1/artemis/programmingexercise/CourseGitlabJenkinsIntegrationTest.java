@@ -48,7 +48,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
 
     @BeforeEach
     void setup() {
-        participantScoreSchedulerService.activate();
+        participantScoreScheduleService.activate();
         courseTestService.setup(TEST_PREFIX, this);
         gitlabRequestMockProvider.enableMockingOfRequests();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
@@ -374,7 +374,13 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetCourseForDashboard() throws Exception {
-        courseTestService.testGetCourseForDashboard();
+        courseTestService.testGetCourseForDashboard(false);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void testGetCourseForDashboard_userRefresh() throws Exception {
+        courseTestService.testGetCourseForDashboard(true);
     }
 
     @Test
@@ -572,6 +578,60 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetAllEditorsInCourse() throws Exception {
         courseTestService.testGetAllEditorsInCourse();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForAllTutors_shouldReturnAllTutorsAndEditors() throws Exception {
+        courseTestService.searchUsersInCourse_searchForAllTutors_shouldReturnAllTutorsAndEditors();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForAllInstructor_shouldReturnAllInstructors() throws Exception {
+        courseTestService.searchUsersInCourse_searchForAllInstructor_shouldReturnAllInstructors();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForAllStudents_shouldReturnBadRequest() throws Exception {
+        courseTestService.searchUsersInCourse_searchForAllStudents_shouldReturnBadRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForStudentsAndTooShortSearchTerm_shouldReturnBadRequest() throws Exception {
+        courseTestService.searchUsersInCourse_searchForStudentsAndTooShortSearchTerm_shouldReturnBadRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForStudents_shouldReturnUsersMatchingSearchTerm() throws Exception {
+        courseTestService.searchUsersInCourse_searchForStudents_shouldReturnUsersMatchingSearchTerm();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForAllTutorsAndInstructors_shouldReturnAllTutorsEditorsAndInstructors() throws Exception {
+        courseTestService.searchUsersInCourse_searchForAllTutorsAndInstructors_shouldReturnAllTutorsEditorsAndInstructors();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForTutorsAndInstructors_shouldReturnUsersMatchingSearchTerm() throws Exception {
+        courseTestService.searchUsersInCourse_searchForTutorsAndInstructors_shouldReturnUsersMatchingSearchTerm();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForStudentsTutorsAndInstructorsAndTooShortSearchTerm_shouldReturnBadRequest() throws Exception {
+        courseTestService.searchUsersInCourse_searchForStudentsTutorsAndInstructorsAndTooShortSearchTerm_shouldReturnBadRequest();
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void searchUsersInCourse_searchForStudentsTutorsEditorsAndInstructors_shouldReturnUsersMatchingSearchTerm() throws Exception {
+        courseTestService.searchUsersInCourse_searchForStudentsTutorsEditorsAndInstructors_shouldReturnUsersMatchingSearchTerm();
     }
 
     @Test
@@ -817,7 +877,8 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         String group = "students";
         String registrationNumber1 = "1234567";
         String registrationNumber2 = "2345678";
-        courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2);
+        String email = "test@mail";
+        courseTestService.testAddUsersToCourseGroup(group, registrationNumber1, registrationNumber2, email);
     }
 
     @Test

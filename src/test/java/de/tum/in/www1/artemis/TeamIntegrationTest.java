@@ -388,7 +388,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(users3).as("No user was found as expected").isEmpty();
 
         // Check whether a student from a team is found but marked as "assignedToTeam"
-        Team team = database.addTeamForExercise(exercise, tutor);
+        Team team = database.addTeamForExercise(exercise, tutor, TEST_PREFIX);
         User teamStudent = team.getStudents().iterator().next();
 
         List<TeamSearchUserDTO> users4 = request.getList(resourceUrlSearchUsersInCourse(teamStudent.getLogin()), HttpStatus.OK, TeamSearchUserDTO.class);
@@ -476,7 +476,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getCourseWithExercisesAndParticipationsForTeam_AsTutor() throws Exception {
-        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false);
+        List<Course> courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, false, 5);
         Course course = courses.get(0);
 
         ProgrammingExercise programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);

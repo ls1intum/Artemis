@@ -6,6 +6,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { LearningGoalSelectionComponent } from 'app/shared/learning-goal-selection/learning-goal-selection.component';
 describe('VideoUnitFormComponent', () => {
     const validYouTubeUrl = 'https://www.youtube.com/watch?v=8iU8LPEa4o0';
     const validYouTubeUrlInEmbeddableFormat = 'https://www.youtube.com/embed/8iU8LPEa4o0';
@@ -15,7 +16,13 @@ describe('VideoUnitFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule],
-            declarations: [VideoUnitFormComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FormDateTimePickerComponent), MockComponent(FaIconComponent)],
+            declarations: [
+                VideoUnitFormComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FormDateTimePickerComponent),
+                MockComponent(FaIconComponent),
+                MockComponent(LearningGoalSelectionComponent),
+            ],
             providers: [],
             schemas: [],
         })
@@ -110,6 +117,7 @@ describe('VideoUnitFormComponent', () => {
                 name: exampleName,
                 description: exampleDescription,
                 releaseDate: exampleReleaseDate,
+                learningGoals: null,
                 source: validYouTubeUrlInEmbeddableFormat,
                 urlHelper: null,
             });

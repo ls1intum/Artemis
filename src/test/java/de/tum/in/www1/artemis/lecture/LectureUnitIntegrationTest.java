@@ -66,7 +66,7 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @BeforeEach
     void initTestCase() throws Exception {
         this.database.addUsers(TEST_PREFIX, 6, 6, 0, 1);
-        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
+        List<Course> courses = this.database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         Course course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
         this.lecture1 = course1.getLectures().stream().findFirst().get();
 
@@ -82,7 +82,8 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // textUnit3 is not one of the lecture units connected to the lecture
         this.textUnit3 = database.createTextUnit();
 
-        this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, Set.of(this.textUnit, onlineUnit, this.textUnit2, attachmentUnit));
+        database.addLectureUnitsToLecture(course1.getLectures().stream().skip(1).findFirst().get(), Set.of(textUnit2));
+        this.lecture1 = database.addLectureUnitsToLecture(this.lecture1, Set.of(this.textUnit, onlineUnit, attachmentUnit));
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         this.textUnit = textUnitRepository.findById(this.textUnit.getId()).get();
         this.textUnit2 = textUnitRepository.findById(textUnit2.getId()).get();
@@ -95,6 +96,22 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnitId, HttpStatus.OK);
         this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
         assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnitId);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
+    void deleteLectureUnit_shouldUnlinkLearningGoal() throws Exception {
+        var lectureUnit = lecture1.getLectureUnits().get(0);
+        var learningGoal = database.createLearningGoal(lecture1.getCourse());
+        lectureUnit.setLearningGoals(Set.of(learningGoal));
+        lectureRepository.save(lecture1);
+
+        var lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
+        assertThat(lecture.getLectureUnits().get(0).getLearningGoals()).isNotEmpty();
+
+        request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + lectureUnit.getId(), HttpStatus.OK);
+        this.lecture1 = lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId());
+        assertThat(this.lecture1.getLectureUnits().stream().map(DomainObject::getId)).doesNotContain(lectureUnit.getId());
     }
 
     @Test
@@ -140,19 +157,12 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteLectureUnit_FirstLectureUnit_ShouldReorderList() throws Exception {
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits()).hasSize(4);
+        assertThat(lecture.getLectureUnits()).hasSize(3);
         LectureUnit firstLectureUnit = lecture.getLectureUnits().stream().findFirst().get();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + firstLectureUnit.getId(), HttpStatus.OK);
         lecture = lectureRepository.findByIdWithLectureUnitsAndLearningGoalsElseThrow(lecture1.getId());
-        assertThat(lecture.getLectureUnits()).hasSize(3);
-        boolean nullFound = false;
-        for (LectureUnit lectureUnit : lecture.getLectureUnits()) {
-            if (Objects.isNull(lectureUnit)) {
-                nullFound = true;
-                break;
-            }
-        }
-        assertThat(nullFound).isFalse();
+        assertThat(lecture.getLectureUnits()).hasSize(2);
+        assertThat(lecture.getLectureUnits().stream().anyMatch(Objects::isNull)).isFalse();
     }
 
     @Test
@@ -223,6 +233,13 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void setLectureUnitCompletion_lectureUnitNotPartOfLecture_shouldReturnConflict() throws Exception {
+        request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit2.getId() + "/completion?completed=true", null, HttpStatus.CONFLICT,
+                null);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
+    void setLectureUnitCompletion_withoutLecture_shouldReturnConflict() throws Exception {
         request.postWithoutLocation("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.textUnit3.getId() + "/completion?completed=true", null, HttpStatus.CONFLICT,
                 null);
     }

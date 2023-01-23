@@ -1,30 +1,30 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.repository.BuildPlanRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.BUILD_PLAN;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Optional;
+import de.tum.in.www1.artemis.domain.BuildPlan;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
-import static de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation.log;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.BUILD_PLAN;
-import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.ROOT;
-
+@Profile("gitlabci")
 @RestController
-@RequestMapping(ROOT)
+@RequestMapping("api/")
 public class BuildPlanResource {
 
-    private final BuildPlanRepository buildPlanRepository;
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
-    public BuildPlanResource(BuildPlanRepository buildPlanRepository,
-                             ProgrammingExerciseRepository programmingExerciseRepository) {
+    private final BuildPlanRepository buildPlanRepository;
+
+    public BuildPlanResource(BuildPlanRepository buildPlanRepository) {
         this.buildPlanRepository = buildPlanRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -37,15 +37,12 @@ public class BuildPlanResource {
     @GetMapping(BUILD_PLAN)
     @PreAuthorize("permitAll()")
     public ResponseEntity<String> getBuildPlan(@PathVariable Long exerciseId, @RequestParam("secret") String secret) {
-        log.debug("REST request to get build plan for programming exercise with id : {}", exerciseId);
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findById(exerciseId);
-        if (optionalProgrammingExercise.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
-        if (programmingExercise.getBuildPlanAccessSecret() == null || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
+        log.debug("REST request to get build plan for programming exercise with id {}", exerciseId);
+        BuildPlan buildPlan = buildPlanRepository.findByProgrammingExercises_IdWithProgrammingExercises(exerciseId).orElseThrow();
+        ProgrammingExercise programmingExercise = buildPlan.getProgrammingExerciseById(exerciseId).orElseThrow();
+        if (!programmingExercise.hasBuildPlanAccessSecretSet() || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
             throw new AccessForbiddenException();
         }
-        return ResponseEntity.ok().body(programmingExercise.getBuildPlan().getBuildPlan());
+        return ResponseEntity.ok().body(buildPlan.getBuildPlan());
     }
 }

@@ -3,9 +3,9 @@ package de.tum.in.www1.artemis.service;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.LearningGoal;
@@ -54,25 +54,19 @@ public class LectureUnitService {
                 completion.setLectureUnit(lectureUnit);
                 completion.setUser(user);
                 completion.setCompletedAt(ZonedDateTime.now());
-                lectureUnitCompletionRepository.save(completion);
+                try {
+                    lectureUnitCompletionRepository.save(completion);
+                }
+                catch (DataIntegrityViolationException e) {
+                    // In rare instances the completion status might already exist if this method runs in parallel.
+                    // This fails the SQL unique constraint and throws an exception. We can safely ignore it.
+                }
             }
         }
         else {
             // Delete the completion status for this lecture unit (if it exists)
             existingCompletion.ifPresent(lectureUnitCompletionRepository::delete);
         }
-    }
-
-    /**
-     * Get the timestamp when the lecture unit was completed by the user
-     * @param lectureUnit The lecture unit completed by the user
-     * @param user The user that completed the lecture unit
-     * @return The completion timestamp or null if not yet completed by the user
-     */
-    @Nullable
-    public ZonedDateTime getLectureUnitCompletion(@NotNull LectureUnit lectureUnit, @NotNull User user) {
-        Optional<LectureUnitCompletion> completion = lectureUnitCompletionRepository.findByLectureUnitIdAndUserId(lectureUnit.getId(), user.getId());
-        return completion.map(LectureUnitCompletion::getCompletedAt).orElse(null);
     }
 
     /**
@@ -97,7 +91,7 @@ public class LectureUnitService {
         // Creating a new list of lecture units without the one we want to remove
         List<LectureUnit> lectureUnitsUpdated = new ArrayList<>();
         for (LectureUnit unit : lecture.getLectureUnits()) {
-            if (Objects.nonNull(unit) && !unit.getId().equals(lectureUnitToDelete.getId())) {
+            if (unit != null && !unit.getId().equals(lectureUnitToDelete.getId())) {
                 lectureUnitsUpdated.add(unit);
             }
         }
