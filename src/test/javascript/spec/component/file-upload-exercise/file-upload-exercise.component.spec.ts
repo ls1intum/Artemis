@@ -17,6 +17,7 @@ import { CourseExerciseService } from 'app/exercises/shared/course-exercises/cou
 import { ExerciseImportComponent } from 'app/exercises/shared/import/exercise-import.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('FileUploadExercise Management Component', () => {
     let comp: FileUploadExerciseComponent;
@@ -40,6 +41,7 @@ describe('FileUploadExercise Management Component', () => {
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: NgbModal, useClass: MockNgbModalService },
             ],
         })
             .overrideTemplate(FileUploadExerciseComponent, '')
@@ -49,6 +51,7 @@ describe('FileUploadExercise Management Component', () => {
         comp = fixture.componentInstance;
         service = TestBed.inject(CourseExerciseService);
         fileUploadExerciseService = TestBed.inject(FileUploadExerciseService);
+        modalService = TestBed.inject(NgbModal);
 
         comp.fileUploadExercises = [fileUploadExercise];
     });
