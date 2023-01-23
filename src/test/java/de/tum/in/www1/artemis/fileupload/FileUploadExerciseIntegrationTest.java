@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
 class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -632,6 +633,39 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
                 HttpStatus.CREATED);
         assertThat(importedFileUploadExercise).usingRecursiveComparison()
                 .ignoringFields("id", "course", "shortName", "releaseDate", "dueDate", "assessmentDueDate", "exampleSolutionPublicationDate").isEqualTo(expectedFileUploadExercise);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testImportFileUploadExerciseFromCourseToCourseNegativeCourseIdBadRequest() throws Exception {
+        Course course = database.addCourseWithFileUploadExercise();
+        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
+        Course course2 = database.addEmptyCourse();
+        expectedFileUploadExercise.setCourse(course2);
+        request.postWithResponseBody("/api/file-upload-exercises/import/" + -1, expectedFileUploadExercise, FileUploadExercise.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testImportFileUploadExerciseCourseNotSetBadRequest() throws Exception {
+        Course course = database.addCourseWithFileUploadExercise();
+        Exercise expectedFileUploadExercise = course.getExercises().stream().findFirst().get();
+        expectedFileUploadExercise.setCourse(null);
+        request.postWithResponseBody("/api/file-upload-exercises/import/" + expectedFileUploadExercise.getId(), expectedFileUploadExercise, FileUploadExercise.class,
+                HttpStatus.BAD_REQUEST);
+
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
+    void testGetAllExercisesOnPageAsEditorSuccess() throws Exception {
+        database.addCourseWithFourFileUploadExercise();
+        var search = database.configureSearch("a");
+
+        SearchResultPageDTO<Exercise> result = request.get("/api/file-upload-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage().size()).isEqualTo(4);
+        assertThat(result.getNumberOfPages()).isEqualTo(1);
+
     }
 
     @Test

@@ -23,6 +23,7 @@ import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pag
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
+import { FileUploadExercisePagingService } from 'app/exercises/file-upload/manage/file-upload-exercise-paging.service';
 
 describe('ExerciseImportComponent', () => {
     let fixture: ComponentFixture<ExerciseImportComponent>;
@@ -186,7 +187,15 @@ describe('ExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, true, true, undefined);
+            expect(searchForExercisesStub).toHaveBeenCalledWith(
+                {
+                    ...state,
+                    sortingOrder: SortingOrder.ASCENDING,
+                },
+                true,
+                true,
+                undefined,
+            );
             expect(comp.listSorting).toBeTrue();
         });
     }));
@@ -209,7 +218,15 @@ describe('ExerciseImportComponent', () => {
             tick(10);
             expect(searchForExercisesStub).not.toHaveBeenCalled();
             tick(290);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, true, true, undefined);
+            expect(searchForExercisesStub).toHaveBeenCalledWith(
+                {
+                    ...state,
+                    searchTerm: givenSearchTerm,
+                },
+                true,
+                true,
+                undefined,
+            );
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
@@ -219,7 +236,15 @@ describe('ExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.sortedColumn = 'TITLE';
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortedColumn: 'TITLE' }, true, true, undefined);
+            expect(searchForExercisesStub).toHaveBeenCalledWith(
+                {
+                    ...state,
+                    sortedColumn: 'TITLE',
+                },
+                true,
+                true,
+                undefined,
+            );
             expect(comp.sortedColumn).toBe('TITLE');
         });
     }));
@@ -260,6 +285,7 @@ describe('ExerciseImportComponent', () => {
         [ExerciseType.TEXT, TextExercisePagingService],
         [ExerciseType.MODELING, ModelingExercisePagingService],
         [ExerciseType.QUIZ, QuizExercisePagingService],
+        [ExerciseType.FILE_UPLOAD, FileUploadExercisePagingService],
     ])(
         'uses the correct paging service',
         fakeAsync((exerciseType: ExerciseType, expectedPagingService: typeof PagingService) => {
