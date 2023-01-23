@@ -161,8 +161,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             }
         }
         this.isLoading = false;
-
-        console.log(this.participations);
     }
 
     /**
@@ -170,11 +168,9 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * @param newValue New filter prop value
      */
     updateParticipationFilter(newValue: FilterProp) {
-        console.log(newValue);
         this.isLoading = true;
         setTimeout(() => {
             this.resultCriteria.filterProp = newValue;
-            console.log(this.resultCriteria.filterProp);
             this.isLoading = false;
         });
     }
@@ -190,7 +186,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             case FilterProp.UNSUCCESSFUL:
                 return !participation.results?.[0]?.successful;
             case FilterProp.BUILD_FAILED:
-                return !!participation.results?.[0]?.submission && !!(participation.results?.[0]?.submission as ProgrammingSubmission).buildFailed;
+                return !!(participation.results?.[0]?.submission && (participation.results?.[0]?.submission as ProgrammingSubmission).buildFailed);
             case FilterProp.MANUAL:
                 return !!participation.results?.[0] && Result.isManualResult(participation.results[0]!);
             case FilterProp.AUTOMATIC:

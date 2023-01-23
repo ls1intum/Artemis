@@ -45,7 +45,6 @@ import { AssessmentDashboardInformationEntry } from 'app/course/dashboards/asses
 import { Result } from 'app/entities/result.model';
 import dayjs from 'dayjs/esm';
 import { faCheckCircle, faExclamationTriangle, faFolderOpen, faQuestionCircle, faSort, faSpinner } from '@fortawesome/free-solid-svg-icons';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { GraphColors } from 'app/entities/statistics.model';
 
 export interface ExampleSubmissionQueryParams {
