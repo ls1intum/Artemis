@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 
 import javax.xml.transform.TransformerException;
 
-import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpResponseException;
 import org.slf4j.Logger;
@@ -39,6 +38,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -79,9 +79,10 @@ public class JenkinsBuildPlanService {
 
     private final BuildPlanRepository buildPlanRepository;
 
-    public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, JenkinsBuildPlanCreator jenkinsBuildPlanCreator, PipelineGroovyBuildPlanCreator pipelineGroovyBuildPlanCreator,
-            JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, BuildPlanRepository buildPlanRepository) {
+    public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
+            PipelineGroovyBuildPlanCreator pipelineGroovyBuildPlanCreator, JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService,
+            JenkinsInternalUrlService jenkinsInternalUrlService, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            BuildPlanRepository buildPlanRepository) {
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
@@ -117,8 +118,9 @@ public class JenkinsBuildPlanService {
         String job = jobFolder + "-" + planKey;
         jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
         givePlanPermissions(exercise, planKey);
-        BuildPlan buildPlan = new BuildPlan(pipelineGroovyBuildPlanCreator.getPipelineGroovyScript(programmingLanguage, Optional.ofNullable(exercise.getProjectType()),
-            staticCodeAnalysisEnabled, isSequentialTestRuns, testwiseCoverageAnalysisEnabled));
+        BuildPlan buildPlan = new BuildPlan();
+        buildPlan.setBuildPlan(pipelineGroovyBuildPlanCreator.getPipelineGroovyScript(programmingLanguage, Optional.ofNullable(exercise.getProjectType()),
+                staticCodeAnalysisEnabled, isSequentialTestRuns, testwiseCoverageAnalysisEnabled));
         buildPlanRepository.save(buildPlan);
         triggerBuild(jobFolder, job);
     }
