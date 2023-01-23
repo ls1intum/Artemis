@@ -185,10 +185,15 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     void updateAttendanceCount_asNotTutorOfGroup_shouldReturnForbidden() throws Exception {
         // given
         var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
-        // when / then
+        assertThat(session.getAttendanceCount()).isNull();
+        // when
         var dto = new TutorialGroupSessionResource.TutorialGroupSessionAttendanceCountDTO(20);
         request.putWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count", dto, TutorialGroupSession.class,
                 HttpStatus.FORBIDDEN);
+        // then
+        session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
+        assertThat(session.getAttendanceCount()).isNull();
+
         // cleanup
         tutorialGroupSessionRepository.deleteById(session.getId());
     }
