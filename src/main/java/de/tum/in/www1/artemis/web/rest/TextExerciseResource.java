@@ -368,8 +368,8 @@ public class TextExerciseResource {
      */
     @GetMapping("text-exercises")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SearchResultPageDTO<TextExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search, @RequestParam(defaultValue = "true") Boolean isCourseFilter,
-            @RequestParam(defaultValue = "true") Boolean isExamFilter) {
+    public ResponseEntity<SearchResultPageDTO<TextExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search, @RequestParam(defaultValue = "true") boolean isCourseFilter,
+            @RequestParam(defaultValue = "true") boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         return ResponseEntity.ok(textExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }

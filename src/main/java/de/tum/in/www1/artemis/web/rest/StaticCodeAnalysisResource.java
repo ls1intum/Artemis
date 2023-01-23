@@ -131,7 +131,7 @@ public class StaticCodeAnalysisResource {
             throw new ConflictException("SCA configurations can only be imported from exercises with the same programming language", ENTITY_NAME, "programmingLanguageMismatch");
         }
 
-        Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.importCategoriesFromExercise(targetExercise, sourceExercise);
+        Set<StaticCodeAnalysisCategory> staticCodeAnalysisCategories = staticCodeAnalysisService.importCategoriesFromExercise(sourceExercise, targetExercise);
         return ResponseEntity.ok(staticCodeAnalysisCategories);
     }
 

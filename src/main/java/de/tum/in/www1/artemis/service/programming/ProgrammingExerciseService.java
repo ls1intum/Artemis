@@ -77,8 +77,6 @@ public class ProgrammingExerciseService {
 
     private final UserRepository userRepository;
 
-    private final AuthorizationCheckService authCheckService;
-
     private final GroupNotificationService groupNotificationService;
 
     private final GroupNotificationScheduleService groupNotificationScheduleService;
@@ -109,8 +107,8 @@ public class ProgrammingExerciseService {
             Optional<VersionControlService> versionControlService, Optional<ContinuousIntegrationService> continuousIntegrationService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ParticipationService participationService,
-            ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, AuthorizationCheckService authCheckService,
-            ResourceLoaderService resourceLoaderService, GroupNotificationService groupNotificationService, GroupNotificationScheduleService groupNotificationScheduleService,
+            ParticipationRepository participationRepository, ResultRepository resultRepository, UserRepository userRepository, ResourceLoaderService resourceLoaderService,
+            GroupNotificationService groupNotificationService, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, AuxiliaryRepositoryRepository auxiliaryRepositoryRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository, ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository,
             ProgrammingExerciseTaskService programmingExerciseTaskService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
@@ -126,7 +124,6 @@ public class ProgrammingExerciseService {
         this.participationService = participationService;
         this.resultRepository = resultRepository;
         this.userRepository = userRepository;
-        this.authCheckService = authCheckService;
         this.resourceLoaderService = resourceLoaderService;
         this.groupNotificationService = groupNotificationService;
         this.groupNotificationScheduleService = groupNotificationScheduleService;
@@ -952,9 +949,8 @@ public class ProgrammingExerciseService {
      * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
+    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final boolean isCourseFilter, final boolean isExamFilter,
             final User user) {
-        // TODO while minor, this still is duplicated code. Can we refactor this in such a way that there are still no database calls for this.
         if (!isCourseFilter && !isExamFilter) {
             return new SearchResultPageDTO<>(Collections.emptyList(), 0);
         }
