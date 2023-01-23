@@ -418,6 +418,8 @@ public class QuizExerciseService {
         quizExercise.setDueDate(null);
         quizExercise.setQuizBatches(Set.of());
 
+        resetInvalidQuestions(quizExercise);
+
         quizExercise = save(quizExercise);
 
         // in case the quiz has not yet started or the quiz is currently running, we have to clean up
@@ -482,5 +484,11 @@ public class QuizExerciseService {
             }
         }
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
+    }
+
+    private void resetInvalidQuestions(QuizExercise quizExercise) {
+        for (QuizQuestion question : quizExercise.getQuizQuestions()) {
+            question.setInvalid(false);
+        }
     }
 }
