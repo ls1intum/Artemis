@@ -13,17 +13,17 @@ import de.tum.in.www1.artemis.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamUser extends AbstractAuditingEntity {
 
-    @Column(name = "student_identifier")
-    private String studentIdentifier;
+    @Column(name = "actual_room")
+    private String actualRoom;
 
-    @Column(name = "matriculation_number")
-    private String matriculationNumber;
+    @Column(name = "actual_seat")
+    private String actualSeat;
 
-    @Column(name = "lecture_hall")
-    private String lectureHall;
+    @Column(name = "planned_room")
+    private String plannedRoom;
 
-    @Column(name = "seat")
-    private String seat;
+    @Column(name = "planned_seat")
+    private String plannedSeat;
 
     @Column(name = "did_check_image")
     private Boolean didCheckImage;
@@ -31,12 +31,15 @@ public class ExamUser extends AbstractAuditingEntity {
     @Column(name = "did_check_name")
     private Boolean didCheckName;
 
-    @Column(name = "did_check_artemis")
-    private Boolean didCheckArtemis;
+    @Column(name = "did_check_login")
+    private Boolean didCheckLogin;
 
-    @Size(max = 256)
-    @Column(name = "signing_url", length = 256)
-    private String signingUrl;
+    @Column(name = "did_check_registration_number")
+    private Boolean didCheckRegistrationNumber;
+
+    @Size(max = 100)
+    @Column(name = "signing_image_path", length = 100)
+    private String signingImagePath;
 
     // todo: add a column for the signature as json string.
     // var signingDrawing: PKDrawing?
@@ -49,36 +52,44 @@ public class ExamUser extends AbstractAuditingEntity {
     @JoinColumn(name = "student_id")
     private User user;
 
-    public String getStudentIdentifier() {
-        return studentIdentifier;
+    public String getActualRoom() {
+        return actualRoom;
     }
 
-    public void setStudentIdentifier(String studentIdentifier) {
-        this.studentIdentifier = studentIdentifier;
+    public void setActualRoom(String actualRoom) {
+        this.actualRoom = actualRoom;
     }
 
-    public String getMatriculationNumber() {
-        return matriculationNumber;
+    public String getActualSeat() {
+        return actualSeat;
     }
 
-    public void setMatriculationNumber(String matriculationNumber) {
-        this.matriculationNumber = matriculationNumber;
+    public void setActualSeat(String actualSeat) {
+        this.actualSeat = actualSeat;
     }
 
-    public String getLectureHall() {
-        return lectureHall;
+    public String getPlannedRoom() {
+        return plannedRoom;
     }
 
-    public void setLectureHall(String lectureHall) {
-        this.lectureHall = lectureHall;
+    public void setPlannedRoom(String plannedRoom) {
+        this.plannedRoom = plannedRoom;
     }
 
-    public String getSeat() {
-        return seat;
+    public String getPlannedSeat() {
+        return plannedSeat;
     }
 
-    public void setSeat(String seat) {
-        this.seat = seat;
+    public void setPlannedSeat(String plannedSeat) {
+        this.plannedSeat = plannedSeat;
+    }
+
+    public Boolean getDidCheckRegistrationNumber() {
+        return didCheckRegistrationNumber;
+    }
+
+    public void setDidCheckRegistrationNumber(Boolean didCheckRegistrationNumber) {
+        this.didCheckRegistrationNumber = didCheckRegistrationNumber;
     }
 
     public Boolean getDidCheckImage() {
@@ -97,12 +108,12 @@ public class ExamUser extends AbstractAuditingEntity {
         this.didCheckName = didCheckName;
     }
 
-    public Boolean getDidCheckArtemis() {
-        return didCheckArtemis;
+    public Boolean getDidCheckLogin() {
+        return didCheckLogin;
     }
 
-    public void setDidCheckArtemis(Boolean didCheckArtemis) {
-        this.didCheckArtemis = didCheckArtemis;
+    public void setDidCheckLogin(Boolean didCheckLogin) {
+        this.didCheckLogin = didCheckLogin;
     }
 
     public Exam getExam() {
@@ -121,11 +132,11 @@ public class ExamUser extends AbstractAuditingEntity {
         this.user = user;
     }
 
-    public String getSigningUrl() {
-        return signingUrl;
+    public String getSigningImagePath() {
+        return signingImagePath;
     }
 
-    public void setSigningUrl(String signingUrl) {
-        this.signingUrl = signingUrl;
+    public void setSigningImagePath(String signingImagePath) {
+        this.signingImagePath = signingImagePath;
     }
 }

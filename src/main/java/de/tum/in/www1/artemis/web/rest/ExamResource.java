@@ -22,10 +22,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -47,6 +52,8 @@ import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringS
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
+import io.swagger.annotations.ApiParam;
+import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for managing Exam.
@@ -356,6 +363,17 @@ public class ExamResource {
         }
     }
 
+    // TODO: write javadoc
+    @GetMapping("exams/all")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<List<Exam>> getAllExams(@ApiParam Pageable pageable) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final Page<Exam> page;
+        page = examService.getAllExams(pageable, user);
+        HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
+        return new ResponseEntity<>(page.getContent(), headers, HttpStatus.OK);
+    }
+
     /**
      * GET /exams : Find all exams the user is allowed to access
      *
@@ -367,9 +385,6 @@ public class ExamResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<SearchResultPageDTO<Exam>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises, PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        System.out.println(user.getLogin());
-        System.out.println(user.getFirstName());
-        System.out.println(user.getAuthorities().size());
         return ResponseEntity.ok(examService.getAllOnPageWithSize(search, user, withExercises));
     }
 

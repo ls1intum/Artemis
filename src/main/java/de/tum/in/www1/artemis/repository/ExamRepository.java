@@ -49,6 +49,13 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     List<Exam> findAllByEndDateGreaterThanEqual(@Param("date") ZonedDateTime date);
 
+    @Query("""
+            SELECT e FROM Exam e
+            WHERE e.course.instructorGroupName IN :groups
+                AND e.exerciseGroups IS NOT EMPTY
+            """)
+    Page<Exam> findAllExamsWithUserLogin(@Param("groups") Set<String> groups, Pageable pageable);
+
     @EntityGraph(type = LOAD, attributePaths = { "exerciseGroups" })
     Optional<Exam> findWithExerciseGroupsById(long examId);
 

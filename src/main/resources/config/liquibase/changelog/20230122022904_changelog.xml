@@ -29,32 +29,31 @@
         <addForeignKeyConstraint baseColumnNames="exam_id" baseTableName="exam_user" constraintName="FK_exam_id" deferrable="false" initiallyDeferred="false"
                                  onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exam" validate="true"/>
         <addColumn tableName="exam_user">
-            <column name="did_check_artemis" type="boolean"/>
+            <column name="did_check_login" type="boolean"/>
         </addColumn>
         <addColumn tableName="exam_user">
             <column name="did_check_name" type="boolean"/>
         </addColumn>
         <addColumn tableName="exam_user">
+            <column name="did_check_registration_number" type="boolean"/>
+        </addColumn>
+        <addColumn tableName="exam_user">
             <column name="did_check_image" type="boolean"/>
         </addColumn>
         <addColumn tableName="exam_user">
-            <column name="lecture_hall" type="varchar(255)"/>
+            <column name="signing_image_path" type="varchar(100)"/>
         </addColumn>
         <addColumn tableName="exam_user">
-            <column name="matriculation_number" type="varchar(255)"/>
+            <column name="actual_room" type="varchar(100)"/>
         </addColumn>
         <addColumn tableName="exam_user">
-            <column name="seat" type="varchar(255)"/>
+            <column name="actual_seat" type="varchar(100)"/>
         </addColumn>
         <addColumn tableName="exam_user">
-            <column name="signing_url" type="varchar(255)"/>
+            <column name="planned_room" type="varchar(100)"/>
         </addColumn>
         <addColumn tableName="exam_user">
-            <column name="student_identifier" type="varchar(255)"/>
+            <column name="planned_seat" type="varchar(100)"/>
         </addColumn>
-<!--        <addColumn tableName="exam">-->
-<!--            <column name="exam_users" type="varchar(255)"/>-->
-<!--        </addColumn>-->
-<!--        <dropColumn tableName="exam"  columnName="registered_users"/>-->
     </changeSet>
 </databaseChangeLog>

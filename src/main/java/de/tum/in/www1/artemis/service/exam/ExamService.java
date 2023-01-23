@@ -21,6 +21,7 @@ import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -1320,6 +1321,13 @@ public class ExamService {
             }
         }
         return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());
+    }
+
+    // TODO: write javadoc
+    public Page<Exam> getAllExams(Pageable pageable, final User user) {
+        final Page<Exam> examPage;
+        examPage = examRepository.findAllExamsWithUserLogin(user.getGroups(), pageable);
+        return examPage;
     }
 
     /**
