@@ -181,7 +181,7 @@ public class TutorialGroupSessionResource {
     /**
      * DTO for updating the attendance count of a tutorial group session
      */
-    public record TutorialGroupSessionAttendanceCountDTO(@Min(0) @Max(2000) Integer attendanceCount) {
+    public record TutorialGroupSessionAttendanceCountDTO(@Min(0) @Max(999) Integer attendanceCount) {
     }
 
     /**
