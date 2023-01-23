@@ -472,13 +472,17 @@ public class Result extends DomainObject implements Comparable<Result> {
      * @param isBeforeDueDate if feedbacks marked with visibility 'after due date' should also be removed.
      */
     public void filterSensitiveFeedbacks(boolean isBeforeDueDate) {
+        filterSensitiveFeedbacks(isBeforeDueDate, participation.getExercise());
+    }
+
+    public void filterSensitiveFeedbacks(boolean isBeforeDueDate, Exercise exercise) {
         feedbacks.removeIf(Feedback::isInvisible);
 
         if (isBeforeDueDate) {
             feedbacks.removeIf(Feedback::isAfterDueDate);
         }
 
-        if (participation.getExercise() instanceof ProgrammingExercise programmingExercise) {
+        if (exercise instanceof ProgrammingExercise programmingExercise) {
             var testCaseFeedback = feedbacks.stream().filter(Feedback::isTestFeedback).toList();
             if (!programmingExercise.getShowTestNamesToStudents()) {
                 testCaseFeedback.forEach(feedback -> feedback.setText(null));
@@ -488,7 +492,6 @@ public class Result extends DomainObject implements Comparable<Result> {
             setTestCaseCount(testCaseFeedback.size());
             setPassedTestCaseCount((int) testCaseFeedback.stream().filter(feedback -> Boolean.TRUE.equals(feedback.isPositive())).count());
         }
-
     }
 
     /**
