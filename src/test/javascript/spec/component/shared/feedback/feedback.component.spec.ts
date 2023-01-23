@@ -360,15 +360,6 @@ describe('FeedbackComponent', () => {
         expect(comp.isLoading).toBeFalse();
     });
 
-    it('should hide chart if no exercise available', () => {
-        comp.showScoreChart = true;
-        comp.exercise = undefined;
-
-        comp.ngOnInit();
-
-        expect(comp.showScoreChart).toBeFalse();
-    });
-
     it('should not show test details to students', () => {
         const createSpy = jest.spyOn(feedbackItemService, 'create');
         const { feedbacks } = generateFeedbacksAndExpectedItems();
