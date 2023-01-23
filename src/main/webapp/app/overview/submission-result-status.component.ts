@@ -33,20 +33,21 @@ export class SubmissionResultStatusComponent implements OnChanges {
     @Input() triggerLastGraded = true;
 
     quizNotStarted: boolean;
-    afterDueDate: boolean;
+    exerciseMissedDeadline: boolean;
     uninitialized: boolean;
     notSubmitted: boolean;
 
     ngOnChanges() {
-        this.afterDueDate = !!this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs());
-        this.notSubmitted = !this.afterDueDate && !!this.studentParticipation;
+        const afterDueDate = !!this.exercise.dueDate && this.exercise.dueDate.isBefore(dayjs());
+        this.exerciseMissedDeadline = afterDueDate && !this.studentParticipation;
+        this.notSubmitted = !afterDueDate && !this.studentParticipation;
 
         if (this.exercise.type === ExerciseType.QUIZ) {
             const quizExercise = this.exercise as QuizExercise;
             this.uninitialized = ArtemisQuizService.isUninitialized(quizExercise);
             this.quizNotStarted = ArtemisQuizService.notStarted(quizExercise);
         } else {
-            this.uninitialized = !this.afterDueDate && !this.studentParticipation;
+            this.uninitialized = !afterDueDate && !this.studentParticipation;
         }
     }
 }

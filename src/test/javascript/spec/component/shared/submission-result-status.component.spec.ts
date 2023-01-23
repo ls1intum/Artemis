@@ -61,18 +61,21 @@ describe('SubmissionResultStatusComponent', () => {
         it.each([
             [{} as Exercise, false],
             [{ dueDate: dayjs().subtract(1, 'hour') } as Exercise, true],
+            [{ dueDate: dayjs().subtract(1, 'hour'), studentParticipations: [{}] } as Exercise, false],
             [{ dueDate: dayjs().add(1, 'hour') } as Exercise, false],
-        ])('should determine if it is after the due date', (exercise: Exercise, expected: boolean) => {
+            [{ dueDate: dayjs().add(1, 'hour'), studentParticipations: [{}] } as Exercise, false],
+        ])('should determine if missed deadline', (exercise: Exercise, expected: boolean) => {
             comp.exercise = exercise;
+            comp.studentParticipation = exercise.studentParticipations?.[0];
             comp.ngOnChanges();
-            expect(comp.afterDueDate).toBe(expected);
+            expect(comp.exerciseMissedDeadline).toBe(expected);
         });
 
         it.each([
             [{ dueDate: dayjs().subtract(1, 'hour') } as Exercise, false],
-            [{ dueDate: dayjs().add(1, 'hour') } as Exercise, false],
             [{ dueDate: dayjs().subtract(1, 'hour'), studentParticipations: [{}] } as Exercise, false],
-            [{ dueDate: dayjs().add(1, 'hour'), studentParticipations: [{}] } as Exercise, true],
+            [{ dueDate: dayjs().add(1, 'hour') } as Exercise, true],
+            [{ dueDate: dayjs().add(1, 'hour'), studentParticipations: [{}] } as Exercise, false],
         ])('should determine if it is notSubmitted', (exercise: Exercise, expected: boolean) => {
             comp.exercise = exercise;
             comp.studentParticipation = exercise.studentParticipations?.[0];

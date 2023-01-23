@@ -68,7 +68,7 @@
                 "quizNotStarted": "The quiz is not active.",
                 "userNotParticipated": "You did not participate in this live quiz.",
                 "userParticipating": "You are currently participating in this quiz.",
-                "userSubmitted": "You have already submitted. Wait for the quiz to end to see results.",
+                "userSubmitted": "You have already submitted.",
                 "userNotStartedExerciseShort": "Not yet started.",
                 "userNotAssignedToTeamShort": "No team yet.",
                 "exerciseNotSubmittedShort": "No Submission",

@@ -67,7 +67,7 @@
                 "quizNotStarted": "Das Quiz ist nicht aktiv.",
                 "userNotParticipated": "Du hast bei diesem Live-Quiz nicht teilgenommen.",
                 "userParticipating": "Du nimmst gerade an diesem Quiz teil.",
-                "userSubmitted": "Du hast bereits abgegeben. Warte, bis das Quiz beendet ist, um die Ergebnisse zu sehen.",
+                "userSubmitted": "Du hast bereits abgegeben.",
                 "userNotStartedExerciseShort": "Noch nicht angefangen.",
                 "exerciseNotSubmittedShort": "Noch nicht abgegeben",
                 "exerciseMissedDeadlineShort": "Abgabefrist abgelaufen",
