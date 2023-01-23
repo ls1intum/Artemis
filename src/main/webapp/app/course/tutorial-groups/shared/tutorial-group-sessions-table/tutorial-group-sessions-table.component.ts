@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, ContentChild, Input, OnChanges, SimpleChanges, TemplateRef, ViewEncapsulation } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { SortService } from 'app/shared/service/sort.service';
@@ -9,6 +9,7 @@ import dayjs from 'dayjs/esm';
     templateUrl: './tutorial-group-sessions-table.component.html',
     styleUrls: ['./tutorial-group-sessions-table.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
 })
 export class TutorialGroupSessionsTableComponent implements OnChanges {
     @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;

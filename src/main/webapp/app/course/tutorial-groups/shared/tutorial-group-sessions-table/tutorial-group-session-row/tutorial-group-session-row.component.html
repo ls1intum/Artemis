@@ -27,7 +27,7 @@
             </span>
         </button>
     </td>
-    <td [class.table-danger]="isCancelled">
+    <td [class.table-danger]="isCancelled" class="attendance-column">
         <div class="input-group" *ngIf="!isReadOnly; else readOnlyAttendance">
             <input
                 type="number"

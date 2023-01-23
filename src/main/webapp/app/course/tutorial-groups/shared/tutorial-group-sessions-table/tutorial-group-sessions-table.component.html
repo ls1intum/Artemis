@@ -1,4 +1,4 @@
-<div class="table-responsive">
+<div class="table-responsive session-table">
     <div class="col-12 mb-2">
         <div class="alert alert-info">
             {{ 'artemisApp.pages.tutorialGroupSessionManagement.timeZoneExplanation' | artemisTranslate : { timeZone: timeZoneUsedForDisplay } }}
@@ -15,7 +15,7 @@
                             | artemisTranslate
                     }}</span>
                 </th>
-                <th>{{ 'artemisApp.entities.tutorialGroupSession.attendance' | artemisTranslate }}</th>
+                <th class="attendance-column">{{ 'artemisApp.entities.tutorialGroupSession.attendance' | artemisTranslate }}</th>
                 <th *ngIf="tutorialGroup.tutorialGroupSchedule">{{ 'artemisApp.pages.tutorialGroupSessionManagement.columns.notes' | artemisTranslate }}</th>
                 <th *ngIf="extraColumn"></th>
             </tr>
