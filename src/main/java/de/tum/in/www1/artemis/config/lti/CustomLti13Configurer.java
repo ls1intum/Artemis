@@ -3,6 +3,8 @@ package de.tum.in.www1.artemis.config.lti;
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.web.AuthorizationRequestRepository;
+import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
 import org.springframework.security.web.authentication.logout.LogoutFilter;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 
@@ -12,7 +14,6 @@ import de.tum.in.www1.artemis.web.filter.Lti13LaunchFilter;
 import uk.ac.ox.ctl.lti13.Lti13Configurer;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.authentication.OidcLaunchFlowAuthenticationProvider;
 import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OAuth2LoginAuthenticationFilter;
-import uk.ac.ox.ctl.lti13.security.oauth2.client.lti.web.OptimisticAuthorizationRequestRepository;
 
 /**
  * Configures and registers Security Filters to handle LTI 1.3 Resource Link Launches
@@ -37,11 +38,12 @@ public class CustomLti13Configurer extends Lti13Configurer {
         ltiPath(LTI13_BASE_PATH);
         loginInitiationPath(LOGIN_INITIATION_PATH);
         loginPath(LOGIN_PATH);
+        useState(true);
     }
 
     @Override
     public void configure(HttpSecurity http) {
-        OptimisticAuthorizationRequestRepository authorizationRequestRepository = configureRequestRepository();
+        AuthorizationRequestRepository<OAuth2AuthorizationRequest> authorizationRequestRepository = configureRequestRepository();
         OidcLaunchFlowAuthenticationProvider oidcLaunchFlowAuthenticationProvider = configureAuthenticationProvider(http);
 
         // Step 1 of the IMS SEC

@@ -196,8 +196,8 @@ dependencies {
 
 
     // Note: spring-security-lti13 does not work with jakarta yet, so we built our own custom version and declare its transitive dependencies below
-//    implementation "uk.ac.ox.ctl:spring-security-lti13:0.1.0"
-    implementation files("lib/spring-security-lti13-0.1.1.jar")
+//    implementation "uk.ac.ox.ctl:spring-security-lti13:0.0.4"
+    implementation files("lib/spring-security-lti13-0.0.6.jar")
 
 
     implementation "de.jplag:jplag:${jplag_version}"

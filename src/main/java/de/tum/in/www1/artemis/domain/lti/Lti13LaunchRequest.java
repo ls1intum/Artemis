@@ -14,26 +14,20 @@ public class Lti13LaunchRequest {
 
     private final String resourceLinkId;
 
-    private final String targetLinkUri;
-
     private final Lti13AgsClaim agsClaim;
 
     public Lti13LaunchRequest(OidcIdToken ltiIdToken, String clientRegistrationId) {
         this.iss = ltiIdToken.getClaim("iss");
         this.sub = ltiIdToken.getClaim("sub");
         this.deploymentId = ltiIdToken.getClaim(ArtemisLtiClaims.LTI_DEPLOYMENT_ID);
-
-        JSONObject resourceLinkClaim = ltiIdToken.getClaim(ArtemisLtiClaims.RESOURCE_LINK);
-        this.resourceLinkId = resourceLinkClaim != null ? (String) resourceLinkClaim.get("id") : null;
-        this.targetLinkUri = ltiIdToken.getClaim(ArtemisLtiClaims.TARGET_LINK_URI);
-
+        this.resourceLinkId = ltiIdToken.getClaim(ArtemisLtiClaims.RESOURCE_LINK) != null ? (String) new JSONObject(ltiIdToken.getClaim(ArtemisLtiClaims.RESOURCE_LINK)).get("id")
+                : null;
         this.agsClaim = Lti13AgsClaim.from(ltiIdToken).orElse(null);
 
         Assert.notNull(iss, "Iss must not be empty in LTI 1.3 launch request");
         Assert.notNull(sub, "Sub must not be empty in LTI 1.3 launch request");
         Assert.notNull(deploymentId, "DeploymentId must not be empty in LTI 1.3 launch request");
         Assert.notNull(resourceLinkId, "ResourceLinkId must not be empty in LTI 1.3 launch request");
-        Assert.notNull(targetLinkUri, "TargetLinkUri must not be empty in LTI 1.3 launch request");
         Assert.notNull(clientRegistrationId, "ClientRegistrationId must not be empty in LTI 1.3 launch request");
     }
 
@@ -51,10 +45,6 @@ public class Lti13LaunchRequest {
 
     public String getResourceLinkId() {
         return resourceLinkId;
-    }
-
-    public String getTargetLinkUri() {
-        return targetLinkUri;
     }
 
     public Lti13AgsClaim getAgsClaim() {

@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain.lti;
 
 import java.util.*;
 
-import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 
@@ -21,13 +20,13 @@ public class Lti13AgsClaim {
      * @return an Ags-Claim if one was present in idToken.
      */
     public static Optional<Lti13AgsClaim> from(OidcIdToken idToken) {
-        JSONObject agsClaimJson = idToken.getClaim(ArtemisLtiClaims.AGS_CLAIM);
+        JSONObject agsClaimJson = idToken.getClaim(ArtemisLtiClaims.AGS_CLAIM) != null ? new JSONObject(idToken.getClaim(ArtemisLtiClaims.AGS_CLAIM)) : null;
         if (agsClaimJson == null) {
             return Optional.empty();
         }
 
         Lti13AgsClaim agsClaim = new Lti13AgsClaim();
-        JSONArray scopes = (JSONArray) agsClaimJson.get("scope");
+        ArrayList<String> scopes = (ArrayList<String>) agsClaimJson.get("scope");
 
         if (scopes == null) {
             return Optional.empty();
