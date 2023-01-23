@@ -20,7 +20,8 @@ class FeedbackGroupWrong extends FeedbackGroup {
     }
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        return feedbackItem.credits !== undefined && feedbackItem.credits < 0;
+        const isNotSubsequentFeedback = feedbackItem.type !== 'Subsequent';
+        return feedbackItem.credits !== undefined && feedbackItem.credits < 0 && isNotSubsequentFeedback;
     }
 }
 
@@ -36,7 +37,8 @@ class FeedbackGroupInfo extends FeedbackGroup {
     }
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        return feedbackItem.credits !== undefined && feedbackItem.credits === 0;
+        const isSubsequentFeedback = feedbackItem.type === 'Subsequent';
+        return (feedbackItem.credits !== undefined && feedbackItem.credits === 0) || isSubsequentFeedback;
     }
 }
 
@@ -52,6 +54,7 @@ class FeedbackGroupCorrect extends FeedbackGroup {
     }
 
     shouldContain(feedbackItem: FeedbackItem): boolean {
-        return feedbackItem.credits !== undefined && feedbackItem.credits > 0;
+        const isNotSubsequentFeedback = feedbackItem.type !== 'Subsequent';
+        return feedbackItem.credits !== undefined && feedbackItem.credits > 0 && isNotSubsequentFeedback;
     }
 }
