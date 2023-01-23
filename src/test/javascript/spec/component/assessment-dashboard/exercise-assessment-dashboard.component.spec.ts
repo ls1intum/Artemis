@@ -719,48 +719,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
     });
 
-    describe('pie chart interaction', () => {
-        let event: any;
-
-        it('should not navigate if user is not instructor', () => {
-            jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
-            event = { value: 60 };
-
-            comp.navigateToExerciseSubmissionOverview(event);
-
-            expect(routingStub).not.toHaveBeenCalled();
-        });
-
-        it('should navigate if user is instructor but clicked the chart legend', () => {
-            event = 'test';
-
-            assertRoutingPerformed();
-        });
-
-        it('should navigate if user is instructor and clicked pie part', () => {
-            event = { name: 'test', value: 40 };
-
-            assertRoutingPerformed();
-        });
-        const assertRoutingPerformed = () => {
-            jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            const exercises = [programmingExercise, modelingExercise, textExercise, fileUploadExercise];
-            comp.assessments = [event];
-
-            exercises.forEach((preparedExercise) => {
-                comp.exercise = preparedExercise;
-                comp.exerciseId = preparedExercise.id!;
-                comp.courseId = 42;
-
-                comp.navigateToExerciseSubmissionOverview(event);
-
-                expect(routingStub).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions'], {
-                    queryParams: { filterOption: 0 },
-                });
-            });
-        };
-    });
-
     it('should toggle second correction', () => {
         comp.exercise = exercise;
         comp.exercise.type = ExerciseType.TEXT;

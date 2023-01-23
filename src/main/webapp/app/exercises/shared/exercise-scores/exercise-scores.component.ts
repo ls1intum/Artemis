@@ -30,7 +30,7 @@ import dayjs from 'dayjs/esm';
 /**
  * Filter properties for a result
  */
-enum FilterProp {
+export enum FilterProp {
     ALL = 'all',
     BUILD_FAILED = 'build-failed',
     MANUAL = 'manual',

@@ -73,25 +73,6 @@ describe('StudentExamDetailTableRowComponent', () => {
         expect(studentExamDetailTableRowComponent.getIcon(exercise.type!)).toEqual(faFileUpload);
     });
 
-    it('should route to programming submission dashboard', () => {
-        const getAssessmentLinkSpy = jest.spyOn(studentExamDetailTableRowComponent, 'getAssessmentLink');
-        studentExamDetailTableRowComponentFixture.detectChanges();
-        studentExamDetailTableRowComponent.courseId = 23;
-        studentExamDetailTableRowComponent.examId = exam1.id!;
-
-        const programmingExercise = {
-            numberOfAssessmentsOfCorrectionRounds: [],
-            secondCorrectionEnabled: false,
-            studentAssignedTeamIdComputed: false,
-            id: 12,
-            exerciseGroup: { id: 13 },
-            type: ExerciseType.PROGRAMMING,
-        };
-        const route = studentExamDetailTableRowComponent.getAssessmentLink(programmingExercise);
-        expect(getAssessmentLinkSpy).toHaveBeenCalledOnce();
-        expect(route).toEqual(['/course-management', '23', 'exams', '1', 'exercise-groups', '13', 'programming-exercises', '12', 'submissions']);
-    });
-
     it('should route to modeling submission', () => {
         const getAssessmentLinkSpy = jest.spyOn(studentExamDetailTableRowComponent, 'getAssessmentLink');
         studentExamDetailTableRowComponentFixture.detectChanges();

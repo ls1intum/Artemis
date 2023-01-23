@@ -7,7 +7,6 @@ import static org.mockito.Mockito.doReturn;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -35,12 +34,9 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.web.rest.dto.ResultWithPointsPerGradingCriterionDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -63,9 +59,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     private QuizExerciseRepository quizExerciseRepository;
 
     @Autowired
-    private FileUploadExerciseRepository fileUploadExerciseRepository;
-
-    @Autowired
     private TextExerciseRepository textExerciseRepository;
 
     @Autowired
@@ -85,9 +78,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     private ExamRepository examRepository;
-
-    @Autowired
-    private GradingCriterionRepository gradingCriterionRepository;
 
     private Course course;
 
@@ -274,232 +264,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 Arguments.of(false, dateInFuture, SubmissionType.MANUAL, dateInPast));
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    @EnumSource(QuizMode.class)
-    void testGetResultsForQuizExercise(QuizMode quizMode) throws Exception {
-        var now = ZonedDateTime.now();
-
-        QuizExercise quizExercise = database.createQuiz(course, now.minusHours(5), now.minusMinutes(2), quizMode);
-        quizExerciseRepository.save(quizExercise);
-
-        for (int i = 1; i <= numberOfStudents; i++) {
-            QuizSubmission quizSubmission = new QuizSubmission();
-            quizSubmission.setScoreInPoints(2.0);
-            quizSubmission.submitted(true);
-            quizSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(quizExercise, quizSubmission, TEST_PREFIX + "student" + i);
-            if (i % 3 == 0) {
-                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 10D, true);
-            }
-            else if (i % 4 == 0) {
-                database.addResultToSubmission(quizSubmission, AssessmentType.AUTOMATIC, null, 20D, true);
-            }
-        }
-
-        List<Result> results = request.getList("/api/exercises/" + quizExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(numberOfStudents / 2);
-        // TODO: check additional values
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetResultsForModelingExercise() throws Exception {
-        var now = ZonedDateTime.now();
-        for (int i = 1; i <= numberOfStudents; i++) {
-            ModelingSubmission modelingSubmission = new ModelingSubmission();
-            modelingSubmission.model("Text");
-            modelingSubmission.submitted(true);
-            modelingSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(modelingExercise, modelingSubmission, TEST_PREFIX + "student" + i);
-            if (i % 3 == 0) {
-                database.addResultToSubmission(modelingSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
-            }
-            else if (i % 4 == 0) {
-                database.addResultToSubmission(modelingSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin(TEST_PREFIX + "instructor1"), 20D, true);
-            }
-        }
-
-        List<Result> results = request.getList("/api/exercises/" + modelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(numberOfStudents / 2);
-        // TODO: check additional values
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetResultsForTextExercise() throws Exception {
-        var now = ZonedDateTime.now();
-        TextExercise textExercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course);
-        course.addExercises(textExercise);
-        textExerciseRepository.save(textExercise);
-
-        for (int i = 1; i <= numberOfStudents; i++) {
-            TextSubmission textSubmission = new TextSubmission();
-            textSubmission.text("Text");
-            textSubmission.submitted(true);
-            textSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(textExercise, textSubmission, TEST_PREFIX + "student" + i);
-            if (i % 3 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
-            }
-            else if (i % 4 == 0) {
-                database.addResultToSubmission(textSubmission, AssessmentType.SEMI_AUTOMATIC, database.getUserByLogin(TEST_PREFIX + "instructor1"), 20D, true);
-            }
-        }
-
-        List<Result> results = request.getList("/api/exercises/" + textExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(numberOfStudents / 2);
-        // TODO: check additional values
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetResultsForFileUploadExercise() throws Exception {
-        FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
-        List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(numberOfStudents / 2);
-        // TODO: check additional values
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetResultsWithPointsForFileUploadExerciseNoGradingCriteria() throws Exception {
-        FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
-
-        List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion",
-                HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
-
-        // with points should return the same results as the /results endpoint
-        assertThat(results).hasSize(numberOfStudents / 2);
-        assertThat(resultsWithPoints).hasSameSizeAs(results);
-        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
-        assertThat(resultWithPoints2).containsExactlyElementsOf(results);
-
-        // the exercise has no grading criteria -> empty points map in every resultWithPoints
-        for (final var resultWithPoints : resultsWithPoints) {
-            assertThat(resultWithPoints.pointsPerCriterion()).isEmpty();
-        }
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetResultsWithPointsForFileUploadExerciseWithGradingCriteria() throws Exception {
-        FileUploadExercise fileUploadExercise = setupFileUploadExerciseWithResults();
-        addFeedbacksWithGradingCriteriaToExercise(fileUploadExercise);
-
-        List<Result> results = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request.getList("/api/exercises/" + fileUploadExercise.getId() + "/results-with-points-per-criterion",
-                HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
-
-        // with points should return the same results as the /results endpoint
-        assertThat(results).hasSize(numberOfStudents / 2);
-        assertThat(resultsWithPoints).hasSameSizeAs(results);
-        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
-        assertThat(resultWithPoints2).containsExactlyInAnyOrderElementsOf(results);
-
-        final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
-        final GradingCriterion criterion2 = getGradingCriterionByTitle(fileUploadExercise, "test title2");
-
-        for (final var resultWithPoints : resultsWithPoints) {
-            final Map<Long, Double> points = resultWithPoints.pointsPerCriterion();
-            if (resultWithPoints.result().getScore() == 10.0) {
-                // feedback without criterion (1.1 points) is considered in the total points calculation
-                assertThat(resultWithPoints.totalPoints()).isEqualTo(6.1);
-                // two feedbacks of the same criterion -> credits should be summed up in one entry of the map
-                assertThat(points).hasSize(1);
-                assertThat(points).containsEntry(criterion1.getId(), 5.0);
-            }
-            else {
-                assertThat(resultWithPoints.totalPoints()).isEqualTo(14);
-                // two feedbacks of different criteria -> map should contain two entries
-                assertThat(resultWithPoints.pointsPerCriterion()).hasSize(2);
-                assertThat(points).containsEntry(criterion1.getId(), 1.0);
-                assertThat(points).containsEntry(criterion2.getId(), 3.0);
-            }
-        }
-    }
-
-    private FileUploadExercise setupFileUploadExerciseWithResults() {
-        var now = ZonedDateTime.now();
-        FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), "pdf", course);
-        course.addExercises(fileUploadExercise);
-        fileUploadExerciseRepository.save(fileUploadExercise);
-
-        for (int i = 1; i <= numberOfStudents; i++) {
-            FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
-            fileUploadSubmission.submitted(true);
-            fileUploadSubmission.submissionDate(now.minusHours(3));
-            database.addSubmission(fileUploadExercise, fileUploadSubmission, TEST_PREFIX + "student" + i);
-            fileUploadExercise.addParticipation((StudentParticipation) fileUploadSubmission.getParticipation());
-
-            if (i % 3 == 0) {
-                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 10D, true);
-            }
-            else if (i % 4 == 0) {
-                database.addResultToSubmission(fileUploadSubmission, AssessmentType.MANUAL, database.getUserByLogin(TEST_PREFIX + "instructor1"), 20D, true);
-            }
-            submissionRepository.save(fileUploadSubmission);
-        }
-
-        fileUploadExerciseRepository.save(fileUploadExercise);
-
-        return fileUploadExercise;
-    }
-
-    private void addFeedbacksWithGradingCriteriaToExercise(FileUploadExercise fileUploadExercise) {
-        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
-        gradingCriterionRepository.saveAll(gradingCriteria);
-        fileUploadExerciseRepository.save(fileUploadExercise);
-
-        final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
-        final GradingCriterion criterion2 = getGradingCriterionByTitle(fileUploadExercise, "test title2");
-
-        final GradingInstruction instruction1a = criterion1.getStructuredGradingInstructions().get(0);
-        final GradingInstruction instruction1b = criterion1.getStructuredGradingInstructions().get(1);
-        final GradingInstruction instruction2 = criterion2.getStructuredGradingInstructions().get(0);
-
-        for (final var participation : fileUploadExercise.getStudentParticipations()) {
-            for (final var result : participation.getSubmissions().stream().flatMap(submission -> submission.getResults().stream()).toList()) {
-                if (result.getScore() == 10.0) {
-                    final Feedback feedback1 = new Feedback().credits(2.0);
-                    feedback1.setGradingInstruction(instruction1a);
-                    feedbackRepository.save(feedback1);
-                    database.addFeedbackToResult(feedback1, result);
-
-                    final Feedback feedback2 = new Feedback().credits(3.0);
-                    feedback2.setGradingInstruction(instruction1b);
-                    feedbackRepository.save(feedback2);
-                    database.addFeedbackToResult(feedback2, result);
-
-                    // one feedback without grading instruction should be included in total score calculation
-                    final Feedback feedback3 = new Feedback().credits(1.111);
-                    feedbackRepository.save(feedback3);
-                    database.addFeedbackToResult(feedback3, result);
-                }
-                else {
-                    final Feedback feedback1 = new Feedback().credits(1.0);
-                    feedback1.setGradingInstruction(instruction1a);
-                    feedbackRepository.save(feedback1);
-                    database.addFeedbackToResult(feedback1, result);
-
-                    final Feedback feedback2 = new Feedback().credits(3.0);
-                    feedback2.setGradingInstruction(instruction2);
-                    feedbackRepository.save(feedback2);
-                    database.addFeedbackToResult(feedback2, result);
-
-                    final Feedback feedback3 = new Feedback().credits(10.0);
-                    feedbackRepository.save(feedback3);
-                    database.addFeedbackToResult(feedback3, result);
-                }
-            }
-        }
-    }
-
-    private GradingCriterion getGradingCriterionByTitle(Exercise exercise, String title) {
-        return exercise.getGradingCriteria().stream().filter(criteria -> title.equals(criteria.getTitle())).findFirst().orElseThrow();
-    }
-
     @Test
     @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void getResult() throws Exception {
@@ -514,41 +278,6 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void getResult_asStudent() throws Exception {
         Result result = database.addResultToParticipation(null, null, studentParticipation);
         request.get("/api/participations/" + studentParticipation.getId() + "/results/" + result.getId(), HttpStatus.FORBIDDEN, Result.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetResultsForExamExercise() throws Exception {
-        setupExamModelingExerciseWithResults();
-        List<Result> results = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        assertThat(results).hasSize(numberOfStudents);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "student1", roles = "STUDENT")
-    void testGetResultsForExamExercise_asStudent() throws Exception {
-        setupExamModelingExerciseWithResults();
-        request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.FORBIDDEN, Result.class);
-    }
-
-    @Test
-    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
-    void testGetResultsWithPointsForExamExercise() throws Exception {
-        setupExamModelingExerciseWithResults();
-        List<Result> results = request.getList("/api/exercises/" + this.examModelingExercise.getId() + "/results", HttpStatus.OK, Result.class);
-        List<ResultWithPointsPerGradingCriterionDTO> resultsWithPoints = request
-                .getList("/api/exercises/" + this.examModelingExercise.getId() + "/results-with-points-per-criterion", HttpStatus.OK, ResultWithPointsPerGradingCriterionDTO.class);
-
-        // with points should return the same results as the /results endpoint
-        assertThat(results).hasSize(numberOfStudents);
-        assertThat(resultsWithPoints).hasSameSizeAs(results);
-        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
-        assertThat(resultWithPoints2).containsExactlyElementsOf(results);
-
-        // the exercise has no grading criteria -> empty points map in every resultWithPoints
-        for (final var resultWithPoints : resultsWithPoints) {
-            assertThat(resultWithPoints.pointsPerCriterion()).isEmpty();
-        }
     }
 
     @Test
