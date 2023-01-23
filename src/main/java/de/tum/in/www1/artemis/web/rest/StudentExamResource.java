@@ -590,6 +590,8 @@ public class StudentExamResource {
      */
     private void prepareStudentExamForConduction(HttpServletRequest request, User currentUser, StudentExam studentExam) {
 
+        // TODO: Figure out whats going wrong here. Passes locally but not on CI.
+
         // In case the studentExam is not yet started, a new participation with a specific initialization date should be created - isStarted uses Boolean
         if (studentExam.getExam().isTestExam()) {
             boolean setupTestExamNeeded = studentExam.isStarted() == null || !studentExam.isStarted();
