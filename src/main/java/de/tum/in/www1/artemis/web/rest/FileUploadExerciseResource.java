@@ -119,6 +119,20 @@ public class FileUploadExerciseResource {
         return ResponseEntity.created(new URI("/api/file-upload-exercises/" + result.getId())).body(result);
     }
 
+    /**
+     * POST file-upload--exercises/import: Imports an existing file upload exercise into an existing course
+     * <p>
+     * This will import the whole exercise except for the participations and Dates.
+     * Referenced entities will get cloned and assigned a new id.
+     * Uses {@link FileUploadExerciseImportService}.
+     *
+     * @param sourceId The ID of the original exercise which should get imported
+     * @param importedFileUploadExercise The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
+     * @throws URISyntaxException When the URI of the response entity is invalid
+     *
+     * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
+     *         (403) if the user is not at least an editor in the target course.
+     */
     @PostMapping("file-upload-exercises/import/{sourceId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<FileUploadExercise> importFileUploadExercise(@PathVariable long sourceId, @RequestBody FileUploadExercise importedFileUploadExercise)
@@ -134,7 +148,7 @@ public class FileUploadExerciseResource {
         final var originalFileUploadExercise = fileUploadExerciseRepository.findByIdElseThrow(sourceId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, importedFileUploadExercise, user);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, originalFileUploadExercise, user);
-        // validates general settings: points, dates
+        // validates general settings: points, dates, exam score included completely
         importedFileUploadExercise.validateGeneralSettings();
 
         final var newFileUploadExercise = fileUploadExerciseImportService.importFileUploadExercise(originalFileUploadExercise, importedFileUploadExercise);
