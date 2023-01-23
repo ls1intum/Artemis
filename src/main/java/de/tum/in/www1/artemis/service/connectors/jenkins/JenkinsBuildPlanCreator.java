@@ -1,10 +1,7 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -15,14 +12,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
-import org.springframework.util.StreamUtils;
 import org.w3c.dom.Document;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
@@ -94,14 +89,12 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         this.artemisNotificationUrl = ARTEMIS_SERVER_URL + Constants.NEW_RESULT_RESOURCE_API_PATH;
     }
 
-   /*
-   public String getPipelineScript(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,
-            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, boolean isTestwiseCoverageEnabled) {
-        var pipelinePath = getResourcePath(programmingLanguage, projectType, isStaticCodeAnalysisEnabled, isSequentialRuns);
-        var replacements = getReplacements(programmingLanguage, projectType, internalVcsRepositoryURLs);
-        return replacePipelineScriptParameters(pipelinePath, replacements);
-    }
-    */
+    /*
+     * public String getPipelineScript(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs, boolean
+     * isStaticCodeAnalysisEnabled, boolean isSequentialRuns, boolean isTestwiseCoverageEnabled) { var pipelinePath = getResourcePath(programmingLanguage, projectType,
+     * isStaticCodeAnalysisEnabled, isSequentialRuns); var replacements = getReplacements(programmingLanguage, projectType, internalVcsRepositoryURLs); return
+     * replacePipelineScriptParameters(pipelinePath, replacements); }
+     */
 
     private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs) {
         Map<String, String> replacements = new HashMap<>();
@@ -119,57 +112,29 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_DEFAULT_BRANCH, defaultBranch);
 
         /*
-        // at the moment, only Java and Swift are supported
-        if (isStaticCodeAnalysisEnabled) {
-            String staticCodeAnalysisScript = createStaticCodeAnalysisScript(programmingLanguage, projectType);
-            replacements.put(REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript);
-        }
-        // replace testwise coverage analysis placeholder
-        String testwiseCoverageAnalysisMavenProfile = "";
-        String testwiseCoverageAnalysisGradleTask = "";
-        String testwiseCoverageAnalysisScript = "";
-        if (isTestwiseCoverageAnalysisEnabled) {
-            testwiseCoverageAnalysisMavenProfile = "-Pcoverage";
-            testwiseCoverageAnalysisGradleTask = "tiaTests --run-all-tests";
-            testwiseCoverageAnalysisScript = createTestwiseCoverageAnalysisScript(projectType);
-        }
-        replacements.put(REPLACE_TESTWISE_COVERAGE_MAVEN_PROFILE, testwiseCoverageAnalysisMavenProfile);
-        replacements.put(REPLACE_TESTWISE_COVERAGE_GRADLE_TASK, testwiseCoverageAnalysisGradleTask);
-        replacements.put(REPLACE_TESTWISE_COVERAGE_SCRIPT, testwiseCoverageAnalysisScript);
-        */
+         * // at the moment, only Java and Swift are supported if (isStaticCodeAnalysisEnabled) { String staticCodeAnalysisScript =
+         * createStaticCodeAnalysisScript(programmingLanguage, projectType); replacements.put(REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript); } // replace testwise
+         * coverage analysis placeholder String testwiseCoverageAnalysisMavenProfile = ""; String testwiseCoverageAnalysisGradleTask = ""; String testwiseCoverageAnalysisScript =
+         * ""; if (isTestwiseCoverageAnalysisEnabled) { testwiseCoverageAnalysisMavenProfile = "-Pcoverage"; testwiseCoverageAnalysisGradleTask = "tiaTests --run-all-tests";
+         * testwiseCoverageAnalysisScript = createTestwiseCoverageAnalysisScript(projectType); } replacements.put(REPLACE_TESTWISE_COVERAGE_MAVEN_PROFILE,
+         * testwiseCoverageAnalysisMavenProfile); replacements.put(REPLACE_TESTWISE_COVERAGE_GRADLE_TASK, testwiseCoverageAnalysisGradleTask);
+         * replacements.put(REPLACE_TESTWISE_COVERAGE_SCRIPT, testwiseCoverageAnalysisScript);
+         */
 
         return replacements;
     }
     /*
-    private String[] getResourcePath(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
-        if (programmingLanguage == null) {
-            throw new IllegalArgumentException("ProgrammingLanguage should not be null");
-        }
-        final var pipelineScriptFilename = isStaticCodeAnalysisEnabled ? "Jenkinsfile-staticCodeAnalysis" : "Jenkinsfile";
-        final var regularOrSequentialDir = isSequentialRuns ? "sequentialRuns" : "regularRuns";
-        final var programmingLanguageName = programmingLanguage.name().toLowerCase();
-
-        Optional<String> projectTypeName;
-
-        // Set a project type name in case the chosen Jenkinsfile also depend on the project type
-        if (projectType.isPresent() && ProgrammingLanguage.C.equals(programmingLanguage)) {
-            projectTypeName = Optional.of(projectType.get().name().toLowerCase(Locale.ROOT));
-        }
-        else if (projectType.isPresent() && projectType.get().isGradle()) {
-            projectTypeName = Optional.of("gradle");
-        }
-        // Maven is also the project type for all other Java exercises (also if the project type is not present)
-        else if (ProgrammingLanguage.JAVA.equals(programmingLanguage)) {
-            projectTypeName = Optional.of("maven");
-        }
-        else {
-            projectTypeName = Optional.empty();
-        }
-
-        return projectTypeName.map(name -> new String[] { "templates", "jenkins", programmingLanguageName, name, regularOrSequentialDir, pipelineScriptFilename })
-                .orElseGet(() -> new String[] { "templates", "jenkins", programmingLanguageName, regularOrSequentialDir, pipelineScriptFilename });
-    }
-    */
+     * private String[] getResourcePath(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns) {
+     * if (programmingLanguage == null) { throw new IllegalArgumentException("ProgrammingLanguage should not be null"); } final var pipelineScriptFilename =
+     * isStaticCodeAnalysisEnabled ? "Jenkinsfile-staticCodeAnalysis" : "Jenkinsfile"; final var regularOrSequentialDir = isSequentialRuns ? "sequentialRuns" : "regularRuns"; final
+     * var programmingLanguageName = programmingLanguage.name().toLowerCase(); Optional<String> projectTypeName; // Set a project type name in case the chosen Jenkinsfile also
+     * depend on the project type if (projectType.isPresent() && ProgrammingLanguage.C.equals(programmingLanguage)) { projectTypeName =
+     * Optional.of(projectType.get().name().toLowerCase(Locale.ROOT)); } else if (projectType.isPresent() && projectType.get().isGradle()) { projectTypeName =
+     * Optional.of("gradle"); } // Maven is also the project type for all other Java exercises (also if the project type is not present) else if
+     * (ProgrammingLanguage.JAVA.equals(programmingLanguage)) { projectTypeName = Optional.of("maven"); } else { projectTypeName = Optional.empty(); } return
+     * projectTypeName.map(name -> new String[] { "templates", "jenkins", programmingLanguageName, name, regularOrSequentialDir, pipelineScriptFilename }) .orElseGet(() -> new
+     * String[] { "templates", "jenkins", programmingLanguageName, regularOrSequentialDir, pipelineScriptFilename }); }
+     */
 
     @Override
     public Document buildBasicConfig(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,
@@ -179,7 +144,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         String jenkinsFileScript = Path.of("templates", "jenkins", "Jenkinsfile").toString();
         var replacements = getReplacements(programmingLanguage, projectType, internalVcsRepositoryURLs);
         replacePipelineScriptParameters(jenkinsFileScript, replacements);
-            // getPipelineScript(programmingLanguage, projectType, internalVcsRepositoryURLs, isStaticCodeAnalysisEnabled, isSequentialRuns, isTestwiseCoverageEnabled);
+        // getPipelineScript(programmingLanguage, projectType, internalVcsRepositoryURLs, isStaticCodeAnalysisEnabled, isSequentialRuns, isTestwiseCoverageEnabled);
         jenkinsFileScript = jenkinsFileScript.replace("'", "&apos;");
         jenkinsFileScript = jenkinsFileScript.replace("<", "&lt;");
         jenkinsFileScript = jenkinsFileScript.replace(">", "&gt;");

@@ -1,15 +1,16 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
-import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
-import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
-import de.tum.in.www1.artemis.service.ResourceLoaderService;
-import org.springframework.stereotype.Component;
-
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+
+import org.springframework.stereotype.Component;
+
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
+import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.service.ResourceLoaderService;
 
 @Component
 public class PipelineGroovyBuildPlanCreator {
@@ -32,8 +33,8 @@ public class PipelineGroovyBuildPlanCreator {
         this.resourceLoaderService = resourceLoaderService;
     }
 
-    public String getPipelineGroovyScript(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType,
-            boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns, boolean isTestwiseCoverageEnabled) {
+    public String getPipelineGroovyScript(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns,
+            boolean isTestwiseCoverageEnabled) {
         var pipelinePath = getResourcePath(programmingLanguage, projectType, isSequentialRuns);
         var replacements = getReplacements(programmingLanguage, projectType, isStaticCodeAnalysisEnabled, isTestwiseCoverageEnabled);
         String pipeline = resourceLoaderService.getResource(pipelinePath).toString();
@@ -41,8 +42,8 @@ public class PipelineGroovyBuildPlanCreator {
         return pipeline;
     }
 
-    private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType,
-            boolean isStaticCodeAnalysisEnabled, boolean isTestwiseCoverageAnalysisEnabled) {
+    private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isStaticCodeAnalysisEnabled,
+            boolean isTestwiseCoverageAnalysisEnabled) {
         Map<String, String> replacements = new HashMap<>();
         // at the moment, only Java and Swift are supported
         replacements.put(REPLACE_STATIC_CODE_ANALYSIS_ENABLED, String.valueOf(isStaticCodeAnalysisEnabled));
@@ -91,7 +92,7 @@ public class PipelineGroovyBuildPlanCreator {
         }
 
         return projectTypeName.map(name -> new String[] { "templates", "jenkins", programmingLanguageName, name, regularOrSequentialDir, pipelineScriptFilename })
-            .orElseGet(() -> new String[] { "templates", "jenkins", programmingLanguageName, regularOrSequentialDir, pipelineScriptFilename });
+                .orElseGet(() -> new String[] { "templates", "jenkins", programmingLanguageName, regularOrSequentialDir, pipelineScriptFilename });
     }
 
     // at the moment, only Java and Swift are supported
