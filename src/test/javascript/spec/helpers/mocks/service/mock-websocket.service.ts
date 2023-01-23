@@ -18,7 +18,9 @@ export class MockWebsocketService implements IWebsocketService {
 
     stompFailureCallback(): void {}
 
-    subscribe(): void {}
+    subscribe(): IWebsocketService {
+        return this;
+    }
 
     unsubscribe(): void {}
 
