@@ -216,7 +216,7 @@
             "isTeamExercise": "This is a team exercise.",
             "update": {
                 "warning": {
-                    "warning": "Warning: These changes will possibly cause problems",
+                    "warning": "Warning: These changes could cause problems",
                     "saveExerciseWithoutReevaluation": "Save without re-evaluation",
                     "problems": "To avoid inconsistencies between existing feedback and future feedback that is associated to affected grading instruction, the exercise has to be re-evaluated. This includes the recalculation of the results.",
                     "instructionDeleted": "Grading instruction deleted",
