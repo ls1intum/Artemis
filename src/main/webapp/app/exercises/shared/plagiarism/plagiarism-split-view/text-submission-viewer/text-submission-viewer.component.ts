@@ -258,7 +258,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
             }
         });
 
-        for (let i = matches.last()!.from.line; i < rows.length; i++) {
+        for (let i = matches.last()!.to.line; i < rows.length; i++) {
             if (rows[i]) {
                 rows[i] = escape(rows[i]);
             }
