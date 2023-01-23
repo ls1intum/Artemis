@@ -163,8 +163,7 @@ public class SecurityConfiguration {
         )
         .apply(securityConfigurerAdapter());
 
-        // TODO: currently disabled because it is not fully working yet
-//        http.apply(new CustomLti13Configurer());
+        http.apply(new CustomLti13Configurer());
         // @formatter:on
 
         return http.build();

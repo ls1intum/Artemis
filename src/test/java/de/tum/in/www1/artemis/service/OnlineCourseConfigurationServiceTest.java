@@ -8,7 +8,6 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AuthorizationGrantType;
 
 import de.tum.in.www1.artemis.config.lti.CustomLti13Configurer;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
@@ -57,7 +56,7 @@ class OnlineCourseConfigurationServiceTest {
 
         ClientRegistration clientRegistration = onlineCourseConfigurationService.getClientRegistration(onlineCourseConfiguration);
 
-        assertEquals(AuthorizationGrantType.CLIENT_CREDENTIALS, clientRegistration.getAuthorizationGrantType());
+        assertEquals("implicit", clientRegistration.getAuthorizationGrantType().getValue());
         assertThat(clientRegistration.getScopes()).hasSize(1).contains("openid");
         assertEquals("reg", clientRegistration.getRegistrationId());
         assertEquals(artemisServerUrl + CustomLti13Configurer.LTI13_LOGIN_REDIRECT_PROXY_PATH, clientRegistration.getRedirectUri());
