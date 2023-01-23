@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -180,7 +181,7 @@ public class TutorialGroupSessionResource {
     /**
      * DTO for updating the attendance count of a tutorial group session
      */
-    public record TutorialGroupSessionAttendanceCountDTO(@Min(0) @NotNull Integer attendanceCount) {
+    public record TutorialGroupSessionAttendanceCountDTO(@Min(0) @Max(2000) Integer attendanceCount) {
     }
 
     /**
