@@ -7,7 +7,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DueDateStat } from 'app/course/dashboards/due-date-stat.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
-import { Exercise, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { CourseCardComponent } from 'app/overview/course-card.component';
@@ -33,6 +33,7 @@ import { of } from 'rxjs';
 import dayjs from 'dayjs/esm';
 import { Exam } from 'app/entities/exam.model';
 import { QuizExercise, QuizMode } from 'app/entities/quiz/quiz-exercise.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -64,7 +65,7 @@ const activeQuiz: QuizExercise = {
     id: 8,
     isActiveQuiz: true,
     quizMode: QuizMode.SYNCHRONIZED,
-    participationStatus: ParticipationStatus.QUIZ_ACTIVE,
+    studentParticipations: [{ initializationState: InitializationState.INITIALIZED }],
     numberOfAssessmentsOfCorrectionRounds: [],
     secondCorrectionEnabled: false,
     studentAssignedTeamIdComputed: false,

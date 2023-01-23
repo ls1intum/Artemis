@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnDestroy, Output } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { faCalendarAlt, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { EMPTY, Subject, from } from 'rxjs';
@@ -13,6 +13,7 @@ import { catchError, takeUntil } from 'rxjs/operators';
 @Component({
     selector: 'jhi-tutorial-group-row-buttons',
     templateUrl: './tutorial-group-row-buttons.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupRowButtonsComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();
@@ -36,7 +37,7 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
 
     openSessionDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupSessionsManagementComponent, { size: 'xl', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(TutorialGroupSessionsManagementComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroupId = this.tutorialGroup.id!;
         modalRef.componentInstance.initialize();
@@ -50,7 +51,7 @@ export class TutorialGroupRowButtonsComponent implements OnDestroy {
 
     openRegistrationDialog(event: MouseEvent) {
         event.stopPropagation();
-        const modalRef: NgbModalRef = this.modalService.open(RegisteredStudentsComponent, { size: 'xl', scrollable: false, backdrop: 'static' });
+        const modalRef: NgbModalRef = this.modalService.open(RegisteredStudentsComponent, { size: 'xl', scrollable: false, backdrop: 'static', animation: false });
         modalRef.componentInstance.course = this.course;
         modalRef.componentInstance.tutorialGroupId = this.tutorialGroup.id!;
         modalRef.componentInstance.initialize();

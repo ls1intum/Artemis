@@ -1,7 +1,7 @@
 import { SimpleChanges } from '@angular/core';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import dayjs from 'dayjs/esm';
-import { InitializationState, Participation } from 'app/entities/participation/participation.model';
+import { Participation } from 'app/entities/participation/participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
@@ -11,7 +11,6 @@ import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-upda
 import { ExerciseServicable } from 'app/exercises/shared/exercise/exercise.service';
 import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
-import { hasResults } from 'app/exercises/shared/participation/participation.utils';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
@@ -144,59 +143,6 @@ export const hasStudentParticipations = (exercise: Exercise) => {
 };
 
 /**
- * Handles the evaluation of participation status.
- *
- * @param exercise
- * @param testRun if specified, filters the student participations according to this flag
- * @return {ParticipationStatus}
- */
-export const participationStatus = (exercise: Exercise, testRun?: boolean): ParticipationStatus => {
-    let studentParticipation: StudentParticipation | undefined;
-    if (testRun === undefined) {
-        studentParticipation = exercise.studentParticipations?.first();
-    } else {
-        studentParticipation = exercise.studentParticipations?.filter((participation: StudentParticipation) => !!participation.testRun === testRun).first();
-    }
-
-    // For team exercises check whether the student has been assigned to a team yet
-    if (exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId) {
-        return ParticipationStatus.NO_TEAM_ASSIGNED;
-    }
-
-    // Evaluate the participation status for quiz exercises.
-    if (exercise.type === ExerciseType.QUIZ) {
-        return participationStatusForQuizExercise(exercise);
-    }
-
-    // Evaluate the participation status for modeling, text and file upload exercises if the exercise has participations.
-    if (exercise.type && [ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(exercise.type) && studentParticipation) {
-        return participationStatusForModelingTextFileUploadExercise(exercise);
-    }
-
-    const programmingExerciseStates = [
-        InitializationState.UNINITIALIZED,
-        InitializationState.REPO_COPIED,
-        InitializationState.REPO_CONFIGURED,
-        InitializationState.BUILD_PLAN_COPIED,
-        InitializationState.BUILD_PLAN_CONFIGURED,
-    ];
-
-    // The following evaluations are relevant for programming exercises in general and for modeling, text and file upload exercises that don't have participations.
-    if (!studentParticipation || programmingExerciseStates.includes(studentParticipation.initializationState!)) {
-        const relevantDueDate = getExerciseDueDate(exercise, studentParticipation);
-        const isAfterDueDate = relevantDueDate && dayjs().isAfter(relevantDueDate);
-        if (exercise.type === ExerciseType.PROGRAMMING && isAfterDueDate && !testRun) {
-            return ParticipationStatus.EXERCISE_MISSED;
-        } else {
-            return ParticipationStatus.UNINITIALIZED;
-        }
-    } else if (studentParticipation.initializationState === InitializationState.INITIALIZED) {
-        return ParticipationStatus.INITIALIZED;
-    }
-    return ParticipationStatus.INACTIVE;
-};
-
-/**
  * Determines if the exercise can be started, this is the case if:
  * - It is after the start date or the participant is at least a tutor
  * - In case of a programming exercise it is not before the due date
@@ -232,53 +178,6 @@ export const isStartPracticeAvailable = (exercise: Exercise): boolean => {
             return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate) && !exercise.teamMode;
         default:
             return false;
-    }
-};
-
-/**
- * Handles the evaluation of participation status for quiz exercises.
- *
- * @param exercise
- * @return {ParticipationStatus}
- */
-const participationStatusForQuizExercise = (exercise: Exercise): ParticipationStatus => {
-    const quizExercise = exercise as QuizExercise;
-    if (quizExercise.quizEnded) {
-        if (hasStudentParticipations(exercise) && hasResults(exercise.studentParticipations![0])) {
-            return ParticipationStatus.QUIZ_FINISHED;
-        }
-        return ParticipationStatus.QUIZ_NOT_PARTICIPATED;
-    } else if (hasStudentParticipations(exercise)) {
-        if (exercise.studentParticipations![0].initializationState === InitializationState.INITIALIZED) {
-            return ParticipationStatus.QUIZ_ACTIVE;
-        } else if (exercise.studentParticipations![0].initializationState === InitializationState.FINISHED) {
-            return ParticipationStatus.QUIZ_SUBMITTED;
-        }
-    } else if (quizExercise?.quizBatches?.some((batch) => batch.started)) {
-        return ParticipationStatus.QUIZ_UNINITIALIZED;
-    }
-    return ParticipationStatus.QUIZ_NOT_STARTED;
-};
-
-/**
- * Handles the evaluation of participation status for modeling, text and file upload exercises if the exercise has participations.
- *
- * @param exercise
- * @return {ParticipationStatus}
- */
-const participationStatusForModelingTextFileUploadExercise = (exercise: Exercise): ParticipationStatus => {
-    const participation = exercise.studentParticipations![0];
-
-    // An exercise is active (EXERCISE_ACTIVE) if it is initialized and has not passed its due date.
-    // A more detailed evaluation of active exercises takes place in the result component.
-    // An exercise was missed (EXERCISE_MISSED) if it is initialized and has passed its due date (due date lies in the past).
-    if (participation.initializationState === InitializationState.INITIALIZED) {
-        return hasExerciseDueDatePassed(exercise, participation) ? ParticipationStatus.EXERCISE_MISSED : ParticipationStatus.EXERCISE_ACTIVE;
-    } else if (participation.initializationState === InitializationState.FINISHED) {
-        // An exercise was submitted (EXERCISE_SUBMITTED) if the corresponding InitializationState is set to FINISHED
-        return ParticipationStatus.EXERCISE_SUBMITTED;
-    } else {
-        return ParticipationStatus.UNINITIALIZED;
     }
 };
 

@@ -28,6 +28,7 @@ const examManagement = artemis.pageobjects.exam.management;
 
 // Common primitives
 const admin = artemis.users.getAdmin();
+const instructor = artemis.users.getInstructor();
 const student = artemis.users.getStudentOne();
 const tutor = artemis.users.getTutor();
 let exam: Exam;
@@ -71,6 +72,7 @@ describe('Exam assessment', () => {
         });
 
         beforeEach('Create exam, exercise and submission', () => {
+            cy.login(instructor);
             courseManagementRequests
                 .createProgrammingExercise(
                     { exerciseGroup },
@@ -117,6 +119,7 @@ describe('Exam assessment', () => {
 
         describe('Modeling exercise assessment', () => {
             beforeEach('Create exercise and submission', () => {
+                cy.login(instructor);
                 courseManagementRequests.createModelingExercise({ exerciseGroup }).then(() => {
                     courseManagementRequests.generateMissingIndividualExams(exam);
                     courseManagementRequests.prepareExerciseStartForExam(exam);
@@ -151,6 +154,7 @@ describe('Exam assessment', () => {
 
         describe('Text exercise assessment', () => {
             beforeEach('Create exercise and submission', () => {
+                cy.login(instructor);
                 const exerciseTitle = 'Cypress Text Exercise';
                 courseManagementRequests.createTextExercise({ exerciseGroup }, exerciseTitle);
                 courseManagementRequests.generateMissingIndividualExams(exam);
@@ -190,6 +194,7 @@ describe('Exam assessment', () => {
         });
 
         beforeEach('Create exercise and submission', () => {
+            cy.login(instructor);
             courseManagementRequests.createQuizExercise({ exerciseGroup }, [multipleChoiceQuizTemplate], 'Cypress Quiz').then((quizResponse) => {
                 courseManagementRequests.generateMissingIndividualExams(exam);
                 courseManagementRequests.prepareExerciseStartForExam(exam);
