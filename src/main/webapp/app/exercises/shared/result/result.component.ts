@@ -25,7 +25,6 @@ import { Badge, ResultService } from 'app/exercises/shared/result/result.service
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 import { ExerciseCacheService } from 'app/exercises/shared/exercise/exercise-cache.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { mergeMap, of } from 'rxjs';
 
 @Component({
     selector: 'jhi-result',
@@ -65,7 +64,7 @@ export class ResultComponent implements OnInit, OnChanges {
     badge: Badge;
     resultTooltip?: string;
 
-    latestIndividualDueDate: dayjs.Dayjs | undefined;
+    latestDueDate: dayjs.Dayjs | undefined;
 
     // Icons
     faCircleNotch = faCircleNotch;
@@ -268,21 +267,21 @@ export class ResultComponent implements OnInit, OnChanges {
      * @param componentInstance the detailed result view
      */
     private determineShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackComponent) {
-        of(this.latestIndividualDueDate)
-            .pipe(
-                mergeMap((latestDueDate) => {
-                    if (latestDueDate) {
-                        return of(latestDueDate);
-                    }
-
-                    const service = this.exerciseCacheService ?? this.exerciseService;
-                    return service.getLatestDueDate(this.exercise!.id!);
-                }),
-            )
-            .subscribe((latestDueDate) => {
-                this.latestIndividualDueDate = latestDueDate;
-                componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(this.latestIndividualDueDate);
-                componentInstance.latestIndividualDueDate = this.latestIndividualDueDate;
+        if (this.latestDueDate) {
+            this.setShowMissingAutomaticFeedbackInformation(componentInstance, this.latestDueDate);
+        } else {
+            const service = this.exerciseCacheService ?? this.exerciseService;
+            service.getLatestDueDate(this.exercise!.id!).subscribe((latestDueDate) => {
+                if (latestDueDate) {
+                    this.setShowMissingAutomaticFeedbackInformation(componentInstance, latestDueDate);
+                }
             });
+        }
+    }
+
+    private setShowMissingAutomaticFeedbackInformation(componentInstance: FeedbackComponent, latestDueDate: dayjs.Dayjs) {
+        this.latestDueDate = latestDueDate;
+        componentInstance.showMissingAutomaticFeedbackInformation = dayjs().isBefore(latestDueDate);
+        componentInstance.latestDueDate = this.latestDueDate;
     }
 }
