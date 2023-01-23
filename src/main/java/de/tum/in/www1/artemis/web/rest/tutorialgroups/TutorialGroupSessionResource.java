@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import javax.ws.rs.BadRequestException;
@@ -150,6 +151,36 @@ public class TutorialGroupSessionResource {
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
         return ResponseEntity.ok(TutorialGroupSession.preventCircularJsonConversion(result));
+    }
+
+    /**
+     * PUT /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId/attendance-count : Updates the attendance count of a tutorial group session
+     *
+     * @param courseId                               the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId                        the id of the tutorial group to which the session belongs to
+     * @param sessionId                              the id of the session to update
+     * @param tutorialGroupSessionAttendanceCountDTO DTO containing the updated attendance count
+     * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group session
+     */
+    @PutMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/attendance-count")
+    @PreAuthorize("hasRole('TA')")
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<TutorialGroupSession> updateAttendanceCount(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
+            @RequestBody @Valid TutorialGroupSessionAttendanceCountDTO tutorialGroupSessionAttendanceCountDTO) {
+        log.debug("REST request to update attendance count of session: {} of tutorial group: {} of course {} to {}", sessionId, tutorialGroupId, courseId,
+                tutorialGroupSessionAttendanceCountDTO.attendanceCount());
+        var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
+        checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
+        tutorialGroupService.isAllowedToModifySessionsOfTutorialGroup(sessionToUpdate.getTutorialGroup(), null);
+        sessionToUpdate.setAttendanceCount(tutorialGroupSessionAttendanceCountDTO.attendanceCount());
+        var result = tutorialGroupSessionRepository.save(sessionToUpdate);
+        return ResponseEntity.ok(TutorialGroupSession.preventCircularJsonConversion(result));
+    }
+
+    /**
+     * DTO for updating the attendance count of a tutorial group session
+     */
+    public record TutorialGroupSessionAttendanceCountDTO(@Min(0) @NotNull Integer attendanceCount) {
     }
 
     /**

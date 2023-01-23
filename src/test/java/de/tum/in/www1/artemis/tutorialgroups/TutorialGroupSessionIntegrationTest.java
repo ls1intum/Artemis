@@ -159,6 +159,41 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
     }
 
     @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateAttendanceCount_asTutor_shouldUpdateAttendanceCount() throws Exception {
+        // given
+        var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
+        assertThat(session.getAttendanceCount()).isNull();
+
+        // when
+        var dto = new TutorialGroupSessionResource.TutorialGroupSessionAttendanceCountDTO(20);
+        var updatedSessionId = request.putWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count", dto,
+                TutorialGroupSession.class, HttpStatus.OK).getId();
+
+        // then
+        var updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(updatedSessionId);
+        assertThat(updatedSession.getId()).isEqualTo(session.getId());
+        session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
+        assertThat(session.getAttendanceCount()).isEqualTo(20);
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(session.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor2", roles = "TA")
+    void updateAttendanceCount_asNotTutorOfGroup_shouldReturnForbidden() throws Exception {
+        // given
+        var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
+        // when / then
+        var dto = new TutorialGroupSessionResource.TutorialGroupSessionAttendanceCountDTO(20);
+        request.putWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count", dto, TutorialGroupSession.class,
+                HttpStatus.FORBIDDEN);
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(session.getId());
+    }
+
+    @Test
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateSession_nowOverlapsWithOtherSession_shouldReturnBadRequest() throws Exception {
         // given

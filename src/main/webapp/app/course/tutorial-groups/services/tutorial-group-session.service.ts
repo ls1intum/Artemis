@@ -16,6 +16,10 @@ export class TutorialGroupSessionDTO {
     public location?: string;
 }
 
+export class TutorialGroupSessionAttendanceCountDTO {
+    public attendanceCount?: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupSessionService {
     private resourceURL = SERVER_API_URL + 'api';
@@ -31,6 +35,19 @@ export class TutorialGroupSessionService {
         const copy = this.convertTutorialGroupSessionDatesFromClient(session);
         return this.httpClient
             .put<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
+    }
+
+    updateAttendanceCount(
+        courseId: number,
+        tutorialGroupId: number,
+        sessionId: number,
+        attendanceCountDTO: TutorialGroupSessionAttendanceCountDTO,
+    ): Observable<EntityResponseType> {
+        return this.httpClient
+            .put<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/attendance-count`, attendanceCountDTO, {
+                observe: 'response',
+            })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
     }
 
