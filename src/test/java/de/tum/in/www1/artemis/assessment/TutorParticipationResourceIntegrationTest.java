@@ -40,7 +40,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
     @BeforeEach
     void initTestCase() throws Exception {
         database.addUsers(TEST_PREFIX, 1, 5, 0, 1);
-        var courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true);
+        var courses = database.createCoursesWithExercisesAndLectures(TEST_PREFIX, true, 5);
         course1 = courses.get(0);
         exercise = course1.getExercises().iterator().next();
     }

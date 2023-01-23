@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -15,6 +15,7 @@ import { Subject } from 'rxjs';
 @Component({
     selector: 'jhi-create-tutorial-group',
     templateUrl: './create-tutorial-group.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CreateTutorialGroupComponent implements OnInit, OnDestroy {
     tutorialGroupToCreate: TutorialGroup = new TutorialGroup();

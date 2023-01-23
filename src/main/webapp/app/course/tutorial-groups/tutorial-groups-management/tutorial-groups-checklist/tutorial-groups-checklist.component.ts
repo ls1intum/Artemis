@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
@@ -13,6 +13,7 @@ import { takeUntil } from 'rxjs/operators';
 @Component({
     selector: 'jhi-tutorial-groups-checklist',
     templateUrl: './tutorial-groups-checklist.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
     isLoading = false;
@@ -29,6 +30,7 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
         private courseManagementService: CourseManagementService,
         private alertService: AlertService,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
+        private cdr: ChangeDetectorRef,
     ) {}
 
     get isFullyConfigured(): boolean {
@@ -63,7 +65,8 @@ export class TutorialGroupsChecklistComponent implements OnInit, OnDestroy {
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     ngOnDestroy(): void {

@@ -11,7 +11,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
     `,
 })
 export class TutorialGroupSessionsTableStubComponent {
-    @ContentChild(TemplateRef) extraColumn: TemplateRef<any>;
+    @ContentChild(TemplateRef, { static: true }) extraColumn: TemplateRef<any>;
 
     @Input()
     sessions: TutorialGroupSession[] = [];

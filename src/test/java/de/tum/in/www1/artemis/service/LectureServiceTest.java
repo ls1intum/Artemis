@@ -50,7 +50,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         student = database.getUserByLogin(TEST_PREFIX + "student1");
         editor = database.getUserByLogin(TEST_PREFIX + "editor1");
 
-        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false);
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(TEST_PREFIX, false, false, 0);
         // always use the lecture and course with the smallest ID, otherwise tests below related to search might fail (in a flaky way)
         course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).get().getId());
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).get();
