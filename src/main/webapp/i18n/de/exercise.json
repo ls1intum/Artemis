@@ -153,8 +153,6 @@
             "showBuildFailed": "Nur fehlgeschlagene Builds anzeigen",
             "showFailed": "Nur die letzten Einreichungen ohne Ergebnis anzeigen",
             "showNoSubmissions": "Nur ohne Einreichungen anzeigen",
-            "showUnsuccessful": "Nur nicht erfolgreiche anzeigen",
-            "showSuccessful": "Nur erfolgreiche anzeigen",
             "showManual": "Nur manuelle anzeigen",
             "showAutomatic": "Nur automatische anzeigen",
             "showLocked": "Nur gesperrte anzeigen",

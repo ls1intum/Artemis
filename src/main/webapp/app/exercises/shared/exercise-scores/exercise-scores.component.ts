@@ -25,14 +25,13 @@ import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/share
 import { faCodeBranch, faDownload, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
+import dayjs from 'dayjs/esm';
 
 /**
  * Filter properties for a result
  */
 enum FilterProp {
     ALL = 'all',
-    SUCCESSFUL = 'successful',
-    UNSUCCESSFUL = 'unsuccessful',
     BUILD_FAILED = 'build-failed',
     MANUAL = 'manual',
     AUTOMATIC = 'automatic',
@@ -79,6 +78,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     isLoading: boolean;
 
+    afterDueDate = false;
+
     // Icons
     faDownload = faDownload;
     faSync = faSync;
@@ -114,6 +115,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             forkJoin([findCourse, findExercise]).subscribe(([courseRes, exerciseRes]) => {
                 this.course = courseRes.body!;
                 this.exercise = exerciseRes.body!;
+                this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
                 // After both calls are done, the loading flag is removed. If the exercise is not a programming exercise, only the result call is needed.
                 this.participationService.findAllParticipationsByExercise(this.exercise.id!, true).subscribe((participationsResponse) => {
                     this.handleNewParticipations(participationsResponse);
@@ -179,12 +181,8 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
      * Predicate used to filter participations by the current filter prop setting
      * @param participation Participation for which to evaluate the predicate
      */
-    filterParticipationsByProp(participation: Participation): boolean {
+    filterParticipationsByProp = (participation: Participation): boolean => {
         switch (this.resultCriteria.filterProp) {
-            case FilterProp.SUCCESSFUL:
-                return !!participation.results?.[0]?.successful;
-            case FilterProp.UNSUCCESSFUL:
-                return !participation.results?.[0]?.successful;
             case FilterProp.BUILD_FAILED:
                 return !!(participation.results?.[0]?.submission && (participation.results?.[0]?.submission as ProgrammingSubmission).buildFailed);
             case FilterProp.MANUAL:
@@ -197,7 +195,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
             default:
                 return true;
         }
-    }
+    };
 
     /**
      * Returns the build plan id for a participation

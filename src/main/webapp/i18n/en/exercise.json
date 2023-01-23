@@ -153,8 +153,6 @@
             "showBuildFailed": "Show Build Failed",
             "showFailed": "Show Latest Submission without Result",
             "showNoSubmissions": "Show No Submissions",
-            "showUnsuccessful": "Show Unsuccessful",
-            "showSuccessful": "Show Successful",
             "showManual": "Show Manual",
             "showAutomatic": "Show Automatic",
             "showLocked": "Show Locked",

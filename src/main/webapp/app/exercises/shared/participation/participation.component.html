@@ -22,10 +22,7 @@
                     />
                     <span class="ms-1">{{ 'artemisApp.exercise.showNoSubmissions' | artemisTranslate }}</span>
                 </label>
-                <label
-                    class="radio-inline ms-2 mb-0 d-flex align-items-center"
-                    *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.dueDate && dayjs().isAfter(exercise.dueDate)"
-                >
+                <label class="radio-inline ms-2 mb-0 d-flex align-items-center" *ngIf="exercise.type === ExerciseType.PROGRAMMING && afterDueDate">
                     <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.NO_PRACTICE)" [value]="FilterProp.NO_PRACTICE" />
                     <span class="ms-1">{{ 'artemisApp.exercise.showNoPracticeMode' | artemisTranslate }}</span>
                 </label>
@@ -209,12 +206,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column
-                    *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.dueDate && dayjs().isAfter(exercise.dueDate)"
-                    prop="student"
-                    [minWidth]="80"
-                    [width]="80"
-                >
+                <ngx-datatable-column *ngIf="exercise.type === ExerciseType.PROGRAMMING && afterDueDate" prop="student" [minWidth]="80" [width]="80">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('testRun')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.practiceMode"> Practice Mode </span>

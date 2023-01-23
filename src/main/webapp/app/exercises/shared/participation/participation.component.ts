@@ -39,7 +39,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     readonly ExerciseType = ExerciseType;
     readonly ActionType = ActionType;
     readonly FeatureToggle = FeatureToggle;
-    readonly dayjs = dayjs;
 
     participations: StudentParticipation[] = [];
     participationsChangedDueDate: Map<number, StudentParticipation> = new Map<number, StudentParticipation>();
@@ -65,6 +64,8 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     isLoading: boolean;
 
     isSaving: boolean;
+
+    afterDueDate = false;
 
     // Icons
     faTimes = faTimes;
@@ -113,6 +114,7 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         this.hasLoadedPendingSubmissions = false;
         this.exerciseService.find(exerciseId).subscribe((exerciseResponse) => {
             this.exercise = exerciseResponse.body!;
+            this.afterDueDate = !!this.exercise.dueDate && dayjs().isAfter(this.exercise.dueDate);
             this.loadParticipations(exerciseId);
             if (this.exercise.type === ExerciseType.PROGRAMMING) {
                 this.loadSubmissions(exerciseId);

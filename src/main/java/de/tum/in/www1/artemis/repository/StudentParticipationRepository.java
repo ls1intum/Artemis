@@ -38,8 +38,6 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     Set<StudentParticipation> findByExerciseId(@Param("exerciseId") Long exerciseId);
 
-    boolean existsByExerciseId(@Param("exerciseId") Long exerciseId);
-
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p LEFT JOIN FETCH p.results r
             WHERE p.exercise.course.id = :#{#courseId}
