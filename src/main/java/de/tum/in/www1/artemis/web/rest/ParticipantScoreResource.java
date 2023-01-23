@@ -94,7 +94,7 @@ public class ParticipantScoreResource {
     public ResponseEntity<List<ScoreDTO>> getScoresOfExam(@PathVariable Long examId) {
         long start = System.currentTimeMillis();
         log.debug("REST request to get exam scores for exam : {}", examId);
-        Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+        Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, exam.getCourse(), null);
         List<ScoreDTO> scoreDTOS = participantScoreService.calculateExamScores(exam);
         log.info("getScoresOfExam took {}ms", System.currentTimeMillis() - start);

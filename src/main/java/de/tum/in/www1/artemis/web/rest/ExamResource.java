@@ -186,7 +186,7 @@ public class ExamResource {
         // NOTE: Make sure that all references are preserved here
         updatedExam.setExerciseGroups(originalExam.getExerciseGroups());
         updatedExam.setStudentExams(originalExam.getStudentExams());
-        updatedExam.setRegisteredUsers(originalExam.getRegisteredUsers());
+        updatedExam.setExamUsers(originalExam.getExamUsers());
 
         Exam result = examRepository.save(updatedExam);
 
@@ -416,7 +416,7 @@ public class ExamResource {
         if (withExerciseGroups) {
             Exam exam;
             if (withStudents) {
-                exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+                exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
             }
             else {
                 exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
@@ -425,8 +425,8 @@ public class ExamResource {
             return ResponseEntity.ok(exam);
         }
 
-        Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
-        exam.getRegisteredUsers().forEach(user -> user.setVisibleRegistrationNumber(user.getRegistrationNumber()));
+        Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
+        exam.getExamUsers().forEach(examUser -> examUser.getUser().setVisibleRegistrationNumber(examUser.getUser().getRegistrationNumber()));
 
         return ResponseEntity.ok(exam);
     }
@@ -461,7 +461,7 @@ public class ExamResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         var isInstructorInCourse = authCheckService.isAtLeastInstructorInCourse(course, null);
 
-        Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+        Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
         ExamChecklistDTO examChecklistDTO = examService.getStatsForChecklist(exam, isInstructorInCourse);
 
         return ResponseEntity.ok(examChecklistDTO);
@@ -580,7 +580,7 @@ public class ExamResource {
         examAccessService.checkCourseAccessForTeachingAssistantElseThrow(courseId);
         // We need the exercise groups and exercises for the exam status now
         List<Exam> exams = examRepository.findByCourseIdWithExerciseGroupsAndExercises(courseId);
-        examRepository.setNumberOfRegisteredUsersForExams(exams);
+        examRepository.setNumberOfExamUsersForExams(exams);
         return ResponseEntity.ok(exams);
     }
 
@@ -679,7 +679,7 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         var course = courseRepository.findByIdElseThrow(courseId);
-        var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
+        var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Add student to exam is only allowed for real exams", ENTITY_NAME, "addStudentOnlyForRealExams");
@@ -732,7 +732,7 @@ public class ExamResource {
 
     @NotNull
     private Exam checkAccessForStudentExamGenerationAndLogAuditEvent(Long courseId, Long examId, String auditEventAction) {
-        final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+        final Exam exam = examRepository.findByIdWithExamUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Generate student exams is only allowed for real exams", ENTITY_NAME, "generateStudentExamsOnlyForRealExams");
@@ -778,7 +778,7 @@ public class ExamResource {
 
     private static void breakCyclesForSerialization(List<StudentExam> studentExams) {
         for (StudentExam studentExam : studentExams) {
-            studentExam.getExam().setRegisteredUsers(null);
+            studentExam.getExam().setExamUsers(null);
             studentExam.getExam().setExerciseGroups(null);
             studentExam.getExam().setStudentExams(null);
         }
@@ -895,7 +895,7 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
+        var exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Registration of course students is only allowed for real exams", ENTITY_NAME, "AddCourseStudentsOnlyForRealExams");
@@ -929,7 +929,7 @@ public class ExamResource {
             throw new EntityNotFoundException("user", studentLogin);
         }
 
-        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Deletion of users is only allowed for real exams", ENTITY_NAME, "unregisterStudentsOnlyForRealExams");
@@ -957,7 +957,7 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
             throw new BadRequestAlertException("Deregister students is only allowed for real exams", ENTITY_NAME, "unregisterAllOnlyForRealExams");

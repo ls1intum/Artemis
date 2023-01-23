@@ -1169,7 +1169,7 @@ public class ExamService {
             studentParticipationRepository.addNumberOfExamExerciseParticipations(exerciseGroup);
         });
         // set transient number of registered users
-        examRepository.setNumberOfRegisteredUsersForExams(Collections.singletonList(exam));
+        examRepository.setNumberOfExamUsersForExams(Collections.singletonList(exam));
     }
 
     /**

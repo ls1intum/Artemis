@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.exam.ExamUser;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
@@ -81,7 +82,7 @@ public class ExamRegistrationService {
      */
     public List<StudentDTO> registerStudentsForExam(Long courseId, Long examId, List<StudentDTO> studentDTOs) {
         var course = courseRepository.findByIdElseThrow(courseId);
-        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+        var exam = examRepository.findWithExamUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
@@ -97,7 +98,10 @@ public class ExamRegistrationService {
                 notFoundStudentsDTOs.add(studentDto);
             }
             else {
-                exam.addRegisteredUser(optionalStudent.get());
+                ExamUser registeredExamUser = new ExamUser();
+                registeredExamUser.setUser(optionalStudent.get());
+                registeredExamUser.setExam(exam);
+                exam.addExamUser(registeredExamUser);
             }
         }
         examRepository.save(exam);
@@ -155,7 +159,10 @@ public class ExamRegistrationService {
             throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
-        exam.addRegisteredUser(student);
+        ExamUser registeredExamUser = new ExamUser();
+        registeredExamUser.setUser(student);
+        registeredExamUser.setExam(exam);
+        exam.addExamUser(registeredExamUser);
 
         if (!student.getGroups().contains(course.getStudentGroupName())) {
             userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
@@ -177,17 +184,18 @@ public class ExamRegistrationService {
      * @param currentUser the user to be registered in the exam
      */
     public void checkRegistrationOrRegisterStudentToTestExam(Course course, long examId, User currentUser) {
-        Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
+        Exam exam = examRepository.findByIdWithExamUsersElseThrow(examId);
 
         if (!exam.isTestExam()) {
             throw new BadRequestAlertException("Self-Registration is only allowed for test exams", "ExamRegistrationService", "SelfRegistrationOnlyForRealExams");
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
+        ExamUser registeredExamUser = currentUser.getExamUsers().stream().filter(examUser -> examUser.getExam().getId().equals(examId)).findFirst().orElseThrow();
 
-        // We only need to update the registered users, if the user is not yet registered for the test exam
-        if (!exam.getRegisteredUsers().contains(currentUser)) {
-            exam.addRegisteredUser(currentUser);
+        // We only need to update the registered exam users, if the user is not yet registered for the test exam
+        if (!exam.getExamUsers().contains(registeredExamUser)) {
+            exam.addExamUser(registeredExamUser);
             examRepository.save(exam);
 
             AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "TestExam=" + exam.getTitle());
@@ -202,7 +210,8 @@ public class ExamRegistrationService {
      * @param student                           the user object that should be unregistered
      */
     public void unregisterStudentFromExam(Exam exam, boolean deleteParticipationsAndSubmission, User student) {
-        exam.removeRegisteredUser(student);
+        ExamUser registeredExamUser = student.getExamUsers().stream().filter(examUser -> examUser.getExam().getId().equals(exam.getId())).findFirst().orElseThrow();
+        exam.removeExamUser(registeredExamUser);
 
         // Note: we intentionally do not remove the user from the course, because the student might just have "unregistered" from the exam, but should
         // still have access to the course.
@@ -243,9 +252,11 @@ public class ExamRegistrationService {
 
         // remove all registered students
         List<Long> userIds = new ArrayList<>();
-        exam.getRegisteredUsers().forEach(user -> userIds.add(user.getId()));
+        exam.getExamUsers().forEach(examUser -> userIds.add(examUser.getUser().getId()));
         List<User> registeredStudentsList = userRepository.findAllById(userIds);
-        registeredStudentsList.forEach(exam::removeRegisteredUser);
+        List<ExamUser> registeredExamUserList = registeredStudentsList.stream()
+                .map(user -> user.getExamUsers().stream().filter(examUser -> examUser.getExam().getId().equals(exam.getId())).findFirst().orElseThrow()).toList();
+        registeredExamUserList.forEach(exam::removeExamUser);
         examRepository.save(exam);
 
         // remove all students exams
@@ -273,9 +284,12 @@ public class ExamRegistrationService {
         userData.put("exam", exam.getTitle());
         for (int i = 0; i < students.size(); i++) {
             var student = students.get(i);
-            if (!exam.getRegisteredUsers().contains(student) && !student.getAuthorities().contains(ADMIN_AUTHORITY)
+            ExamUser registeredExamUser = new ExamUser();
+            registeredExamUser.setUser(student);
+            registeredExamUser.setExam(exam);
+            if (!exam.getExamUsers().contains(registeredExamUser) && !student.getAuthorities().contains(ADMIN_AUTHORITY)
                     && !student.getGroups().contains(course.getInstructorGroupName())) {
-                exam.addRegisteredUser(student);
+                exam.addExamUser(registeredExamUser);
                 userData.put("student " + i, student.toDatabaseString());
             }
         }
