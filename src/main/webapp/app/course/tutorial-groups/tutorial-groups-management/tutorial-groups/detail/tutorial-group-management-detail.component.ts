@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
 import { Subject, combineLatest, finalize, switchMap, take } from 'rxjs';
@@ -12,6 +12,7 @@ import { takeUntil } from 'rxjs/operators';
 @Component({
     selector: 'jhi-tutorial-group-management-detail',
     templateUrl: './tutorial-group-management-detail.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TutorialGroupManagementDetailComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();
@@ -22,7 +23,13 @@ export class TutorialGroupManagementDetailComponent implements OnInit, OnDestroy
     tutorialGroupId: number;
     isAtLeastInstructor = false;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private tutorialGroupService: TutorialGroupsService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private tutorialGroupService: TutorialGroupsService,
+        private alertService: AlertService,
+        private cdr: ChangeDetectorRef,
+    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -45,7 +52,8 @@ export class TutorialGroupManagementDetailComponent implements OnInit, OnDestroy
                     this.tutorialGroup = tutorialGroupResult.body!;
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     onCourseClicked = () => {

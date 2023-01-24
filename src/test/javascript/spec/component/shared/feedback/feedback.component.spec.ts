@@ -46,7 +46,7 @@ describe('FeedbackComponent', () => {
     };
 
     const makeFeedbackItem = (item: FeedbackItem) => {
-        return Object.assign({ type: 'Feedback', credits: 0, title: undefined, positive: undefined } as FeedbackItem, item);
+        return Object.assign({ type: 'Reviewer', credits: 0, title: undefined, positive: undefined } as FeedbackItem, item);
     };
 
     const generateSCAFeedbackPair = (
@@ -110,7 +110,7 @@ describe('FeedbackComponent', () => {
                 positive: credits > 0,
             }),
             item: makeFeedbackItem({
-                type: 'Feedback',
+                type: 'Reviewer',
                 name: showDetails ? 'artemisApp.course.tutor' : 'artemisApp.result.detail.feedback',
                 title,
                 text,
@@ -281,7 +281,7 @@ describe('FeedbackComponent', () => {
         comp.ngOnInit();
 
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.participation!.id!, comp.result.id);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.participation!.id!, comp.result);
         expect(comp.isLoading).toBeFalse();
     });
 
@@ -354,14 +354,5 @@ describe('FeedbackComponent', () => {
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
         expect(comp.loadingFailed).toBeTrue();
         expect(comp.isLoading).toBeFalse();
-    });
-
-    it('should hide chart if no exercise available', () => {
-        comp.showScoreChart = true;
-        comp.exercise = undefined;
-
-        comp.ngOnInit();
-
-        expect(comp.showScoreChart).toBeFalse();
     });
 });

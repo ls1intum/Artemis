@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-form.component';
@@ -15,6 +15,7 @@ import { Course } from 'app/entities/course.model';
 @Component({
     selector: 'jhi-edit-tutorial-group',
     templateUrl: './edit-tutorial-group.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class EditTutorialGroupComponent implements OnInit, OnDestroy {
     ngUnsubscribe = new Subject<void>();
@@ -26,7 +27,13 @@ export class EditTutorialGroupComponent implements OnInit, OnDestroy {
     tutorialGroupId: number;
     course: Course;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private tutorialGroupService: TutorialGroupsService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private router: Router,
+        private tutorialGroupService: TutorialGroupsService,
+        private alertService: AlertService,
+        private cdr: ChangeDetectorRef,
+    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -68,7 +75,8 @@ export class EditTutorialGroupComponent implements OnInit, OnDestroy {
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            })
+            .add(() => this.cdr.detectChanges());
     }
 
     updateTutorialGroup(formData: TutorialGroupFormData) {

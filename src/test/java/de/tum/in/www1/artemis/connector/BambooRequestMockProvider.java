@@ -185,8 +185,12 @@ public class BambooRequestMockProvider {
     }
 
     public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username) throws URISyntaxException, JsonProcessingException {
+        mockCopyBuildPlanForParticipation(exercise, username, false);
+    }
+
+    public void mockCopyBuildPlanForParticipation(ProgrammingExercise exercise, String username, boolean practiceMode) throws URISyntaxException, JsonProcessingException {
         final var projectKey = exercise.getProjectKey();
-        final var targetPlanName = username.toUpperCase();
+        final var targetPlanName = (practiceMode ? "practice" : "") + username.toUpperCase();
         mockCopyBuildPlan(projectKey, BuildPlanType.TEMPLATE.getName(), projectKey, targetPlanName, true);
     }
 

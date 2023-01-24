@@ -1,34 +1,36 @@
-import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
+import { HttpClient } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
-import { Subject, of } from 'rxjs';
-import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
-import { InitializationState } from 'app/entities/participation/participation.model';
-import { ExerciseMode, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
-import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
-import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ArtemisTestModule } from '../../../test.module';
-import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
-import { Team } from 'app/entities/team.model';
-import { User } from 'app/core/user/user.model';
+import { ComponentFixture, TestBed, fakeAsync, flush, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { Router } from '@angular/router';
+import { User } from 'app/core/user/user.model';
+import { Exercise, ExerciseMode, ExerciseType } from 'app/entities/exercise.model';
+import { InitializationState } from 'app/entities/participation/participation.model';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { QuizBatch, QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { Result } from 'app/entities/result.model';
+import { Team } from 'app/entities/team.model';
+import { TextExercise } from 'app/entities/text-exercise.model';
+import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { ExerciseDetailsStudentActionsComponent } from 'app/overview/exercise-details/exercise-details-student-actions.component';
 import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-button/clone-repo-button.component';
-import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
-import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import { ExerciseActionButtonComponent } from 'app/shared/components/exercise-action-button.component';
 import { ExtensionPointDirective } from 'app/shared/extension-point/extension-point.directive';
+import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
+import dayjs from 'dayjs/esm';
+import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { Subject, of } from 'rxjs';
 import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-router-link.directive';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
-import { Router } from '@angular/router';
-import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
-import { HttpClient } from '@angular/common/http';
-import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { Result } from 'app/entities/result.model';
-import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import dayjs from 'dayjs/esm';
+import { MockCourseExerciseService } from '../../../helpers/mocks/service/mock-course-exercise.service';
+import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
+import { ArtemisTestModule } from '../../../test.module';
 import { NgbTooltipModule } from '@ng-bootstrap/ng-bootstrap';
 import { StartPracticeModeButtonComponent } from 'app/shared/components/start-practice-mode-button/start-practice-mode-button.component';
 
@@ -113,20 +115,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         expect(startExerciseButton).toBeNull();
     }));
 
-    it('should reflect the correct participation state when a team was assigned to the student', fakeAsync(() => {
-        comp.exercise = teamExerciseWithoutTeamAssigned;
-        fixture.detectChanges();
-        tick();
-
-        expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.NO_TEAM_ASSIGNED);
-
-        comp.exercise.studentAssignedTeamId = team.id;
-        fixture.detectChanges();
-        tick();
-
-        expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.UNINITIALIZED);
-    }));
-
     it('should show the button "Team" for a team exercise for a student to view his team when assigned to a team', fakeAsync(() => {
         comp.exercise = teamExerciseWithTeamAssigned;
 
@@ -160,14 +148,15 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.UNINITIALIZED);
+        expect(comp.gradedParticipation?.initializationState).toEqual(InitializationState.UNINITIALIZED);
+
         expect(startExerciseStub).toHaveBeenCalledOnce();
         participationSubject.next(initPart);
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.INITIALIZED);
+        expect(comp.gradedParticipation?.initializationState).toEqual(InitializationState.INITIALIZED);
 
         // Check that button "Start exercise" is no longer shown
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
@@ -189,7 +178,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             allowOfflineIde: true,
             studentParticipations: [] as StudentParticipation[],
         } as ProgrammingExercise;
-        const inactivePart = { id: 2, initializationState: InitializationState.UNINITIALIZED, testRun: true } as StudentParticipation;
         const initPart = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
 
         comp.exercise = exercise;
@@ -200,26 +188,19 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         let startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).not.toBeNull();
 
-        comp.exercise.studentParticipations = [inactivePart];
-
-        fixture.detectChanges();
-        tick();
-
-        expect(comp.participationStatusWrapper(true)).toEqual(ParticipationStatus.UNINITIALIZED);
+        let cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepositoryButton).toBeNull();
 
         comp.exercise.studentParticipations = [initPart];
+        comp.practiceParticipation = initPart;
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.participationStatusWrapper(true)).toEqual(ParticipationStatus.INITIALIZED);
-
-        // Check that button "Start practice" is no longer shown
         startPracticeButton = fixture.debugElement.query(By.css('jhi-start-practice-mode-button'));
         expect(startPracticeButton).toBeNull();
 
-        // Check that button "Clone repository" is shown
-        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
+        cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
         expect(cloneRepositoryButton).not.toBeNull();
 
         fixture.destroy();
@@ -237,12 +218,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         comp.resumeProgrammingExercise(false);
 
         expect(comp.exercise.studentParticipations).toEqual([activeParticipation, practiceParticipation]);
-        expect(comp.exercise.participationStatus).toBe(ParticipationStatus.INITIALIZED);
-    });
-
-    it('should not allow to publish a build plan for text exercises', () => {
-        comp.exercise = teamExerciseWithoutTeamAssigned;
-        expect(comp.publishBuildPlanUrl()).toBeUndefined();
     });
 
     it('should disable the feedback request button', () => {
@@ -253,7 +228,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         };
 
         comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
-        comp.studentParticipation = participation;
+        comp.gradedParticipation = participation;
 
         expect(comp.isFeedbackRequestButtonDisabled()).toBeTrue();
     });
@@ -266,7 +241,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         };
 
         comp.exercise = { ...programmingExercise, allowManualFeedbackRequests: true };
-        comp.studentParticipation = participation;
+        comp.gradedParticipation = participation;
 
         expect(comp.isFeedbackRequestButtonDisabled()).toBeFalse();
     });
@@ -315,4 +290,40 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
             expect(startExerciseButton.componentInstance.overwriteDisabled).toBeTrue();
         }),
     );
+
+    describe('onInit', () => {
+        it.each([
+            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: false }, { started: true }] } as QuizExercise, true],
+            [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] } as QuizExercise, false],
+            [{ type: ExerciseType.TEXT } as TextExercise, undefined],
+        ])('should determine if it is an uninitialized quiz', (exercise: Exercise, expected: boolean) => {
+            comp.exercise = exercise;
+            comp.ngOnInit();
+            expect(comp.uninitializedQuiz).toBe(expected);
+        });
+
+        it.each([
+            [{ type: ExerciseType.QUIZ, quizBatches: [] as QuizBatch[] } as QuizExercise, true],
+            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [] as StudentParticipation[] } as QuizExercise, false],
+            [
+                { type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [{ initializationState: InitializationState.UNINITIALIZED }] } as QuizExercise,
+                false,
+            ],
+            [{ type: ExerciseType.QUIZ, quizBatches: [{ started: true }], studentParticipations: [{ initializationState: InitializationState.FINISHED }] } as QuizExercise, false],
+        ])('should determine if quiz is not started', (exercise: Exercise, expected: boolean) => {
+            comp.exercise = exercise;
+            comp.ngOnInit();
+            expect(comp.quizNotStarted).toBe(expected);
+        });
+    });
+
+    it('ngOnChanges should determine participations', () => {
+        const gradedParticipation = { id: 42 };
+        const practiceParticipation = { id: 43, testRun: true };
+
+        comp.exercise = { studentParticipations: [gradedParticipation, practiceParticipation] } as Exercise;
+        comp.ngOnChanges();
+        expect(comp.gradedParticipation).toEqual(gradedParticipation);
+        expect(comp.practiceParticipation).toEqual(practiceParticipation);
+    });
 });
