@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
-@Profile("gitlabci")
+@Profile("gitlabci | jenkins")
 @RestController
 @RequestMapping("api/")
 public class BuildPlanResource {
