@@ -80,18 +80,18 @@ public class JenkinsBuildPlanService {
     private final BuildPlanRepository buildPlanRepository;
 
     public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
-            PipelineGroovyBuildPlanCreator pipelineGroovyBuildPlanCreator, JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService,
-            JenkinsInternalUrlService jenkinsInternalUrlService, UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, JenkinsInternalUrlService jenkinsInternalUrlService,
+            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, PipelineGroovyBuildPlanCreator pipelineGroovyBuildPlanCreator,
             BuildPlanRepository buildPlanRepository) {
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
-        this.pipelineGroovyBuildPlanCreator = pipelineGroovyBuildPlanCreator;
         this.jenkinsJobService = jenkinsJobService;
         this.userRepository = userRepository;
         this.jenkinsJobPermissionsService = jenkinsJobPermissionsService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
+        this.pipelineGroovyBuildPlanCreator = pipelineGroovyBuildPlanCreator;
         this.buildPlanRepository = buildPlanRepository;
     }
 
@@ -101,23 +101,24 @@ public class JenkinsBuildPlanService {
      * @param planKey the name of the plan
      * @param repositoryURL the url of the vcs repository
      */
-    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, String buildPlanUrl) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUrls = getInternalRepositoryUrls(exercise, repositoryURL);
 
         ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
-        boolean staticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
-        boolean isSequentialTestRuns = exercise.hasSequentialTestRuns();
         var isSolutionPlan = planKey.equals(BuildPlanType.SOLUTION.getName());
-        var testwiseCoverageAnalysisEnabled = exercise.isTestwiseCoverageEnabled() && isSolutionPlan;
 
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
-        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, staticCodeAnalysisEnabled,
-                isSequentialTestRuns, testwiseCoverageAnalysisEnabled);
+        Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, isSolutionPlan,
+                buildPlanUrl);
 
         String jobFolder = exercise.getProjectKey();
         String job = jobFolder + "-" + planKey;
         jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
         givePlanPermissions(exercise, planKey);
+
+        boolean staticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
+        boolean isSequentialTestRuns = exercise.hasSequentialTestRuns();
+        boolean testwiseCoverageAnalysisEnabled = exercise.isTestwiseCoverageEnabled() && isSolutionPlan;
         BuildPlan buildPlan = new BuildPlan();
         buildPlan.setBuildPlan(pipelineGroovyBuildPlanCreator.getPipelineGroovyScript(programmingLanguage, Optional.ofNullable(exercise.getProjectType()),
                 staticCodeAnalysisEnabled, isSequentialTestRuns, testwiseCoverageAnalysisEnabled));

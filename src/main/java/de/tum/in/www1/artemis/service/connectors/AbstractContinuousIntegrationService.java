@@ -18,6 +18,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
@@ -185,5 +186,12 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      */
     protected Integer countMatchingLogs(List<BuildLogEntry> buildLogEntries, String searchString) {
         return Math.toIntExact(buildLogEntries.stream().filter(buildLogEntry -> buildLogEntry.getLog().contains(searchString)).count());
+    }
+
+    protected String generateBuildPlanURL(ProgrammingExercise exercise, ProgrammingExerciseRepository programmingExerciseRepository, String artemisServerUrl) {
+        programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
+        // We need this workaround (&file-extension=.yml) since GitLab only accepts URLs ending with .yml.
+        // See https://gitlab.com/gitlab-org/gitlab/-/issues/27526
+        return String.format("%s/api/programming-exercises/%s/build-plan?secret=%s", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
     }
 }

@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -36,10 +39,22 @@ public class PipelineGroovyBuildPlanCreator {
     public String getPipelineGroovyScript(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns,
             boolean isTestwiseCoverageEnabled) {
         var pipelinePath = getResourcePath(programmingLanguage, projectType, isSequentialRuns);
+        Resource resource = resourceLoaderService.getResource(pipelinePath);
         var replacements = getReplacements(programmingLanguage, projectType, isStaticCodeAnalysisEnabled, isTestwiseCoverageEnabled);
-        String pipeline = resourceLoaderService.getResource(pipelinePath).toString();
-        replacePipelineScriptParameters(pipeline, replacements);
-        return pipeline;
+        String pipelineScript;
+        try {
+            pipelineScript = Files.readString(resource.getFile().toPath());
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        pipelineScript = pipelineScript.replace("'", "&apos;");
+        pipelineScript = pipelineScript.replace("<", "&lt;");
+        pipelineScript = pipelineScript.replace(">", "&gt;");
+        pipelineScript = pipelineScript.replace("\\", "\\\\");
+        replacePipelineScriptParameters(pipelineScript, replacements);
+        System.out.println(pipelineScript);
+        return pipelineScript;
     }
 
     private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isStaticCodeAnalysisEnabled,

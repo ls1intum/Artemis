@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
@@ -51,6 +52,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Value("${jenkins.use-crumb:#{true}}")
     private boolean useCrumb;
 
+    @Value("${server.url}")
+    private String artemisServerUrl;
+
     private final JenkinsBuildPlanService jenkinsBuildPlanService;
 
     private final JenkinsServer jenkinsServer;
@@ -59,27 +63,32 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     private final JenkinsInternalUrlService jenkinsInternalUrlService;
 
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
             FeedbackRepository feedbackRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService,
-            JenkinsInternalUrlService jenkinsInternalUrlService, TestwiseCoverageService testwiseCoverageService) {
+            JenkinsInternalUrlService jenkinsInternalUrlService, TestwiseCoverageService testwiseCoverageService, ProgrammingExerciseRepository programmingExerciseRepository) {
         super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate,
                 testwiseCoverageService);
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     @Override
     public void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, planKey, repositoryURL, generateBuildPlanURL(exercise, programmingExerciseRepository, artemisServerUrl));
     }
 
     @Override
     public void recreateBuildPlansForExercise(ProgrammingExercise exercise) {
         final String projectKey = exercise.getProjectKey();
+
+        String buildPlanUrl = generateBuildPlanURL(exercise, programmingExerciseRepository, artemisServerUrl);
 
         if (!jenkinsBuildPlanService.projectFolderExists(projectKey)) {
             createProjectForExercise(exercise);
@@ -88,8 +97,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         deleteBuildPlan(projectKey, exercise.getTemplateBuildPlanId());
         deleteBuildPlan(projectKey, exercise.getSolutionBuildPlanId());
 
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURL(RepositoryType.TEMPLATE));
-        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURL(RepositoryType.SOLUTION));
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.TEMPLATE.getName(), exercise.getRepositoryURL(RepositoryType.TEMPLATE), buildPlanUrl);
+        jenkinsBuildPlanService.createBuildPlanForExercise(exercise, BuildPlanType.SOLUTION.getName(), exercise.getRepositoryURL(RepositoryType.SOLUTION), buildPlanUrl);
     }
 
     @Override

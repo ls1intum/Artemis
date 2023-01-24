@@ -129,7 +129,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             project.setSharedRunnersEnabled(true);
             project.setAutoDevopsEnabled(false);
 
-            project.setCiConfigPath(generateBuildPlanURL(exercise));
+            project.setCiConfigPath(generateBuildPlanURL(exercise, programmingExerciseRepository, artemisServerUrl.toString()));
 
             projectApi.updateProject(project);
         }
@@ -390,12 +390,5 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
         buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
                 dependenciesDownloadedCount);
-    }
-
-    private String generateBuildPlanURL(ProgrammingExercise exercise) {
-        programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
-        // We need this workaround (&file-extension=.yml) since GitLab only accepts URLs ending with .yml.
-        // See https://gitlab.com/gitlab-org/gitlab/-/issues/27526
-        return String.format("%s/api/programming-exercises/%s/build-plan?secret=%s&file-extension=.yml", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
     }
 }
