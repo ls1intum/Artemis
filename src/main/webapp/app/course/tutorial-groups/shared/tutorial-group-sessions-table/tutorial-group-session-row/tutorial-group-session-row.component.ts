@@ -33,7 +33,7 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
 
     @Output() attendanceChanged = new EventEmitter<TutorialGroupSession>();
 
-    persistedAttendanceCount?: number | undefined = undefined;
+    persistedAttendanceCount?: number = undefined;
     attendanceDiffersFromPersistedValue = false;
 
     isUpdatingAttendance = false;
