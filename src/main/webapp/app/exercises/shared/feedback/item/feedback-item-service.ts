@@ -27,21 +27,46 @@ export interface FeedbackItemService {
 export class FeedbackItemServiceImpl implements FeedbackItemService {
     constructor(private translateService: TranslateService) {}
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     create(feedbacks: Feedback[], showTestDetails: boolean): FeedbackItem[] {
-        return feedbacks.map((feedback) => ({
-            type: 'Feedback',
-            name: this.translateService.instant('artemisApp.result.detail.feedback'),
-            title: feedback.text,
-            text: feedback.detailText,
-            positive: feedback.positive,
-            credits: feedback.credits,
-        }));
+        return feedbacks.map((feedback) => this.createFeedbackItem(feedback, showTestDetails));
     }
 
     group(feedbackItems: FeedbackItem[]): FeedbackNode[] {
         return getAllFeedbackGroups() //
             .map((group: FeedbackGroup) => group.addAllItems(feedbackItems.filter(group.shouldContain)))
             .filter((group: FeedbackGroup) => !group.isEmpty());
+    }
+
+    private createFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
+        if (feedback.gradingInstruction) {
+            return this.createGradingInstructionFeedbackItem(feedback, showTestDetails);
+        }
+
+        return {
+            type: 'Reviewer',
+            name: this.translateService.instant('artemisApp.result.detail.feedback'),
+            title: feedback.text,
+            text: feedback.detailText,
+            positive: feedback.positive,
+            credits: feedback.credits,
+        };
+    }
+
+    /**
+     * Creates a feedback item for a manual feedback where the tutor used a grading instruction.
+     * @param feedback The manual feedback where a grading instruction was used.
+     * @param showTestDetails
+     */
+    private createGradingInstructionFeedbackItem(feedback: Feedback, showTestDetails: boolean): FeedbackItem {
+        const gradingInstruction = feedback.gradingInstruction!;
+
+        return {
+            type: feedback.isSubsequent ? 'Subsequent' : 'Reviewer',
+            name: showTestDetails ? this.translateService.instant('artemisApp.course.tutor') : this.translateService.instant('artemisApp.result.detail.feedback'),
+            title: feedback.text,
+            text: gradingInstruction.feedback + (feedback.detailText ? `\n${feedback.detailText}` : ''),
+            positive: feedback.positive,
+            credits: feedback.credits,
+        };
     }
 }

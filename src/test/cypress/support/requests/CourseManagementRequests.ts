@@ -541,6 +541,12 @@ export class CypressExamBuilder {
         return this;
     }
 
+    testExam() {
+        this.template.testExam = true;
+        this.template.numberOfCorrectionRoundsInExam = 0;
+        return this;
+    }
+
     /**
      * @param randomize if the exercise order should be randomized
      */
