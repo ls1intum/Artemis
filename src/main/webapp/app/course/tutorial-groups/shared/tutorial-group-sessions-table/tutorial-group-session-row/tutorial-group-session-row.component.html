@@ -39,6 +39,7 @@
                 min="0"
                 max="999"
                 [readOnly]="isUpdatingAttendance"
+                aria-labelledby="attendanceHeader"
             />
             <button
                 [style.visibility]="attendanceDiffersFromPersistedValue && attendance.valid ? 'visible' : 'hidden'"
