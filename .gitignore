@@ -179,7 +179,8 @@ local-vcs-repos
 /coverage
 /exports
 /src/main/docker/.env
-/src/main/resources/config/application-local.yml
+/src/main/resources/config/application-local*.yml
+!/src/main/resources/config/application-localvc.yml
 /src/main/resources/id_*
 /src/main/resources/known_hosts
 /src/test/cypress/screenshots/

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.security.localvc;
 import java.net.URL;
 import java.time.ZonedDateTime;
 import java.util.Base64;
-import java.util.List;
 import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
@@ -23,10 +22,7 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.exception.LocalVCException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.service.CourseService;
-import de.tum.in.www1.artemis.service.ExerciseDateService;
-import de.tum.in.www1.artemis.service.SubmissionPolicyService;
+import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
@@ -65,7 +61,7 @@ public class LocalVCFilterService {
 
     private final PlagiarismService plagiarismService;
 
-    private final TeamRepository teamRepository;
+    private final TeamService teamService;
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
@@ -74,7 +70,7 @@ public class LocalVCFilterService {
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ExamSubmissionService examSubmissionService,
-            SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService, TeamRepository teamRepository) {
+            SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService, TeamService teamService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -87,7 +83,7 @@ public class LocalVCFilterService {
         this.examSubmissionService = examSubmissionService;
         this.submissionPolicyService = submissionPolicyService;
         this.plagiarismService = plagiarismService;
-        this.teamRepository = teamRepository;
+        this.teamService = teamService;
     }
 
     /**
@@ -204,12 +200,15 @@ public class LocalVCFilterService {
 
         // ---- Requesting one of the participant repositories. ----
 
-        // Teaching Assistants and Instructors can fetch any repository but can only push to repositories that belong to them.
-        if (!repositoryTypeOrUserName.equals(user.getLogin()) && authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
-            if (forPush) {
-                throw new LocalVCAuthException();
+        if (!repositoryTypeOrUserName.equals(user.getLogin())) {
+            // Instructors can fetch and push to any repository.
+            if (authorizationCheckService.isAtLeastInstructorForExercise(exercise, user)) {
+                return;
             }
-            return;
+            // Teaching assistants can only fetch any repository.
+            if (!forPush && authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user)) {
+                return;
+            }
         }
 
         // Check that offline IDE usage is allowed.
@@ -333,15 +332,9 @@ public class LocalVCFilterService {
             return;
         }
 
-        Optional<ZonedDateTime> dueDate = ExerciseDateService.getDueDate(participation);
+        // ---- Additional checks for push request. ----
 
-        // Start date of the exercise must be in the past.
-        if (exercise.getParticipationStartDate() != null && ZonedDateTime.now().isBefore(exercise.getParticipationStartDate())) {
-            throw new LocalVCForbiddenException();
-        }
-
-        // Due date of the exercise must be in the future.
-        if (dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
+        if (!isBetweenStartAndDueDate(exercise, participation)) {
             throw new LocalVCForbiddenException();
         }
 
@@ -352,6 +345,21 @@ public class LocalVCFilterService {
         if (plagiarismService.wasUserNotifiedByInstructor(participation.getId(), user.getLogin())) {
             throw new LocalVCForbiddenException();
         }
+    }
+
+    private boolean isBetweenStartAndDueDate(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
+        // Start date of the exercise must be in the past.
+        if (exercise.getParticipationStartDate() != null && ZonedDateTime.now().isBefore(exercise.getParticipationStartDate())) {
+            return false;
+        }
+
+        // Due date of the exercise must be in the future.
+        Optional<ZonedDateTime> dueDate = ExerciseDateService.getDueDate(participation);
+        if (dueDate.isPresent() && ZonedDateTime.now().isAfter(dueDate.get())) {
+            return false;
+        }
+
+        return true;
     }
 
     private ProgrammingExerciseStudentParticipation getStudentParticipation(long exerciseId, String userLogin) {
@@ -367,14 +375,16 @@ public class LocalVCFilterService {
     private ProgrammingExerciseStudentParticipation authorizeTeam(long courseId, String userNameFromUrl, User user, long exerciseId)
             throws LocalVCInternalException, LocalVCAuthException {
 
-        List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(courseId, userNameFromUrl);
+        Team team;
 
-        if (teams.size() != 1) {
+        try {
+            team = teamService.findOneByExerciseCourseIdAndShortName(courseId, userNameFromUrl);
+        }
+        catch (Exception e) {
             throw new LocalVCInternalException();
         }
 
         // Check that the authenticated user is part of the team.
-        Team team = teams.get(0);
         if (!team.hasStudent(user)) {
             throw new LocalVCAuthException();
         }

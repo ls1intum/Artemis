@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
 import java.io.File;
-import java.util.List;
 import java.util.Optional;
 
 import org.eclipse.jgit.lib.ObjectId;
@@ -24,6 +23,8 @@ import de.tum.in.www1.artemis.exception.LocalVCException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.localvc.LocalVCInternalException;
+import de.tum.in.www1.artemis.service.TeamService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
 
@@ -36,7 +37,7 @@ public class LocalVCPostPushHookService {
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCPath;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
+    private final ProgrammingExerciseService programmingExerciseService;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
@@ -48,20 +49,20 @@ public class LocalVCPostPushHookService {
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    private final TeamRepository teamRepository;
+    private final TeamService teamService;
 
-    public LocalVCPostPushHookService(ProgrammingExerciseRepository programmingExerciseRepository,
+    public LocalVCPostPushHookService(ProgrammingExerciseService programmingExerciseService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, TeamRepository teamRepository) {
-        this.programmingExerciseRepository = programmingExerciseRepository;
+            ProgrammingMessagingService programmingMessagingService, TeamService teamService) {
+        this.programmingExerciseService = programmingExerciseService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
-        this.teamRepository = teamRepository;
+        this.teamService = teamService;
     }
 
     /**
@@ -79,12 +80,14 @@ public class LocalVCPostPushHookService {
             return;
         }
 
-        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByProjectKey(localVCRepositoryUrl.getProjectKey());
-        if (exercises.size() != 1) {
+        ProgrammingExercise exercise;
+
+        try {
+            exercise = programmingExerciseService.findOneByProjectKey(localVCRepositoryUrl.getProjectKey());
+        }
+        catch (Exception e) {
             throw new LocalVCException("No exercise or multiple exercises found for the given project key: " + localVCRepositoryUrl.getProjectKey());
         }
-
-        ProgrammingExercise exercise = exercises.get(0);
 
         // Retrieve participation for the repository.
         ProgrammingExerciseParticipation participation = null;
@@ -97,9 +100,14 @@ public class LocalVCPostPushHookService {
         }
         else {
             if (exercise.isTeamMode()) {
-                List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMember().getId(),
-                        localVCRepositoryUrl.getRepositoryTypeOrUserName());
-                Team team = teams.get(0);
+                Team team;
+                try {
+                    team = teamService.findOneByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMember().getId(),
+                            localVCRepositoryUrl.getRepositoryTypeOrUserName());
+                }
+                catch (Exception e) {
+                    throw new LocalVCException("No team or multiple teams found for the given short name: " + localVCRepositoryUrl.getRepositoryTypeOrUserName());
+                }
                 Optional<ProgrammingExerciseStudentParticipation> teamParticipation = programmingExerciseStudentParticipationRepository
                         .findWithSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId());
                 if (teamParticipation.isPresent()) {

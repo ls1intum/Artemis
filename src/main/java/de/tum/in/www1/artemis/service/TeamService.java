@@ -71,6 +71,15 @@ public class TeamService {
         return teamSearchUsers;
     }
 
+    public Team findOneByExerciseCourseIdAndShortName(long courseId, String teamShortName) throws Exception {
+        List<Team> teams = teamRepository.findAllByExerciseCourseIdAndShortName(courseId, teamShortName);
+        if (teams.size() != 1) {
+            throw new Exception("Team with short name " + teamShortName + " not found or found multiple times in course " + courseId);
+        }
+
+        return teams.get(0);
+    }
+
     /**
      * Update the members of a team repository if a participation exists already. Users might need to be removed or added.
      *
@@ -85,8 +94,6 @@ public class TeamService {
             // Users in the existing team that are no longer in the updated team need to be removed
             Set<User> usersToRemove = new HashSet<>(existingTeam.getStudents());
             usersToRemove.removeAll(updatedTeam.getStudents());
-            // For local VC, members cannot be removed from the repository. Instead, there is a check in the LocalVCFetchFilter and LocalVCPushFilter
-            // for whether the authenticated user belongs to the repository's team.
             usersToRemove.forEach(user -> versionControlService.get().removeMemberFromRepository(participation.getVcsRepositoryUrl(), user));
 
             // Users in the updated team that were not yet part of the existing team need to be added

@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.config.Constants.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
 
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -12,7 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.env.Environment;
 
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Repository;
@@ -45,17 +43,13 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     protected final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final Environment environment;
-
     public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService, UrlService urlService,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            Environment environment) {
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.applicationContext = applicationContext;
         this.gitService = gitService;
         this.urlService = urlService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.environment = environment;
     }
 
     /**
@@ -84,11 +78,6 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     @Override
     public void addWebHooksForExercise(ProgrammingExercise exercise) {
-        // No web hooks necessary when running local VCS.
-        if (Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
-            return;
-        }
-
         final var artemisTemplateHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + exercise.getTemplateParticipation().getId();
         final var artemisSolutionHookPath = ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + exercise.getSolutionParticipation().getId();
         final var artemisTestsHookPath = ARTEMIS_SERVER_URL + TEST_CASE_CHANGED_API_PATH + exercise.getId();
@@ -101,10 +90,6 @@ public abstract class AbstractVersionControlService implements VersionControlSer
 
     @Override
     public void addWebHookForParticipation(ProgrammingExerciseParticipation participation) {
-        // No web hooks necessary when running local VCS.
-        if (Arrays.asList(this.environment.getActiveProfiles()).contains("localvc")) {
-            return;
-        }
         if (!participation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED)) {
             // first add a web hook from the version control service to Artemis, so that Artemis is notified can create a ProgrammingSubmission when students push their code
             addWebHook(participation.getVcsRepositoryUrl(), ARTEMIS_SERVER_URL + PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participation.getId(), "Artemis WebHook");
