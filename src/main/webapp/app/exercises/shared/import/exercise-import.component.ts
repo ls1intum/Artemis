@@ -110,9 +110,7 @@ export class ExerciseImportComponent implements OnInit {
             .pipe(
                 debounceTime(debounce),
                 tap(() => (this.loading = true)),
-                switchMap(() => {
-                    return this.pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter, this.programmingLanguage);
-                }),
+                switchMap(() => this.pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter, this.programmingLanguage)),
             )
             .subscribe((resp: SearchResult<Exercise>) => {
                 this.content = resp;
