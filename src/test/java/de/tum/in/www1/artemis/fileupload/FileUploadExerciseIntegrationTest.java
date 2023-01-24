@@ -659,9 +659,9 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = TEST_PREFIX + "editor1", roles = "EDITOR")
     void testGetAllExercisesOnPageAsEditorSuccess() throws Exception {
-        database.addUsers("customeditor", 0, 0, 1, 0);
+        database.addUsers("custom", 0, 0, 1, 0);
         database.addCourseWithFourFileUploadExercisesAndCustomUserGroups("tumuser", "tutor", "customeditor", "instructor");
-        database.changeUser("customeditoreditor1");
+        database.changeUser("customeditor1");
         var search = database.configureSearch("e");
         SearchResultPageDTO<Exercise> result = request.get("/api/file-upload-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage().size()).isEqualTo(4);
