@@ -99,7 +99,7 @@ public class Exam extends DomainObject {
 
     /**
      * From all exercise groups connected to the exam, this number of exercises is randomly
-     * chosen when generating the specific exam for the {@link #registeredUsers}
+     * chosen when generating the specific exam for the {@link #examUsers}
      */
     @Column(name = "number_of_exercises_in_exam")
     private Integer numberOfExercisesInExam;
@@ -137,13 +137,6 @@ public class Exam extends DomainObject {
 
     @Column(name = "exam_archive_path")
     private String examArchivePath;
-
-    // Unidirectional
-    // @ManyToMany
-    // @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    // @JoinTable(name = "exam_user", joinColumns = @JoinColumn(name = "exam_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "student_id",
-    // referencedColumnName = "id"))
-    // private Set<User> registeredUsers = new HashSet<>();
 
     @OneToMany(mappedBy = "exam", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)

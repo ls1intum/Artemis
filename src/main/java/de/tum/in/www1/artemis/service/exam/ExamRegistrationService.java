@@ -104,6 +104,7 @@ public class ExamRegistrationService {
                 ExamUser registeredExamUser = new ExamUser();
                 registeredExamUser.setUser(optionalStudent.get());
                 registeredExamUser.setExam(exam);
+                registeredExamUser = examUserRepository.save(registeredExamUser);
                 exam.addExamUser(registeredExamUser);
             }
         }
@@ -289,11 +290,14 @@ public class ExamRegistrationService {
         userData.put("exam", exam.getTitle());
         for (int i = 0; i < students.size(); i++) {
             var student = students.get(i);
-            ExamUser registeredExamUser = new ExamUser();
-            registeredExamUser.setUser(student);
-            registeredExamUser.setExam(exam);
-            if (!exam.getExamUsers().contains(registeredExamUser) && !student.getAuthorities().contains(ADMIN_AUTHORITY)
+            ExamUser registeredExamUserCheck = examUserRepository.findByExamIdAndUser(exam.getId(), student);
+
+            if (!exam.getExamUsers().contains(registeredExamUserCheck) && !student.getAuthorities().contains(ADMIN_AUTHORITY)
                     && !student.getGroups().contains(course.getInstructorGroupName())) {
+                ExamUser registeredExamUser = new ExamUser();
+                registeredExamUser.setUser(student);
+                registeredExamUser.setExam(exam);
+                registeredExamUser = examUserRepository.save(registeredExamUser);
                 exam.addExamUser(registeredExamUser);
                 userData.put("student " + i, student.toDatabaseString());
             }
