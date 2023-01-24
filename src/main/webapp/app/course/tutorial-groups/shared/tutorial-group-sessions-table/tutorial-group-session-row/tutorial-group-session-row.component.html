@@ -53,7 +53,7 @@
             </button>
         </div>
         <ng-template #readOnlyAttendance>
-            {{ session.attendanceCount === undefined ? '' : session.attendanceCount }}
+            {{ session.attendanceCount ?? '' }}
         </ng-template>
     </td>
     <td *ngIf="tutorialGroup.tutorialGroupSchedule" [class.table-danger]="isCancelled">
