@@ -5,6 +5,8 @@ import static javax.persistence.Persistence.getPersistenceUtil;
 import java.time.ZonedDateTime;
 
 import javax.persistence.*;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
@@ -61,6 +63,8 @@ public class TutorialGroupSession extends DomainObject {
     /**
      * The number of students that attended the session.
      */
+    @Min(0)
+    @Max(3000)
     @Column(name = "attendance_count")
     private Integer attendanceCount;
 

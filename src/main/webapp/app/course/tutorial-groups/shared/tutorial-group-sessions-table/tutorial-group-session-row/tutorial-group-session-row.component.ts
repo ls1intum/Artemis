@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Ho
 import { faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupSessionAttendanceCountDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
+import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
@@ -73,11 +73,9 @@ export class TutorialGroupSessionRowComponent implements OnChanges {
     }
 
     saveAttendanceCount() {
-        const dto = new TutorialGroupSessionAttendanceCountDTO();
-        dto.attendanceCount = this.session.attendanceCount;
         this.isUpdatingAttendance = true;
         this.tutorialGroupSessionService
-            .updateAttendanceCount(this.tutorialGroup.course!.id!, this.tutorialGroup.id!, this.session.id!, dto)
+            .updateAttendanceCount(this.tutorialGroup.course!.id!, this.tutorialGroup.id!, this.session.id!, this.session.attendanceCount!)
             .pipe(
                 map((res: HttpResponse<TutorialGroupSession>) => {
                     return res.body!;

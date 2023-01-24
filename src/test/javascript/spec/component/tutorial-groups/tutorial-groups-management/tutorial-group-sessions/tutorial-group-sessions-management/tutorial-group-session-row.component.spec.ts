@@ -10,7 +10,7 @@ import { By } from '@angular/platform-browser';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
-import { TutorialGroupSessionAttendanceCountDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
+import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { FormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
@@ -65,9 +65,8 @@ describe('TutorialGroupSessionRowComponent', () => {
         changeAttendanceInputAndSave();
 
         fixture.whenStable().then(() => {
-            const expectedDTO = { attendanceCount: 5 } as TutorialGroupSessionAttendanceCountDTO;
             expect(updateAttendanceCountSpy).toHaveBeenCalledOnce();
-            expect(updateAttendanceCountSpy).toHaveBeenCalledWith(tutorialGroup.course?.id, tutorialGroup.id, session.id, expectedDTO);
+            expect(updateAttendanceCountSpy).toHaveBeenCalledWith(tutorialGroup.course?.id, tutorialGroup.id, session.id, 5);
             expect(attendanceChangedSpy).toHaveBeenCalledOnce();
             expect(attendanceChangedSpy).toHaveBeenCalledWith({ ...session, attendanceCount: 5 });
             expect(component.attendanceDiffersFromPersistedValue).toBeFalse();
@@ -82,9 +81,8 @@ describe('TutorialGroupSessionRowComponent', () => {
         changeAttendanceInputAndSave();
 
         fixture.whenStable().then(() => {
-            const expectedDTO = { attendanceCount: 5 } as TutorialGroupSessionAttendanceCountDTO;
             expect(updateAttendanceCountSpy).toHaveBeenCalledOnce();
-            expect(updateAttendanceCountSpy).toHaveBeenCalledWith(tutorialGroup.course?.id, tutorialGroup.id, session.id, expectedDTO);
+            expect(updateAttendanceCountSpy).toHaveBeenCalledWith(tutorialGroup.course?.id, tutorialGroup.id, session.id, 5);
             expect(attendanceChangedSpy).toHaveBeenCalledTimes(0);
             expect(component.attendanceDiffersFromPersistedValue).toBeFalse();
             expect(component.session.attendanceCount).toBe(component.persistedAttendanceCount);

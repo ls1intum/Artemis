@@ -166,15 +166,21 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         assertThat(session.getAttendanceCount()).isNull();
 
         // when
-        var dto = new TutorialGroupSessionResource.TutorialGroupSessionAttendanceCountDTO(20);
-        var updatedSessionId = request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count", dto,
-                TutorialGroupSession.class, HttpStatus.OK).getId();
+        var updatedSessionId = request
+                .patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + 20, null,
+                        TutorialGroupSession.class, HttpStatus.OK)
+                .getId();
 
         // then
         var updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(updatedSessionId);
         assertThat(updatedSession.getId()).isEqualTo(session.getId());
-        session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
-        assertThat(session.getAttendanceCount()).isEqualTo(20);
+        assertThat(updatedSession.getAttendanceCount()).isEqualTo(20);
+
+        // when
+        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count", null, TutorialGroupSession.class,
+                HttpStatus.OK).getId();
+        updatedSession = tutorialGroupSessionRepository.findByIdElseThrow(updatedSessionId);
+        assertThat(updatedSession.getAttendanceCount()).isNull();
 
         // cleanup
         tutorialGroupSessionRepository.deleteById(session.getId());
@@ -187,9 +193,33 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
         assertThat(session.getAttendanceCount()).isNull();
         // when
-        var dto = new TutorialGroupSessionResource.TutorialGroupSessionAttendanceCountDTO(20);
-        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count", dto, TutorialGroupSession.class,
-                HttpStatus.FORBIDDEN);
+        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + 20, null,
+                TutorialGroupSession.class, HttpStatus.FORBIDDEN);
+        // then
+        session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
+        assertThat(session.getAttendanceCount()).isNull();
+
+        // cleanup
+        tutorialGroupSessionRepository.deleteById(session.getId());
+    }
+
+    @Test
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
+    void updateAttendanceCount_belowMinOrAboveMax_shouldReturnBadRequest() throws Exception {
+        // given
+        var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleTutorialGroupId, firstAugustMonday);
+        assertThat(session.getAttendanceCount()).isNull();
+
+        // when
+        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + 3001, null,
+                TutorialGroupSession.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        // then
+        session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
+        assertThat(session.getAttendanceCount()).isNull();
+
+        // when
+        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count" + "?attendanceCount=" + -1, null,
+                TutorialGroupSession.class, HttpStatus.INTERNAL_SERVER_ERROR);
         // then
         session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());
         assertThat(session.getAttendanceCount()).isNull();

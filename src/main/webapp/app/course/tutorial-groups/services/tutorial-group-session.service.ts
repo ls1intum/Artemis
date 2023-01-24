@@ -1,10 +1,9 @@
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { convertDateFromServer, toISO8601DateString } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 
 type EntityResponseType = HttpResponse<TutorialGroupSession>;
@@ -14,10 +13,6 @@ export class TutorialGroupSessionDTO {
     public startTime?: string;
     public endTime?: string;
     public location?: string;
-}
-
-export class TutorialGroupSessionAttendanceCountDTO {
-    public attendanceCount?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -38,15 +33,15 @@ export class TutorialGroupSessionService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
     }
 
-    updateAttendanceCount(
-        courseId: number,
-        tutorialGroupId: number,
-        sessionId: number,
-        attendanceCountDTO: TutorialGroupSessionAttendanceCountDTO,
-    ): Observable<EntityResponseType> {
+    updateAttendanceCount(courseId: number, tutorialGroupId: number, sessionId: number, attendanceCount: number | undefined): Observable<EntityResponseType> {
+        let params = new HttpParams();
+        if (attendanceCount !== undefined && attendanceCount !== null) {
+            params = params.append('attendanceCount', attendanceCount.toString());
+        }
         return this.httpClient
-            .patch<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/attendance-count`, attendanceCountDTO, {
+            .patch<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/attendance-count`, null, {
                 observe: 'response',
+                params,
             })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
     }

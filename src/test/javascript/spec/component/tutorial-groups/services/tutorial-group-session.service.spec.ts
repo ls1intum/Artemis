@@ -1,7 +1,7 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { take } from 'rxjs/operators';
-import { TutorialGroupSessionAttendanceCountDTO, TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
+import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { generateExampleTutorialGroupSession } from '../helpers/tutorialGroupSessionExampleModels';
 
@@ -68,7 +68,7 @@ describe('TutorialGroupSessionService', () => {
         const expected = { ...returnedFromService };
 
         service
-            .updateAttendanceCount(1, 1, 1, new TutorialGroupSessionAttendanceCountDTO())
+            .updateAttendanceCount(1, 1, 1, 5)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
 
