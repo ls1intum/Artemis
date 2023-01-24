@@ -24,11 +24,13 @@ import de.tum.in.www1.artemis.exception.LocalVCException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseService;
 import de.tum.in.www1.artemis.service.ExerciseDateService;
 import de.tum.in.www1.artemis.service.SubmissionPolicyService;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -43,11 +45,13 @@ public class LocalVCFilterService {
 
     private final UserRepository userRepository;
 
-    private final CourseRepository courseRepository;
+    private final CourseService courseService;
 
     private final AuthorizationCheckService authorizationCheckService;
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ProgrammingExerciseService programmingExerciseService;
 
     private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
 
@@ -65,17 +69,18 @@ public class LocalVCFilterService {
 
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
-    public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseRepository courseRepository,
-            AuthorizationCheckService authorizationCheckService, ProgrammingExerciseRepository programmingExerciseRepository,
+    public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseService courseService,
+            AuthorizationCheckService authorizationCheckService, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ExamSubmissionService examSubmissionService,
             SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService, TeamRepository teamRepository) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
-        this.courseRepository = courseRepository;
+        this.courseService = courseService;
         this.authorizationCheckService = authorizationCheckService;
         this.programmingExerciseRepository = programmingExerciseRepository;
+        this.programmingExerciseService = programmingExerciseService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -116,9 +121,23 @@ public class LocalVCFilterService {
         String courseShortName = localVCUrl.getCourseShortName();
         String repositoryTypeOrUserName = localVCUrl.getRepositoryTypeOrUserName();
 
-        Course course = findCourseForRepository(courseShortName);
+        Course course;
 
-        ProgrammingExercise exercise = findExerciseForRepository(projectKey);
+        try {
+            course = courseService.findOneByShortName(courseShortName);
+        }
+        catch (Exception e) {
+            throw new LocalVCInternalException("Could not find single course with short name " + courseShortName);
+        }
+
+        ProgrammingExercise exercise;
+
+        try {
+            exercise = programmingExerciseService.findOneByProjectKey(projectKey);
+        }
+        catch (Exception e) {
+            throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey);
+        }
 
         authorizeUser(repositoryTypeOrUserName, course, exercise, user, forPush);
     }
@@ -172,22 +191,6 @@ public class LocalVCFilterService {
         }
 
         return localVCRepositoryUrl;
-    }
-
-    private Course findCourseForRepository(String courseShortName) throws LocalVCInternalException {
-        List<Course> courses = courseRepository.findAllByShortName(courseShortName);
-        if (courses.size() != 1) {
-            throw new LocalVCInternalException("No course or multiple courses found for the given short name: " + courseShortName);
-        }
-        return courses.get(0);
-    }
-
-    private ProgrammingExercise findExerciseForRepository(String projectKey) throws LocalVCInternalException {
-        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByProjectKey(projectKey);
-        if (exercises.size() != 1) {
-            throw new LocalVCInternalException("No exercise or multiple exercises found for the given project key: " + projectKey);
-        }
-        return exercises.get(0);
     }
 
     private void authorizeUser(String repositoryTypeOrUserName, Course course, ProgrammingExercise exercise, User user, boolean forPush)

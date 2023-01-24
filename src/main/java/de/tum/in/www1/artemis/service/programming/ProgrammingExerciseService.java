@@ -1193,4 +1193,12 @@ public class ProgrammingExerciseService {
         }
         return false;
     }
+
+    public ProgrammingExercise findOneByProjectKey(String projectKey) throws Exception {
+        List<ProgrammingExercise> exercises = programmingExerciseRepository.findByProjectKey(projectKey);
+        if (exercises.size() != 1) {
+            throw new Exception("No course or multiple courses found for the given project key: " + projectKey);
+        }
+        return exercises.get(0);
+    }
 }

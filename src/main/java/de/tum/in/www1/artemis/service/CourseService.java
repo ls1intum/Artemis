@@ -289,6 +289,14 @@ public class CourseService {
         return courses;
     }
 
+    public Course findOneByShortName(String shortName) throws Exception {
+        List<Course> courses = courseRepository.findAllByShortName(shortName);
+        if (courses.size() != 1) {
+            throw new Exception("No course or multiple courses found for the given short name: " + shortName);
+        }
+        return courses.get(0);
+    }
+
     private boolean isCourseVisibleForUser(User user, Course course) {
         // Instructors and TAs see all courses that have not yet finished
         if (authCheckService.isAtLeastTeachingAssistantInCourse(course, user)) {
