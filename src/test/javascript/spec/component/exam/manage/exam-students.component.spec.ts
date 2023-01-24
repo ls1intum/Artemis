@@ -121,7 +121,7 @@ describe('ExamStudentsComponent', () => {
 
     it('should reload with only registered users', () => {
         // Same id is intentional: Simulate one user got removed
-        const examWithOneUser = { course, id: 2, registeredUsers: [user2] };
+        const examWithOneUser = { course, id: 2, examUsers: [user2] };
         const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
 
@@ -147,7 +147,7 @@ describe('ExamStudentsComponent', () => {
 
     it('should register all enrolled students of the course to the exam', () => {
         const examServiceStubAddAll = jest.spyOn(examManagementService, 'addAllStudentsOfCourseToExam').mockReturnValue(of(new HttpResponse<void>()));
-        const examWithOneUser = { course, id: 2, registeredUsers: [user2] };
+        const examWithOneUser = { course, id: 2, examUsers: [user2] };
         const examServiceStub = jest.spyOn(examManagementService, 'find').mockReturnValue(of(new HttpResponse({ body: examWithOneUser })));
         fixture.detectChanges();
 
