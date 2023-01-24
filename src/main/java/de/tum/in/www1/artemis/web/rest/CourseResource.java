@@ -802,13 +802,15 @@ public class CourseResource {
         User searchingUser = userRepository.getUser();
         var originalPage = userRepository.searchAllByLoginOrNameInGroups(PageRequest.of(0, 25), loginOrName, groups, searchingUser.getId());
 
-        var resultDTO = new ArrayList<UserPublicInfoDTO>();
+        var resultDTOs = new ArrayList<UserPublicInfoDTO>();
         for (var user : originalPage) {
             var dto = new UserPublicInfoDTO(user);
             UserPublicInfoDTO.assignRoleProperties(course, user, dto);
-            resultDTO.add(dto);
+            if (!resultDTOs.contains(dto)) {
+                resultDTOs.add(dto);
+            }
         }
-        var dtoPage = new PageImpl<>(resultDTO, originalPage.getPageable(), originalPage.getTotalElements());
+        var dtoPage = new PageImpl<>(resultDTOs, originalPage.getPageable(), originalPage.getTotalElements());
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), dtoPage);
         return new ResponseEntity<>(dtoPage.getContent(), headers, HttpStatus.OK);
     }

@@ -485,13 +485,17 @@ do either do it manually or using the following command:
    in ``jenkins-casc-config.yml`` (defaults to ``artemis_admin`` as both username and password).
 
 3. You need to generate the `ci-token` and `secret-push-token`.
-   If you used the preset ``master.key`` within the file ``gitlab-jenkins-mysql.yml``, you can skip this step.
-   In a production setup, you should use a random ``master.key``, then you have to follow the steps described in
+
+   ..
+       Workaround as long as Github Issue 5973 (Default Push Notifications GitLab → Jenkins not working)
+       for now just generate the ci-token and secret-push-token manually
+
+   As there is currently an `open issue with the presets for Jenkins in Development environments <https://github.com/ls1intum/Artemis/issues/5973>`__,
+   follow the steps described in
    `Gitlab to Jenkins push notification token <#gitlab-to-jenkins-push-notification-token>`__ to generate the token.
+   In a production setup, you should use a random ``master.key`` in the file ``gitlab-jenkins-mysql.yml``.
 
 4. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
-   If you used the preset ``master.key`` and are running a development setup, the secrets can be found in the
-   `artemis configuration template posted at the beginning of this page <#artemis>`__.
 
 .. code:: yaml
 
