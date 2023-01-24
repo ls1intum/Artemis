@@ -145,11 +145,11 @@ public class StaticCodeAnalysisService {
     /**
      * This method allows users to reuse an already existing SCA configuration by copying it into another exercise.
      * The previous configuration of the targeted exercise will get removed.
-     * @param targetExercise The exercise into which the configuration gets copied in
      * @param sourceExercise The exercise to take the existing configuration from
+     * @param targetExercise The exercise into which the configuration gets copied in
      * @return the new SCA configuration of the targetExercise
      */
-    public Set<StaticCodeAnalysisCategory> importCategoriesFromExercise(ProgrammingExercise targetExercise, ProgrammingExercise sourceExercise) {
+    public Set<StaticCodeAnalysisCategory> importCategoriesFromExercise(ProgrammingExercise sourceExercise, ProgrammingExercise targetExercise) {
         var sourceCategories = findByExerciseId(sourceExercise.getId());
         var oldCategories = findByExerciseId(targetExercise.getId());
 
