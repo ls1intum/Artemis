@@ -33,7 +33,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             orientation: Orientation.TOP,
         }),
         new TextTourStep({
-            highlightSelector: '.row.guided-tour',
+            highlightSelector: '.course-exercise-row.guided-tour',
             headlineTranslateKey: 'tour.courseExerciseOverview.currentExercise.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.currentExercise.content',
             highlightPadding: 10,
