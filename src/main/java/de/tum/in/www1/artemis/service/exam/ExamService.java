@@ -1323,7 +1323,13 @@ public class ExamService {
         return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());
     }
 
-    // TODO: write javadoc
+    /**
+     * Get all exams of the user. The result is paged
+     *
+     * @param pageable   The search query defining the search term and the size of the returned page
+     * @param user       The user for whom to fetch all available exercises
+     * @return exam page
+     */
     public Page<Exam> getAllExams(Pageable pageable, final User user) {
         final Page<Exam> examPage;
         examPage = examRepository.findAllExamsWithUserLogin(user.getGroups(), pageable);

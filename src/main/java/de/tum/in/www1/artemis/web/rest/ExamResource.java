@@ -363,7 +363,12 @@ public class ExamResource {
         }
     }
 
-    // TODO: write javadoc
+    /**
+     * GET /exams/all : Find all exams the user is allowed to access
+     *
+     * @param pageable pageable parameters
+     * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
+     */
     @GetMapping("exams/all")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<Exam>> getAllExams(@ApiParam Pageable pageable) {

@@ -167,12 +167,12 @@ public class ExamRegistrationService {
         registeredExamUser.setUser(student);
         registeredExamUser.setExam(exam);
 
-        registeredExamUser = examUserRepository.save(registeredExamUser);
-        exam.addExamUser(registeredExamUser);
-        examRepository.save(exam);
         if (!student.getGroups().contains(course.getStudentGroupName())) {
             userService.addUserToGroup(student, course.getStudentGroupName(), Role.STUDENT);
         }
+
+        registeredExamUser = examUserRepository.save(registeredExamUser);
+        exam.addExamUser(registeredExamUser);
         examRepository.save(exam);
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();

@@ -41,9 +41,6 @@ public class ExamUser extends AbstractAuditingEntity {
     @Column(name = "signing_image_path", length = 100)
     private String signingImagePath;
 
-    // todo: add a column for the signature as json string.
-    // var signingDrawing: PKDrawing?
-
     @ManyToOne
     @JoinColumn(name = "exam_id")
     private Exam exam;
