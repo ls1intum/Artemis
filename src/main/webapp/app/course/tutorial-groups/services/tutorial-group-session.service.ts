@@ -27,14 +27,14 @@ export class TutorialGroupSessionService {
     constructor(private httpClient: HttpClient, private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService) {}
     getOneOfTutorialGroup(courseId: number, tutorialGroupId: number, sessionId: number) {
         return this.httpClient
-            .get<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, { observe: 'response' })
+            .get<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
     }
 
     update(courseId: number, tutorialGroupId: number, sessionId: number, session: TutorialGroupSessionDTO): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupSessionDatesFromClient(session);
         return this.httpClient
-            .put<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, copy, { observe: 'response' })
+            .put<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
     }
 
@@ -45,7 +45,7 @@ export class TutorialGroupSessionService {
         attendanceCountDTO: TutorialGroupSessionAttendanceCountDTO,
     ): Observable<EntityResponseType> {
         return this.httpClient
-            .put<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/attendance-count`, attendanceCountDTO, {
+            .patch<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}/attendance-count`, attendanceCountDTO, {
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));

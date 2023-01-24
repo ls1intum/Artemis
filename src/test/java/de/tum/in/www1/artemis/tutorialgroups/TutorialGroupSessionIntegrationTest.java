@@ -167,7 +167,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
 
         // when
         var dto = new TutorialGroupSessionResource.TutorialGroupSessionAttendanceCountDTO(20);
-        var updatedSessionId = request.putWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count", dto,
+        var updatedSessionId = request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count", dto,
                 TutorialGroupSession.class, HttpStatus.OK).getId();
 
         // then
@@ -188,7 +188,7 @@ class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrati
         assertThat(session.getAttendanceCount()).isNull();
         // when
         var dto = new TutorialGroupSessionResource.TutorialGroupSessionAttendanceCountDTO(20);
-        request.putWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count", dto, TutorialGroupSession.class,
+        request.patchWithResponseBody(getSessionsPathOfDefaultTutorialGroup(exampleTutorialGroupId) + session.getId() + "/attendance-count", dto, TutorialGroupSession.class,
                 HttpStatus.FORBIDDEN);
         // then
         session = tutorialGroupSessionRepository.findByIdElseThrow(session.getId());

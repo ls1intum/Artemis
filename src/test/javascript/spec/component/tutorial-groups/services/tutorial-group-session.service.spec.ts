@@ -72,7 +72,7 @@ describe('TutorialGroupSessionService', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
 
-        const req = httpMock.expectOne({ method: 'PUT' });
+        const req = httpMock.expectOne({ method: 'PATCH' });
         req.flush(returnedFromService);
         tick();
     }));
