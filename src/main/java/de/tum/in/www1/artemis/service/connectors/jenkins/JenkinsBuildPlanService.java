@@ -38,7 +38,6 @@ import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.JenkinsException;
-import de.tum.in.www1.artemis.repository.BuildPlanRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
@@ -77,12 +76,9 @@ public class JenkinsBuildPlanService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final BuildPlanRepository buildPlanRepository;
-
     public JenkinsBuildPlanService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, JenkinsBuildPlanCreator jenkinsBuildPlanCreator,
             JenkinsJobService jenkinsJobService, JenkinsJobPermissionsService jenkinsJobPermissionsService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, PipelineGroovyBuildPlanCreator pipelineGroovyBuildPlanCreator,
-            BuildPlanRepository buildPlanRepository) {
+            UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, PipelineGroovyBuildPlanCreator pipelineGroovyBuildPlanCreator) {
         this.restTemplate = restTemplate;
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanCreator = jenkinsBuildPlanCreator;
@@ -92,7 +88,6 @@ public class JenkinsBuildPlanService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.jenkinsInternalUrlService = jenkinsInternalUrlService;
         this.pipelineGroovyBuildPlanCreator = pipelineGroovyBuildPlanCreator;
-        this.buildPlanRepository = buildPlanRepository;
     }
 
     /**
@@ -101,13 +96,14 @@ public class JenkinsBuildPlanService {
      * @param planKey the name of the plan
      * @param repositoryURL the url of the vcs repository
      */
-    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL, String buildPlanUrl) {
+    void createBuildPlanForExercise(ProgrammingExercise exercise, String planKey, VcsRepositoryUrl repositoryURL) {
         final JenkinsXmlConfigBuilder.InternalVcsRepositoryURLs internalRepositoryUrls = getInternalRepositoryUrls(exercise, repositoryURL);
 
-        ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
-        var isSolutionPlan = planKey.equals(BuildPlanType.SOLUTION.getName());
+        final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
+        final boolean isSolutionPlan = planKey.equals(BuildPlanType.SOLUTION.getName());
 
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
+        final String buildPlanUrl = pipelineGroovyBuildPlanCreator.generateBuildPlanURL(exercise);
         Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, isSolutionPlan,
                 buildPlanUrl);
 
@@ -116,13 +112,8 @@ public class JenkinsBuildPlanService {
         jenkinsJobService.createJobInFolder(jobConfig, jobFolder, job);
         givePlanPermissions(exercise, planKey);
 
-        boolean staticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
-        boolean isSequentialTestRuns = exercise.hasSequentialTestRuns();
-        boolean testwiseCoverageAnalysisEnabled = exercise.isTestwiseCoverageEnabled() && isSolutionPlan;
-        BuildPlan buildPlan = new BuildPlan();
-        buildPlan.setBuildPlan(pipelineGroovyBuildPlanCreator.getPipelineGroovyScript(programmingLanguage, Optional.ofNullable(exercise.getProjectType()),
-                staticCodeAnalysisEnabled, isSequentialTestRuns, testwiseCoverageAnalysisEnabled));
-        buildPlanRepository.save(buildPlan);
+        pipelineGroovyBuildPlanCreator.addBuildPlanToProgrammingExerciseIfUnset(exercise);
+
         triggerBuild(jobFolder, job);
     }
 

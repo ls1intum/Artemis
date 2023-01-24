@@ -5,8 +5,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.Predicate;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 
@@ -18,7 +16,6 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
@@ -26,8 +23,6 @@ import de.tum.in.www1.artemis.service.dto.BuildJobDTOInterface;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 
 public abstract class AbstractContinuousIntegrationService implements ContinuousIntegrationService {
-
-    private final Logger log = LoggerFactory.getLogger(AbstractContinuousIntegrationService.class);
 
     @Value("${artemis.continuous-integration.url}")
     protected URL serverUrl;
@@ -46,7 +41,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
 
     protected final TestwiseCoverageService testwiseCoverageService;
 
-    public AbstractContinuousIntegrationService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
+    protected AbstractContinuousIntegrationService(ProgrammingSubmissionRepository programmingSubmissionRepository, FeedbackRepository feedbackRepository,
             BuildLogEntryService buildLogService, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, RestTemplate restTemplate,
             RestTemplate shortTimeoutRestTemplate, TestwiseCoverageService testwiseCoverageService) {
         this.programmingSubmissionRepository = programmingSubmissionRepository;
@@ -186,12 +181,5 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      */
     protected Integer countMatchingLogs(List<BuildLogEntry> buildLogEntries, String searchString) {
         return Math.toIntExact(buildLogEntries.stream().filter(buildLogEntry -> buildLogEntry.getLog().contains(searchString)).count());
-    }
-
-    protected String generateBuildPlanURL(ProgrammingExercise exercise, ProgrammingExerciseRepository programmingExerciseRepository, String artemisServerUrl) {
-        programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
-        // We need this workaround (&file-extension=.yml) since GitLab only accepts URLs ending with .yml.
-        // See https://gitlab.com/gitlab-org/gitlab/-/issues/27526
-        return String.format("%s/api/programming-exercises/%s/build-plan?secret=%s", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
     }
 }

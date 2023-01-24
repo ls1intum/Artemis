@@ -10,13 +10,18 @@ import java.util.Optional;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
+import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.repository.BuildPlanRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
+import de.tum.in.www1.artemis.service.connectors.AbstractBuildPlanCreator;
 
 @Component
-public class PipelineGroovyBuildPlanCreator {
+public class PipelineGroovyBuildPlanCreator extends AbstractBuildPlanCreator {
 
     private static final String STATIC_CODE_ANALYSIS_REPORT_DIR = "staticCodeAnalysisReports";
 
@@ -32,29 +37,41 @@ public class PipelineGroovyBuildPlanCreator {
 
     private final ResourceLoaderService resourceLoaderService;
 
-    public PipelineGroovyBuildPlanCreator(ResourceLoaderService resourceLoaderService) {
+    public PipelineGroovyBuildPlanCreator(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            ResourceLoaderService resourceLoaderService) {
+        super(buildPlanRepository, programmingExerciseRepository);
+
         this.resourceLoaderService = resourceLoaderService;
     }
 
-    public String getPipelineGroovyScript(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isStaticCodeAnalysisEnabled, boolean isSequentialRuns,
-            boolean isTestwiseCoverageEnabled) {
-        var pipelinePath = getResourcePath(programmingLanguage, projectType, isSequentialRuns);
-        Resource resource = resourceLoaderService.getResource(pipelinePath);
-        var replacements = getReplacements(programmingLanguage, projectType, isStaticCodeAnalysisEnabled, isTestwiseCoverageEnabled);
-        String pipelineScript;
+    @Override
+    protected String generateDefaultBuildPlan(ProgrammingExercise exercise) {
+        final ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
+        final boolean isSequentialTestRuns = exercise.hasSequentialTestRuns();
+        final Optional<ProjectType> projectType = Optional.ofNullable(exercise.getProjectType());
+
+        final String[] pipelinePath = getResourcePath(programmingLanguage, projectType, isSequentialTestRuns);
+        final Resource resource = resourceLoaderService.getResource(pipelinePath);
+        final String pipelineScript = loadPipelineScript(resource);
+
+        final boolean isStaticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
+        // ToDo: was only enabled in case this is the solution build plan
+        // -> define a global variable in the Jenkinsfile and make script in pipeline conditional on that
+        // ToDo: same for staticCodeAnalysisScript: do not build that here in the code, but instead define '#staticCodeAnalysisEnabled'
+        // and in pipeline.groovy `if (#staticCodeAnalysisEnabled) { … }`
+        final boolean isTestwiseCoverageAnalysisEnabled = exercise.isTestwiseCoverageEnabled();
+        final var replacements = getReplacements(programmingLanguage, projectType, isStaticCodeAnalysisEnabled, isTestwiseCoverageAnalysisEnabled);
+
+        return replacePipelineScriptParameters(pipelineScript, replacements);
+    }
+
+    private String loadPipelineScript(final Resource resource) {
         try {
-            pipelineScript = Files.readString(resource.getFile().toPath());
+            return Files.readString(resource.getFile().toPath());
         }
         catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new JenkinsException("Could not load pipeline skript definition.", e);
         }
-        pipelineScript = pipelineScript.replace("'", "&apos;");
-        pipelineScript = pipelineScript.replace("<", "&lt;");
-        pipelineScript = pipelineScript.replace(">", "&gt;");
-        pipelineScript = pipelineScript.replace("\\", "\\\\");
-        replacePipelineScriptParameters(pipelineScript, replacements);
-        System.out.println(pipelineScript);
-        return pipelineScript;
     }
 
     private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, boolean isStaticCodeAnalysisEnabled,
@@ -168,11 +185,12 @@ public class PipelineGroovyBuildPlanCreator {
         return script.toString();
     }
 
-    private void replacePipelineScriptParameters(String pipelineGroovyScript, Map<String, String> variablesToReplace) {
+    private String replacePipelineScriptParameters(String pipelineGroovyScript, Map<String, String> variablesToReplace) {
         if (variablesToReplace != null) {
             for (final var replacement : variablesToReplace.entrySet()) {
                 pipelineGroovyScript = pipelineGroovyScript.replace(replacement.getKey(), replacement.getValue());
             }
         }
+        return pipelineGroovyScript;
     }
 }
