@@ -51,7 +51,7 @@ node('docker') {
         }
         stage('Load') {
             timestamps {
-                sh "wget -O pipeline.groovy #buildPlanUrl" // https://<ARTEMIS_URL>/programming-exercise/#ID/build-plan?secret=#secret"
+                sh "wget -O pipeline.groovy #buildPlanUrl"
                 ownStages = load 'pipeline.groovy'
                 ownStages.testRunner()
             }

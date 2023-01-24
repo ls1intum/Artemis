@@ -10,6 +10,7 @@ import java.util.Optional;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
@@ -35,13 +36,18 @@ public class PipelineGroovyBuildPlanCreator extends AbstractBuildPlanCreator {
 
     private static final String REPLACE_TESTWISE_COVERAGE_SCRIPT = "#testwiseCoverageScript";
 
+    private static final String REPLACE_DOCKER_IMAGE_NAME = "#dockerImage";
+
     private final ResourceLoaderService resourceLoaderService;
 
+    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
+
     public PipelineGroovyBuildPlanCreator(BuildPlanRepository buildPlanRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ResourceLoaderService resourceLoaderService) {
+            ResourceLoaderService resourceLoaderService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
         super(buildPlanRepository, programmingExerciseRepository);
 
         this.resourceLoaderService = resourceLoaderService;
+        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     @Override
@@ -57,8 +63,8 @@ public class PipelineGroovyBuildPlanCreator extends AbstractBuildPlanCreator {
         final boolean isStaticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
         // ToDo: was only enabled in case this is the solution build plan
         // -> define a global variable in the Jenkinsfile and make script in pipeline conditional on that
-        // ToDo: same for staticCodeAnalysisScript: do not build that here in the code, but instead define '#staticCodeAnalysisEnabled'
-        // and in pipeline.groovy `if (#staticCodeAnalysisEnabled) { … }`
+        // ToDo: same for staticCodeAnalysisScript: do not build that here in the code, but add the script always in pipeline.groovy
+        // the #staticCodeAnalysisEnabled now exists for that, pipeline.groovy for Gradle regularRuns is already adapted
         final boolean isTestwiseCoverageAnalysisEnabled = exercise.isTestwiseCoverageEnabled();
         final var replacements = getReplacements(programmingLanguage, projectType, isStaticCodeAnalysisEnabled, isTestwiseCoverageAnalysisEnabled);
 
@@ -95,6 +101,8 @@ public class PipelineGroovyBuildPlanCreator extends AbstractBuildPlanCreator {
         replacements.put(REPLACE_TESTWISE_COVERAGE_MAVEN_PROFILE, testwiseCoverageAnalysisMavenProfile);
         replacements.put(REPLACE_TESTWISE_COVERAGE_GRADLE_TASK, testwiseCoverageAnalysisGradleTask);
         replacements.put(REPLACE_TESTWISE_COVERAGE_SCRIPT, testwiseCoverageAnalysisScript);
+        replacements.put(REPLACE_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getImage(programmingLanguage, projectType));
+
         return replacements;
     }
 

@@ -18,7 +18,6 @@ import org.springframework.stereotype.Component;
 import org.w3c.dom.Document;
 
 import de.tum.in.www1.artemis.config.Constants;
-import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
@@ -52,8 +51,6 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private static final String REPLACE_NOTIFICATIONS_TOKEN = "#jenkinsNotificationToken";
 
-    private static final String REPLACE_DOCKER_IMAGE_NAME = "#dockerImage";
-
     private static final String REPLACE_JENKINS_TIMEOUT = "#jenkinsTimeout";
 
     private static final String REPLACE_DEFAULT_BRANCH = "#defaultBranch";
@@ -82,13 +79,10 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultBranch;
 
-    private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
-
     private final ResourceLoaderService resourceLoaderService;
 
-    public JenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService, ProgrammingLanguageConfiguration programmingLanguageConfiguration) {
+    public JenkinsBuildPlanCreator(ResourceLoaderService resourceLoaderService) {
         this.resourceLoaderService = resourceLoaderService;
-        this.programmingLanguageConfiguration = programmingLanguageConfiguration;
     }
 
     @PostConstruct
@@ -103,8 +97,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
      * replacePipelineScriptParameters(pipelinePath, replacements); }
      */
 
-    private Map<String, String> getReplacements(ProgrammingLanguage programmingLanguage, Optional<ProjectType> projectType, InternalVcsRepositoryURLs internalVcsRepositoryURLs,
-            boolean isSolutionPlan, String buildPlanUrl) {
+    private Map<String, String> getReplacements(InternalVcsRepositoryURLs internalVcsRepositoryURLs, boolean isSolutionPlan, String buildPlanUrl) {
         Map<String, String> replacements = new HashMap<>();
         replacements.put(REPLACE_TEST_REPO, internalVcsRepositoryURLs.testRepositoryUrl().getURI().toString());
         replacements.put(REPLACE_ASSIGNMENT_REPO, internalVcsRepositoryURLs.assignmentRepositoryUrl().getURI().toString());
@@ -115,21 +108,12 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_SOLUTION_CHECKOUT_PATH, Constants.SOLUTION_CHECKOUT_PATH);
         replacements.put(REPLACE_ARTEMIS_NOTIFICATION_URL, artemisNotificationUrl);
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
-        replacements.put(REPLACE_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getImage(programmingLanguage, projectType));
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
         replacements.put(REPLACE_DEFAULT_BRANCH, defaultBranch);
+        // ToDo: checkout solution build plan is an exercise setting
         replacements.put(REPLACE_CHECKOUT_SOLUTION, Boolean.toString(isSolutionPlan));
         System.out.println(buildPlanUrl);
         replacements.put(REPLACE_BUILD_PLAN_URL, buildPlanUrl);
-        /*
-         * // at the moment, only Java and Swift are supported if (isStaticCodeAnalysisEnabled) { String staticCodeAnalysisScript =
-         * createStaticCodeAnalysisScript(programmingLanguage, projectType); replacements.put(REPLACE_STATIC_CODE_ANALYSIS_SCRIPT, staticCodeAnalysisScript); } // replace testwise
-         * coverage analysis placeholder String testwiseCoverageAnalysisMavenProfile = ""; String testwiseCoverageAnalysisGradleTask = ""; String testwiseCoverageAnalysisScript =
-         * ""; if (isTestwiseCoverageAnalysisEnabled) { testwiseCoverageAnalysisMavenProfile = "-Pcoverage"; testwiseCoverageAnalysisGradleTask = "tiaTests --run-all-tests";
-         * testwiseCoverageAnalysisScript = createTestwiseCoverageAnalysisScript(projectType); } replacements.put(REPLACE_TESTWISE_COVERAGE_MAVEN_PROFILE,
-         * testwiseCoverageAnalysisMavenProfile); replacements.put(REPLACE_TESTWISE_COVERAGE_GRADLE_TASK, testwiseCoverageAnalysisGradleTask);
-         * replacements.put(REPLACE_TESTWISE_COVERAGE_SCRIPT, testwiseCoverageAnalysisScript);
-         */
 
         return replacements;
     }
@@ -146,7 +130,7 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         catch (IOException e) {
             throw new RuntimeException(e);
         }
-        var replacements = getReplacements(programmingLanguage, projectType, internalVcsRepositoryURLs, isSolutionPlan, buildPlanUrl);
+        var replacements = getReplacements(internalVcsRepositoryURLs, isSolutionPlan, buildPlanUrl);
         jenkinsFileScript = jenkinsFileScript.replace("'", "&apos;");
         jenkinsFileScript = jenkinsFileScript.replace("<", "&lt;");
         jenkinsFileScript = jenkinsFileScript.replace(">", "&gt;");
