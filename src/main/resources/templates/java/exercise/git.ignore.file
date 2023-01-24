@@ -86,3 +86,7 @@ out
 
 #################
 .gradle
+
+#################
+# Mac Binaries
+*.DS_Store
