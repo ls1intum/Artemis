@@ -96,7 +96,7 @@ class ProgrammingLanguageConfigurationTest {
         final var config = new ProgrammingLanguageConfiguration();
         config.setDefaultDockerFlags(getDockerFlags());
 
-        final List<String> expectedFlags = List.of("-v", "\"(pwd):/working_dir\"", "--cpus", "\"2\"", "--env", "\"VAR='value with spaces'\"", "--env", "\"SECOND_VAR=42\"");
+        final List<String> expectedFlags = List.of("-v", "\"$(pwd):/working_dir\"", "--cpus", "\"2\"", "--env", "\"VAR='value with spaces'\"", "--env", "\"SECOND_VAR=42\"");
         assertThat(config.getDefaultDockerFlags()).containsExactlyElementsOf(expectedFlags);
     }
 
@@ -129,7 +129,7 @@ class ProgrammingLanguageConfigurationTest {
     }
 
     private List<ProgrammingLanguageConfiguration.DockerFlag> getDockerFlags() {
-        return List.of(new ProgrammingLanguageConfiguration.DockerFlag("-v", "(pwd):/working_dir"), new ProgrammingLanguageConfiguration.DockerFlag("--cpus", "2"),
+        return List.of(new ProgrammingLanguageConfiguration.DockerFlag("-v", "$(pwd):/working_dir"), new ProgrammingLanguageConfiguration.DockerFlag("--cpus", "2"),
                 new ProgrammingLanguageConfiguration.DockerFlag("--env", "VAR='value with spaces'"), new ProgrammingLanguageConfiguration.DockerFlag("--env", "SECOND_VAR=42"));
     }
 }
