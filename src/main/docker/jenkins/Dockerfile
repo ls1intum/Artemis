@@ -1,4 +1,4 @@
-FROM docker.io/library/jenkins/jenkins:lts
+FROM docker.io/jenkins/jenkins:lts
 
 LABEL description="Jenkins with plugins pre-installed for Artemis"
 

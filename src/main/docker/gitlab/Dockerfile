@@ -1,4 +1,4 @@
-FROM docker.io/library/gitlab/gitlab-ce:latest
+FROM docker.io/gitlab/gitlab-ce:latest
 
 LABEL description="Gitlab for local development environment packaged with jq"
 
