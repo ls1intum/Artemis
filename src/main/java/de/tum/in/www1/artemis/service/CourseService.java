@@ -216,7 +216,7 @@ public class CourseService {
      * @return the course including exercises, lectures, exams, learning goals and tutorial groups (filtered for given user)
      */
     public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsAndTutorialGroupsForUser(Long courseId, User user, boolean refresh) {
-        Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
+        Course course = courseRepository.findByIdWithLecturesElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException();
         }
@@ -224,6 +224,7 @@ public class CourseService {
         course.setExercises(exerciseRepository.findByCourseIdWithCategories(course.getId()));
         course.setExercises(exerciseService.filterExercisesForCourse(course, user));
         exerciseService.loadExerciseDetailsIfNecessary(course, user);
+        course.setExams(examRepository.findByCourseIdForUser(course.getId(), user.getId(), user.getGroups(), ZonedDateTime.now()));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
         course.setLearningGoals(learningGoalService.findAllForCourse(course, user, refresh));
         course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
