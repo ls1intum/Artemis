@@ -2,7 +2,7 @@
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.18.xsd">
-    <changeSet author="baboci" id="20230122022904-1">
+    <changeSet author="baboci" id="20230122022904">
         <addColumn tableName="exam_user">
             <column name="created_by" type="varchar(45)"/>
         </addColumn>
