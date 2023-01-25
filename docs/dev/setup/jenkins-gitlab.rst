@@ -550,9 +550,7 @@ Manual Jenkins Server Setup
    To perform all these steps automatically, you can prepare a Docker
    image:
 
-   Create a Dockerfile with the content found `here <src/main/docker/jenkins/Dockerfile>`
-   or `here <src/main/docker/jenkins/swift/Dockerfile>` in case you want to additionally
-   install Swift/SwiftLint.
+   Create a Dockerfile with the content found `here <src/main/docker/jenkins/Dockerfile>`.
    Copy it in a file named ``Dockerfile``, e.g. in
    the folder ``/opt/jenkins/`` using ``vim Dockerfile``.
 
