@@ -55,7 +55,8 @@
                 "start": "Anfang",
                 "end": "Ende",
                 "status": "Status",
-                "location": "Ort"
+                "location": "Ort",
+                "attendance": "# Teilnehmer:innen"
             },
             "tutorialFreePeriod": {
                 "date": "Datum",
