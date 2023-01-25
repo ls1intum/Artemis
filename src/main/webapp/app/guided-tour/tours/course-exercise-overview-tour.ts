@@ -40,14 +40,14 @@ export const courseExerciseOverviewTour: GuidedTour = {
             orientation: Orientation.TOP,
         }),
         new TextTourStep({
-            highlightSelector: '.row.guided-tour .exercise-row-icon',
+            highlightSelector: '.course-exercise-row.guided-tour .exercise-row-icon',
             headlineTranslateKey: 'tour.courseExerciseOverview.exerciseType.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.exerciseType.content',
             highlightPadding: 10,
             orientation: Orientation.TOPLEFT,
         }),
         new TextTourStep({
-            highlightSelector: '.row.guided-tour .exercise-tags',
+            highlightSelector: '.course-exercise-row.guided-tour .exercise-tags',
             headlineTranslateKey: 'tour.courseExerciseOverview.exerciseTags.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.exerciseTags.content',
             highlightPadding: 10,
@@ -68,7 +68,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             orientation: Orientation.LEFT,
         }),
         new UserInterActionTourStep({
-            highlightSelector: '.row.guided-tour .start-exercise',
+            highlightSelector: '.course-exercise-row.guided-tour .start-exercise',
             headlineTranslateKey: 'tour.courseExerciseOverview.startExercise.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.startExercise.content',
             highlightPadding: 5,
@@ -77,7 +77,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             triggerNextStep: true,
         }),
         new UserInterActionTourStep({
-            highlightSelector: '.row.guided-tour .start-exercise',
+            highlightSelector: '.course-exercise-row.guided-tour .start-exercise',
             headlineTranslateKey: 'tour.courseExerciseOverview.startExerciseWait.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.startExerciseWait.content',
             highlightPadding: 5,
@@ -86,7 +86,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             triggerNextStep: true,
         }),
         new TextTourStep({
-            highlightSelector: '.row.guided-tour .clone-repository',
+            highlightSelector: '.course-exercise-row.guided-tour .clone-repository',
             headlineTranslateKey: 'tour.courseExerciseOverview.repositoryCreated.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.repositoryCreated.content',
             highlightPadding: 5,
@@ -104,7 +104,7 @@ export const courseExerciseOverviewTour: GuidedTour = {
             videoUrl: 'tour.courseExerciseOverview.solveExercise.videoUrl',
         }),
         new TextTourStep({
-            highlightSelector: '.row.guided-tour',
+            highlightSelector: '.course-exercise-row.guided-tour',
             headlineTranslateKey: 'tour.courseExerciseOverview.reviewResult.headline',
             contentTranslateKey: 'tour.courseExerciseOverview.reviewResult.content',
             highlightPadding: 10,
