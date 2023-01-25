@@ -47,7 +47,7 @@ docker networks
 ``ERROR: Pool overlaps with other one on this address space``. Use the
 command ``docker network prune`` to resolve this issue.
 
-Make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Settings -> Resources``
+Make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Settings → Resources``
 
 
 In case you want to enable Swift or C programming exercises, refer to the readme in
@@ -73,7 +73,11 @@ under ``localhost:7990``.
    in all 3 applications.
    For the Bamboo database you can choose H2.
    Also, you can select the evaluation/internal/test/dev setups if you are asked.
-   Follow the additional steps for Jira and Bitbucket.
+
+   Put the admin username and password into ``application-local.yml`` at ``artemis.version-control.user``
+   and ``artemis.continuous-integration.user``.
+
+   Follow the additional steps for Jira and Bitbucket:
 
    - Jira:
 
@@ -197,12 +201,15 @@ under ``localhost:7990``.
 
                 Adding Crowd Server in **Bamboo**
 
-#. Give the test users User access on Bitbucket: Configure → Global permissions
+#. Give the test users User access on Bitbucket: On the Administration interface (settings cogwheel on the top),
+   go to the Global permissions. Type the names of all test users in the search field ("Add Users") and give them
+   the "Bitbucket User" permission. If you skip this step, the users will not be able to log in to Bitbucket or
+   clone repositories.
 
 #. In Bamboo create a global variable named
    SERVER_PLUGIN_SECRET_PASSWORD, the value of this variable will be used
    as the secret. The value of this variable should be then stored in
-   ``src/main/resources/config/application-artemis.yml`` as the value of
+   ``src/main/resources/config/application-local.yml`` as the value of
    ``artemis-authentication-token-value``.
    You can create a global variable from settings on Bamboo.
 
@@ -229,13 +236,13 @@ under ``localhost:7990``.
 
    #. Personal access token for Bamboo.
 
-      - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens ->
+      - Log in as the admin user and go to Bamboo → Profile (top right corner) → Personal access tokens →
         Create token
 
           .. figure:: setup/bamboo-bitbucket-jira/bamboo-create-token.png
              :align: center
 
-      - Insert the generated token into the file ``application-artemis.yml`` in the section ``continuous-integration``:
+      - Insert the generated token into the file ``application-local.yml`` in the section ``continuous-integration``:
 
       .. code:: yaml
 
@@ -245,15 +252,15 @@ under ``localhost:7990``.
                   password: <password>
                   token: #insert the token here
 
-   # Personal access token for Bitbucket.
+   #. Personal access token for Bitbucket
 
-      - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage account ->
-        Personal access tokens -> Create token
+      - Log in as the admin user and go to Bitbucket → Your profile image (top right corner) → Manage account →
+        HTTP access tokens → Create token
 
-          .. figure:: setup/bamboo-bitbucket-jira/bitbucket-create-token.png
+          .. figure:: setup/bamboo-bitbucket-jira/bitbucket_create_token.png
              :align: center
 
-      - Insert the generated token into the file ``application-artemis.yml`` in the section ``version-control``:
+      - Insert the generated token into the file ``application-local.yml`` in the section ``version-control``:
 
       .. code:: yaml
 
@@ -288,7 +295,7 @@ under ``localhost:7990``.
     Navigate to ``BITBUCKET-URL/plugins/servlet/ssh/account/keys`` and add the SSH key by pasting the content of
     the public key.
 
-    ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename).
+    ``<ssh-private-key-folder-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename).
     It will be used in the configuration of Artemis to specify where Artemis should look for the key and
     store the ``known_hosts`` file.
 
@@ -299,7 +306,7 @@ under ``localhost:7990``.
 Configure Artemis
 ^^^^^^^^^^^^^^^^^
 
-#. Modify ``src/main/resources/config/application-artemis.yml``
+#. Modify ``src/main/resources/config/application-local.yml`` to include the correct URLs and credentials:
 
    .. code:: yaml
 
@@ -334,7 +341,7 @@ Configure Artemis
                empty-commit-necessary: true
                artemis-authentication-token-value: <artemis-authentication-token-value>   # step 7
 
-#. Modify the application-dev.yml
+#. Also, set the server URL in ``src/main/resources/config/application-local.yml``:
 
    .. code:: yaml
 
@@ -350,8 +357,9 @@ e.g.:
 
 ::
 
-   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling
+   --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling,local
 
+All of these profiles are enabled by default when using one of the run configurations in IntelliJ.
 Please read :ref:`Server Setup` for more details.
 
 How to verify the connection works?
