@@ -25,9 +25,11 @@
             "fileExtensionError": "Unsupported file extension. Please upload a file with one of the allowed file extensions listed below.",
             "fileUploadError": "Your submission of file {{ fileName }} failed!",
             "submitted": "Submitted",
-            "submittedFile": "Submitted file {{ filename }} as a solution for the exercise",
-            "download": "Download file",
-            "selectFile": "Please first select a file and then submit it.",
+            "submissionFile": "Files to be submitted",
+            "submittedFile": "Submitted files as a solution for the exercise",
+            "download": "Download file {{ fileName }}",
+            "open": "Open file {{ fileName }}",
+            "selectFile": "Please first select files and then submit them.",
             "fileUpload": "File Upload",
             "forExercise": "for Exercise"
         }

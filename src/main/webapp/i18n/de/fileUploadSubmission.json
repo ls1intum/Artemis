@@ -25,9 +25,11 @@
             "fileExtensionError": "Falsche Dateierweiterung. Bitte lade eine Datei mit einer der unten aufgeführten zulässigen Dateierweiterungen hoch.",
             "fileUploadError": "Deine Einreichung der Datei {{ fileName }} ist fehlgeschlagen!",
             "submitted": "Abgegeben",
-            "submittedFile": "Die Datei {{ filename }} wurde als Lösung für die Übung eingereicht",
-            "download": "Datei herunterladen",
-            "selectFile": "Bitte wähle zuerst eine Datei aus und sende sie dann ab.",
+            "submissionFile": "Dateien als Lösung eingereicht werden",
+            "submittedFile": "Dateien wurden als Lösung für die Übung eingereicht",
+            "download": "Datei herunterladen {{ fileName }}",
+            "open": "Datei öffnen {{ fileName }}",
+            "selectFile": "Bitte wähle zuerst Dateien aus und sende sie dann ab.",
             "fileUpload": "Datei hochladen",
             "forExercise": "für Übung"
         }

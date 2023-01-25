@@ -154,11 +154,11 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFile();
 
         // get access token
-        String accessToken = request.get(fileUploadSubmission.getFilePath() + "/access-token", HttpStatus.OK, String.class);
+        String accessToken = request.get(fileUploadSubmission.getFilePaths().get(0) + "/access-token", HttpStatus.OK, String.class);
 
-        String receivedFile = request.get(fileUploadSubmission.getFilePath() + "?access_token=" + accessToken, HttpStatus.OK, String.class);
+        String receivedFile = request.get(fileUploadSubmission.getFilePaths().get(0) + "?access_token=" + accessToken, HttpStatus.OK, String.class);
         assertThat(receivedFile).isEqualTo("some data");
-        request.get(fileUploadSubmission.getFilePath() + "?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
+        request.get(fileUploadSubmission.getFilePaths().get(0) + "?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -167,11 +167,11 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFile();
 
         // get access token
-        String accessToken = request.get(fileUploadSubmission.getFilePath() + "/access-token", HttpStatus.OK, String.class);
+        String accessToken = request.get(fileUploadSubmission.getFilePaths().get(0) + "/access-token", HttpStatus.OK, String.class);
 
-        String receivedFile = request.get(fileUploadSubmission.getFilePath() + "?access_token=" + accessToken, HttpStatus.OK, String.class);
+        String receivedFile = request.get(fileUploadSubmission.getFilePaths().get(0) + "?access_token=" + accessToken, HttpStatus.OK, String.class);
         assertThat(receivedFile).isEqualTo("some data");
-        request.get(fileUploadSubmission.getFilePath() + "?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
+        request.get(fileUploadSubmission.getFilePaths().get(0) + "?access_token=random_non_valid_token", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -188,7 +188,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         String filePath = fileService.manageFilesForUpdatedFilePath(null, responsePath,
                 FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
 
-        fileUploadSubmission.setFilePath(filePath);
+        fileUploadSubmission.setFilePaths(new String[] { filePath });
 
         // invalid exercise id
         request.get("/api/files/file-upload-exercises/" + 999999999 + "/submissions/" + fileUploadSubmission.getId() + "/file.png/access-token", HttpStatus.NOT_FOUND,
@@ -207,7 +207,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // create tutor that is not in the course
         database.addTeachingAssistant("other-tutors", "other-ta");
 
-        request.get(fileUploadSubmission.getFilePath() + "/access-token", HttpStatus.FORBIDDEN, String.class);
+        request.get(fileUploadSubmission.getFilePaths().get(0) + "/access-token", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -216,7 +216,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithoutUploadPermissions();
 
         // get access token
-        request.get(fileUploadSubmission.getFilePath() + "/access-token", HttpStatus.OK, String.class);
+        request.get(fileUploadSubmission.getFilePaths().get(0) + "/access-token", HttpStatus.OK, String.class);
     }
 
     @Test
@@ -224,7 +224,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testGetAccessTokenForOtherStudentsFileUploadSubmissionAsStudent_forbidden() throws Exception {
         FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithoutUploadPermissions();
 
-        request.get(fileUploadSubmission.getFilePath() + "/access-token", HttpStatus.FORBIDDEN, String.class);
+        request.get(fileUploadSubmission.getFilePaths().get(0) + "/access-token", HttpStatus.FORBIDDEN, String.class);
     }
 
     private FileUploadSubmission createFileUploadSubmissionWithRealFile() throws Exception {
@@ -239,7 +239,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         String filePath = fileService.manageFilesForUpdatedFilePath(null, responsePath,
                 FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
 
-        fileUploadSubmission.setFilePath(filePath);
+        fileUploadSubmission.setFilePaths(new String[] { filePath });
         return fileUploadSubmission;
     }
 
@@ -249,7 +249,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
         String path = "/api/files/file-upload-exercises/" + fileUploadExercise.getId() + "/submissions/" + fileUploadSubmission.getId() + "/test.png";
-        fileUploadSubmission.setFilePath(path);
+        fileUploadSubmission.setFilePaths(new String[] { path });
 
         return fileUploadSubmission;
     }

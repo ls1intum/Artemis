@@ -42,6 +42,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     text: string;
     participation: StudentParticipation;
     submission: FileUploadSubmission;
+    submissionFileNames: string[];
     unassessedSubmission: FileUploadSubmission;
     result?: Result;
     unreferencedFeedback: Feedback[] = [];
@@ -193,9 +194,21 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
             });
     }
 
+    private filePathToNames(filePaths: string[]) {
+        const fileNames: string[] = [];
+
+        for (const filePath of filePaths) {
+            const submittedFileName = filePath.split('/').last()!;
+            fileNames.push(submittedFileName);
+        }
+
+        return fileNames;
+    }
+
     private initializePropertiesFromSubmission(submission: FileUploadSubmission): void {
         this.loadingInitialSubmission = false;
         this.submission = submission;
+        this.submissionFileNames = this.filePathToNames(this.submission!.filePaths!);
         this.participation = this.submission.participation as StudentParticipation;
         this.exercise = this.participation.exercise as FileUploadExercise;
         /**

@@ -21,35 +21,48 @@ public class FileUploadSubmissionExportService extends SubmissionExportService {
     }
 
     @Override
-    protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
+    protected void saveSubmissionToFiles(Exercise exercise, Submission submission, File[] files) throws IOException {
 
-        if (((FileUploadSubmission) submission).getFilePath() == null) {
+        if (((FileUploadSubmission) submission).getFilePaths() == null) {
             throw new IOException("Cannot export submission " + submission.getId() + " for exercise " + exercise.getId() + " because the file path is null.");
         }
 
         // we need to get the 'real' file path here, the submission only has the api url path
         String filePath = FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId());
-        String[] apiFilePathParts = ((FileUploadSubmission) submission).getFilePath().split(Pattern.quote(File.separator));
 
-        Path submissionPath = Path.of(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
+        var apiPaths = ((FileUploadSubmission) submission).getFilePaths();
+        for (int i = 0; i < apiPaths.size(); i++) {
+            String apiPath = apiPaths.get(i);
+            String[] apiFilePathParts = apiPath.split(Pattern.quote(File.separator));
 
-        if (!submissionPath.toFile().exists()) { // throw if submission file does not exist
-            throw new IOException("Cannot export submission " + submission.getId() + " because the uploaded file " + submissionPath + " doesn't exist.");
+            Path submissionPath = Path.of(filePath, apiFilePathParts[apiFilePathParts.length - 1]);
+
+            if (!submissionPath.toFile().exists()) { // throw if submission file does not exist
+                throw new IOException("Cannot export submission " + submission.getId() + " because the uploaded file " + submissionPath + " doesn't exist.");
+            }
+
+            Files.copy(submissionPath, files[i].toPath());
         }
-
-        Files.copy(submissionPath, file.toPath());
     }
 
     @Override
-    protected String getFileEndingForSubmission(Submission submission) {
-        if (((FileUploadSubmission) submission).getFilePath() == null) {
-            return ""; // submission will be ignored by saveSubmissionToFile
+    protected String[] getFileEndingsForSubmission(Submission submission) {
+        var filePaths = ((FileUploadSubmission) submission).getFilePaths();
+
+        if (filePaths == null) {
+            return null; // submission will be ignored by saveSubmissionToFile
         }
         else {
-            String[] parts = ((FileUploadSubmission) submission).getFilePath().split(Pattern.quote(File.separator));
-            String fileName = parts[parts.length - 1];
-            int endingIndex = fileName.indexOf(".");
-            return fileName.substring(endingIndex);
+            String[] fileEndings = new String[filePaths.size()];
+
+            for (int i = 0; i < filePaths.size(); i++) {
+                String[] parts = filePaths.get(i).split(Pattern.quote(File.separator));
+                String fileName = parts[parts.length - 1];
+                int endingIndex = fileName.indexOf(".");
+                fileEndings[i] = fileName.substring(endingIndex);
+            }
+
+            return fileEndings;
         }
     }
 }

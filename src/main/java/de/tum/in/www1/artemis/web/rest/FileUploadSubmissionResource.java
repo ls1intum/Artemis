@@ -79,7 +79,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      *
      * @param exerciseId of the file upload exercise a submission should be created for
      * @param fileUploadSubmission the fileUploadSubmission to create
-     * @param file The uploaded file belonging to the submission
+     * @param files The uploaded files belonging to the submission
      *
      * @return the ResponseEntity with status 200 and with body the new fileUploadSubmission, or with status 400 (Bad Request) if the fileUploadSubmission has already an
      * ID
@@ -87,19 +87,23 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
     @PostMapping("exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<FileUploadSubmission> createFileUploadSubmission(@PathVariable long exerciseId, @RequestPart("submission") FileUploadSubmission fileUploadSubmission,
-            @RequestPart("file") MultipartFile file) {
+            @RequestPart("file[]") MultipartFile[] files) {
         log.debug("REST request to submit new file upload submission : {}", fileUploadSubmission);
-        return handleFileUploadSubmission(exerciseId, fileUploadSubmission, file);
+        return handleFileUploadSubmission(exerciseId, fileUploadSubmission, files);
     }
 
     @NotNull
-    private ResponseEntity<FileUploadSubmission> handleFileUploadSubmission(long exerciseId, FileUploadSubmission fileUploadSubmission, MultipartFile file) {
+    private ResponseEntity<FileUploadSubmission> handleFileUploadSubmission(long exerciseId, FileUploadSubmission fileUploadSubmission, MultipartFile[] files) {
         long start = System.currentTimeMillis();
-        checkFileLength(file);
+
+        for (MultipartFile file : files)
+            checkFileLength(file);
+
         final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
 
-        checkFilePattern(file, exercise);
+        for (MultipartFile file : files)
+            checkFilePattern(file, exercise);
 
         // if there is a participation that has an exercise linked to it,
         // the exercise needs to be the same as the one referenced in the path via exerciseId
@@ -118,7 +122,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         final FileUploadSubmission submission;
         try {
-            submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, user);
+            submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, files, exercise, user);
         }
         catch (IOException e) {
             throw new BadRequestAlertException("The uploaded file could not be saved on the server", ENTITY_NAME, "cantSaveFile");

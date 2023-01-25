@@ -1,9 +1,12 @@
-<div *ngIf="submission && submission.filePath; else noSubmission">
-    <a id="downloadFileButton" (click)="downloadFile(submission.filePath!)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | artemisTranslate }}</a>
-    <span class="ms-2 badge bg-info">
-        {{ attachmentExtension(submission.filePath!) | uppercase }}
-    </span>
+<div *ngIf="submission && submission.filePaths; else noSubmission">
+    <div *ngFor="let filePath of submission!.filePaths!; index as i" class="col-12 card-text">
+        <a id="downloadFileButton" (click)="downloadFile(filePath)">{{ 'artemisApp.fileUploadAssessment.submissionFile' | artemisTranslate : { fileName: filePath } }}</a>
+        <span class="ms-2 badge bg-info">
+            {{ attachmentExtension(filePath) | uppercase }}
+        </span>
+    </div>
 </div>
+
 <ng-template #noSubmission>
     <div>No submission</div>
 </ng-template>

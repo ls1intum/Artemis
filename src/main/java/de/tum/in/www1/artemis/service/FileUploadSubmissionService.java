@@ -56,10 +56,10 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @param file                 the file that will be stored on the server
      * @param user                 the user who initiated the save/submission
      * @return the saved file upload submission
-     * @throws IOException if file can't be saved
+     * @throws IOException        if file can't be saved
      * @throws EmptyFileException if file is empty
      */
-    public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user)
+    public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile[] files, FileUploadExercise exercise, User user)
             throws IOException, EmptyFileException {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
         final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
@@ -77,7 +77,8 @@ public class FileUploadSubmissionService extends SubmissionService {
             fileUploadSubmission.setSubmitted(true);
         }
 
-        fileUploadSubmission = save(fileUploadSubmission, file, participation, exercise);
+        fileUploadSubmission = save(fileUploadSubmission, files, participation, exercise);
+
         return fileUploadSubmission;
     }
 
@@ -87,8 +88,8 @@ public class FileUploadSubmissionService extends SubmissionService {
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
      *
      * @param fileUploadExercise the exercise for which we want to retrieve a submission without manual result
-     * @param correctionRound - the correction round we want our submission to have results for
-     * @param examMode flag to determine if test runs should be ignored. This should be set to true for exam exercises
+     * @param correctionRound    - the correction round we want our submission to have results for
+     * @param examMode           flag to determine if test runs should be ignored. This should be set to true for exam exercises
      * @return a fileUploadSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<FileUploadSubmission> getRandomFileUploadSubmissionEligibleForNewAssessment(FileUploadExercise fileUploadExercise, boolean examMode, int correctionRound) {
@@ -108,13 +109,11 @@ public class FileUploadSubmissionService extends SubmissionService {
      * @param participation        the participation the submission belongs to
      * @param exercise             the exercise the submission belongs to
      * @return the fileUploadSubmission entity that was saved to the database
-     * @throws IOException if file can't be saved
+     * @throws IOException        if file can't be saved
      * @throws EmptyFileException if file is empty
      */
-    public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
+    public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile[] files, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException, EmptyFileException {
-
-        String newFilePath = storeFile(fileUploadSubmission, file, exercise);
 
         // update submission properties
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
@@ -129,49 +128,68 @@ public class FileUploadSubmissionService extends SubmissionService {
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         fileUploadSubmission.setResults(new ArrayList<>());
 
-        // Note: we save before the new file path is set to potentially remove the old file on the file system
+        // Note: we save before the new file path is set to potentially remove the old files on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-        fileUploadSubmission.setFilePath(newFilePath);
-        // Note: we save again so that the new file is stored on the file system
+        String[] newFilePaths = storeFiles(fileUploadSubmission, files, exercise);
+        fileUploadSubmission.setFilePaths(newFilePaths);
+
+        // Note: we save again so that the new files are stored on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
 
         return fileUploadSubmission;
     }
 
-    private String storeFile(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise) throws EmptyFileException, IOException {
-        if (file.isEmpty()) {
-            throw new EmptyFileException(file.getOriginalFilename());
-        }
-
-        final var oldFilePath = fileUploadSubmission.getFilePath();
-
-        final var multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
-        // We need to set id for newly created submissions
-        if (fileUploadSubmission.getId() == null) {
-            fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-        }
-        final var newLocalFilePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
-        final var newFilePath = fileService.publicPathForActualPath(newLocalFilePath, fileUploadSubmission.getId());
-
-        // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
-        final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(newLocalFilePath)));
-        if (!multipartFileHash.equals(storedFileHash)) {
-            throw new IOException("The file " + file.getName() + "could not be stored");
-        }
-
-        // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
-        if (oldFilePath != null) {
-            // check if we already had a file associated with this submission
-            if (!oldFilePath.equals(newFilePath)) { // different name
-                // IMPORTANT: only delete the file when it has changed the name
-                fileUploadSubmission.onDelete();
-            }
-            else { // same name
-                   // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
-                fileService.resetOnPath(newLocalFilePath);
+    private String[] storeFiles(FileUploadSubmission fileUploadSubmission, MultipartFile[] files, FileUploadExercise exercise) throws EmptyFileException, IOException {
+        for (MultipartFile file : files) {
+            if (file.isEmpty()) {
+                throw new EmptyFileException(file.getOriginalFilename());
             }
         }
-        return newFilePath;
+
+        final var oldFilePaths = fileUploadSubmission.getFilePaths();
+        final var newFilePaths = new String[files.length];
+
+        for (int i = 0; i < files.length; i++) {
+            final MultipartFile file = files[i];
+
+            final var multipartFileHash = DigestUtils.md5Hex(file.getInputStream());
+            // We need to set id for newly created submissions
+            if (fileUploadSubmission.getId() == null) {
+                fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
+            }
+            final var newLocalFilePath = saveFileForSubmission(file, fileUploadSubmission, exercise);
+            newFilePaths[i] = fileService.publicPathForActualPath(newLocalFilePath, fileUploadSubmission.getId());
+
+            // We need to ensure that we can access the store file and the stored file is the same as was passed to us in the request
+            final var storedFileHash = DigestUtils.md5Hex(Files.newInputStream(Path.of(newLocalFilePath)));
+            if (!multipartFileHash.equals(storedFileHash)) {
+                throw new IOException("The file " + file.getName() + "could not be stored");
+            }
+
+            // Note: we can only delete the file, if the file name was changed (i.e. the new file name is different), otherwise this will cause issues
+            if (oldFilePaths != null) {
+                // check if we already had a file associated with this submission
+                int alreadyPresent = -1;
+
+                for (int o = 0; o < oldFilePaths.size(); o++) {
+                    if (oldFilePaths.get(o).equals(newFilePaths[i])) {
+                        alreadyPresent = o;
+                        break;
+                    }
+                }
+
+                if (alreadyPresent != -1) { // different name
+                    // IMPORTANT: only delete the file when it has changed the name
+                    fileUploadSubmission.onDeleteAt(alreadyPresent); // nocheckin
+                }
+                else { // same name
+                       // IMPORTANT: invalidate the cache so that the new file with the same name will be downloaded (and not a potentially cached one)
+                    fileService.resetOnPath(newLocalFilePath);
+                }
+            }
+        }
+
+        return newFilePaths;
     }
 
     private String saveFileForSubmission(final MultipartFile file, final Submission submission, FileUploadExercise exercise) throws IOException {
@@ -209,7 +227,7 @@ public class FileUploadSubmissionService extends SubmissionService {
      *
      * @param submissionId       the id of the file upload submission
      * @param fileUploadExercise the corresponding exercise
-     * @param correctionRound the correctionRound for which the submission should lock a result
+     * @param correctionRound    the correctionRound for which the submission should lock a result
      * @return the locked file upload submission
      */
     public FileUploadSubmission lockAndGetFileUploadSubmission(Long submissionId, FileUploadExercise fileUploadExercise, int correctionRound) {
@@ -227,8 +245,8 @@ public class FileUploadSubmissionService extends SubmissionService {
     /**
      * Get a file upload submission of the given exercise that still needs to be assessed and lock the submission to prevent other tutors from receiving and assessing it.
      *
-     * @param fileUploadExercise the exercise the submission should belong to
-     * @param correctionRound - the correction round we want our submission to have results for
+     * @param fileUploadExercise          the exercise the submission should belong to
+     * @param correctionRound             - the correction round we want our submission to have results for
      * @param ignoreTestRunParticipations flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a locked file upload submission that needs an assessment
      */

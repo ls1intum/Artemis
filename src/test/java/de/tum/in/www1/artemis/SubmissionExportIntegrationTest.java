@@ -88,9 +88,12 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
             else if (exercise instanceof FileUploadExercise) {
                 fileUploadExercise = (FileUploadExercise) exercise;
 
-                fileUploadSubmission1 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test1.pdf"), "student1");
-                fileUploadSubmission2 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test2.pdf"), "student2");
-                fileUploadSubmission3 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFile(true, "test3.pdf"), "student3");
+                fileUploadSubmission1 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFiles(true, new String[] { "test1.pdf" }),
+                        "student1");
+                fileUploadSubmission2 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFiles(true, new String[] { "test2.pdf" }),
+                        "student2");
+                fileUploadSubmission3 = database.addFileUploadSubmission(fileUploadExercise, ModelFactory.generateFileUploadSubmissionWithFiles(true, new String[] { "test3.pdf" }),
+                        "student3");
 
                 try {
                     saveEmptySubmissionFile(fileUploadExercise, fileUploadSubmission1);
@@ -110,8 +113,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     private void saveEmptySubmissionFile(Exercise exercise, FileUploadSubmission submission) throws IOException {
-
-        String[] parts = submission.getFilePath().split(Pattern.quote(File.separator));
+        String[] parts = submission.getFilePaths().get(0).split(Pattern.quote(File.separator));
         String fileName = parts[parts.length - 1];
         File file = Path.of(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), fileName).toFile();
 
@@ -242,13 +244,13 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     private String getSubmissionFileName(Submission submission) {
         if (submission instanceof TextSubmission) {
-            return textExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".txt";
+            return textExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + "-0.txt";
         }
         else if (submission instanceof ModelingSubmission) {
-            return modelingExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".json";
+            return modelingExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + "-0.json";
         }
         else if (submission instanceof FileUploadSubmission) {
-            return fileUploadExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + ".pdf";
+            return fileUploadExercise.getTitle() + "-" + ((StudentParticipation) submission.getParticipation()).getParticipantIdentifier() + "-" + submission.getId() + "-0.pdf";
         }
         else {
             fail("Unknown submission type");

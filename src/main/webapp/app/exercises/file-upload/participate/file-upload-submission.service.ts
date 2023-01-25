@@ -18,13 +18,17 @@ export class FileUploadSubmissionService {
      * Updates File Upload submission on the server
      * @param fileUploadSubmission that will be updated on the server
      * @param exerciseId id of the exercise
-     * @param submissionFile the file submitted that will for the exercise
+     * @param submissionFiles the files submitted that will for the exercise
      */
-    update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: File): Observable<HttpResponse<FileUploadSubmission>> {
+    update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFiles: File[]): Observable<HttpResponse<FileUploadSubmission>> {
         const copy = this.submissionService.convert(fileUploadSubmission);
         const formData = new FormData();
         const submissionBlob = new Blob([stringifyCircular(copy)], { type: 'application/json' });
-        formData.append('file', submissionFile);
+
+        for (const submissionFile of submissionFiles) {
+            formData.append('file[]', submissionFile);
+        }
+
         formData.append('submission', submissionBlob);
         return this.http
             .post<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submissions`, formData, {

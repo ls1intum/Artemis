@@ -2667,7 +2667,7 @@ public class DatabaseUtilService {
                 exercise = exerciseRepo.findAllExercisesByCourseId(course.getId()).iterator().next();
 
                 for (int j = 1; j <= numberOfSubmissions; j++) {
-                    FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
+                    FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFiles(true, new String[] { "path/to/file.pdf" });
                     saveFileUploadSubmission((FileUploadExercise) exercise, submission, "student" + j);
                 }
                 return course;
@@ -2799,7 +2799,7 @@ public class DatabaseUtilService {
                 course = courseRepo.save(course);
                 exerciseRepo.save(fileUploadExercise);
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
-                    FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFile(true, "path/to/file.pdf");
+                    FileUploadSubmission submission = ModelFactory.generateFileUploadSubmissionWithFiles(true, new String[] { "path/to/file.pdf" });
                     saveFileUploadSubmission(fileUploadExercise, submission, "student" + j);
                     if (numberOfAssessments >= j) {
                         Result result = generateResult(submission, currentUser);
@@ -4100,7 +4100,7 @@ public class DatabaseUtilService {
             Files.createDirectories(uploadedFileDir);
             Files.createFile(uploadedFilePath);
         }
-        fileUploadSubmission.setFilePath(uploadedFilePath.toString());
+        fileUploadSubmission.setFilePaths(new String[] { uploadedFilePath.toString() });
         fileUploadSubmissionRepo.save(fileUploadSubmission);
     }
 

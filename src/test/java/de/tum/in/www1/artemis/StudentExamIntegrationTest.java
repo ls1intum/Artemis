@@ -1281,7 +1281,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat("Model: " + modelingSubmission.getModel() + "; Explanation: " + modelingSubmission.getExplanationText()).isEqualTo(versionedSubmission.get().getContent());
         }
         else if (submission instanceof FileUploadSubmission) {
-            assertThat(((FileUploadSubmission) submission).getFilePath()).isEqualTo(versionedSubmission.get().getContent());
+            // nocheckin: commenting this assert out is obviously wrong but i dont understand it yet.
+            assertThat(((FileUploadSubmission) submission).getFilePaths()).isEqualTo(versionedSubmission.get().getContent());
         }
         else {
             assert submission instanceof QuizSubmission;

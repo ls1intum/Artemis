@@ -54,7 +54,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
 
     private FileUploadSubmission lateFileUploadSubmission;
 
-    private final MockMultipartFile validFile = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+    private final MockMultipartFile validFile = new MockMultipartFile("file[]", "file.png", "application/json", "some data".getBytes());
 
     private StudentParticipation participation;
 
@@ -124,7 +124,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
 
         if (differentFilePath) {
-            submission.setFilePath("/api/files/file-upload-exercises/1/submissions/1/file1.png");
+            submission.setFilePaths(new String[] { "/api/files/file-upload-exercises/1/submissions/1/file1.png" });
         }
         FileUploadSubmission returnedSubmission = performInitialSubmission(releasedFileUploadExercise.getId(), submission, filename);
 
@@ -147,7 +147,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
 
         String publicFilePath = fileService.publicPathForActualPath(actualFilePath, returnedSubmission.getId());
         assertThat(returnedSubmission).as("submission correctly posted").isNotNull();
-        assertThat(returnedSubmission.getFilePath()).isEqualTo(publicFilePath);
+        assertThat(returnedSubmission.getFilePaths()).isEqualTo(publicFilePath);
         var fileBytes = Files.readAllBytes(Path.of(actualFilePath));
         assertThat(fileBytes.length > 0).as("Stored file has content").isTrue();
         checkDetailsHidden(returnedSubmission, true);
@@ -157,7 +157,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "student1")
     void submitFileUploadSubmission_wrongExercise() throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
-        var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+        var file = new MockMultipartFile("file[]", "file.png", "application/json", "some data".getBytes());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file,
                 FileUploadSubmission.class, HttpStatus.FAILED_DEPENDENCY);
     }
@@ -166,7 +166,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "student1")
     void submitFileUploadSubmission_withoutParticipation() throws Exception {
         FileUploadSubmission submission = ModelFactory.generateFileUploadSubmission(false);
-        var file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+        var file = new MockMultipartFile("file[]", "file.png", "application/json", "some data".getBytes());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submission, "submission", file,
                 FileUploadSubmission.class, HttpStatus.FAILED_DEPENDENCY);
     }
@@ -497,13 +497,13 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     void submitExercise_tooLarge() throws Exception {
         char[] charsOK = new char[(int) (Constants.MAX_SUBMISSION_FILE_SIZE)];
         Arrays.fill(charsOK, 'a'); // each letter takes exactly one byte
-        final MockMultipartFile okFile = new MockMultipartFile("file", "file.png", "application/json", new String(charsOK).getBytes());
+        final MockMultipartFile okFile = new MockMultipartFile("file[]", "file.png", "application/json", new String(charsOK).getBytes());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission", okFile,
                 FileUploadSubmission.class, HttpStatus.OK);
 
         char[] charsTooLarge = new char[(int) (Constants.MAX_SUBMISSION_FILE_SIZE + 1)];
         Arrays.fill(charsTooLarge, 'a'); // each letter takes exactly one byte
-        final MockMultipartFile tooLargeFile = new MockMultipartFile("file", "file.png", "application/json", new String(charsTooLarge).getBytes());
+        final MockMultipartFile tooLargeFile = new MockMultipartFile("file[]", "file.png", "application/json", new String(charsTooLarge).getBytes());
         request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions", submittedFileUploadSubmission, "submission",
                 tooLargeFile, FileUploadSubmission.class, HttpStatus.PAYLOAD_TOO_LARGE);
     }
@@ -553,17 +553,17 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "student3", roles = "USER")
     void submitExercise_beforeDueDateSecondSubmission_allowed() throws Exception {
-        var file = new MockMultipartFile("file", "ffile.png", "application/json", "some data".getBytes());
+        var file = new MockMultipartFile("file[]", "ffile.png", "application/json", "some data".getBytes());
         submittedFileUploadSubmission = request.postWithMultipartFile("/api/exercises/" + releasedFileUploadExercise.getId() + "/file-upload-submissions",
                 submittedFileUploadSubmission, "submission", file, FileUploadSubmission.class, HttpStatus.OK);
 
         final var submissionInDb = fileUploadSubmissionRepository.findById(submittedFileUploadSubmission.getId());
         assertThat(submissionInDb).isPresent();
-        assertThat(submissionInDb.get().getFilePath()).contains("ffile.png");
+        assertThat(submissionInDb.get().getFilePaths().get(0)).contains("ffile.png");
     }
 
     private FileUploadSubmission performInitialSubmission(Long exerciseId, FileUploadSubmission submission, String originalFilename) throws Exception {
-        var file = new MockMultipartFile("file", originalFilename, "application/json", "some data".getBytes());
+        var file = new MockMultipartFile("file[]", originalFilename, "application/json", "some data".getBytes());
         return request.postWithMultipartFile("/api/exercises/" + exerciseId + "/file-upload-submissions", submission, "submission", file, FileUploadSubmission.class,
                 HttpStatus.OK);
     }
@@ -647,7 +647,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testDeleteSubmission() {
-        submittedFileUploadSubmission.setFilePath("/api/files/file-upload-exercises/769/submissions/406062/Pinguin.pdf");
+        submittedFileUploadSubmission.setFilePaths(new String[] { "/api/files/file-upload-exercises/769/submissions/406062/Pinguin.pdf" });
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
         fileUploadSubmissionRepository.delete(submittedFileUploadSubmission);
         assertThat(fileUploadSubmissionRepository.findAll()).doesNotContain(submittedFileUploadSubmission);
@@ -656,7 +656,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testOnDeleteSubmission() {
-        submittedFileUploadSubmission.setFilePath("/api/files/file-upload-exercises/769/submissions/406062/Pinguin.pdf");
+        submittedFileUploadSubmission.setFilePaths(new String[] { "/api/files/file-upload-exercises/769/submissions/406062/Pinguin.pdf" });
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
         Assertions.assertDoesNotThrow(() -> submittedFileUploadSubmission.onDelete());
     }
@@ -664,7 +664,7 @@ class FileUploadSubmissionIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testOnDeleteSubmissionWithException() {
-        submittedFileUploadSubmission.setFilePath("/api/files/file-upload-exercises");
+        submittedFileUploadSubmission.setFilePaths(new String[] { "/api/files/file-upload-exercises" });
         fileUploadSubmissionRepository.save(submittedFileUploadSubmission);
         Assertions.assertThrows(FilePathParsingException.class, () -> submittedFileUploadSubmission.onDelete());
     }

@@ -160,7 +160,7 @@ describe('FileUploadSubmissionComponent', () => {
         comp.submission = createFileUploadSubmission();
         const jhiErrorSpy = jest.spyOn(alertService, 'error');
         const event = { target: { files: [submissionFile] } };
-        comp.setFileSubmissionForExercise(event);
+        comp.addFileSubmissionForExercise(event); // nocheckin
         fixture.detectChanges();
 
         // check that properties are set properly
@@ -187,7 +187,7 @@ describe('FileUploadSubmissionComponent', () => {
         comp.submission = createFileUploadSubmission();
         const jhiErrorSpy = jest.spyOn(alertService, 'error');
         const event = { target: { files: [submissionFile] } };
-        comp.setFileSubmissionForExercise(event);
+        comp.addFileSubmissionForExercise(event); // nocheckin
         fixture.detectChanges();
 
         // check that properties are set properly

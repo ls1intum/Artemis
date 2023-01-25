@@ -18,14 +18,14 @@ public class TextSubmissionExportService extends SubmissionExportService {
     }
 
     @Override
-    protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
+    protected void saveSubmissionToFiles(Exercise exercise, Submission submission, File[] files) throws IOException {
         if (((TextSubmission) submission).getText() == null) {
-            if (!file.exists()) {
-                file.createNewFile(); // create empty file if submission is empty
+            if (!files[0].exists()) {
+                files[0].createNewFile(); // create empty file if submission is empty
             }
         }
         else {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(files[0], StandardCharsets.UTF_8))) {
                 writer.write(((TextSubmission) submission).getText());
             }
         }
@@ -39,7 +39,7 @@ public class TextSubmissionExportService extends SubmissionExportService {
      * @param submissionsFolderName base folder name to save the file to
      */
     public void saveSubmissionToFile(TextSubmission submission, String studentLogin, String submissionsFolderName) throws IOException {
-        String submissionFileName = String.format("%s-%s%s", submission.getId(), studentLogin, this.getFileEndingForSubmission(submission));
+        String submissionFileName = String.format("%s-%s%s", submission.getId(), studentLogin, this.getFileEndingsForSubmission(submission)[0]);
 
         File submissionExportFile = new File(submissionsFolderName, submissionFileName);
 
@@ -53,7 +53,7 @@ public class TextSubmissionExportService extends SubmissionExportService {
     }
 
     @Override
-    protected String getFileEndingForSubmission(Submission submission) {
-        return ".txt";
+    protected String[] getFileEndingsForSubmission(Submission submission) {
+        return new String[] { ".txt" };
     }
 }

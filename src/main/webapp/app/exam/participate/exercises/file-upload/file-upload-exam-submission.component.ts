@@ -32,12 +32,11 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     studentSubmission: FileUploadSubmission;
     @Input()
     exercise: FileUploadExercise;
-
-    submittedFileName: string;
-    submittedFileExtension: string;
+    submittedFileNames: string[];
+    submittedFileExtensions: string[];
     participation: StudentParticipation;
     result: Result;
-    submissionFile?: File;
+    submissionFiles?: File[];
 
     readonly ButtonType = ButtonType;
 
@@ -83,19 +82,31 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
      * Here the file selected with the -browse- button is handled.
      * @param event {object} Event object which contains the uploaded file
      */
-    setFileSubmissionForExercise(event: any): void {
+    addFileSubmissionForExercise(event: any): void {
         if (event.target.files.length) {
             const fileList: FileList = event.target.files;
-            const submissionFile = fileList[0];
-            const allowedFileExtensions = this.exercise.filePattern!.split(',');
-            if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
-                this.alertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
-            } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
-                this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
-            } else {
-                this.submissionFile = submissionFile;
-                this.studentSubmission.isSynced = false;
+
+            const submissionFiles = [];
+
+            for (let i = 0; i < fileList.length; i++) {
+                const submissionFile = fileList[i];
+                const allowedFileExtensions = this.exercise.filePattern!.split(',');
+                if (!allowedFileExtensions.some((extension) => submissionFile.name.toLowerCase().endsWith(extension))) {
+                    this.alertService.error('artemisApp.fileUploadSubmission.fileExtensionError');
+                    return;
+                } else if (submissionFile.size > MAX_SUBMISSION_FILE_SIZE) {
+                    this.alertService.error('artemisApp.fileUploadSubmission.fileTooBigError', { fileName: submissionFile.name });
+                    return;
+                } else {
+                    submissionFiles.push(submissionFile);
+                    this.studentSubmission.isSynced = false;
+                }
             }
+
+            if (this.submissionFiles === undefined) {
+                this.submissionFiles = [];
+            }
+            this.submissionFiles!.push(...submissionFiles);
         }
     }
 
@@ -129,29 +140,40 @@ export class FileUploadExamSubmissionComponent extends ExamSubmissionComponent i
     /**
      *  Here the new filePath, which was received from the server, is used to display the name and type of the just uploaded file.
      */
-    updateViewFromSubmission(): void {
-        if (this.studentSubmission.isSynced && this.studentSubmission.filePath) {
-            // clear submitted file so that it is not displayed in the input (this might be confusing)
-            this.submissionFile = undefined;
-            const filePath = this.studentSubmission!.filePath!.split('/');
-            this.submittedFileName = filePath.last()!;
-            const fileName = this.submittedFileName.split('.');
-            this.submittedFileExtension = fileName.last()!;
+
+    private filePathToNamesAndExtensions(filePaths: string[]) {
+        const fileNames: string[] = [];
+        const fileExtensions: string[] = [];
+
+        for (const filePath of filePaths) {
+            const submittedFileName = filePath.split('/').last()!;
+            fileNames.push(submittedFileName);
+            const fileName = submittedFileName.split('.');
+            fileExtensions.push(fileName.last()!);
         }
+
+        return { fileNames, fileExtensions };
+    }
+
+    updateViewFromSubmission(): void {
+        const { fileNames, fileExtensions } = this.filePathToNamesAndExtensions(this.studentSubmission.filePaths!);
+        this.submittedFileNames = fileNames;
+        this.submittedFileExtensions = fileExtensions;
     }
 
     /**
-     *  Here we send the submissionFile obtained in setFileSubmissionForExercise() to the server with the update method. The server returns the path to the file, and we
+     *  Here we send the submissionFile obtained in addFileSubmissionForExercise() to the server with the update method. The server returns the path to the file, and we
      *  set it in the submission.
      */
     saveUploadedFile() {
-        if (!this.submissionFile) {
+        if (!this.submissionFiles) {
             return;
         }
-        this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, this.submissionFile).subscribe({
+        this.fileUploadSubmissionService.update(this.studentSubmission as FileUploadSubmission, this.exercise.id!, this.submissionFiles).subscribe({
             next: (res) => {
                 const submissionFromServer = res.body!;
-                this.studentSubmission.filePath = submissionFromServer.filePath;
+                console.log(submissionFromServer.filePaths);
+                this.studentSubmission.filePaths = submissionFromServer.filePaths;
                 this.studentSubmission.isSynced = true;
                 this.studentSubmission.submitted = true;
                 this.updateViewFromSubmission();

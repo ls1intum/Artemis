@@ -18,21 +18,21 @@ public class ModelingSubmissionExportService extends SubmissionExportService {
     }
 
     @Override
-    protected void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException {
+    protected void saveSubmissionToFiles(Exercise exercise, Submission submission, File[] files) throws IOException {
         if (((ModelingSubmission) submission).getModel() == null) {
-            if (!file.exists()) {
-                file.createNewFile(); // create empty file if submission is empty
+            if (!files[0].exists()) {
+                files[0].createNewFile(); // create empty file if submission is empty
             }
         }
         else {
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(files[0], StandardCharsets.UTF_8))) {
                 writer.write(((ModelingSubmission) submission).getModel()); // TODO: save explanation text
             }
         }
     }
 
     @Override
-    protected String getFileEndingForSubmission(Submission submission) {
-        return ".json";
+    protected String[] getFileEndingsForSubmission(Submission submission) {
+        return new String[] { ".json" };
     }
 }

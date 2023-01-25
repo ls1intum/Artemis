@@ -7,6 +7,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.annotation.Nullable;
 
@@ -181,30 +182,41 @@ public abstract class SubmissionExportService {
         MutableInt skippedEntries = new MutableInt();
 
         // Save all Submissions
-        List<Path> submissionFilePaths = participations.stream().map(participation -> {
+        List<Path> submissionFilePaths = participations.stream().flatMap(participation -> {
             Submission latestSubmission = latestSubmission(participation, enableFilterAfterDueDate, lateSubmissionFilter);
             if (latestSubmission == null) {
                 skippedEntries.increment();
-                return Optional.<Path>empty();
+                return Stream.empty();
             }
 
             // create file path
-            String submissionFileName = exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + latestSubmission.getId()
-                    + this.getFileEndingForSubmission(latestSubmission);
-            Path submissionFilePath = Path.of(submissionsFolderPath.toString(), submissionFileName);
+            String[] fileEndings = this.getFileEndingsForSubmission(latestSubmission);
+            if (fileEndings == null) {
+                // correct behavior is to ignore the submission
+                return Stream.empty();
+            }
+
+            String submissionFileNameWithoutEnding = exercise.getTitle() + "-" + participation.getParticipantIdentifier() + "-" + latestSubmission.getId() + "-";
+
+            Path[] savePaths = new Path[fileEndings.length];
+            File[] saveFiles = new File[fileEndings.length];
+            for (int i = 0; i < saveFiles.length; i++) {
+                savePaths[i] = Path.of(submissionsFolderPath.toString(), submissionFileNameWithoutEnding + i + fileEndings[i]);
+                saveFiles[i] = savePaths[i].toFile();
+            }
 
             // store file
             try {
-                this.saveSubmissionToFile(exercise, latestSubmission, submissionFilePath.toFile());
-                return Optional.of(submissionFilePath);
+                this.saveSubmissionToFiles(exercise, latestSubmission, saveFiles);
+                return Arrays.stream(savePaths);
             }
             catch (Exception ex) {
-                String message = "Could not create file " + submissionFilePath + "  for exporting: " + ex.getMessage();
+                String message = "Could not create a file in " + Arrays.toString(savePaths) + "  for exporting: " + ex.getMessage();
                 log.error(message, ex);
                 exportErrors.add(message);
-                return Optional.<Path>empty();
+                return Stream.empty();
             }
-        }).flatMap(Optional::stream).toList();
+        }).collect(Collectors.toList());
 
         // Add report entry
         reportData.add(new ArchivalReportEntry(exercise, fileService.removeIllegalCharacters(exercise.getTitle()), participations.size(), submissionFilePaths.size(),
@@ -254,8 +266,8 @@ public abstract class SubmissionExportService {
         return latestSubmission;
     }
 
-    protected abstract void saveSubmissionToFile(Exercise exercise, Submission submission, File file) throws IOException;
+    protected abstract void saveSubmissionToFiles(Exercise exercise, Submission submission, File[] files) throws IOException;
 
-    protected abstract String getFileEndingForSubmission(Submission submission);
+    protected abstract String[] getFileEndingsForSubmission(Submission submission);
 
 }
