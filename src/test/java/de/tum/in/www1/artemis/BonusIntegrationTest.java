@@ -292,6 +292,61 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
     }
 
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCalculateRawBonusWithGradesContinuousBonusStrategy_nonNumericGrades() throws Exception {
+        // Calculation results should be consistent with bonus.service.spec.ts
+
+        BonusStrategy bonusStrategy = BonusStrategy.GRADES_CONTINUOUS;
+        double weight = -1;
+
+        Exam bonusToExam = bonusToExamGradingScale.getExam();
+        Course sourceCourse = courseGradingScale.getCourse();
+
+        bonusRepository.delete(courseBonus);
+        // Line below is needed to prevent EntityNotFoundException for the Bonus instance deleted above.
+        bonusToExamGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(bonusToExam.getId()).orElseThrow();
+        gradingScaleRepository.deleteAll(List.of(bonusToExamGradingScale, courseGradingScale));
+
+        GradingScale sourceGradingScale = createSourceGradingScaleWithGradeStepsForGradesBonusStrategy(sourceCourse);
+        GradingScale bonusToGradingScale = createBonusToGradingScale(bonusToExam);
+
+        GradeStep matchedBonusSourceGradeStep = sourceGradingScale.getGradeSteps().stream().filter(gradeStep -> gradeStep.getGradeName().equals("0.1")).findFirst().orElseThrow();
+        matchedBonusSourceGradeStep.setGradeName("NonNumericBonusSourceGrade");
+
+        GradeStep matchedBonusToGradeStep = bonusToGradingScale.getGradeSteps().stream().filter(gradeStep -> gradeStep.getGradeName().equals("4.0")).findFirst().orElseThrow();
+        matchedBonusToGradeStep.setGradeName("NonNumericBonusToGrade");
+
+        gradingScaleRepository.saveAll(List.of(bonusToGradingScale, sourceGradingScale));
+
+        double bonusToPoints = 125;
+        double sourcePoints = 150;
+        String expectedExamGrade = "3.0";
+        double expectedBonusGrade = 0.2;
+        Double expectedFinalPoints = null;
+        String expectedFinalGrade = "2.8";
+        boolean expectedExceedsMax = false;
+
+        // First assert there is a working source and bonusTo grade step combinations before checking BAD_REQUEST errors.
+        calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
+                expectedExceedsMax, sourceGradingScale.getId());
+
+        // Test getting an error due to non-numeric bonus source grade step.
+        bonusToPoints = 125;
+        sourcePoints = 75;
+        request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign=" + weight
+                + "&sourceGradingScaleId=" + sourceGradingScale.getId() + "&bonusToPoints=" + bonusToPoints + "&sourcePoints=" + sourcePoints, HttpStatus.BAD_REQUEST,
+                BonusExampleDTO.class);
+
+        // Test getting an error due to non-numeric bonusTo grade step.
+        bonusToPoints = 110;
+        sourcePoints = 150;
+        request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign=" + weight
+                + "&sourceGradingScaleId=" + sourceGradingScale.getId() + "&bonusToPoints=" + bonusToPoints + "&sourcePoints=" + sourcePoints, HttpStatus.BAD_REQUEST,
+                BonusExampleDTO.class);
+
+    }
+
     @NotNull
     private BonusExampleDTO calculateFinalGradeAtServer(BonusStrategy bonusStrategy, double weight, double bonusToPoints, double sourcePoints, String expectedExamGrade,
             double expectedBonusGrade, Double expectedFinalPoints, String expectedFinalGrade, boolean expectedExceedsMax, long sourceGradingScaleId) throws Exception {
