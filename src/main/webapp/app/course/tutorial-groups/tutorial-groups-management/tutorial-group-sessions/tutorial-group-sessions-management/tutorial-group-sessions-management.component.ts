@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, ViewEncapsulation } from '@angular/core';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EMPTY, Subject, from } from 'rxjs';
@@ -19,6 +19,7 @@ import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/
     templateUrl: './tutorial-group-sessions-management.component.html',
     styleUrls: ['./tutorial-group-sessions-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
 })
 export class TutorialGroupSessionsManagementComponent implements OnDestroy {
     ngUnsubscribe = new Subject<void>();
