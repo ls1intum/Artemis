@@ -3,11 +3,11 @@
         <div class="card-body">
             <span *ngIf="loadingParticipation">
                 <fa-icon [icon]="faCircleNotch" [spin]="true"></fa-icon>
-                <span jhiTranslate="artemisApp.editor.fetchingParticipation"> Your participation is being loaded... </span>
+                <p class="d-inline" jhiTranslate="artemisApp.editor.fetchingParticipation">Your participation is being loaded...</p>
             </span>
             <span *ngIf="participationCouldNotBeFetched">
                 <fa-icon [icon]="faTimesCircle" class="text-danger"></fa-icon>
-                <span jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</span>
+                <p class="d-inline" jhiTranslate="artemisApp.editor.errors.participationNotFound">Your participation could not be found.</p>
             </span>
         </div>
     </nav>
