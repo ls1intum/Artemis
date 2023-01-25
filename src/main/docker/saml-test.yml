@@ -1,0 +1,31 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# SAML2 Testing service
+# ----------------------------------------------------------------------------------------------------------------------
+# based on the work of: https://github.com/kit-sdq/Artemis-SAML2-Test-Docker
+#
+# when using this service you have to manually add the saml2 spring profile in your Artemis configuration
+# ----------------------------------------------------------------------------------------------------------------------
+
+services:
+    saml-test:
+        container_name: artemis-saml-test
+        image: docker.io/jamedjo/test-saml-idp
+        pull_policy: always
+        ports:
+            - 9980:8080
+        volumes:
+            - ./saml-test/saml20-sp-remote.php:/var/www/simplesamlphp/metadata/saml20-sp-remote.php
+            - ./saml-test/config.php:/var/www/simplesamlphp/config/config.php
+        networks:
+            - artemis
+
+    # comment this section if you use the saml-test service without an artemis-app container
+    # and copy the ./saml-test/application-saml2.yml to your server configs
+    artemis-app:
+        volumes:
+            - ./saml-test/application-saml2.yml:/opt/artemis/config/application-saml2.yml
+
+networks:
+    artemis:
+        driver: "bridge"
+        name: artemis
