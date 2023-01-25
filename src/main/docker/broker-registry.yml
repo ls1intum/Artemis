@@ -1,7 +1,7 @@
 services:
     jhipster-registry:
         container_name: artemis-jhipster-registry
-        image: jhipster/jhipster-registry:v6.1.2
+        image: docker.io/library/jhipster/jhipster-registry:v6.1.2
         pull_policy: always
         volumes:
             - ./registry:/central-config
@@ -24,7 +24,7 @@ services:
 
     activemq-broker:
         container_name: artemis-activemq-broker
-        image: vromero/activemq-artemis:latest
+        image: docker.io/library/vromero/activemq-artemis:latest
         pull_policy: always
         environment:
             ARTEMIS_USERNAME: guest

@@ -31,7 +31,7 @@ services:
 
     artemis-cypress:
         # Cypress image with node and chrome browser installed (Cypress installation needs to be done separately because we require additional dependencies)
-        image: cypress/browsers:node18.12.0-chrome107
+        image: docker.io/library/cypress/browsers:node18.12.0-chrome107
         #TODO: uncomment this after Docker compose version upgrade
         #pull_policy: always
         depends_on:

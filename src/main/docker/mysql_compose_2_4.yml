@@ -8,7 +8,7 @@ version: '2.4'
 services:
     mysql:
         container_name: artemis-mysql
-        image: mysql:8.0.31
+        image: docker.io/library/mysql:8.0.31
         volumes:
             - artemis-mysql-data:/var/lib/mysql
         environment:

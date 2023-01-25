@@ -28,7 +28,7 @@ services:
             - '443:443'
         shm_size: '256m'
     gitlab-runner:
-        image: gitlab/gitlab-runner:latest
+        image: docker.io/library/gitlab/gitlab-runner:latest
         pull_policy: always
         container_name: artemis-gitlab-runner
         volumes:

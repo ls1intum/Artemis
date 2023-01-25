@@ -5,7 +5,7 @@
 services:
     saml-test:
         container_name: artemis-saml-test
-        image: jamedjo/test-saml-idp
+        image: docker.io/library/jamedjo/test-saml-idp
         pull_policy: always
         ports:
             - 9980:8080
