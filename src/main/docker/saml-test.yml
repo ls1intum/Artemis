@@ -4,6 +4,9 @@
 # based on the work of: https://github.com/kit-sdq/Artemis-SAML2-Test-Docker
 #
 # when using this service you have to manually add the saml2 spring profile in your Artemis configuration
+#
+# Out of the box this setup just works with a containerized Artemis instance
+# see comments above artemis-app on how to get it working wit a non-containerized Artemis instance
 # ----------------------------------------------------------------------------------------------------------------------
 
 services:
@@ -19,7 +22,7 @@ services:
         networks:
             - artemis
 
-    # comment this section if you use the saml-test service without an artemis-app container
+    # comment this section if you use the saml-test service with a non-containerized Artemis instance
     # and copy the ./saml-test/application-saml2.yml to your server configs
     artemis-app:
         volumes:

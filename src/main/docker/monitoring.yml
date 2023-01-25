@@ -1,13 +1,18 @@
+# ----------------------------------------------------------------------------------------------------------------------
+# Monitoring setup
+# ----------------------------------------------------------------------------------------------------------------------
 # This configuration is intended for development purpose, it's **your** responsibility to harden it for production
+#
+# Out of the box this setup just works with a non-containerized Artemis instancezs
+# ----------------------------------------------------------------------------------------------------------------------
 
 services:
   prometheus:
     container_name: artemis-prometheus
     image: docker.io/prom/prometheus:v2.34.0
     pull_policy: always
-    # If you want to run this in production, you should persist the /etc/prometheus-directory
-    #volumes:
-      # - ./monitoring/prometheus/:/etc/prometheus/
+    volumes:
+        - ./monitoring/prometheus/:/etc/prometheus/
     # If you want to expose these ports outside your dev PC,
     # remove the "127.0.0.1:" prefix
     ports:
@@ -31,6 +36,4 @@ services:
       - 127.0.0.1:3000:3000
     # On macOS, remove next line and replace localhost by host.docker.internal in prometheus/prometheus.yml and
     # grafana/provisioning/datasources/datasource.yml
-    # TODO: check if just host.docker.internal now works also for linux systems. already saw that there was progress.
-    # TODO: also check that it works when running Artemis locally and inside of our docker container
     network_mode: 'host' # to test locally running service
