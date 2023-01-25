@@ -331,6 +331,7 @@
                 "configuration": "Exam Configuration",
                 "conduction": "Exam Conduction",
                 "assessment": "Exam Assessment and Student Review",
+                "assessmentEmptyDates": "If you leave a date blank, this exam step will not take place.",
                 "exercises": "Exam Exercises",
                 "text": "Exam Texts",
                 "examSolutions": "Exam Solutions"
