@@ -1,4 +1,4 @@
-# this profile contains the default variables for the docker setups
+# Artemis configuration profile with the default variables for the docker setups
 artemis:
     course-archives-path: /opt/artemis/data/course-archives
     repo-clone-path: /opt/artemis/data/repos
