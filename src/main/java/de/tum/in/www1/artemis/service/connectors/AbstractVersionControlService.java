@@ -173,4 +173,20 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     public String getDefaultBranchOfArtemis() {
         return defaultBranch;
     }
+
+    /**
+     * Determines if a user should get read-only or also write permissions for their repository.
+     *
+     * @param programmingExercise The programming exercise the repository belongs to.
+     * @return The permissions the user should receive for a repository.
+     */
+    protected RepositoryPermissions determineRepositoryPermissions(final ProgrammingExercise programmingExercise) {
+        // NOTE: null values are interpreted as offline IDE is allowed
+        if (Boolean.FALSE.equals(programmingExercise.isAllowOfflineIde())) {
+            return RepositoryPermissions.READ_ONLY;
+        }
+        else {
+            return RepositoryPermissions.READ_WRITE;
+        }
+    }
 }
