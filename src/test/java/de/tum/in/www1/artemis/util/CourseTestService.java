@@ -670,6 +670,26 @@ public class CourseTestService {
     }
 
     // Test
+    public void testGetCourseForDashboardFiltersExamsForStudent(boolean userRefresh) throws Exception {
+        User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").get();
+
+        String suffix = "instructorExam";
+        adjustUserGroupsToCustomGroups(suffix);
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
+                userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        course = courseRepo.save(course);
+        Exam examRegistered = ModelFactory.generateExam(course);
+        examRegistered.addRegisteredUser(student);
+        examRepo.save(examRegistered);
+        Exam examUnregistered = ModelFactory.generateExam(course);
+        examRepo.save(examUnregistered);
+
+        Course receivedCourse = request.get("/api/courses/" + course.getId() + "/for-dashboard?refresh=" + userRefresh, HttpStatus.OK, Course.class);
+        assertThat(receivedCourse).isNotNull();
+        assertThat(receivedCourse.getExams()).containsExactlyInAnyOrder(examRegistered);
+    }
+
+    // Test
     public void testGetAllCoursesForDashboard() throws Exception {
         String suffix = "getall";
         adjustUserGroupsToCustomGroups(suffix);
@@ -775,6 +795,26 @@ public class CourseTestService {
         Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
         assertThat(courseInList).isNotNull();
         assertThat(courseInList.getExams()).containsExactlyInAnyOrder(examRegistered, examUnregistered);
+    }
+
+    public void testGetCoursesFiltersExamsForStudent() throws Exception {
+        User student = userRepo.findOneWithGroupsByLogin(userPrefix + "student1").get();
+
+        String suffix = "instructorExam";
+        adjustUserGroupsToCustomGroups(suffix);
+        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>(), userPrefix + "student" + suffix, userPrefix + "tutor" + suffix,
+                userPrefix + "editor" + suffix, userPrefix + "instructor" + suffix);
+        course = courseRepo.save(course);
+        Exam examRegistered = ModelFactory.generateExam(course);
+        examRegistered.addRegisteredUser(student);
+        examRepo.save(examRegistered);
+        Exam examUnregistered = ModelFactory.generateExam(course);
+        examRepo.save(examUnregistered);
+        List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
+        final var finalCourse = course;
+        Course courseInList = courses.stream().filter(c -> c.getId().equals(finalCourse.getId())).findFirst().orElse(null);
+        assertThat(courseInList).isNotNull();
+        assertThat(courseInList.getExams()).containsExactlyInAnyOrder(examRegistered);
     }
 
     // Test
