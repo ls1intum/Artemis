@@ -216,12 +216,13 @@ public class ExamRegistrationService {
      * @param student                           the user object that should be unregistered
      */
     public void unregisterStudentFromExam(Exam exam, boolean deleteParticipationsAndSubmission, User student) {
-        ExamUser registeredExamUser = student.getExamUsers().stream().filter(examUser -> examUser.getExam().getId().equals(exam.getId())).findFirst().orElseThrow();
+        ExamUser registeredExamUser = examUserRepository.findByExamIdAndUser(exam.getId(), student);
         exam.removeExamUser(registeredExamUser);
 
         // Note: we intentionally do not remove the user from the course, because the student might just have "unregistered" from the exam, but should
         // still have access to the course.
         examRepository.save(exam);
+        examUserRepository.delete(registeredExamUser);
 
         // The student exam might already be generated, then we need to delete it
         Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(student.getId(), exam.getId());
@@ -257,13 +258,10 @@ public class ExamRegistrationService {
     public void unregisterAllStudentFromExam(Exam exam, boolean deleteParticipationsAndSubmission) {
 
         // remove all registered students
-        List<Long> userIds = new ArrayList<>();
-        exam.getExamUsers().forEach(examUser -> userIds.add(examUser.getUser().getId()));
-        List<User> registeredStudentsList = userRepository.findAllById(userIds);
-        List<ExamUser> registeredExamUserList = registeredStudentsList.stream()
-                .map(user -> user.getExamUsers().stream().filter(examUser -> examUser.getExam().getId().equals(exam.getId())).findFirst().orElseThrow()).toList();
+        List<ExamUser> registeredExamUserList = examUserRepository.findAllByExamId(exam.getId());
         registeredExamUserList.forEach(exam::removeExamUser);
         examRepository.save(exam);
+        examUserRepository.deleteAllById(registeredExamUserList.stream().map(ExamUser::getId).toList());
 
         // remove all students exams
         Set<StudentExam> studentExams = studentExamRepository.findAllWithoutTestRunsWithExercisesByExamId(exam.getId());

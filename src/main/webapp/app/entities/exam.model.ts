@@ -1,3 +1,4 @@
+import { ExamUser } from 'app/entities/exam-user.model';
 import dayjs from 'dayjs/esm';
 import { Course } from 'app/entities/course.model';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -35,7 +36,7 @@ export class Exam implements BaseEntity {
     public course?: Course;
     public exerciseGroups?: ExerciseGroup[];
     public studentExams?: StudentExam[];
-    public examUsers?: User[];
+    public examUsers?: ExamUser[];
 
     public numberOfRegisteredUsers?: number; // transient
 
