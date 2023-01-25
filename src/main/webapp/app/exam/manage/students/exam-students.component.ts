@@ -74,7 +74,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.isAdmin = this.accountService.isAdmin();
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
             this.exam = exam;
-            this.allRegisteredUsers = (exam.examUsers && exam.examUsers!.map((examUser) => examUser.user!)) || [];
+            this.allRegisteredUsers = (exam.examUsers && exam.examUsers.map((examUser) => examUser.user!)) || [];
             this.isTestExam = this.exam.testExam!;
             this.isLoading = false;
         });
@@ -84,7 +84,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         this.examManagementService.find(this.courseId, this.exam.id!, true).subscribe((examResponse: HttpResponse<Exam>) => {
             this.exam = examResponse.body!;
-            this.allRegisteredUsers = (this.exam.examUsers && this.exam.examUsers!.map((examUser) => examUser.user!)) || [];
+            this.allRegisteredUsers = (this.exam.examUsers && this.exam.examUsers.map((examUser) => examUser.user!)) || [];
             this.isLoading = false;
         });
     }
@@ -149,7 +149,9 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
      */
     onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
         // If the user is not registered for this exam yet, perform the server call to add them
-        if (!this.allRegisteredUsers.map((u) => u.id).includes(user.id) && user.login) {
+        console.log(this.allRegisteredUsers);
+        console.log(this.allRegisteredUsers.map((u) => u.id).includes(user.id) && user.login);
+        if (this.allRegisteredUsers.length > 0 && !this.allRegisteredUsers.map((u) => u.id).includes(user.id) && user.login) {
             this.isTransitioning = true;
             this.examManagementService.addStudentToExam(this.courseId, this.exam.id!, user.login).subscribe({
                 next: (student) => {
