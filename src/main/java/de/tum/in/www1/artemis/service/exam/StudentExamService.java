@@ -362,8 +362,8 @@ public class StudentExamService {
                 if (exercise instanceof ProgrammingExercise) {
                     try {
                         log.debug("lock student repositories for {}", currentUser);
-                        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(exercise,
-                                currentUser.getLogin());
+                        ProgrammingExerciseStudentParticipation participation = programmingExerciseParticipationService
+                                .findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise, currentUser.getLogin(), false, false);
                         programmingExerciseParticipationService.lockStudentRepository((ProgrammingExercise) exercise, participation);
                     }
                     catch (Exception e) {

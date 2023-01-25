@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCRepositoryUrl;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -53,7 +54,7 @@ public class LocalVCFilterService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final ExamSubmissionService examSubmissionService;
 
@@ -61,16 +62,14 @@ public class LocalVCFilterService {
 
     private final PlagiarismService plagiarismService;
 
-    private final TeamService teamService;
-
     public static final String AUTHORIZATION_HEADER = "Authorization";
 
     public LocalVCFilterService(AuthenticationManagerBuilder authenticationManagerBuilder, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authorizationCheckService, ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseService programmingExerciseService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ExamSubmissionService examSubmissionService,
-            SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService, TeamService teamService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ExamSubmissionService examSubmissionService,
+            SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService) {
         this.authenticationManagerBuilder = authenticationManagerBuilder;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -79,11 +78,10 @@ public class LocalVCFilterService {
         this.programmingExerciseService = programmingExerciseService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.examSubmissionService = examSubmissionService;
         this.submissionPolicyService = submissionPolicyService;
         this.plagiarismService = plagiarismService;
-        this.teamService = teamService;
     }
 
     /**
@@ -116,13 +114,12 @@ public class LocalVCFilterService {
         String projectKey = localVCUrl.getProjectKey();
         String courseShortName = localVCUrl.getCourseShortName();
         String repositoryTypeOrUserName = localVCUrl.getRepositoryTypeOrUserName();
-
-        Course course;
+        boolean isTestRunRepository = localVCUrl.isTestRunRepository();
 
         try {
-            course = courseService.findOneByShortName(courseShortName);
+            courseService.findOneByShortName(courseShortName);
         }
-        catch (Exception e) {
+        catch (EntityNotFoundException e) {
             throw new LocalVCInternalException("Could not find single course with short name " + courseShortName);
         }
 
@@ -131,11 +128,11 @@ public class LocalVCFilterService {
         try {
             exercise = programmingExerciseService.findOneByProjectKey(projectKey);
         }
-        catch (Exception e) {
+        catch (EntityNotFoundException e) {
             throw new LocalVCInternalException("Could not find single programming exercise with project key " + projectKey);
         }
 
-        authorizeUser(repositoryTypeOrUserName, course, exercise, user, forPush);
+        authorizeUser(repositoryTypeOrUserName, exercise, user, isTestRunRepository, forPush);
     }
 
     private String checkAuthorizationHeader(String authorizationHeader) throws LocalVCAuthException {
@@ -189,7 +186,7 @@ public class LocalVCFilterService {
         return localVCRepositoryUrl;
     }
 
-    private void authorizeUser(String repositoryTypeOrUserName, Course course, ProgrammingExercise exercise, User user, boolean forPush)
+    private void authorizeUser(String repositoryTypeOrUserName, ProgrammingExercise exercise, User user, boolean isTestRunRepository, boolean forPush)
             throws LocalVCAuthException, LocalVCForbiddenException, LocalVCInternalException {
 
         if (isRequestingBaseRepository(repositoryTypeOrUserName)) {
@@ -217,10 +214,10 @@ public class LocalVCFilterService {
         }
 
         if (exercise.isExamExercise()) {
-            authorizeUserForExamExercise(repositoryTypeOrUserName, exercise, forPush, user);
+            authorizeUserForExamExercise(repositoryTypeOrUserName, exercise, user, isTestRunRepository, forPush);
         }
         else {
-            authorizeUserForCourseExercise(course, repositoryTypeOrUserName, user, exercise, forPush);
+            authorizeUserForCourseExercise(repositoryTypeOrUserName, user, exercise, isTestRunRepository, forPush);
         }
     }
 
@@ -264,13 +261,25 @@ public class LocalVCFilterService {
         }
     }
 
-    private void authorizeUserForExamExercise(String userName, ProgrammingExercise exercise, boolean forPush, User user) throws LocalVCAuthException, LocalVCForbiddenException {
+    private void authorizeUserForExamExercise(String userName, ProgrammingExercise exercise, User user, boolean isTestRunRepository, boolean forPush)
+            throws LocalVCAuthException, LocalVCForbiddenException {
 
-        ProgrammingExerciseStudentParticipation participation = getStudentParticipation(exercise.getId(), user.getLogin());
+        ProgrammingExerciseStudentParticipation participation;
+        try {
+            participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise, userName, isTestRunRepository, false);
+        }
+        catch (EntityNotFoundException e) {
+            throw new LocalVCAuthException();
+        }
 
         // Check that the student owns the participation.
-        if (participation.getStudent().isEmpty() || !participation.getStudent().get().getLogin().equals(userName)) {
+        if (participation.getStudent().isEmpty() || !participation.getStudent().get().getLogin().equals(user.getLogin())) {
             throw new LocalVCAuthException();
+        }
+
+        // Access is allowed for test runs independent of the start date and due date.
+        if (participation.isTestRun()) {
+            return;
         }
 
         Exam exam = exercise.getExerciseGroup().getExam();
@@ -291,10 +300,6 @@ public class LocalVCFilterService {
             throw new LocalVCForbiddenException();
         }
 
-        if (participation.isTestRun()) {
-            return;
-        }
-
         // Check the submission policy.
         checkSubmissionPolicy(exercise, participation);
 
@@ -304,11 +309,19 @@ public class LocalVCFilterService {
         }
     }
 
-    private void authorizeUserForCourseExercise(Course course, String userName, User user, ProgrammingExercise exercise, boolean forPush) {
+    private void authorizeUserForCourseExercise(String userName, User user, ProgrammingExercise exercise, boolean isTestRunRepository, boolean forPush) {
+
         ProgrammingExerciseStudentParticipation participation;
+        try {
+            participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise, userName, isTestRunRepository, false);
+        }
+        catch (EntityNotFoundException e) {
+            throw new LocalVCAuthException();
+        }
+
         // Check if the repository belongs to a team.
         if (exercise.isTeamMode()) {
-            participation = authorizeTeam(course.getId(), userName, user, exercise.getId());
+            authorizeTeam(participation, user);
         }
         else {
             // ---- Repository belongs to a single student. ----
@@ -318,8 +331,6 @@ public class LocalVCFilterService {
                 throw new LocalVCAuthException();
             }
 
-            participation = getStudentParticipation(exercise.getId(), user.getLogin());
-
             // Check that the student owns the participation.
             if (!participation.isOwnedBy(user)) {
                 throw new LocalVCAuthException();
@@ -328,7 +339,7 @@ public class LocalVCFilterService {
 
         // Students can commit code for test runs after the due date.
         // The results for these submissions will not be rated.
-        if (!forPush || participation.isTestRun()) {
+        if (!forPush || isTestRunRepository) {
             return;
         }
 
@@ -362,46 +373,20 @@ public class LocalVCFilterService {
         return true;
     }
 
-    private ProgrammingExerciseStudentParticipation getStudentParticipation(long exerciseId, String userLogin) {
-        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndStudentLogin(exerciseId, userLogin);
+    private void authorizeTeam(ProgrammingExerciseStudentParticipation participation, User user) throws LocalVCInternalException, LocalVCAuthException {
 
-        if (participation.isEmpty()) {
+        Optional<Team> teamOptional = participation.getTeam();
+
+        if (teamOptional.isEmpty()) {
             throw new LocalVCInternalException();
         }
 
-        return participation.get();
-    }
-
-    private ProgrammingExerciseStudentParticipation authorizeTeam(long courseId, String userNameFromUrl, User user, long exerciseId)
-            throws LocalVCInternalException, LocalVCAuthException {
-
-        Team team;
-
-        try {
-            team = teamService.findOneByExerciseCourseIdAndShortName(courseId, userNameFromUrl);
-        }
-        catch (Exception e) {
-            throw new LocalVCInternalException();
-        }
+        Team team = teamOptional.get();
 
         // Check that the authenticated user is part of the team.
         if (!team.hasStudent(user)) {
             throw new LocalVCAuthException();
         }
-
-        // Check that team participation exists.
-        Optional<ProgrammingExerciseStudentParticipation> participation = programmingExerciseStudentParticipationRepository.findByExerciseIdAndTeamId(exerciseId, team.getId());
-
-        if (participation.isEmpty()) {
-            throw new LocalVCInternalException();
-        }
-
-        // Check that the team owns the participation.
-        if (participation.get().getTeam().isEmpty() || !participation.get().getTeam().get().getShortName().equals(team.getShortName())) {
-            throw new LocalVCAuthException();
-        }
-
-        return participation.get();
     }
 
     private void checkSubmissionPolicy(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation)

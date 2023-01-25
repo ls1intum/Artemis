@@ -1,8 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
-import java.io.File;
-import java.util.Optional;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Map;
 
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.revwalk.RevCommit;
@@ -15,24 +18,21 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Commit;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Team;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
-import de.tum.in.www1.artemis.exception.LocalVCException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.security.localvc.LocalVCInternalException;
-import de.tum.in.www1.artemis.service.TeamService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingMessagingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
 @Profile("localvc")
-public class LocalVCPostPushHookService {
+public class LocalVCHookService {
 
-    private final Logger log = LoggerFactory.getLogger(LocalVCPostPushHookService.class);
+    private final Logger log = LoggerFactory.getLogger(LocalVCHookService.class);
 
     @Value("${artemis.version-control.local-vcs-repo-path}")
     private String localVCPath;
@@ -43,26 +43,23 @@ public class LocalVCPostPushHookService {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
-    private final ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository;
+    private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
     private final ProgrammingSubmissionService programmingSubmissionService;
 
     private final ProgrammingMessagingService programmingMessagingService;
 
-    private final TeamService teamService;
-
-    public LocalVCPostPushHookService(ProgrammingExerciseService programmingExerciseService,
+    public LocalVCHookService(ProgrammingExerciseService programmingExerciseService,
             TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ProgrammingSubmissionService programmingSubmissionService,
-            ProgrammingMessagingService programmingMessagingService, TeamService teamService) {
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, ProgrammingSubmissionService programmingSubmissionService,
+            ProgrammingMessagingService programmingMessagingService) {
         this.programmingExerciseService = programmingExerciseService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.programmingMessagingService = programmingMessagingService;
-        this.teamService = teamService;
     }
 
     /**
@@ -71,7 +68,7 @@ public class LocalVCPostPushHookService {
      */
     public void createNewSubmission(String commitHash, Repository repository) {
 
-        File repositoryFolderPath = repository.getDirectory();
+        Path repositoryFolderPath = repository.getDirectory().toPath();
 
         LocalVCRepositoryUrl localVCRepositoryUrl = new LocalVCRepositoryUrl(localVCPath, repositoryFolderPath);
 
@@ -85,46 +82,31 @@ public class LocalVCPostPushHookService {
         try {
             exercise = programmingExerciseService.findOneByProjectKey(localVCRepositoryUrl.getProjectKey());
         }
-        catch (Exception e) {
-            throw new LocalVCException("No exercise or multiple exercises found for the given project key: " + localVCRepositoryUrl.getProjectKey());
+        catch (EntityNotFoundException e) {
+            // This should never happen, as the unambiguous exercise is already retrieved in the LocalVCPushFilter.
+            log.error("No exercise or multiple exercises found for the given project key: {}", localVCRepositoryUrl.getProjectKey());
+            return;
         }
 
         // Retrieve participation for the repository.
-        ProgrammingExerciseParticipation participation = null;
+        ProgrammingExerciseParticipation participation;
 
-        if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.TEMPLATE.getName())) {
-            participation = templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exercise.getId()).orElse(null);
-        }
-        else if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.SOLUTION.getName())) {
-            participation = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exercise.getId()).orElse(null);
-        }
-        else {
-            if (exercise.isTeamMode()) {
-                Team team;
-                try {
-                    team = teamService.findOneByExerciseCourseIdAndShortName(exercise.getCourseViaExerciseGroupOrCourseMember().getId(),
-                            localVCRepositoryUrl.getRepositoryTypeOrUserName());
-                }
-                catch (Exception e) {
-                    throw new LocalVCException("No team or multiple teams found for the given short name: " + localVCRepositoryUrl.getRepositoryTypeOrUserName());
-                }
-                Optional<ProgrammingExerciseStudentParticipation> teamParticipation = programmingExerciseStudentParticipationRepository
-                        .findWithSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId());
-                if (teamParticipation.isPresent()) {
-                    participation = teamParticipation.get();
-                }
+        try {
+            if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.TEMPLATE.getName())) {
+                participation = templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
+            }
+            else if (localVCRepositoryUrl.getRepositoryTypeOrUserName().equals(RepositoryType.SOLUTION.getName())) {
+                participation = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseIdElseThrow(exercise.getId());
             }
             else {
-                Optional<ProgrammingExerciseStudentParticipation> studentParticipation = programmingExerciseStudentParticipationRepository
-                        .findWithSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), localVCRepositoryUrl.getRepositoryTypeOrUserName());
-                if (studentParticipation.isPresent()) {
-                    participation = studentParticipation.get();
-                }
+                participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentLoginAndTestRun(exercise,
+                        localVCRepositoryUrl.getRepositoryTypeOrUserName(), localVCRepositoryUrl.isTestRunRepository(), true);
             }
         }
-
-        if (participation == null) {
-            throw new LocalVCInternalException("No participation found for repository " + repository.getDirectory().getPath());
+        catch (EntityNotFoundException e) {
+            // This should never happen, as the participation is already retrieved in the LocalVCPushFilter.
+            log.error("No participation found for the given repository: {}", repository.getDirectory().getPath());
+            return;
         }
 
         Commit commit = extractCommitInfo(commitHash, repository);
@@ -140,33 +122,39 @@ public class LocalVCPostPushHookService {
         }
         catch (Exception ex) {
             log.error("Exception encountered when trying to create a new submission for participation {} with the following commit: {}", participation.getId(), commit, ex);
-            throw new LocalVCInternalException();
+            // Throwing an exception here would lead to the Git client request getting stuck.
+            // Instead, the user can see in the UI that creating the submission failed.
         }
     }
 
     private Commit extractCommitInfo(String commitHash, Repository repository) {
-        RevCommit revCommit;
-        String branch;
+        RevCommit revCommit = null;
+        String branch = null;
 
         try {
             ObjectId objectId = repository.resolve(commitHash);
             revCommit = repository.parseCommit(objectId);
-            branch = repository.getBranch();
-        }
-        catch (Exception e) {
-            throw new LocalVCInternalException(e.getMessage());
-        }
 
-        if (revCommit == null || branch == null) {
-            throw new LocalVCInternalException();
+            // Get the branch name.
+            Git git = new Git(repository);
+            // Look in the 'refs/heads' namespace for a ref that points to the commit.
+            // The returned map contains at most one entry where the key is the commit id and the value denotes the branch which points to it.
+            Map<ObjectId, String> objectIdBranchNameMap = git.nameRev().addPrefix("refs/heads").add(objectId).call();
+            if (!objectIdBranchNameMap.isEmpty()) {
+                branch = objectIdBranchNameMap.get(objectId);
+            }
+            git.close();
+        }
+        catch (IOException | NullPointerException | GitAPIException e) {
+            log.error("Could not resolve commit hash {} to a commit.", commitHash, e);
         }
 
         Commit commit = new Commit();
         commit.setCommitHash(commitHash);
-        commit.setAuthorName(revCommit.getAuthorIdent().getName());
-        commit.setAuthorEmail(revCommit.getAuthorIdent().getEmailAddress());
+        commit.setAuthorName(revCommit != null ? revCommit.getAuthorIdent().getName() : null);
+        commit.setAuthorEmail(revCommit != null ? revCommit.getAuthorIdent().getEmailAddress() : null);
         commit.setBranch(branch);
-        commit.setMessage(revCommit.getFullMessage());
+        commit.setMessage(revCommit != null ? revCommit.getFullMessage() : null);
 
         return commit;
     }

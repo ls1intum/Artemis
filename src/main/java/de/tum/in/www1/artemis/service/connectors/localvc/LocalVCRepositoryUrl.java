@@ -1,12 +1,10 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
-import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.regex.Pattern;
 
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.LocalVCException;
@@ -23,11 +21,14 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
     // Part of the repositorySlug, identifies the repository's type (exercise, solution, tests) or its owner (e.g. "artemis_test_user_1").
     final private String repositoryTypeOrUserName;
 
+    final private boolean isTestRunRepository;
+
     public LocalVCRepositoryUrl(URL localVCServerUrl, String projectKey, String courseShortName, String repositorySlug) {
         this.projectKey = StringUtil.stripIllegalCharacters(projectKey);
         this.courseShortName = StringUtil.stripIllegalCharacters(courseShortName);
         this.repositorySlug = StringUtil.stripIllegalCharacters(repositorySlug);
         this.repositoryTypeOrUserName = this.repositorySlug.toLowerCase().replace(this.projectKey.toLowerCase() + "-", "");
+        this.isTestRunRepository = this.repositorySlug.contains("-practice-");
         final String url = localVCServerUrl.getProtocol() + "://" + localVCServerUrl.getAuthority() + buildRepositoryPath();
         try {
             this.uri = new URI(url);
@@ -42,24 +43,23 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
     }
 
     public LocalVCRepositoryUrl(URL localVCServerUrl, String urlString) throws LocalVCException {
+
         if (!urlString.startsWith(localVCServerUrl.toString())) {
             throw new LocalVCException("Url does not start with the current server Url");
         }
 
-        String urlPath = urlString.replaceFirst(localVCServerUrl.toString(), "");
+        Path urlPath = Paths.get(urlString.replaceFirst(localVCServerUrl.toString(), ""));
 
-        // Extract segments from URL.
-        String[] pathSplit = urlPath.split("/");
-
-        // Should start with '/git', and end with '.git'.
-        if (!pathSplit[1].equals("git") || !(pathSplit[4].endsWith(".git"))) {
+        if (!urlPath.getName(0).toString().equals("git") || !urlPath.getName(3).toString().endsWith(".git")) {
             throw new LocalVCException("Invalid URL.");
         }
 
-        projectKey = pathSplit[3];
-        courseShortName = pathSplit[2];
-        repositorySlug = pathSplit[4].replace(".git", "");
-        repositoryTypeOrUserName = repositorySlug.toLowerCase().replace(projectKey.toLowerCase() + "-", "");
+        projectKey = urlPath.getName(2).toString();
+        courseShortName = urlPath.getName(1).toString();
+        repositorySlug = urlPath.getName(3).toString().replace(".git", "");
+        String repositoryTypeOrUserNameWithPracticePrefix = repositorySlug.toLowerCase().replace(projectKey.toLowerCase() + "-", "");
+        isTestRunRepository = repositoryTypeOrUserNameWithPracticePrefix.startsWith("practice-");
+        repositoryTypeOrUserName = repositoryTypeOrUserNameWithPracticePrefix.replace("practice-", "");
 
         // Project key should contain the course short name.
         if (!projectKey.toLowerCase().contains(courseShortName.toLowerCase())) {
@@ -74,27 +74,23 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
         }
     }
 
-    public LocalVCRepositoryUrl(String localVCPath, File repositoryFolderPath) {
-        String separator = File.separator;
-        String folderPath = repositoryFolderPath.getPath();
+    public LocalVCRepositoryUrl(String localVCPath, Path repositoryFolderPath) {
 
-        // Extract segments from path.
-        String[] pathSplit = folderPath.split(Pattern.quote(separator));
-
-        if (!pathSplit[0].equals(localVCPath)) {
-            throw new LocalVCException("Invalid repository path.");
+        if (!repositoryFolderPath.getName(0).toString().equals(localVCPath)) {
+            throw new LocalVCException("Repository folder path does not start with the current local VC path");
         }
 
-        projectKey = pathSplit[2];
-        courseShortName = pathSplit[1];
-        repositorySlug = pathSplit[3].replace(".git", "");
-        repositoryTypeOrUserName = repositorySlug.toLowerCase().replace(projectKey.toLowerCase() + "-", "");
+        projectKey = repositoryFolderPath.getName(2).toString();
+        courseShortName = repositoryFolderPath.getName(1).toString();
+        repositorySlug = repositoryFolderPath.getName(3).toString().replace(".git", "");
+        String repositoryTypeOrUserNameWithPracticePrefix = repositorySlug.toLowerCase().replace(projectKey.toLowerCase() + "-", "");
+        isTestRunRepository = repositoryTypeOrUserNameWithPracticePrefix.startsWith("practice-");
+        repositoryTypeOrUserName = repositoryTypeOrUserNameWithPracticePrefix.replace("practice-", "");
 
         // Project key should contain the course short name.
         if (!projectKey.toLowerCase().contains(courseShortName.toLowerCase())) {
-            throw new LocalVCException("Badly formed Local Git Path: " + folderPath + " Expected the repository name to start with the lower case course short name.");
+            throw new LocalVCException("Badly formed Local Git Path: " + repositoryFolderPath + " Expected the repository name to start with the lower case course short name.");
         }
-
     }
 
     public Path getLocalPath(String localVCPath) {
@@ -115,5 +111,9 @@ public class LocalVCRepositoryUrl extends VcsRepositoryUrl {
 
     public String getRepositoryTypeOrUserName() {
         return repositoryTypeOrUserName;
+    }
+
+    public boolean isTestRunRepository() {
+        return isTestRunRepository;
     }
 }

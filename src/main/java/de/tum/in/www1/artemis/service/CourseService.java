@@ -56,6 +56,7 @@ import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Service Implementation for managing Course.
@@ -289,10 +290,16 @@ public class CourseService {
         return courses;
     }
 
-    public Course findOneByShortName(String shortName) throws Exception {
+    /**
+     * Get single course for the given short name.
+     * @param shortName the short name of the course.
+     * @return the course with the given short name.
+     * @throws EntityNotFoundException if the course does not exist or multiple courses are found for the same short name.
+     */
+    public Course findOneByShortName(String shortName) throws EntityNotFoundException {
         List<Course> courses = courseRepository.findAllByShortName(shortName);
         if (courses.size() != 1) {
-            throw new Exception("No course or multiple courses found for the given short name: " + shortName);
+            throw new EntityNotFoundException("No course or multiple courses found for the given short name: " + shortName);
         }
         return courses.get(0);
     }

@@ -1,7 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 import org.eclipse.jgit.errors.RepositoryNotFoundException;
@@ -33,10 +35,10 @@ public class LocalVCServletService {
      */
     public Repository resolveRepository(String repositoryPath) throws RepositoryNotFoundException {
         // Find the local repository depending on the name.
-        java.io.File gitDir = new java.io.File(localVCPath + File.separator + repositoryPath);
+        Path repositoryDir = Paths.get(localVCPath, repositoryPath);
 
-        log.debug("Path to resolve repository from: {}", gitDir.getPath());
-        if (!gitDir.exists()) {
+        log.debug("Path to resolve repository from: {}", repositoryDir);
+        if (!Files.exists(repositoryDir)) {
             log.info("Could not find local repository with name {}", repositoryPath);
             throw new RepositoryNotFoundException(repositoryPath);
         }
@@ -50,7 +52,7 @@ public class LocalVCServletService {
         else {
             log.debug("Opening local repository {}", repositoryPath);
             try {
-                repository = FileRepositoryBuilder.create(gitDir);
+                repository = FileRepositoryBuilder.create(repositoryDir.toFile());
                 this.repositories.put(repositoryPath, repository);
             }
             catch (IOException e) {
@@ -61,13 +63,6 @@ public class LocalVCServletService {
 
         // Enable pushing without credentials, authentication is handled by the LocalVCPushFilter.
         repository.getConfig().setBoolean("http", null, "receivepack", true);
-
-        // Prevent force-pushes.
-        repository.getConfig().setBoolean("receive", null, "denyNonFastForwards", true);
-
-        // Prevent renaming branches.
-        repository.getConfig().setBoolean("receive", null, "denyDeletes", true);
-        repository.getConfig().setBoolean("receive", null, "denyRenames", true);
 
         repository.incrementOpen();
 

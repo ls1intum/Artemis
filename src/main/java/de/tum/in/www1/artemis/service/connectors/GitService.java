@@ -68,9 +68,6 @@ public class GitService {
     @Value("${artemis.version-control.url}")
     private URL gitUrl;
 
-    @Value("${artemis.version-control.local-vcs-repo-path}")
-    private String localVCPath;
-
     @Value("${artemis.version-control.user}")
     private String gitUser;
 
@@ -276,7 +273,9 @@ public class GitService {
                 throw new URISyntaxException(vcsRepositoryUrl.toString(), "LocalVCRepositoryUrl malformed");
             }
 
+            String localVCPath = environment.getProperty("artemis.version-control.local-vcs-repo-path");
             Path localVCRepositoryPath = localVCRepositoryUrl.getLocalPath(localVCPath);
+
             return localVCRepositoryPath.toUri();
         }
         return useSsh() ? getSshUri(vcsRepositoryUrl) : vcsRepositoryUrl.getURI();

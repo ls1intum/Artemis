@@ -1194,10 +1194,16 @@ public class ProgrammingExerciseService {
         return false;
     }
 
-    public ProgrammingExercise findOneByProjectKey(String projectKey) throws Exception {
+    /**
+     * Finds one programming exercise by its project key.
+     * @param projectKey the project key of the programming exercise.
+     * @return the programming exercise.
+     * @throws EntityNotFoundException if no programming exercise or multiple exercises with the given project key exist.
+     */
+    public ProgrammingExercise findOneByProjectKey(String projectKey) throws EntityNotFoundException {
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findByProjectKey(projectKey);
         if (exercises.size() != 1) {
-            throw new Exception("No course or multiple courses found for the given project key: " + projectKey);
+            throw new EntityNotFoundException("No course or multiple courses found for the given project key: " + projectKey);
         }
         return exercises.get(0);
     }

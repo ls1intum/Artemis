@@ -8,14 +8,14 @@ import org.eclipse.jgit.transport.PostReceiveHook;
 import org.eclipse.jgit.transport.ReceiveCommand;
 import org.eclipse.jgit.transport.ReceivePack;
 
-import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCPostPushHookService;
+import de.tum.in.www1.artemis.service.connectors.localvc.LocalVCHookService;
 
 public class LocalVCPostPushHook implements PostReceiveHook {
 
-    private final LocalVCPostPushHookService localVCPostPushHookService;
+    private final LocalVCHookService localVCHookService;
 
-    public LocalVCPostPushHook(LocalVCPostPushHookService localVCPostPushHookService) {
-        this.localVCPostPushHookService = localVCPostPushHookService;
+    public LocalVCPostPushHook(LocalVCHookService localVCHookService) {
+        this.localVCHookService = localVCHookService;
     }
 
     @Override
@@ -30,17 +30,17 @@ public class LocalVCPostPushHook implements PostReceiveHook {
 
         // There should only be one command.
         if (iterator.hasNext()) {
-            throw new LocalVCBadRequestException();
+            command.setResult(ReceiveCommand.Result.REJECTED_OTHER_REASON, "There should only be one command.");
         }
 
         if (command.getType() != ReceiveCommand.Type.UPDATE) {
-            throw new LocalVCBadRequestException();
+            return;
         }
 
         String commitHash = command.getNewId().name();
 
         Repository repository = rp.getRepository();
 
-        localVCPostPushHookService.createNewSubmission(commitHash, repository);
+        localVCHookService.createNewSubmission(commitHash, repository);
     }
 }

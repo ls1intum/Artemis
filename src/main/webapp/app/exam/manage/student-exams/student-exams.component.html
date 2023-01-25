@@ -40,14 +40,20 @@
             id="handleUnlockAllRepositoriesButton"
             class="btn btn-danger mt-1"
             (click)="handleUnlockAllRepositories()"
-            *ngIf="course?.isAtLeastInstructor"
+            *ngIf="!localVCEnabled && course?.isAtLeastInstructor"
             [disabled]="isLoading"
         >
             <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
             <span jhiTranslate="artemisApp.studentExams.unlockAllRepositories">Unlock all repositories</span>
         </button>
-        <button id="lockAllRepositoriesButton" class="btn btn-danger mt-1" (click)="handleLockAllRepositories()" *ngIf="course?.isAtLeastInstructor" [disabled]="isLoading">
+        <button
+            id="lockAllRepositoriesButton"
+            class="btn btn-danger mt-1"
+            (click)="handleLockAllRepositories()"
+            *ngIf="!localVCEnabled && course?.isAtLeastInstructor"
+            [disabled]="isLoading"
+        >
             <span *ngIf="isLoading" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
             <fa-icon [icon]="faExclamationTriangle" class="text-warning"></fa-icon>
             <span jhiTranslate="artemisApp.studentExams.lockAllRepositories">Lock all repositories</span>

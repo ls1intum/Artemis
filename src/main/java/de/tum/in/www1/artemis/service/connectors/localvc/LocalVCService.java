@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.connectors.localvc;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
-import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -54,9 +53,8 @@ public class LocalVCService extends AbstractVersionControlService {
     private String localVCPath;
 
     public LocalVCService(UrlService urlService, GitService gitService, ApplicationContext applicationContext,
-            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            Environment environment) {
-        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository, environment);
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository);
     }
 
     @Override
@@ -92,8 +90,8 @@ public class LocalVCService extends AbstractVersionControlService {
     @Override
     public void deleteProject(String courseShortName, String projectKey) {
         try {
-            String folderName = localVCPath + File.separator + courseShortName + File.separator + projectKey;
-            FileUtils.deleteDirectory(new File(folderName));
+            Path projectPath = Path.of(localVCPath, courseShortName, projectKey);
+            FileUtils.deleteDirectory(projectPath.toFile());
         }
         catch (IOException e) {
             log.error("Could not delete project", e);
@@ -165,8 +163,9 @@ public class LocalVCService extends AbstractVersionControlService {
         String courseShortNameStripped = StringUtil.stripIllegalCharacters(courseShortName);
 
         // Try to find the folder in the file system. If it is not found, return false.
-        if (new File(localVCPath + File.separator + courseShortNameStripped + File.separator + projectKeyStripped).exists()) {
-            log.warn("Local git project with key {} already exists: {}", projectKey, projectName);
+        Path projectPath = Path.of(localVCPath, courseShortNameStripped, projectKeyStripped);
+        if (Files.exists(projectPath)) {
+            log.warn("Local VC project with key {} already exists: {}", projectKey, projectName);
             return true;
         }
 
@@ -183,24 +182,19 @@ public class LocalVCService extends AbstractVersionControlService {
      */
     @Override
     public void createProjectForExercise(ProgrammingExercise programmingExercise) throws LocalVCException {
-        String localVCPathResolved = localVCPath;
         String courseShortName = StringUtil.stripIllegalCharacters(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getShortName());
         String projectKey = StringUtil.stripIllegalCharacters(programmingExercise.getProjectKey());
 
-        log.debug("Creating folder for local git project at {}", localVCPathResolved + File.separator + courseShortName + File.separator + projectKey);
+        log.debug("Creating folder for local git project at {}", Path.of(localVCPath, courseShortName, projectKey));
 
         try {
-            // Instead of defining a project like would be done for GitLab or Bitbucket,
-            // just define a directory that will contain all repositories.
-            File localPath = new File(localVCPathResolved + File.separator + courseShortName + File.separator + projectKey);
-
-            if (!localPath.mkdirs()) {
-                throw new IOException("Could not create directory " + localPath.getPath());
-            }
+            // Instead of defining a project like would be done for GitLab or Bitbucket, just define a directory that will contain all repositories.
+            Path projectPath = Path.of(localVCPath, courseShortName, projectKey);
+            Files.createDirectories(projectPath);
         }
-        catch (Exception e) {
+        catch (IOException e) {
             log.error("Could not create local git project for key {} in course {}", projectKey, courseShortName, e);
-            throw new LocalVCException("Error while creating local git project.");
+            throw new LocalVCException("Error while creating local VC project.");
         }
     }
 
@@ -228,19 +222,15 @@ public class LocalVCService extends AbstractVersionControlService {
 
         LocalVCRepositoryUrl localVCUrl = new LocalVCRepositoryUrl(localVCServerUrl, projectKey, courseShortName, repositorySlug);
 
-        Path localFilePath = localVCUrl.getLocalPath(localVCPath);
+        Path remoteDirPath = localVCUrl.getLocalPath(localVCPath);
 
-        log.debug("Creating local git repo {} in folder {}", repositorySlug, localFilePath);
+        log.debug("Creating local git repository {} in folder {}", repositorySlug, remoteDirPath);
 
         try {
-            File remoteDir = localFilePath.toFile();
-
-            if (!remoteDir.mkdirs()) {
-                throw new IOException("Could not create directory " + remoteDir.getPath());
-            }
+            Files.createDirectories(remoteDirPath);
 
             // Create a bare local repository with JGit.
-            Git git = Git.init().setDirectory(remoteDir).setBare(true).call();
+            Git git = Git.init().setDirectory(remoteDirPath.toFile()).setBare(true).call();
             Repository repository = git.getRepository();
             RefUpdate refUpdate = repository.getRefDatabase().newUpdate(Constants.HEAD, false);
             refUpdate.setForceUpdate(true);
@@ -249,7 +239,7 @@ public class LocalVCService extends AbstractVersionControlService {
             git.close();
         }
         catch (GitAPIException | IOException e) {
-            log.error("Could not create local git repo {} at location {}", repositorySlug, localFilePath, e);
+            log.error("Could not create local git repo {} at location {}", repositorySlug, remoteDirPath, e);
             throw new LocalVCException("Error while creating local git project.");
         }
     }
