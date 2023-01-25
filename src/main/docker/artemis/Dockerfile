@@ -1,7 +1,7 @@
 #-----------------------------------------------------------------------------------------------------------------------
 # build stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM eclipse-temurin:17-jdk as builder
+FROM docker.io/library/eclipse-temurin:17-jdk as builder
 
 WORKDIR /opt/artemis
 # so far just using the .dockerignore to define what isn't necessary here
@@ -12,7 +12,7 @@ RUN ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
 #-----------------------------------------------------------------------------------------------------------------------
 # runtime stage
 #-----------------------------------------------------------------------------------------------------------------------
-FROM eclipse-temurin:17-jre as runtime
+FROM docker.io/library/eclipse-temurin:17-jdk as runtime
 
 # Docker Compose: wget (healthcheck docker compose)
 # Artemis: graphviz, locales
