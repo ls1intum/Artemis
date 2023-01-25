@@ -91,8 +91,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void calculateCourseScoreForStudentWithMultipleResultsInParticipation(boolean withDueDate) {
 
-        // Add 10 minutes to dueDate to prevent any possible test flakiness.
-        ZonedDateTime dueDate = withDueDate ? ZonedDateTime.now().plusSeconds(600L) : null;
+        ZonedDateTime dueDate = withDueDate ? ZonedDateTime.now() : null;
         course.getExercises().forEach(ex -> ex.setDueDate(dueDate));
 
         exerciseRepository.saveAll(course.getExercises());
@@ -158,8 +157,7 @@ class CourseScoreCalculationServiceTest extends AbstractSpringIntegrationBambooB
     @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getResultsForParticipationEdgeCases() {
 
-        // Add 10 minutes to dueDate to prevent any possible test flakiness.
-        ZonedDateTime dueDate = ZonedDateTime.now().plusSeconds(600L);
+        ZonedDateTime dueDate = ZonedDateTime.now();
         course.getExercises().forEach(ex -> ex.setDueDate(dueDate));
 
         exerciseRepository.saveAll(course.getExercises());
