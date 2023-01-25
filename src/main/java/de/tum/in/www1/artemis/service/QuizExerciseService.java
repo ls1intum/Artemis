@@ -486,6 +486,11 @@ public class QuizExerciseService {
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 
+    /**
+     * Reset the invalid status of questions of given quizExercise to false
+     *
+     * @param quizExercise The quiz exercise which questions to be reset
+     */
     private void resetInvalidQuestions(QuizExercise quizExercise) {
         for (QuizQuestion question : quizExercise.getQuizQuestions()) {
             question.setInvalid(false);
